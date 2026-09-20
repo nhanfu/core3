@@ -53,6 +53,28 @@ Module owner: timesheets module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## 2026-09-20 `TIMESHEET-CALENDAR-MULTI-CREATE`
+
+- Odoo source gate: `hr_timesheet/views/hr_timesheet_views.xml:328-368`
+  confirms the My Timesheets calendar and its
+  `view_calendar_account_analytic_line_multi_create` form.
+- Core3 gate: page/API remain separate by `page.id: timesheets`; the
+  permissioned `Log multiple days` action expands an inclusive range into
+  Draft entries and records `timesheet_entry_batches`.
+- Focused test gate: `bun test test/timesheets_calendar_multi_create.integration.test.ts
+  --timeout 20000` — 4 passed, 0 failed, 21 assertions. Full suite:
+  `bun test test/timesheets*.integration.test.ts --timeout 20000` — 41 passed,
+  0 failed, 355 assertions.
+- Guard/persistence gate: range, hours, active employee/company, project/task
+  relation, migration replay, atomic no-partial write, and file-backed restart
+  are covered. Audit, scoped ESLint, and diff-check pass.
+- Browser gate: authenticated Core3 and Odoo captures are stored in
+  `../evidence/timesheets/2026-09-20/timesheet-calendar-multi-create/`.
+  Core3 desktop/mobile opened and submitted the modal; Odoo desktop shows the
+  calendar and Odoo mobile resolves to responsive kanban. No page/request
+  errors or horizontal overflow were observed.
+- Disposition: **bounded slice verified; module sign-off remains pending**.
+
 Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md). It is the module-level source for entries, approvals, Project integration, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Current regression evidence

@@ -1,0 +1,41 @@
+version: 0.0.10
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_entry_batches (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        project_id VARCHAR NOT NULL,
+        project_name VARCHAR NOT NULL,
+        task_id VARCHAR,
+        task_name VARCHAR,
+        date_from DATE NOT NULL,
+        date_to DATE NOT NULL,
+        description VARCHAR NOT NULL DEFAULT '',
+        hours DECIMAL(18,3) NOT NULL,
+        entry_count INTEGER NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_entry_batches_employee_idx ON timesheet_entry_batches(company_name, employee_name, date_from, date_to);
+      UPDATE timesheet_employees SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      UPDATE timesheet_projects SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      INSERT OR IGNORE INTO timesheet_entry_batches(
+        id, employee_id, employee_name, company_name, project_id, project_name, task_id, task_name,
+        date_from, date_to, description, hours, entry_count, state, created_at, row_version
+      ) VALUES (
+        'timesheet-calendar-batch-demo-001', 'employee-demo-001', 'Admin User', 'Core3 Demo Company',
+        'project-demo-001', 'Core3 Implementation', 'task-demo-001', 'Complete module migration',
+        DATE '2026-01-12', DATE '2026-01-14', 'Calendar migration work', 6, 3, 'Draft',
+        TIMESTAMP '2026-01-15 00:00:00', 1
+      );
+    down: |
+      DROP TABLE IF EXISTS timesheet_entry_batches;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

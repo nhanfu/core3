@@ -6,6 +6,8 @@ components:
     source: timesheet_entries
     create_action: create_timesheet_entry
     create_label: New
+    header_actions:
+      - { id: create_timesheet_calendar_batch, label: Log multiple days, permission: timesheets.write, variant: secondary }
     search: { label: Search, placeholder: 'Search...' }
     filters:
       - { field: state, label: Status, options_source: timesheet_states }

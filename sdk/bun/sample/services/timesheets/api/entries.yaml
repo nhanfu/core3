@@ -9,6 +9,10 @@ datasources:
   - id: timesheet_tasks
     permission: timesheets.write
     query: "SELECT id AS value, name AS label FROM timesheet_tasks WHERE open ORDER BY name, id"
+  - id: timesheet_entry_batches
+    permission: timesheets.read
+    meta: { mock_data_justification: Durable calendar multi-create audit records are created by the YAML action and seeded only as a deterministic demo fixture. }
+    query: "SELECT id, employee_name, company_name, project_name, task_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, description, hours, entry_count, state, CAST(created_at AS VARCHAR) AS created_at, row_version FROM timesheet_entry_batches WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') ORDER BY date_from DESC, id"
   - id: timesheet_states
     permission: timesheets.read
     single: false
@@ -20,6 +24,38 @@ datasources:
     meta: { mock_data_justification: Runtime-only persisted entry list; static mock data would make CRUD results and permissions unverifiable. }
     query: "SELECT t.id, t.row_version, t.name, t.company_name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.sales_order_item, t.billable, t.unit_amount, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
 actions:
+  - id: create_timesheet_calendar_batch
+    type: server_form
+    permission: timesheets.write
+    title: Log time on multiple days
+    description: Create one draft timesheet entry for every date in the selected range.
+    action: timesheets.entries.calendar_batch_create
+    handler: yaml_mutation
+    operation: create
+    refresh: [timesheet_entries, timesheet_entry_batches]
+    submit_label: Log time
+    mutation:
+      before_steps:
+        - query: "SELECT 'timesheet-calendar-batch-' || regexp_replace(lower(COALESCE(NULLIF(:current_user_name, ''), 'admin-user')), '[^a-z0-9]+', '-', 'g') || '-' || CAST(:date_from AS VARCHAR) || '-' || CAST(:date_to AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM timesheet_entry_batches WHERE employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND date_from = TRY_CAST(:date_from AS DATE) AND date_to = TRY_CAST(:date_to AS DATE)) AS VARCHAR) AS id, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, (SELECT name FROM timesheet_projects WHERE id = :project_id) AS project_name, (SELECT name FROM timesheet_tasks WHERE id = :task_id) AS task_name"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:date_from AS DATE) IS NOT NULL AND TRY_CAST(:date_to AS DATE) IS NOT NULL AND date_diff('day', TRY_CAST(:date_from AS DATE), TRY_CAST(:date_to AS DATE)) BETWEEN 0 AND 30", status: 422, code: TIMESHEET_CALENDAR_RANGE_INVALID, message: Select a date range of one to 31 days. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24", status: 422, code: TIMESHEET_CALENDAR_HOURS_INVALID, message: Time spent must be greater than 0 and no more than 24 hours per day. }
+        - { query: "SELECT id FROM timesheet_employees WHERE name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active", status: 403, code: TIMESHEET_CALENDAR_EMPLOYEE_SCOPE, message: The current employee is not active in this company. }
+        - { query: "SELECT id FROM timesheet_projects WHERE id = :project_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_CALENDAR_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:task_id AS VARCHAR)), ''), '') = '' OR EXISTS (SELECT 1 FROM timesheet_tasks WHERE id = :task_id AND project_id = :project_id AND open)", status: 422, code: TIMESHEET_CALENDAR_TASK_INVALID, message: Select an open task belonging to the selected project. }
+      steps:
+        - query: "INSERT INTO timesheet_entry_batches(id, employee_id, employee_name, company_name, project_id, project_name, task_id, task_name, date_from, date_to, description, hours, entry_count, state, created_at, row_version) VALUES(:id, :employee_id, :employee_name, :company_name, :project_id, :project_name, NULLIF(:task_id, ''), NULLIF(:task_name, ''), TRY_CAST(:date_from AS DATE), TRY_CAST(:date_to AS DATE), COALESCE(NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), 'Calendar timesheet'), TRY_CAST(:hours AS DECIMAL(18,3)), 0, 'Draft', TIMESTAMP '2026-01-15 00:00:00', 1)"
+        - query: "INSERT INTO timesheet_entries(id, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, state, row_version, company_name, created_at, updated_at) SELECT :id || '-entry-' || strftime(work_date, '%Y%m%d'), 'TS/BATCH/' || :id || '/' || strftime(work_date, '%Y%m%d'), :employee_id, :employee_name, :project_id, :project_name, NULLIF(:task_id, ''), NULLIF(:task_name, ''), work_date, COALESCE(NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), 'Calendar timesheet'), TRY_CAST(:hours AS DECIMAL(18,3)), TRUE, 125, 'Draft', 1, :company_name, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00' FROM generate_series(TRY_CAST(:date_from AS DATE), TRY_CAST(:date_to AS DATE), INTERVAL 1 DAY) AS series(work_date)"
+        - query: "UPDATE timesheet_entry_batches SET entry_count = (SELECT COUNT(*) FROM timesheet_entries WHERE id LIKE :id || '-entry-%'), row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT id, employee_name, company_name, project_id, project_name, task_id, task_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, description, hours, entry_count, state, row_version FROM timesheet_entry_batches WHERE id = :id" }
+    fields:
+      - { field: project_id, label: Project, type: select, options_source: timesheet_projects, required: true }
+      - { field: task_id, label: Task, type: select, options_source: timesheet_tasks }
+      - { field: date_from, label: First day, type: date, required: true }
+      - { field: date_to, label: Last day, type: date, required: true }
+      - { field: hours, label: Time Spent per day, type: number, required: true, min: 0.001, max: 24, step: 0.25, default: 8 }
+      - { field: description, label: Description, type: textarea, placeholder: 'e.g. Sending E-mails' }
   - id: create_timesheet_entry
     type: server_form
     permission: timesheets.write

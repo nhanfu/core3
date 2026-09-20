@@ -623,3 +623,45 @@ Focused evidence: `test/timesheets_report.integration.test.ts`, 4 tests and
 cross-employee, stale-row, invalid-request, migration replay, and file-backed
 restart persistence. It does not claim project/task report bindings or the
 full Odoo PDF/QWeb renderer; those remain separate parity work.
+
+## Calendar multi-create slice — `TIMESHEET-CALENDAR-MULTI-CREATE` (2026-09-20)
+
+Odoo's `hr_timesheet` calendar action is the `/odoo/timesheets` My Timesheets
+action. Its source view at `addons/hr_timesheet/views/hr_timesheet_views.xml`
+lines 328-350 uses `date_start="date"` and explicitly binds
+`multi_create_view="hr_timesheet.view_calendar_account_analytic_line_multi_create"`.
+The source multi-create form at lines 352-368 requires a project, optionally
+selects an open task, accepts Time Spent, and accepts an optional description.
+
+Core3 previously had the Odoo list/calendar/kanban/form family but no
+multi-create action. This slice keeps page/API YAML separate: `entries.yaml`
+adds a permissioned `Log multiple days` header action, while
+`api/entries.yaml` owns its `timesheets.entries.calendar_batch_create` server
+form, project/task lookup sources, validation guards, and refresh bindings.
+The form uses an inclusive first/last-day range to represent the calendar's
+selected cells, then inserts one Draft analytic entry per day. Each request
+also writes a durable `timesheet_entry_batches` audit record, with a fixed
+demo fixture and replay-safe migration `0.0.10`.
+
+The action enforces `timesheets.write`, an active employee/company boundary,
+active timesheetable project and open task relation, a one-to-31-day range,
+and 0 < hours <= 24. Batch IDs and entry IDs are deterministic per actor,
+range, and replay count. Migration setup normalizes the pre-existing relation
+fixtures to the same `Core3 Demo Company` used by persisted Timesheets entries.
+
+Focused evidence is `test/timesheets_calendar_multi_create.integration.test.ts`
+(4 tests, 21 assertions): source comparison, three-day CRUD creation,
+file-backed restart persistence, migration replay, permission/relation/range/
+hours guards, and no-partial-write checks. The full Timesheets suite passes
+41 tests and 355 assertions; the UI audit and scoped lint also pass.
+
+Authenticated browser evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-calendar-multi-create/`.
+Core3 desktop/mobile captures open and submit the modal for 2026-01-22 through
+2026-01-24 and show the resulting Draft entries; Odoo `core3_reference` on
+`127.0.0.1:8069` is captured in desktop calendar and responsive mobile kanban
+states. All captures reported zero page/request errors and no horizontal
+overflow. The mobile Odoo route resolves to its responsive kanban state, which
+is recorded as an observation rather than claimed as a calendar rendering.
+This slice does not sign off the full Timesheets module; remaining report,
+context, interaction, and integration gates remain open.
