@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `dada7d89` (Product Attributes); previous bounded slice: `4b14f8ff` (Product Tags).
+Latest committed bounded slice: `3e9a938bfc28` (Combo Choices); previous bounded slice: `d6485833` (Product Attributes).
 
 ## Current state
 
@@ -40,17 +40,21 @@ and ownership gates are still incomplete; no full parity claim is made here.
   browser matrix, and paired Odoo gates remain open; this is not module
   sign-off.
 
-## Current bounded task — `ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-COMBO-CHOICES-001`
 
-Product Tags is complete as its bounded slice. The next smallest missing
-catalog surface is Product Attributes: Odoo menu/action/model/list-form
-analysis is complete, and Core3 now has durable attribute/value migrations,
-deterministic fixtures, page/API separation, option/preview constraints,
-permissioned CRUD, value replacement, concurrency, and restart coverage.
-Authenticated Core3 desktop/mobile evidence and an authenticated Odoo
-desktop/mobile `/shop` 404 blocker capture are recorded at
-`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-attributes-001/`.
+Product Tags and Product Attributes are complete bounded slices. The next
+smallest missing catalog surface is Combo Choices: Odoo menu/action/model/list-
+form analysis is complete, and Core3 now has durable combo/option migrations,
+deterministic fixtures, page/API separation, active non-combo option
+validation, company scope, permissioned CRUD, optimistic concurrency, and
+restart coverage. Authenticated Core3 desktop/mobile evidence and an
+authenticated Odoo desktop/mobile `/shop` 404 blocker capture are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-combo-choices-001/`.
 
-Focused tests and the repository UI audit pass. The paired Odoo comparison is
-blocked because both supplied authenticated reference instances return 404 for
-`/shop`; this feature and the full Ecommerce module remain unsigned off.
+Focused Combo Choices plus affected catalog regression tests pass (18 tests,
+141 assertions), the authenticated actor matrix passes (3 tests, 22
+assertions), and the repository UI audit passes at 671 pages, 680 routes, and
+1216 datasources. The paired Odoo comparison is blocked because both supplied
+authenticated reference instances return 404 for `/shop`; this feature and the
+full Ecommerce module remain unsigned off despite the bounded verification.
+Bounded commit: `3e9a938bfc28` (local only, not pushed).

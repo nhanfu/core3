@@ -1,6 +1,6 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded catalog-ribbons slice; module sign-off remains open)
+Status: qa-in-progress (bounded catalog combo-choices slice; module sign-off remains open)
 
 ## Bounded feature — Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`)
 
@@ -97,6 +97,38 @@ authenticated 404 page on both instances; the reference database still lacks
 the installed Website/eCommerce surface, so paired Product Ribbon visual
 comparison is blocked and this feature/module is not signed off.
 
+## Bounded feature — Combo Choices (`ECOM-CATALOG-PRODUCT-COMBO-CHOICES-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` registers
+`menu_product_combos` under Website > Configuration > eCommerce > Products
+with `product.product_combo_action`. The supplied
+`product/views/product_combo_views.xml` action is `product.combo`, path
+`combo-choices`, and list/form. `product/models/product_combo.py` defines
+ordered `name`, `sequence`, nullable company, computed product count, and
+computed `base_price` as the minimum selected product price. Its constraints
+require at least one option and reject duplicate products. The related
+`product_combo_item.py` model stores the selected `product_id` and `extra_price`
+and rejects combo products as options.
+
+Core3 comparison: `services/ecommerce/pages/combo-choices.yaml` owns
+`/ecommerce/combo-choices` and joins the separate
+`services/ecommerce/api/combo-choices.yaml` contract by
+`page.id: ecommerce-combo-choices`. Migrations 040/041 add durable combo and
+option tables with deterministic Workspace Essentials and Office Upgrade
+fixtures. The API exposes search, product option lookup, computed minimum
+price, empty/transport errors, permissioned CRUD, company scope, and
+newline-delimited `product-id|extra-price` options. Validation enforces
+non-empty active non-combo products, non-negative prices, unique options,
+optimistic row-version concurrency, and relation cleanup on edit/delete.
+
+Focused CRUD, permission, validation, migration-rerun, and DuckDB restart tests
+pass. Authenticated Core3 desktop/mobile evidence and the exact authenticated
+Odoo `/shop` blocker are recorded under
+`evidence/ecommerce/2026-09-20/ecom-catalog-product-combo-choices-001/`.
+The Core3 desktop create interaction persists a new combo and options; the
+Odoo reference continues to return authenticated 404 on ports 8069 and 8073,
+so paired visual comparison is blocked and Ecommerce remains unsigned.
+
 ## Source trace
 
 Reference: Odoo 19 `website_sale` addon in `/home/nhanjs/projects/odoo/addons/website_sale`.
@@ -104,7 +136,7 @@ Reference: Odoo 19 `website_sale` addon in `/home/nhanjs/projects/odoo/addons/we
 (salesman group, sequence 20), with `Orders` (sequence 2) and `Products`
 (sequence 3). Products contains Products, Pricelists, Categories, Attributes,
 Combo Choices, Product Tags, and Product Ribbons; group-gated entries are
-preserved in the trace. This batch implements only Products.
+preserved in the trace. This batch implements the Products menu family.
 
 The implemented entry is `menu_catalog_products` →
 `product_template_action_website` in `views/product_views.xml`: action path
@@ -112,6 +144,13 @@ The implemented entry is `menu_catalog_products` →
 `kanban,list,form,activity`, default Published filter, and website-specific
 sequence ordering. The Core3 deliberate route alias is `/ecommerce/products`;
 the exact action and menu labels remain visible in the Core3 eCommerce menu.
+
+The newly implemented entry is `menu_product_combos` →
+`product.product_combo_action` in `product/views/product_combo_views.xml`:
+action path `combo-choices`, model `product.combo`, and list/form modes. The
+Core3 route is `/ecommerce/combo-choices`; its YAML page/API split preserves
+the Odoo menu/action contract while keeping option persistence in the
+eCommerce-owned backend.
 
 The same source file adds the website list columns for website sequence,
 Categories, and Is Published. Core3 renders these alongside Product, Internal

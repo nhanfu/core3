@@ -1,0 +1,38 @@
+version: 0.0.40
+kind: schema
+description: eCommerce product combo choices and durable product options
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_combos (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        company_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_combos_sequence_idx ON ecommerce_product_combos(sequence, id);
+      CREATE TABLE IF NOT EXISTS ecommerce_product_combo_items (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        combo_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        product_id VARCHAR NOT NULL,
+        extra_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_combo_items_product_idx ON ecommerce_product_combo_items(combo_id, product_id);
+      CREATE INDEX IF NOT EXISTS ecommerce_product_combo_items_combo_idx ON ecommerce_product_combo_items(combo_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_combo_items_combo_idx;
+      DROP INDEX IF EXISTS ecommerce_product_combo_items_product_idx;
+      DROP TABLE IF EXISTS ecommerce_product_combo_items;
+      DROP INDEX IF EXISTS ecommerce_product_combos_sequence_idx;
+      DROP TABLE IF EXISTS ecommerce_product_combos;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

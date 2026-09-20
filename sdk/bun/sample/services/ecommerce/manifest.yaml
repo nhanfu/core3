@@ -58,6 +58,10 @@ menu:
           label: Attributes
           icon: sliders
           permission: ecommerce.read
+        - path: /ecommerce/combo-choices
+          label: Combo Choices
+          icon: layers
+          permission: ecommerce.read
         - path: /ecommerce/product-tags
           label: Product Tags
           icon: tag

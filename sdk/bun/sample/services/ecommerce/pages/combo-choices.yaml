@@ -1,0 +1,22 @@
+title: Combo Choices
+page: { id: ecommerce-combo-choices, route: /ecommerce/combo-choices, breadcrumb: [eCommerce, Products, Combo Choices], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_combos
+    create_action: create_ecommerce_product_combo
+    create_label: New
+    search: { label: Search combo choices, placeholder: Search combo choice or product... }
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: name, label: Combo Choice, type: PrimaryEntityCell }
+      - { field: base_price, label: Combo Price, type: money, align: right }
+      - { field: combo_item_count, label: Product Count, align: right }
+      - { field: company_name, label: Company }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_product_combo, label: Edit, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_combo, label: Delete, permission: ecommerce.write, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No combo choices, description: Create a combo choice and add products for customers to configure together. }

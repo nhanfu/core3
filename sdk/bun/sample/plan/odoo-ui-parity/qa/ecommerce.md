@@ -28,8 +28,47 @@
   blocked.
 - QA disposition: **bounded implementation verified, not signed off**. Full
   Ecommerce sign-off remains open for the paired Odoo surface and existing
-  module-level actor/company and checkout gates. Bounded commit: `dada7d89`
+  module-level actor/company and checkout gates. Bounded commit: `d6485833`
   (local only, not pushed).
+
+## Combo Choices (`ECOM-CATALOG-PRODUCT-COMBO-CHOICES-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `menu_product_combos` /
+  `product.product_combo_action`, model `product.combo`, ordered list/form
+  fields, nullable company, computed minimum combo price, product count,
+  non-empty/unique option constraints, and non-combo product option rule
+  verified against the supplied `product` and `website_sale` source.
+- Core3 lifecycle: migrations 040/041 add durable combo and option rows with
+  deterministic Workspace Essentials and Office Upgrade fixtures; page/API
+  YAML is separated by `page.id`; the manifest menu, search/product lookup,
+  empty/error states, company scope, permissioned CRUD, option validation,
+  optimistic row-version guards, and relation cleanup are implemented.
+- Browser repair: the authenticated Core3 company is `Core3 Demo Company`, and
+  the shared YAML form renderer emits `textarea` fields as text inputs. The
+  combo API preserves newline option input and accepts semicolon-separated
+  option lines so the real form can persist multiple options without a bypass.
+- Focused verification: `bun test
+  test/ecommerce_combo_choices.integration.test.ts --timeout 20000` — **4
+  passed, 30 assertions, 0 failures**. The affected Products menu assertion
+  was repaired to include Combo Choices. The affected catalog regression suite
+  then passed with **18 tests, 141 assertions**, and the authenticated actor
+  matrix passed with **3 tests, 22 assertions**.
+- Scoped audit: `bun run audit` passed with **671 pages, 680 routes, and 1216
+  datasources**. Targeted ESLint and `git diff --check` passed after the final
+  repair.
+- Browser verification: authenticated Core3 desktop 1440x900 list/form/post-
+  create and mobile 390x844 list captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-product-combo-choices-001/`;
+  the desktop create interaction persisted `Browser Workspace Combo` with two
+  product options under `Core3 Demo Company`.
+  Core3 browser page/request errors were empty.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. Authenticated
+  `/shop` returned 404 on both, so paired Combo Choices comparison is blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for the paired Odoo surface and existing
+  module-level actor/company and checkout gates. Bounded commit:
+  `3e9a938bfc28` (local only, not pushed).
 
 ## Product Tags (`ECOM-CATALOG-PRODUCT-TAGS-001`, 2026-09-20)
 

@@ -1,0 +1,92 @@
+page: { id: ecommerce-combo-choices }
+datasources:
+  - id: ecommerce_product_combos
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_COMBOS_UNAUTHENTICATED, message: Sign in to view combo choices. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_COMBOS_FORBIDDEN, message: You do not have permission to view combo choices. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_COMBOS_UNAVAILABLE, message: Combo choices are temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.name, c.sequence, c.company_name, COUNT(i.id) AS combo_item_count, COALESCE(MIN(p.sales_price), 0) AS base_price, COALESCE(STRING_AGG(p.id || '|' || CAST(i.extra_price AS VARCHAR), chr(10) ORDER BY i.sequence, i.id), '') AS option_list, COALESCE(STRING_AGG(p.name || '|' || CAST(i.extra_price AS VARCHAR), chr(10) ORDER BY i.sequence, i.id), '') AS option_names FROM ecommerce_product_combos c LEFT JOIN ecommerce_product_combo_items i ON i.combo_id = c.id LEFT JOIN ecommerce_products p ON p.id = i.product_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(p.name, '') ILIKE '%' || :q || '%') AND (:company_name IS NULL OR c.company_name = :company_name OR c.company_name IS NULL) GROUP BY c.id, c.row_version, c.name, c.sequence, c.company_name ORDER BY c.sequence, c.id"
+  - id: ecommerce_product_combo_products
+    permission: ecommerce.read
+    query: "SELECT id AS value, name || ' (' || COALESCE(internal_reference, id) || ')' AS label FROM ecommerce_products WHERE active = TRUE AND LOWER(COALESCE(product_type, '')) <> 'combo' AND (:company_name IS NULL OR company_name = :company_name) ORDER BY name, id"
+actions:
+  - id: create_ecommerce_product_combo
+    type: server_form
+    permission: ecommerce.write
+    title: New Combo Choice
+    action: ecommerce.product_combos.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_product_combos]
+    mutation:
+      operation: insert
+      table: ecommerce_product_combos
+      fields: [name, sequence, company_name]
+      required: [name]
+      defaults: { sequence: 10, company_name: My Company }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PRODUCT_COMBO_NAME_INVALID, message: Combo Choice must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:option_list AS VARCHAR), ''))) > 0", status: 422, code: ECOMMERCE_PRODUCT_COMBO_OPTIONS_REQUIRED, message: Add at least one product option. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Combo choices must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS product_id, trim(split_part(line, '|', 2)) AS extra_price FROM lines WHERE line <> '') SELECT 1 FROM parsed WHERE product_id = '' OR extra_price = '' OR TRY_CAST(extra_price AS DECIMAL(12,2)) IS NULL OR TRY_CAST(extra_price AS DECIMAL(12,2)) < 0 OR NOT EXISTS (SELECT 1 FROM ecommerce_products p WHERE p.id = product_id AND p.active = TRUE AND LOWER(COALESCE(p.product_type, '')) <> 'combo'))", status: 422, code: ECOMMERCE_PRODUCT_COMBO_OPTION_INVALID, message: Each option must use an active non-combo product id and a non-negative extra price. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS product_id FROM lines WHERE line <> '') SELECT product_id FROM parsed GROUP BY product_id HAVING COUNT(*) > 1)", status: 409, code: ECOMMERCE_PRODUCT_COMBO_OPTION_DUPLICATE, message: A product can only appear once in a combo choice. }
+      steps:
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT row_number() OVER () * 10 AS sequence, trim(split_part(line, '|', 1)) AS product_id, CAST(trim(split_part(line, '|', 2)) AS DECIMAL(12,2)) AS extra_price FROM lines WHERE line <> '') INSERT INTO ecommerce_product_combo_items(id, combo_id, row_version, sequence, product_id, extra_price) SELECT :id || '-item-' || CAST(sequence AS VARCHAR), :id, 1, sequence, product_id, extra_price FROM parsed ON CONFLICT (id) DO NOTHING" }
+      result: { query: "SELECT * FROM ecommerce_product_combos WHERE id = :id" }
+    fields:
+      - { field: name, label: Combo Choice, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 0 }
+      - { field: company_name, label: Company, type: text, default: My Company }
+      - { field: option_list, label: Product Options, type: textarea, required: true, placeholder: 'ecommerce-product-mug|0\necommerce-product-lamp|4.50' }
+  - id: edit_ecommerce_product_combo
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Combo Choice
+    action: ecommerce.product_combos.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [ecommerce_product_combos]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: update
+      table: ecommerce_product_combos
+      fields: [name, sequence, company_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_combos WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_COMBO_NOT_FOUND, message: Combo choice not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PRODUCT_COMBO_NAME_INVALID, message: Combo Choice must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:option_list AS VARCHAR), ''))) > 0", status: 422, code: ECOMMERCE_PRODUCT_COMBO_OPTIONS_REQUIRED, message: Add at least one product option. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Combo choices must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS product_id, trim(split_part(line, '|', 2)) AS extra_price FROM lines WHERE line <> '') SELECT 1 FROM parsed WHERE product_id = '' OR extra_price = '' OR TRY_CAST(extra_price AS DECIMAL(12,2)) IS NULL OR TRY_CAST(extra_price AS DECIMAL(12,2)) < 0 OR NOT EXISTS (SELECT 1 FROM ecommerce_products p WHERE p.id = product_id AND p.active = TRUE AND LOWER(COALESCE(p.product_type, '')) <> 'combo'))", status: 422, code: ECOMMERCE_PRODUCT_COMBO_OPTION_INVALID, message: Each option must use an active non-combo product id and a non-negative extra price. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS product_id FROM lines WHERE line <> '') SELECT product_id FROM parsed GROUP BY product_id HAVING COUNT(*) > 1)", status: 409, code: ECOMMERCE_PRODUCT_COMBO_OPTION_DUPLICATE, message: A product can only appear once in a combo choice. }
+      before_steps:
+        - { query: "DELETE FROM ecommerce_product_combo_items WHERE combo_id = :id" }
+      steps:
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(REPLACE(CAST(:option_list AS VARCHAR), ';', chr(10)), chr(10)))) AS line), parsed AS (SELECT row_number() OVER () * 10 AS sequence, trim(split_part(line, '|', 1)) AS product_id, CAST(trim(split_part(line, '|', 2)) AS DECIMAL(12,2)) AS extra_price FROM lines WHERE line <> '') INSERT INTO ecommerce_product_combo_items(id, combo_id, row_version, sequence, product_id, extra_price) SELECT :id || '-item-' || CAST(sequence AS VARCHAR), :id, 1, sequence, product_id, extra_price FROM parsed ON CONFLICT (id) DO NOTHING" }
+      result: { query: "SELECT * FROM ecommerce_product_combos WHERE id = :id" }
+    fields:
+      - { field: name, label: Combo Choice, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0 }
+      - { field: company_name, label: Company, type: text }
+      - { field: option_list, label: Product Options, type: textarea, required: true, placeholder: 'ecommerce-product-mug|0\necommerce-product-lamp|4.50' }
+  - id: delete_ecommerce_product_combo
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_combos.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete combo choice {{row.name}}?'
+    refresh: [ecommerce_product_combos]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: ecommerce_product_combos
+      concurrency: { required: true }
+      before_steps:
+        - { query: "DELETE FROM ecommerce_product_combo_items WHERE combo_id = :id" }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_combos WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_COMBO_NOT_FOUND, message: Combo choice not found. }
+      result: { query: "SELECT TRUE AS deleted" }

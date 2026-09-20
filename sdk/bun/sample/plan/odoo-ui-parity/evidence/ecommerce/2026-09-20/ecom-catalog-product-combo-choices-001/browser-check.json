@@ -1,0 +1,39 @@
+{
+  "featureId": "ECOM-CATALOG-PRODUCT-COMBO-CHOICES-001",
+  "capturedAt": "2026-09-20T11:24:59.649Z",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:4312/ecommerce/combo-choices",
+      "title": "Combo Choices",
+      "authentication": "admin@tms.local",
+      "listText": "1-2 / 2 Workspace Essentials 18 2 My Company; Office Upgrade 46.5 2 My Company",
+      "create": {
+        "created": true,
+        "name": "Browser Workspace Combo",
+        "company": "Core3 Demo Company",
+        "optionInput": "ecommerce-product-mug|0; ecommerce-product-lamp|4.50",
+        "resultText": "1-3 / 3 Browser Workspace Combo 18 2 Core3 Demo Company"
+      },
+      "errors": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:4312/ecommerce/combo-choices",
+      "viewport": "390x844",
+      "resultText": "1-3 / 3 Workspace Essentials; Office Upgrade; Browser Workspace Combo",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "database": "core3_codex_demo",
+    "user": "codex@core3.local",
+    "blocker": "Authenticated /shop returned exact Odoo Error 404 on both supplied instances.",
+    "odoo-8069": {
+      "desktop": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    },
+    "odoo-8073": {
+      "desktop": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    }
+  }
+}

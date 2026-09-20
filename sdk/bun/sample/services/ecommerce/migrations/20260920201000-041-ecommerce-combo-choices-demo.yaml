@@ -1,0 +1,23 @@
+version: 0.0.41
+kind: data
+description: deterministic Odoo product combo choice fixtures and options
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_combos (id, row_version, name, sequence, company_name) VALUES
+        ('ecommerce-combo-workspace', 1, 'Workspace Essentials', 10, 'My Company'),
+        ('ecommerce-combo-office', 1, 'Office Upgrade', 20, 'My Company')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_product_combo_items (id, combo_id, row_version, sequence, product_id, extra_price) VALUES
+        ('ecommerce-combo-workspace-item-mug', 'ecommerce-combo-workspace', 1, 10, 'ecommerce-product-mug', 0),
+        ('ecommerce-combo-workspace-item-lamp', 'ecommerce-combo-workspace', 1, 20, 'ecommerce-product-lamp', 4.50),
+        ('ecommerce-combo-office-item-chair', 'ecommerce-combo-office', 1, 10, 'ecommerce-product-chair', 0),
+        ('ecommerce-combo-office-item-lamp', 'ecommerce-combo-office', 1, 20, 'ecommerce-product-lamp', 2.00)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_combo_items WHERE combo_id IN ('ecommerce-combo-workspace', 'ecommerce-combo-office');
+      DELETE FROM ecommerce_product_combos WHERE id IN ('ecommerce-combo-workspace', 'ecommerce-combo-office');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
