@@ -34,6 +34,33 @@ authenticated Odoo `/shop` blocker evidence is under
 references return exact HTTP 404 for `/shop`, so paired visual comparison is
 blocked. Ecommerce remains unsigned off.
 
+## Bounded feature — Product Tag Variant Assignments (`ECOM-CATALOG-PRODUCT-TAG-VARIANT-ASSIGNMENT-001`)
+
+Odoo source comparison: `product/models/product_tag.py` defines the separate
+`product_product_ids` many-to-many relation with a variant domain, while
+`product/views/product_tag_views.xml` exposes the `Product Variant` field in
+the Product Tags list. `website_sale/models/product_tag.py` adds the website
+mixin, and `website_sale/controllers/variant.py` renders the union of template
+and variant tags for a selected website combination.
+
+Core3 comparison: the completed Product Tags slice persisted only template
+assignments. With the completed variant table now available, migrations
+050/051 add `ecommerce_product_tag_variants` and deterministic Mug/Chair
+variant assignments. The tag API adds a read-protected variant option source,
+variant counts/names/IDs, and separate permissioned assign/remove actions.
+Each action validates active combination variants and company scope, rejects
+duplicates/missing assignments, and increments the tag row version under
+optimistic concurrency. The Product Tags ListView exposes assigned variant
+counts/names and row actions while retaining template assignment CRUD.
+
+Focused tests cover Odoo source/page/API separation, migration fixtures,
+permission/company validation, assignment CRUD, duplicate/not-found/stale
+guards, and DuckDB restart persistence. Authenticated Core3 desktop/mobile
+and authenticated Odoo `/shop` blocker evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-variant-assignment-001/`.
+Both Odoo references return exact HTTP 404 for `/shop`, so paired comparison
+is blocked. Ecommerce remains unsigned off.
+
 ## Bounded feature — Pricelist Rules (`ECOM-CATALOG-PRICELIST-RULES-001`)
 
 Odoo source comparison: `website_sale/views/website_sale_menus.xml` places the
@@ -115,10 +142,9 @@ Service fixtures. The page/API provide search, customer-visibility filtering,
 empty/transport errors, customer-facing color, product assignment, and
 permissioned create/edit/delete. Server guards enforce unique names, valid
 colors, optimistic row versions, and relation cleanup on edit/delete.
-This bounded Core3 slice maps the available product-template catalog; the
-optional Odoo tag image and variant-only assignment fields remain explicit
-follow-up gaps because the current Ecommerce catalog has no corresponding
-binary/variant model.
+This bounded Core3 slice maps the available product-template catalog and now
+also covers Odoo variant-only tag assignments. The optional Odoo tag image
+remains an explicit follow-up gap.
 
 Focused CRUD, permission, validation, assignment, migration-rerun, and DuckDB
 restart tests pass. Authenticated Core3 desktop/mobile evidence is under

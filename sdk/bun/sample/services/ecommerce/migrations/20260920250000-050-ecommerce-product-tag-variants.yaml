@@ -1,0 +1,19 @@
+version: 0.0.50
+kind: schema
+description: eCommerce product tag variant assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_tag_variants (
+        tag_id VARCHAR NOT NULL,
+        variant_id VARCHAR NOT NULL,
+        PRIMARY KEY (tag_id, variant_id)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_tag_variants_variant_idx ON ecommerce_product_tag_variants(variant_id, tag_id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_tag_variants_variant_idx;
+      DROP TABLE IF EXISTS ecommerce_product_tag_variants;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (Product Variants); previous bounded slice: `3b3536beaad4c220b78d37124070ecd5253da671` (Pricelist Rules).
+Latest committed bounded slice: `61f96244950042a6705f63eed5c7906008a08e72` (Product Tag Variant Assignments); previous bounded slice: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (Product Variants).
 
 ## Current state
 
@@ -13,7 +13,7 @@ Core3 browser evidence. DEV-4 adds an eCommerce-owned, retry-safe outbox
 contract for handing checkout orders to the separate Sales service. Functional
 and ownership gates are still incomplete; no full parity claim is made here.
 
-## Current bounded task — `ECOM-CATALOG-PRODUCT-VARIANTS-001`
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-VARIANTS-001`
 
 The next source-backed catalog gap is the missing `product.product` variant
 resolution surface. The supplied Odoo product and website_sale views/models
@@ -29,6 +29,20 @@ persistence and variant-specific cart pricing. Authenticated Core3 desktop /
 mobile captures and authenticated Odoo 404 blocker captures are recorded at
 `plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-variants-001/`.
 Bounded commit: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (local only, not
+pushed); module sign-off remains open.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-TAG-VARIANT-ASSIGNMENT-001`
+
+The smallest newly unblocked catalog gap is Odoo Product Tags' explicit
+`product_product_ids` variant assignment. Core3 now has the source-backed
+variant table, but the completed tag slice still persisted template relations
+only. This wave adds migrations 050/051, deterministic variant assignments,
+variant option/query data, separate permissioned assign/remove actions,
+company/active/combination/duplicate/not-found validation, row-version
+concurrency, and restart coverage. Core3 desktop/mobile and authenticated
+Odoo `/shop` blocker captures are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-variant-assignment-001/`.
+Bounded commit: `61f96244950042a6705f63eed5c7906008a08e72` (local only, not
 pushed); module sign-off remains open.
 
 ## DEV-4 evidence (2026-09-13)

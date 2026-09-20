@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Product Tag Variant Assignments (`ECOM-CATALOG-PRODUCT-TAG-VARIANT-ASSIGNMENT-001`, 2026-09-20)
+
+- Odoo source comparison: `product.tag.product_product_ids` is a distinct
+  variant many-to-many relation with an attribute-bearing variant domain;
+  `product_tag_views.xml` exposes the Product Variant field, and website_sale
+  renders selected-variant tags in the combination response.
+- Core3 lifecycle: migrations 050/051 add the durable tag/variant relation and
+  deterministic Mug/Chair assignments. The API adds a variant option source,
+  variant projection fields, and separate `ecommerce.write` assign/remove
+  actions with active-combination, company, duplicate, missing, and stale-row
+  guards. The page keeps the YAML/API split and exposes variant columns/actions.
+- Focused verification: `bun test
+  ./test/ecommerce_product_tags.integration.test.ts
+  ./test/ecommerce_product_tag_variants.integration.test.ts --timeout 20000` —
+  **8 passed, 50 assertions, 0 failures**. Isolated Ecommerce discovery audit:
+  **19 pages, 20 routes, 51 datasources**.
+- Browser verification: authenticated Core3 `admin@tms.local` desktop
+  1440x900 tag list/assignment form and mobile 390x844 tag list captures are
+  under `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-variant-assignment-001/`;
+  no post-navigation page/request errors were recorded.
+- Odoo comparison: authenticated `codex@core3.local` in
+  `core3_codex_demo` reached both supplied references, but `/shop` returned
+  exact HTTP 404 on ports 8069 and 8073 at desktop and mobile viewports.
+- QA disposition: **bounded implementation verified, not signed off**.
+  Odoo website/eCommerce, Product Tag image, broader actor/company browser,
+  and full module gates remain open.
+
 ## Product Variants (`ECOM-CATALOG-PRODUCT-VARIANTS-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `product_variant_action` for

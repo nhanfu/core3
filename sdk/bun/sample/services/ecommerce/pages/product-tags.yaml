@@ -15,9 +15,13 @@ components:
       - { field: color, label: Color, type: ColorSwatch }
       - { field: product_count, label: Products, align: right }
       - { field: product_names, label: Assigned products }
+      - { field: variant_count, label: Variants, align: right }
+      - { field: variant_names, label: Assigned variants }
     row_actions: menu
     actions:
       - { id: edit_ecommerce_product_tag, label: Edit, permission: ecommerce.write }
+      - { id: assign_ecommerce_product_tag_variant, label: Assign Variant, permission: ecommerce.write }
+      - { id: remove_ecommerce_product_tag_variant, label: Remove Variant, permission: ecommerce.write, variant: danger }
       - { id: delete_ecommerce_product_tag, label: Delete, permission: ecommerce.write, variant: danger }
     page_size: 50
     row_key: id

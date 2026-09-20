@@ -30,12 +30,15 @@ describe('eCommerce Product Tags parity', () => {
     expect(api.datasources.map((source: any) => source.id)).toEqual([
       'ecommerce_product_tags',
       'ecommerce_product_tag_products',
+      'ecommerce_product_tag_variants',
       'ecommerce_product_tag_visibility',
     ]);
     expect(api.actions.map((action: any) => action.id)).toEqual([
       'create_ecommerce_product_tag',
       'edit_ecommerce_product_tag',
       'delete_ecommerce_product_tag',
+      'assign_ecommerce_product_tag_variant',
+      'remove_ecommerce_product_tag_variant',
     ]);
   });
 

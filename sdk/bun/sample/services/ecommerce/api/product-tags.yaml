@@ -6,10 +6,13 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_TAGS_UNAUTHENTICATED, message: Sign in to view product tags. }
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_TAGS_FORBIDDEN, message: You do not have permission to view product tags. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_TAGS_UNAVAILABLE, message: Product tags are temporarily unavailable. }
-    query: "SELECT t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers, COUNT(tp.product_id) AS product_count, COALESCE(STRING_AGG(p.name, ', ' ORDER BY p.name), '') AS product_names, COALESCE(ARRAY_AGG(tp.product_id ORDER BY tp.product_id) FILTER (WHERE tp.product_id IS NOT NULL), CAST([] AS VARCHAR[])) AS product_ids FROM ecommerce_product_tags t LEFT JOIN ecommerce_product_tag_products tp ON tp.tag_id = t.id LEFT JOIN ecommerce_products p ON p.id = tp.product_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(p.name, '') ILIKE '%' || :q || '%') AND (:visible_to_customers IS NULL OR t.visible_to_customers = :visible_to_customers) GROUP BY t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers ORDER BY t.sequence, t.id"
+    query: "SELECT t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers, COUNT(DISTINCT tp.product_id) AS product_count, COALESCE(STRING_AGG(DISTINCT p.name, ', ' ORDER BY p.name), '') AS product_names, COALESCE(ARRAY_AGG(DISTINCT tp.product_id ORDER BY tp.product_id) FILTER (WHERE tp.product_id IS NOT NULL), CAST([] AS VARCHAR[])) AS product_ids, COUNT(DISTINCT tv.variant_id) AS variant_count, COALESCE(STRING_AGG(DISTINCT v.name, ', ' ORDER BY v.name), '') AS variant_names, COALESCE(ARRAY_AGG(DISTINCT tv.variant_id ORDER BY tv.variant_id) FILTER (WHERE tv.variant_id IS NOT NULL), CAST([] AS VARCHAR[])) AS variant_ids FROM ecommerce_product_tags t LEFT JOIN ecommerce_product_tag_products tp ON tp.tag_id = t.id LEFT JOIN ecommerce_products p ON p.id = tp.product_id LEFT JOIN ecommerce_product_tag_variants tv ON tv.tag_id = t.id LEFT JOIN ecommerce_product_variants v ON v.id = tv.variant_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(p.name, '') ILIKE '%' || :q || '%' OR COALESCE(v.name, '') ILIKE '%' || :q || '%') AND (:visible_to_customers IS NULL OR t.visible_to_customers = :visible_to_customers) GROUP BY t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers ORDER BY t.sequence, t.id"
   - id: ecommerce_product_tag_products
     permission: ecommerce.read
     query: "SELECT id AS value, name AS label FROM ecommerce_products WHERE active = TRUE ORDER BY website_sequence, name"
+  - id: ecommerce_product_tag_variants
+    permission: ecommerce.read
+    query: "SELECT v.id AS value, v.name || ' (' || COALESCE(v.internal_reference, v.id) || ')' AS label FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.active = TRUE AND v.combination_key <> '' AND (:company_name IS NULL OR v.company_name = :company_name OR v.company_name IS NULL) ORDER BY p.name, v.name, v.id"
   - id: ecommerce_product_tag_visibility
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Visible to customers'), (false, 'Hidden from customers')) states(value, label)"
@@ -94,3 +97,42 @@ actions:
       guards:
         - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
       result: { query: "SELECT TRUE AS deleted" }
+  - id: assign_ecommerce_product_tag_variant
+    type: server_form
+    permission: ecommerce.write
+    title: Assign Product Variant
+    action: ecommerce.product_tags.variants.add
+    handler: yaml_mutation
+    operation: update
+    params: { tag_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_tags]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :tag_id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_PRODUCT_TAG_STALE, message: This product tag changed. Reload before assigning a variant. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_product_variants v WHERE v.id = :variant_id AND v.active = TRUE AND v.combination_key <> '' AND (COALESCE(:current_company_name, '') = '' OR COALESCE(v.company_name, '') IN ('', :current_company_name))", status: 422, code: ECOMMERCE_PRODUCT_TAG_VARIANT_INVALID, message: Select an active variant from the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_tag_variants WHERE tag_id = :tag_id AND variant_id = :variant_id)", status: 409, code: ECOMMERCE_PRODUCT_TAG_VARIANT_EXISTS, message: This variant is already assigned to the tag. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_tag_variants(tag_id, variant_id) VALUES(:tag_id, :variant_id)", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_TAG_VARIANT_EXISTS, message: This variant is already assigned to the tag. }
+        - { query: "UPDATE ecommerce_product_tags SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :tag_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_TAG_STALE, message: This product tag changed. Reload before assigning a variant. }
+      result: { query: "SELECT * FROM ecommerce_product_tags WHERE id = :tag_id" }
+    fields:
+      - { field: variant_id, label: Product Variant, type: select, options_source: ecommerce_product_tag_variants, required: true }
+  - id: remove_ecommerce_product_tag_variant
+    type: server_form
+    permission: ecommerce.write
+    title: Remove Product Variant
+    action: ecommerce.product_tags.variants.remove
+    handler: yaml_mutation
+    operation: update
+    params: { tag_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_tags]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :tag_id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_PRODUCT_TAG_STALE, message: This product tag changed. Reload before removing a variant. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_product_tag_variants WHERE tag_id = :tag_id AND variant_id = :variant_id", status: 404, code: ECOMMERCE_PRODUCT_TAG_VARIANT_NOT_FOUND, message: This variant is not assigned to the tag. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_tag_variants WHERE tag_id = :tag_id AND variant_id = :variant_id", expect_changed: true, status: 404, code: ECOMMERCE_PRODUCT_TAG_VARIANT_NOT_FOUND, message: This variant is not assigned to the tag. }
+        - { query: "UPDATE ecommerce_product_tags SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :tag_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_TAG_STALE, message: This product tag changed. Reload before removing a variant. }
+      result: { query: "SELECT * FROM ecommerce_product_tags WHERE id = :tag_id" }
+    fields:
+      - { field: variant_id, label: Product Variant, type: select, options_source: ecommerce_product_tag_variants, required: true }
