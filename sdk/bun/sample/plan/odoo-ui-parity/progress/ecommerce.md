@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `4a4d156ceb4d1db88b8072d198215bbfe52f8828` (Delivery Methods); previous bounded slice: `62b822ae812df234c6da981173b58248003edd7d` (Payment Methods).
+Latest committed bounded slice: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (Product Variants); previous bounded slice: `3b3536beaad4c220b78d37124070ecd5253da671` (Pricelist Rules).
 
 ## Current state
 
@@ -12,6 +12,24 @@ The current wave has a committed Ecommerce implementation and authenticated
 Core3 browser evidence. DEV-4 adds an eCommerce-owned, retry-safe outbox
 contract for handing checkout orders to the separate Sales service. Functional
 and ownership gates are still incomplete; no full parity claim is made here.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-VARIANTS-001`
+
+The next source-backed catalog gap is the missing `product.product` variant
+resolution surface. The supplied Odoo product and website_sale views/models
+define variant list/form records, combination-derived website behavior, and
+variant price resolution. Core3 now has migrations 048/049 for durable variant
+records, deterministic Mug and Chair fixtures, variant-aware pricelist rules
+and cart lines; separated product detail page/API YAML; permissioned CRUD;
+combination/reference/price/company validation; and row-version concurrency.
+
+Focused verification passes in
+`test/ecommerce_product_variants.integration.test.ts`, including restart
+persistence and variant-specific cart pricing. Authenticated Core3 desktop /
+mobile captures and authenticated Odoo 404 blocker captures are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-variants-001/`.
+Bounded commit: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (local only, not
+pushed); module sign-off remains open.
 
 ## DEV-4 evidence (2026-09-13)
 

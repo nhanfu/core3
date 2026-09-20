@@ -1,0 +1,20 @@
+version: 0.0.49
+kind: data
+description: deterministic Odoo-style product variant fixtures and variant pricelist rule
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_variants (id, row_version, product_id, name, internal_reference, combination_key, attribute_values, sales_price, active, company_name) VALUES
+        ('ecommerce-variant-mug-blue', 1, 'ecommerce-product-mug', 'Core3 Ceramic Mug (Blue)', 'CS-MUG-001-BLUE', 'color=blue', 'Color: Blue', 20.50, TRUE, 'My Company'),
+        ('ecommerce-variant-chair-black', 1, 'ecommerce-product-chair', 'Ergonomic Office Chair (Black)', 'OF-CHAIR-004-BLACK', 'color=black', 'Color: Black', 259.00, TRUE, 'My Company')
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE ecommerce_pricelist_rules
+      SET variant_id = 'ecommerce-variant-mug-blue', applied_on = '0_product_variant', apply_on = 'Core3 Ceramic Mug (Blue)', product_id = 'ecommerce-product-mug', fixed_price = 19.00, price = 19.00, compute_price = 'fixed', row_version = 1
+      WHERE id = 'ecommerce-rule-public-mug';
+    down: |
+      UPDATE ecommerce_pricelist_rules SET variant_id = NULL, applied_on = '1_product', apply_on = 'Core3 Ceramic Mug', product_id = 'ecommerce-product-mug', fixed_price = 18.00, price = 18.00 WHERE id = 'ecommerce-rule-public-mug';
+      DELETE FROM ecommerce_product_variants WHERE id IN ('ecommerce-variant-mug-blue', 'ecommerce-variant-chair-black');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

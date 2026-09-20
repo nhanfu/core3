@@ -12,6 +12,13 @@ datasources:
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_variants
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_VARIANTS_UNAUTHENTICATED, message: Sign in to view product variants. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_VARIANTS_FORBIDDEN, message: You do not have permission to view product variants. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_VARIANTS_UNAVAILABLE, message: Product variants are temporarily unavailable. }
+    query: "SELECT v.id, v.row_version, v.product_id, v.name, v.internal_reference, v.combination_key, v.attribute_values, v.sales_price, v.active, v.company_name FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.product_id = :id AND (:company_name IS NULL OR v.company_name = :company_name OR v.company_name IS NULL) ORDER BY v.name, v.id"
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
@@ -34,6 +41,77 @@ actions:
     type: download
     permission: ecommerce.read
     kind: ecommerce_product_image
+  - id: create_ecommerce_product_variant
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Variant
+    action: ecommerce.product_variants.create
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_variants, ecommerce_product_detail]
+    mutation:
+      generated: [id]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_VARIANT_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_NAME_INVALID, message: Variant name must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:combination_key AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_COMBINATION_INVALID, message: Add a stable attribute combination. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sales_price AS DECIMAL(12,2)) >= 0", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_PRICE_INVALID, message: Variant price must be non-negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE product_id = :product_id AND combination_key = :combination_key)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_COMBINATION_EXISTS, message: This attribute combination already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:internal_reference, '') = '' OR NOT EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE product_id = :product_id AND internal_reference = :internal_reference)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_REFERENCE_EXISTS, message: This variant reference already exists. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_variants(id, row_version, product_id, name, internal_reference, combination_key, attribute_values, sales_price, active, company_name) SELECT :id, 1, :product_id, :name, NULLIF(:internal_reference, ''), :combination_key, COALESCE(:attribute_values, ''), CAST(:sales_price AS DECIMAL(12,2)), COALESCE(CAST(:active AS BOOLEAN), TRUE), p.company_name FROM ecommerce_products p WHERE p.id = :product_id" }
+      result: { query: "SELECT * FROM ecommerce_product_variants WHERE id = :id" }
+    fields:
+      - { field: name, label: Variant Name, type: text, required: true }
+      - { field: internal_reference, label: Internal Reference, type: text }
+      - { field: combination_key, label: Combination Key, type: text, required: true, placeholder: 'color=blue,size=large' }
+      - { field: attribute_values, label: Attribute Values, type: text, placeholder: 'Color: Blue, Size: Large' }
+      - { field: sales_price, label: Sales Price, type: number, min: 0, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_ecommerce_product_variant
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Variant
+    action: ecommerce.product_variants.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { product_id: '{state.ecommerce_product_detail.id}', variant_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_variants, ecommerce_product_detail]
+    mutation:
+      guards:
+        - { query: "SELECT v.id FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.id = :variant_id AND v.product_id = :product_id AND v.row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_STALE, message: This product variant changed or was deleted. Reload before saving. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_VARIANT_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_NAME_INVALID, message: Variant name must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:combination_key AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_COMBINATION_INVALID, message: Add a stable attribute combination. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sales_price AS DECIMAL(12,2)) >= 0", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_PRICE_INVALID, message: Variant price must be non-negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE product_id = :product_id AND combination_key = :combination_key AND id <> :variant_id)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_COMBINATION_EXISTS, message: This attribute combination already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:internal_reference, '') = '' OR NOT EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE product_id = :product_id AND internal_reference = :internal_reference AND id <> :variant_id)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_REFERENCE_EXISTS, message: This variant reference already exists. }
+      steps:
+        - { query: "UPDATE ecommerce_product_variants SET row_version = row_version + 1, name = :name, internal_reference = NULLIF(:internal_reference, ''), combination_key = :combination_key, attribute_values = COALESCE(:attribute_values, ''), sales_price = CAST(:sales_price AS DECIMAL(12,2)), active = CAST(:active AS BOOLEAN), updated_at = CURRENT_TIMESTAMP WHERE id = :variant_id AND product_id = :product_id AND row_version = :expected_row_version" , expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_VARIANT_STALE, message: This product variant changed or was deleted. Reload before saving. }
+      result: { query: "SELECT * FROM ecommerce_product_variants WHERE id = :variant_id" }
+    fields:
+      - { field: name, label: Variant Name, type: text, required: true }
+      - { field: internal_reference, label: Internal Reference, type: text }
+      - { field: combination_key, label: Combination Key, type: text, required: true }
+      - { field: attribute_values, label: Attribute Values, type: text }
+      - { field: sales_price, label: Sales Price, type: number, min: 0, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: delete_ecommerce_product_variant
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_variants.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { product_id: '{state.ecommerce_product_detail.id}', variant_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_variants, ecommerce_product_detail]
+    mutation:
+      guards:
+        - { query: "SELECT v.id FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.id = :variant_id AND v.product_id = :product_id AND v.row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_STALE, message: This product variant changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_variants WHERE id = :variant_id AND product_id = :product_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_VARIANT_STALE, message: This product variant changed or was deleted. Reload before deleting. }
+      result: { query: "SELECT TRUE AS deleted, :variant_id AS id" }
   - id: edit_ecommerce_product
     type: server_form
     permission: ecommerce.write

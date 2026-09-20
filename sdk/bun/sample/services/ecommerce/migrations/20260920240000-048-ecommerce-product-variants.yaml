@@ -1,0 +1,40 @@
+version: 0.0.48
+kind: schema
+description: durable eCommerce product variants and variant-aware cart/pricelist links
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_variants (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        internal_reference VARCHAR,
+        combination_key VARCHAR NOT NULL DEFAULT '',
+        attribute_values VARCHAR NOT NULL DEFAULT '',
+        sales_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        company_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_variants_reference_idx ON ecommerce_product_variants(product_id, internal_reference);
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_variants_combination_idx ON ecommerce_product_variants(product_id, combination_key);
+      CREATE INDEX IF NOT EXISTS ecommerce_product_variants_product_idx ON ecommerce_product_variants(product_id, active, id);
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN variant_id VARCHAR;
+      ALTER TABLE ecommerce_cart_lines ADD COLUMN variant_id VARCHAR;
+      ALTER TABLE ecommerce_cart_lines ADD COLUMN variant_name VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_pricelist_rules_variant_idx ON ecommerce_pricelist_rules(pricelist_id, variant_id, min_quantity, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_pricelist_rules_variant_idx;
+      ALTER TABLE ecommerce_cart_lines DROP COLUMN IF EXISTS variant_name;
+      ALTER TABLE ecommerce_cart_lines DROP COLUMN IF EXISTS variant_id;
+      ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS variant_id;
+      DROP INDEX IF EXISTS ecommerce_product_variants_product_idx;
+      DROP INDEX IF EXISTS ecommerce_product_variants_combination_idx;
+      DROP INDEX IF EXISTS ecommerce_product_variants_reference_idx;
+      DROP TABLE IF EXISTS ecommerce_product_variants;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

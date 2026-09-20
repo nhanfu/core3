@@ -1,0 +1,22 @@
+{
+  "feature_id": "ECOM-CATALOG-PRODUCT-VARIANTS-001",
+  "authenticated_user": "admin@tms.local",
+  "core3": {
+    "route": "/ecommerce/products/detail?id=ecommerce-product-mug",
+    "desktop_viewport": "1440x900",
+    "mobile_viewport": "390x844",
+    "seeded_variant_visible": true,
+    "variant_form_visible": true,
+    "post_navigation_page_errors": [],
+    "post_navigation_request_errors": []
+  },
+  "odoo": {
+    "user": "codex@core3.local",
+    "database": "core3_codex_demo",
+    "shop_blockers": [
+      { "port": 8069, "path": "/shop", "status": 404, "authenticated": true, "desktop": true, "mobile": true },
+      { "port": 8073, "path": "/shop", "status": 404, "authenticated": true, "desktop": true, "mobile": true }
+    ],
+    "paired_comparison": "blocked"
+  }
+}

@@ -1,5 +1,37 @@
 # ecommerce QA ledger
 
+## Product Variants (`ECOM-CATALOG-PRODUCT-VARIANTS-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `product_variant_action` for
+  `product.product`, website_sale variant list/form views, and the supplied
+  `product_product.py`, `product_template_attribute_value.py`, and
+  configurator controller were traced. Variant records resolve combinations
+  and can contribute variant-specific prices to website sale.
+- Core3 lifecycle: migrations 048/049 add durable variants, deterministic Mug
+  and Chair fixtures, variant references on pricelist rules and cart lines,
+  and an idempotent variant-specific Mug rule. Product detail page/API YAML
+  remains separated by `page.id`; the variant datasource is read-protected
+  and create/edit/delete mutations require `ecommerce.write`.
+- Focused verification: `bun test
+  ./test/ecommerce_product_variants.integration.test.ts
+  ./test/ecommerce_cart.integration.test.ts --timeout 20000` — **6 passed,
+  43 assertions, 0 failures**. The variant suite covers discovery contract,
+  migration rerun, company/read scope, CRUD, duplicate combination/reference,
+  negative-price validation, stale writes, restart persistence, and
+  variant-specific cart pricing.
+- Browser verification: authenticated Core3 `admin@tms.local` desktop
+  1440x900 product detail/variant form and mobile 390x844 detail captures are
+  under `../evidence/ecommerce/2026-09-20/ecom-catalog-product-variants-001/`;
+  post-navigation page/request errors were empty.
+- Odoo comparison: authenticated `codex@core3.local` in
+  `core3_codex_demo` reached both supplied references, but `/shop` returned
+  exact HTTP 404 on ports 8069 and 8073 at desktop and mobile viewports.
+  Paired comparison is blocked by the supplied reference database.
+- QA disposition: **bounded implementation verified, not signed off**.
+  Full Ecommerce sign-off remains open for the working Odoo Website/eCommerce
+  surface, configurator/media/currency follow-ups, broader actor/company
+  browser coverage, and module-level workflows.
+
 ## Pricelist Rules (`ECOM-CATALOG-PRICELIST-RULES-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: Website > Configuration > eCommerce >

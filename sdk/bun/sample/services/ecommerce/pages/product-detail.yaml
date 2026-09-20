@@ -21,3 +21,29 @@ components:
     groups:
       - { title: Product, columns: 2, fields: [{ field: name, label: Product Name }, { field: internal_reference, label: Internal Reference }, { field: product_type, label: Product Type }, { field: category, label: Category }] }
       - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: active, label: Active, type: StatusChip }] }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_variants
+    create_action: create_ecommerce_product_variant
+    create_label: New Variant
+    search: { label: Search variants, placeholder: Search variant or combination... }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No product variants, description: Create a variant from an attribute combination. }
+    columns:
+      - { field: name, label: Variant, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: attribute_values, label: Attributes }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: active, label: Active, type: StatusChip }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 120
+        actions:
+          - { id: edit_ecommerce_product_variant, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
+          - { id: delete_ecommerce_product_variant, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }
+    actions:
+      - { id: edit_ecommerce_product_variant, label: Edit, permission: ecommerce.write, show_if: 'row.id != null' }
+      - { id: delete_ecommerce_product_variant, label: Delete, permission: ecommerce.write, variant: danger, show_if: 'row.id != null' }

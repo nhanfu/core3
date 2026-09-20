@@ -1,6 +1,38 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded catalog pricelist-rules slice; module sign-off remains open)
+Status: qa-in-progress (bounded catalog product-variants slice; module sign-off remains open)
+
+## Bounded feature — Product Variants (`ECOM-CATALOG-PRODUCT-VARIANTS-001`)
+
+Odoo source comparison: the supplied `product/views/product_views.xml` defines
+`product_variant_action` for `product.product` with variant list/form views;
+`website_sale/views/product_views.xml` adds the website variant list/form
+surface. `website_sale/models/product_product.py` resolves website URLs and
+variant media/price behavior from `product_template_attribute_value_ids`, and
+`website_sale/models/product_template_attribute_value.py` supplies the
+attribute-value extra-price behavior. The configurator controller resolves a
+selected combination before adding a product to the cart.
+
+Core3 comparison: before this slice, Ecommerce persisted product templates and
+attribute values but had no durable `product.product` equivalent. Migrations
+048/049 add `ecommerce_product_variants`, deterministic Mug and Chair variants,
+variant references on pricelist rules and cart lines, and an idempotent
+variant-specific Mug rule. The product detail page now owns a responsive
+variant `ListView`, while `api/product-detail.yaml` owns the matching
+`page.id` datasource and permissioned create/edit/delete actions. Combination
+and internal-reference uniqueness, active-parent/company scope, non-negative
+prices, and row-version concurrency are enforced. Cart price resolution uses a
+matching variant rule and variant sales price before the template price.
+
+This bounded slice intentionally does not claim the full Odoo configurator,
+variant media, currency conversion, or optional-product behavior. Focused
+integration tests cover page/API separation, migration rerun, company/read
+scope, CRUD, validation, stale writes, DuckDB restart persistence, and
+variant-specific cart pricing. Authenticated Core3 desktop/mobile and
+authenticated Odoo `/shop` blocker evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-product-variants-001/`. Both Odoo
+references return exact HTTP 404 for `/shop`, so paired visual comparison is
+blocked. Ecommerce remains unsigned off.
 
 ## Bounded feature — Pricelist Rules (`ECOM-CATALOG-PRICELIST-RULES-001`)
 
