@@ -1,0 +1,26 @@
+version: 0.0.51
+kind: data
+description: Persist the Odoo HR responsible approver on employees and current records
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS hr_responsible_name VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS hr_responsible_name VARCHAR;
+      UPDATE employees
+      SET hr_responsible_name = CASE id
+        WHEN 'employee-demo-002' THEN 'People Operations'
+        WHEN 'employee-demo-003' THEN 'People Operations'
+        ELSE 'HR Manager'
+      END
+      WHERE NULLIF(hr_responsible_name, '') IS NULL;
+      UPDATE employee_versions v
+      SET hr_responsible_name = e.hr_responsible_name
+      FROM employees e
+      WHERE v.employee_id = e.id AND NULLIF(v.hr_responsible_name, '') IS NULL;
+    down: |
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS hr_responsible_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS hr_responsible_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

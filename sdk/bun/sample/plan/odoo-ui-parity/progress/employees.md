@@ -588,3 +588,26 @@ Candidate commit: current working tree
   the source label, but Abigail Peterson has no populated value; seven app
   icon 404s are unrelated shell noise. Conditional evidence only; no
   aggregate Employees sign-off.
+
+## EMP-HR-RESPONSIBLE-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Settings behavior: Odoo's
+  `hr.version.hr_responsible_id` / Approvers field.
+- Added migration `20260921210000-051` with durable employee and current
+  employee-version projections plus deterministic HR Manager / People
+  Operations fixtures. A dedicated `employees.write` action updates both
+  records under actor, active/current-company, supported-value, and
+  optimistic-concurrency guards.
+- Page/API contracts remain separate and join at `employee-detail`; Settings
+  exposes a write-gated Approvers group and the dedicated action is the only
+  HR Responsible write path.
+- Focused verification: **4 tests / 20 assertions**; migration replay and
+  file-backed restart pass. UI audit **706 pages / 715 routes / 1343
+  datasources**, scoped ESLint, and diff-check pass.
+- Evidence: `evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`.
+  Authenticated Core3 desktop/mobile render Settings / Approvers / HR
+  Responsible with no browser/request errors or overflow, but the `Core3
+  Vietnam` fixture is hidden from the `Core3 Demo Company` session. Odoo
+  desktop/mobile render the source control, but Abigail Peterson has no
+  populated approver; seven app-icon 404s are unrelated shell noise.
+  Conditional evidence only; no aggregate Employees sign-off.

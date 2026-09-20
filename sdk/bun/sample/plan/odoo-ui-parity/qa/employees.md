@@ -848,3 +848,18 @@ Focused test: `test/employees_contract_type.integration.test.ts` (4 tests,
 `evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`. Core3 returned 200
 without browser/request errors or overflow; Odoo's seven app-icon 404s are
 unrelated shell noise. No aggregate Employees sign-off is claimed.
+
+## EMP-HR-RESPONSIBLE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-032 | Settings Approvers HR Responsible create/read/update | pass; employee projection and current active version persist the selected supported approver |
+| EMP-PERM-032 | `employees.write`, actor, active/current company, row version, supported values | pass; actor, stale, wrong-company, and invalid-approver requests reject atomically |
+| EMP-DATA-032 | Migration replay and file-backed restart | pass; HR Manager / People Operations fixtures remain deterministic |
+| EMP-UI-028 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture-company boundary and empty Odoo reference approver are recorded |
+
+Focused test: `test/employees_hr_responsible.integration.test.ts` (4 tests,
+20 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`. Core3 returned 200
+without browser/request errors or overflow; Odoo's seven app-icon 404s are
+unrelated shell noise. No aggregate Employees sign-off is claimed.

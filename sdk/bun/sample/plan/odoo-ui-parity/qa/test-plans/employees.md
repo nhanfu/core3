@@ -402,3 +402,17 @@ assertions). Evidence:
 Focused test: `test/employees_contract_type.integration.test.ts` (4 tests,
 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`.
+
+## EMP-HR-RESPONSIBLE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.hr_responsible_id` and Settings Approvers view map to paired employee-detail page/API contracts | pass |
+| Employee CRUD | Create persists an approver; HR-write action updates the employee and current active version | pass |
+| Permission and scope | `employees.write`, actor, active/current company, stale version, and supported-value guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic HR responsible values | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Settings desktop/mobile captures | conditional; Core3 fixture-company mismatch and empty Odoo reference approver recorded |
+
+Focused test: `test/employees_hr_responsible.integration.test.ts` (4 tests,
+20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`.

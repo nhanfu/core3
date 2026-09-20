@@ -1505,6 +1505,30 @@ unrelated app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
 
+## EMP-HR-RESPONSIBLE-001: Employee HR responsible approver (2026-09-21)
+
+Odoo's employee Settings page exposes `hr.version.hr_responsible_id` in the
+Approvers group as the HR responsible user. This is distinct from the Payroll
+Contract Type slice. Core3 adds durable `hr_responsible_name` projections on
+employees and current employee versions, a write-gated Settings Approvers
+group, and a dedicated `employees.write` action for the HR Responsible field.
+
+Migration `20260921210000-051-employee-hr-responsible.yaml` seeds stable HR
+Manager and People Operations fixtures and is replay-safe. The API action has
+actor, active/current-company, supported-value, and optimistic row-version
+guards; successful edits synchronize the current active version. Focused
+coverage is **4 tests / 20 assertions**, including source mapping,
+create/edit/read, current-version synchronization, invalid/stale/company and
+actor atomicity, migration replay, and file-backed restart.
+
+Authenticated Core3 desktop/mobile captures render Settings / Approvers / HR
+Responsible with no browser/request errors or overflow, but the session is
+`Core3 Demo Company` while the deterministic row is `Core3 Vietnam`. Odoo
+desktop/mobile render Abigail Peterson's source control, but the reference
+approver is blank. Evidence is under
+`evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`; this is conditional
+feature evidence, not aggregate Employees sign-off.
+
 ## EMP-CONTRACT-TYPE-001: Employee Payroll contract type (2026-09-21)
 
 Odoo's Payroll page exposes the manager-only `hr.version.contract_type_id`
