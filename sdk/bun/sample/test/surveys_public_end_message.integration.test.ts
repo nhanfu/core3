@@ -51,6 +51,7 @@ describe('Surveys public completion message', () => {
     expect(page.page.id).toBe('surveys');
     expect(detail.query).toContain('description_done');
     expect(submit.permission).toBe('surveys.public');
+    expect(submit.mutation.result.query).toContain('description_done');
     expect(renderer).toContain('survey.description_done');
     expect(yaml('migrations/20260922200000-025-survey-public-end-message.yaml').version).toBe('0.0.25');
   });

@@ -108,7 +108,7 @@ actions:
       steps:
         - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id" }
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, score, quiz_passed, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.score, r.quiz_passed, s.description_done, CAST(r.submitted_at AS VARCHAR) AS submitted_at FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
