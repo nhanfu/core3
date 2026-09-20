@@ -1,0 +1,5 @@
+# Source comparison — `SURVEYS-PUBLIC-BACKGROUND-001`
+
+Odoo defines persisted `background_image` and computed `background_image_url` in `addons/survey/models/survey_survey.py:62-63,206-210`, serves the public token route `/survey/<survey_token>/get_background_image` in `addons/survey/controllers/main.py:441-447`, and applies the URL to the public wrapper in `addons/survey/views/survey_templates.xml:10-24`.
+
+Core3 migrations `0.0.33` and forward compatibility `0.0.34` persist a deterministic published fixture's background URL and SVG content. `survey.public.detail` returns the URL; `survey.public.background` reads the published token-scoped record and serves the persisted SVG. Core3 aliases the helper as `GET /api/public/surveys/<token>/background`, keeps the authenticated `surveys` page YAML separate from the public API action, and retains `surveys.public` permission metadata. `PublicSurvey.ts` applies only a validated same-origin URL to the public frame. Section/question-specific background transitions remain outside this slice.

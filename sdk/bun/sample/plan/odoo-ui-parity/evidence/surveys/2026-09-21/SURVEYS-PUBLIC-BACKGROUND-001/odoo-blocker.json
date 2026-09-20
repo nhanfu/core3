@@ -1,0 +1,31 @@
+{
+  "base": "http://127.0.0.1:8069",
+  "target": "/odoo/surveys",
+  "viewports": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "text": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "loginRequired": true,
+      "surveysRendered": false
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "text": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "loginRequired": true,
+      "surveysRendered": false
+    }
+  ],
+  "blocker": "Both authenticated probes redirect to the Odoo login form; supplied local credentials were rejected, so the Surveys module could not be paired. The disposable Odoo proxy at 127.0.0.1:8072 was connection-refused during this run."
+}

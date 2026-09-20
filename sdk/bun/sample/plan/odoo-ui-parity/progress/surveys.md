@@ -141,6 +141,27 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-BACKGROUND-001`
+
+Selected the next uncovered Odoo public helper behavior after the excluded
+question-type and public-flow slices: survey background image delivery. The
+new `0.0.33` migration persists a deterministic published fixture's background
+URL and SVG content. The paired API/page contract exposes a `surveys.public`-
+guarded asset action, the module serves the published token-scoped asset at
+`/api/public/surveys/<token>/background`, and `PublicSurvey.ts` applies only a
+validated same-origin URL to the public frame.
+
+Focused lifecycle coverage is 2/2 tests with 23 assertions, including restart,
+asset replay, malformed/foreign/unpublished token, method, and YAML contract
+guards. The module regression is 107 passed / 5 failed / 898 assertions; the
+five failures are the known migration rollback dependent-entry tests and stale
+Test Entry fixture expectation. Audit and scoped lint/diff-check pass.
+
+Authenticated Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.
+Odoo desktop/mobile remain blocked at the login form; port 8072 is refused.
+Status remains **qa-in-progress / conditional** with no sign-off claim.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-IDENTITY-001`
 
 Selected the next uncovered source-backed public behavior after the completed

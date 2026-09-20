@@ -423,3 +423,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.
+
+## 2026-09-21 public background additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-039 | public asset | Persisted survey background contract | Return the durable background URL and token-scoped SVG asset through paired page/API YAML | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-036 | restart/replay | Background fetch → reopen → replay | Preserve URL/content across file-backed DuckDB restart and return identical asset bytes | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-038 | token/method guard | Malformed, unpublished, foreign, and non-GET asset requests | Reject before returning asset content with 400/404/405 while retaining `surveys.public` metadata | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-037 | authenticated responsive/reference | Public background desktop/mobile + Odoo comparison | Capture computed background and exact Odoo login/proxy blockers; no sign-off until reference is available | `core3-{admin,public}-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.

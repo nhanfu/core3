@@ -63,6 +63,8 @@ actions:
   # nickname. The public identity operation supplies these flags to the paired
   # page binding, and the controller writes the derived identity on progress
   # and submit while retaining the original answer_data.
+  # Odoo survey background_image_url is exposed through the token-scoped public
+  # asset handler below; the page renderer consumes the paired survey field.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form
@@ -84,6 +86,15 @@ actions:
       - { field: answer_data, label: 'Answers (Date/Datetime: ISO)', type: text, required: true }
       - { field: answer_token, label: Existing response token, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
+  - id: public_survey_background
+    type: server_form
+    permission: surveys.public
+    title: Load public survey background
+    action: surveys.public.background
+    handler: public_asset
+    params: { access_token: '{token}' }
+    fields:
+      - { field: access_token, label: Survey token, type: text, required: true }
   - id: public_survey_begin
     type: server_form
     permission: surveys.public

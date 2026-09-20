@@ -1040,3 +1040,14 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMEN
   entry failures. Surveys remains **qa-in-progress / conditional**.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.
+
+## Bounded QA run: Public survey background — `SURVEYS-PUBLIC-BACKGROUND-001`
+
+- Source comparison: Odoo computes `background_image_url` from persisted survey image data, serves `/survey/<token>/get_background_image`, and applies it to the public wrapper. Core3 persists a deterministic URL and SVG asset content and serves the token-scoped API alias.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain separate through `page.id: surveys`; the public asset action retains `surveys.public`, and the renderer consumes the persisted URL.
+- Focused verification: **2 passed / 23 assertions**; module regression **107 passed / 5 known failures / 898 assertions**. Audit **714 pages, 723 routes, 1364 datasources**, scoped ESLint, and diff-check pass.
+- Persistence/guards: the URL and asset content survive file-backed DuckDB reopen; replay returns identical SVG; malformed, unpublished/foreign, and non-GET requests are rejected before asset return.
+- Core3 authenticated desktop/mobile evidence passes at 1440x900 and 390x844 with HTTP 200 SVG, computed background URL, no request/page failures, and no horizontal overflow.
+- Odoo desktop/mobile both redirect to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; supplied credentials were rejected and port 8072 was connection-refused. No paired Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.

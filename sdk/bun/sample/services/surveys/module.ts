@@ -3,6 +3,8 @@ import type { ModuleContext, ModuleLifecycle } from '@core3/server/module';
 
 type PublicService = { call(operation: string, request?: Record<string, unknown>): Promise<any> };
 
+const PUBLIC_SURVEY_BACKGROUND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Survey background"><defs><linearGradient id="survey-background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1e8f0"/><stop offset="0.52" stop-color="#e5eef4"/><stop offset="1" stop-color="#f7e8dd"/></linearGradient></defs><rect width="1600" height="900" fill="url(#survey-background)"/><circle cx="1260" cy="160" r="260" fill="#ffffff" fill-opacity=".24"/><circle cx="240" cy="780" r="320" fill="#ffffff" fill-opacity=".2"/></svg>`;
+
 export default class SurveysModule implements ModuleLifecycle {
   readonly id = 'surveys';
   private delegate: YamlServiceModule | null = null;
@@ -38,6 +40,8 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
+    const backgroundMatch = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)\/background$/);
+    if (backgroundMatch) return this.handlePublicBackgroundRoute(request, backgroundMatch[1], service);
     const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
     if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
     const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|next_question|previous_question|print))?$/);
@@ -428,6 +432,21 @@ export default class SurveysModule implements ModuleLifecycle {
       }
       return this.publicMutationError(error);
     }
+  }
+
+  private async handlePublicBackgroundRoute(request: Request, token: string, service: PublicService): Promise<Response> {
+    if (request.method !== 'GET') return this.json({ error: 'Method not allowed' }, 405);
+    if (!this.isToken(token)) return this.json({ error: 'A valid survey token is required' }, 400);
+    const background = (await service.call('survey.public.background', { access_token: token }))?.background?.[0];
+    if (!background) return this.json({ error: 'Survey background is unavailable' }, 404);
+    return new Response(String(background.background_image_content || PUBLIC_SURVEY_BACKGROUND_SVG), {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
   }
 
   private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService, answerRoute = false): Promise<Response> {

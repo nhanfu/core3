@@ -18,7 +18,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -36,6 +36,13 @@ const STYLE_ID = 'core3-public-survey-style';
 
 function escapeHtml(value: unknown): string {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] || character));
+}
+
+function backgroundStyle(value: unknown): string {
+  const url = String(value || '');
+  return /^\/api\/public\/surveys\/[A-Za-z0-9_-]+\/background$/.test(url)
+    ? ` style="background-image:url('${escapeHtml(url)}')"`
+    : '';
 }
 
 function installStyles() {
@@ -187,7 +194,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   const testBanner = payload.answer?.test_entry
     ? `<div class="core3-public-survey__test-banner">This is a Test Survey Entry.${survey.id ? ` <a href="/surveys/detail?id=${encodeURIComponent(survey.id)}">Go to Survey</a>` : ''}</div>`
     : '';
-  const frame = () => `<div class="core3-public-survey"><div class="core3-public-survey__card">${testBanner}<div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
+  const frame = () => `<div class="core3-public-survey"${backgroundStyle(survey.background_image_url)}><div class="core3-public-survey__card">${testBanner}<div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
   outlet.innerHTML = frame();
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
   const renderDone = (result: SurveyPayload['answer'] = payload.answer) => {

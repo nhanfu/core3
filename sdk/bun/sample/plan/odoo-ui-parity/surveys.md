@@ -1769,3 +1769,26 @@ and mobile probes passed with no request/page failures or horizontal overflow.
 Odoo 8069 redirected both viewports to its login route and disposable proxy
 8072 refused the connection, so no paired Odoo identity fixture or visual
 sign-off is claimed. Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public survey background delivery (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-BACKGROUND-001`.
+
+Odoo computes a token-scoped `background_image_url`, serves the corresponding
+public image through `/survey/<survey_token>/get_background_image`, and applies
+it to the survey wrapper. Core3 implements this one behavior with migration
+`20260930000000-033-survey-public-background.yaml`, which persists a deterministic
+published fixture URL and SVG content. The paired `page.id: surveys` API/page
+contract declares a `surveys.public` asset action, the module guards published
+survey tokens and methods, and the public renderer applies only the validated
+same-origin background URL.
+
+Focused verification is **2 passed / 23 assertions**. The module regression is
+**107 passed / 5 failed / 898 assertions** with only the known rollback
+dependent-entry failures and stale Test Entry fixture expectation failing.
+Audit, scoped lint, and diff-check pass. Authenticated Core3 desktop/mobile
+captures show HTTP 200 SVG delivery and computed background at 1440x900 and
+390x844 with no overflow or browser failures. Odoo desktop/mobile redirected
+to login, credentials were rejected, and port 8072 refused; no paired Odoo
+sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.

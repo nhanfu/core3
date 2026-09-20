@@ -16,6 +16,9 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # the source question enables comment_count_as_answer.
 # Text questions with save_as_email/save_as_nickname retain the answer in the
 # durable response identity fields, matching Odoo's respondent capture flags.
+# The public survey frame also consumes the persisted background_image_url from
+# the paired API contract; its token-scoped asset route stays outside this
+# authenticated admin layout.
 components:
   - type: ListView
     variant: odoo
