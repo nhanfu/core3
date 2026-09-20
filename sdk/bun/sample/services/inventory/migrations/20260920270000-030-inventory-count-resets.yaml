@@ -1,0 +1,29 @@
+version: 0.0.30
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_count_resets (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        reset_count BIGINT NOT NULL DEFAULT 0, requested_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS inventory_count_reset_lines (
+        reset_id VARCHAR NOT NULL, quant_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL, PRIMARY KEY(reset_id, quant_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_count_resets_created_at
+        ON inventory_count_resets(created_at, id);
+      INSERT INTO inventory_count_resets(id, row_version, reset_count, requested_by, created_at)
+      VALUES ('inventory-reset-0001', 1, 1, 'Mitchell Admin', TIMESTAMP '2026-01-15 07:30:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_count_reset_lines(reset_id, quant_id, row_version)
+      VALUES ('inventory-reset-0001', 'quant-box-main', 1)
+      ON CONFLICT(reset_id, quant_id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_count_reset_lines;
+      DROP TABLE IF EXISTS inventory_count_resets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -11,6 +11,7 @@ components:
       - { id: apply_all_inventory_quantities, label: Apply All, variant: primary, permission: inventory.write }
     selectable: true
     bulk_actions:
+      - { id: reset_inventory_counts, label: Clear, permission: inventory.manage }
       - { id: request_inventory_count, label: Request a Count, permission: inventory.manage }
     search: { label: Search physical inventory, placeholder: 'Search products, lots, or locations...' }
     filters:

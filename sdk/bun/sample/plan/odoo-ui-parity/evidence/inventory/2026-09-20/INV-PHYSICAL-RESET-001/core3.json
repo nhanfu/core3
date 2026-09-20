@@ -1,0 +1,81 @@
+{
+  "feature_id": "INV-PHYSICAL-RESET-001",
+  "authenticated_user": "admin@tms.local",
+  "runtime": "http://127.0.0.1:4545",
+  "desktop": {
+    "url": "http://127.0.0.1:4545/inventory/physical-inventory",
+    "body_width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    },
+    "authenticated": true,
+    "has_clear_text": false,
+    "has_reset_text": false,
+    "buttons": [
+      "",
+      "Transfers",
+      "Adjustments",
+      "Procurement",
+      "Reporting",
+      "Products",
+      "Configuration",
+      "",
+      "",
+      "",
+      "AU",
+      "New",
+      "Apply All",
+      "‹",
+      "›",
+      "Product",
+      "Lot/Serial Number",
+      "Scheduled",
+      "User",
+      "On Hand",
+      "Counted",
+      "Difference",
+      "Unit"
+    ],
+    "selection_controls": 10,
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4545/inventory/physical-inventory",
+    "body_width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "authenticated": true,
+    "has_clear_text": false,
+    "has_reset_text": false,
+    "buttons": [
+      "",
+      "",
+      "",
+      "AU",
+      "New",
+      "Apply All",
+      "",
+      "‹",
+      "›",
+      "Product",
+      "Lot/Serial Number",
+      "Scheduled",
+      "User",
+      "On Hand",
+      "Counted",
+      "Difference",
+      "Unit"
+    ],
+    "selection_controls": 10,
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "selected_state": {
+    "desktop_capture": "core3-desktop-selected.png",
+    "selected_ids": ["quant-box-main"],
+    "bulk_actions": ["Clear", "Request a Count"],
+    "clear_confirmation_capture": "core3-desktop-clear-confirm.png"
+  }
+}

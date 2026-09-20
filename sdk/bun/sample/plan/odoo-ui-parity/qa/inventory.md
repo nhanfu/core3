@@ -563,3 +563,31 @@ QA disposition: PASS for the bounded Core3 request-count lifecycle, durable
 data, permission boundary, and browser evidence; PARTIAL for direct Odoo
 wizard comparison because of the exact source group gate. Full Inventory
 sign-off remains open.
+
+## Physical Inventory Clear/reset QA — `INV-PHYSICAL-RESET-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.menu_action_inventory_tree` →
+  `stock.action_view_inventory_tree`; manager-only `Clear` invokes
+  `stock.quant.action_reset`, then `stock.inventory.warning.action_reset` and
+  `stock.quant.action_clear_inventory_quantity`. The source clears inventory
+  quantity/difference, unsets the count flag, and clears the user.
+- Core3 implementation: `pages/physical-inventory.yaml` is layout-only; the
+  matching API owns the manager bulk action, confirmation, reset datasource,
+  company guard, selected-quant mutation, and audit lines. Migration `0.0.30`
+  adds durable reset headers/lines and deterministic fixtures.
+- Focused test: `bun test test/inventory_physical_reset.integration.test.ts`
+  — PASS, 4 tests / 20 assertions. Coverage includes source contract,
+  selected reset CRUD/workflow, company/stale/invalid guards, manager
+  permission, and file-backed restart persistence.
+- Authenticated evidence is under
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-RESET-001/`: Core3 desktop
+  list/selection/Clear control and mobile list, plus Odoo desktop/mobile
+  source-list captures. Core3 final list captures report 1440/1440 and
+  390/390 with no page failures; Odoo renders both source lists without
+  horizontal overflow. The exact blocker is that `codex@core3.local` lacks
+  `stock.group_stock_manager`, so Odoo Clear/warning cannot be opened.
+
+QA disposition: PASS for the bounded Core3 reset lifecycle, durable data,
+permissions, and evidence contract; PARTIAL for direct Odoo wizard comparison
+because of the exact manager-group blocker. Full Inventory sign-off remains
+open.

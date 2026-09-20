@@ -397,6 +397,27 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-PHYSICAL-RESET-001` — Physical Inventory Clear/reset (2026-09-20)
+
+- Selected the smallest remaining source-backed Physical Inventory behavior
+  after Request a Count: Odoo's manager-only Clear action and warning wizard.
+- Compared `stock_quant_views.xml:278-321`, `stock_quant.py:531-549`, and
+  `stock_inventory_warning.py:7-14`. Core3 keeps the page/API split, adds a
+  manager bulk action, and applies the source reset semantics to selected
+  quants.
+- Migration `20260920270000-030-inventory-count-resets.yaml` persists reset
+  headers and selected-quant lines. Company scope, invalid selection, stale
+  row-version, manager permission, atomic rollback, and restart persistence
+  are covered by the focused suite.
+- Focused test passes 4 tests / 20 assertions. Authenticated Core3 and Odoo
+  desktop/mobile evidence is under
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-RESET-001/`; Odoo Clear is
+  group-gated for the supplied user, so no Odoo mutation or sign-off is
+  claimed.
+
+Status: bounded lifecycle complete for review; full Inventory sign-off remains
+open.
+
 ## `INV-PHYSICAL-REQUEST-COUNT-001` — Physical Inventory Request a Count (2026-09-20)
 
 - Selected the smallest remaining source-backed Physical Inventory wizard after

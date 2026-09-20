@@ -13,6 +13,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_COUNT_REQUESTS_UNAVAILABLE, message: Inventory count requests are temporarily unavailable. } }
     query: "SELECT r.id, r.row_version, CAST(r.inventory_date AS VARCHAR) AS inventory_date, COALESCE(r.assigned_user, 'Anyone') AS assigned_user, r.show_expected_quantity, r.requested_by, r.quant_count, CAST(r.created_at AS VARCHAR) AS created_at FROM inventory_count_requests r ORDER BY r.created_at DESC, r.id DESC"
+  - id: inventory_reset_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_RESETS_UNAVAILABLE, message: Inventory reset history is temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.reset_count, r.requested_by, CAST(r.created_at AS VARCHAR) AS created_at FROM inventory_count_resets r ORDER BY r.created_at DESC, r.id DESC"
   - id: inventory_adjustment_runs
     single: false
     permission: inventory.read
@@ -24,6 +29,45 @@ datasources:
     error_states: { transport_error: { status: 503, code: INVENTORY_PHYSICAL_DATA_UNAVAILABLE, message: Physical inventory data is temporarily unavailable. } }
     query: "SELECT q.id, q.row_version, q.product_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number, CAST(q.inventory_date AS VARCHAR) AS scheduled, COALESCE(q.inventory_user, '') AS inventory_user, CAST(q.quantity AS DOUBLE) AS on_hand, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity AS DOUBLE) ELSE NULL END AS counted, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity - q.quantity AS DOUBLE) ELSE NULL END AS difference, COALESCE(q.unit_name, 'Units') AS unit_name, l.name AS location_name, l.usage AS location_usage, COALESCE(q.company_name, 'Core3 Demo Company') AS company_name, q.inventory_quantity_set, q.is_outdated FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.usage IN ('Internal', 'Transit') AND (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR COALESCE(q.lot_serial_number, '') ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') AND (:count_filter IS NULL OR (:count_filter = 'my_count' AND COALESCE(q.inventory_user, '') = :current_user_name) OR (:count_filter = 'internal' AND l.usage = 'Internal') OR (:count_filter = 'transit' AND l.usage = 'Transit') OR (:count_filter = 'to_count' AND q.inventory_date <= DATE '2026-01-15') OR (:count_filter = 'to_apply' AND q.inventory_quantity_set) OR (:count_filter = 'conflicts' AND q.is_outdated) OR (:count_filter = 'negative' AND q.quantity < 0)) ORDER BY l.usage, l.name, q.product_name, q.id"
 actions:
+  - id: reset_inventory_counts
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.reset
+    handler: yaml_mutation
+    operation: reset_counts
+    refresh: [inventory_physical_inventory, inventory_reset_runs]
+    confirm: 'This will discard all unapplied counts for the selected quantities. Continue?'
+    mutation:
+      generated: [id]
+      before_steps:
+        - query: "SELECT 'inventory-reset-' || LPAD(CAST((SELECT COUNT(*) + 1 FROM inventory_count_resets) AS VARCHAR), 4, '0') AS id"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: INVENTORY_RESET_SELECTION_REQUIRED, message: Select at least one quantity to clear. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_quants q WHERE q.id IN :selectedIds AND (COALESCE(:current_company_name, '') = '' OR COALESCE(q.company_name, 'Core3 Demo Company') <> :current_company_name))", status: 403, code: INVENTORY_RESET_COMPANY_FORBIDDEN, message: One or more selected quantities belong to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_quants q WHERE q.id IN :selectedIds AND q.location_id NOT IN (SELECT id FROM inventory_locations WHERE usage IN ('Internal', 'Transit')))", status: 409, code: INVENTORY_RESET_SELECTION_INVALID, message: One or more selected quantities are no longer available for clearing. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:expected_row_version, 0) = 0 OR (SELECT COUNT(*) FROM inventory_quants q WHERE q.id IN :selectedIds AND q.row_version = :expected_row_version) = 1", status: 409, code: INVENTORY_RESET_STALE, message: The selected quantity changed before it could be cleared. Reload and try again. }
+      steps:
+        - for_each:
+            input: selectedIds
+            as: quant_id
+            steps:
+              - query: "INSERT INTO inventory_count_reset_lines(reset_id, quant_id, row_version) SELECT :id, q.id, q.row_version FROM inventory_quants q WHERE q.id = :quant_id AND q.location_id IN (SELECT id FROM inventory_locations WHERE usage IN ('Internal', 'Transit')) AND (COALESCE(:current_company_name, '') = '' OR COALESCE(q.company_name, 'Core3 Demo Company') = :current_company_name) AND (COALESCE(:expected_row_version, 0) = 0 OR q.row_version = :expected_row_version)"
+                expect_changed: true
+                status: 409
+                code: INVENTORY_RESET_STALE
+                message: One or more selected quantities changed before it could be cleared.
+              - query: "UPDATE inventory_quants SET counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :quant_id AND row_version = (SELECT l.row_version FROM inventory_count_reset_lines l WHERE l.reset_id = :id AND l.quant_id = :quant_id)"
+                expect_changed: true
+                status: 409
+                code: INVENTORY_RESET_STALE
+                message: One or more selected quantities changed before it could be cleared.
+        - query: "INSERT INTO inventory_count_resets(id, row_version, reset_count, requested_by, created_at) SELECT :id, 1, COUNT(*), COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), TIMESTAMP '2026-01-15 08:00:00' FROM inventory_count_reset_lines WHERE reset_id = :id"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_RESET_EMPTY
+          message: None of the selected quantities has an unapplied count to clear.
+      result: { query: "SELECT id, row_version, reset_count, requested_by, CAST(created_at AS VARCHAR) AS created_at FROM inventory_count_resets WHERE id = :id" }
   - id: request_inventory_count
     type: server_form
     permission: inventory.manage

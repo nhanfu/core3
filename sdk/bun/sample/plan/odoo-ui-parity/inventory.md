@@ -1155,3 +1155,30 @@ reported no page failures or horizontal overflow. No Odoo mutation was made.
 Status: bounded relocation lifecycle complete for review. Full Inventory sign-off
 remains open for the broader actor/company matrix and remaining report/export
 semantics.
+
+## Operations > Physical Inventory Clear/reset — `INV-PHYSICAL-RESET-001` (2026-09-20)
+
+This bounded slice closes the next smallest source-backed Physical Inventory
+gap after Request a Count. Odoo's `stock.menu_action_inventory_tree` /
+`stock.action_view_inventory_tree` exposes manager-only `Clear`, invoking
+`stock.quant.action_reset`, `stock.inventory.warning`, and then
+`action_clear_inventory_quantity` to discard unapplied counts.
+
+Core3 keeps `pages/physical-inventory.yaml` layout-only and adds the manager
+bulk action; `api/physical-inventory.yaml` owns the confirmation, reset-run
+datasource, company scope, selected-quant mutation, and permission. Migration
+`20260920270000-030-inventory-count-resets.yaml` persists reset headers/lines
+and deterministic seed data. The mutation clears counted state, increments row
+versions, records actor and selected rows, rejects invalid/cross-company/stale
+requests, and survives restart.
+
+Focused coverage passes 4 tests / 20 assertions. Authenticated Core3 desktop
+and mobile list/selection/confirmation captures plus paired authenticated Odoo
+desktop/mobile source-list captures are under
+`evidence/inventory/2026-09-20/INV-PHYSICAL-RESET-001/`. The supplied Odoo
+user is not in `stock.group_stock_manager`, so its source Clear modal is not
+reachable; this exact blocker is recorded and no Odoo mutation was made.
+
+Status: bounded Core3 lifecycle and evidence complete for review. Full
+Inventory sign-off remains open for the broader actor/company matrix and
+remaining report/export semantics.
