@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -86,5 +86,74 @@ describe('SMS Marketing mailing action parity', () => {
     await expect(repository.executeMutation(transition('complete').mutation, { id: 'sms-campaign-demo-004', expected_row_version: 3 })).rejects.toMatchObject({ status: 409, code: 'SMS_MAILING_STALE' });
     const [persisted] = await repository.query('SELECT state, row_version, delivered_count FROM sms_campaigns WHERE id = ?', ['sms-campaign-demo-004']);
     expect(persisted).toEqual({ state: 'Sent', row_version: 4, delivered_count: 24 });
+  });
+
+  test('survives file-backed restarts across completion and cancellation replays', async () => {
+    const databasePath = `/tmp/core3-sms-workflow-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `sms_workflow_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const workflow = yaml('pages/sms-workflow.yaml').workflow;
+    const transition = (id: string) => workflow.transitions.find((candidate: any) => candidate.id === id);
+    let database = await DuckDbDatabase.open(databasePath);
+    let repository = new YamlRepository(database);
+    const restart = async () => {
+      database.close();
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+    };
+    const row = async (id: string) => (await repository.query(
+      'SELECT id, company_name, state, row_version, scheduled_at, sent_at, delivered_count, failed_count FROM sms_campaigns WHERE id = ?',
+      [id],
+    ))[0];
+
+    try {
+      await migrateDatabase(repository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+      await repository.run("UPDATE sms_campaigns SET company_name = 'Other Company' WHERE id = 'sms-campaign-demo-004'");
+
+      const outsideCompanyBeforeSchedule = await row('sms-campaign-demo-004');
+      await expect(repository.executeMutation(transition('schedule').mutation, {
+        id: 'sms-campaign-demo-004', expected_row_version: 1, company_name: 'Core3 Demo Company',
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_MAILING_STALE' });
+      expect(await row('sms-campaign-demo-004')).toEqual(outsideCompanyBeforeSchedule);
+
+      expect(await repository.executeMutation(transition('schedule').mutation, {
+        id: 'sms-campaign-demo-004', expected_row_version: 1, company_name: 'Other Company',
+      })).toMatchObject({ state: 'In Queue', row_version: 2, company_name: 'Other Company' });
+      await restart();
+      expect(await repository.executeMutation(transition('send').mutation, {
+        id: 'sms-campaign-demo-004', expected_row_version: 2, company_name: 'Other Company',
+      })).toMatchObject({ state: 'Sending', row_version: 3, company_name: 'Other Company' });
+      await restart();
+      expect(await repository.executeMutation(transition('complete').mutation, {
+        id: 'sms-campaign-demo-004', expected_row_version: 3, company_name: 'Other Company',
+      })).toMatchObject({ state: 'Sent', row_version: 4, delivered_count: 24, failed_count: 0, company_name: 'Other Company' });
+      await restart();
+
+      const completed = await row('sms-campaign-demo-004');
+      expect(completed).toMatchObject({ state: 'Sent', row_version: 4, delivered_count: 24, failed_count: 0, company_name: 'Other Company' });
+      await expect(repository.executeMutation(transition('complete').mutation, {
+        id: 'sms-campaign-demo-004', expected_row_version: 3, company_name: 'Other Company',
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_MAILING_STALE' });
+      expect(await row('sms-campaign-demo-004')).toEqual(completed);
+
+      expect(await repository.executeMutation(transition('schedule').mutation, {
+        id: 'sms-campaign-demo-001', expected_row_version: 1, company_name: 'Core3 Demo Company',
+      })).toMatchObject({ state: 'In Queue', row_version: 2, company_name: 'Core3 Demo Company' });
+      await restart();
+      expect(await repository.executeMutation(transition('cancel').mutation, {
+        id: 'sms-campaign-demo-001', expected_row_version: 2, company_name: 'Core3 Demo Company',
+      })).toMatchObject({ state: 'Draft', row_version: 3, company_name: 'Core3 Demo Company' });
+      await restart();
+
+      const cancelled = await row('sms-campaign-demo-001');
+      expect(cancelled).toMatchObject({ state: 'Draft', row_version: 3, scheduled_at: null, company_name: 'Core3 Demo Company' });
+      await expect(repository.executeMutation(transition('cancel').mutation, {
+        id: 'sms-campaign-demo-001', expected_row_version: 2, company_name: 'Core3 Demo Company',
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_MAILING_STALE' });
+      expect(await row('sms-campaign-demo-001')).toEqual(cancelled);
+    } finally {
+      database.close();
+      rmSync(databasePath, { force: true });
+    }
   });
 });
