@@ -87,3 +87,18 @@ but not the desktop search panel. Core3 desktop/mobile evidence is blocked by
 the bounded startup's unavailable backend 3001, with the exact output
 preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known
 blocker and no module sign-off is claimed.
+## Twelfth-wave execution — `TIMESHEET-MY-MANAGER-GROUP-001`
+
+The Manager group-by source comparison and durable contract are covered by
+`test/timesheets_my_manager_group.integration.test.ts` (4 tests / 28
+expectations). The test exercises page/API separation, migration-backed
+manager relation reads, active actor and company scope, empty fixtures,
+required optimistic concurrency, migration replay, and file-backed restart.
+
+Authenticated Odoo captures are in
+`../evidence/timesheets/2026-09-21/timesheet-my-manager-group/`: desktop
+exposes and applies Manager grouping; mobile exposes responsive Kanban but
+not the desktop search panel. Core3 desktop/mobile evidence is blocked by an
+unrelated `discoverPages` `max_length is not allowed` schema failure, with the
+exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces
+remain a known blocker and no module sign-off is claimed.

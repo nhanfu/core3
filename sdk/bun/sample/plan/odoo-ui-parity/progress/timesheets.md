@@ -708,3 +708,11 @@ sign-off is claimed.
 - Focused verification: `test/timesheets_my_department_group.integration.test.ts` passed 4/4 with 28 expectations, including durable reads, actor/company/empty guards, stale concurrency, migration replay, and file-backed restart.
 - Odoo authenticated desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-my-department-group/`. Desktop selects Department and renders the grouped result; mobile is responsive Kanban without the desktop search control.
 - Core3 browser evidence is blocked by backend `127.0.0.1:3001` readiness during the bounded startup probe; see `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+## 2026-09-21 — `TIMESHEET-MY-MANAGER-GROUP-001`
+
+- Selected the next source-backed gap after Department grouping: authenticated My Timesheets Manager group-by from Odoo's stored `manager_id` and `groupby_manager` search filter.
+- Added migration `20260921140000-019-timesheets-manager-group.yaml` with deterministic employee manager relations and an index.
+- Added `manager_id`/`manager_name` to the API list/pivot projection and `Manager` to the page ListView group-by. Page/API separation remains joined by `page.id: timesheets`.
+- Focused verification: `test/timesheets_my_manager_group.integration.test.ts` passed 4/4 with 28 expectations, including durable reads, actor/company/empty guards, stale concurrency, migration replay, and file-backed restart.
+- Odoo authenticated desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-my-manager-group/`. Desktop applies Manager and renders `Mitchell Admin (42)`; mobile is responsive Kanban without the desktop search control.
+- Core3 browser evidence is blocked by an unrelated `discoverPages` `max_length is not allowed` schema failure; see `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.

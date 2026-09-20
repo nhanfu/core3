@@ -752,3 +752,21 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
   `/api/modules` during the bounded startup probe; exact output is in
   `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this
   slice is not sign-off.
+## `TIMESHEET-MY-MANAGER-GROUP-001` — My Timesheets Manager grouping (2026-09-21)
+
+- Source gate: Odoo stores analytic-line `manager_id` from the employee's
+  `parent_id` and exposes `groupby_manager` in the authenticated Timesheets
+  search view.
+- Core3 gate: the layout-only page adds `Manager` to the ListView group-by;
+  the API adds durable employee manager identity/name to the list/pivot
+  projection through `page.id: timesheets`.
+- Focused gate: `test/timesheets_my_manager_group.integration.test.ts`
+  passes 4/4 tests / 28 expectations, including relation reads,
+  actor/company/empty guards, stale concurrency, replay, and file restart.
+- Odoo browser gate: authenticated desktop applies Manager grouping and
+  renders the grouped result; authenticated mobile captures responsive Kanban
+  without the desktop search control. Captures and results are under
+  `evidence/timesheets/2026-09-21/timesheet-my-manager-group/`.
+- Core3 browser blocker: `discoverPages` rejects an unrelated page's
+  `actions[2].fields[*].max_length`; exact output is in `core3-readiness.txt`.
+  Odoo Print/PDF/action blockers remain open and this slice is not sign-off.

@@ -1,0 +1,14 @@
+{
+  "feature_id": "TIMESHEET-MY-MANAGER-GROUP-001",
+  "source": "hr_timesheet manager_id related employee.parent_id and groupby_manager search filter",
+  "odoo": {
+    "desktop": "authenticated Manager group-by applied and grouped result captured",
+    "mobile": "authenticated responsive Kanban captured; desktop group-by is not exposed",
+    "errors": []
+  },
+  "core3": {
+    "desktop": "blocked before authentication by unrelated discoverPages max_length schema failure",
+    "mobile": "blocked by same startup discovery condition"
+  },
+  "signoff": false
+}

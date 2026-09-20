@@ -1,0 +1,11 @@
+Bounded command: timeout 18s bun dev --db=ddb --memory
+exit=1 (startup terminated after discovery failure)
+port=3001 api_modules=000 (connection refused)
+port=3002 api_modules=000 after process termination
+Core3 reached Vite 3002/event-mediator startup, then discoverPages failed on an unrelated page definition:
+PageSchemaError: Invalid page definition:
+- actions[2].fields[0].max_length is not allowed
+- actions[2].fields[1].max_length is not allowed
+- actions[2].fields[2].max_length is not allowed
+- actions[2].fields[3].max_length is not allowed
+No Core3 authenticated desktop/mobile capture was possible. The failing page is outside Timesheets and was not modified.
