@@ -16,6 +16,39 @@ datasources:
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
 actions:
+  - id: add_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Add a question
+    action: surveys.questions.create_inline
+    handler: line_item
+    operation: create
+    domain: survey_detail
+    params: { id: '{state.id}' }
+    refresh: [survey_detail, survey_questions]
+    mutation:
+      generated: [question_id]
+      before_steps:
+        - query: |
+            SELECT
+              CAST(COALESCE(NULLIF(CAST(:question_id AS VARCHAR), ''), CAST(gen_random_uuid() AS VARCHAR)) AS VARCHAR) AS question_id,
+              COALESCE(MAX(sequence), 0) + 1 AS next_sequence
+            FROM survey_questions
+            WHERE survey_id = :id
+          assign: true
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :parent_expected_row_version", status: 409, code: SURVEY_QUESTION_PARENT_CHANGED, message: This survey changed or is archived. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:question_text AS VARCHAR), ''))) > 0", status: 422, code: SURVEY_QUESTION_TITLE_REQUIRED, message: A question title is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:question_type AS VARCHAR), 'Text') IN ('Text', 'Choice', 'Multiple Choice', 'Rating', 'Numerical')", status: 422, code: SURVEY_QUESTION_TYPE_INVALID, message: Select a supported question type. }
+      steps:
+        - { query: "INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, is_page) VALUES(:question_id, :id, TRIM(:question_text), COALESCE(NULLIF(TRIM(CAST(:question_type AS VARCHAR)), ''), 'Text'), CAST(:next_sequence AS INTEGER), COALESCE(CAST(:required AS BOOLEAN), false), COALESCE(CAST(:answer_options AS VARCHAR), ''), false)", expect_changed: true, status: 409, code: SURVEY_QUESTION_CREATE_FAILED, message: The question could not be added. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SURVEY_QUESTION_PARENT_CHANGED, message: This survey changed while the question was being added. Reload and try again. }
+      result: { query: "SELECT * FROM survey_questions WHERE id = :question_id" }
+    fields:
+      - { field: question_text, label: Question, type: text, required: true, placeholder: 'e.g. How did you hear about us?' }
+      - { field: question_type, label: Type, type: select, default: Text, options: [{ value: Text, label: Text }, { value: Choice, label: Choice }, { value: Multiple Choice, label: Multiple Choice }, { value: Rating, label: Rating }, { value: Numerical, label: Numerical }] }
+      - { field: required, label: Required, type: checkbox, default: false }
+      - { field: answer_options, label: Suggested Answers, type: text, placeholder: 'e.g. Email,Phone,Chat' }
   - id: add_survey_section
     type: server_form
     permission: surveys.write

@@ -973,3 +973,35 @@ passes 5 tests with 27 assertions. `bunx eslint` and `git diff --check` pass.
 The repository audit remains blocked by an unrelated pre-existing Inventory
 schema error (`back_to_inventory_package` duplicate action and illegal label);
 that module's uncommitted files were preserved and are outside this slice.
+
+## Bounded slice: Questions-tab Add a question (2026-09-20)
+
+The next genuinely uncovered visible Survey-form control after the existing
+`Add a section` slice is Odoo's inline Questions-tab `Add a question` control.
+The source is `addons/survey/views/survey_survey_views.xml` lines 75-100:
+`question_and_page_ids` uses `question_page_one2many`, passes
+`default_survey_id`, and exposes `add_question_control` beside
+`add_section_control`. Odoo appends a normal `survey.question` row to the
+ordered parent graph; question creation remains governed by Survey user/write
+access and the parent survey context.
+
+Core3 adds `add_survey_question` to the existing `survey-detail` page
+`LineItemGrid` and declares its backend separately in
+`services/surveys/api/survey-detail.yaml` as the permissioned
+`surveys.questions.create_inline` server form. The mutation is parent-scoped,
+computes the next sequence from durable `survey_questions`, creates a normal
+question with deterministic defaults, increments `surveys.row_version`, and
+rejects blank titles, unsupported types, stale parents, archived surveys, and
+failed inserts with explicit 422/409 contracts. The existing schema and
+Feedback Form fixture already provide the Odoo-derived question graph, so no
+new migration is needed.
+
+Focused CRUD, permission, validation, and restart coverage is in
+`test/surveys_question_create.integration.test.ts` (3 tests, 17 assertions).
+Authenticated Core3 desktop/mobile evidence, QA inventory, source comparison,
+and truthful authenticated Odoo fallback captures are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-QUESTION-CREATE-001/`.
+The Odoo reference database used for this run has Surveys uninstalled and
+redirects `/odoo/surveys` to Discuss; that fallback is recorded explicitly and
+is not a paired visual sign-off. The overall Surveys module remains
+in-progress.

@@ -147,3 +147,32 @@ Disposition: bounded live-results contract passes; broader Surveys sign-off
 remains conditional. Public session joining, leaderboard, attendee answer
 submission, actor mutation matrix, and paired Odoo desktop/mobile evidence
 remain open.
+
+## Bounded QA run: Questions-tab Add a question (2026-09-20)
+
+- Source/action trace: Odoo `survey_survey_views.xml` Questions-tab
+  `question_page_one2many` control `add_question_control`; Core3 page/API
+  contracts are `survey-detail` plus `surveys.questions.create_inline`.
+- Focused implementation test: **3 passed, 17 assertions** in
+  `test/surveys_question_create.integration.test.ts`. Coverage includes the
+  page/API join, `surveys.write` boundary declaration, deterministic ordered
+  insert, blank/type/stale/archive refusal, and file-backed restart reload.
+- Authenticated Core3 browser evidence: desktop 1440x1000 and mobile 390x844
+  successfully created and rendered appended question rows with zero page
+  errors, zero failed requests, and no horizontal overflow. Evidence is in
+  `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-QUESTION-CREATE-001/`.
+- Authenticated Odoo browser evidence: `codex@core3.local` reached the live
+  database, but its Surveys addon is uninstalled; `/odoo/surveys` redirected
+  to Discuss. The desktop/mobile fallback captures and this limitation are
+  recorded in the feature's `source-comparison.md`; no Odoo visual parity
+  claim is made.
+- Scoped lint and diff-check: pass (`bunx eslint
+  test/surveys_question_create.integration.test.ts`; `git diff --check`).
+- Repository audit: run separately; any failure is reported without staging
+  or modifying other module owners' files.
+
+Disposition: bounded Add-a-question lifecycle passes its service, persistence,
+permission-contract, and Core3 responsive evidence checks. Surveys remains
+conditional and unsigned-off pending the broader actor matrix, public flows,
+restart coverage across all workflows, and an installed Odoo paired visual
+reference.

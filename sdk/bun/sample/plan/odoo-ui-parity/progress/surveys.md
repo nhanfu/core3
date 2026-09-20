@@ -16,6 +16,20 @@ Fresh module HTTP/browser probe: public `/surveys` returned 200; authenticated h
 
 Status remains **qa-in-progress / blocked**, with migration repair verified but schema/audit, full regression, authenticated render, and paired Odoo evidence open.
 
+## 2026-09-20 — `SURVEYS-QUESTION-CREATE-001`
+
+Selected the smallest unfinished source-backed form workflow: Odoo's
+Questions-tab inline `Add a question` control. Core3 implementation is complete
+in the page/API pair `survey-detail`, with `surveys.write` permission,
+parent-scoped ordered persistence, deterministic defaults, stale/archive and
+validation guards, and file-backed restart coverage. Focused test result is
+3/3 passing with 17 assertions. Authenticated Core3 desktop/mobile evidence
+and truthful authenticated Odoo fallback captures are recorded under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-QUESTION-CREATE-001/`.
+The current Odoo reference database has Surveys uninstalled, so this feature is
+not visually signed off against Odoo. Overall module status remains
+**qa-in-progress / conditional**.
+
 ## Current state
 
 The focused Surveys suite passes 34 tests with 305 assertions across five files,

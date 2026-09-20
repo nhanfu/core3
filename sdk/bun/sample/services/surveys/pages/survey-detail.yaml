@@ -49,6 +49,7 @@ components:
     variant: odoo_x2many
     row_key: id
     actions:
+      - { id: add_survey_question, label: Add a question, variant: primary, permission: surveys.write }
       - { id: add_survey_section, label: Add a section, variant: secondary, permission: surveys.write }
     children:
       - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
