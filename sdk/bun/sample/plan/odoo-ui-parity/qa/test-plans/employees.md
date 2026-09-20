@@ -458,3 +458,17 @@ assertions). Evidence:
 Focused test: `test/employees_properties.integration.test.ts` (4 tests, 19
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`.
+
+## EMP-PRIVATE-CAR-PLATE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `private_car_plate` HR-user search field maps to separate Employees page/API contracts | pass |
+| Employee CRUD/list | Create, read, edit, and search/list project a private car plate durably | pass |
+| Permission and scope | Employees read/write declarations, current company, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic plate fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Employees desktop/mobile captures | conditional; Odoo field is optional/hidden by default and Core3 backend did not bind during bounded startup |
+
+Focused test: `test/employees_private_car_plate.integration.test.ts` (4 tests,
+21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`.

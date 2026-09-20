@@ -908,3 +908,17 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`. UI audit passed
 with 714 pages, 723 routes, and 1,364 datasources; scoped ESLint and
 `git diff --check` passed. No aggregate Employees sign-off is claimed.
+
+## EMP-PRIVATE-CAR-PLATE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-036 | Employees private car plate create/read/edit/search projection | pass; durable plate values are created, returned, edited, and included in the list query |
+| EMP-PERM-036 | `employees.read`/`employees.write`, current company, row version | pass; source/API permission declarations and stale/wrong-company guards reject atomically |
+| EMP-DATA-036 | Migration replay and file-backed restart | pass; deterministic plate fixtures survive restart without duplicates |
+| EMP-UI-032 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo optional search field is hidden by default, Core3 backend port 3001 did not bind during the bounded runtime attempt |
+
+Focused test: `test/employees_private_car_plate.integration.test.ts` (4 tests,
+21 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`. No aggregate
+Employees sign-off is claimed.

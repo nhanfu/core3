@@ -8,7 +8,7 @@ components:
     create_label: New employee
     header_actions:
       - { id: load_sample_employee_data, label: Load Sample Data, permission: employees.write, variant: secondary }
-    search: { label: Search employees, placeholder: 'Search employee number, name, email, or coach...' }
+    search: { label: Search employees, placeholder: 'Search employee number, name, email, coach, or private car plate...' }
     filters:
       - { field: state, label: Status, options_source: employee_states }
       - { field: department_name, label: Department, options_source: employee_departments }
@@ -95,6 +95,7 @@ components:
       - { field: job_title, label: Job Position }
       - { field: department_name, label: Department }
       - { field: coach_name, label: Coach }
+      - { field: private_car_plate, label: Private Car Plate, optional: hide }
       - { field: work_email, label: Work Email }
       - { field: work_phone, label: Work Phone }
       - { field: state, label: Status, type: StatusChip }

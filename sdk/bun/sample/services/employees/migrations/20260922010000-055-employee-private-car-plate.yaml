@@ -1,0 +1,22 @@
+version: 0.0.55
+kind: data
+description: Persist the Odoo employee private car plate search field
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_car_plate VARCHAR;
+      UPDATE employees
+      SET private_car_plate = CASE id
+        WHEN 'employee-demo-001' THEN '51A-123.45'
+        WHEN 'employee-demo-002' THEN '43B-678.90'
+        WHEN 'employee-demo-003' THEN '30F-246.80'
+        WHEN 'employee-demo-004' THEN '29A-135.79'
+        ELSE private_car_plate
+      END
+      WHERE private_car_plate IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_car_plate;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

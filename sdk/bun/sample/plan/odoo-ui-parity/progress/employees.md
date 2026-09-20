@@ -674,3 +674,21 @@ Candidate commit: current working tree
   captures are authenticated desktop/mobile but the reference company has no
   dynamic Properties definition; Core3 backend startup was unavailable. No
   aggregate Employees sign-off is claimed.
+
+## EMP-PRIVATE-CAR-PLATE-001 (2026-09-21)
+
+- Selected Odoo's HR-user `hr.employee.private_car_plate` search field as the
+  next uncovered visible Employees behavior; it is distinct from the excluded
+  private contact/location and completed lifecycle slices.
+- Added migration `20260922010000-055`, deterministic plate fixtures, list
+  projection/search, and create/edit API fields. Page YAML and API YAML remain
+  separate and join at `employees`.
+- Focused verification: `test/employees_private_car_plate.integration.test.ts`,
+  **4 tests / 21 assertions**, covering source mapping, CRUD/list/read,
+  stale/company guards, replay, and restart. Audit, scoped lint, and diff-check
+  are recorded with the commit.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`. Authenticated Odoo
+  desktop/mobile captures succeeded; the optional field is hidden by default.
+  Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
+  No aggregate Employees sign-off is claimed.

@@ -1668,6 +1668,29 @@ Private Contact group; seven unrelated app-icon 404s are recorded. Evidence is
 under `evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`. This is
 conditional feature evidence, not aggregate Employees sign-off.
 
+## EMP-PRIVATE-CAR-PLATE-001: Employee private car plate search/list behavior (2026-09-21)
+
+Odoo defines the HR-user-only `hr.employee.private_car_plate` field and exposes
+it in the Employees search view. Core3 now persists the field on `employees`,
+seeds deterministic company fixtures, projects it in the Employees list with an
+optional hidden column, includes it in employee search, and carries it through
+the employee create/edit API contract. The page YAML and API YAML remain
+separate and join at `employees`.
+
+The existing `employees.write` create/edit mutations enforce current-company
+scope and optimistic row-version concurrency; `employees.read` controls the
+list projection. Focused coverage is **4 tests / 21 assertions**, including
+Odoo source mapping, CRUD/list/read persistence, stale and wrong-company
+atomicity, migration replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile list captures are under
+`evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`. The optional source
+search field is hidden in Odoo's default list rendering, and the source
+reference has unrelated app-icon 404 noise. Core3 browser capture was blocked:
+the bounded memory-mode runtime served Vite but never bound backend port 3001;
+the exact attempt is recorded in the evidence. This is conditional feature
+evidence, not aggregate Employees sign-off.
+
 ## EMP-BIRTHDAY-VISIBILITY-001: Employee birthday visibility (2026-09-21)
 
 Odoo's Personal Information group exposes `birthday_public_display` as the

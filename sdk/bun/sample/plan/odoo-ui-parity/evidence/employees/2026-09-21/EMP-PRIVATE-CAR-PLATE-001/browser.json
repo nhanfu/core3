@@ -1,0 +1,25 @@
+{
+  "feature": "EMP-PRIVATE-CAR-PLATE-001",
+  "odoo": {
+    "authenticated": true,
+    "route": "http://127.0.0.1:8069/odoo/employees",
+    "desktop": { "viewport": "1440x900", "http_status": 200, "capture": "odoo-desktop.png", "private_car_plate_visible_in_default_body": false },
+    "mobile": { "viewport": "390x844", "http_status": 200, "capture": "odoo-mobile.png", "private_car_plate_visible_in_default_body": false },
+    "shell_http_errors": [
+      "404 /sign/static/description/icon.png",
+      "404 /hr_payroll/static/description/icon.png",
+      "404 /hr_referral/static/description/icon.png",
+      "404 /ai/static/description/icon.png",
+      "404 /planning/static/description/icon.png",
+      "404 /hr_appraisal/static/description/icon.png",
+      "404 /documents/static/description/icon.png"
+    ]
+  },
+  "core3": {
+    "authenticated": false,
+    "desktop_capture": null,
+    "mobile_capture": null,
+    "blocker": "bun dev --db=ddb --memory announced Vite on 3002, but backend port 3001 never bound and /api/modules stayed unavailable through the bounded poll; timeout stopped the process"
+  },
+  "signoff": "conditional_feature_evidence_only"
+}
