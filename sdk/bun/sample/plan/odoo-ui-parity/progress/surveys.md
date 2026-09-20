@@ -141,6 +141,23 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-END-MESSAGE-001`
+
+Selected the next uncovered source-backed public behavior after scoring:
+Odoo's durable `survey.survey.description_done` completion message. Core3
+adds migration `0.0.25`, exposes `description_done` from the public survey
+detail operation, and renders the configured message after submit and on a
+submitted-response restart. The submit path retains `surveys.public`, token,
+state, deadline, and idempotency guards.
+
+Focused end-message plus adjacent public regression coverage passes. Fresh
+authenticated Core3 desktop/mobile login and `/api/auth/me` pass, while the
+shared runtime returns 404 `API route not found` for the authenticated public
+API and 401 for the rendered public route. Odoo redirects the public token to
+login, so no installed Survey completion fixture is available. Evidence is
+under `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-END-MESSAGE-001/`;
+status remains **qa-in-progress / conditional**, with no sign-off claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-SCORING-001`
 
 Selected the next uncovered source-backed public participant behavior after

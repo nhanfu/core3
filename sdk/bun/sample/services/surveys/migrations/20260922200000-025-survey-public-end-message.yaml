@@ -1,0 +1,18 @@
+version: 0.0.25
+description: Durable public survey completion message
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS description_done VARCHAR;
+      UPDATE surveys SET description_done = CASE
+        WHEN id = 'survey-demo-feedback' THEN 'Thank you for completing the Feedback Form.'
+        WHEN id = 'survey-demo-certification' THEN 'Thank you for completing the certification.'
+        ELSE description_done
+      END;
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS description_done;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -327,3 +327,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCORING-001/`.
+
+## 2026-09-21 public completion-message additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-031 | public workflow | Submit → completion message | Odoo `description_done` copy is returned and rendered after a completed response | pass |
+| SURVEYS-WF-028 | concurrency/restart | Concurrent submit → replay → reopen | One durable completion message remains after idempotent replay and restart | pass |
+| SURVEYS-PERM-030 | token/state guard | Wrong token and submitted response | `surveys.public`, token, In Progress, and submitted-state guards remain enforced | pass |
+| SURVEYS-UI-029 | authenticated responsive/reference | Completion result desktop/mobile + Odoo comparison | Record exact Core3 route and Odoo fixture blockers; no sign-off until available | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-END-MESSAGE-001/`.

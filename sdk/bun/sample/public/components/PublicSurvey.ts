@@ -8,7 +8,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -133,7 +133,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
   const renderDone = (result: SurveyPayload['answer'] = payload.answer) => {
     const score = typeof result?.score === 'number' ? `<p class="core3-public-survey__description">Score: ${result.score}% · ${result.quiz_passed ? 'Passed' : 'Not passed'}</p>` : '';
-    body.innerHTML = `<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">Your answers have been submitted.</p>${score}</div>`;
+    const completionMessage = survey.description_done || 'Your answers have been submitted.';
+    body.innerHTML = `<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">${escapeHtml(completionMessage)}</p>${score}</div>`;
   };
 
   const firstUnanswered = () => questions.findIndex((question) => {

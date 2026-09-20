@@ -1552,3 +1552,27 @@ both authenticated viewports because the shared runtime did not register the
 Surveys public route. Odoo redirected the unavailable synthetic token to its
 login page. No browser or paired Odoo sign-off is claimed. Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded slice: Public completion message (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-END-MESSAGE-001`.
+
+Odoo's `survey.survey.description_done` is the configured End Message shown
+when a public response reaches the completed state. Core3 now adds the
+durable `surveys.description_done` field through migration `0.0.25`, seeds a
+deterministic Feedback Form completion message, returns it through the
+token-scoped public detail operation, and has the Surveys-owned public
+renderer consume it on submit and submitted-response resume.
+
+The public API remains separate from the `surveys` page layout and is joined
+through `page.id: surveys`; submit remains permissioned as `surveys.public`.
+Focused coverage verifies the API/page/renderer contract, concurrent
+idempotent submit, wrong-token rejection, and file-backed restart. Evidence is
+under `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-END-MESSAGE-001/`.
+
+Authenticated Core3 login and `/api/auth/me` succeeded at desktop and mobile,
+but the shared runtime returned HTTP 404 `API route not found` for the
+authenticated public API and HTTP 401 for the rendered public route. Odoo
+redirected the public token to `/web/login?redirect=%2Fodoo%3F` at both
+viewports, leaving no installed Survey completion fixture. No browser or
+paired Odoo sign-off is claimed; Surveys remains **qa-in-progress / conditional**.

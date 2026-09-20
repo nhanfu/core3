@@ -1,7 +1,7 @@
 operations:
   survey.public.detail:
     result_key: survey
-    query: "SELECT id, access_token, name, title, description, state FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
+    query: "SELECT id, access_token, name, title, description, description_done, state FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
   survey.public.questions:
     result_key: questions
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id AND COALESCE(is_page, false) = false ORDER BY sequence, id"
@@ -40,7 +40,7 @@ operations:
     query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, respondent_name, respondent_email, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
   survey.public.print.detail:
     result_key: survey
-    query: "SELECT id, access_token, name, title, description, state FROM surveys WHERE access_token = :access_token AND state IN ('Published', 'Closed') LIMIT 1"
+    query: "SELECT id, access_token, name, title, description, description_done, state FROM surveys WHERE access_token = :access_token AND state IN ('Published', 'Closed') LIMIT 1"
   survey.public.print.questions:
     result_key: questions
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"

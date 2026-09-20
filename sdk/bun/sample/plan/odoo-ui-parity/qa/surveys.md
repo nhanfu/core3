@@ -826,3 +826,25 @@ conditional**.
 Disposition: the durable cookie behavior and bounded tests pass; runtime and
 reference evidence remain conditional. Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-END-MESSAGE-001` — 2026-09-21
+
+- Source: Odoo `survey.survey.description_done` is the End Message rendered
+  after a public response is completed.
+- YAML/API/UI: the `surveys` page and public detail operation remain joined by
+  `page.id`; the public submit action remains `surveys.public`, and the
+  Surveys-owned renderer consumes the returned completion copy.
+- Focused verification: **3 passed / 12 assertions** for the new test;
+  adjacent public regression set: **17 passed / 146 assertions**.
+- Persistence/concurrency: the configured message survives file-backed reopen;
+  two same-key submissions converge on one response, and a wrong token is
+  rejected without mutation.
+- Core3 authenticated desktop/mobile: login and `/api/auth/me` returned 200 at
+  1440x900 and 390x844; the public API returned 404 `API route not found` and
+  the rendered public route returned 401.
+- Odoo desktop/mobile: the token redirected to
+  `/web/login?redirect=%2Fodoo%3F`; no installed Survey completion fixture was
+  available.
+
+Disposition: implementation and bounded tests pass; browser/reference evidence
+remains conditional and Surveys is not signed off.

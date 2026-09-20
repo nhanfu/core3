@@ -1,0 +1,20 @@
+{
+  "feature": "SURVEYS-PUBLIC-END-MESSAGE-001",
+  "core3": {
+    "actor": "admin@tms.local",
+    "viewports": ["1440x900", "390x844"],
+    "auth_me_status": 200,
+    "public_api_status": 404,
+    "public_api_body": {"error": "API route not found", "message_key": "errors.http_404"},
+    "rendered_public_status": 401,
+    "rendered_public_body": "Unauthorized",
+    "blocker": "Shared runtime does not register the Surveys public route/API for this probe."
+  },
+  "odoo": {
+    "viewports": ["1440x900", "390x844"],
+    "status": 200,
+    "final_path": "/web/login?redirect=%2Fodoo%3F",
+    "blocker": "Reference public token redirects to Odoo login; no installed Surveys completion fixture is available."
+  },
+  "signoff": false
+}

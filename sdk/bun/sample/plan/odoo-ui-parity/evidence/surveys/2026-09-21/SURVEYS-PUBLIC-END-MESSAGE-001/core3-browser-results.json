@@ -1,0 +1,49 @@
+{
+  "feature": "SURVEYS-PUBLIC-END-MESSAGE-001",
+  "runtime": "Core3",
+  "surveyToken": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "authLogin": {
+        "status": 200,
+        "user": "admin@tms.local",
+        "tokenStored": true,
+        "body": "{\"token\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImNsaWVudC0xMzYyNTI0MS0yOTdlLTQ1YjYtYTBjMy1kZTIyNzI5NWY0ZDgiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyLWFkbWluIiwiaWQiOiJ1c2VyLWFkbWluIiwiZW1haWwiOiJhZG1pbkB0bXMubG9jYWwiLCJuYW1lIjoiQWRtaW4gVXNlciIsInByZWZlcnJlZF9sYW5nIjoiZW4iLCJicmFuY2hfaWQiOiJicmFuY2gtaGNtIiwidG9rZW5"
+      },
+      "me": {
+        "status": 200,
+        "body": "{\"sub\":\"user-admin\",\"id\":\"user-admin\",\"email\":\"admin@tms.local\",\"name\":\"Admin User\",\"preferred_lang\":\"en\",\"branch_id\":\"branch-hcm\",\"token_type\":\"client_access\",\"jti\":\"881f9ac4-9dcf-4e8b-a133-6ac7a7869b5d\",\"sid\":\"5a9b0bce-37de-4750-b1c3-5b1163f03418\",\"did\":\"191cb299-9847-4ad1-966f-08d7ff171af2\",\"user"
+      },
+      "api": {
+        "status": 404,
+        "body": "{\"error\":\"API route not found\",\"message_key\":\"errors.http_404\"}"
+      },
+      "url": "http://localhost:4041/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "body": "Unauthorized",
+      "overflow": false,
+      "failedRequests": []
+    },
+    {
+      "viewport": "390x844",
+      "authLogin": {
+        "status": 200,
+        "user": "admin@tms.local",
+        "tokenStored": true,
+        "body": "{\"token\":\"eyJhbGciOiJFZERTQSIsImtpZCI6ImNsaWVudC0xMzYyNTI0MS0yOTdlLTQ1YjYtYTBjMy1kZTIyNzI5NWY0ZDgiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyLWFkbWluIiwiaWQiOiJ1c2VyLWFkbWluIiwiZW1haWwiOiJhZG1pbkB0bXMubG9jYWwiLCJuYW1lIjoiQWRtaW4gVXNlciIsInByZWZlcnJlZF9sYW5nIjoiZW4iLCJicmFuY2hfaWQiOiJicmFuY2gtaGNtIiwidG9rZW5"
+      },
+      "me": {
+        "status": 200,
+        "body": "{\"sub\":\"user-admin\",\"id\":\"user-admin\",\"email\":\"admin@tms.local\",\"name\":\"Admin User\",\"preferred_lang\":\"en\",\"branch_id\":\"branch-hcm\",\"token_type\":\"client_access\",\"jti\":\"d615e7a1-f45b-4553-948f-d28a44cdf885\",\"sid\":\"35cf89c7-9a18-4dcd-bbad-44e4b4f0621f\",\"did\":\"530b87d3-4e23-4906-a554-c7d00401f6ca\",\"user"
+      },
+      "api": {
+        "status": 404,
+        "body": "{\"error\":\"API route not found\",\"message_key\":\"errors.http_404\"}"
+      },
+      "url": "http://localhost:4041/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "body": "Unauthorized",
+      "overflow": false,
+      "failedRequests": []
+    }
+  ]
+}

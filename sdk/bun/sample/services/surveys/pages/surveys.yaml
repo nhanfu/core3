@@ -5,6 +5,8 @@ title: Surveys
 page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
 # Public submission score/pass results are returned by the paired API action
 # and persisted on the response; the renderer remains joined through page.id.
+# The public completion message is likewise sourced from the survey record and
+# consumed by the token-scoped renderer after submit/resume.
 components:
   - type: ListView
     variant: odoo
