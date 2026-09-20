@@ -20,6 +20,19 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-FAMILY-INFO-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed Personal behavior: Odoo
+  Family information (`marital`, spouse name/birthdate, dependent children).
+- Added migration 036, deterministic fixtures, page/API-separated fields,
+  employee create/edit/read CRUD, validation, company/stale guards, and
+  migration replay/file-backed restart coverage.
+- Verification: focused 4 tests / 24 assertions; audit 681 pages / 690
+  routes / 1,256 datasources; scoped ESLint and diff-check pass.
+- Authenticated Core3 and Odoo desktop/mobile evidence passes. Odoo's one
+  aborted desktop chatter request and app-icon 404s are documented as
+  unrelated reference-shell noise.
+
 ## EMP-EMERGENCY-CONTACT-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed Personal-tab scalar behavior:

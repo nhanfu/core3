@@ -601,3 +601,14 @@ Employees sign-off is claimed.
 | EMP-UI-011 | Authenticated Core3/Odoo desktop and mobile | Personal tab exposes Emergency Contact responsively | conditional; Odoo pass, Core3 blocked by unrelated shared page-discovery schema error |
 
 Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.
+
+## EMP-FAMILY-INFO-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-016 | Personal Family create/edit/read | Marital, spouse, birthdate, and child count persist through employee CRUD | pass; 4 focused tests / 24 assertions |
+| EMP-PERM-016 | Employees read/write, company, stale, invalid marital/date/count | Invalid or out-of-scope edits reject atomically | pass |
+| EMP-DATA-016 | Migration replay and file-backed restart | Deterministic family fields survive restart | pass |
+| EMP-UI-012 | Authenticated Core3/Odoo desktop and mobile | Family group and conditional spouse fields render responsively | pass; Odoo shell noise documented |
+
+Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.

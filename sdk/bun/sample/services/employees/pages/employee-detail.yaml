@@ -53,6 +53,9 @@ components:
             - title: Emergency Contact
               permission: employees.read
               fields: [{ field: emergency_contact, label: Contact }, { field: emergency_phone, label: Phone }]
+            - title: Family
+              permission: employees.read
+              fields: [{ field: marital, label: Marital Status }, { field: spouse_complete_name, label: Spouse Legal Name, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: spouse_birthdate, label: Spouse Birthdate, type: date, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: children, label: Dependent Children, type: number }]
           component:
             type: LineItemGrid
             source: employee_bank_accounts

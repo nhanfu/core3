@@ -1273,3 +1273,25 @@ the shared checkout's page discovery returned HTTP 500 because an unrelated
 concurrent page contains `components[0].row_action`; no other owner's file was
 altered. The exact blocker and screenshots are recorded in the evidence
 directory. No aggregate Employees sign-off is claimed.
+
+## EMP-FAMILY-INFO-001: Employee Personal family information (2026-09-20)
+
+The next smallest source-backed behavior is Odoo's Personal-tab Family group.
+Odoo defines `marital`, `spouse_complete_name`, `spouse_birthdate`, and
+`children` on `hr.version` in `addons/hr/models/hr_version.py`; the group and
+conditional spouse fields are rendered by `hr_employee_views.xml`.
+
+Core3 adds migration `20260920250000-036` with idempotent employee columns and
+deterministic family fixtures, extends the page/API-separated employee
+create/edit/read contract, and adds valid marital-status, non-negative
+children, ISO birthdate, current-company, missing-record, and optimistic
+stale-write guards. Focused coverage is **4 tests / 24 assertions**; audit is
+**681 pages / 690 routes / 1,256 datasources**.
+
+Authenticated evidence is under
+`evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`. Core3 and Odoo both
+render Family, Marital Status, Spouse Legal Name, Spouse Birthdate, and
+Dependent Children at desktop and mobile with viewport-matched widths and no
+page errors. Odoo records one unrelated aborted chatter request on desktop
+and known app-icon 404s as shell noise. No aggregate Employees sign-off is
+claimed.

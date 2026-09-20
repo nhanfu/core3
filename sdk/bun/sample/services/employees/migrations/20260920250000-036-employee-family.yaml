@@ -1,0 +1,35 @@
+version: 0.0.36
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS marital VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS spouse_complete_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS spouse_birthdate DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS children INTEGER;
+      UPDATE employees
+      SET marital = COALESCE(marital, CASE id
+        WHEN 'employee-demo-001' THEN 'married'
+        WHEN 'employee-demo-003' THEN 'cohabitant'
+        ELSE 'single' END),
+          spouse_complete_name = COALESCE(spouse_complete_name, CASE id
+        WHEN 'employee-demo-001' THEN 'Linh Nguyen'
+        WHEN 'employee-demo-003' THEN 'Thanh Tran'
+        ELSE NULL END),
+          spouse_birthdate = COALESCE(spouse_birthdate, CASE id
+        WHEN 'employee-demo-001' THEN DATE '1992-04-12'
+        WHEN 'employee-demo-003' THEN DATE '1994-08-20'
+        ELSE NULL END),
+          children = COALESCE(children, CASE id
+        WHEN 'employee-demo-001' THEN 2
+        WHEN 'employee-demo-003' THEN 1
+        ELSE 0 END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS marital;
+      ALTER TABLE employees DROP COLUMN IF EXISTS spouse_complete_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS spouse_birthdate;
+      ALTER TABLE employees DROP COLUMN IF EXISTS children;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

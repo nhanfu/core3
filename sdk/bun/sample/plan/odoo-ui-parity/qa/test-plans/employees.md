@@ -171,3 +171,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/`.
 | EMP-UI-011 | visual/responsive | Authenticated Core3/Odoo Personal tab | Emergency Contact group visible at desktop/mobile | conditional; Odoo pass, Core3 exact shared-discovery blocker |
 
 Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.
+
+## EMP-FAMILY-INFO-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-016 | workflow | Employee detail Personal / Family | Create and edit marital, spouse, and dependent-child values durably | pass |
+| EMP-PERM-016 | permission/security | Employee detail API edit | Employees write, company, stale, marital, date, and count guards enforce scope | pass |
+| EMP-DATA-016 | data/regression | Migration replay and restart | Seeded family fields persist without duplicate effects | pass |
+| EMP-UI-012 | visual/responsive | Authenticated Core3/Odoo Personal tab | Family group and conditional spouse fields visible at desktop/mobile | pass; Odoo shell noise recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.
