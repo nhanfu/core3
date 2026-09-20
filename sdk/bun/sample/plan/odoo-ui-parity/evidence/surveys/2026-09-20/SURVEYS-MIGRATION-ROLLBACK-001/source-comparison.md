@@ -1,6 +1,6 @@
 # SURVEYS-MIGRATION-ROLLBACK-001 source and gate comparison
 
-Date: 2026-09-20  
+Date: 2026-09-20
 Feature: DuckDB rollback/replay of the durable survey response graph
 
 ## Bounded fix
