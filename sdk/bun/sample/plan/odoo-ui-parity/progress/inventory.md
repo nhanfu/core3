@@ -679,3 +679,18 @@ Inventory sign-off remains open.
   and Stock report regression. Evidence is under
   `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`; downstream Odoo
   procurement remains open and full module sign-off is not claimed.
+
+## `INV-REPLENISH-INFO-001` — Replenishment Information (2026-09-21)
+
+- Added the source-backed Replenishment Information workflow after Product
+  Replenish: product/warehouse forecast context, Forecast Description demand
+  chart, durable report-open history, route catalog, and Save Rule min/max/route
+  persistence.
+- Kept page/API YAML separate and joined by `page.id`; migration 0.0.42 seeds
+  deterministic demand and run history. Company, actor, permission, range,
+  route, and row-version guards are covered by focused tests and restart reads.
+- Focused suite: 7 tests / 57 assertions. Authenticated Core3 desktop/mobile
+  and Odoo desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-REPLENISH-INFO-001/`; Odoo's reachable
+  account did not expose the source information action. Full module sign-off
+  remains open.

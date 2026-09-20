@@ -118,3 +118,8 @@ actions:
       result: { query: "SELECT * FROM inventory_orderpoints WHERE id = :id" }
     fields:
       - { field: snoozed_until, label: Snooze Date, type: date, required: true, default: '2026-01-22' }
+  - id: view_inventory_replenishment_info
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /replenishment/info
+    params: { id: '{row.id}', row_version: '{row.row_version}', min_qty: '{row.min_qty}', max_qty: '{row.max_qty}', route: '{row.route}', company_name: '{row.company_name}' }

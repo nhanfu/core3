@@ -1,0 +1,52 @@
+title: Replenishment Information
+page: { id: replenishment-info, route: /replenishment/info, breadcrumb: [Supply Chain, Inventory, Procurement, Replenishment, Information], auth: { require: [inventory.manage] } }
+components:
+  - type: StatRow
+    source: inventory_replenishment_info_context
+    title: Replenishment Information
+    stats:
+      - { label: Product, field: product_name }
+      - { label: Warehouse, field: warehouse_name }
+      - { label: Forecast, field: forecast }
+      - { label: To Order, field: to_order }
+      - { label: Lead Days, field: lead_days }
+  - type: Chart
+    source: inventory_replenishment_info_demand
+    title: Forecast Description
+    label_field: demand_date
+    value_field: stock_balance
+    variant: line
+    height: 240
+  - type: ListView
+    variant: odoo
+    source: inventory_replenishment_info_demand
+    header_actions:
+      - { id: save_inventory_replenishment_info, label: Save Rule, variant: primary, permission: inventory.manage }
+      - { id: record_inventory_replenishment_info, label: Refresh Information, variant: secondary, permission: inventory.manage }
+      - { id: back_to_inventory_replenishment, label: Back to Replenishment, variant: secondary, permission: inventory.manage }
+    columns:
+      - { field: demand_date, label: Date, type: PrimaryEntityCell, sortable: true }
+      - { field: reference, label: Reference }
+      - { field: outgoing_qty, label: Outgoing, align: right }
+      - { field: returned_qty, label: Returned, align: right }
+      - { field: net_demand, label: Net Demand, align: right }
+      - { field: stock_balance, label: Stock Balance, align: right }
+      - { field: state, label: Status }
+    page_size: 30
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No demand history, description: Completed stock movements will appear here for this replenishment rule. }
+  - type: ListView
+    variant: odoo
+    source: inventory_replenishment_info_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: line_count, label: Lines, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No information runs, description: Refresh Information records the report request. }

@@ -1,0 +1,74 @@
+page: { id: replenishment-info }
+datasources:
+  - id: inventory_replenishment_info_context
+    single: true
+    permission: inventory.manage
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_REPLENISHMENT_INFO_NOT_FOUND, message: The replenishment rule is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_REPLENISHMENT_INFO_UNAVAILABLE, message: Replenishment information is temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.product_id, o.product_name, o.location_name, o.warehouse_name, CAST(o.on_hand AS DOUBLE) AS on_hand, CAST(o.forecast AS DOUBLE) AS forecast, CAST(o.min_qty AS DOUBLE) AS min_qty, CAST(o.max_qty AS DOUBLE) AS max_qty, CAST(o.to_order AS DOUBLE) AS to_order, o.unit_name, o.route, o.trigger, o.state, o.company_name, o.lead_days, CAST(COUNT(d.id) AS INTEGER) AS demand_line_count, COALESCE(SUM(d.net_demand), 0) AS total_demand FROM inventory_orderpoints o LEFT JOIN inventory_replenishment_info_demand d ON d.orderpoint_id = o.id AND d.company_name = o.company_name WHERE o.id = :id AND o.active = TRUE AND (COALESCE(NULLIF(:current_company_name, ''), o.company_name) = o.company_name OR COALESCE(:current_company_name, '') = 'Core3 Demo Company') GROUP BY o.id, o.row_version, o.product_id, o.product_name, o.location_name, o.warehouse_name, o.on_hand, o.forecast, o.min_qty, o.max_qty, o.to_order, o.unit_name, o.route, o.trigger, o.state, o.company_name, o.lead_days"
+  - id: inventory_replenishment_info_demand
+    single: false
+    permission: inventory.manage
+    query: "SELECT id, row_version, orderpoint_id, CAST(demand_date AS VARCHAR) AS demand_date, reference, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty, CAST(returned_qty AS DOUBLE) AS returned_qty, CAST(net_demand AS DOUBLE) AS net_demand, CAST(stock_balance AS DOUBLE) AS stock_balance, state, company_name FROM inventory_replenishment_info_demand WHERE orderpoint_id = :id AND (:company_name IS NULL OR :company_name = '' OR company_name = :company_name) ORDER BY demand_date, id"
+  - id: inventory_replenishment_info_runs
+    single: false
+    permission: inventory.manage
+    query: "SELECT id, row_version, orderpoint_id, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_replenishment_info_runs WHERE orderpoint_id = :id AND (:company_name IS NULL OR :company_name = '' OR company_name = :company_name) ORDER BY opened_at DESC, id DESC"
+  - id: inventory_replenishment_info_routes
+    single: false
+    permission: inventory.manage
+    query: "SELECT value, label FROM (VALUES ('Buy', 'Buy'), ('Manufacture', 'Manufacture'), ('MTO', 'Make To Order')) AS routes(value, label) ORDER BY label"
+actions:
+  - id: record_inventory_replenishment_info
+    type: server
+    permission: inventory.manage
+    action: inventory.replenishment.info.open
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_replenishment_info_context, inventory_replenishment_info_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'replenish-info-' || CAST(:id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_replenishment_info_runs WHERE orderpoint_id = :id) AS VARCHAR) AS run_id, o.product_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, o.company_name, COUNT(d.id) AS line_count FROM inventory_orderpoints o LEFT JOIN inventory_replenishment_info_demand d ON d.orderpoint_id = o.id WHERE o.id = :id GROUP BY o.id, o.product_name, o.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND (COALESCE(NULLIF(:current_company_name, ''), company_name) = company_name OR COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 404, code: INVENTORY_REPLENISHMENT_INFO_NOT_FOUND, message: The replenishment rule is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_orderpoints WHERE id = :id AND row_version = :expected_row_version", status: 409, code: INVENTORY_REPLENISHMENT_INFO_STALE, message: The replenishment rule changed before the information was opened. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_REPLENISHMENT_INFO_ACTOR_REQUIRED, message: An authenticated inventory actor is required to open replenishment information. }
+      steps:
+        - query: "INSERT INTO inventory_replenishment_info_runs(id, orderpoint_id, requested_by, company_name, line_count, opened_at, row_version) VALUES(:run_id, :id, :requested_by, :company_name, :line_count, TIMESTAMP '2026-01-15 09:00:00', 1)"
+      result: { query: "SELECT id, orderpoint_id, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_replenishment_info_runs WHERE id = :run_id" }
+  - id: save_inventory_replenishment_info
+    type: server_form
+    permission: inventory.manage
+    title: Save Replenishment Rule
+    action: inventory.replenishment.info.save
+    handler: yaml_mutation
+    operation: update
+    prefill: { id: '{state.id}', expected_row_version: '{state.row_version}', min_qty: '{state.min_qty}', max_qty: '{state.max_qty}', route: '{state.route}', company_name: '{state.company_name}' }
+    refresh: [inventory_replenishment_info_context, inventory_replenishment_info_runs]
+    success_message: Replenishment rule saved.
+    fields:
+      - { field: id, label: Rule, type: hidden }
+      - { field: expected_row_version, label: Row Version, type: hidden }
+      - { field: company_name, label: Company, type: hidden }
+      - { field: min_qty, label: Minimum Quantity, type: number, required: true, min: 0 }
+      - { field: max_qty, label: Maximum Quantity, type: number, required: true, min: 0 }
+      - { field: route, label: Route, type: select, options_source: inventory_replenishment_info_routes, required: true }
+    mutation:
+      operation: update
+      table: inventory_orderpoints
+      fields: [min_qty, max_qty, route]
+      required: [min_qty, max_qty, route]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND (COALESCE(NULLIF(:current_company_name, ''), company_name) = company_name OR COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 404, code: INVENTORY_REPLENISHMENT_INFO_NOT_FOUND, message: The replenishment rule is not available in the current company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, '') = (SELECT company_name FROM inventory_orderpoints WHERE id = :id)", status: 403, code: INVENTORY_REPLENISHMENT_INFO_COMPANY, message: The replenishment rule company must match the current company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:max_qty AS DECIMAL(18,3)) >= CAST(:min_qty AS DECIMAL(18,3))", status: 422, code: INVENTORY_REPLENISHMENT_INFO_RANGE_INVALID, message: Maximum quantity must be greater than or equal to minimum quantity. }
+        - { query: "SELECT 1 AS ok WHERE :route IN ('Buy', 'Manufacture', 'MTO')", status: 422, code: INVENTORY_REPLENISHMENT_INFO_ROUTE_INVALID, message: Choose a supported replenishment route. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_REPLENISHMENT_INFO_ACTOR_REQUIRED, message: An authenticated inventory actor is required to save replenishment information. }
+      result: { query: "SELECT id, row_version, min_qty, max_qty, route, company_name FROM inventory_orderpoints WHERE id = :id" }
+  - id: back_to_inventory_replenishment
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /replenishment

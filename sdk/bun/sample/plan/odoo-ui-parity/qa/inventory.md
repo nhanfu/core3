@@ -879,3 +879,33 @@ exact blocker is recorded. No Odoo mutation or parity sign-off is claimed.
 QA disposition: PASS for the bounded Core3 request lifecycle and permissions;
 PARTIAL for direct Odoo modal comparison and downstream procurement
 generation. Full Inventory sign-off remains open.
+
+## Replenishment Information QA — `INV-REPLENISH-INFO-001` (2026-09-21)
+
+- Odoo source/menu/action: `stock_orderpoint_views.xml:24-63,143` binds the
+  orderpoint Replenishment Information and Forecast Description actions;
+  `stock_replenishment_info.xml:3-61` and `stock_replenishment_info.py:16-267`
+  define the transient context, graph, route choices, and Save behavior.
+- Core3: `pages/replenishment-info.yaml` is layout-only and joins
+  `api/replenishment-info.yaml` by `page.id`. The Replenishment list row opens
+  product/warehouse context; the API owns demand/run/route sources and the
+  manager-gated `inventory.replenishment.info.open` and `.save` actions.
+  Migration 0.0.42 provides durable deterministic demand and report history.
+- Focused test: `bun test
+  test/inventory_replenishment_info.integration.test.ts
+  test/inventory_replenishment.integration.test.ts` — PASS, 7 tests / 57
+  assertions. Coverage includes discovery/separation, deterministic context
+  and demand, durable report opens, Save Rule CRUD, permission, actor/company,
+  range/route, stale-row guards, and restart persistence.
+- Authenticated Core3 evidence: desktop 1440x900 and mobile 390x844 captures
+  show the forecast chart, three demand rows, durable run history, Save Rule
+  dialog/success, and no overflow or browser request errors.
+- Authenticated Odoo evidence: desktop and mobile Replenishment screens render
+  with no browser errors, but the supplied account exposes only Order,
+  Automate, and Snooze; the source information action/wizard is not reachable.
+  Exact comparison and screenshots are in
+  `evidence/inventory/2026-09-21/INV-REPLENISH-INFO-001/`.
+
+QA disposition: PASS for the bounded Core3 information/report and Save Rule
+lifecycle; PARTIAL for direct Odoo wizard interaction and downstream
+procurement generation. Full Inventory sign-off remains open.

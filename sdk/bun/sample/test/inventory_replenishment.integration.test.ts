@@ -39,7 +39,7 @@ describe('Inventory replenishment Odoo parity', () => {
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: true });
     expect(list.columns.map((column: any) => column.field)).toEqual(['product_name', 'on_hand', 'forecast', 'route', 'min_qty', 'max_qty', 'to_order', 'unit_name', 'actions']);
     expect(list.columns.at(-1).actions.map((item: any) => item.id)).toEqual([
-      'order_inventory_replenishment', 'automate_inventory_replenishment', 'snooze_inventory_replenishment',
+      'order_inventory_replenishment', 'automate_inventory_replenishment', 'snooze_inventory_replenishment', 'view_inventory_replenishment_info',
     ]);
     expect(api.datasources.every((candidate: any) => candidate.permission === 'inventory.manage')).toBe(true);
     expect(api.actions.every((candidate: any) => candidate.permission === 'inventory.manage')).toBe(true);

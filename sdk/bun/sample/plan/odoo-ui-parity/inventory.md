@@ -1488,3 +1488,27 @@ and Stock report regression suites. Authenticated Core3 desktop/mobile and
 paired Odoo comparison/blocker evidence is under
 `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`. Full Inventory
 sign-off remains open.
+
+## Procurement > Replenishment Information — `INV-REPLENISH-INFO-001` (2026-09-21)
+
+This bounded slice covers Odoo's source-backed Replenishment Information action
+and Forecast Description context after Product Replenish. The source is
+`addons/stock/views/stock_orderpoint_views.xml:24-63,143`,
+`addons/stock/wizard/stock_replenishment_info.xml:3-61`,
+`stock_replenishment_info.py:16-267`, and
+`stock_orderpoint.py:328-340`. Odoo provides transient min/max guidance,
+lead-time and demand context, forecast graph data, warehouse/route options, and
+Save/Close behavior.
+
+Core3 adds the paired `pages/replenishment-info.yaml` and
+`api/replenishment-info.yaml` contracts joined by `page.id`, a replenishment
+row action, deterministic demand/history fixtures, and migration
+`20260921160000-042-inventory-replenishment-info.yaml`. The API persists report
+opens and Save Rule min/max/route changes with manager permission, current
+company, authenticated actor, and row-version/range/route guards. Focused
+verification passes 7 tests / 57 assertions; authenticated Core3 desktop/mobile
+and paired Odoo captures are under
+`evidence/inventory/2026-09-21/INV-REPLENISH-INFO-001/`. Odoo renders the
+reachable Replenishment screens but does not expose the source information
+action to the supplied account; the exact blocker is recorded. Downstream
+procurement generation and full Inventory sign-off remain open.

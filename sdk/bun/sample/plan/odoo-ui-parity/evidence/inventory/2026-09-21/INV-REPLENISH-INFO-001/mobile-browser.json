@@ -1,0 +1,16 @@
+{
+  "viewport": { "width": 390, "height": 844 },
+  "url": "http://127.0.0.1:4328/inventory/replenishment/info?id=orderpoint-desk-left&row_version=1&min_qty=0&max_qty=0&route=Buy&company_name=My+Company+%28San+Francisco%29",
+  "title": "Replenishment Information",
+  "authenticated_as": "admin@tms.local",
+  "assertions": {
+    "product_context": true,
+    "save_rule_action": true,
+    "run_history": true,
+    "horizontal_overflow": false
+  },
+  "scroll": { "width": 390, "viewport_width": 390 },
+  "console_errors": [],
+  "failed_requests": [],
+  "bad_responses": []
+}

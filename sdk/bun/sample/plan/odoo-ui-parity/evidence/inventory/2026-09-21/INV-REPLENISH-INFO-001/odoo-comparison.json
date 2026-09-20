@@ -1,0 +1,22 @@
+{
+  "authenticated_as": "codex@core3.local",
+  "desktop": {
+    "viewport": { "width": 1440, "height": 900 },
+    "url": "http://127.0.0.1:8069/odoo/replenishment",
+    "title": "Replenishment",
+    "rendered": true,
+    "visible_actions": ["Order", "Automate", "Snooze"],
+    "replenishment_information_action_visible": false,
+    "console_errors": [],
+    "screenshot": "odoo-desktop-replenishment.png"
+  },
+  "mobile": {
+    "viewport": { "width": 390, "height": 844 },
+    "url": "http://127.0.0.1:8069/odoo/replenishment?view_type=kanban",
+    "title": "Replenishment",
+    "rendered": true,
+    "horizontal_overflow": false,
+    "screenshot": "odoo-mobile-replenishment.png"
+  },
+  "mutation": "none"
+}

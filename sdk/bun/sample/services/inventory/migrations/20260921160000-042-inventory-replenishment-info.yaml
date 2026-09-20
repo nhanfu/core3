@@ -1,0 +1,44 @@
+version: 0.0.42
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_replenishment_info_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        orderpoint_id VARCHAR NOT NULL, requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, line_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE(orderpoint_id, id)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_replenishment_info_demand (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        orderpoint_id VARCHAR NOT NULL, demand_date DATE NOT NULL,
+        reference VARCHAR NOT NULL, outgoing_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        returned_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        net_demand DECIMAL(18,3) NOT NULL DEFAULT 0,
+        stock_balance DECIMAL(18,3) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Done', company_name VARCHAR NOT NULL,
+        UNIQUE(orderpoint_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_replenishment_info_runs_orderpoint_idx ON inventory_replenishment_info_runs(orderpoint_id, opened_at, id);
+      CREATE INDEX IF NOT EXISTS inventory_replenishment_info_demand_orderpoint_idx ON inventory_replenishment_info_demand(orderpoint_id, demand_date, id);
+      INSERT INTO inventory_replenishment_info_demand
+        (id, orderpoint_id, demand_date, reference, outgoing_qty, returned_qty, net_demand, stock_balance, state, company_name)
+      VALUES
+        ('replenish-info-desk-left-0001', 'orderpoint-desk-left', DATE '2026-01-08', 'SO/INFO/0001', 2, 0, 2, 4, 'Done', 'My Company (San Francisco)'),
+        ('replenish-info-desk-left-0002', 'orderpoint-desk-left', DATE '2026-01-11', 'SO/INFO/0002', 1, 0, 1, 3, 'Done', 'My Company (San Francisco)'),
+        ('replenish-info-desk-left-0003', 'orderpoint-desk-left', DATE '2026-01-14', 'RET/INFO/0001', 0, 1, -1, 2, 'Done', 'My Company (San Francisco)')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_replenishment_info_runs
+        (id, orderpoint_id, requested_by, company_name, line_count)
+      VALUES ('replenish-info-run-0001', 'orderpoint-desk-left', 'Seeded Inventory', 'My Company (San Francisco)', 3)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_replenishment_info_runs WHERE orderpoint_id = 'orderpoint-desk-left';
+      DELETE FROM inventory_replenishment_info_demand WHERE orderpoint_id = 'orderpoint-desk-left';
+      DROP TABLE IF EXISTS inventory_replenishment_info_runs;
+      DROP TABLE IF EXISTS inventory_replenishment_info_demand;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
