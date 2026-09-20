@@ -1,5 +1,27 @@
 # ecommerce QA ledger
 
+## Product Tag Images (`ECOM-CATALOG-PRODUCT-TAG-IMAGE-001`, 2026-09-20)
+
+- Odoo source comparison: `product.tag.image` is a bounded image field with
+  200x200 limits, visible in the customer-visible tag form/list; website_sale
+  renders the image before its color/name fallback.
+- Core3 lifecycle: migrations 052/053 add durable tag-image metadata and
+  deterministic fixture stability; the list opens a separate tag-detail page,
+  whose API owns the matching `page.id`, attachment datasource, upload and
+  download actions, image-only/5 MB validation, replacement, permission, and
+  row-version concurrency contract.
+- Focused verification: `bun test
+  test/ecommerce_product_tag_image.integration.test.ts` — **3 passed, 25
+  assertions, 0 failures**. Coverage includes migration rerun, permission and
+  invalid upload boundaries, replacement, stale upload rejection, download,
+  and DuckDB restart bytes.
+- Browser verification: authenticated Core3 desktop/mobile and authenticated
+  Odoo `/shop` blocker captures are under
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/`.
+- Odoo `/shop` returned exact HTTP 404 on ports 8069 and 8073; paired visual
+  comparison is blocked. QA disposition: **bounded implementation verified,
+  not signed off**.
+
 ## Product Tag Variant Assignments (`ECOM-CATALOG-PRODUCT-TAG-VARIANT-ASSIGNMENT-001`, 2026-09-20)
 
 - Odoo source comparison: `product.tag.product_product_ids` is a distinct

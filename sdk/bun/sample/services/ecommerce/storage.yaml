@@ -11,3 +11,8 @@ attachments:
       route: /api/ecommerce/product-images
       permission: ecommerce.read
       query: SELECT * FROM ecommerce_product_images WHERE id = :attachment_id
+  ecommerce_product_tag_image:
+    download:
+      route: /api/ecommerce/product-tag-images
+      permission: ecommerce.read
+      query: SELECT * FROM ecommerce_product_tag_images WHERE id = :attachment_id

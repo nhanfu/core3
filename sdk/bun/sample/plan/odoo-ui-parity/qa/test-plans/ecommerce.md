@@ -78,6 +78,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-029 | Pricelist Rule configuration | Authorized Ecommerce editor creates, edits, and deletes a rule; target/date/value and stale-write guards preserve the durable pricelist and cart application resolves the selected rule | pass: `ecommerce_pricelist_rules.integration.test.ts`; authenticated Core3 form and company boundary captured |
 | ECOM-WF-030 | Product Variant configuration and resolution | Authorized catalog editor creates, edits, and deletes a variant; duplicate combination/reference and stale writes are rejected; restart preserves the variant and cart pricing resolves its variant rule before the template price | pass: `ecommerce_product_variants.integration.test.ts`; authenticated Core3 product detail/variant form captured |
 | ECOM-WF-031 | Product Tag variant assignment | Authorized catalog editor assigns and removes a product variant from a tag; duplicate, missing, cross-company, and stale operations preserve the tag and increment its row version durably | pass: `ecommerce_product_tag_variants.integration.test.ts`; authenticated Core3 assignment form captured |
+| ECOM-WF-032 | Product Tag image | Authorized catalog editor uploads/replaces an image for a product tag; invalid media, stale uploads, and missing tags leave the current image unchanged; bytes survive restart | pass: `ecommerce_product_tag_image.integration.test.ts`; authenticated Core3 detail evidence captured |
 
 ## Permission and security cases
 
@@ -105,6 +106,7 @@ the all-customer scope.
 | ECOM-PERM-025 | Pricelist Rule read/write/company boundary | `ecommerce.read` protects the detail/rules/options sources and `ecommerce.write` protects create/edit/delete; invalid target/date/value, duplicate, cross-company, and stale requests preserve the pricelist | pass: `ecommerce_pricelist_rules.integration.test.ts` contract and mutation coverage |
 | ECOM-PERM-026 | Product Variant read/write/company boundary | `ecommerce.read` protects variant/detail sources and `ecommerce.write` protects create/edit/delete; cross-company, duplicate combination/reference, invalid price, and stale requests preserve the product and variants | pass: `ecommerce_product_variants.integration.test.ts` contract and mutation coverage |
 | ECOM-PERM-027 | Product Tag Variant read/write/company boundary | `ecommerce.read` protects variant option/tag projections and `ecommerce.write` protects assign/remove; inactive, non-combination, cross-company, duplicate, missing, and stale requests preserve the tag | pass: `ecommerce_product_tag_variants.integration.test.ts` contract and mutation coverage |
+| ECOM-PERM-028 | Product Tag image read/write boundary | `ecommerce.read` protects tag detail/image reads and download; `ecommerce.write` protects upload/replacement; non-image, oversized, missing-tag, and stale requests preserve the current image | pass: `ecommerce_product_tag_image.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -123,6 +125,7 @@ the all-customer scope.
 | ECOM-UI-011 | Pricelist Rules detail/form/cart source | 1440x900, 390x844 | Authenticated Core3 detail renders seeded rules and Add Price Rule form at desktop/mobile; company boundary is visible; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-pricelist-rules-001/` |
 | ECOM-UI-012 | Product Variant detail/form/cart resolution | 1440x900, 390x844 | Authenticated Core3 product detail renders seeded variants and desktop New Variant form at both responsive states; variant-specific cart/pricelist resolution is test-backed; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-variants-001/` |
 | ECOM-UI-013 | Product Tag variant assignment list/form | 1440x900, 390x844 | Authenticated Core3 tag list renders assigned variant counts/names, desktop Assign Variant form exposes deterministic variants, and mobile list remains readable; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-variant-assignment-001/` |
+| ECOM-UI-014 | Product Tag image detail/form | 1440x900, 390x844 | Authenticated Core3 Product Tags list opens an image-capable detail form and remains readable at mobile; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/` |
 
 ## Reference blocker
 

@@ -1,0 +1,33 @@
+{
+  "feature_id": "ECOM-CATALOG-PRODUCT-TAG-IMAGE-001",
+  "date": "2026-09-20",
+  "core3": {
+    "runtime": "http://127.0.0.1:4312",
+    "authenticated_user": "admin@tms.local",
+    "company": "Core3 Demo Company",
+    "desktop": {
+      "viewport": "1440x900",
+      "route": "/ecommerce/product-tags/detail?id=ecommerce-tag-featured",
+      "uploaded_fixture": "27b9fbd6-5375-4268-8b30-c704372e8579-browser-product.svg",
+      "result": "pass",
+      "page_errors": [],
+      "request_errors": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "route": "/ecommerce/product-tags/detail?id=ecommerce-tag-featured",
+      "result": "pass",
+      "page_errors": [],
+      "request_errors": []
+    }
+  },
+  "odoo": {
+    "authenticated_user": "codex@core3.local",
+    "database": "core3_codex_demo",
+    "desktop_and_mobile": [
+      { "port": 8069, "route": "/shop", "status": 404, "result": "blocked" },
+      { "port": 8073, "route": "/shop", "status": 404, "result": "blocked" }
+    ],
+    "blocker": "Both supplied authenticated references lack an installed Website/eCommerce /shop route."
+  }
+}

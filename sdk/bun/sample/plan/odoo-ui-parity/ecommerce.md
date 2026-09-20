@@ -142,9 +142,9 @@ Service fixtures. The page/API provide search, customer-visibility filtering,
 empty/transport errors, customer-facing color, product assignment, and
 permissioned create/edit/delete. Server guards enforce unique names, valid
 colors, optimistic row versions, and relation cleanup on edit/delete.
-This bounded Core3 slice maps the available product-template catalog and now
-also covers Odoo variant-only tag assignments. The optional Odoo tag image
-remains an explicit follow-up gap.
+This bounded Core3 slice maps the available product-template catalog, Odoo
+variant-only tag assignments, and the optional Odoo tag image through the
+dedicated detail surface.
 
 Focused CRUD, permission, validation, assignment, migration-rerun, and DuckDB
 restart tests pass. Authenticated Core3 desktop/mobile evidence is under
@@ -152,6 +152,36 @@ restart tests pass. Authenticated Core3 desktop/mobile evidence is under
 create flow persisted `Browser Catalog Tag Verified` with Core3 Ceramic Mug assigned.
 Authenticated Odoo captures on ports 8069 and 8073 both show `/shop` 404, so
 the paired Product Tags comparison is blocked and Ecommerce remains unsigned.
+
+## Bounded feature — Product Tag Images (`ECOM-CATALOG-PRODUCT-TAG-IMAGE-001`)
+
+Odoo source comparison: the supplied `product/models/product_tag.py` defines
+`image = fields.Image(max_width=200, max_height=200)` on `product.tag`.
+`product/views/product_tag_views.xml` renders it as the form avatar when the
+tag is customer-visible and exposes it as an optional list image. The
+website_sale tag renderer uses the image when present and otherwise falls back
+to the tag color/name presentation.
+
+Core3 comparison: the prior Product Tags slice persisted tag metadata and
+template/variant assignments but left the Odoo image field open. This bounded
+slice adds durable `ecommerce_product_tag_images` storage (migration 052) and
+an idempotent tag fixture migration (053), plus the separate
+`product-tag-detail.yaml` page/API pair. The detail page uses the existing
+OdooFormView attachment contract, with an image-only, 5 MB upload guard,
+permissioned read/download and write/upload actions, replacement semantics,
+tag row-version concurrency, and local durable storage. Product Tags now opens
+the detail page from its list; the existing tag list/API contract remains
+separate and intact.
+
+Focused tests cover the Odoo/page/API/storage trace, read/write permissions,
+mime/size validation, replacement without partial writes, stale upload
+rejection, download bytes, migration rerun, and DuckDB restart persistence in
+`test/ecommerce_product_tag_image.integration.test.ts`. Authenticated Core3
+desktop/mobile evidence and authenticated Odoo `/shop` blocker captures are
+under `evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/`.
+Both Odoo references return exact HTTP 404 for `/shop`, so paired visual
+comparison is blocked. This is a bounded implementation; Ecommerce remains
+unsigned off.
 
 ## Bounded feature — Product Ribbons (`ECOM-CATALOG-RIBBONS-001`)
 

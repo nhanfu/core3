@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `61f96244950042a6705f63eed5c7906008a08e72` (Product Tag Variant Assignments); previous bounded slice: `8dbd5ab6575bdab4fc03c31d3f8578f601b1020b` (Product Variants).
+Latest committed bounded slice: `fb8312242ee51535d35e2582dd906232e8e10cb4` (Product Tag Variant Assignments); previous bounded slice: `2c2a356` (Product Variant Resolution).
 
 ## Current state
 
@@ -12,6 +12,21 @@ The current wave has a committed Ecommerce implementation and authenticated
 Core3 browser evidence. DEV-4 adds an eCommerce-owned, retry-safe outbox
 contract for handing checkout orders to the separate Sales service. Functional
 and ownership gates are still incomplete; no full parity claim is made here.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-TAG-IMAGE-001`
+
+The smallest remaining explicit Product Tags gap is Odoo's optional
+`product.tag.image` field. The source-backed implementation adds migration
+052 durable image metadata/storage and migration 053 deterministic fixture
+stability, a separate tag-detail page/API contract, attachment upload/download
+actions, image validation, write/read permissions, replacement and stale
+row-version guards, and restart persistence. Product Tags list rows now open
+the image-capable detail form. Focused tests are in
+`test/ecommerce_product_tag_image.integration.test.ts`; authenticated Core3
+desktop/mobile and Odoo `/shop` blocker evidence is recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/`.
+The bounded commit is local and will be recorded in the handoff after the
+scoped verification pass; module sign-off remains open.
 
 ## Completed bounded task — `ECOM-CATALOG-PRODUCT-VARIANTS-001`
 

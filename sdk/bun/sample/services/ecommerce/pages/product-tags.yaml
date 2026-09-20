@@ -25,4 +25,12 @@ components:
       - { id: delete_ecommerce_product_tag, label: Delete, permission: ecommerce.write, variant: danger }
     page_size: 50
     row_key: id
+    row_open_action: view_ecommerce_product_tag
+    row_double_click_action: view_ecommerce_product_tag
     empty_state: { title: Define a new tag, description: Create a tag to organize products and control customer-facing labels. }
+actions:
+  - id: view_ecommerce_product_tag
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/product-tags/detail
+    params: { id: '{row.id}' }

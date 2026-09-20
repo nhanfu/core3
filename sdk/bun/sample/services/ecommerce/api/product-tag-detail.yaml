@@ -1,0 +1,44 @@
+page: { id: ecommerce-product-tag-detail }
+datasources:
+  - id: ecommerce_product_tag_detail
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_TAG_UNAUTHENTICATED, message: Sign in to view this product tag. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_TAG_FORBIDDEN, message: You do not have permission to view this product tag. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_TAG_UNAVAILABLE, message: Product tag details are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers, i.id AS image_id, i.file_name AS image_file_name, i.mime_type AS image_mime_type, i.size_bytes AS image_size_bytes, i.uploaded_by AS image_uploaded_by, CAST(i.created_at AS VARCHAR) AS image_created_at FROM ecommerce_product_tags t LEFT JOIN ecommerce_product_tag_images i ON i.tag_id = t.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND t.id = :id"
+  - id: ecommerce_product_tag_images
+    permission: ecommerce.read
+    query: "SELECT id, tag_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_tag_images WHERE tag_id = :id ORDER BY created_at DESC, id"
+actions:
+  - id: back_to_ecommerce_product_tags
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/product-tags
+    params: {}
+  - id: upload_ecommerce_product_tag_image
+    type: upload
+    action: ecommerce.product_tags.images.upload
+    handler: attachment_metadata
+    permission: ecommerce.write
+    kind: ecommerce_product_tag_image
+    params: { tag_id: '{state.ecommerce_product_tag_detail.id}', expected_row_version: '{state.ecommerce_product_tag_detail.row_version}' }
+    refresh: [ecommerce_product_tag_detail, ecommerce_product_tag_images]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :tag_id", status: 404, code: ECOMMERCE_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :tag_id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This product tag changed before the image could be uploaded. Reload it before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(CAST(:mimeType AS VARCHAR)) LIKE 'image/%' AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 5242880", status: 422, code: ECOMMERCE_PRODUCT_TAG_IMAGE_INVALID, message: Upload a non-empty image up to 5 MB. }
+      before_steps:
+        - { query: "DELETE FROM ecommerce_product_tag_images WHERE tag_id = :tag_id" }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_tag_images(id, tag_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :tag_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
+        - { query: "UPDATE ecommerce_product_tags SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :tag_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: This product tag changed before the image could be uploaded. Reload it before retrying. }
+      result: { query: "SELECT id, tag_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_tag_images WHERE id = :attachment_id" }
+  - id: download_ecommerce_product_tag_image
+    type: download
+    permission: ecommerce.read
+    kind: ecommerce_product_tag_image

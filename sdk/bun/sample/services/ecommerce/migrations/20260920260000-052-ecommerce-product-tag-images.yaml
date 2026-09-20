@@ -1,0 +1,25 @@
+version: 0.0.52
+kind: schema
+description: eCommerce product tag images
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_tag_images (
+        id VARCHAR PRIMARY KEY,
+        tag_id VARCHAR NOT NULL UNIQUE,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_tag_images_tag_idx ON ecommerce_product_tag_images(tag_id, created_at);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_tag_images_tag_idx;
+      DROP TABLE IF EXISTS ecommerce_product_tag_images;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

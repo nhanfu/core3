@@ -1,0 +1,23 @@
+title: Product Tag
+page: { id: ecommerce-product-tag-detail, route: /ecommerce/product-tags/detail, breadcrumb: [eCommerce, Products, Product Tags, Product Tag], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_product_tag_detail
+    editable: false
+    title_field: name
+    attachment_source: ecommerce_product_tag_images
+    attachment_panel_open: true
+    attachment_page_size: 10
+    attachment_label: Tag image
+    add_attachment_label: Upload tag image
+    no_attachments_label: No tag image
+    uploading_label: Uploading tag image…
+    upload_failed_label: Tag image upload failed
+    download_label: Download tag image
+    attachment_accept: image/*
+    attachment_upload_action: upload_ecommerce_product_tag_image
+    attachment_download_action: download_ecommerce_product_tag_image
+    header_actions:
+      - { id: back_to_ecommerce_product_tags, label: Back to Product Tags, variant: secondary }
+    groups:
+      - { title: Product Tag, columns: 2, fields: [{ field: name, label: Tag }, { field: color, label: Color, type: ColorSwatch }, { field: sequence, label: Sequence }, { field: visible_to_customers, label: Visible to customers, type: StatusChip }] }
