@@ -1,0 +1,33 @@
+title: eCommerce Category
+page: { id: ecommerce-category-detail, route: /ecommerce/categories/detail, breadcrumb: [eCommerce, Products, Categories, Category], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_category_detail
+    editable: false
+    title_field: name
+    subtitle_field: parent_name
+    attachment_source: ecommerce_category_cover_image
+    attachment_panel_open: true
+    attachment_page_size: 1
+    attachment_label: Cover image
+    add_attachment_label: Upload cover image
+    no_attachments_label: No cover image
+    uploading_label: Uploading cover image…
+    upload_failed_label: Cover image upload failed
+    download_label: Download cover image
+    attachment_accept: image/*
+    attachment_upload_action: upload_ecommerce_category_cover_image
+    attachment_download_action: download_ecommerce_category_cover_image
+    header_actions:
+      - { id: back_to_ecommerce_categories, label: Back to Categories, variant: secondary }
+      - { id: remove_ecommerce_category_cover_image, label: Remove Cover Image, variant: danger, permission: ecommerce.write }
+    groups:
+      - title: Category
+        columns: 2
+        fields:
+          - { field: name, label: Category }
+          - { field: parent_name, label: Parent Category }
+          - { field: sequence, label: Sequence }
+          - { field: active, label: Active, type: StatusChip }
+          - { field: company_name, label: Company }
+          - { field: cover_image_file_name, label: Cover Image }

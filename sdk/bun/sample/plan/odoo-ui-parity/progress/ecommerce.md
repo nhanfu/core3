@@ -4,8 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `26a872c6ab326dd2b10b5aeb911a6095e52ae6e1`
-(`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`, committed locally; not pushed).
+Latest committed bounded slice: `ac45965a55653bf7e6a2277c6ccf530e25e45ee3`
+(`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`, committed locally; not pushed).
+
+## Current bounded task — `ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`
+
+The tenth-wave source-backed gap is Website Sale's
+`product.public.category.cover_image`. Odoo exposes the image on the public
+category model/view and updates it through the category image controller.
+Core3 migrations 084/085 add durable company-scoped metadata and a
+deterministic Accessories fixture. Category list and detail use paired,
+separate page/API YAML; upload/replace, download, and remove are permissioned,
+validated, company-aware, optimistic, and restart-safe.
+
+Focused verification is complete: **5 tests, 38 assertions, 0 failures**
+including category regression; paired schema validation passed for 2 pairs,
+scoped ESLint and `git diff --check` passed. The repository UI audit is
+blocked by an unrelated shared stale kanban/search page schema error; no
+non-Ecommerce file was changed. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-category-cover-image-001/`.
+Core3 desktop/mobile browser capture is blocked by unavailable ports and no
+persistent `js_repl`; Odoo `/shop` is exact HTTP 404 on 8069/8073. Committed
+locally as `ac45965a55653bf7e6a2277c6ccf530e25e45ee3`; not pushed.
 
 ## Completed bounded task — `ECOM-CATALOG-PRODUCT-DOCUMENTS-001`
 

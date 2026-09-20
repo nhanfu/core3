@@ -6,11 +6,16 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_CATEGORIES_UNAUTHENTICATED, message: Sign in to view eCommerce categories. }
       forbidden: { status: 403, code: ECOMMERCE_CATEGORIES_FORBIDDEN, message: You do not have permission to view eCommerce categories. }
       transport_error: { status: 503, code: ECOMMERCE_CATEGORIES_UNAVAILABLE, message: eCommerce categories are temporarily unavailable. }
-    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, COUNT(p.id) AS product_count FROM ecommerce_categories c LEFT JOIN ecommerce_products p ON p.category = c.name AND p.active = TRUE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(c.parent_name, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR c.active = :active) GROUP BY c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active ORDER BY c.sequence, c.name"
+    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, c.company_name, c.cover_image_file_name, COUNT(p.id) AS product_count FROM ecommerce_categories c LEFT JOIN ecommerce_products p ON p.category = c.name AND p.active = TRUE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(c.parent_name, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR c.active = :active) AND (COALESCE(:company_name, '') = '' OR c.company_name = :company_name OR c.company_name IS NULL) GROUP BY c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, c.company_name, c.cover_image_file_name ORDER BY c.sequence, c.name"
   - id: ecommerce_category_active
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
 actions:
+  - id: view_ecommerce_category
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/categories/detail
+    params: { id: '{row.id}' }
   - id: create_ecommerce_category
     type: server_form
     permission: ecommerce.write

@@ -1,0 +1,28 @@
+version: 0.0.85
+kind: data
+description: deterministic Website Sale category cover image fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_categories
+      SET company_name = 'My Company',
+          cover_image_file_name = CASE WHEN id = 'ecommerce-category-accessories' THEN 'accessories-cover.png' ELSE cover_image_file_name END,
+          cover_image_mime_type = CASE WHEN id = 'ecommerce-category-accessories' THEN 'image/png' ELSE cover_image_mime_type END,
+          cover_image_size_bytes = CASE WHEN id = 'ecommerce-category-accessories' THEN 96 ELSE cover_image_size_bytes END,
+          cover_image_storage_key = CASE WHEN id = 'ecommerce-category-accessories' THEN 'ecommerce/category-covers/accessories-cover.png' ELSE cover_image_storage_key END,
+          cover_image_uploaded_by = CASE WHEN id = 'ecommerce-category-accessories' THEN 'system-fixture' ELSE cover_image_uploaded_by END
+      WHERE company_name IS NULL OR id = 'ecommerce-category-accessories';
+    down: |
+      UPDATE ecommerce_categories
+      SET company_name = NULL,
+          cover_image_file_name = NULL,
+          cover_image_mime_type = NULL,
+          cover_image_size_bytes = NULL,
+          cover_image_storage_key = NULL,
+          cover_image_uploaded_by = NULL,
+          cover_image_updated_at = NULL;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

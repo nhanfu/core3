@@ -21,3 +21,8 @@ attachments:
       route: /api/ecommerce/product-documents
       permission: ecommerce.read
       query: SELECT d.* FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :attachment_id AND d.active = TRUE AND p.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)
+  ecommerce_category_cover_image:
+    download:
+      route: /api/ecommerce/category-cover-images
+      permission: ecommerce.read
+      query: SELECT id, cover_image_file_name AS file_name, cover_image_mime_type AS mime_type, cover_image_size_bytes AS size_bytes, cover_image_storage_key AS storage_key FROM ecommerce_categories WHERE id = :attachment_id AND active = TRUE AND cover_image_file_name IS NOT NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name OR company_name IS NULL)

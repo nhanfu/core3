@@ -12,10 +12,11 @@ components:
       - { field: name, label: Category, type: PrimaryEntityCell }
       - { field: parent_name, label: Parent Category }
       - { field: sequence, label: Sequence, align: right }
+      - { field: cover_image_file_name, label: Cover Image }
       - { field: product_count, label: Products, align: right }
       - { field: active, label: Active, type: StatusChip }
     row_actions: menu
-    actions: [{ id: archive_ecommerce_category, label: Archive, permission: ecommerce.write, show_if: "row.active === true" }, { id: restore_ecommerce_category, label: Restore, permission: ecommerce.write, show_if: "row.active === false" }]
+    actions: [{ id: view_ecommerce_category, label: View, permission: ecommerce.read }, { id: archive_ecommerce_category, label: Archive, permission: ecommerce.write, show_if: "row.active === true" }, { id: restore_ecommerce_category, label: Restore, permission: ecommerce.write, show_if: "row.active === false" }]
     page_size: 50
     row_key: id
     empty_state: { title: No categories found, description: Create a category to organize products on your website. }

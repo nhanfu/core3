@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Category Cover Image (`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product_public_category.py` defines
+  `cover_image`; `product_public_category_views.xml` renders the category
+  image/action; and `controllers/main.py` assigns the uploaded image through
+  `set_category_image`.
+- Core3 lifecycle: pass for this bounded category-image contract. Migrations
+  084/085 add durable metadata and a deterministic Accessories fixture.
+  Category list/detail use separate page/API YAML; upload/replace,
+  download/remove, company scope, permissions, validation, optimistic row
+  versions, and restart persistence are covered.
+- Focused verification: `bun test
+  test/ecommerce_category_cover_image.integration.test.ts
+  test/ecommerce_categories.integration.test.ts --timeout 20000` — **5
+  passed, 38 assertions, 0 failures**. Paired schema validation passed for 2
+  pairs; scoped ESLint and `git diff --check` passed. The repository UI audit
+  is blocked by an unrelated shared stale kanban/search page schema error
+  (`group_by` missing and unsupported search keys); no non-Ecommerce file was
+  changed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable and no persistent `js_repl` browser
+  runtime is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Public category rendering, image-editor parity, broader browser actor
+  coverage, and paired Odoo rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-category-cover-image-001/`.
+
 ## Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product/models/product_document.py` defines the

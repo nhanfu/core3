@@ -1,6 +1,29 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product-document slice; module sign-off remains open)
+Status: qa-in-progress (bounded category-cover-image slice; module sign-off remains open)
+
+## Bounded feature — Category Cover Image (`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`)
+
+Odoo source comparison: `website_sale/models/product_public_category.py`
+defines `product.public.category.cover_image`; the category form/view in
+`views/product_public_category_views.xml` renders the image and action, and
+`controllers/main.py` assigns uploaded data through
+`/snippets/category/set_image`.
+
+Core3 had category names and hierarchy but no durable category image lifecycle.
+Migrations 084/085 add company and cover-image metadata plus a deterministic
+Accessories fixture. The category list and category detail use separate
+page/API YAML pairs. Authenticated read/write actions support upload/replace,
+download, and removal with Ecommerce permissions, current-company filtering,
+image validation, optimistic row versions, and restart persistence. Binary
+bytes are kept in the Ecommerce attachment storage route.
+
+Focused verification and schema/audit evidence are recorded in
+`evidence/ecommerce/2026-09-21/ecom-catalog-category-cover-image-001/`.
+Core3 authenticated desktop/mobile rendering is blocked by unavailable runtime
+ports and the missing persistent browser runtime. Odoo `/shop` returns exact
+HTTP 404 on ports 8069 and 8073, so paired comparison is blocked. This bounded
+slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`)
 

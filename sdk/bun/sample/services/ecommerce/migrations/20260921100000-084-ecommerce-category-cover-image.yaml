@@ -1,0 +1,26 @@
+version: 0.0.84
+kind: schema
+description: durable Website Sale public category cover image metadata
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_categories ADD COLUMN company_name VARCHAR;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_file_name VARCHAR;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_mime_type VARCHAR;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_size_bytes BIGINT;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_storage_key VARCHAR;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_uploaded_by VARCHAR;
+      ALTER TABLE ecommerce_categories ADD COLUMN cover_image_updated_at TIMESTAMP;
+    down: |
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_updated_at;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_uploaded_by;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_storage_key;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_size_bytes;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_mime_type;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS cover_image_file_name;
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb
