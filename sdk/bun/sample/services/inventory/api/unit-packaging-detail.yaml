@@ -1,0 +1,73 @@
+page: { id: unit-packaging-detail }
+datasources:
+  - id: inventory_unit_packaging_detail
+    single: true
+    permission: inventory.read
+    error_states: { missing_record: { status: 404, code: INVENTORY_UNIT_PACKAGING_NOT_FOUND, message: Unit or packaging not found in the current company. }, transport_error: { status: 503, code: INVENTORY_UNIT_PACKAGING_UNAVAILABLE, message: This unit or packaging is temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, CAST(relative_factor AS DOUBLE) AS relative_factor, COALESCE(reference_unit_id, '') AS reference_unit_id, COALESCE(reference_unit_name, '') AS reference_unit_name, active, company_name, usage_count, CASE WHEN reference_unit_id IS NULL THEN TRUE ELSE FALSE END AS is_reference_unit FROM inventory_units_packagings WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))"
+  - id: inventory_unit_packaging_children
+    single: false
+    permission: inventory.read
+    query: "SELECT id, row_version, sequence, name, CAST(relative_factor AS DOUBLE) AS relative_factor, active, company_name FROM inventory_units_packagings WHERE reference_unit_id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared') ORDER BY sequence, name, id"
+actions:
+  - id: back_to_inventory_units_packagings
+    type: navigate
+    permission: inventory.read
+    navigate_to: /units-packagings
+  - id: edit_inventory_unit_packaging
+    type: server_form
+    permission: inventory.manage
+    title: Edit Unit & Packaging
+    action: inventory.units_packagings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_unit_packaging_detail
+    refresh: [inventory_unit_packaging_detail, inventory_units_packagings, inventory_unit_packaging_children]
+    mutation:
+      operation: update
+      table: inventory_units_packagings
+      fields: [sequence, name, relative_factor, reference_unit_id, reference_unit_name, company_name]
+      required: [name, relative_factor, company_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_units_packagings WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_UNIT_PACKAGING_NOT_FOUND, message: Unit or packaging not found in the current company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_UNIT_NAME_REQUIRED, message: A unit name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:relative_factor AS DOUBLE) > 0", status: 422, code: INVENTORY_UNIT_FACTOR_INVALID, message: Quantity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_UNIT_COMPANY_FORBIDDEN, message: The unit company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_units_packagings WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company_name = :company_name AND id <> :id)", status: 409, code: INVENTORY_UNIT_NAME_EXISTS, message: A unit or packaging with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE (CAST(:relative_factor AS DOUBLE) = 1 AND COALESCE(:reference_unit_id, '') = '') OR EXISTS (SELECT 1 FROM inventory_units_packagings WHERE id = :reference_unit_id AND active = TRUE AND (company_name = :company_name OR company_name = 'Shared'))", status: 422, code: INVENTORY_UNIT_REFERENCE_INVALID, message: Select an active reference unit when the quantity is not one. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:reference_unit_id, '') = '' OR :reference_unit_id <> :id", status: 422, code: INVENTORY_UNIT_REFERENCE_SELF, message: A unit cannot reference itself. }
+      result: { query: "SELECT * FROM inventory_units_packagings WHERE id = :id" }
+    fields: [{ field: sequence, label: Sequence, type: number }, { field: name, label: Unit Name, type: text, required: true }, { field: relative_factor, label: Quantity, type: number, required: true, min: 0.000001, step: 0.000001 }, { field: reference_unit_id, label: Reference Unit, type: select, options_source: inventory_units_packaging_reference_units }, { field: company_name, label: Company, type: text, required: true }]
+  - id: archive_inventory_unit_packaging
+    type: server
+    permission: inventory.manage
+    action: inventory.units_packagings.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_unit_packaging_detail, inventory_units_packagings]
+    mutation: { operation: update, table: inventory_units_packagings, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_units_packagings WHERE id = :id AND active = TRUE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_UNIT_PACKAGING_NOT_FOUND, message: Active unit or packaging not found in the current company. }, { query: "SELECT 1 AS ok FROM inventory_units_packagings WHERE id = :id AND usage_count = 0", status: 409, code: INVENTORY_UNIT_IN_USE, message: A unit used by inventory data cannot be archived. }] }
+  - id: restore_inventory_unit_packaging
+    type: server
+    permission: inventory.manage
+    action: inventory.units_packagings.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_unit_packaging_detail, inventory_units_packagings]
+    mutation: { operation: update, table: inventory_units_packagings, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_units_packagings WHERE id = :id AND active = FALSE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_UNIT_PACKAGING_NOT_FOUND, message: Archived unit or packaging not found in the current company. }] }
+  - id: delete_inventory_unit_packaging
+    type: server
+    permission: inventory.manage
+    action: inventory.units_packagings.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete unit or packaging {{row.name}}?'
+    refresh: [inventory_units_packagings]
+    mutation:
+      operation: delete
+      table: inventory_units_packagings
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_units_packagings WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_UNIT_PACKAGING_NOT_FOUND, message: Unit or packaging not found in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_units_packagings WHERE id = :id AND usage_count = 0", status: 409, code: INVENTORY_UNIT_IN_USE, message: A unit used by inventory data cannot be deleted. Archive it instead. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_units_packagings WHERE reference_unit_id = :id)", status: 409, code: INVENTORY_UNIT_HAS_CHILDREN, message: A reference unit with dependent units cannot be deleted. }

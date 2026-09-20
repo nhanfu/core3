@@ -787,3 +787,22 @@ Inventory sign-off remains open.
   authenticate, but `/odoo/action-434` redirects to Discuss at desktop and
   mobile; source comparison and exact blocker are recorded. Full Inventory
   sign-off remains open.
+
+## `INV-UNITS-PACKAGINGS-001` — Inventory Units & Packagings (2026-09-21)
+
+- Selected the next uncovered Inventory Configuration > Products action:
+  `stock.menu_stock_uom_form_action` → `uom.product_uom_form_action`, the
+  source `uom.uom` list/form for Units & Packagings.
+- Added migration `20260921220000-048-inventory-units-packagings.yaml`,
+  deterministic base/derived/shared/archived fixtures, and separate list/detail
+  page/API YAML joined by `page.id`. Manager actions enforce positive factors,
+  valid reference relationships, company scope, duplicate names, in-use and
+  dependent guards, archive/restore, and row versions.
+- Focused verification: 4 tests / 35 assertions pass. Audit passes at 710
+  pages, 719 routes, and 1,353 datasources; scoped ESLint and `git diff --check`
+  pass.
+- Authenticated Core3 desktop/mobile list/detail and Odoo `/odoo/action-90`
+  desktop/mobile evidence are under
+  `evidence/inventory/2026-09-21/INV-UNITS-PACKAGINGS-001/`. Core3 New-form
+  rendering was not claimed; Odoo source list renders 21 rows. Full Inventory
+  sign-off remains open.

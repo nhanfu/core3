@@ -426,6 +426,35 @@ QA disposition: PASS for the bounded Core3 Product Variants lifecycle and
 guards; BLOCKED for the paired Odoo action capture. Full Inventory sign-off
 remains open.
 
+## Inventory Units & Packagings QA — `INV-UNITS-PACKAGINGS-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_menu_views.xml:20-34`,
+  `addons/uom/views/uom_uom_views.xml:3-61`, and
+  `addons/uom/models/uom_uom.py:17-47,97-104`. The action is
+  `uom.product_uom_form_action` for `uom.uom`, with list/form sequence, name,
+  quantity, reference-unit, search, and UoM-group behavior.
+- Core3 contract: PASS. List/detail presentation YAML is separate from list/
+  detail API YAML and joined by `page.id`. Migration 0.0.48 adds durable
+  conversion/reference rows, usage counts, company scope, active/archive
+  state, and deterministic fixtures. Manager mutations enforce factor,
+  reference, company, duplicate, in-use/dependent, and row-version guards.
+- Focused test: `bun test test/inventory_units_packagings.integration.test.ts
+  --timeout 20000` — PASS, 4 tests / 35 assertions. `bun run audit` — PASS,
+  710 pages, 719 routes, 1,353 datasources. Scoped ESLint and diff-check pass.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 list/detail states with matching document/body widths and no feature
+  HTTP or console errors. The unrelated notifications poll abort is recorded
+  in paired JSON evidence; browser New-form rendering is not claimed.
+- Odoo comparison: PASS. Authenticated `/odoo/action-90` renders the actual
+  Units & Packagings list with 21 rows at both viewports; no Odoo mutation was
+  attempted. Evidence is under
+  `evidence/inventory/2026-09-21/INV-UNITS-PACKAGINGS-001/`.
+
+QA disposition: PASS for the bounded Core3 contract, lifecycle tests, and
+paired read-only Odoo list evidence; Core3 browser CRUD-form rendering remains
+open. Full Inventory sign-off remains open.
+
 ## Operations Types QA — `INV-OP-TYPES-001` (2026-09-20)
 
 - Odoo source/menu/action: `stock.menu_pickingtype` →

@@ -1652,3 +1652,32 @@ evidence is under
 redirected to Discuss at both viewports, so the exact blocker is recorded and
 no Odoo Product Variants state is claimed. Full Inventory sign-off remains
 open.
+
+## Configuration > Products > Units & Packagings — `INV-UNITS-PACKAGINGS-001` (2026-09-21)
+
+This bounded eleventh-wave slice closes the next uncovered Inventory
+configuration action. Odoo's
+`addons/stock/views/stock_menu_views.xml:20-34` binds
+`menu_stock_uom_form_action` to `uom.product_uom_form_action` under
+Configuration > Products, gated by `uom.group_uom`. The action and views in
+`addons/uom/views/uom_uom_views.xml:3-61` use `uom.uom` list/form fields for
+sequence, name, relative factor, and reference unit. The source model and
+constraints are in `addons/uom/models/uom_uom.py:17-47,97-104`.
+
+Core3 adds `pages/units-packagings.yaml` and
+`pages/unit-packaging-detail.yaml` as presentation-only contracts paired with
+`api/units-packagings.yaml` and `api/unit-packaging-detail.yaml` by matching
+`page.id`. Migration `20260921220000-048-inventory-units-packagings.yaml`
+stores conversion factors, reference relationships, usage counts, active state,
+company scope, and row versions, with deterministic base, derived, shared, and
+archived fixtures. The list/detail lifecycle supports reference-child context,
+manager create/edit/archive/restore/delete, positive-factor and reference
+validation, current-company writes, in-use/dependent deletion guards, and
+optimistic concurrency.
+
+Focused verification passes 4 tests / 35 assertions. Authenticated Core3
+desktop/mobile list/detail evidence and authenticated Odoo `/odoo/action-90`
+desktop/mobile evidence are under
+`evidence/inventory/2026-09-21/INV-UNITS-PACKAGINGS-001/`. Core3 browser CRUD
+form opening remained unproven in this bounded capture; the focused suite
+covers CRUD and guards. Full Inventory sign-off remains open.

@@ -1,0 +1,74 @@
+{
+  "feature": "INV-UNITS-PACKAGINGS-001",
+  "capturedAt": "2026-09-20T21:43:15.710Z",
+  "core3": [
+    {
+      "device": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:4330/inventory/units-packagings",
+      "title": "Units & Packagings",
+      "listText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Configuration / Products / Units & Packagings\n1-10 / 10\n‹\n›\n\tUnit Name\n\tContains\n\tReference Unit\n\n⠿\t\nMinutes\n\t0.017\tHours\n⠿\t\ncm\n\t—\t—\n⠿\t\ng\n\t—\t—\n⠿\t\nHours\n\t—\t—\n⠿\t\nUnits\n\t—\t—\n⠿\t\nPack of 6\n\t6.000\tUnits\n⠿\t\nBox of 12\n\t12.000\tUnits\n⠿\t\nShared Unit\n\t—\t—\n⠿\t\nm\n\t100.000\tcm\n⠿\t\nkg\n\t1000.000\tg",
+      "detailText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nProducts\n›\nUnits & Packagings\nBack to Units & Packagings\nEdit\nArchive\nDelete\nPack of 6\nACTIVE\nUnit of Measure\nUnit Name\nPack of 6\nQuantity\n6\nReference Unit\nUnits\nSequence\n600\nCompany\nCore3 Demo Company\nUsed By\n0",
+      "createText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Configuration / Products / Units & Packagings\n1-10 / 10\n‹\n›\n\tUnit Name\n\tContains\n\tReference Unit\n\n⠿\t\nMinutes\n\t0.017\tHours\n⠿\t\ncm\n\t—\t—\n⠿\t\ng\n\t—\t—\n⠿\t\nHours\n\t—\t—\n⠿\t\nUnits\n\t—\t—\n⠿\t\nPack of 6\n\t6.000\tUnits\n⠿\t\nBox of 12\n\t12.000\tUnits\n⠿\t\nShared Unit\n\t—\t—\n⠿\t\nm\n\t100.000\tcm\n⠿\t\nkg\n\t1000.000\tg",
+      "widths": {
+        "document": 1440,
+        "viewport": 1440,
+        "body": 1440
+      },
+      "errors": [],
+      "failed": [],
+      "bad": []
+    },
+    {
+      "device": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:4330/inventory/units-packagings",
+      "title": "Units & Packagings",
+      "listText": "AU\nNew\nUnits & Packagings\n1-10 / 10\n‹\n›\nMinutes\n\nHours\n\nContains\n0.017\nSequence\n1\nActive\ntrue\ncm\nSequence\n100\nActive\ntrue\ng\nSequence\n100\nActive\ntrue\nHours\nSequence\n100\nActive\ntrue\nUnits\nSequence\n100\nActive\ntrue\nPack of 6\n\nUnits\n\nContains\n6.000\nSequence\n600\nActive\ntrue\nBox of 12\n\nUnits\n\nContains\n12.000\nSequence\n650\nActive\ntrue\nShared Unit\nSequence\n800\nActive\ntrue\nm\n\ncm\n\nContains\n100.000\nSequence\n1000\nActive\ntrue\nkg\n\ng\n\nContains\n1000.000\nSequence\n1000\nActive\ntrue",
+      "detailText": "AU\nBack to Units & Packagings\nEdit\nArchive\nDelete\nPack of 6\nACTIVE\nUnit of Measure\nUnit Name\nPack of 6\nQuantity\n6\nReference Unit\nUnits\nSequence\n600\nCompany\nCore3 Demo Company\nUsed By\n0",
+      "createText": "",
+      "widths": {
+        "document": 390,
+        "viewport": 390,
+        "body": 390
+      },
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:4330/api/v1/notifications",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "bad": []
+    }
+  ],
+  "odoo": [
+    {
+      "device": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/odoo/action-90",
+      "body": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nUnits & Packagings\n1-21 / 21\n\t\t\nUnit Name\n\t\nContains\n\t\nReference Unit\n\n\n\t\tMinutes\t0.017\tHours\n\n\t\tft²\t0.093\tm²\n\n\t\tUnits\t\t\n\n\t\tHours\t\t\n\n\t\tmm\t\t\n\n\t\tm²\t\t\n\n\t\tml\t\t\n\n\t\tg\t\t\n\n\t\tKWH\t\t\n\n\t\tin\t2.540\tcm\n\n\t\tgal (US)\t4.000\tqt (US)\n\n\t\tPack of 6\t6.000\tUnits\n\n\t\tDays\t8.000\tHours\n\n\t\tm\t100.000\tcm\n\n\t\tkm\t1,000.000\tm\n\n\t\tL\t1,000.000\tml\n\n\t\tkg\t1,000.000\tg\n\n\t\tTon\t1,000.000\tkg\n\n\t\toz\t28.350\tg\n\n\t\tlb\t16.000\toz\n\n\t\tft\t12.000\tin\n",
+      "error": null
+    },
+    {
+      "device": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/odoo/action-90",
+      "body": "Units & Packagings\n7\n40\nNew\n\t\nUnit Name\n\t\nContains\n\t\nReference Unit\n\n\tMinutes\t0.017\tHours\n\tft²\t0.093\tm²\n\tUnits\t\t\n\tHours\t\t\n\tmm\t\t\n\tm²\t\t\n\tml\t\t\n\tg\t\t\n\tKWH\t\t\n\tin\t2.540\tcm\n\tgal (US)\t4.000\tqt (US)\n\tPack of 6\t6.000\tUnits\n\tDays\t8.000\tHours\n\tm\t100.000\tcm\n\tkm\t1,000.000\tm\n\tL\t1,000.000\tml\n\tkg\t1,000.000\tg\n\tTon\t1,000.000\tkg\n\toz\t28.350\tg\n\tlb\t16.000\toz\n\tft\t12.000\tin\n",
+      "error": null
+    }
+  ],
+  "blockers": []
+}

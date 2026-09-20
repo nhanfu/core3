@@ -1,0 +1,42 @@
+version: 0.0.48
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_units_packagings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 1000,
+        name VARCHAR NOT NULL,
+        relative_factor DECIMAL(18,6) NOT NULL DEFAULT 1,
+        reference_unit_id VARCHAR,
+        reference_unit_name VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company',
+        usage_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name, company_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_units_packagings_order
+        ON inventory_units_packagings(active, sequence, reference_unit_id, id);
+      INSERT INTO inventory_units_packagings
+        (id, sequence, name, relative_factor, reference_unit_id, reference_unit_name, active, company_name, usage_count)
+      VALUES
+        ('inventory-uom-units', 100, 'Units', 1, NULL, '', TRUE, 'Core3 Demo Company', 4),
+        ('inventory-uom-hours', 100, 'Hours', 1, NULL, '', TRUE, 'Core3 Demo Company', 1),
+        ('inventory-uom-minutes', 1, 'Minutes', 0.016667, 'inventory-uom-hours', 'Hours', TRUE, 'Core3 Demo Company', 0),
+        ('inventory-uom-meters', 1000, 'm', 100, 'inventory-uom-centimeters', 'cm', TRUE, 'Core3 Demo Company', 0),
+        ('inventory-uom-centimeters', 100, 'cm', 1, NULL, '', TRUE, 'Core3 Demo Company', 1),
+        ('inventory-uom-kilograms', 1000, 'kg', 1000, 'inventory-uom-grams', 'g', TRUE, 'Core3 Demo Company', 2),
+        ('inventory-uom-grams', 100, 'g', 1, NULL, '', TRUE, 'Core3 Demo Company', 2),
+        ('inventory-uom-pack-six', 600, 'Pack of 6', 6, 'inventory-uom-units', 'Units', TRUE, 'Core3 Demo Company', 0),
+        ('inventory-uom-box-twelve', 650, 'Box of 12', 12, 'inventory-uom-units', 'Units', TRUE, 'Core3 Demo Company', 0),
+        ('inventory-uom-shared', 800, 'Shared Unit', 1, NULL, '', TRUE, 'Shared', 0),
+        ('inventory-uom-legacy', 900, 'Legacy Unit', 1, NULL, '', FALSE, 'Core3 Demo Company', 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_units_packagings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

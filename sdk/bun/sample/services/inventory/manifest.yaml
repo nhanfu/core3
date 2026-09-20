@@ -112,6 +112,10 @@ menu:
           label: Operations Types
           icon: settings
           permission: inventory.manage
+        - path: /units-packagings
+          label: Units & Packagings
+          icon: ruler
+          permission: inventory.read
         - path: /inventory-analysis
           label: Inventory Analysis
           icon: chart
