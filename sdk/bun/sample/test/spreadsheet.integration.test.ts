@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -387,6 +387,51 @@ describe('Spreadsheet dashboard configuration parity', () => {
     await expect(repository.executeMutation(action.mutation, {
       dashboard_id: 'sdb-product', id: 'share-product-revoked-2026', expected_row_version: 1, values: { revoked: false },
     })).resolves.toMatchObject({ dashboard_id: 'sdb-product', revoked: false });
+  });
+
+  test('preserves dashboard share revocation across a file-backed restart and migration replay', async () => {
+    const databasePath = `/tmp/core3-spreadsheet-share-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `spreadsheet_share_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const api = yaml('api/dashboard-detail.yaml');
+    const share = api.datasources.find((source: any) => source.id === 'spreadsheet_dashboard_share');
+    const action = api.actions.find((candidate: any) => candidate.id === 'share_dashboard');
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const revoked = await firstRepository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-sales', id: 'share-sales-2026', expected_row_version: 1, values: { revoked: true },
+    });
+    expect(revoked).toMatchObject({ dashboard_id: 'sdb-sales', revoked: true, row_version: 2 });
+    expect((await firstRepository.querySource(share, { id: 'sdb-sales', fixture_state: null }, 0, 1)).data).toMatchObject({
+      dashboard_id: 'sdb-sales', revoked: true, share_link: null,
+    });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT revoked, row_version FROM spreadsheet_dashboard_shares WHERE id = ?', ['share-sales-2026']))[0]).toEqual({ revoked: true, row_version: 2 });
+    expect((await secondRepository.querySource(share, { id: 'sdb-sales', fixture_state: null }, 0, 1)).data).toMatchObject({
+      dashboard_id: 'sdb-sales', revoked: true, share_link: null,
+    });
+    await expect(secondRepository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-sales', id: 'share-sales-2026', expected_row_version: 1, values: { revoked: false },
+    })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_SHARE_STALE' });
+    const restored = await secondRepository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-sales', id: 'share-sales-2026', expected_row_version: 2, values: { revoked: false },
+    });
+    expect(restored).toMatchObject({ dashboard_id: 'sdb-sales', revoked: false, row_version: 3 });
+    second.close();
+
+    const third = await DuckDbDatabase.open(databasePath);
+    const thirdRepository = new YamlRepository(third);
+    await migrateDatabase(thirdRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await thirdRepository.querySource(share, { id: 'sdb-sales', fixture_state: null }, 0, 1)).data).toMatchObject({
+      dashboard_id: 'sdb-sales', revoked: false, share_link: '/dashboard/share/sdb-sales/sales-dashboard-share-2026',
+    });
+    third.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('matches Odoo public share/data/download routes and access boundaries', async () => {
