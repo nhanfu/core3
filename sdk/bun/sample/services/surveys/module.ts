@@ -500,6 +500,9 @@ export default class SurveysModule implements ModuleLifecycle {
       if (['Date', 'date'].includes(questionType) && (values.length !== 1 || !this.isIsoDate(values[0]))) {
         invalid.push(String(question.question_text || question.id));
       }
+      if (['Datetime', 'datetime'].includes(questionType) && (values.length !== 1 || !this.isIsoDatetime(values[0]))) {
+        invalid.push(String(question.question_text || question.id));
+      }
     }
     return invalid;
   }
@@ -511,6 +514,18 @@ export default class SurveysModule implements ModuleLifecycle {
       && parsed.getUTCFullYear() === Number(value.slice(0, 4))
       && parsed.getUTCMonth() + 1 === Number(value.slice(5, 7))
       && parsed.getUTCDate() === Number(value.slice(8, 10));
+  }
+
+  private isIsoDatetime(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return false;
+    const parsed = new Date(value.replace(' ', 'T') + 'Z');
+    return Number.isFinite(parsed.getTime())
+      && parsed.getUTCFullYear() === Number(value.slice(0, 4))
+      && parsed.getUTCMonth() + 1 === Number(value.slice(5, 7))
+      && parsed.getUTCDate() === Number(value.slice(8, 10))
+      && parsed.getUTCHours() === Number(value.slice(11, 13))
+      && parsed.getUTCMinutes() === Number(value.slice(14, 16))
+      && parsed.getUTCSeconds() === Number(value.slice(17, 19));
   }
 
   private async publicScore(service: PublicService, surveyId: string, answers: Record<string, unknown>): Promise<{ score: number; quiz_passed: boolean }> {

@@ -84,6 +84,18 @@ function isIsoDate(value: string): boolean {
     && parsed.getUTCDate() === Number(value.slice(8, 10));
 }
 
+function isIsoDatetime(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return false;
+  const parsed = new Date(value.replace(' ', 'T') + 'Z');
+  return Number.isFinite(parsed.getTime())
+    && parsed.getUTCFullYear() === Number(value.slice(0, 4))
+    && parsed.getUTCMonth() + 1 === Number(value.slice(5, 7))
+    && parsed.getUTCDate() === Number(value.slice(8, 10))
+    && parsed.getUTCHours() === Number(value.slice(11, 13))
+    && parsed.getUTCMinutes() === Number(value.slice(14, 16))
+    && parsed.getUTCSeconds() === Number(value.slice(17, 19));
+}
+
 function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] = '') {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
   const currentValues = Array.isArray(answer) ? answer : [answer];
@@ -95,7 +107,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         const checked = currentValues.includes(option) ? ' checked' : '';
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}><span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
-      : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : 'Your answer'}">`;
+      : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : 'Your answer'}">`;
   container.innerHTML = `
     <div class="core3-public-survey__question">${escapeHtml(question.question_text)}${question.required ? '<span class="core3-public-survey__required">*</span>' : ''}</div>
     ${input}
@@ -252,6 +264,14 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         const error = document.createElement('div');
         error.className = 'core3-public-survey__error';
         error.textContent = 'Enter a valid date in YYYY-MM-DD format.';
+        body.prepend(error);
+        return;
+      }
+      if (!empty && ['Datetime', 'datetime'].includes(question.question_type) && !isIsoDatetime(String(value))) {
+        actionButton.disabled = false;
+        const error = document.createElement('div');
+        error.className = 'core3-public-survey__error';
+        error.textContent = 'Enter a valid datetime in YYYY-MM-DD HH:MM:SS format.';
         body.prepend(error);
         return;
       }

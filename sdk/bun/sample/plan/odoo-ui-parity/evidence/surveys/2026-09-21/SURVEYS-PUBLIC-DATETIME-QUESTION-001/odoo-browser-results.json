@@ -1,0 +1,22 @@
+{
+  "feature": "SURVEYS-PUBLIC-DATETIME-QUESTION-001",
+  "runtime": "Odoo",
+  "surveyToken": "4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+  "route": "/survey/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "failedRequests": []
+    },
+    {
+      "viewport": "390x844",
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "failedRequests": []
+    }
+  ]
+}

@@ -7,8 +7,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # and persisted on the response; the renderer remains joined through page.id.
 # The public completion message is likewise sourced from the survey record and
 # consumed by the token-scoped renderer after submit/resume.
-# Public Date questions are rendered by the same token-scoped page binding;
-# their ISO answer contract is defined by the paired API fragment.
+# Public Date and Datetime questions are rendered by the same token-scoped page
+# binding; their ISO answer contracts are defined by the paired API fragment.
 components:
   - type: ListView
     variant: odoo

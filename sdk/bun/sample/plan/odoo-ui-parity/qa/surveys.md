@@ -874,3 +874,30 @@ remains conditional and Surveys is not signed off.
   fixture exists, so no paired Odoo mutation or visual sign-off is claimed.
 - Scoped `git diff --check` and audit/lint results are recorded after final
   verification. Surveys remains **qa-in-progress / conditional**.
+
+## Bounded QA run: Public Datetime question — `SURVEYS-PUBLIC-DATETIME-QUESTION-001`
+
+- Source comparison: Odoo `survey_question._validate_date` uses
+  `fields.Datetime.from_string` for `datetime` questions; this slice is
+  distinct from the completed `Date` slice and does not claim range metadata,
+  matrix, or scale parity.
+- YAML/UI contract: `pages/surveys.yaml` remains layout-only and paired with
+  `api/surveys.yaml` through `page.id: surveys`; public progress and submit
+  retain `surveys.public`. The renderer uses a non-native ISO datetime text
+  control and the server validates impossible calendar/time values before
+  writing answer JSON.
+- Focused verification: **2 passed / 21 assertions** in
+  `test/surveys_public_datetime_question.integration.test.ts`.
+- Persistence/guards: invalid `2026-02-30 09:30:00` returns HTTP 422 with
+  `SURVEY_PUBLIC_ANSWER_INVALID` and leaves `{}` unchanged; valid
+  `2026-01-15 09:30:00` survives reopen; same-key submits converge on one row;
+  a wrong answer token returns HTTP 404.
+- Core3 evidence: authenticated desktop/mobile login and `/api/auth/me` are
+  HTTP 200; the shared runtime returns HTTP 404 `API route not found` for the
+  public API and HTTP 200 `Unauthorized` for the rendered route. Both viewports
+  report no horizontal overflow or failed browser requests.
+- Odoo evidence: both viewports return HTTP 200 only at
+  `/web/login?redirect=%2Fodoo%3F`; no authenticated installed Survey Datetime
+  fixture exists, so no paired Odoo mutation or visual sign-off is claimed.
+- Surveys remains **qa-in-progress / conditional**; no module sign-off is
+  claimed.

@@ -141,6 +141,26 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-DATETIME-QUESTION-001`
+
+Selected the smallest uncovered source-backed public question behavior after
+the Date slice: Odoo's `datetime` question parser. Core3 adds deterministic
+optional fixture `question-certification-datetime`, renders a custom
+`YYYY-MM-DD HH:MM:SS` input, and validates calendar/time components before
+public progress or submit mutates durable answer JSON. The paired page/API
+contract remains joined by `page.id: surveys`, and both mutations retain
+`surveys.public`.
+
+Focused verification passes 2/2 tests with 21 assertions, covering impossible
+datetime no-mutation, valid persistence, file-backed DuckDB restart, concurrent
+idempotent submit, response-count durability, and wrong-token rejection. The
+adjacent public regression passes 38/38 tests with 311 assertions. Authenticated
+Core3 desktop/mobile probes recorded login/me 200, public API 404
+`API route not found`, rendered body `Unauthorized`, no overflow, and no failed
+requests. Odoo 8069 returned its login redirect at both viewports; no
+authenticated installed Survey Datetime fixture exists. Status remains
+**qa-in-progress / conditional**; no module sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-DATE-QUESTION-001`
 
 Selected the smallest uncovered source-backed public question behavior after
