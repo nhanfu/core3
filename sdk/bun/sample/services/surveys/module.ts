@@ -73,7 +73,6 @@ export default class SurveysModule implements ModuleLifecycle {
     }))?.question?.[0] || null;
 
     if (request.method === 'GET' && !operation) {
-      const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
       const explicitAnswerToken = url.searchParams.get('answer_token') || '';
       const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
       const answerToken = explicitAnswerToken || cookieAnswerToken;
@@ -81,6 +80,8 @@ export default class SurveysModule implements ModuleLifecycle {
       const answer = answerToken ? await readResponse(answerToken) : undefined;
       if (explicitAnswerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
       if (answer && this.publicResponseExpired(answer)) return this.expiredResponse();
+      const allQuestions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+      const questions = this.visibleQuestions(allQuestions, answer?.answer_data);
       return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
     if (request.method !== 'POST' || !operation) return this.json({ error: 'Method not allowed' }, 405);
@@ -195,10 +196,17 @@ export default class SurveysModule implements ModuleLifecycle {
         }))?.response?.[0];
         if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
       }
-      const next = (await service.call('survey.public.next_question', {
+      let next = (await service.call('survey.public.next_question', {
         survey_id: detail.id,
         current_question_id: expectedQuestionId,
       }))?.question?.[0];
+      const answers = this.parseAnswerData(response.answer_data);
+      while (next && !this.isQuestionVisible(next, answers)) {
+        next = (await service.call('survey.public.next_question', {
+          survey_id: detail.id,
+          current_question_id: next.id,
+        }))?.question?.[0];
+      }
       if (!next) return this.json({ error: 'The survey has reached the final question', code: 'SURVEY_PUBLIC_NEXT_EXHAUSTED' }, 409);
       try {
         const result = await service.call('surveys.public.next_question', {
@@ -251,10 +259,17 @@ export default class SurveysModule implements ModuleLifecycle {
         }))?.response?.[0];
         if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
       }
-      const previous = (await service.call('survey.public.previous_question', {
+      let previous = (await service.call('survey.public.previous_question', {
         survey_id: detail.id,
         current_question_id: expectedQuestionId,
       }))?.question?.[0];
+      const answers = this.parseAnswerData(response.answer_data);
+      while (previous && !this.isQuestionVisible(previous, answers)) {
+        previous = (await service.call('survey.public.previous_question', {
+          survey_id: detail.id,
+          current_question_id: previous.id,
+        }))?.question?.[0];
+      }
       if (!previous) return this.json({ error: 'The survey is already at its first question', code: 'SURVEY_PUBLIC_PREVIOUS_EXHAUSTED' }, 409);
       try {
         const result = await service.call('surveys.public.previous_question', {
@@ -350,7 +365,8 @@ export default class SurveysModule implements ModuleLifecycle {
     }
     if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
-    const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+    const allQuestions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+    const questions = this.visibleQuestions(allQuestions, JSON.stringify(answers));
     const invalidAnswers = this.invalidPublicAnswers(questions, answers);
     if (invalidAnswers.length) {
       return this.json({ error: `Invalid answers: ${invalidAnswers.join(', ')}`, code: 'SURVEY_PUBLIC_ANSWER_INVALID' }, 422);
@@ -466,6 +482,30 @@ export default class SurveysModule implements ModuleLifecycle {
       return this.json({ error: String(error?.message || 'This survey response is no longer available for editing'), ...(error?.code ? { code: error.code } : {}) }, status);
     }
     throw error;
+  }
+
+  private parseAnswerData(value: unknown): Record<string, unknown> {
+    if (typeof value !== 'string' || !value.trim()) return {};
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private isQuestionVisible(question: any, answers: Record<string, unknown>): boolean {
+    const sourceQuestionId = String(question?.trigger_question_id || '').trim();
+    if (!sourceQuestionId) return true;
+    const expectedAnswer = String(question?.trigger_answer || '').trim();
+    const value = answers[sourceQuestionId];
+    if (Array.isArray(value)) return value.map((entry) => String(entry).trim()).includes(expectedAnswer);
+    return String(value ?? '').trim() === expectedAnswer;
+  }
+
+  private visibleQuestions(questions: any[], answerData: unknown): any[] {
+    const answers = this.parseAnswerData(answerData);
+    return questions.filter((question) => this.isQuestionVisible(question, answers));
   }
 
   private expiredResponse(): Response {

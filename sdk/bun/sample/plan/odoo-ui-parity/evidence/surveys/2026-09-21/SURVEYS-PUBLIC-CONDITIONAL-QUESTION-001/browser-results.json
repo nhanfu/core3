@@ -1,0 +1,41 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "core3": {
+        "frontend": "http://127.0.0.1:4341/survey/start/branching-public-token-2026",
+        "screenshot": "core3-desktop.png",
+        "body": "Survey could not be loaded (502).",
+        "blocker": "fresh backend never exposed http://127.0.0.1:4340/api/modules; Vite proxy logged ECONNREFUSED to 127.0.0.1:3001",
+        "authenticated": false
+      },
+      "odoo": {
+        "url": "http://127.0.0.1:8069/survey/branching-public-token-2026",
+        "screenshot": "odoo-desktop.png",
+        "redirect_chain": ["/", "/odoo", "/web/login?redirect=%2Fodoo%3F"],
+        "authenticated": false,
+        "fixture": "unavailable; reference route did not reach an installed Survey fixture"
+      }
+    },
+    {
+      "viewport": "390x844",
+      "core3": {
+        "frontend": "http://127.0.0.1:4341/survey/start/branching-public-token-2026",
+        "screenshot": "core3-mobile.png",
+        "body": "Survey could not be loaded (502).",
+        "blocker": "fresh backend never exposed http://127.0.0.1:4340/api/modules; Vite proxy logged ECONNREFUSED to 127.0.0.1:3001",
+        "authenticated": false
+      },
+      "odoo": {
+        "url": "http://127.0.0.1:8069/survey/branching-public-token-2026",
+        "screenshot": "odoo-mobile.png",
+        "redirect_chain": ["/", "/odoo", "/web/login?redirect=%2Fodoo%3F"],
+        "authenticated": false,
+        "fixture": "unavailable; reference route did not reach an installed Survey fixture"
+      }
+    }
+  ],
+  "overflow": "not measured because Core3 API never became ready; Odoo screenshots show the host login/database fallback",
+  "signoff": "not claimed"
+}

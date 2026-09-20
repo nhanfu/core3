@@ -141,6 +141,31 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001`
+
+Selected the next uncovered source-backed public behavior after the completed
+begin, sections, cookie resume, scoring, completion, date/datetime/scale/
+matrix, live-session, deadline, answer-validation, and renderer navigation
+slices: Odoo conditional question visibility. Core3 adds migration `0.0.30`
+with a durable trigger relation and deterministic `SURVEY/BRANCHING` fixture;
+the public catalog, navigation, progress, and submit paths evaluate the
+token's durable answer data. The renderer now accepts a conditional question
+returned by next/previous navigation and merges it into the sorted question
+list, so the new API is connected to the rendered route.
+
+Focused coverage is **2 tests / 25 assertions**; the public regression is
+**44 tests / 376 assertions**. It includes wrong-token and public-permission
+guards, hidden-question skip/show behavior, concurrent idempotent submit, and
+file-backed restart. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001/`.
+
+The full migration rollback gate remains blocked by DuckDB's
+`Cannot alter entry "surveys" because there are entries that depend on it`;
+`bun run audit` remains blocked by a concurrent non-Surveys page-schema error.
+Fresh Core3 desktop/mobile probes recorded the backend-not-ready 502; Odoo
+redirected to `/web/login?redirect=%2Fodoo%3F` and supplied no installed
+authenticated Survey fixture. No parity or module sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-SCALE-QUESTION-001`
 
 Selected the smallest uncovered source-backed public question behavior after

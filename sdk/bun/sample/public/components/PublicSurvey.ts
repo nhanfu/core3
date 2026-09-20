@@ -8,6 +8,8 @@ type SurveyQuestion = {
   matrix_rows?: string;
   matrix_columns?: string;
   matrix_subtype?: string;
+  trigger_question_id?: string | null;
+  trigger_answer?: string | null;
 };
 
 type SurveyPayload = {
@@ -254,8 +256,12 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         body.prepend(message);
         return;
       }
-      const previousPayload = await previousResponse.json() as { question?: { id?: string }; answer?: { current_question_id?: string | null } };
+      const previousPayload = await previousResponse.json() as { question?: SurveyQuestion; answer?: { current_question_id?: string | null } };
       currentQuestionId = String(previousPayload.question?.id || previousPayload.answer?.current_question_id || '');
+      if (previousPayload.question?.id && !questions.some((candidate) => candidate.id === previousPayload.question!.id)) {
+        questions.push(previousPayload.question);
+        questions.sort((left, right) => Number(left.sequence) - Number(right.sequence));
+      }
       const previousIndex = questions.findIndex((candidate) => candidate.id === currentQuestionId);
       if (previousIndex < 0) {
         backButton.disabled = false;
@@ -332,8 +338,12 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
           body.prepend(message);
           return;
         }
-        const nextPayload = await nextResponse.json() as { question?: { id?: string }; answer?: { current_question_id?: string | null } };
+        const nextPayload = await nextResponse.json() as { question?: SurveyQuestion; answer?: { current_question_id?: string | null } };
         currentQuestionId = String(nextPayload.question?.id || nextPayload.answer?.current_question_id || '');
+        if (nextPayload.question?.id && !questions.some((candidate) => candidate.id === nextPayload.question!.id)) {
+          questions.push(nextPayload.question);
+          questions.sort((left, right) => Number(left.sequence) - Number(right.sequence));
+        }
         const nextIndex = questions.findIndex((candidate) => candidate.id === currentQuestionId);
         if (nextIndex < 0) {
           actionButton.disabled = false;

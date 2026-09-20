@@ -902,6 +902,37 @@ remains conditional and Surveys is not signed off.
 - Surveys remains **qa-in-progress / conditional**; no module sign-off is
   claimed.
 
+## Bounded QA run: Public conditional question — `SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001`
+
+- Source comparison: Odoo stores `triggering_answer_ids` on questions and
+  computes conditional maps from selected answer lines; the conditional demo
+  makes the follow-up food-preference question depend on an earlier answer.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate through `page.id: surveys`; every public mutation retains
+  `surveys.public`. The trigger relation is projected by public question and
+  navigation operations, and the renderer inserts an API-returned follow-up
+  instead of treating it as unavailable.
+- Focused verification: **2 passed / 25 assertions**; public regression:
+  **44 passed / 376 assertions**. Scoped ESLint and `git diff --check` pass.
+- Persistence/guards: `Yes` shows the follow-up; `No` skips it in next and
+  previous navigation; the cursor and answer survive a file-backed reopen;
+  concurrent same-key submit retains one response/idempotency row; a wrong
+  answer token is rejected without mutation.
+- Core3 desktop/mobile evidence is retained in the feature directory. A fresh
+  backend did not expose `/api/modules`; the Vite proxy returned HTTP 502 for
+  the public route at both viewports. The direct server retry hit an existing
+  `coredb/auth.duckdb.wal` DuckDB internal replay error. No authenticated
+  browser sign-off is claimed.
+- Odoo desktop/mobile evidence is retained in the feature directory. The
+  public route redirected `/ → /odoo → /web/login?redirect=%2Fodoo%3F`; the
+  reference had no installed authenticated Survey fixture. No paired Odoo
+  sign-off is claimed.
+- Migration rollback remains blocked by the known DuckDB dependent-entry
+  error; repository audit remains blocked by the concurrent non-Surveys page
+  schema. Surveys remains **qa-in-progress / conditional**.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001/`.
+
 ## Bounded QA run: Public Matrix question — `SURVEYS-PUBLIC-MATRIX-QUESTION-001`
 
 - Source comparison: Odoo `survey_question.py` stores Matrix columns and rows

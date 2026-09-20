@@ -54,7 +54,8 @@ actions:
   # Date and Datetime questions use Odoo-compatible ISO values inside
   # answer_data; Scale values use the deterministic question option range;
   # Matrix values use a row-to-column JSON map; mandatory matrix questions
-  # require every source-defined row to be covered.
+  # require every source-defined row to be covered. Conditional follow-ups
+  # carry their durable trigger relation through the public question contract.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form

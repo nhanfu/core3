@@ -1,0 +1,32 @@
+version: 0.0.30
+description: Deterministic public conditional question relation and branching survey
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_question_triggers (
+        question_id VARCHAR PRIMARY KEY,
+        source_question_id VARCHAR NOT NULL,
+        source_answer VARCHAR NOT NULL
+      );
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-branching', 'SURVEY/BRANCHING', 'Conditional Lunch Preferences', 'Answer the follow-up question when it applies to you.', 'Mitchell Admin', 0, 'Published', 'branching-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES
+        ('question-branching-vegetarian', 'survey-demo-branching', 'Are you vegetarian?', 'Choice', 1, true, 'Yes,No'),
+        ('question-branching-followup', 'survey-demo-branching', 'Would you prefer a veggie meal if possible?', 'Choice', 2, true, 'Yes,No'),
+        ('question-branching-meal', 'survey-demo-branching', 'Choose your meal', 'Choice', 3, true, 'Vegetarian pizza,Vegetarian burger')
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+      INSERT INTO survey_question_triggers(question_id, source_question_id, source_answer)
+      VALUES ('question-branching-followup', 'question-branching-vegetarian', 'Yes')
+      ON CONFLICT (question_id) DO UPDATE SET source_question_id = excluded.source_question_id, source_answer = excluded.source_answer;
+      UPDATE surveys SET response_count = 0 WHERE id = 'survey-demo-branching';
+    down: |
+      DROP TABLE IF EXISTS survey_question_triggers;
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-branching';
+      DELETE FROM surveys WHERE id = 'survey-demo-branching';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

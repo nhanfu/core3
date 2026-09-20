@@ -387,3 +387,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX-QUESTION-001/`.
+
+## 2026-09-21 public conditional-question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-036 | public question | Conditional catalog and trigger relation | Persist the Odoo-style source-answer relation and omit a non-matching follow-up from the public catalog | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-033 | restart/idempotency | Branch → next/previous skip or show → reopen → concurrent submit | Preserve the answer-dependent cursor across restart; replay one durable submit without duplicate response state | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-035 | token/input guard | Wrong token and hidden required answer | Keep `surveys.public`, token, state, and visible-question validation boundaries before mutation | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-034 | authenticated responsive/reference | Conditional public desktop/mobile + Odoo comparison | Capture exact Core3 backend and Odoo installed-fixture blockers; no sign-off until both are available | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001/`.

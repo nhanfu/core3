@@ -1684,3 +1684,33 @@ redirected both viewport probes to its login form and supplied no authenticated
 Matrix response. The existing DuckDB rollback/dependent-entry failure remains
 open. No browser, paired Odoo, or module sign-off is claimed; Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded slice: Public conditional question (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001`.
+
+Odoo's `survey.question.triggering_answer_ids` and the conditional demo in
+`addons/survey/data/survey_demo_conditional.xml` make a follow-up question
+visible only when a source answer is selected. Core3 now has the durable
+`survey_question_triggers` relation and a deterministic published
+`SURVEY/BRANCHING` fixture. Public GET/progress/submit filters by the stored
+answer, next/previous navigation skips hidden rows in both directions, and
+the renderer merges a conditional question returned by the API into its local
+sorted set. This closes the page/API integration gap rather than exposing a
+disconnected action.
+
+The page and API YAML remain separate and join through `page.id: surveys`;
+public actions retain `surveys.public`. Focused coverage proves permission and
+wrong-token boundaries, no-mutation invalid paths, concurrent idempotent
+submit, and file-backed restart. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001/`.
+
+Focused verification is **2 passed / 25 assertions** and the public regression
+is **44 passed / 376 assertions**. The complete migration rollback gate still
+fails on the known DuckDB dependent-entry error; the repository audit is
+blocked by a concurrent non-Surveys page-schema error. Fresh Core3 desktop and
+mobile runtime probes returned a bounded 502 because the backend did not
+become ready, and Odoo redirected through `/`, `/odoo`, and
+`/web/login?redirect=%2Fodoo%3F` without an installed authenticated Survey
+fixture. No browser, paired Odoo, or module sign-off is claimed; Surveys
+remains **qa-in-progress / conditional**.
