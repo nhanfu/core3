@@ -8,6 +8,8 @@ components:
     editable: true
     content_slot: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    stat_buttons:
+      - { id: view_event_question_answers, label: Attendee answers, value_field: answer_count, permission: events.read, show_if: "record.question_type === 'Selection' || record.question_type === 'Text'" }
     header_actions:
       - { id: back_to_event_questions, label: Back to event questions, variant: secondary, permission: events.read }
       - { id: edit_event_question, label: Edit, variant: primary, permission: events.write }

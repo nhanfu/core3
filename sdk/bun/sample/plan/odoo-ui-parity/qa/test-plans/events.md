@@ -37,7 +37,7 @@ and the linked confirmed order.
 | EVENTS-FUNC-002 | functional | Event lifecycle | Draft → Published → In Progress → Completed; invalid/stale transitions are guarded | authenticated lifecycle probe | pass |
 | EVENTS-FUNC-003 | functional | Tickets and attendees | Create/update ticket and attendee; required fields and event scope persist | attendee edit focused test; ticket contracts | partial: attendee update passes; create remains open |
 | EVENTS-FUNC-004 | functional | Registration desk/statistics | Register, confirm, cancel and report registrations by event | registration/statistics tests | pass |
-| EVENTS-FUNC-005 | functional | Questions/answers | CRUD questions, answer choices and attendee answers; ordering and required guards persist | question/answer tests | planned |
+| EVENTS-FUNC-005 | functional | Questions/answers | CRUD questions, answer choices and attendee answers; ordering and required guards persist | question/answer/stat tests | partial: question/choice CRUD and question-scoped attendee-answer report pass; attendee answer-line editing remains open |
 | EVENTS-FUNC-006 | functional | Slots/stages/tags | CRUD and validation with duplicate, missing and stale guards | slots/stages/tags tests | planned |
 | EVENTS-FUNC-007 | functional | Templates/mail schedulers | CRUD template/schedule, send or queue action, and inspect deterministic audit state | template/scheduler tests | planned |
 | EVENTS-FUNC-008 | functional | Settings | Update event settings and reload; manager-only fields are protected | settings tests | planned |

@@ -1,5 +1,31 @@
 # Events UI parity
 
+## Current bounded batch: Event question attendee answers stat action (2026-09-20)
+
+Odoo's `event.question.action_view_question_answers` is exposed by the
+question form as an `Attendee answers` stat button. It opens the read-only
+`event.action_event_registration_report` action with the current question in
+the domain; the source action uses graph/pivot/list for selection questions
+and list for text questions. Core3 previously had the global Answer Breakdown
+report but no question-scoped action from the question form.
+
+This slice adds the page-owned `view_event_question_answers` stat action to
+`/events/questions/detail`, routes it to `/events/answer-breakdown` with the
+question id, and adds the API-owned `answer_count` stat value. Migration
+`20260920110000-032-event-question-answer-stat.yaml` adds the durable
+`question_id` relation to registration answers and an idempotent Dietary
+requirements answer fixture. The report now supports an explicit
+`question_id` scope while retaining global search, empty, and transport-error
+contracts. The action is read-only and requires `events.read`, matching the
+Odoo report boundary.
+
+Validation: the focused stat suite passes 2 tests and 14 assertions; the
+related question, answer-choice, answer-report, and attendee suites pass 15
+tests and 122 assertions; the full Events integration set passes 90 tests
+and 654 assertions. The shared UI audit passes with 665 pages, 674 routes,
+and 1,176 datasources; targeted ESLint and `git diff --check` pass. No
+browser or screenshot evidence is claimed for this bounded automated slice.
+
 ## Bounded batch: Attendee creation persistence (2026-09-13)
 
 The attendee CRUD gap was creation: the global Attendees list had no create

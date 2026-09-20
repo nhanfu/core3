@@ -1,0 +1,20 @@
+version: 0.0.32
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_registration_answers ADD COLUMN IF NOT EXISTS question_id VARCHAR;
+      INSERT INTO event_registration_answers(id, registration_id, question_id, question, question_type, suggested_answer, text_answer)
+      VALUES ('registration-answer-dietary-demo-001', 'registration-demo-002', 'question-dietary', 'Dietary requirements', 'Selection', 'No preference', '')
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE event_registration_answers AS answers
+      SET question_id = questions.id
+      FROM event_questions AS questions
+      WHERE answers.question_id IS NULL AND LOWER(answers.question) = LOWER(questions.title);
+    down: |
+      DELETE FROM event_registration_answers WHERE id = 'registration-answer-dietary-demo-001';
+      ALTER TABLE event_registration_answers DROP COLUMN IF EXISTS question_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

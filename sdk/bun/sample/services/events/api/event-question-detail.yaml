@@ -4,12 +4,17 @@ datasources:
     single: true
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_QUESTION_DETAIL_UNAVAILABLE, message: Event question details are temporarily unavailable. } }
-    query: "SELECT id, row_version, title, question_type, mandatory, once_per_order, answers, 'Event Question' AS question_label FROM event_questions WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT q.id, q.row_version, q.title, q.question_type, q.mandatory, q.once_per_order, q.answers, (SELECT COUNT(*) FROM event_registration_answers a WHERE a.question_id = q.id) AS answer_count, 'Event Question' AS question_label FROM event_questions q WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND q.id = :id"
   - id: event_question_answers
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_QUESTION_ANSWERS_UNAVAILABLE, message: Suggested answers are temporarily unavailable. } }
     query: "SELECT id, row_version, question_id, name, sequence FROM event_question_answers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND question_id = :id ORDER BY sequence, id"
 actions:
+  - id: view_event_question_answers
+    type: navigate
+    permission: events.read
+    navigate_to: /events/answer-breakdown
+    params: { question_id: '{row.id}' }
   - id: back_to_event_questions
     type: navigate
     permission: events.read

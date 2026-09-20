@@ -1,5 +1,29 @@
 # events QA ledger
 
+## Bounded QA — event question attendee answers stat action (2026-09-20)
+
+- Source contract: **PASS**. Odoo `event_question_views.xml` exposes
+  `action_view_question_answers`, and
+  `event_registration_answer_views.xml` defines the read-only Answer
+  Breakdown list/graph/pivot action. Core3 now exposes the matching
+  `Attendee answers` stat button on the question detail page and routes the
+  active question to the existing report.
+- YAML ownership and permissions: **PASS**. The page remains layout-only;
+  the API owns `answer_count`, the navigation action, and the scoped report
+  datasource. The action and datasource require `events.read`.
+- Durable data and scope: **PASS**. Migration `032` adds `question_id`,
+  seeds one fixed Dietary requirements answer, and is safe to replay. The
+  report returns only the selected question, while global, empty, and
+  transport-error contracts remain explicit.
+- Focused stat suite: **PASS**, 2 tests / 14 assertions.
+- Related question/answer/attendee suites: **PASS**, 15 tests / 122
+  assertions. Full Events integration: **PASS**, 90 tests / 654 assertions.
+- Shared UI audit: **PASS**, 665 pages / 674 routes / 1,176 datasources.
+  Targeted ESLint and `git diff --check`: **PASS**.
+- Browser/Odoo paired captures were not run for this bounded automated slice;
+  no visual sign-off is claimed. Attendee answer-line editing remains a
+  separate parity gap.
+
 ## Bounded QA — candidate `715568b9` (2026-09-13)
 
 - Attendee creation API/page contract and server-derived fields: **PASS**.
