@@ -81,7 +81,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     const detail = source('contact-detail.yaml', 'contact_detail');
     expect(await repository.querySource(detail, { id: 'contact-demo', fixture_state: null }, 0, 1)).toMatchObject({ data: expect.objectContaining({ name: 'Demo Contact', categories: 'Partner', avatar_initials: 'D' }) });
     expect((await repository.querySource(detail, { id: 'missing-contact', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
-    expect((await repository.querySource(source('contact-detail.yaml', 'contact_messages'), { id: 'contact-demo', fixture_state: null }, 0, 50)).data).toHaveLength(2);
+    expect((await repository.querySource(source('contact-detail.yaml', 'contact_messages'), { id: 'contact-demo', fixture_state: null }, 0, 50)).data).toHaveLength(3);
     expect((await repository.querySource(source('contact-detail.yaml', 'contact_attachments'), { id: 'contact-demo', fixture_state: null }, 0, 50)).data).toHaveLength(1);
   });
 

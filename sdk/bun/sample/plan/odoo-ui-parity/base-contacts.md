@@ -293,3 +293,27 @@ of the seeded attachment as `contact-brief.txt`. Desktop 1440x900 and mobile
 horizontal overflow. Captures remain outside Git at
 `/tmp/core3-base-attach-001-desktop.png` and
 `/tmp/core3-base-attach-001-mobile.png`.
+
+## Contact chatter message and internal-note slice (2026-09-20)
+
+Odoo 19's `res.partner` form is a mail-thread document: the Contacts form
+renders the chatter composer actions `Send message` and `Log note`, and the
+mail addon persists each entry against the partner thread. Core3 previously
+rendered only deterministic, read-only contact chatter rows. This bounded
+slice adds API-owned `send_contact_message` and `log_contact_note` actions to
+the existing `contact-detail` contract, with the existing OdooChatter composer
+as the user-visible surface.
+
+Migration `20260920130000-019-contact-chatter.yaml` owns the durable
+`base_contact_messages` table and one deterministic follow-up fixture. The
+actions require `base.contacts.write`, trim and bound content to 4,000
+characters, reject missing and cross-company contacts, and record actor,
+action label, body, and timestamp. The `contact_messages` datasource reads
+both seeded and persisted entries after restart.
+
+Focused evidence: `test/base_contact_chatter.integration.test.ts` covers page
+and API separation, both composer actions, message/note persistence, restart,
+validation, missing-record, and company-scope guards. The existing Contacts
+regression now expects the seeded chatter row as well. Screenshots are not
+claimed in this backend/contract slice; paired authenticated Odoo/Core3
+composer captures remain a follow-up.

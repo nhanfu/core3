@@ -31,14 +31,14 @@ activities.
 | Case ID | Class | Route/action | Expected result and persistence assertion | Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | BASE-FUNC-001 | functional | Contacts/company list/detail | Search/filter/group/paginate, open detail, edit/save/discard and preserve relation fields after reload | focused contacts/companies tests | pass |
-| BASE-FUNC-002 | functional | Contact activity/chatter/stats | Schedule activity, view timeline and stat counts with deterministic records | focused contacts tests | pass |
+| BASE-FUNC-002 | functional | Contact activity/chatter/stats | Schedule activity, send message, log internal note, view timeline and stat counts with deterministic records | focused contacts/chatter tests | pass at contract level |
 | BASE-FUNC-003 | functional | Country groups | Create/edit/delete groups and multi-select countries; duplicate/required/stale guards persist | country group tests | pass |
 | BASE-FUNC-004 | functional | Banks/partner bank accounts | CRUD, relation validity, archive/restore, duplicate and in-use guards | bank tests | pass |
 | BASE-FUNC-005 | functional | Companies/tags/industries | CRUD/search/archive and linked record constraints | focused catalog tests | pass |
 | BASE-FUNC-006 | functional | Countries/states/reference | Read-only catalogs, search, empty and transport-error states | catalog tests | pass |
 | BASE-FUNC-007 | data | Migration/seed | Reapply schema/demo data with fixed IDs/dates and no duplicates | focused suites | pass |
 | BASE-FUNC-008 | data | Empty/error/not-found | Every current route returns explicit empty, missing and transport-error behavior | focused suites; matrix | planned |
-| BASE-FUNC-009 | functional | Attachments/import/export/bulk | Upload/download, import/export and bulk archive/delete are exercised when renderer/actions are available | attachment journey deferred | planned |
+| BASE-FUNC-009 | functional | Attachments/import/export/bulk | Upload/download, import/export and bulk archive/delete are exercised when renderer/actions are available | attachment journey covered; import/export and bulk remain deferred | partial |
 
 ## Workflow and integration cases
 

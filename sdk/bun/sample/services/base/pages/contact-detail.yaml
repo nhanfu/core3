@@ -68,6 +68,14 @@ components:
     attachment_download_action: download_contact_attachment
     chatter_label: Chatter
     chatter_empty: No messages or activities yet
+    message_action: send_contact_message
+    note_action: log_contact_note
+    message_label: Send message
+    note_label: Log note
+    message_placeholder: Write a message…
+    note_placeholder: Log an internal note…
+    send_label: Send
+    log_label: Log note
     message_action_field: action
     message_detail_field: detail
     message_timestamp_field: created_at

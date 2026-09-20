@@ -1,0 +1,27 @@
+version: 0.0.19
+kind: schema
+description: Persist contact chatter messages and internal notes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_contact_messages (
+        id VARCHAR PRIMARY KEY,
+        contact_id VARCHAR NOT NULL,
+        actor_id VARCHAR,
+        actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS base_contact_messages_contact_idx ON base_contact_messages(contact_id, created_at);
+      INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail, created_at)
+      VALUES ('contact-message-followup', 'contact-demo', 'user-admin', 'Administrator', 'base.contacts.note', 'Internal note', 'Confirm the contact details before the next outreach.', TIMESTAMP '2026-09-04 11:15:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM base_contact_messages WHERE id = 'contact-message-followup';
+      DROP TABLE IF EXISTS base_contact_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
