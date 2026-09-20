@@ -1,0 +1,22 @@
+{
+  "feature": "INV-TRANSFER-SCRAP-001",
+  "odoo": {
+    "source": "addons/stock/views/stock_picking_views.xml:502-511",
+    "server_action": "stock.action_scrap",
+    "model": "stock.picking",
+    "label": "Scrap",
+    "binding_view_types": "form",
+    "code": "action = records.button_scrap()",
+    "comparison": "Core3 transfer-detail exposes a Scrap form action and durable transfer-bound history; the backend action is named stock.picking.action_scrap."
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detail.yaml",
+    "api": "services/inventory/api/transfer-detail.yaml",
+    "page_id": "transfer-detail",
+    "action_id": "scrap_inventory_transfer",
+    "migration": "services/inventory/migrations/20260922030000-053-inventory-transfer-scrap.yaml",
+    "persistence": "inventory_transfer_scrap_runs plus inventory_scrap_orders and inventory_transfer_messages",
+    "guards": ["inventory.write", "current company", "signed-in actor", "open transfer state", "positive quantity and locations", "expected row version"]
+  },
+  "scope": "Bounded transfer-bound Scrap wizard; standalone Scrap Orders remains a separate completed slice."
+}

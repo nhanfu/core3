@@ -1,0 +1,65 @@
+{
+  "feature": "INV-TRANSFER-SCRAP-001",
+  "generated_at": "2026-09-20T23:23:46.171Z",
+  "authenticated": true,
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:4333/inventory/transfer/detail?id=delivery-scrap-0001",
+      "title": "Transfer",
+      "status": 1,
+      "body_excerpt": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nOperations\n›\nTransfers\n›\nTransfer\nEdit details\nPut in Pack\nUnreserve\nValidate\nLock / Unlock\nLabels\nScrap\nCancel\nDraft\nWaiting\nReady\nDone\nCancelled\nWH/OUT/SCRAP/0001\n\nDeliveries\n\nTransfer\nReference\nWH/OUT/SCRAP/0001\nOperation Type\nDeliveries\nContact\nCore3 Demo Customer\nCompany\nCore3 Demo Company\nScheduling\nScheduled Date\n2026-01-15\nSource Document\nSO/SCRAP/0001\nSource Location\nStock\nDestination Location\nCustomers\nProduct Availability\nWaiting\nOperations\nAdditional Info\nNote\nProduct\n\tDemand\n\tQuantity\n\tReserved\n\tUnit of Measure\n\tAvailability\n\t\n[E-COM08] Storage Box\t2\t0\t0\tUnit(s)\tAvailable\t\nSend message\nLog note\n0\nDocuments\nAdd document\n\nNo documents attached\n\nMessages and activities\nO\nOdooBot\nJan 15, 2026, 07:00 AM\n\nTransfer created\n\nTransfer created\nSupply Chain / Inventory / Operations / Transfers / Transfer\n0-0 / 0\n‹\n›\nLabels\n\tOutput\n\tQuantity\n\tRequested by\n\tCreated at\n\n\nNo labels prepared\n\nUse Labels to prepare Product Labels for this transfer.\n\nSupply Chain / Inventory / Operations / Transfers / Transfer\n0-0 / 0\n‹\n›\nTo\n\tSubject\n\tStatus\n\tQueued by\n\tQu",
+      "has_scrap": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/transfer-detail?lc=en&id=delivery-scrap-0001",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:4333/inventory/transfer/detail?id=delivery-scrap-0001",
+      "title": "Transfer",
+      "status": 1,
+      "body_excerpt": "AU\nEdit details\nPut in Pack\nUnreserve\nValidate\nLock / Unlock\nLabels\nScrap\nCancel\nDraft\nWaiting\nReady\nDone\nCancelled\nWH/OUT/SCRAP/0001\n\nDeliveries\n\nTransfer\nReference\nWH/OUT/SCRAP/0001\nOperation Type\nDeliveries\nContact\nCore3 Demo Customer\nCompany\nCore3 Demo Company\nScheduling\nScheduled Date\n2026-01-15\nSource Document\nSO/SCRAP/0001\nSource Location\nStock\nDestination Location\nCustomers\nProduct Availability\nWaiting\nOperations\nAdditional Info\nNote\nProduct\n\tDemand\n\tQuantity\n\tReserved\n\tUnit of Measure\n\tAvailability\n\t\n[E-COM08] Storage Box\t2\t0\t0\tUnit(s)\tAvailable\t\nSend message\nLog note\n0\nDocuments\nAdd document\n\nNo documents attached\n\nMessages and activities\nO\nOdooBot\nJan 15, 2026, 07:00 AM\n\nTransfer created\n\nTransfer created\nTransfer\n0-0 / 0\n‹\n›\nLabels\n\tOutput\n\tQuantity\n\tRequested by\n\tCreated at\n\n\nNo labels prepared\n\nUse Labels to prepare Product Labels for this transfer.\n\nTransfer\n0-0 / 0\n‹\n›\nTo\n\tSubject\n\tStatus\n\tQueued by\n\tQueued at\n\n\nNo email history\n\nMessages queued from this transfer will appear here.\n\nTransfer\n0-0 / 0\n‹\n›\nProduct\n\tQuantity\n\tSource\n\tScrap Location\n\tRequested by\n\tCreated at\n\n\nNo scrap orders\n\nScrap orders created from this transfer will appear here.",
+      "has_scrap": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/transfer-detail?lc=en&id=delivery-scrap-0001",
+          "status": 200
+        }
+      ]
+    }
+  ]
+}

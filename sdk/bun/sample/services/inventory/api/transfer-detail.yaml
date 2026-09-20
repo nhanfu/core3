@@ -40,6 +40,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_EMAILS_UNAVAILABLE, message: Transfer email history is temporarily unavailable. } }
     query: "SELECT r.id, r.picking_id, r.company_name, r.recipient_email, r.subject, r.queued_by, r.state, CAST(r.queued_at AS VARCHAR) AS queued_at, r.row_version FROM inventory_transfer_email_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.queued_at DESC, r.id DESC"
+  - id: inventory_transfer_scrap_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_SCRAP_UNAVAILABLE, message: Transfer scrap history is temporarily unavailable. } }
+    query: "SELECT r.id, r.picking_id, r.scrap_id, r.company_name, r.product_name, CAST(r.scrap_qty AS DOUBLE) AS scrap_qty, r.product_uom, r.source_location, r.scrap_location, r.should_replenish, r.requested_by, r.note, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_transfer_scrap_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
 
 actions:
   - id: upload_inventory_transfer_attachment
@@ -125,6 +130,41 @@ actions:
     fields:
       - { field: package_name, label: Package Reference, type: text, required: true, placeholder: 'e.g. PACK0000007' }
       - { field: package_type_name, label: Package Type, type: text, placeholder: 'e.g. Box' }
+  - id: scrap_inventory_transfer
+    type: server_form
+    permission: inventory.write
+    title: Scrap Products
+    action: stock.picking.action_scrap
+    handler: yaml_mutation
+    operation: scrap
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline, inventory_transfer_scrap_runs]
+    mutation:
+      generated: [run_id, scrap_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-scrap-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS run_id, 'inventory-scrap-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS scrap_id, 'transfer-scrap-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_scrap_runs WHERE picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state NOT IN ('Done', 'Cancelled') AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_SCRAP_NOT_ALLOWED, message: Only a current open transfer can be scrapped. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_ACTOR_REQUIRED, message: A signed-in inventory operator is required to scrap products. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:product_name, ''))) BETWEEN 1 AND 255 AND CAST(:scrap_qty AS DECIMAL(18,3)) > 0 AND length(trim(COALESCE(:source_location, ''))) > 0 AND length(trim(COALESCE(:scrap_location, ''))) > 0", status: 422, code: INVENTORY_TRANSFER_SCRAP_INVALID, message: Product, positive quantity, source, and scrap locations are required. }
+      steps:
+        - { query: "INSERT INTO inventory_scrap_orders(id, name, product_name, scrap_qty, product_uom, source_location, scrap_location, company_name, state, origin, picking_name, should_replenish, note) SELECT :scrap_id, 'SCRAP/' || :scrap_id, TRIM(CAST(:product_name AS VARCHAR)), CAST(:scrap_qty AS DECIMAL(18,3)), COALESCE(NULLIF(TRIM(CAST(:product_uom AS VARCHAR)), ''), 'Units'), TRIM(CAST(:source_location AS VARCHAR)), TRIM(CAST(:scrap_location AS VARCHAR)), p.company_name, 'Draft', p.source_document, p.name, COALESCE(CAST(:should_replenish AS BOOLEAN), FALSE), NULLIF(TRIM(CAST(COALESCE(:note, '') AS VARCHAR)), '') FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_transfer_scrap_runs(id, picking_id, scrap_id, company_name, product_name, scrap_qty, product_uom, source_location, scrap_location, should_replenish, requested_by, note) SELECT :run_id, :id, :scrap_id, p.company_name, TRIM(CAST(:product_name AS VARCHAR)), CAST(:scrap_qty AS DECIMAL(18,3)), COALESCE(NULLIF(TRIM(CAST(:product_uom AS VARCHAR)), ''), 'Units'), TRIM(CAST(:source_location AS VARCHAR)), TRIM(CAST(:scrap_location AS VARCHAR)), COALESCE(CAST(:should_replenish AS BOOLEAN), FALSE), :current_user_name, NULLIF(TRIM(CAST(COALESCE(:note, '') AS VARCHAR)), '') FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before products could be scrapped. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.scrapped', 'Scrap Products', 'Scrap order created from transfer')" }
+      result: { query: "SELECT id, picking_id, scrap_id, company_name, product_name, scrap_qty, product_uom, source_location, scrap_location, should_replenish, requested_by, note, row_version FROM inventory_transfer_scrap_runs WHERE id = :run_id" }
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: scrap_qty, label: Quantity, type: number, required: true, min: 0.001 }
+      - { field: product_uom, label: Unit of Measure, type: text, default: Units }
+      - { field: source_location, label: Source Location, type: text, required: true, default: WH/Stock }
+      - { field: scrap_location, label: Scrap Location, type: text, required: true, default: Virtual Locations/Scrap }
+      - { field: should_replenish, label: Replenish Quantities, type: checkbox, default: false }
+      - { field: note, label: Reason, type: textarea }
   - id: return_inventory_transfer
     type: server_form
     permission: inventory.write

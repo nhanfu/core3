@@ -28,6 +28,7 @@ components:
       - { id: create_inventory_backorder, label: Create Backorder, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
       - { id: toggle_inventory_transfer_lock, label: Lock / Unlock, variant: secondary, permission: inventory.manage, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: print_inventory_transfer_labels, label: Labels, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
+      - { id: scrap_inventory_transfer, label: Scrap, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     message_source: inventory_transfer_timeline
@@ -53,6 +54,7 @@ components:
       inventory.transfer.lock_toggled: Lock state changed
       inventory.transfer.labels_printed: Labels prepared
       inventory.transfer.email_queued: Email queued
+      inventory.transfer.scrapped: Scrap order created
     content_slot: true
     group_columns: 2
     groups:
@@ -115,3 +117,17 @@ components:
     row_key: id
     selectable: false
     empty_state: { title: No email history, description: Messages queued from this transfer will appear here. }
+  - type: ListView
+    source: inventory_transfer_scrap_runs
+    variant: odoo
+    columns:
+      - { field: product_name, label: Product }
+      - { field: scrap_qty, label: Quantity, align: right }
+      - { field: source_location, label: Source }
+      - { field: scrap_location, label: Scrap Location }
+      - { field: requested_by, label: Requested by }
+      - { field: created_at, label: Created at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No scrap orders, description: Scrap orders created from this transfer will appear here. }

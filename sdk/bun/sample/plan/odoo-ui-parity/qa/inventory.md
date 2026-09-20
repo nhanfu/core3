@@ -1181,3 +1181,30 @@ comparison. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 Product Templates lifecycle and
 guards; PARTIAL/BLOCKED for any unavailable live Odoo visual or mutation
 comparison. Full Inventory sign-off remains open.
+
+## Inventory Transfer Scrap QA — `INV-TRANSFER-SCRAP-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_views.xml:502-511`. The form-bound
+  `stock.action_scrap` server action is named Scrap for `stock.picking` and
+  invokes `records.button_scrap()`.
+- Core3 contract: PASS. `pages/transfer-detail.yaml` owns the visible Scrap
+  button and history list; `api/transfer-detail.yaml` owns the
+  `stock.picking.action_scrap` mutation and datasource, joined by
+  `page.id: transfer-detail`. Migration 0.0.53 persists transfer-bound runs
+  and deterministic test data.
+- Focused test: `bun test
+  test/inventory_transfer_scrap.integration.test.ts` — PASS, 4 tests / 23
+  assertions. Coverage includes contract validation, Draft scrap CRUD,
+  company/actor/state/input/row-version guards, write permission, migration
+  replay, and file-backed restart persistence.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  transfer-detail captures, source responses, page-error and overflow checks
+  are under `evidence/inventory/2026-09-21/INV-TRANSFER-SCRAP-001/`.
+- Odoo comparison: source/menu comparison is PASS. The live probe result is
+  paired evidence; if the supplied runtime is at `/web/login`, no Odoo visual
+  or mutation is claimed.
+
+QA disposition: PASS for the bounded Core3 transfer Scrap lifecycle and
+guards; PARTIAL/BLOCKED for live Odoo visual/mutation comparison when the
+authenticated route is unavailable. Full Inventory sign-off remains open.

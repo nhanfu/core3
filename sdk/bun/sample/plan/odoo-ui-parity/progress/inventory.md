@@ -894,3 +894,23 @@ Inventory sign-off remains open.
 - Odoo source/menu comparison is complete; paired live evidence records the
   authenticated result or exact route/login blocker. No Odoo mutation or full
   Inventory sign-off is claimed.
+
+## `INV-TRANSFER-SCRAP-001` — Transfer-bound Scrap wizard (2026-09-21)
+
+- Selected the smallest uncovered operation after the product configuration
+  waves: Odoo's `stock.action_scrap` form action on `stock.picking`, which
+  calls `button_scrap()` from a transfer. This does not duplicate the existing
+  standalone Scrap Orders lifecycle.
+- Added migration `20260922030000-053-inventory-transfer-scrap.yaml`, a
+  deterministic open delivery fixture, durable scrap-run history, and the
+  separate transfer-detail page/API contracts joined by `page.id`.
+- The action creates a Draft `inventory_scrap_orders` row, a transfer-bound
+  run, actor timeline message, and source row-version update. Company scope,
+  signed-in actor, open-state, positive-quantity/location, and stale-row
+  guards are covered, with read/write permission enforcement and restart
+  persistence.
+- Focused verification: 4 tests / 23 assertions pass. Authenticated Core3
+  desktop/mobile evidence and the exact Odoo live blocker are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-SCRAP-001/`. Scoped audit,
+  lint, and diff-check results are recorded with the evidence. Full Inventory
+  sign-off remains open.

@@ -1,0 +1,29 @@
+version: 0.0.53
+description: Inventory transfer-bound Scrap wizard persistence and fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_scrap_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, picking_id VARCHAR NOT NULL,
+        scrap_id VARCHAR NOT NULL UNIQUE, company_name VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        scrap_qty DECIMAL(18,3) NOT NULL, product_uom VARCHAR NOT NULL DEFAULT 'Units',
+        source_location VARCHAR NOT NULL, scrap_location VARCHAR NOT NULL, should_replenish BOOLEAN NOT NULL DEFAULT FALSE,
+        requested_by VARCHAR NOT NULL, note VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_transfer_scrap_picking ON inventory_transfer_scrap_runs(picking_id, created_at);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-scrap-0001', 'operation-deliveries', 'WH/OUT/SCRAP/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/SCRAP/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-scrap-0001-move-001', 'delivery-scrap-0001', '[E-COM08] Storage Box', 2, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_scrap_runs WHERE picking_id = 'delivery-scrap-0001';
+      DELETE FROM inventory_transfer_messages WHERE picking_id = 'delivery-scrap-0001';
+      DELETE FROM inventory_picking_moves WHERE picking_id = 'delivery-scrap-0001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-scrap-0001';
+      DROP TABLE IF EXISTS inventory_transfer_scrap_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

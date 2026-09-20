@@ -1804,3 +1804,28 @@ desktop/mobile list/detail evidence is under
 `evidence/inventory/2026-09-21/INV-PRODUCT-TEMPLATES-001/`. Odoo source/menu
 comparison and any exact live-route blocker are recorded in paired evidence;
 full Inventory sign-off remains open.
+
+## Transfer Scrap wizard — `INV-TRANSFER-SCRAP-001` (2026-09-21)
+
+This bounded Wave 16 slice covers the transfer-bound Scrap action, distinct
+from the completed standalone Scrap Orders surface. Odoo binds
+`stock.action_scrap` to `stock.picking` in
+`addons/stock/views/stock_picking_views.xml:502-511`; the server action is
+named `Scrap`, is form-bound, and calls `records.button_scrap()`.
+
+Core3 adds migration
+`20260922030000-053-inventory-transfer-scrap.yaml` with deterministic
+transfer/move fixtures and durable `inventory_transfer_scrap_runs` history.
+The existing `transfer-detail` page/API pair stays separated and joined by
+`page.id`: `pages/transfer-detail.yaml` adds the Scrap header action/history
+list while `api/transfer-detail.yaml` owns the
+`stock.picking.action_scrap` mutation, company/actor/state/input/row-version
+guards, scrap-order creation, timeline message, and refresh contract.
+
+Focused verification is in
+`test/inventory_transfer_scrap.integration.test.ts` and covers contract
+separation, deterministic CRUD, permission/company/actor/concurrency guards,
+migration replay, and file-backed restart persistence. Authenticated Core3
+desktop/mobile and the paired Odoo source/login result are recorded under
+`evidence/inventory/2026-09-21/INV-TRANSFER-SCRAP-001/`.
+Full Inventory sign-off remains open.
