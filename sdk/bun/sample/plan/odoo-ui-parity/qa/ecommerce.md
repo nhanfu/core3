@@ -1,5 +1,35 @@
 # ecommerce QA ledger
 
+## Product Ribbons (`ECOM-CATALOG-RIBBONS-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `product_catalog_product_ribbons` /
+  `website_sale.product_ribbon_action`, model `product.ribbon`, list/form
+  fields and automatic `sale`/`new` uniqueness constraint verified against the
+  supplied `website_sale` source.
+- Core3 lifecycle: durable schema and deterministic four-row demo migration,
+  separate page/API YAML contracts, manifest menu, `ecommerce.read` page/query
+  boundary, `ecommerce.write` CRUD mutations, validation, assignment
+  uniqueness, optimistic row-version guards, and restart persistence are
+  implemented.
+- Focused verification: `bun test
+  test/ecommerce_product_ribbons.integration.test.ts --timeout 20000` — **4
+  passed, 28 assertions, 0 failures**. The test covers CRUD, permission/error
+  declarations, migration idempotency, deterministic fixtures, and DuckDB
+  restart persistence.
+- Browser verification: Core3 authenticated desktop 1440x900 and mobile
+  390x844 list captures plus desktop create-form/post-create captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-ribbons-001/`; the desktop
+  create interaction persisted `Browser QA Ribbon`, and the captured browser
+  check has no Core3 page/request errors. `bun run audit` passed with 668 pages,
+  677 routes, and 1196 datasources.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. The authenticated
+  `/shop` route returned 404 on both, confirming the supplied reference lacks
+  Website/eCommerce; the paired Odoo Product Ribbon comparison is blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for the paired Odoo surface and existing
+  module-level actor/company and workflow gates.
+
 ## Bounded reorder workflow (2026-09-20)
 
 - Source trace: Odoo 19 `website_sale/controllers/reorder.py`,

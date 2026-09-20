@@ -15,6 +15,7 @@ recorded in [`../ecommerce.md`](../ecommerce.md).
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
 | Products/shop | product and shop routes | Published catalog, product detail, search/filter and price-list scope |
+| Product Ribbons | `/ecommerce/product-ribbons` / `ecommerce-product-ribbons` | Odoo product.ribbon list/form, deterministic defaults, automatic assignment uniqueness, CRUD and responsive configuration surface |
 | Pricelists | pricelist list/detail routes | Pricelist CRUD, rules, validation and company scope |
 | Commerce journey | shop/cart/checkout/payment/order routes when enabled | Product selection, cart, delivery/payment and order creation; currently a required expansion gate |
 | YAML-driven presentation | page/API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, asset binding and responsive layout |
@@ -43,6 +44,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | pass: focused idempotency suite; durable order restart verified on isolated DuckDB |
 | ECOM-FUNC-013 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | product image upload/download and product import pass through the persisted YAML/API path; list export remains a client-side browser gate |
 | ECOM-FUNC-014 | Sales handoff outbox | Checkout emits one idempotent handoff envelope; a Sales worker can claim it once, read the owned order/lines, and acknowledge success/failure with stale-write protection | pass: `ecommerce_checkout.integration.test.ts` — 11 tests, 59 assertions; migration, pending/order/line operations, claim, acknowledgement, duplicate-claim, and duplicate-acknowledgement behavior verified |
+| ECOM-FUNC-015 | Product Ribbons | Product Ribbon fixtures, search/filter/empty/error states, permissioned CRUD, automatic assignment uniqueness, validation, stale guards, migration rerun, and restart persistence work | pass: `ecommerce_product_ribbons.integration.test.ts` — 4 tests, 28 assertions |
 
 ## Workflow and integration cases
 
@@ -55,6 +57,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | bounded handoff outbox now persists the eCommerce order envelope and exposes order/line reads for the owning Sales consumer; Sales-side consumer remains a separate gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | Temporal SDK 1.23.0 and Bun worker startup/workflow/timer-recovery/callback/retry-exhaustion/compensation/shutdown smoke pass; production provider adapter and paired Odoo comparison remain open |
 | ECOM-WF-022 | Reorder prior order | An accessible prior order merges active product lines and quantities into the customer's open cart; unavailable-only orders are rejected | pass: `test/ecommerce_reorder.integration.test.ts` — ownership/company, stale/missing, additive repeat, and restart persistence coverage |
+| ECOM-WF-023 | Product Ribbon configuration | Authorized catalog editor creates, edits, and deletes a ribbon; duplicate automatic assignment and stale writes are rejected without losing persisted data | pass: `ecommerce_product_ribbons.integration.test.ts`; authenticated Core3 desktop create interaction also persisted `Browser QA Ribbon` |
 
 ## Permission and security cases
 
@@ -73,6 +76,7 @@ the all-customer scope.
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
 | ECOM-PERM-018 | Reorder ownership/company | A customer cannot reorder another customer's or company's order | pass: reorder integration guard matrix |
+| ECOM-PERM-019 | Product Ribbon read/write boundary | `ecommerce.read` protects the page/query and `ecommerce.write` protects create/edit/delete; unauthenticated, forbidden, invalid, duplicate-assignment, and stale requests return declared errors | pass: `ecommerce_product_ribbons.integration.test.ts` contract and mutation coverage |
 
 ## Visual, responsive, and regression cases
 
@@ -82,6 +86,7 @@ the all-customer scope.
 | ECOM-UI-002 | Cart/checkout/payment | both | Cart summary, checkout steps, validation and payment states match Odoo | authenticated route smoke passed; submit interaction and paired Odoo capture planned |
 | ECOM-UI-003 | Empty/unpublished/error | both | Public visibility, empty and error states do not leak content or overflow | planned |
 | ECOM-UI-004 | Current route regression | all manifest-owned Ecommerce routes | Public/authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
+| ECOM-UI-005 | Product Ribbons list/form | 1440x900, 390x844 | Authenticated Core3 list, desktop create form/post-create state, and mobile list render with deterministic fixtures; paired Odoo comparison is required but blocked by authenticated `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-ribbons-001/` |
 
 ## Reference blocker
 

@@ -1,6 +1,39 @@
 # eCommerce parity — Products and order workflows
 
-Status: ready for review (bounded wave 2 slice)
+Status: qa-in-progress (bounded catalog-ribbons slice; module sign-off remains open)
+
+## Bounded feature — Product Ribbons (`ECOM-CATALOG-RIBBONS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` places
+`product_catalog_product_ribbons` (label Product Ribbons) under Website >
+Configuration > eCommerce > Products and opens
+`website_sale.product_ribbon_action`. `models/product_ribbon.py` defines the
+ordered `product.ribbon` model with `name`, `sequence`, `bg_color`,
+`text_color`, `position`, `style`, `assign`, and `new_period`; only one
+automatic `sale` or `new` assignment is allowed. The list/form views in
+`views/product_ribbon_views.xml` expose the same configuration surface, and
+`data/data.xml` seeds Sale, Sold out, Out of stock, and New! ribbons.
+
+Core3 comparison: `services/ecommerce/pages/product-ribbons.yaml` owns the
+route `/ecommerce/product-ribbons` and joins the separate
+`services/ecommerce/api/product-ribbons.yaml` contract by
+`page.id: ecommerce-product-ribbons`. The API migration creates the durable
+`ecommerce_product_ribbons` table and deterministic Odoo-like fixtures. The
+manifest adds the Products > Product Ribbons menu entry. Create, edit, and
+delete mutations require `ecommerce.write`, reads require `ecommerce.read`,
+automatic-assignment uniqueness and field validation are enforced server-side,
+and row-version guards protect edits/deletes. Focused tests cover migration
+reruns, search/filter/empty/transport states, CRUD, permissions, stale writes,
+and DuckDB restart persistence.
+
+Authenticated browser evidence was captured on 2026-09-20 under
+`evidence/ecommerce/2026-09-20/ecom-catalog-ribbons-001/`: Core3 desktop list,
+create form, post-create list, and mobile list are present with no page or
+request errors. The Odoo credentials/database authentication succeeded on
+ports 8069 and 8073 at desktop and mobile viewports, but `/shop` returned the
+authenticated 404 page on both instances; the reference database still lacks
+the installed Website/eCommerce surface, so paired Product Ribbon visual
+comparison is blocked and this feature/module is not signed off.
 
 ## Source trace
 

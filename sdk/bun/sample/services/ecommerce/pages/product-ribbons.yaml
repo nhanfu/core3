@@ -1,0 +1,25 @@
+title: Product Ribbons
+page: { id: ecommerce-product-ribbons, route: /ecommerce/product-ribbons, breadcrumb: [eCommerce, Products, Product Ribbons], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_ribbons
+    create_action: create_ecommerce_product_ribbon
+    create_label: New
+    search: { label: Search ribbons, placeholder: Search ribbon... }
+    filters: [{ field: assign, label: Assignment, options_source: ecommerce_product_ribbon_assignments }]
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: name, label: Ribbon Name, type: PrimaryEntityCell }
+      - { field: assign, label: Assign }
+      - { field: position, label: Position }
+      - { field: style, label: Style }
+      - { field: text_color, label: Text Color, type: ColorSwatch }
+      - { field: bg_color, label: Background Color, type: ColorSwatch }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_product_ribbon, label: Edit, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_ribbon, label: Delete, permission: ecommerce.write, variant: danger }
+    page_size: 40
+    row_key: id
+    empty_state: { title: Define a new ribbon, description: Create a ribbon to highlight products in your online shop. }

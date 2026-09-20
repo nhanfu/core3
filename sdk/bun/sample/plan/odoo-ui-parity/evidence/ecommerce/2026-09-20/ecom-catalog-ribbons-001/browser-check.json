@@ -1,0 +1,60 @@
+{
+  "featureId": "ECOM-CATALOG-RIBBONS-001",
+  "capturedAt": "2026-09-20T09:49:25.320Z",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-ribbons",
+      "title": "Product Ribbons",
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Product Ribbons\n1-5 / 5\n‹\n›\nSequence\n\tRibbon Name\n\tAssign\n\tPosition\n\tStyle\n\tText Color\n\tBackground Color\n\n1\t\nSold out\n\tmanual\tleft\tribbon\t#FFFFFF\t#D9534F\n2\t\nOut of stock\n\tmanual\tleft\tribbon\t#FFFFFF\t#FFC107\n3\t\nSale\n\tmanual\tleft\tribbon\t#FFFFFF\t#0CA725\n4\t\nNew!\n\tmanual\tleft\tribbon\t#FFFFFF\t#0275D8\n9\t\nBrowser QA Ribbon\n\tmanual\tleft\tribbon\t#000000\t#000000",
+      "errors": []
+    },
+    "create": {
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Product Ribbons\n1-6 / 6\n‹\n›\nSequence\n\tRibbon Name\n\tAssign\n\tPosition\n\tStyle\n\tText Color\n\tBackground Color\n\n1\t\nSold out\n\tmanual\tleft\tribbon\t#FFFFFF\t#D9534F\n2\t\nOut of stock\n\tmanual\tleft\tribbon\t#FFFFFF\t#FFC107\n3\t\nSale\n\tmanual\tleft\tribbon\t#FFFFFF\t#0CA725\n4\t\nNew!\n\tmanual\tleft\tribbon\t#FFFFFF\t#0275D8\n9\t\nBrowser QA Ribbon\n\tmanual\tleft\tribbon\t#000000\t#000000\n9\t\nBrowser QA Ribbon\n\tmanual\tleft\tribbon\t#000000\t#000000",
+      "created": true,
+      "errors": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-ribbons",
+      "title": "Product Ribbons",
+      "listText": "AU\nNew\nProduct Ribbons\n1-6 / 6\n‹\n›\nSequence\n\tRibbon Name\n\tAssign\n\tPosition\n\tStyle\n\tText Color\n\tBackground Color\n\n1\t\nSold out\n\tmanual\tleft\tribbon\t#FFFFFF\t#D9534F\n2\t\nOut of stock\n\tmanual\tleft\tribbon\t#FFFFFF\t#FFC107\n3\t\nSale\n\tmanual\tleft\tribbon\t#FFFFFF\t#0CA725\n4\t\nNew!\n\tmanual\tleft\tribbon\t#FFFFFF\t#0275D8\n9\t\nBrowser QA Ribbon\n\tmanual\tleft\tribbon\t#000000\t#000000\n9\t\nBrowser QA Ribbon\n\tmanual\tleft\tribbon\t#000000\t#000000",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "odoo-8069": {
+      "desktop": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by ",
+        "authenticated": true,
+        "errors": [
+          "requestfailed: POST http://127.0.0.1:8069/mail/data net::ERR_ABORTED"
+        ]
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by ",
+        "authenticated": true
+      }
+    },
+    "odoo-8073": {
+      "desktop": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by ",
+        "authenticated": true,
+        "errors": [
+          "requestfailed: POST http://127.0.0.1:8073/mail/data net::ERR_ABORTED"
+        ]
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by ",
+        "authenticated": true
+      }
+    }
+  },
+  "errors": []
+}

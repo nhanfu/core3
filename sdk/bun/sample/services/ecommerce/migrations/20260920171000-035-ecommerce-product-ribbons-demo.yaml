@@ -1,0 +1,17 @@
+version: 0.0.35
+kind: data
+description: eCommerce product ribbon demo configuration
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_ribbons (id, name, sequence, bg_color, text_color, position, style, assign, new_period) VALUES
+        ('ecommerce-ribbon-sale', 'Sale', 3, '#0CA725', '#FFFFFF', 'left', 'ribbon', 'manual', 30),
+        ('ecommerce-ribbon-sold-out', 'Sold out', 1, '#D9534F', '#FFFFFF', 'left', 'ribbon', 'manual', 30),
+        ('ecommerce-ribbon-out-of-stock', 'Out of stock', 2, '#FFC107', '#FFFFFF', 'left', 'ribbon', 'manual', 30),
+        ('ecommerce-ribbon-new', 'New!', 4, '#0275D8', '#FFFFFF', 'left', 'ribbon', 'manual', 30)
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_product_ribbons WHERE id IN ('ecommerce-ribbon-sale', 'ecommerce-ribbon-sold-out', 'ecommerce-ribbon-out-of-stock', 'ecommerce-ribbon-new');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

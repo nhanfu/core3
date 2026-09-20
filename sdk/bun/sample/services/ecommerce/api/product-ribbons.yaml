@@ -1,0 +1,92 @@
+page: { id: ecommerce-product-ribbons }
+datasources:
+  - id: ecommerce_product_ribbons
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_RIBBONS_UNAUTHENTICATED, message: Sign in to view product ribbons. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_RIBBONS_FORBIDDEN, message: You do not have permission to view product ribbons. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_RIBBONS_UNAVAILABLE, message: Product ribbons are temporarily unavailable. }
+    query: "SELECT id, row_version, name, sequence, bg_color, text_color, position, style, assign, new_period FROM ecommerce_product_ribbons WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%') AND (:assign IS NULL OR assign = :assign) ORDER BY sequence, id"
+  - id: ecommerce_product_ribbon_assignments
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('manual', 'Manually'), ('sale', 'On Sale'), ('new', 'When New')) assignments(value, label)"
+actions:
+  - id: create_ecommerce_product_ribbon
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Ribbon
+    action: ecommerce.product_ribbons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_product_ribbons]
+    mutation:
+      operation: insert
+      table: ecommerce_product_ribbons
+      fields: [name, sequence, bg_color, text_color, position, style, assign, new_period]
+      required: [name]
+      defaults: { sequence: 10, bg_color: '#000000', text_color: '#FFFFFF', position: left, style: ribbon, assign: manual, new_period: 30 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 20", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_NAME_INVALID, message: Ribbon name must be between 1 and 20 characters. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sequence AS INTEGER) >= 0 AND CAST(:new_period AS INTEGER) BETWEEN 1 AND 3650", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_VALUES_INVALID, message: Sequence must be non-negative and new period must be between 1 and 3650 days. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:bg_color AS VARCHAR), '^#[0-9A-Fa-f]{6}$') AND regexp_matches(CAST(:text_color AS VARCHAR), '^#[0-9A-Fa-f]{6}$')", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_COLOR_INVALID, message: Colors must be six-digit hexadecimal values. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:position AS VARCHAR) IN ('left', 'right') AND CAST(:style AS VARCHAR) IN ('ribbon', 'tag') AND CAST(:assign AS VARCHAR) IN ('manual', 'sale', 'new')", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_OPTION_INVALID, message: Choose valid position, style, and assignment options. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:assign AS VARCHAR) = 'manual' OR NOT EXISTS (SELECT 1 FROM ecommerce_product_ribbons WHERE assign = :assign)", status: 409, code: ECOMMERCE_PRODUCT_RIBBON_ASSIGN_EXISTS, message: Only one automatic ribbon is allowed for each assignment type. }
+      result: { query: "SELECT * FROM ecommerce_product_ribbons WHERE id = :id" }
+    fields:
+      - { field: name, label: Ribbon Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 0 }
+      - { field: assign, label: Assign, type: select, options_source: ecommerce_product_ribbon_assignments, required: true }
+      - { field: new_period, label: New Period (days), type: number, default: 30, min: 1, max: 3650 }
+      - { field: position, label: Position, type: select, options: [{ value: left, label: Left }, { value: right, label: Right }], required: true }
+      - { field: style, label: Style, type: select, options: [{ value: ribbon, label: Ribbon }, { value: tag, label: Badge }], required: true }
+      - { field: text_color, label: Text Color, type: color, required: true }
+      - { field: bg_color, label: Background Color, type: color, required: true }
+  - id: edit_ecommerce_product_ribbon
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Ribbon
+    action: ecommerce.product_ribbons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [ecommerce_product_ribbons]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: update
+      table: ecommerce_product_ribbons
+      fields: [name, sequence, bg_color, text_color, position, style, assign, new_period]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_ribbons WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_RIBBON_NOT_FOUND, message: Product ribbon not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 20", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_NAME_INVALID, message: Ribbon name must be between 1 and 20 characters. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sequence AS INTEGER) >= 0 AND CAST(:new_period AS INTEGER) BETWEEN 1 AND 3650", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_VALUES_INVALID, message: Sequence must be non-negative and new period must be between 1 and 3650 days. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:bg_color AS VARCHAR), '^#[0-9A-Fa-f]{6}$') AND regexp_matches(CAST(:text_color AS VARCHAR), '^#[0-9A-Fa-f]{6}$')", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_COLOR_INVALID, message: Colors must be six-digit hexadecimal values. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:position AS VARCHAR) IN ('left', 'right') AND CAST(:style AS VARCHAR) IN ('ribbon', 'tag') AND CAST(:assign AS VARCHAR) IN ('manual', 'sale', 'new')", status: 422, code: ECOMMERCE_PRODUCT_RIBBON_OPTION_INVALID, message: Choose valid position, style, and assignment options. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:assign AS VARCHAR) = 'manual' OR NOT EXISTS (SELECT 1 FROM ecommerce_product_ribbons WHERE assign = :assign AND id <> :id)", status: 409, code: ECOMMERCE_PRODUCT_RIBBON_ASSIGN_EXISTS, message: Only one automatic ribbon is allowed for each assignment type. }
+      result: { query: "SELECT * FROM ecommerce_product_ribbons WHERE id = :id" }
+    fields:
+      - { field: name, label: Ribbon Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0 }
+      - { field: assign, label: Assign, type: select, options_source: ecommerce_product_ribbon_assignments, required: true }
+      - { field: new_period, label: New Period (days), type: number, min: 1, max: 3650 }
+      - { field: position, label: Position, type: select, options: [{ value: left, label: Left }, { value: right, label: Right }], required: true }
+      - { field: style, label: Style, type: select, options: [{ value: ribbon, label: Ribbon }, { value: tag, label: Badge }], required: true }
+      - { field: text_color, label: Text Color, type: color, required: true }
+      - { field: bg_color, label: Background Color, type: color, required: true }
+  - id: delete_ecommerce_product_ribbon
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_ribbons.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete ribbon {{row.name}}?'
+    refresh: [ecommerce_product_ribbons]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: ecommerce_product_ribbons
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_ribbons WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_RIBBON_NOT_FOUND, message: Product ribbon not found. }
+      result: { query: "SELECT TRUE AS deleted" }
