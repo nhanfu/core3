@@ -1,0 +1,7 @@
+{
+  "featureId": "SURVEYS-PUBLIC-PREVIOUS-QUESTION-001",
+  "status": "blocked",
+  "base": "http://127.0.0.1:8069",
+  "blocker": "The installed Odoo reference has no stable active answer-token fixture accepted for a fresh previous-question mutation probe.",
+  "signoff": false
+}

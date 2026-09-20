@@ -20,6 +20,21 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-RESUME-LINES-001 (2026-09-20)
+
+- Selected Odoo `hr.resume.line` employee-form `resume_line_ids` and
+  `resume_one2many` CRUD after skill assignments.
+- Implemented migration `20260920300000-040`, deterministic section/employee
+  fixtures, API catalog/datasource, page/API-separated Resume-tab grid, and
+  actor/company/type/date/duplicate/row-version guards.
+- Verification: focused **4 tests / 30 assertions**, audit **687 / 696 /
+  1,279**, scoped ESLint and diff-check pass.
+- Core3 authenticated desktop/mobile company switch returned 200 but the
+  Vietnam fixture is hidden in the Vietnam Branch session. Odoo authenticated
+  Resume desktop/mobile navigation succeeded, but no populated reference
+  resume lines were available. Evidence is conditional.
+- Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.
+
 ## EMP-EMPLOYEE-SKILLS-001 (2026-09-20)
 
 - Selected Odoo `hr.employee.skill` current-skill assignments after birth

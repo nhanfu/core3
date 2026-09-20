@@ -584,3 +584,28 @@ Disposition: Core3 durable API workflow, permission/token guards,
 restart/idempotency, and responsive endpoint evidence pass. UI renderer
 integration and paired Odoo mutation evidence remain conditional. Surveys is
 still **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-PREVIOUS-QUESTION-001` — 2026-09-20
+
+- Source comparison: Odoo `survey/submit` consumes `previous_page_id` and
+  returns the prior page/question; Core3 implements the transition as a
+  separate YAML operation/API action and binds the public renderer's Back
+  control to it.
+- Persistence/workflow: q2 → q1 updates one response cursor; the deterministic
+  navigation key replays without a second response row; file-backed DuckDB
+  reopen preserves the cursor; first-question, stale, wrong-token, closed,
+  invalid-order, and non-POST writes are rejected without mutation.
+- Focused verification: **6 passed, 0 failed, 44 assertions** across the
+  next/previous integration files.
+- Scoped verification: ESLint passed for the changed integration tests,
+  `bun run audit` passed with **687 pages, 696 routes, and 1,279 datasources**,
+  and `git diff --check` passed. No full-repository run was performed.
+- Authenticated Core3 evidence: Admin desktop/mobile at 1440x900 and 390x844
+  render Question 2 → Back → Question 1, restore Question 1 after reload,
+  replay HTTP 200/`replayed: true`, and report no console/page failures.
+- Odoo blocker: the installed reference at `127.0.0.1:8069` has no stable
+  active answer-token fixture accepted for a fresh previous-question mutation
+  probe; no paired Odoo mutation/visual sign-off is claimed.
+
+Disposition: the bounded Core3 previous-question workflow passes; Surveys
+remains **qa-in-progress / conditional**.

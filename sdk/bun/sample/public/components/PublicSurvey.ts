@@ -175,8 +175,46 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       return;
     }
     renderQuestion(body, questions[questionIndex], questionIndex, questions.length, answers[questions[questionIndex].id]);
-    body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', () => {
-      questionIndex = Math.max(0, questionIndex - 1);
+    body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', async (event) => {
+      const backButton = event.currentTarget as HTMLButtonElement;
+      backButton.disabled = true;
+      const question = questions[questionIndex];
+      const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+      if (!progressResponse.ok) {
+        backButton.disabled = false;
+        const message = document.createElement('div');
+        message.className = 'core3-public-survey__error';
+        message.textContent = `Survey progress could not be saved (${progressResponse.status}).`;
+        body.prepend(message);
+        return;
+      }
+      await progressResponse.text();
+      const navigationKey = `public-previous:${answerToken}:${question.id}`;
+      const previousResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/previous_question`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer_token: answerToken, expected_question_id: question.id, navigation_key: navigationKey }),
+      });
+      if (!previousResponse.ok) {
+        backButton.disabled = false;
+        const message = document.createElement('div');
+        message.className = 'core3-public-survey__error';
+        message.textContent = `The previous survey question could not be loaded (${previousResponse.status}). Reload before continuing.`;
+        body.prepend(message);
+        return;
+      }
+      const previousPayload = await previousResponse.json() as { question?: { id?: string }; answer?: { current_question_id?: string | null } };
+      currentQuestionId = String(previousPayload.question?.id || previousPayload.answer?.current_question_id || '');
+      const previousIndex = questions.findIndex((candidate) => candidate.id === currentQuestionId);
+      if (previousIndex < 0) {
+        backButton.disabled = false;
+        const message = document.createElement('div');
+        message.className = 'core3-public-survey__error';
+        message.textContent = 'The previous survey question is unavailable. Reload before continuing.';
+        body.prepend(message);
+        return;
+      }
+      questionIndex = previousIndex;
       renderCurrentQuestion();
     });
     body.querySelector<HTMLButtonElement>('[data-next]')!.addEventListener('click', async (event) => {

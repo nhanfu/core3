@@ -1,0 +1,48 @@
+version: 0.0.40
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_resume_line_types (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        is_course BOOLEAN NOT NULL DEFAULT false,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS employee_resume_lines (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        line_type_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        date_start DATE NOT NULL DEFAULT DATE '2026-01-15',
+        date_end DATE,
+        duration INTEGER NOT NULL DEFAULT 0,
+        course_type VARCHAR NOT NULL DEFAULT 'external',
+        description VARCHAR,
+        external_url VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_resume_lines_employee_idx ON employee_resume_lines(employee_id, date_start);
+      INSERT OR IGNORE INTO employee_resume_line_types (id, sequence, name, is_course, active) VALUES
+        ('resume-type-experience', 1, 'Other Experience', false, true),
+        ('resume-type-education', 2, 'Education', false, true),
+        ('resume-type-training', 3, 'Training', true, true);
+      INSERT OR IGNORE INTO employee_resume_lines (id, employee_id, line_type_id, name, date_start, date_end, duration, course_type, description, external_url)
+      VALUES
+        ('employee-resume-demo-001-education', 'employee-demo-001', 'resume-type-education', 'Computer Science', DATE '2018-09-01', DATE '2022-06-30', 0, 'external', 'Bachelor degree in Computer Science', NULL),
+        ('employee-resume-demo-001-training', 'employee-demo-001', 'resume-type-training', 'Odoo HR onboarding', DATE '2025-06-01', NULL, 8, 'external', 'HR workflow and employee lifecycle training', 'https://www.odoo.com/slides'),
+        ('employee-resume-demo-002-experience', 'employee-demo-002', 'resume-type-experience', 'People Operations', DATE '2020-01-15', NULL, 0, 'external', 'People operations and employee support', NULL);
+      UPDATE employee_resume_line_types SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+      UPDATE employee_resume_lines SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_resume_lines;
+      DROP TABLE IF EXISTS employee_resume_line_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

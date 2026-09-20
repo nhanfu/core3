@@ -48,6 +48,8 @@ describe('Surveys public next-question navigation', () => {
     expect(renderer).toContain('/next_question');
     expect(renderer).toContain('expected_question_id: question.id');
     expect(renderer).toContain('navigation_key: navigationKey');
+    expect(renderer).toContain('/previous_question');
+    expect(renderer).toContain('expected_question_id: question.id');
     expect(renderer).not.toContain('questionIndex += 1');
   });
 

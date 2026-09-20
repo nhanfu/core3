@@ -70,6 +70,26 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-20 — `SURVEYS-PUBLIC-PREVIOUS-QUESTION-001`
+
+Selected the smallest remaining source-backed public navigation behavior after
+the renderer binding: Odoo's previous-page path in
+`addons/survey/controllers/main.py:583-587`. Core3 adds a separate YAML API
+action and operation, persists the public response cursor, and binds the
+rendered Back control to the token-scoped transition. Guards cover permission,
+wrong token, stale cursor, closed state, invalid ordering, non-POST, and the
+first-question boundary; the navigation key is replay-safe across a
+file-backed DuckDB reopen.
+
+The focused next/previous suite passes **6 tests / 44 assertions**. Scoped
+ESLint, `bun run audit` (**687 pages, 696 routes, 1,279 datasources**), and
+`git diff --check` pass. Authenticated Core3 desktop/mobile probes render
+Question 2 → Back → Question 1, restore Question 1 after reload, replay with
+HTTP 200/`replayed: true`, and report zero console/page failures. Evidence is
+under `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-PREVIOUS-QUESTION-001/`.
+The installed Odoo reference remains blocked by the absence of a stable active
+answer-token fixture for this mutation; no Odoo sign-off is claimed.
+
 ## 2026-09-20 — `SURVEYS-PUBLIC-NEXT-QUESTION-002`
 
 Closed the integration gap exposed by the previous cursor slice. Ownership

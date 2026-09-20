@@ -65,6 +65,29 @@ components:
           groups:
             - title: Skills and resume
               fields: [{ field: skills, label: Skills }, { field: resume_summary, label: Resume, type: textarea, wide: true }]
+          component:
+            type: LineItemGrid
+            source: employee_resume_lines
+            parent_source: employee_detail
+            title: Resume Lines
+            description: Track education, experience, and training on the employee resume.
+            variant: odoo_x2many
+            page_size: 20
+            row_key: id
+            actions: [{ id: add_employee_resume_line, label: Add a resume line, variant: primary, permission: employees.write }]
+            empty_state: { title: No resume lines, description: Add an education, experience, or training entry. }
+            children:
+              - { type: LineItemField, id: line_type_name, field: line_type_name, label: Section, readonly: true }
+              - { type: LineItemField, id: name, field: name, label: Title, readonly: true }
+              - { type: LineItemField, id: date_start, field: date_start, label: Start Date, readonly: true }
+              - { type: LineItemField, id: date_end, field: date_end, label: End Date, readonly: true }
+              - { type: LineItemField, id: course_type, field: course_type, label: Type, readonly: true }
+              - { type: LineItemField, id: duration, field: duration, label: Hours, readonly: true }
+              - type: LineItemActions
+                id: employee_resume_line_actions
+                actions:
+                  - { id: edit_employee_resume_line, label: Edit, icon: edit, variant: ghost, permission: employees.write }
+                  - { id: delete_employee_resume_line, label: Delete, icon: trash, variant: danger, permission: employees.write }
         - id: personal
           label: Personal
           groups:

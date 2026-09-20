@@ -1,0 +1,4 @@
+[
+  {"viewport":"desktop","viewport_size":"1440x1000","url":"http://127.0.0.1:8069/odoo/employees/6","database":"core3_reference","actor":"codex@core3.local","authenticated":true,"resume_tab_clicked":true,"resume_labels_rendered":true,"seeded_resume_visible":false,"page_errors":[],"known_shell_http_404s":7,"blocker":"Selected reference employee has no populated resume-line values"},
+  {"viewport":"mobile","viewport_size":"390x844","url":"http://127.0.0.1:8069/odoo/employees/6","database":"core3_reference","actor":"codex@core3.local","authenticated":true,"resume_tab_clicked":true,"resume_labels_rendered":true,"seeded_resume_visible":false,"page_errors":[],"known_shell_http_404s":7,"blocker":"Selected reference employee has no populated resume-line values"}
+]

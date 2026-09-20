@@ -145,6 +145,25 @@ datasources:
       JOIN employee_skill_types t ON t.id = l.skill_type_id
       WHERE l.skill_type_id = :skill_type_id AND t.active = true AND t.is_certification = false
       ORDER BY l.level_progress DESC, l.id
+  - id: employee_resume_lines
+    single: false
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_RESUME_LINES_UNAVAILABLE, message: Employee resume lines are temporarily unavailable. } }
+    query: |
+      SELECT r.id, r.row_version, r.employee_id, r.line_type_id, t.name AS line_type_name,
+        t.is_course, r.name, CAST(r.date_start AS VARCHAR) AS date_start,
+        CAST(r.date_end AS VARCHAR) AS date_end, r.duration, r.course_type,
+        r.description, r.external_url
+      FROM employee_resume_lines r
+      JOIN employees e ON e.id = r.employee_id
+      JOIN employee_resume_line_types t ON t.id = r.line_type_id AND t.active = true
+      WHERE r.employee_id = :employee_id
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY t.sequence, r.date_end DESC NULLS LAST, r.date_start DESC, r.id
+  - id: employee_resume_line_types_for_employee
+    single: false
+    permission: employees.write
+    query: "SELECT id AS value, name AS label FROM employee_resume_line_types WHERE active = true ORDER BY sequence, id"
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -488,6 +507,116 @@ actions:
           status: 409
           code: STALE_RECORD
           message: The employee changed before the skill was archived. Reload and try again.
+  - id: add_employee_resume_line
+    type: server_form
+    permission: employees.write
+    title: Add Resume Line
+    description: Add education, experience, or training to the employee resume.
+    action: employees.records.resume_line.create
+    handler: line_item
+    operation: create
+    domain: employee_resume_line
+    params: { id: '{state.id}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_resume_lines]
+    mutation:
+      concurrency: { required: true }
+      before_steps: [{ query: "SELECT 'employee-resume-' || CAST(:id AS VARCHAR) || '-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || CAST(:date_start AS VARCHAR) AS resume_line_id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RESUME_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the resume line was added. Reload and try again. }
+        - { query: "SELECT id FROM employee_resume_line_types WHERE id = :line_type_id AND active = true", status: 422, code: EMPLOYEES_RESUME_TYPE_INVALID, message: Select an active resume section. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_start AS DATE) IS NOT NULL AND (CAST(:date_end AS DATE) IS NULL OR CAST(:date_end AS DATE) >= CAST(:date_start AS DATE))", status: 422, code: EMPLOYEES_RESUME_VALUES_INVALID, message: Resume name and a valid date range are required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:duration AS INTEGER) >= 0", status: 422, code: EMPLOYEES_RESUME_DURATION_INVALID, message: Duration must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_resume_lines WHERE employee_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND date_start = CAST(:date_start AS DATE))", status: 409, code: EMPLOYEES_RESUME_EXISTS, message: This resume line already exists for the employee and date. }
+      steps:
+        - query: "INSERT INTO employee_resume_lines(id, row_version, employee_id, line_type_id, name, date_start, date_end, duration, course_type, description, external_url) VALUES(:resume_line_id, 1, :id, :line_type_id, TRIM(CAST(:name AS VARCHAR)), CAST(:date_start AS DATE), CAST(:date_end AS DATE), CAST(:duration AS INTEGER), COALESCE(NULLIF(TRIM(CAST(:course_type AS VARCHAR)), ''), 'external'), NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), NULLIF(TRIM(CAST(:external_url AS VARCHAR)), ''))"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the resume line was added. Reload and try again.
+      result: { query: "SELECT * FROM employee_resume_lines WHERE id = :resume_line_id" }
+    fields:
+      - { field: line_type_id, label: Resume Section, type: select, options_source: employee_resume_line_types_for_employee, required: true }
+      - { field: name, label: Title, type: text, required: true }
+      - { field: date_start, label: Start Date, type: date, required: true, default: '2026-01-15' }
+      - { field: date_end, label: End Date, type: date }
+      - { field: duration, label: Duration (hours), type: number, default: 0 }
+      - { field: course_type, label: Type, type: select, options: [{ value: external, label: External }, { value: internal, label: Internal }] }
+      - { field: description, label: Description, type: textarea }
+      - { field: external_url, label: External URL, type: text }
+  - id: edit_employee_resume_line
+    type: server_form
+    permission: employees.write
+    title: Edit Resume Line
+    action: employees.records.resume_line.update
+    handler: line_item
+    operation: update
+    domain: employee_resume_line
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    prefill: row
+    refresh: [employee_detail, employee_resume_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RESUME_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the resume line was edited. Reload and try again. }
+        - { query: "SELECT id FROM employee_resume_lines WHERE id = :line_id AND employee_id = :id AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_RESUME_STALE, message: This resume line changed before it was edited. Reload and try again. }
+        - { query: "SELECT id FROM employee_resume_line_types WHERE id = :line_type_id AND active = true", status: 422, code: EMPLOYEES_RESUME_TYPE_INVALID, message: Select an active resume section. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_start AS DATE) IS NOT NULL AND (CAST(:date_end AS DATE) IS NULL OR CAST(:date_end AS DATE) >= CAST(:date_start AS DATE))", status: 422, code: EMPLOYEES_RESUME_VALUES_INVALID, message: Resume name and a valid date range are required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:duration AS INTEGER) >= 0", status: 422, code: EMPLOYEES_RESUME_DURATION_INVALID, message: Duration must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_resume_lines WHERE employee_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND date_start = CAST(:date_start AS DATE) AND id <> :line_id)", status: 409, code: EMPLOYEES_RESUME_EXISTS, message: This resume line already exists for the employee and date. }
+      steps:
+        - query: "UPDATE employee_resume_lines SET row_version = row_version + 1, line_type_id = :line_type_id, name = TRIM(CAST(:name AS VARCHAR)), date_start = CAST(:date_start AS DATE), date_end = CAST(:date_end AS DATE), duration = CAST(:duration AS INTEGER), course_type = COALESCE(NULLIF(TRIM(CAST(:course_type AS VARCHAR)), ''), 'external'), description = NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), external_url = NULLIF(TRIM(CAST(:external_url AS VARCHAR)), ''), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND employee_id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_RESUME_STALE
+          message: This resume line changed before it was edited. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the resume line was edited. Reload and try again.
+      result: { query: "SELECT * FROM employee_resume_lines WHERE id = :line_id" }
+    fields:
+      - { field: line_type_id, label: Resume Section, type: select, options_source: employee_resume_line_types_for_employee, required: true }
+      - { field: name, label: Title, type: text, required: true }
+      - { field: date_start, label: Start Date, type: date, required: true }
+      - { field: date_end, label: End Date, type: date }
+      - { field: duration, label: Duration (hours), type: number }
+      - { field: course_type, label: Type, type: select, options: [{ value: external, label: External }, { value: internal, label: Internal }] }
+      - { field: description, label: Description, type: textarea }
+      - { field: external_url, label: External URL, type: text }
+  - id: delete_employee_resume_line
+    type: server
+    permission: employees.write
+    action: employees.records.resume_line.delete
+    handler: line_item
+    operation: delete
+    domain: employee_resume_line
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    confirm: Delete this resume line?
+    refresh: [employee_detail, employee_resume_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RESUME_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the resume line was deleted. Reload and try again. }
+        - { query: "SELECT id FROM employee_resume_lines WHERE id = :line_id AND employee_id = :id AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_RESUME_STALE, message: This resume line changed before it was deleted. Reload and try again. }
+      steps:
+        - query: "DELETE FROM employee_resume_lines WHERE id = :line_id AND employee_id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_RESUME_STALE
+          message: This resume line changed before it was deleted. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the resume line was deleted. Reload and try again.
   - id: edit_employee
     type: server_form
     permission: employees.write
