@@ -12,6 +12,7 @@ components:
     status_colors: { 'Join now': green, 'Waiting for host': blue, Unavailable: neutral }
     header_actions:
       - { id: join_live_session_preview, label: Join Session, variant: primary, permission: surveys.public, show_if: "record.join_state !== 'Unavailable'" }
+      - { id: submit_live_session_answer, label: Submit Answer, variant: primary, permission: surveys.public, show_if: "record.session_state === 'In Progress'" }
       - { id: back_to_live_session, label: Live Session, variant: secondary, permission: surveys.read }
     group_columns: 2
     groups:
@@ -19,6 +20,9 @@ components:
         fields: [{ field: survey_name, label: Survey }, { field: session_code, label: Session code }, { field: session_state, label: Session state }, { field: join_state, label: Access status }, { field: current_question_text, label: Current question, wide: true }]
       - title: Attendee
         fields: [{ field: attendee_name, label: Your name, type: text, required: true, placeholder: 'e.g. Alex Morgan' }]
+      - title: Current answer
+        show_if: "record.session_state === 'In Progress' && record.attendee_token"
+        fields: [{ field: question_type, label: Answer type, readonly: true }, { field: answer_options, label: Available answers, readonly: true, wide: true }, { field: answer_value, label: Your answer, type: text, required: true, placeholder: 'Choose or enter an answer' }, { field: answer_state, label: Answer state, readonly: true }]
 actions:
   - id: join_live_session_preview
     type: client
@@ -33,6 +37,21 @@ actions:
           body: { attendee_name: name },
         });
         window.alert(`${result.attendee_name} joined ${result.survey_name}.`);
+        window.location.assign(`/surveys/live-session-join?id=${encodeURIComponent(String(row.session_code || ''))}&attendee_token=${encodeURIComponent(String(result.attendee_token || ''))}`);
+      }
+  - id: submit_live_session_answer
+    type: client
+    permission: surveys.public
+    script: |
+      // js
+      async ({ row, request }) => {
+        const answer = String(row.answer_value || '').trim();
+        if (!answer) throw new Error('Select or enter an answer before submitting.');
+        const result = await request(`/api/public/surveys/session/${encodeURIComponent(String(row.session_code || ''))}/answer`, {
+          method: 'POST',
+          body: { attendee_token: String(row.attendee_token || ''), answer_value: answer },
+        });
+        window.alert(`Answer submitted for ${result.question_id || 'the current question'}.`);
         window.location.reload();
       }
   - id: back_to_live_session

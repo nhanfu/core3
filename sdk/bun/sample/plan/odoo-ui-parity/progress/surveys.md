@@ -51,6 +51,25 @@ exists. Evidence is under
 Status remains **qa-in-progress / conditional**; no full-module sign-off is
 claimed.
 
+## 2026-09-20 — `SURVEYS-LIVE-SESSION-ANSWER-001`
+
+Selected the smallest remaining source-backed behavior after Live Session Join:
+an attendee submits one answer for the host's current question. Core3 adds a
+separate permissioned YAML mutation and public route, validates session,
+attendee token, current question, and answer options, persists the answer and
+score, updates session counters, and replays an existing current-question
+answer without inserting a duplicate. Migration `0.0.21` adds the durable
+unique boundary. Focused CRUD/permission/restart coverage is green at 2/2
+tests and 23 assertions; the full Surveys glob is 60/60 with 484 assertions.
+
+Authenticated Core3 desktop/mobile probes rendered the submitted answer with
+zero failed requests and no overflow. The authenticated Odoo reference has no
+matching live session: `/survey/check_session_code/5822` returned HTTP 200
+JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-ANSWER-001/`.
+Status remains **qa-in-progress / conditional**; no module sign-off is
+claimed.
+
 ## 2026-09-20 — `SURVEYS-LIVE-LEADERBOARD-001`
 
 Selected the smallest remaining source-backed live-session behavior after the

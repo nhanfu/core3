@@ -159,3 +159,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-JOIN-001/`.
+
+## 2026-09-20 live-session attendee-answer additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-017 | live-session/public | Joined attendee → current-question answer | Persist one token-scoped answer, derive deterministic score, and update attendee/session counts | pass |
+| SURVEYS-WF-014 | workflow/recovery | Answer → reload/restart → replay | File-backed reopen restores the answer; retry returns the same row without a second insert | pass |
+| SURVEYS-PERM-016 | permission/guards | Public answer boundary | Session/attendee/question guards reject closed, missing, empty, invalid, and duplicate writes explicitly | pass |
+| SURVEYS-UI-015 | visual/responsive | Answer form desktop/mobile + Odoo comparison | Authenticated Core3 shows `Answered` at 1440x900 and 390x844; exact Odoo missing-session blocker is recorded | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-ANSWER-001/`.

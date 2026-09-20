@@ -411,3 +411,41 @@ expectations in `crm_leads_analysis.integration.test.ts` and
 `crm_forecast.integration.test.ts`; no Surveys test failed. Scoped ESLint,
 `git diff --check`, and `bun run audit` all passed. The audit reported 679
 pages, 688 routes, and 1,247 datasources.
+
+## Bounded QA run: `SURVEYS-LIVE-SESSION-ANSWER-001` — 2026-09-20
+
+- Source comparison: Odoo's public session submit flow validates the current
+  question and stores a session answer line; Core3 keeps the public route in
+  `services/surveys/module.ts`, the layout in
+  `pages/live-session-join.yaml`, and the mutation in
+  `api/live-session-join.yaml`, joined by `page.id`.
+- Persistence/workflow: a token-scoped attendee answer inserts one durable
+  current-question row, updates deterministic score and session counters, and
+  replays safely. Migration `0.0.21` adds the unique session/attendee/question
+  index. File-backed reopen and migration replay preserve the answer.
+- Focused feature verification: **2 passed, 0 failed, 23 assertions** in
+  `surveys_live_session_answer.integration.test.ts`.
+- Full Surveys verification: **60 passed, 0 failed, 484 assertions** across
+  13 integration files.
+- Scoped verification: ESLint passed, `git diff --check` passed, and
+  `bun run audit` passed with 679 pages, 688 routes, and 1,250 datasources.
+- Authenticated Core3 evidence: isolated runtime desktop 1440x900 and mobile
+  390x844 rendered `Answer state: Answered`; browser JSON reports zero failed
+  requests and no horizontal overflow. Evidence is under the feature
+  directory.
+- Authenticated Odoo evidence: desktop/mobile `/s/5822` rendered the access
+  code form. Exact `/survey/check_session_code/5822` returned HTTP 200
+  JSON-RPC `{"error":"survey_wrong"}`. This means the reference database
+  has no matching live session/attendee fixture; it blocks paired answer
+  comparison and is not a Core3 failure.
+
+Disposition: Core3 durable workflow, public permission declaration, restart,
+replay, and responsive evidence pass for this bounded slice. Odoo comparison
+remains conditional, and Surveys stays **qa-in-progress / conditional** with
+no module sign-off.
+
+Full repository regression for this wave: `bun test --max-concurrency 1`
+completed with **1,497 passed, 2 failed, 13,419 assertions** across 1,499
+tests. The only failures were concurrent CRM fixture-order expectations in
+`test/crm_leads_analysis.integration.test.ts` and
+`test/crm_forecast.integration.test.ts`; no Surveys test failed.

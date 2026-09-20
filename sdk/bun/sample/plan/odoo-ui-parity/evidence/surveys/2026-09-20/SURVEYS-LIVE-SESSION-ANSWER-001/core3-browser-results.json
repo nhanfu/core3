@@ -1,0 +1,369 @@
+{
+  "runtime": "http://127.0.0.1:4016",
+  "viewport": {
+    "desktop": "1440x900",
+    "mobile": "390x844"
+  },
+  "failures": [],
+  "desktop": {
+    "before": "⌘ K\nAU\nMarketing\nMarketing\n›\nSurveys\nSurveys\n›\nLive Session\n›\nJoin\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name",
+    "overflowBefore": false,
+    "joinInput": {
+      "placeholder": null,
+      "value": "Browser Answer Desktop 2026"
+    },
+    "joinApi": {
+      "status": 200,
+      "body": {
+        "id": "live-attendee-browser-answer-desktop-2026-5822",
+        "session_id": "live-session-feedback",
+        "attendee_name": "Browser Answer Desktop 2026",
+        "attendee_token": "live-token-browser-answer-desktop-2026-5822",
+        "join_key": "session:live-session-feedback:name:browser-answer-desktop-2026",
+        "state": "In Progress",
+        "row_version": 1,
+        "joined_at": "2026-01-15 10:01:00",
+        "survey_name": "Feedback Form",
+        "session_code": "5822",
+        "session_state": "In Progress",
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    },
+    "afterJoin": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822&attendee_token=live-token-browser-answer-desktop-2026-5822",
+      "body": "⌘ K\nAU\nMarketing\nMarketing\n›\nSurveys\nSurveys\n›\nLive Session\n›\nJoin\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nCurrent answer\nAnswer type\nAvailable answers\nYour answer\nAnswer state",
+      "alert": "",
+      "overflow": false,
+      "inputs": [
+        {
+          "placeholder": "Search applications",
+          "value": ""
+        },
+        {
+          "placeholder": "Ask Core3 anything…",
+          "value": ""
+        },
+        {
+          "placeholder": "",
+          "value": "Feedback Form"
+        },
+        {
+          "placeholder": "",
+          "value": "5822"
+        },
+        {
+          "placeholder": "",
+          "value": "In Progress"
+        },
+        {
+          "placeholder": "",
+          "value": "Join now"
+        },
+        {
+          "placeholder": "",
+          "value": "How satisfied are you?"
+        },
+        {
+          "placeholder": "",
+          "value": "Browser Answer Desktop 2026"
+        },
+        {
+          "placeholder": "",
+          "value": "Rating"
+        },
+        {
+          "placeholder": "",
+          "value": "1,2,3,4,5"
+        },
+        {
+          "placeholder": "",
+          "value": ""
+        },
+        {
+          "placeholder": "",
+          "value": "Not answered"
+        }
+      ]
+    },
+    "submitApi": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        },
+        "attendee": {
+          "id": "live-attendee-browser-answer-desktop-2026-5822",
+          "session_id": "live-session-feedback",
+          "attendee_name": "Browser Answer Desktop 2026",
+          "attendee_token": "live-token-browser-answer-desktop-2026-5822",
+          "state": "In Progress",
+          "row_version": 1,
+          "joined_at": "2026-01-15 10:01:00"
+        },
+        "answer": {
+          "id": "live-answer-live-attendee-browser-answer-desktop-2026-5822-question-feedback-rating",
+          "session_id": "live-session-feedback",
+          "attendee_id": "live-attendee-browser-answer-desktop-2026-5822",
+          "question_id": "question-feedback-rating",
+          "answer_type": "choice",
+          "answer_value": "5",
+          "score": 100,
+          "submitted_at": "2026-01-15 10:07:00"
+        },
+        "replayed": false
+      }
+    },
+    "afterSubmit": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822&attendee_token=live-token-browser-answer-desktop-2026-5822",
+      "body": "⌘ K\nAU\nMarketing\nMarketing\n›\nSurveys\nSurveys\n›\nLive Session\n›\nJoin\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nCurrent answer\nAnswer type\nAvailable answers\nYour answer\nAnswer state",
+      "alert": "",
+      "overflow": false
+    },
+    "api": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        },
+        "attendee": {
+          "id": "live-attendee-browser-answer-desktop-2026-5822",
+          "session_id": "live-session-feedback",
+          "attendee_name": "Browser Answer Desktop 2026",
+          "attendee_token": "live-token-browser-answer-desktop-2026-5822",
+          "state": "In Progress",
+          "row_version": 2,
+          "joined_at": "2026-01-15 10:01:00"
+        },
+        "answer": {
+          "id": "live-answer-live-attendee-browser-answer-desktop-2026-5822-question-feedback-rating",
+          "session_id": "live-session-feedback",
+          "attendee_id": "live-attendee-browser-answer-desktop-2026-5822",
+          "question_id": "question-feedback-rating",
+          "answer_type": "choice",
+          "answer_value": "5",
+          "score": 100,
+          "submitted_at": "2026-01-15 10:07:00"
+        }
+      }
+    },
+    "replay": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        },
+        "attendee": {
+          "id": "live-attendee-browser-answer-desktop-2026-5822",
+          "session_id": "live-session-feedback",
+          "attendee_name": "Browser Answer Desktop 2026",
+          "attendee_token": "live-token-browser-answer-desktop-2026-5822",
+          "state": "In Progress",
+          "row_version": 2,
+          "joined_at": "2026-01-15 10:01:00"
+        },
+        "answer": {
+          "id": "live-answer-live-attendee-browser-answer-desktop-2026-5822-question-feedback-rating",
+          "session_id": "live-session-feedback",
+          "attendee_id": "live-attendee-browser-answer-desktop-2026-5822",
+          "question_id": "question-feedback-rating",
+          "answer_type": "choice",
+          "answer_value": "5",
+          "score": 100,
+          "submitted_at": "2026-01-15 10:07:00"
+        },
+        "replayed": true
+      }
+    }
+  },
+  "mobile": {
+    "before": "AU\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name",
+    "overflowBefore": false,
+    "joinInput": {
+      "placeholder": null,
+      "value": "Browser Answer Mobile 2026"
+    },
+    "joinApi": {
+      "status": 200,
+      "body": {
+        "id": "live-attendee-browser-answer-mobile-2026-5822",
+        "session_id": "live-session-feedback",
+        "attendee_name": "Browser Answer Mobile 2026",
+        "attendee_token": "live-token-browser-answer-mobile-2026-5822",
+        "join_key": "session:live-session-feedback:name:browser-answer-mobile-2026",
+        "state": "In Progress",
+        "row_version": 1,
+        "joined_at": "2026-01-15 10:01:00",
+        "survey_name": "Feedback Form",
+        "session_code": "5822",
+        "session_state": "In Progress",
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    },
+    "afterJoin": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822&attendee_token=live-token-browser-answer-mobile-2026-5822",
+      "body": "AU\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nCurrent answer\nAnswer type\nAvailable answers\nYour answer\nAnswer state",
+      "alert": "",
+      "overflow": false
+    },
+    "submitApi": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        },
+        "attendee": {
+          "id": "live-attendee-browser-answer-mobile-2026-5822",
+          "session_id": "live-session-feedback",
+          "attendee_name": "Browser Answer Mobile 2026",
+          "attendee_token": "live-token-browser-answer-mobile-2026-5822",
+          "state": "In Progress",
+          "row_version": 1,
+          "joined_at": "2026-01-15 10:01:00"
+        },
+        "answer": {
+          "id": "live-answer-live-attendee-browser-answer-mobile-2026-5822-question-feedback-rating",
+          "session_id": "live-session-feedback",
+          "attendee_id": "live-attendee-browser-answer-mobile-2026-5822",
+          "question_id": "question-feedback-rating",
+          "answer_type": "choice",
+          "answer_value": "4",
+          "score": 80,
+          "submitted_at": "2026-01-15 10:07:00"
+        },
+        "replayed": false
+      }
+    },
+    "afterSubmit": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822&attendee_token=live-token-browser-answer-mobile-2026-5822",
+      "body": "AU\nJoin Session\nSubmit Answer\nLive Session\nJoin\nBack\nFeedback Form\n\n5822\n\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nCurrent answer\nAnswer type\nAvailable answers\nYour answer\nAnswer state",
+      "alert": "",
+      "overflow": false
+    },
+    "api": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        },
+        "attendee": {
+          "id": "live-attendee-browser-answer-mobile-2026-5822",
+          "session_id": "live-session-feedback",
+          "attendee_name": "Browser Answer Mobile 2026",
+          "attendee_token": "live-token-browser-answer-mobile-2026-5822",
+          "state": "In Progress",
+          "row_version": 2,
+          "joined_at": "2026-01-15 10:01:00"
+        },
+        "answer": {
+          "id": "live-answer-live-attendee-browser-answer-mobile-2026-5822-question-feedback-rating",
+          "session_id": "live-session-feedback",
+          "attendee_id": "live-attendee-browser-answer-mobile-2026-5822",
+          "question_id": "question-feedback-rating",
+          "answer_type": "choice",
+          "answer_value": "4",
+          "score": 80,
+          "submitted_at": "2026-01-15 10:07:00"
+        }
+      }
+    }
+  }
+}

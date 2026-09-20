@@ -1205,3 +1205,36 @@ Odoo returned `{\"error\":\"survey_wrong\"}` for code `5822`, so the paired
 comparison is conditional on an installed/reference live session; attendee
 answer submission remains a separate open gap. Surveys remains
 **qa-in-progress / conditional** and this slice is not module sign-off.
+
+## Bounded slice: Live-session attendee answer (2026-09-20)
+
+Feature ID: `SURVEYS-LIVE-SESSION-ANSWER-001`.
+
+The next smallest source-backed behavior after access-code join is the public
+attendee answer write. Odoo's `survey_session_manage.py` admits the session
+code, while `main.py`'s `/survey/submit/<survey_token>/<answer_token>` validates
+the current question and saves a `survey.user_input.line`. Core3 mirrors that
+workflow at `POST /api/public/surveys/session/<session_code>/answer`: the
+attendee token must belong to the session, the session must be In Progress, and
+the answer must be accepted by the current question. The layout remains in
+`pages/live-session-join.yaml`; the permissioned server action and datasource
+contract are in `api/live-session-join.yaml`, joined by
+`page.id: survey-live-session-join`.
+
+Migration `20260920220000-021-survey-live-session-answers.yaml` adds a unique
+session/attendee/question index. The mutation durably inserts the answer,
+updates deterministic score and session counters, and rejects empty, invalid,
+closed, missing-attendee, and duplicate writes without disclosure or duplicate
+rows. The route replays the committed current-question answer safely. The
+file-backed DuckDB test proves the answer and replay boundary survive reopen
+and migration replay.
+
+Focused tests, QA inventory, source comparison, and authenticated Core3
+desktop/mobile screenshots are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-ANSWER-001/`.
+Core3 browser evidence reports zero failed requests and no horizontal overflow
+at 1440x900 and 390x844. Authenticated Odoo `/s/5822` renders the access-code
+form, while `/survey/check_session_code/5822` returns HTTP 200 JSON-RPC
+`{"error":"survey_wrong"}`; the reference has no matching live session, so
+the Odoo attendee-answer comparison remains conditional. Surveys remains
+**qa-in-progress / conditional** and this slice does not sign off the module.

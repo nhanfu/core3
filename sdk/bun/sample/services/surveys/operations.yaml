@@ -29,3 +29,9 @@ operations:
   survey.public.session.attendee:
     result_key: attendee
     query: "SELECT id, session_id, attendee_name, attendee_token, state, row_version, CAST(joined_at AS VARCHAR) AS joined_at FROM survey_live_attendees WHERE join_key = :join_key LIMIT 1"
+  survey.public.session.attendee_by_token:
+    result_key: attendee
+    query: "SELECT a.id, a.session_id, a.attendee_name, a.attendee_token, a.state, a.row_version, CAST(a.joined_at AS VARCHAR) AS joined_at FROM survey_live_attendees a JOIN survey_live_sessions ls ON ls.id = a.session_id WHERE ls.session_code = :session_code AND a.attendee_token = :attendee_token LIMIT 1"
+  survey.public.session.answer:
+    result_key: answer
+    query: "SELECT a.id, a.session_id, a.attendee_id, a.question_id, a.answer_type, a.answer_value, a.score, CAST(a.submitted_at AS VARCHAR) AS submitted_at FROM survey_live_session_answers a JOIN survey_live_sessions ls ON ls.id = a.session_id WHERE ls.session_code = :session_code AND a.attendee_id = :attendee_id AND a.question_id = ls.current_question_id LIMIT 1"

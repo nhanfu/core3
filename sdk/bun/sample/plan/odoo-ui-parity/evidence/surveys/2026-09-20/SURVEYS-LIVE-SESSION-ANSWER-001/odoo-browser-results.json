@@ -1,0 +1,39 @@
+{
+  "route": "http://127.0.0.1:8069/s/5822",
+  "authenticated": true,
+  "session_cookie": "session_id from /tmp/odoo8069.cookies",
+  "failures": [],
+  "desktop": {
+    "url": "http://127.0.0.1:8069/s/5822",
+    "title": "Odoo",
+    "body": "Enter Session Code\nJoin Session\nPowered by  ",
+    "overflow": false,
+    "validator": {
+      "status": 200,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "error": "survey_wrong"
+        }
+      }
+    }
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:8069/s/5822",
+    "title": "Odoo",
+    "body": "Enter Session Code\nJoin Session\nPowered by  ",
+    "overflow": false,
+    "validator": {
+      "status": 200,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "error": "survey_wrong"
+        }
+      }
+    }
+  },
+  "blocker": "Odoo returned HTTP 200 with the authenticated access-code form, and /survey/check_session_code/5822 returned JSON-RPC {error: survey_wrong}; no matching live session exists in the reference database, so attendee answer submission cannot be exercised there."
+}

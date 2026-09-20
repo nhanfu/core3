@@ -1,0 +1,13 @@
+version: 0.0.21
+description: Durable idempotency boundary for live-session attendee answers
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_live_answers_attendee_question_idx ON survey_live_session_answers(session_id, attendee_id, question_id);
+    down: |
+      DROP INDEX IF EXISTS survey_live_answers_attendee_question_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -38,8 +38,8 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
-    const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)$/);
-    if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service);
+    const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
+    if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
     const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|print))?$/);
     if (!match) return null;
     const token = match[1];
@@ -173,16 +173,47 @@ export default class SurveysModule implements ModuleLifecycle {
     }
   }
 
-  private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService): Promise<Response> {
+  private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService, answerRoute = false): Promise<Response> {
     const session = (await service.call('survey.public.session', { session_code: sessionCode }))?.session?.[0];
     if (!session) return this.json({ error: 'The live session is unavailable', code: 'SURVEY_SESSION_NOT_FOUND' }, 404);
     if (session.session_state === 'Closed') return this.json({ error: 'The live session is no longer open', code: 'SURVEY_SESSION_CLOSED' }, 409);
     const question = session.session_state === 'In Progress'
       ? (await service.call('survey.public.session.question', { session_code: sessionCode }))?.question?.[0] || null
       : null;
-    if (request.method === 'GET') return this.json({ session, question });
+    const attendeeToken = urlSearchToken(request.url);
+    if (request.method === 'GET') {
+      if (!attendeeToken) return this.json({ session, question });
+      const attendee = (await service.call('survey.public.session.attendee_by_token', { session_code: sessionCode, attendee_token: attendeeToken }))?.attendee?.[0];
+      if (!attendee) return this.json({ error: 'This attendee session is no longer available', code: 'SURVEY_SESSION_ATTENDEE_NOT_FOUND' }, 404);
+      const answer = question
+        ? (await service.call('survey.public.session.answer', { session_code: sessionCode, attendee_id: attendee.id }))?.answer?.[0] || null
+        : null;
+      return this.json({ session, question, attendee, answer });
+    }
     if (request.method !== 'POST') return this.json({ error: 'Method not allowed' }, 405);
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    if (answerRoute) {
+      if (session.session_state !== 'In Progress' || !question) return this.json({ error: 'The live session is not accepting answers', code: 'SURVEY_SESSION_NOT_IN_PROGRESS' }, 409);
+      const token = typeof body.attendee_token === 'string' ? body.attendee_token.trim() : '';
+      const answerValue = typeof body.answer_value === 'string' || typeof body.answer_value === 'number'
+        ? String(body.answer_value).trim()
+        : '';
+      if (!token || !answerValue) return this.json({ error: 'Select or enter an answer before submitting', code: 'SURVEY_SESSION_ANSWER_REQUIRED' }, 422);
+      const attendee = (await service.call('survey.public.session.attendee_by_token', { session_code: sessionCode, attendee_token: token }))?.attendee?.[0];
+      if (!attendee) return this.json({ error: 'This attendee session is no longer available', code: 'SURVEY_SESSION_ATTENDEE_NOT_FOUND' }, 404);
+      const existing = (await service.call('survey.public.session.answer', { session_code: sessionCode, attendee_id: attendee.id }))?.answer?.[0];
+      if (existing) return this.json({ session, question, attendee, answer: existing, replayed: true });
+      try {
+        const answer = await service.call('surveys.sessions.answer', {
+          session_code: sessionCode,
+          attendee_token: token,
+          answer_value: answerValue,
+        });
+        return this.json({ session, question, attendee, answer, replayed: false });
+      } catch (error: any) {
+        return this.publicMutationError(error);
+      }
+    }
     const attendeeName = typeof body.attendee_name === 'string' ? body.attendee_name.trim() : '';
     if (!attendeeName || attendeeName.length > 120) return this.json({ error: 'Enter a name to join the live session', code: 'SURVEY_SESSION_ATTENDEE_NAME_REQUIRED' }, 422);
     const normalized = attendeeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -220,4 +251,8 @@ export default class SurveysModule implements ModuleLifecycle {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' },
     });
   }
+}
+
+function urlSearchToken(rawUrl: string): string {
+  return new URL(rawUrl).searchParams.get('attendee_token')?.trim() || '';
 }
