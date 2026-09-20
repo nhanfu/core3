@@ -103,6 +103,40 @@ describe('Website Page Manager parity', () => {
     rmSync(databasePath, { force: true });
   });
 
+  test('completes publish and unpublish across restarts and rejects a replayed transition', async () => {
+    const databasePath = `/tmp/core3-website-publish-cycle-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `website_publish_cycle_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const workflow = yaml('pages/website-workflow.yaml').workflow;
+    const publish = workflow.transitions.find((transition: any) => transition.id === 'publish');
+    const unpublish = workflow.transitions.find((transition: any) => transition.id === 'unpublish');
+    const pageId = 'website-page-demo-002';
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await firstRepository.executeMutation(publish.mutation, { id: pageId, expected_row_version: 1 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT state, row_version FROM website_pages WHERE id = ?', [pageId]))[0]).toEqual({ state: 'Published', row_version: 2 });
+    await secondRepository.executeMutation(unpublish.mutation, { id: pageId, expected_row_version: 2 });
+    second.close();
+
+    const third = await DuckDbDatabase.open(databasePath);
+    const thirdRepository = new YamlRepository(third);
+    await migrateDatabase(thirdRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await thirdRepository.query('SELECT state, row_version FROM website_pages WHERE id = ?', [pageId]))[0]).toEqual({ state: 'Draft', row_version: 3 });
+    await expect(thirdRepository.executeMutation(unpublish.mutation, { id: pageId, expected_row_version: 2 })).rejects.toMatchObject({
+      status: 409,
+      code: 'WEBSITE_PAGE_UNPUBLISH_STALE',
+    });
+    expect((await thirdRepository.query('SELECT state, row_version FROM website_pages WHERE id = ?', [pageId]))[0]).toEqual({ state: 'Draft', row_version: 3 });
+    third.close();
+    rmSync(databasePath, { force: true });
+  });
+
   test('edits page metadata with row-version and site guards', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
