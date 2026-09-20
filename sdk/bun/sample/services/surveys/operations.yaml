@@ -5,12 +5,15 @@ operations:
   survey.public.questions:
     result_key: questions
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id AND COALESCE(is_page, false) = false ORDER BY sequence, id"
+  survey.public.scoring_answers:
+    result_key: answers
+    query: "SELECT q.id AS question_id, q.question_type, sv.value, COALESCE(sv.score, 0) AS score FROM survey_questions q LEFT JOIN survey_suggested_values sv ON sv.question_id = q.id WHERE q.survey_id = :survey_id AND COALESCE(q.is_page, false) = false ORDER BY q.sequence, q.id, sv.sequence, sv.id"
   survey.public.response:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, CAST(deadline AS VARCHAR) AS deadline, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, score, quiz_passed, CAST(deadline AS VARCHAR) AS deadline, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
   survey.public.response_by_idempotency_key:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, CAST(deadline AS VARCHAR) AS deadline, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, score, quiz_passed, CAST(deadline AS VARCHAR) AS deadline, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
   survey.public.first_question:
     result_key: question
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id AND COALESCE(is_page, false) = false ORDER BY sequence, id LIMIT 1"

@@ -315,3 +315,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COOKIE-RESUME-001/`.
+
+## 2026-09-21 public response scoring additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-030 | public workflow | Score and pass/fail on submit | Suggested-answer scores persist as a deterministic percentage and Quiz Passed result | pass |
+| SURVEYS-WF-027 | concurrency/restart | Concurrent submit → idempotent replay → reopen | One durable result survives the losing DuckDB writer and file-backed restart | pass |
+| SURVEYS-PERM-029 | token/state guard | Wrong token and completed response | `surveys.public`, token, In Progress, and submitted-state guards prevent disclosure or mutation | pass |
+| SURVEYS-UI-028 | authenticated responsive/reference | Scoring result desktop/mobile + Odoo comparison | Capture exact Core3 route and Odoo installation/reference blockers; no sign-off until available | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCORING-001/`.

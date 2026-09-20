@@ -17,6 +17,8 @@ type SurveyPayload = {
     current_question_id?: string | null;
     test_entry?: boolean;
     answer_data?: string;
+    score?: number | null;
+    quiz_passed?: boolean | null;
   };
 };
 
@@ -129,8 +131,9 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   const frame = () => `<div class="core3-public-survey"><div class="core3-public-survey__card">${testBanner}<div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
   outlet.innerHTML = frame();
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
-  const renderDone = () => {
-    body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">Your answers have been submitted.</p></div>';
+  const renderDone = (result: SurveyPayload['answer'] = payload.answer) => {
+    const score = typeof result?.score === 'number' ? `<p class="core3-public-survey__description">Score: ${result.score}% · ${result.quiz_passed ? 'Passed' : 'Not passed'}</p>` : '';
+    body.innerHTML = `<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">Your answers have been submitted.</p>${score}</div>`;
   };
 
   const firstUnanswered = () => questions.findIndex((question) => {
@@ -284,7 +287,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       try {
         const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
         if (!response.ok) throw new Error(`Survey could not be submitted (${response.status}).`);
-        renderDone();
+        const submitted = await response.json() as { answer?: SurveyPayload['answer'] };
+        renderDone(submitted.answer);
       } catch (error) {
         actionButton.disabled = false;
         const message = document.createElement('div');

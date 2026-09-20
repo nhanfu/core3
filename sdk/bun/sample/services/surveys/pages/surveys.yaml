@@ -3,6 +3,8 @@ title: Surveys
 # this authenticated admin layout. Its API contract lives in api/surveys.yaml
 # and joins this page fragment through page.id: surveys.
 page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
+# Public submission score/pass results are returned by the paired API action
+# and persisted on the response; the renderer remains joined through page.id.
 components:
   - type: ListView
     variant: odoo

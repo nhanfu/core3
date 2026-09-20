@@ -372,6 +372,7 @@ export default class SurveysModule implements ModuleLifecycle {
       .filter((question: any) => question.required && (answers[question.id] === undefined || answers[question.id] === null || String(answers[question.id]).trim() === ''))
       .map((question: any) => question.question_text || question.id);
     if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
+    const scoring = await this.publicScore(service, detail.id, answers);
     try {
       const result = await service.call('surveys.public.submit', {
         id: response.id,
@@ -382,10 +383,24 @@ export default class SurveysModule implements ModuleLifecycle {
           ...(typeof body.respondent_name === 'string' ? { respondent_name: body.respondent_name.trim() } : {}),
           ...(typeof body.respondent_email === 'string' ? { respondent_email: body.respondent_email.trim() } : {}),
           ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+          score: scoring.score,
+          quiz_passed: scoring.quiz_passed,
         },
       });
       return this.json({ survey: detail, answer: result });
     } catch (error: any) {
+      if (idempotencyKey) {
+        // DuckDB may reject the losing concurrent writer before the winner's
+        // commit becomes visible. Observe the idempotency row and replay it.
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const replay = (await service.call('survey.public.response_by_idempotency_key', {
+            idempotency_key: idempotencyKey,
+            survey_id: detail.id,
+          }))?.response?.[0];
+          if (replay?.state === 'Submitted') return this.json({ survey: detail, answer: replay, replayed: true });
+        }
+      }
       return this.publicMutationError(error);
     }
   }
@@ -484,6 +499,39 @@ export default class SurveysModule implements ModuleLifecycle {
       }
     }
     return invalid;
+  }
+
+  private async publicScore(service: PublicService, surveyId: string, answers: Record<string, unknown>): Promise<{ score: number; quiz_passed: boolean }> {
+    const rows = (await service.call('survey.public.scoring_answers', { survey_id: surveyId }))?.answers || [];
+    const grouped = new Map<string, any[]>();
+    for (const row of rows) {
+      const questionId = String(row.question_id || '');
+      if (!questionId) continue;
+      const entries = grouped.get(questionId) || [];
+      entries.push(row);
+      grouped.set(questionId, entries);
+    }
+    let possible = 0;
+    let earned = 0;
+    for (const [questionId, entries] of grouped) {
+      const scored = entries.filter((row) => row.value != null && Number(row.score || 0) > 0);
+      if (!scored.length) continue;
+      const questionType = String(entries[0]?.question_type || '');
+      const maximum = questionType === 'Multiple Choice'
+        ? scored.reduce((sum, row) => sum + Number(row.score || 0), 0)
+        : Math.max(...scored.map((row) => Number(row.score || 0)));
+      possible += maximum;
+      const raw = answers[questionId];
+      const selected = Array.isArray(raw) ? raw.map((entry) => String(entry)) : raw == null ? [] : [String(raw)];
+      if (questionType === 'Multiple Choice') {
+        earned += scored.filter((row) => selected.includes(String(row.value))).reduce((sum, row) => sum + Number(row.score || 0), 0);
+      } else {
+        const match = scored.find((row) => String(row.value) === selected[0]);
+        if (match) earned += Number(match.score || 0);
+      }
+    }
+    const score = possible > 0 ? Math.round((earned / possible) * 10000) / 100 : 0;
+    return { score, quiz_passed: possible > 0 && score >= 80 };
   }
 
   private isToken(value: string): boolean {

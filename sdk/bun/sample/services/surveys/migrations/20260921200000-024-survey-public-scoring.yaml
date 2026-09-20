@@ -1,0 +1,16 @@
+version: 0.0.24
+description: Durable public survey score and pass result
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS score DECIMAL(8,2);
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS quiz_passed BOOLEAN;
+      UPDATE survey_responses SET score = COALESCE(score, 0), quiz_passed = COALESCE(quiz_passed, false);
+    down: |
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS quiz_passed;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS score;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

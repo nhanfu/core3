@@ -99,7 +99,7 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [answer_data, respondent_name, respondent_email, idempotency_key]
+      fields: [answer_data, respondent_name, respondent_email, idempotency_key, score, quiz_passed]
       required: [answer_data]
       concurrency: false
       guards:
@@ -108,12 +108,14 @@ actions:
       steps:
         - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id" }
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, score, quiz_passed, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
+      - { field: score, label: Score percentage, type: number }
+      - { field: quiz_passed, label: Passed, type: checkbox }
   - id: public_survey_progress
     type: server_form
     permission: surveys.public

@@ -1270,6 +1270,34 @@ exact “Oopsie! We could not let you open this survey...” message. No paired
 Odoo retry creation or redirect is claimed. Surveys remains
 **qa-in-progress / conditional**.
 
+## Bounded slice: Public response scoring (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-SCORING-001`.
+
+Odoo source comparison: `addons/survey/models/survey_user_input.py` stores the
+computed Score (%) and Quiz Passed result. Its scoring computation takes the
+highest positive simple-choice score, sums positive multiple-choice scores,
+and compares the percentage with `survey.scoring_success_min` (default 80%).
+Core3 now applies the same suggested-answer scoring boundary on public submit,
+persists `survey_responses.score` and `survey_responses.quiz_passed` through
+migration `0.0.24`, and returns both fields through the token-scoped submit,
+resume, and idempotency operations.
+
+The public submit action remains in `api/surveys.yaml` with `surveys.public`,
+while the `surveys` page fragment documents the paired renderer contract via
+`page.id: surveys`. A losing concurrent DuckDB submit writer replays the
+committed idempotency row instead of leaking a transaction conflict. Focused
+coverage and evidence are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCORING-001/`.
+
+Authenticated Core3 desktop/mobile login succeeded, but the shared runtime
+returned HTTP 404 `API route not found` for the authenticated public API and
+HTTP 401 for the rendered public route. Odoo redirected the same public token
+to `/web/login?redirect=%2Fodoo%3F`; no installed Survey participant/result
+fixture was available. These are exact runtime/reference blockers, so no
+browser or paired Odoo sign-off is claimed. Surveys remains
+**qa-in-progress / conditional**.
+
 ## Bounded slice: Authenticated test-entry launch (2026-09-20)
 
 Feature ID: `SURVEYS-TEST-ENTRY-001`.

@@ -141,6 +141,24 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-SCORING-001`
+
+Selected the next uncovered source-backed public participant behavior after
+cookie resume: Odoo's stored public score and quiz-pass result. Core3 adds
+`survey.public.scoring_answers`, calculates deterministic suggested-answer
+percentage scoring (including multiple-choice positive-score sums), persists
+`score` and `quiz_passed` when a token-scoped response is submitted, and
+returns them on resume/idempotency reads. A concurrent losing submit replays
+the committed idempotency row after the observed DuckDB transaction conflict.
+
+Focused scoring/restart/concurrency/token tests pass. Authenticated Core3
+desktop/mobile login and `/api/auth/me` pass, but the shared runtime returns
+404 `API route not found` for the authenticated public API and 401 for the
+rendered `/survey/start/<token>` route. Odoo redirects the token to the login
+page, so an installed Survey result fixture is unavailable. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCORING-001/`;
+status remains **qa-in-progress / conditional**, with no sign-off claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-COOKIE-RESUME-001`
 
 Selected the next source-backed public lifecycle after section filtering:

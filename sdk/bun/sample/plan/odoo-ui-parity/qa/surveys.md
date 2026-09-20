@@ -660,6 +660,34 @@ Odoo comparison remains blocked and Surveys remains **qa-in-progress / condition
 Disposition: Core3 question validation passes; Surveys remains
 **qa-in-progress / conditional**.
 
+## Bounded QA run: `SURVEYS-PUBLIC-SCORING-001` — 2026-09-21
+
+- Source: Odoo `survey_user_input._compute_scoring_values` and
+  `_compute_scoring_success` persist Score (%) and Quiz Passed using positive
+  suggested-answer scores and an 80% default threshold.
+- YAML/API: `surveys` page and public submit API remain joined by `page.id`; the
+  action is `surveys.public` and exposes `score`/`quiz_passed` in its mutation
+  and result contract.
+- Focused verification: **2 passed / 16 assertions** for the new scoring test;
+  adjacent public regression set: **14 passed / 134 assertions**.
+- Persistence/concurrency: score/pass fields survive file-backed DuckDB
+  reopen; a concurrent failing submission converges on one idempotent row and
+  remains score 0 / failed; malformed tokens are rejected without mutation.
+- Core3 authenticated desktop/mobile: Admin login and `/api/auth/me` returned
+  200 at 1440x900 and 390x844, but the API returned 404 `API route not found`
+  and the rendered public route returned 401.
+- Odoo desktop/mobile: the public token redirected to
+  `/web/login?redirect=%2Fodoo%3F`; no installed Surveys participant/result
+  fixture was available.
+- Full Surveys glob: **88 passed / 5 failed / 715 assertions**. Four existing
+  DuckDB rollback tests fail on dependent entries, and the existing Test Entry
+  fixture-count assertion observes two rows instead of one; neither failure is
+  caused by or changed in this scoring slice.
+- Scoped ESLint, UI audit, and `git diff --check` passed.
+
+Disposition: implementation and bounded persistence/guard tests pass; browser
+and Odoo comparison remain conditional and Surveys is not signed off.
+
 ## Bounded QA run: `SURVEYS-PUBLIC-DEADLINE-001` — 2026-09-21
 
 - Odoo's `survey/controllers/main.py:_check_validity` rejects a public answer
