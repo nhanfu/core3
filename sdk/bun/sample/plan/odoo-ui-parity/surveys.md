@@ -1452,3 +1452,26 @@ The authenticated desktop/mobile browser probe was blocked before readiness by
 the shared source runtime's exact discovery error
 `PageSchemaError: actions[4].fields is not allowed`; no Core3 visual or Odoo
 deadline sign-off is claimed. Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public begin transition (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-BEGIN-001`.
+
+Odoo source comparison: `addons/survey/controllers/main.py:survey_begin`
+transitions a valid existing public answer from `New` to `In Progress` and
+prepares the first ordered question. Core3 now exposes that transition as the
+separate `public_survey_begin` API action and updates the durable response
+cursor through the existing `/survey/start/<survey>/<answer>` page route.
+The mutation is token-scoped, permissioned as `surveys.public`, rejects
+expired or already-started responses, and retries a losing concurrent writer
+as an idempotent replay.
+
+Focused contract, concurrency, and file-backed restart coverage is recorded in
+`test/surveys_public_begin.integration.test.ts`; evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BEGIN-001/`.
+Core3 authenticated browser/API verification is blocked by the shared runtime
+returning HTTP 401 for the public page and HTTP 404 `API route not found` after
+authenticated direct calls because the Surveys route is not registered in that
+runtime. Odoo 8069 reaches the host-controlled Feedback Form waiting state;
+the disposable 8072 reference is unavailable. No visual or Odoo begin
+sign-off is claimed. Surveys remains **qa-in-progress / conditional**.

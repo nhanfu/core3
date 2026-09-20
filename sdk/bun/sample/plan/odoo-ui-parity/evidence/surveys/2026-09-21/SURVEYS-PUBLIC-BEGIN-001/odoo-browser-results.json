@@ -1,0 +1,20 @@
+{
+  "desktop": {
+    "status": null,
+    "url": "about:blank",
+    "body": "",
+    "errors": [
+      "http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e net::ERR_CONNECTION_REFUSED",
+      "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    ]
+  },
+  "mobile": {
+    "status": null,
+    "url": "about:blank",
+    "body": "",
+    "errors": [
+      "http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e net::ERR_CONNECTION_REFUSED",
+      "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8072/survey/start/b135640d-14d4-4748-9ef6-344ca256531e\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    ]
+  }
+}

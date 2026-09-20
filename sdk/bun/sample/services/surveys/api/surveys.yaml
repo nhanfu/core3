@@ -68,6 +68,25 @@ actions:
       - { field: survey_name, label: Survey, type: text, required: true }
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: idempotency_key, label: Idempotency key, type: text }
+  - id: public_survey_begin
+    type: server_form
+    permission: surveys.public
+    title: Begin public survey response
+    action: surveys.public.begin
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [state, current_question_id]
+      required: [current_question_id]
+      concurrency: false
+      guards:
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'New'", status: 409, code: SURVEY_PUBLIC_BEGIN_STATE, message: This survey response has already begun or is no longer available. }
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
+        - { query: "SELECT id FROM survey_questions WHERE id = :current_question_id AND survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_BEGIN_QUESTION, message: The first survey question is unavailable. }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: current_question_id, label: First question, type: text, required: true }
   - id: public_survey_submit
     type: server_form
     permission: surveys.public

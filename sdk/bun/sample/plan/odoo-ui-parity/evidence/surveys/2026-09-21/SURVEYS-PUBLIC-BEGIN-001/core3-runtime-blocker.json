@@ -1,0 +1,20 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-BEGIN-001",
+  "core3": {
+    "browser_desktop_status": 401,
+    "browser_mobile_status": 401,
+    "browser_error": "Unauthorized",
+    "authenticated_direct_api_status": 404,
+    "authenticated_direct_api_error": "API route not found",
+    "blocker": "The shared runtime did not register the Surveys public route/API; no authenticated Core3 visual sign-off is claimed."
+  },
+  "odoo": {
+    "installed_reference": "127.0.0.1:8069",
+    "installed_status": 200,
+    "installed_state": "host-controlled Feedback Form waiting state",
+    "disposable_reference": "127.0.0.1:8072",
+    "disposable_error": "ERR_CONNECTION_REFUSED",
+    "blocker": "No mutable active answer fixture was available for a paired begin mutation."
+  },
+  "sign_off": false
+}

@@ -141,6 +141,32 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-BEGIN-001`
+
+Selected the next uncovered source-backed public lifecycle after test entry:
+Odoo's `survey_begin` transition for an existing `New` answer token. The
+separate `public_survey_begin` YAML action now moves the durable response to
+`In Progress`, assigns the first question cursor, and keeps the existing
+public start page/API separation. `surveys.public`, survey/answer-token,
+deadline, first-question, and already-started guards are explicit. A bounded
+retry observes a concurrent winner and replays the committed response without
+creating another row.
+
+`surveys_public_begin.integration.test.ts` passes 3 tests / 14 assertions,
+including YAML contract, concurrent begin, file-backed reopen, submitted
+boundary, and unchanged snapshot checks. The adjacent public workflow set
+passes 13 tests / 108 assertions. The pre-existing test-entry fixture-count
+failure remains outside this slice. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BEGIN-001/`.
+
+The shared Core3 runtime returned HTTP 401 for unauthenticated desktop/mobile
+public probes and HTTP 404 `API route not found` for authenticated direct
+public calls; its Surveys route registry was not available for visual proof.
+Odoo 8069 returned HTTP 200 to both desktop/mobile probes but remained in the
+host-controlled Feedback Form waiting state, while disposable 8072 returned
+`ERR_CONNECTION_REFUSED`. No browser or paired Odoo sign-off is claimed;
+Surveys remains **qa-in-progress / conditional**.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-LIVE-SESSION-001`
 
 Selected the smallest unfinished source-backed session behavior after public

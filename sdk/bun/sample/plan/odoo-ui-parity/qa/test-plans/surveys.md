@@ -279,3 +279,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SESSION-PREVIOUS-001/`.
+
+## 2026-09-21 public begin additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-027 | public workflow | Existing `New` answer → Begin | Transition one token-scoped response to `In Progress` and set the first ordered question | pass |
+| SURVEYS-WF-024 | restart/concurrency | Concurrent Begin → reopen → replay | One durable response/cursor survives file-backed restart; losing writer replays the winner | pass |
+| SURVEYS-PERM-026 | token/state/deadline guard | Begin boundary | `surveys.public`, survey/answer token, deadline, first-question, and already-started guards reject invalid transitions | pass |
+| SURVEYS-UI-025 | authenticated responsive/reference | Begin desktop/mobile + Odoo comparison | Record exact Core3 route-registration and Odoo host/fixture blockers; no sign-off until both are available | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BEGIN-001/`.

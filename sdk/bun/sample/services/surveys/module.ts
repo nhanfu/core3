@@ -92,6 +92,44 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
         if (this.publicResponseExpired(answer)) return this.expiredResponse();
         if (answer.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
+        if (answer.state === 'New') {
+          const question = await firstQuestion();
+          if (!question) return this.json({ error: 'The first survey question is unavailable', code: 'SURVEY_PUBLIC_BEGIN_QUESTION' }, 422);
+          try {
+            const begun = await service.call('surveys.public.begin', {
+              id: answer.id,
+              survey_id: detail.id,
+              access_token: existingToken,
+              values: { state: 'In Progress', current_question_id: question.id },
+              current_question_id: question.id,
+            });
+            return this.json({ survey: detail, answer: begun });
+          } catch (error: any) {
+            // DuckDB can reject the losing writer before the winning
+            // transaction is visible to the follow-up read. Retry the
+            // token-scoped begin once, then replay the committed response.
+            for (let attempt = 0; attempt < 3; attempt += 1) {
+              await new Promise((resolve) => setTimeout(resolve, 10));
+              const replay = await readResponse(existingToken);
+              if (replay?.state === 'In Progress') return this.json({ survey: detail, answer: replay, replayed: true });
+              if (replay?.state !== 'New' || attempt === 2) break;
+              try {
+                const retried = await service.call('surveys.public.begin', {
+                  id: answer.id,
+                  survey_id: detail.id,
+                  access_token: existingToken,
+                  values: { state: 'In Progress', current_question_id: question.id },
+                  current_question_id: question.id,
+                });
+                return this.json({ survey: detail, answer: retried });
+              } catch {
+                // Another concurrent begin may still be committing; observe
+                // it on the next iteration before surfacing the original error.
+              }
+            }
+            throw error;
+          }
+        }
         if (answer.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
         return this.json({ survey: detail, answer });
       }

@@ -1,0 +1,18 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e/test-token-feedback-2026",
+    "clicked": false,
+    "before": "Unauthorized",
+    "after": "Unauthorized",
+    "overflow": false,
+    "failures": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e/test-token-feedback-2026",
+    "clicked": false,
+    "before": "Unauthorized",
+    "after": "Unauthorized",
+    "overflow": false,
+    "failures": []
+  }
+}

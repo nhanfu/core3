@@ -1,0 +1,14 @@
+{
+  "desktop": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+    "body": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   ",
+    "errors": []
+  },
+  "mobile": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+    "body": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   ",
+    "errors": []
+  }
+}

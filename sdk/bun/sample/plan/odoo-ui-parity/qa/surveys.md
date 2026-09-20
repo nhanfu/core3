@@ -719,3 +719,28 @@ Disposition: the YAML/API workflow, durable cursor, permission boundary,
 stale/idempotent replay safety, and restart test pass; browser and Odoo
 comparison remain conditional on the shared registry and reference fixture.
 Surveys remains **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-BEGIN-001` — 2026-09-21
+
+- Source: Odoo `survey_begin` transitions a valid existing public answer from
+  `New` to `In Progress` and prepares the first question.
+- Core3 contract: page `id: surveys` remains separate from the API fragment;
+  `public_survey_begin` is `surveys.public`, token-scoped, deadline-guarded,
+  and first-question constrained. The handler retries a concurrent losing
+  writer and replays the committed response.
+- Focused verification: **3 passed / 14 assertions** for the new integration
+  test; the adjacent public set is **13 passed / 108 assertions**.
+- Restart/concurrency coverage: concurrent begin converges on one response;
+  file-backed reopen preserves `In Progress` and the question cursor;
+  submitted replay remains rejected without changing the snapshot.
+- Core3 evidence: desktop/mobile captures and JSON are present, but the
+  shared runtime returned HTTP 401 for page probes and authenticated direct
+  calls returned HTTP 404 `API route not found` because its Surveys route was
+  not registered. No authenticated visual sign-off is claimed.
+- Odoo evidence: 8069 returned HTTP 200 in both viewports but only the
+  host-controlled Feedback Form waiting state; 8072 returned
+  `ERR_CONNECTION_REFUSED`. No paired begin sign-off is claimed.
+
+Disposition: implementation and bounded persistence/guard tests pass;
+runtime/reference verification is conditional and Surveys remains
+**qa-in-progress / conditional**.
