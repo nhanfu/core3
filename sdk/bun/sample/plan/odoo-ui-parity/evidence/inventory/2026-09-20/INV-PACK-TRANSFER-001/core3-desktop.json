@@ -1,0 +1,27 @@
+{
+  "runtime": "http://127.0.0.1:4531",
+  "user": "admin@tms.local",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "packageDetail": {
+    "url": "http://127.0.0.1:4531/inventory/packages/detail?id=package-main-0001",
+    "body": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nProducts\n›\nPackages\n›\nPackage\nBack to Packages\nEdit\nUnpack\nPACK0000001\n\nPallet\n\nIn internal locations\n2\nPackage Transfers\nPackage Information\nPackage Reference\nPACK0000001\nPackage Type\nPallet\nOwner\n—\nLocation\nWH/Stock\nContainer\n—\nCompany\nMy Company (San Francisco)\nPack Date\n2026-01-15\nContent\nItems\n2\nProduct\n\tLot/Serial Number\n\tQuantity\n\tUnit\n\t\n[E-COM08] Storage Box\t—\t18\tUnits\t\n\n[FURN_8855] Drawer\t0000000000029\t80\tUnits\t"
+  },
+  "packageTransfers": {
+    "url": "http://127.0.0.1:4531/inventory/packages/transfers?package_id=package-main-0001",
+    "transferCount": 0,
+    "body": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nPackage\n\nPackage\n\nPACK0000001\n\nTransfers\n\n2"
+  },
+  "transferDetail": {
+    "url": "http://127.0.0.1:4531/inventory/packages/transfers?package_id=package-main-0001&form=show&form_id=delivery-00001",
+    "body": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nPackage\n\nPackage\n\nPACK0000001\n\nTransfers\n\n2\n\nList\nKanban\nCalendar\nSupply Chain / Inventory / Products / Packages / Package Transfers\n1-2 / 2\n‹\n›\nReference\n\tOperation Type\n\tScheduled Date\n\tPackage Relation\n\tCompany\n\tStatus\n\n\nWH/OUT/00001\n\tDeliveries\t2025-12-27\tsource\tMy Company\tReady\n\nWH/IN/00001\n\tReceipts\t2026-01-09\tresult\tMy Company\tReady\nLoading form..."
+  },
+  "failed": [],
+  "width": {
+    "doc": 1440,
+    "client": 1440,
+    "inner": 1440
+  }
+}

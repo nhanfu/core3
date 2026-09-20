@@ -224,3 +224,24 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
   paired action sign-off is claimed.
 - Status: bounded Core3 lifecycle ready for review; broader Inventory parity,
   Odoo gated action execution, and remaining wizard semantics stay open.
+
+## `INV-PACK-TRANSFER-001` — Package Transfers evidence gate (2026-09-20)
+
+- Closed the smallest remaining source-backed Inventory gap after Put in Pack:
+  authenticated evidence for the existing Odoo `stock.package.action_view_picking`
+  Package Transfers stat workflow.
+- Source comparison confirmed `stock_package_view_form` exposes the stat button
+  and `stock.package.action_view_picking` returns pickings whose move lines use
+  the package as source or result; the Packages menu and stat are gated by
+  `stock.group_tracking_lot`.
+- Existing Core3 YAML page/API separation, durable relation migration,
+  permissioned navigation, source/result labels, and restart/permission tests
+  were revalidated without widening the implementation scope.
+- Focused test: 3 tests / 22 assertions; audit, Inventory CSS build, scoped
+  ESLint, and diff-check passed. Authenticated Core3 desktop/mobile evidence
+  is under `plan/odoo-ui-parity/evidence/inventory/2026-09-20/INV-PACK-TRANSFER-001/`.
+- Odoo desktop/mobile exact blocker evidence is recorded: authenticated
+  `codex@core3.local` reaches Discuss instead of `/odoo/packages`, confirming
+  the source group gate; no Odoo execution or false parity sign-off is claimed.
+- Status: bounded Package Transfers evidence gate complete; broader Inventory
+  module sign-off remains open.

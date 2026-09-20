@@ -1,0 +1,34 @@
+{
+  "reference": "http://127.0.0.1:8069",
+  "database": "core3_reference",
+  "authenticatedAs": "codex@core3.local",
+  "sourceMenu": "stock.menu_package",
+  "sourceAction": "stock.action_package_view",
+  "sourceStat": "stock.package.action_view_picking",
+  "sourceGroup": "stock.group_tracking_lot",
+  "observation": "The authenticated reference user is redirected to Discuss for /odoo/packages and does not receive the Packages menu; the same group gates the Package Transfers stat button. Odoo source comparison is therefore represented by exact blocker evidence rather than an action execution.",
+  "desktop": {
+    "requested": "/odoo/packages",
+    "url": "http://127.0.0.1:8069/odoo/discuss",
+    "title": "Discuss",
+    "body": "Discuss\nDiscuss\nChannels\nConfiguration\n7\n40\nMy Company (San Francisco)\nStarred messages\nChannels\nAdministrators\ngeneral\nIdeas & Suggestions\nPublic Community\nDirect messages\nOdooBot\nNo conversation selected.",
+    "failed": [],
+    "width": {
+      "doc": 1440,
+      "client": 1440,
+      "inner": 1440
+    }
+  },
+  "mobile": {
+    "requested": "/odoo/packages",
+    "url": "http://127.0.0.1:8069/odoo/discuss",
+    "title": "Discuss",
+    "body": "7\n40\nTurn on notifications\nStay tuned! Enable push notifications to never miss a message.\nSMS Failure: Contact\nSep 9\nAn error occurred when sending an SMS\n2\nEmail Failure: Contact\nSep 6\nAn error occurred when sending an email on “Azure Interior, Colleen Diaz”\ngeneral\nIdeas & Suggestions\nSep 10\nMarc Demo: Hey team, I was thinking it might be helpful to set up a weekly brainstorming session where we can discuss new strategies for improving customer engagement. What do you all think?\nPublic Community\nSep 10\nMarc Demo: Thanks, Alex! 😊 Yes, there will be a live QA session at the end of the conference where attendees can ask questions and get insights directly from our team. Stay tuned for more details!\ngeneral\nSep 10\nMarc Demo: Building B3, second floor to the right :-).\nOdooBot\nSep 10\nHello, Odoo's chat helps employees collaborate efficiently. I'm here to help you discover its features. Try to send me an emoji :)\nAdministrators\nNotifications\nChats\nChannels\nStarred",
+    "failed": [],
+    "width": {
+      "doc": 390,
+      "client": 390,
+      "inner": 390
+    }
+  }
+}

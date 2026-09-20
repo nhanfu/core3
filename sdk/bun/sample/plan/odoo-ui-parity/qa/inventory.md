@@ -308,3 +308,32 @@ no Inventory module sign-off or aggregate progress claim.
 QA disposition: PASS for the bounded Core3 lifecycle and evidence handoff;
 Odoo action execution remains open behind the reference user's group gate.
 The Inventory module remains open and this slice does not sign off the module.
+
+## Package Transfers QA — `INV-PACK-TRANSFER-001` (2026-09-20)
+
+- Odoo source: `stock_package_view_form` renders the `Package Transfers` stat
+  button for `stock.package.action_view_picking`; the Python action filters
+  pickings through move-line `package_id` or `result_package_id`. The source
+  menu/action and stat are restricted by `stock.group_tracking_lot`.
+- Core3 contract revalidated: `pages/package-detail.yaml` and
+  `pages/package-transfers.yaml` are presentation-only, joined by matching
+  API `page.id` fragments. The package-scoped list preserves source/result
+  relation labels and opens the shared transfer detail.
+- Focused test: `bun test test/inventory_package_transfers.integration.test.ts`
+  — PASS, 3 tests / 22 assertions, covering deterministic source/result
+  relations, empty/transport/not-found paths, tracking permission denial,
+  package scope, idempotent migration, and file-backed restart persistence.
+- Authenticated Core3: Admin on `http://127.0.0.1:4531`, desktop 1440x900 and
+  mobile 390x844. Package `PACK0000001` opened with transfer count 2; the stat
+  opened `/inventory/packages/transfers`, showing `WH/OUT/00001` as `source`
+  and `WH/IN/00001` as `result`, with row navigation to transfer detail. Both
+  viewports had no failed requests or horizontal overflow.
+- Authenticated Odoo: `codex@core3.local` on `http://127.0.0.1:8069`, desktop
+  and mobile. `/odoo/packages` redirected to Discuss and the Packages menu was
+  unavailable; `odoo.json` records the exact `stock.group_tracking_lot` gate
+  and both screenshots. This is an exact blocker, not an Odoo parity claim.
+- Evidence: `plan/odoo-ui-parity/evidence/inventory/2026-09-20/INV-PACK-TRANSFER-001/`.
+
+QA disposition: PASS for the Core3 Package Transfers lifecycle and paired
+evidence gate; Odoo action execution remains blocked by the authenticated
+reference user's source permission. Inventory module sign-off remains open.

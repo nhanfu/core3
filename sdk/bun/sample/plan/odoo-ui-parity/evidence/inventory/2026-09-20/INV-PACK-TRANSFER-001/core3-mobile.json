@@ -1,0 +1,23 @@
+{
+  "runtime": "http://127.0.0.1:4531",
+  "user": "admin@tms.local",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "packageDetail": {
+    "url": "/inventory/packages/detail?id=package-main-0001",
+    "body": "AU\nBack to Packages\nEdit\nUnpack\nPACK0000001\n\nPallet\n\nIn internal locations\n2\nPackage Transfers\nPackage Information\nPackage Reference\nPACK0000001\nPackage Type\nPallet\nOwner\n—\nLocation\nWH/Stock\nContainer\n—\nCompany\nMy Company (San Francisco)\nPack Date\n2026-01-15\nContent\nItems\n2\nProduct\n\tLot/Serial Number\n\tQuantity\n\tUnit\n\t\n[E-COM08] Storage Box\t—\t18\tUnits\t\n\n[FURN_8855] Drawer\t0000000000029\t80\tUnits\t"
+  },
+  "packageTransfers": {
+    "url": "http://127.0.0.1:4531/inventory/packages/transfers?package_id=package-main-0001",
+    "transferCount": 1,
+    "body": "AU\nPackage\n\nPackage\n\nPACK0000001\n\nTransfers\n\n2\n\nPackage Transfers\n1-2 / 2\n‹\n›\ndelivery\n1\nWH/OUT/00001\n\nDeliveries\n\nScheduled Date\n2025-12-27\nStatus\nReady\nPackage relation\nsource\nreceipt\n1\nWH/IN/00001\n\nReceipts\n\nScheduled Date\n2026-01-09\nStatus\nReady\nPackage relation\nresult"
+  },
+  "failed": [],
+  "width": {
+    "doc": 390,
+    "client": 390,
+    "inner": 390
+  }
+}

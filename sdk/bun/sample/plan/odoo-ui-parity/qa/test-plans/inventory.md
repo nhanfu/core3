@@ -31,7 +31,7 @@ transfer workflows must preserve row versions and move quantities.
 | --- | --- | --- | --- |
 | INV-FUNC-001 | Transfers | Search/filter/detail, edit fields, confirm/check/validate and reload persistence work | pass: focused suite and authenticated workflow |
 | INV-FUNC-002 | Locations/warehouses | Hierarchy, CRUD, archive/restore, validation, duplicate, in-use and stale guards work | pass: focused suite |
-| INV-FUNC-003 | Lots/packages | Scoped list/detail, quantity/location validation, CRUD and safe delete preserve relations | pass: focused suite; package transfer drill-down contract added |
+| INV-FUNC-003 | Lots/packages | Scoped list/detail, quantity/location validation, CRUD and safe delete preserve relations | pass: focused suite; package transfer drill-down and browser evidence |
 | INV-FUNC-004 | Operations | Replenishment, physical counts and scrap actions validate quantities/state and persist | pass: focused suite |
 | INV-FUNC-005 | Reporting/settings | Move history, stock report and settings expose declared read-only/filter/save contracts | pass: focused suite |
 | INV-FUNC-006 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit for every datasource | pass: focused suite |
@@ -47,7 +47,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-002 | Transfer edit | Details edit posts through mutation transport and survives reload | pass: authenticated browser probe |
 | INV-WF-003 | Inventory count/replenishment | Count and replenishment actions update quantities with validation and row-version guards | pass at contract level |
 | INV-WF-004 | Scrap/packages/lots | Scrap, lot and package relations remain consistent and scoped to the operation | pass at contract level; browser workflow planned |
-| INV-WF-006 | Package transfers | Package stat resolves only pickings linked through source/result package move-line relations and opens shared transfer detail | pass: focused package-transfer suite; browser workflow planned |
+| INV-WF-006 | Package transfers | Package stat resolves only pickings linked through source/result package move-line relations and opens shared transfer detail | pass: 3 tests / 22 assertions and authenticated Core3 desktop/mobile evidence; Odoo group-gated |
 | INV-WF-007 | Put in Pack | Ready/Waiting transfer opens the package form, persists package/type/content/relation, records timeline, and reloads without losing state | pass: `INV-PACK-001` Core3 desktop/mobile; Odoo action gated for reference user |
 | INV-WF-005 | Durable/external boundary | Carrier, barcode, accounting and cross-module callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 
@@ -68,10 +68,11 @@ transfer workflows must preserve row versions and move quantities.
 | Case ID | State | Viewport | Required assertion | Status |
 | --- | --- | --- | --- | --- |
 | INV-UI-001 | Transfers/detail | 1440x900, 390x844 | Menu order, statusbar, move lines, forms and responsive layout match Odoo | route matrix pass; paired comparison partial |
-| INV-UI-002 | Products/locations/configuration | both | List/form/kanban, hierarchy, settings and validation states match Odoo | planned paired capture |
+| INV-UI-002 | Products/locations/configuration | both | List/form/kanban, hierarchy, settings and validation states match Odoo | package transfers paired Core3 evidence; remaining surfaces planned |
 | INV-UI-003 | Operations/reports | both | Replenishment, counts, scrap and graph/pivot/list reports match Odoo | planned paired capture |
 | INV-UI-004 | Current route regression | all 24 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 48-check matrix |
 | INV-UI-005 | Put in Pack transfer dialog | 1440x900, 390x844 | Permissioned transfer action, package reference/type form, timeline/package result and responsive no-overflow state are rendered | pass Core3; Odoo reference control gated |
+| INV-UI-006 | Package Transfers stat/list | 1440x900, 390x844 | Package stat opens the scoped transfer list, source/result relation labels render, row navigation works, and no horizontal overflow occurs | pass Core3; Odoo reference package menu group-gated |
 
 ## Exit criteria
 
