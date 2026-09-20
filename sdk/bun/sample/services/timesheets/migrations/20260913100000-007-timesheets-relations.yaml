@@ -18,7 +18,8 @@ type:
       );
       INSERT OR IGNORE INTO timesheet_employees(id, name, company_name, hourly_cost) VALUES
         ('employee-demo-001', 'Admin User', 'My Company', 85.00),
-        ('employee-demo-002', 'Demo Employee', 'My Company', 60.00);
+        ('employee-demo-002', 'Demo Employee', 'My Company', 60.00),
+        ('employee-demo-003', 'Priya Shah', 'My Company', 70.00);
       INSERT OR IGNORE INTO timesheet_projects(id, name, company_name, allow_timesheets, has_analytic_account) VALUES
         ('project-demo-001', 'Core3 Implementation', 'My Company', TRUE, TRUE),
         ('project-demo-002', 'Customer Delivery', 'My Company', TRUE, TRUE),

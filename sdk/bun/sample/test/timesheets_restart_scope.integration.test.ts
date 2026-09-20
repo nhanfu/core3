@@ -14,22 +14,23 @@ describe('Timesheets restart, approval, and context boundaries', () => {
   test('persists an entry and approval across a file-backed restart and updates linked hours atomically', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'core3-timesheets-'));
     const path = join(directory, 'timesheets.duckdb');
+    const projectService = { call: async () => ({}) };
     const first = await DuckDbDatabase.open(path);
-    const repository = new YamlRepository(first);
+    const repository = new YamlRepository(first, () => projectService);
     await migrateDatabase(repository, projectRoot + '/migrations', undefined, 'project_restart_scope', ['schema', 'data']);
     await migrateDatabase(repository, root + '/migrations', undefined, 'timesheets_restart_scope', ['schema', 'data']);
     await migrateDatabase(repository, root + '/migrations', undefined, 'timesheets_restart_scope', ['schema', 'data']);
     const create = yaml('api/entries.yaml').actions.find((action: any) => action.id === 'create_timesheet_entry').mutation;
     const submit = yaml('pages/timesheet-workflow.yaml').workflow.transitions.find((transition: any) => transition.id === 'submit').mutation;
     const approve = yaml('pages/timesheet-workflow.yaml').workflow.transitions.find((transition: any) => transition.id === 'approve').mutation;
-    const created = await repository.executeMutation(create, { id: 'timesheet-restart-001', current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company', values: { name: 'TS/RESTART/001', project_id: 'project-demo-001', project_name: 'Core3 Implementation', task_id: 'task-demo-001', task_name: 'Complete module migration', work_date: '2026-01-15', description: 'Restart proof', hours: 2 } });
+    const created = await repository.executeMutation(create, { id: 'timesheet-restart-001', current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company', values: { name: 'TS/RESTART/001', employee_id: 'employee-demo-001', employee_name: 'Admin User', project_id: 'project-demo-001', project_name: 'Core3 Implementation', task_id: 'task-demo-001', task_name: 'Complete module migration', work_date: '2026-01-15', description: 'Restart proof', hours: 2 } });
     expect(created).toMatchObject({ company_name: 'Core3 Demo Company', employee_name: 'Admin User' });
     await repository.executeMutation(submit, { id: 'timesheet-restart-001', current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company' });
     await repository.executeMutation(approve, { id: 'timesheet-restart-001', current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company' });
     const projectBefore = await repository.query("SELECT spent_hours FROM projects WHERE id = 'project-demo-001'");
     first.close();
     const second = await DuckDbDatabase.open(path);
-    const reopened = new YamlRepository(second);
+    const reopened = new YamlRepository(second, () => projectService);
     const row = await reopened.query("SELECT state, hours, company_name, employee_name FROM timesheet_entries WHERE id = 'timesheet-restart-001'");
     expect(row[0]).toMatchObject({ state: 'Approved', hours: 2, company_name: 'Core3 Demo Company', employee_name: 'Admin User' });
     expect(Number((await reopened.query("SELECT spent_hours FROM projects WHERE id = 'project-demo-001'"))[0].spent_hours)).toBe(Number(projectBefore[0].spent_hours));
