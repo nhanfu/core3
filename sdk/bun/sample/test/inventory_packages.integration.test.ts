@@ -46,7 +46,7 @@ describe('Inventory Packages Odoo action parity', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'inventory_packages_test_migrations', ['schema', 'data']);
     const source = parsed('api/packages.yaml').datasources[0];
     const params = { q: null, internal: 'internal', main_packages: null, fixture_state: null };
-    expect((await repository.querySource(source, params, 0, 50)).data.map((row: any) => row.name)).toEqual(['PACK0000001', 'PACK0000002', 'PACK0000004']);
+    expect((await repository.querySource(source, params, 0, 50)).data.map((row: any) => row.name)).toEqual(['PACK/RELOCATE/0005', 'PACK0000001', 'PACK0000002', 'PACK0000004']);
     expect((await repository.querySource(source, { ...params, q: 'PACK0000003', internal: null }, 0, 50)).data[0]).toMatchObject({ location_name: 'Customers/Wood Corner' });
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_PACKAGES_UNAVAILABLE' });

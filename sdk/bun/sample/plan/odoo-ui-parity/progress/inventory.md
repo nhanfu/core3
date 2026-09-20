@@ -397,6 +397,29 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-PACKAGE-RELOCATE-001` — Package location relocation (2026-09-21)
+
+- Selected the smallest remaining Packages detail gap after package CRUD,
+  Unpack, Put in Pack, and Package Transfers: Odoo's non-empty package
+  location write behavior. Compared `stock_package_views.xml:29-70` and
+  `stock_package.py:289-307`, including the empty-package rejection and
+  `Package manually relocated` semantics.
+- Core3 keeps `pages/package-detail.yaml` presentation-only and adds the
+  `inventory.packages.relocate` server form to `api/package-detail.yaml`.
+  Migration `20260921120000-038-inventory-package-relocations.yaml` persists
+  relocation history and seeds `PACK/RELOCATE/0005` in Core3 Demo Company.
+  Company, actor, non-empty/state, destination, same-location, and
+  row-version guards are enforced; the history survives restart.
+- Focused verification passes 8 tests / 53 assertions across the new
+  relocation suite and existing package suite. Authenticated Core3 desktop/
+  mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PACKAGE-RELOCATE-001/` with 1440x900 and
+  390x844 list/detail/form/result captures. Odoo live execution was not
+  captured; no Odoo mutation or parity sign-off is claimed.
+
+Status: bounded Core3 lifecycle and source comparison complete for review;
+full Inventory sign-off remains open.
+
 ## `INV-TRANSFER-EMAIL-001` — Transfer email queue (2026-09-21)
 
 - Selected the smallest remaining non-duplicated transfer action after labels:

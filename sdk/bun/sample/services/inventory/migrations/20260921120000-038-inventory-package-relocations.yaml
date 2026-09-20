@@ -1,0 +1,36 @@
+version: 0.0.38
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_package_relocations (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        package_id VARCHAR NOT NULL,
+        from_location_name VARCHAR NOT NULL,
+        to_location_name VARCHAR NOT NULL,
+        moved_quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        reason VARCHAR NOT NULL DEFAULT 'Package manually relocated',
+        company_name VARCHAR,
+        relocated_by VARCHAR NOT NULL,
+        relocated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(package_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_package_relocations_package_idx
+        ON inventory_package_relocations(package_id, relocated_at, id);
+      INSERT INTO inventory_packages(id,name,parent_package_name,package_type_name,location_name,owner_name,company_name,pack_date,state,content_count)
+      VALUES ('package-relocate-0005','PACK/RELOCATE/0005',NULL,'Pallet','WH/Stock','Core3 Demo Customer','Core3 Demo Company',DATE '2026-01-15','In internal locations',2)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_contents(id,package_id,product_name,lot_name,quantity,unit_name)
+      VALUES
+        ('package-relocate-content-0001','package-relocate-0005','[E-COM08] Storage Box',NULL,2,'Units'),
+        ('package-relocate-content-0002','package-relocate-0005','[FURN_8855] Drawer','TRACE-PACK-0005',1,'Units')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_package_contents WHERE package_id = 'package-relocate-0005';
+      DELETE FROM inventory_packages WHERE id = 'package-relocate-0005';
+      DROP TABLE IF EXISTS inventory_package_relocations;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

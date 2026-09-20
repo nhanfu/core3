@@ -786,3 +786,25 @@ open.
 - Blockers/open scope: Core3 persists `Queued` outbox rows but does not send
   external SMTP mail. Odoo's bulk/multi-record mass-mail wizard and live
   authenticated visual comparison remain open.
+
+## INV-PACKAGE-RELOCATE-001 — Package location relocation (2026-09-21)
+
+- Source/menu/action: PASS for Packages and the package form Location write;
+  source references are `stock_package_views.xml:29-70,144-164` and
+  `stock_package.py:289-307`. Odoo rejects empty-package movement and moves
+  positive contained quantities with the manual-relocation reason.
+- Core3 contract: PASS. Package detail remains page/API separated; the API
+  owns destination options, durable relocation history, and
+  inventory.write/company/actor/state/row-version guards. A dedicated
+  Core3-company fixture avoids weakening company scope.
+- Focused verification: PASS — 8 tests / 53 assertions across
+  `inventory_package_relocation` and `inventory_packages`, covering source
+  mapping, mutation, same-location/invalid/empty/stale/company/actor guards,
+  permission denial, migration replay, and restart persistence.
+- Browser evidence: PASS for authenticated Core3 desktop/mobile package
+  list/detail/Relocate form/result at 1440x900 and 390x844. Odoo live paired
+  action execution was not captured; no Odoo mutation or visual parity
+  sign-off is claimed.
+- Open scope: full quant-chain/nested-package movement and Odoo bulk package
+  list actions remain deferred. One benign desktop shell company request was
+  aborted; the feature requests succeeded and mobile had no failed requests.

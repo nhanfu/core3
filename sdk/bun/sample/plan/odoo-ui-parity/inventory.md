@@ -1377,3 +1377,31 @@ no Odoo mutation was made.
 
 Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
 remains open.
+
+## Products > Package location relocation — `INV-PACKAGE-RELOCATE-001` (2026-09-21)
+
+This bounded slice covers the remaining Packages detail behavior after package
+CRUD, Unpack, Put in Pack, and Package Transfers: changing a non-empty
+package's Location. Odoo exposes the editable field in
+`addons/stock/views/stock_package_views.xml:29-70`; `stock.package.write` in
+`addons/stock/models/stock_package.py:289-307` rejects empty-package moves,
+moves positive contained quantities, and uses the reason `Package manually
+relocated`. The menu/action source is `stock.menu_package` /
+`stock.action_package_view` at `stock_package_views.xml:144-164`.
+
+Core3 keeps `pages/package-detail.yaml` layout-only and adds a permissioned
+Relocate form plus relocation-history grid. `api/package-detail.yaml` owns the
+destination catalog, `inventory.packages.relocate` action, durable audit row,
+and actor/company/state/same-location/row-version guards. Migration
+`20260921120000-038-inventory-package-relocations.yaml` adds the audit table
+and deterministic `PACK/RELOCATE/0005` fixture in Core3 Demo Company. This
+bounded contract records package-level movement and contained quantity; full
+quant-chain, nested-container propagation, and bulk package-list actions stay
+open.
+
+Focused verification passes 8 tests / 53 assertions across the relocation and
+package suites, including restart, migration replay, permission, and
+no-partial-state guards. Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-PACKAGE-RELOCATE-001/`. Odoo live paired
+execution was not captured and no Odoo mutation or full Inventory sign-off is
+claimed.

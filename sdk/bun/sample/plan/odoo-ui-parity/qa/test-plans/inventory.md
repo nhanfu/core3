@@ -133,6 +133,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-023 | Transfer Product Labels report run | Non-cancelled transfer with positive move lines | Product Labels/PDF request records a durable report run, quantity, actor/timeline, current company, and row-version update; migration replay and restart preserve history | pass: `INV-TRANSFER-LABELS-001` focused suite |
 | INV-PERM-022 | Transfer Product Labels permission/context boundary | inventory.read vs inventory.write | readers cannot prepare labels; wrong company, anonymous actor, stale/cancelled transfer, unsupported Lot/SN branch, and empty lines do not create a run | pass: `INV-TRANSFER-LABELS-001` focused suite |
 | INV-UI-021 | Transfer Product Labels wizard/history | 1440x1000, 390x844 | Labels action, Product Labels/PDF form, durable history, and responsive result require authenticated Core3 desktop/mobile proof; paired Odoo action/modal/PDF is required | blocked by shared Ecommerce discovery error; Odoo visual capture open |
+| INV-FUNC-025 | Package location relocation | Non-empty package | Relocate records from/to locations, contained quantity, actor, reason, and row-version update in durable history | pass: `INV-PACKAGE-RELOCATE-001` focused suite |
+| INV-PERM-024 | Package relocation boundary | inventory.tracking vs inventory.write | Readers retain package detail access but cannot relocate; company, actor, empty, invalid destination, same-location, and stale requests do not create audit rows | pass: `INV-PACKAGE-RELOCATE-001` focused suite |
+| INV-UI-023 | Package relocation responsive form | 1440x900, 390x844 | Authenticated Core3 package list/detail exposes Relocate, destination/reason form, persisted history, and no horizontal overflow; paired Odoo action is source-only in this wave | pass Core3; Odoo source-only comparison |
 
 ## Exit criteria
 

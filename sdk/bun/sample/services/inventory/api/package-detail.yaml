@@ -9,6 +9,15 @@ datasources:
     single: false
     permission: inventory.tracking
     query: "SELECT id,product_name,COALESCE(lot_name,'') AS lot_name,quantity,unit_name FROM inventory_package_contents WHERE package_id = :id ORDER BY product_name,id"
+  - id: inventory_package_relocation_locations
+    single: false
+    permission: inventory.tracking
+    query: "SELECT value, label FROM (VALUES ('WH/Stock', 'WH/Stock'), ('WH/Stock/Shelf 1', 'WH/Stock/Shelf 1'), ('WH/Stock/Shelf 2', 'WH/Stock/Shelf 2'), ('WH/Transit', 'WH/Transit')) AS locations(value, label) ORDER BY label"
+  - id: inventory_package_relocations
+    single: false
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_RELOCATIONS_UNAVAILABLE, message: Package relocation history is temporarily unavailable. } }
+    query: "SELECT id,row_version,package_id,from_location_name,to_location_name,moved_quantity,reason,COALESCE(company_name,'Visible to all companies') AS company_name,relocated_by,CAST(relocated_at AS VARCHAR) AS relocated_at FROM inventory_package_relocations WHERE package_id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY relocated_at DESC, id DESC"
 actions:
   - id: back_to_inventory_packages
     type: navigate
@@ -47,6 +56,37 @@ actions:
       - { field: parent_package_name, label: Container, type: text }
       - { field: company_name, label: Company, type: text }
       - { field: pack_date, label: Pack Date, type: date }
+  - id: relocate_inventory_package
+    type: server_form
+    permission: inventory.write
+    title: Relocate package
+    action: inventory.packages.relocate
+    handler: yaml_mutation
+    operation: relocate
+    refresh: [inventory_package_detail, inventory_packages, inventory_package_relocations]
+    success_message: Package relocated.
+    mutation:
+      generated: [relocation_id]
+      concurrency: { required: true }
+      before_steps:
+        - query: "SELECT 'inventory-package-relocation-' || LPAD(CAST((SELECT COUNT(*) + 1 FROM inventory_package_relocations) AS VARCHAR), 4, '0') AS relocation_id, p.location_name AS from_location_name, p.name AS package_name, p.content_count, COALESCE(p.company_name, 'Visible to all companies') AS company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS relocated_by FROM inventory_packages p WHERE p.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id AND row_version = :expected_row_version AND state <> 'Empty' AND content_count > 0 AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: INVENTORY_PACKAGE_RELOCATION_STALE, message: The package changed, is empty, or is unavailable in the current company. Reload before relocating it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_PACKAGE_RELOCATION_ACTOR_REQUIRED, message: An authenticated inventory actor is required to relocate a package. }
+        - { query: "SELECT 1 AS ok WHERE :location_name IN ('WH/Stock', 'WH/Stock/Shelf 1', 'WH/Stock/Shelf 2', 'WH/Transit')", status: 422, code: INVENTORY_PACKAGE_RELOCATION_LOCATION_INVALID, message: Choose an active internal or transit destination. }
+        - { query: "SELECT 1 AS ok FROM inventory_packages WHERE id = :id AND COALESCE(location_name, '') <> :location_name", status: 422, code: INVENTORY_PACKAGE_RELOCATION_SAME_LOCATION, message: Choose a different destination location. }
+      steps:
+        - query: "INSERT INTO inventory_package_relocations(id, package_id, from_location_name, to_location_name, moved_quantity, reason, company_name, relocated_by, relocated_at) VALUES (:relocation_id, :id, :from_location_name, :location_name, :content_count, COALESCE(NULLIF(TRIM(CAST(:reason AS VARCHAR)), ''), 'Package manually relocated'), :company_name, :relocated_by, TIMESTAMP '2026-01-15 08:00:00')"
+        - query: "UPDATE inventory_packages SET location_name = :location_name, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_PACKAGE_RELOCATION_STALE
+          message: The package changed before it could be relocated.
+      result: { query: "SELECT id, package_id, from_location_name, to_location_name, moved_quantity, reason, relocated_by, CAST(relocated_at AS VARCHAR) AS relocated_at FROM inventory_package_relocations WHERE id = :relocation_id" }
+    fields:
+      - { field: location_name, label: To Location, type: select, options_source: inventory_package_relocation_locations, required: true }
+      - { field: reason, label: Reason for relocation, type: textarea, default: Package manually relocated, placeholder: 'e.g. Move to a replenishment shelf' }
   - id: unpack_inventory_package
     type: server
     permission: inventory.tracking

@@ -1,0 +1,53 @@
+{
+  "feature_id": "INV-PACKAGE-RELOCATE-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "rowFound": true,
+      "formVisible": false,
+      "destinationVisible": true,
+      "relocationHistoryVisible": true,
+      "url": "http://127.0.0.1:4316/inventory/packages/detail?id=package-relocate-0005",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": [],
+      "ignored": [
+        {
+          "url": "http://127.0.0.1:4316/api/v1/companies",
+          "error": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "rowFound": true,
+      "formVisible": false,
+      "destinationVisible": true,
+      "relocationHistoryVisible": true,
+      "url": "http://127.0.0.1:4316/inventory/packages/detail?id=package-relocate-0005",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": [],
+      "ignored": []
+    }
+  },
+  "odoo": {
+    "sourceComparison": "pass",
+    "desktop": {
+      "authenticated": false,
+      "route": "not captured"
+    },
+    "mobile": {
+      "authenticated": false,
+      "route": "not captured"
+    }
+  },
+  "blockers": [
+    "Odoo live paired package relocation execution was not captured in this bounded wave; exact source/menu/action comparison is recorded in source-comparison.md. No Odoo mutation was attempted."
+  ]
+}
