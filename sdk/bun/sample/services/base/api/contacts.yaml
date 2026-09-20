@@ -107,8 +107,8 @@ actions:
       - { field: state_name, label: State, type: text }
       - { field: zip, label: ZIP, type: text }
       - { field: country_name, label: Country, type: text }
-       - { field: currency_code, label: Currency, type: text }
-       - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
+      - { field: currency_code, label: Currency, type: text }
+      - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
   - id: duplicate_contact
