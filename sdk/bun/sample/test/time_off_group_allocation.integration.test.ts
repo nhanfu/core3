@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
@@ -65,6 +66,52 @@ describe('Time Off group allocation wizard parity', () => {
     await expect(repository.executeMutation(action.mutation, { values: { ...values, employee_ids: ['employee-missing'], date_from: '2026-10-01' } })).rejects.toMatchObject({ status: 422, code: 'TIME_OFF_GROUP_ALLOCATION_EMPLOYEES_INVALID' });
     await expect(repository.executeMutation(action.mutation, { values: { ...values, employee_ids: ['employee-demo-003'], date_from: '2026-10-01', date_to: '2026-09-30' } })).rejects.toMatchObject({ status: 422, code: 'TIME_OFF_GROUP_ALLOCATION_VALUES_INVALID' });
     database.close();
+  });
+
+  test('retains a group allocation across file-backed restart and rejects replay', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-time-off-group-allocation-'));
+    const databasePath = join(directory, 'time-off.duckdb');
+    const values = {
+      grant_mode: 'employee',
+      employee_ids: ['employee-demo-001', 'employee-demo-003'],
+      leave_type_id: 'leave-type-annual',
+      allocation_type: 'regular',
+      date_from: '2027-02-15',
+      date_to: '2027-12-31',
+      days: 6,
+      reason: 'Restart durability allocation',
+    };
+
+    try {
+      const firstDatabase = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(firstDatabase);
+      await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, 'time_off_group_allocation_restart', ['schema', 'data']);
+      const action = yaml('api/allocations.yaml').actions.find((candidate: any) => candidate.id === 'create_group_allocation');
+
+      const created = await firstRepository.executeMutation(action.mutation, { values });
+      expect(created.group_id).toBeTruthy();
+      expect(await firstRepository.query("SELECT id, state, days, reason FROM leave_allocations WHERE name LIKE 'ALLOC/GROUP/2027-02-15/%' ORDER BY id"))
+        .toEqual([
+          { id: 'group-allocation-employee-demo-001-2027-02-15', state: 'Submitted', days: 6, reason: 'Restart durability allocation' },
+          { id: 'group-allocation-employee-demo-003-2027-02-15', state: 'Submitted', days: 6, reason: 'Restart durability allocation' },
+        ]);
+      firstDatabase.close();
+
+      const reopenedDatabase = await DuckDbDatabase.open(databasePath);
+      const reopenedRepository = new YamlRepository(reopenedDatabase);
+      await migrateDatabase(reopenedRepository, join(root, 'migrations'), undefined, 'time_off_group_allocation_restart', ['schema', 'data']);
+      expect(await reopenedRepository.query("SELECT id, state, days, reason FROM leave_allocations WHERE name LIKE 'ALLOC/GROUP/2027-02-15/%' ORDER BY id"))
+        .toEqual([
+          { id: 'group-allocation-employee-demo-001-2027-02-15', state: 'Submitted', days: 6, reason: 'Restart durability allocation' },
+          { id: 'group-allocation-employee-demo-003-2027-02-15', state: 'Submitted', days: 6, reason: 'Restart durability allocation' },
+        ]);
+      expect(await reopenedRepository.query("SELECT version FROM time_off_group_allocation_restart WHERE version = '0.0.11'" )).toEqual([{ version: '0.0.11' }]);
+      await expect(reopenedRepository.executeMutation(action.mutation, { values }))
+        .rejects.toMatchObject({ status: 409, code: 'TIME_OFF_GROUP_ALLOCATION_EXISTS' });
+      reopenedDatabase.close();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('keeps the group wizard manager-only and the source lookups scoped', () => {
