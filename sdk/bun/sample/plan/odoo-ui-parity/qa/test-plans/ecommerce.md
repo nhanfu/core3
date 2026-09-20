@@ -80,6 +80,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-031 | Product Tag variant assignment | Authorized catalog editor assigns and removes a product variant from a tag; duplicate, missing, cross-company, and stale operations preserve the tag and increment its row version durably | pass: `ecommerce_product_tag_variants.integration.test.ts`; authenticated Core3 assignment form captured |
 | ECOM-WF-032 | Product Tag image | Authorized catalog editor uploads/replaces an image for a product tag; invalid media, stale uploads, and missing tags leave the current image unchanged; bytes survive restart | pass: `ecommerce_product_tag_image.integration.test.ts`; authenticated Core3 detail evidence captured |
 | ECOM-WF-033 | Product export | Authorized Ecommerce reader exports current company-scoped product rows with stable escaped CSV columns; replay and restart preserve the source snapshot and edits are reflected by row version | pass: `ecommerce_product_export.integration.test.ts`; Core3 browser blocked by shared Inventory discovery |
+| ECOM-WF-034 | Variant configurator cart resolution | Authorized product-detail variant add validates the selected active/published/current-company combination, persists the variant-priced line, increments the same line idempotently, and survives restart for authenticated and anonymous carts | pass: `ecommerce_variant_configurator.integration.test.ts`; Core3 browser blocked by shared Inventory discovery and paired Odoo `/shop` 404 |
 
 ## Permission and security cases
 
@@ -109,6 +110,7 @@ the all-customer scope.
 | ECOM-PERM-027 | Product Tag Variant read/write/company boundary | `ecommerce.read` protects variant option/tag projections and `ecommerce.write` protects assign/remove; inactive, non-combination, cross-company, duplicate, missing, and stale requests preserve the tag | pass: `ecommerce_product_tag_variants.integration.test.ts` contract and mutation coverage |
 | ECOM-PERM-028 | Product Tag image read/write boundary | `ecommerce.read` protects tag detail/image reads and download; `ecommerce.write` protects upload/replacement; non-image, oversized, missing-tag, and stale requests preserve the current image | pass: `ecommerce_product_tag_image.integration.test.ts` |
 | ECOM-PERM-029 | Product export read/company boundary | `ecommerce.read` protects the Products page/query/export; company context excludes other-company rows and export performs no mutation or cross-company widening | pass: `ecommerce_product_export.integration.test.ts` |
+| ECOM-PERM-030 | Variant configurator cart boundary | `ecommerce.write` protects authenticated variant mutation; inactive, unpublished, cross-company, missing, and non-matching variants are rejected without changing the cart; anonymous YAML mutation requires a valid public cart and published current-company variant | pass: `ecommerce_variant_configurator.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -129,6 +131,7 @@ the all-customer scope.
 | ECOM-UI-013 | Product Tag variant assignment list/form | 1440x900, 390x844 | Authenticated Core3 tag list renders assigned variant counts/names, desktop Assign Variant form exposes deterministic variants, and mobile list remains readable; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-variant-assignment-001/` |
 | ECOM-UI-014 | Product Tag image detail/form | 1440x900, 390x844 | Authenticated Core3 Product Tags list opens an image-capable detail form and remains readable at mobile; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/` |
 | ECOM-UI-015 | Product export | 1440x900, 390x844 | Authenticated Core3 Products list exposes Export and downloads deterministic CSV; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture is additionally blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-export-001/` |
+| ECOM-UI-016 | Variant configurator cart resolution | 1440x900, 390x844 | Authenticated Core3 Product Detail variant rows expose Add to Cart and preserve the selected variant in Cart; paired Odoo comparison requires combination resolution but is blocked by exact `/shop` 404; Core3 capture is blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-variant-configurator-001/` |
 
 ## Reference blocker
 

@@ -43,7 +43,9 @@ components:
         width: 120
         actions:
           - { id: edit_ecommerce_product_variant, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
+          - { id: add_ecommerce_product_variant_to_cart, label: Add to Cart, icon: cart, variant: primary, permission: ecommerce.write }
           - { id: delete_ecommerce_product_variant, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }
     actions:
       - { id: edit_ecommerce_product_variant, label: Edit, permission: ecommerce.write, show_if: 'row.id != null' }
+      - { id: add_ecommerce_product_variant_to_cart, label: Add to Cart, permission: ecommerce.write, show_if: 'row.id != null' }
       - { id: delete_ecommerce_product_variant, label: Delete, permission: ecommerce.write, variant: danger, show_if: 'row.id != null' }

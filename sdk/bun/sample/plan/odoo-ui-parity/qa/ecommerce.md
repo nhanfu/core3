@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Variant Configurator Cart Resolution (`ECOM-CATALOG-VARIANT-CONFIGURATOR-001`, 2026-09-20)
+
+- Odoo source comparison: `website_sale/controllers/variant.py` exposes the
+  public combination resolver and delegates selected combinations to the
+  concrete `product.product`; the supplied product/website_sale models provide
+  possible-variant and variant combination resolution.
+- Core3 lifecycle: `api/product-detail.yaml` and
+  `pages/product-detail.yaml` remain joined by `page.id`; the variant row
+  action requires `ecommerce.write`, validates active/published/company scope,
+  and writes variant identity/name/price to a durable cart line. Migration
+  054 preserves prior lines and makes `(cart, product, variant)` the durable
+  idempotency boundary. The public route carries `variant_id` and the public
+  YAML mutation applies the same validation.
+- Focused verification: `bun test
+  ./test/ecommerce_variant_configurator.integration.test.ts
+  ./test/ecommerce_cart.integration.test.ts
+  ./test/ecommerce_product_variants.integration.test.ts --timeout 20000` —
+  **9 passed, 57 assertions, 0 failures**.
+- Core3 authenticated desktop/mobile evidence is blocked by the unrelated
+  Inventory discovery error `actions[0].title is not allowed`; the blocker is
+  recorded in `../evidence/ecommerce/2026-09-20/ecom-catalog-variant-configurator-001/browser-check.md`.
+- Authenticated Odoo comparison is blocked: `/shop` returned exact HTTP 404
+  on ports 8069 and 8073. QA disposition: **bounded implementation verified,
+  not signed off**.
+
 ## Product Export (`ECOM-CATALOG-PRODUCT-EXPORT-001`, 2026-09-20)
 
 - Odoo source comparison: `product_template_action_website` owns the Website

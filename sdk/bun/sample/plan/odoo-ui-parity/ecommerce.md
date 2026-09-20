@@ -2,6 +2,37 @@
 
 Status: qa-in-progress (bounded catalog product-variants slice; module sign-off remains open)
 
+## Bounded feature — Variant Configurator Cart Resolution (`ECOM-CATALOG-VARIANT-CONFIGURATOR-001`)
+
+Odoo source comparison: the supplied `website_sale/controllers/variant.py`
+defines the public `website_sale/get_combination_info` JSON route and resolves
+the selected combination to a concrete `product.product` before cart work;
+`product_template.py` provides possible-variant resolution and
+`product_product.py` supplies variant-specific combination information. The
+Odoo flow therefore carries the selected variant, rather than only the
+template, into the cart.
+
+Core3 comparison: the prior variant slice persisted and priced variants but
+the Shop/Product Detail add-to-cart contract still accepted only a template
+product. This bounded slice adds the missing variant-aware cart action on the
+separate Product Detail API/page contracts, validates active published
+variants against the product and current company, stores variant identity and
+price on the durable cart line, and carries `variant_id` through the public
+anonymous cart route. Migration 054 replaces the old cart-line uniqueness
+with a durable `(cart, product, variant)` identity while preserving existing
+rows; deterministic line IDs make repeated adds idempotent and row versions
+make quantity changes observable.
+
+Focused tests cover API/page separation, authenticated and anonymous variant
+adds, permissioned/company/active validation, idempotent quantity increments,
+migration replay, and DuckDB restart persistence in
+`test/ecommerce_variant_configurator.integration.test.ts`. Core3 authenticated
+desktop/mobile capture is blocked by the unrelated shared discovery boundary
+(`services/inventory/api/physical-inventory.yaml`: `actions[0].title is not
+allowed`). Both supplied authenticated Odoo references return exact HTTP 404
+for `/shop`; paired visual comparison is blocked. This bounded feature is
+verified but Ecommerce remains unsigned off.
+
 ## Bounded feature — Product Variants (`ECOM-CATALOG-PRODUCT-VARIANTS-001`)
 
 Odoo source comparison: the supplied `product/views/product_views.xml` defines

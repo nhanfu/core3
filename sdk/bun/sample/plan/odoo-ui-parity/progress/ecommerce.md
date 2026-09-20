@@ -6,6 +6,31 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Latest committed bounded slice: `c7cfd29a8d4540d18d95d1b7a4ac29a5490a7a86` (Product Tag Images); previous bounded slice: `fb8312242ee51535d35e2582dd906232e8e10cb4` (Product Tag Variant Assignments).
 
+## Current bounded task — `ECOM-CATALOG-VARIANT-CONFIGURATOR-001`
+
+The remaining source-backed variant gap was the Odoo website configurator's
+selected-combination-to-cart resolution, not another variant CRUD surface.
+Core3 now exposes a separate Product Detail API/page variant add action,
+validates active/published/current-company ownership, persists variant name
+and variant price on cart lines, and carries the selected variant through the
+anonymous cart route. Migration 054 makes cart-line identity
+`(cart, product, variant)` and preserves earlier rows; deterministic line IDs
+make repeated authenticated or anonymous adds idempotent while row versions
+record quantity increments.
+
+Focused verification: `bun test
+./test/ecommerce_variant_configurator.integration.test.ts
+./test/ecommerce_cart.integration.test.ts
+./test/ecommerce_product_variants.integration.test.ts --timeout 20000` —
+3 + 2 + 4 tests, 14 + 14 + 29 assertions, 0 failures (the combined run
+reports 9 tests and 57 assertions). Core3 desktop/mobile evidence is blocked
+by the unrelated shared Inventory discovery error
+`actions[0].title is not allowed`; no shared Inventory files were staged.
+Authenticated Odoo `/shop` returned exact HTTP 404 on ports 8069 and 8073.
+Evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-variant-configurator-001/`.
+The bounded feature is not module sign-off.
+
 ## Current state
 
 The current wave has a committed Ecommerce implementation and authenticated

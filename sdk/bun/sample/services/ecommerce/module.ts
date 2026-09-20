@@ -58,9 +58,10 @@ export default class EcommerceModule implements ModuleLifecycle {
     try { body = await request.json(); } catch { return this.json({ error: 'A product is required', code: 'ECOMMERCE_PUBLIC_CART_PRODUCT_REQUIRED' }, 422); }
     const productId = String(body?.product_id || '').trim();
     if (!productId) return this.json({ error: 'A product is required', code: 'ECOMMERCE_PUBLIC_CART_PRODUCT_REQUIRED' }, 422);
+    const variantId = String(body?.variant_id || '').trim() || null;
     const createdCart = !cartId;
     const effectiveCartId = cartId || `ecommerce-cart-anon-${crypto.randomUUID()}`;
-    const result = await service.call('ecommerce.cart.anonymous_add', { values: { cart_id: effectiveCartId, line_id: `${effectiveCartId}-${productId}`, product_id: productId } });
+    const result = await service.call('ecommerce.cart.anonymous_add', { values: { cart_id: effectiveCartId, line_id: `${effectiveCartId}-${variantId || productId}`, product_id: productId, variant_id: variantId } });
     const response = this.json({ cart_id: effectiveCartId, line: result });
     if (createdCart) response.headers.set('Set-Cookie', `${ANONYMOUS_CART_COOKIE}=${effectiveCartId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
     return response;

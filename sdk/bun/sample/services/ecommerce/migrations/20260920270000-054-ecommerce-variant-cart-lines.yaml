@@ -1,0 +1,31 @@
+version: 0.0.54
+kind: schema
+description: eCommerce variant-aware cart line identity
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_cart_lines_variant_v2 (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        cart_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        variant_id VARCHAR,
+        variant_name VARCHAR,
+        product_name VARCHAR NOT NULL,
+        unit_price DECIMAL(12,2) NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 1
+      );
+      INSERT INTO ecommerce_cart_lines_variant_v2
+        (id, row_version, cart_id, product_id, variant_id, variant_name, product_name, unit_price, quantity)
+      SELECT id, row_version, cart_id, product_id, variant_id, variant_name, product_name, unit_price, quantity
+      FROM ecommerce_cart_lines
+      ON CONFLICT (id) DO NOTHING;
+      DROP TABLE ecommerce_cart_lines;
+      ALTER TABLE ecommerce_cart_lines_variant_v2 RENAME TO ecommerce_cart_lines;
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_cart_lines_cart_product_variant_idx
+        ON ecommerce_cart_lines(cart_id, product_id, COALESCE(variant_id, ''));
+    down: DROP INDEX IF EXISTS ecommerce_cart_lines_cart_product_variant_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

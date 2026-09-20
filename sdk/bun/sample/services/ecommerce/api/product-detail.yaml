@@ -22,6 +22,24 @@ datasources:
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: add_ecommerce_product_variant_to_cart
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.cart.add_variant
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{state.ecommerce_product_detail.id}', variant_id: '{row.id}' }
+    refresh: [ecommerce_product_variants, ecommerce_cart, ecommerce_cart_lines]
+    mutation:
+      guards:
+        - { query: "SELECT COALESCE((SELECT 'ecommerce-cart-' || id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'ecommerce-cart-open-001') AS cart_id, 'ecommerce-cart-line-' || COALESCE((SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'admin') || '-variant-' || :variant_id AS line_id", assign: true }
+        - { query: "SELECT v.id FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.id = :variant_id AND v.product_id = :product_id AND v.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_UNAVAILABLE, message: Select an active variant from the current company. }
+        - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open' AND (COALESCE(:customer_scope, 'all') = 'all' OR customer_id = (SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart belongs to another customer or is no longer open. }
+      steps:
+        - { query: "INSERT INTO ecommerce_carts(id, customer_id, customer_name, currency, state, company_name) SELECT :cart_id, id, name, currency, 'Open', company_name FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_cart_lines(id, cart_id, product_id, variant_id, variant_name, product_name, unit_price, quantity) SELECT :line_id, :cart_id, p.id, v.id, v.name, p.name, v.sales_price, 1 FROM ecommerce_products p JOIN ecommerce_product_variants v ON v.id = :variant_id AND v.product_id = p.id WHERE p.id = :product_id ON CONFLICT (id) DO UPDATE SET quantity = ecommerce_cart_lines.quantity + 1, row_version = ecommerce_cart_lines.row_version + 1" }
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_cart_lines WHERE cart_id = :cart_id AND variant_id = :variant_id" }
   - id: upload_ecommerce_product_image
     type: upload
     action: ecommerce.products.images.upload
