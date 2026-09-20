@@ -176,3 +176,32 @@ permission-contract, and Core3 responsive evidence checks. Surveys remains
 conditional and unsigned-off pending the broader actor matrix, public flows,
 restart coverage across all workflows, and an installed Odoo paired visual
 reference.
+
+## Bounded QA run: DuckDB dependent-response rollback (2026-09-20)
+
+- Focused migration regression: **4 passed, 15 assertions**. The new case
+  inserts a response with a populated access token, rolls back `0.0.17` to
+  `0.0.16`, checks the row and both dependent indexes, then replays the chain
+  and checks the row again.
+- Full Surveys glob: **45 passed, 0 failed, 374 assertions** across 8 files.
+- Full repository regression: **1,379 passed, 3 failed, 12,601 assertions**.
+  The failures are outside Surveys: two CRM deterministic-order expectations
+  received concurrent `crm-team-opportunity-*` rows, and Ecommerce Products
+  received the concurrent `Product Tags` menu item. No Surveys failure was
+  observed.
+- Authenticated actor evidence: Core3 Admin loaded Survey detail at desktop
+  1440x1000 and mobile 390x844 with zero page/request errors and no overflow;
+  Fleet received HTTP 403 and `Requires permission: surveys.read` for
+  `/surveys`.
+- Authenticated Odoo evidence: `codex@core3.local` authenticated at desktop
+  and mobile, but the live database has Surveys uninstalled and redirected
+  `/odoo/surveys` to Discuss. Captures and the exact limitation are in the
+  feature evidence directory; no paired Odoo visual claim is made.
+- Evidence inventory and source comparison:
+  `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-MIGRATION-ROLLBACK-001/`.
+
+Disposition: the previously reported DuckDB dependent-entry blocker is
+verified repaired and now has a focused regression guard. Surveys remains
+conditional pending an installed Odoo visual reference and wider module
+acceptance/actor coverage; repository-wide red is attributable to other
+owners' concurrent CRM/Ecommerce changes.

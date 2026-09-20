@@ -39,6 +39,7 @@ and the published public survey token.
 | SURVEYS-FUNC-008 | data | Schema/demo | Reapply migrations and verify fixed IDs/counts, no duplicates, stable seed dates | focused suite | pass |
 | SURVEYS-FUNC-009 | functional | Live-session results | Current in-progress question exposes scoped choice and text response statistics | `surveys_live_results.integration.test.ts` | pass |
 | SURVEYS-FUNC-010 | functional | Survey detail > Questions > Add a question | Append a normal ordered question from the inline control and refresh the detail graph | `surveys_question_create.integration.test.ts` | pass |
+| SURVEYS-FUNC-011 | data/recovery | DuckDB migration rollback/replay | Preserve an access-token response row and its dependent indexes across `0.0.17` rollback and replay | `surveys_migrations.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -51,6 +52,7 @@ and the published public survey token.
 | SURVEYS-WF-005 | integration | Durable/external boundary | Timers, mail delivery, callbacks and long-running sessions use Temporal contract when activated | retry, timeout, compensation, replay/restart and shutdown are required | planned |
 | SURVEYS-WF-006 | workflow | Live-session current-question results | Host opens results for the current question and sees durable attendee answers | Closed, empty, stale session, and transport-error states do not disclose results | pass at contract level |
 | SURVEYS-WF-007 | workflow | Inline question create | Create a question in the parent survey and advance its row version | Blank/type/stale/archive guards leave durable rows unchanged | pass at contract level |
+| SURVEYS-WF-008 | recovery | Migration replay | Roll back the idempotency migration and replay the full chain without losing response data | Dependent-index teardown/recreation is explicit and repeatable | pass |
 
 ## Permission and security cases
 
@@ -64,6 +66,7 @@ and the published public survey token.
 | SURVEYS-PERM-006 | Stale/missing record | any mutation | 409/404/422 and unchanged database state | pass at contract level |
 | SURVEYS-PERM-007 | Survey Manager/Survey User | Live-session results | Manager may open the host results action; result datasources remain `surveys.read` scoped | direct API permission probe and browser actor matrix | partial |
 | SURVEYS-PERM-008 | Survey User | Inline question create | `surveys.write` permits the server-form insert; read-only or absent permission is denied | action contract and mutation guard | pass at contract level |
+| SURVEYS-PERM-009 | Administrator/Fleet | Authenticated regression surface | Admin can read the seeded detail; Fleet receives 403 with no survey disclosure | browser actor matrix | pass |
 
 ## Visual, responsive, and regression cases
 
@@ -76,6 +79,7 @@ and the published public survey token.
 | SURVEYS-UI-005 | Current route regression | all 14 routes | 28 authenticated checks with no page/request errors, HTTP errors, blank states or overflow | pass |
 | SURVEYS-UI-006 | Live-session current-question results | 1440x900, 390x844 | Host results page shows current-question cards/chart/lists without overflow | authenticated paired Odoo/Core3 capture | planned |
 | SURVEYS-UI-007 | Survey detail Questions grid | 1440x1000, 390x844 | Add-a-question control, inline row, appended question, and no overflow are visible | authenticated Core3 captures; Odoo fallback limitation recorded | partial |
+| SURVEYS-UI-008 | Migration repair smoke | 1440x1000, 390x844 | Existing authenticated Survey detail remains populated and responsive after migration replay | Core3 Admin captures; Odoo installed-reference blocker recorded | partial |
 
 ## Exit criteria
 

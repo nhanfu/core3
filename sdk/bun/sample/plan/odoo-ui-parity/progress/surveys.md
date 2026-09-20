@@ -62,3 +62,15 @@ Resolve the DuckDB migration rollback/dependent-entry blocker, complete the
 full repository regression, then repeat the complete actor mutation matrix and
 paired Odoo desktop/mobile comparison. This bounded QA run does not sign off
 the module.
+
+## 2026-09-20 — `SURVEYS-MIGRATION-ROLLBACK-001`
+
+Revalidated and strengthened the DuckDB rollback/dependent-entry repair with an
+access-token-bearing response regression. Migration tests pass 4/4, the full
+Surveys glob passes 45/45, and the full repository run completed 1,379 pass / 3
+fail; all failures are concurrent CRM/Ecommerce expectations outside Surveys.
+Authenticated Core3 Admin desktop/mobile and Fleet permission-denial evidence,
+alongside authenticated Odoo desktop/mobile fallback evidence, is recorded in
+the feature evidence directory. The gate repair is complete; module status
+remains **qa-in-progress / conditional**, with no Odoo Surveys visual sign-off
+because the live reference database is uninstalled.

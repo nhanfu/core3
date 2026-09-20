@@ -25,6 +25,27 @@ describe('Surveys migration replay and rollback', () => {
     database.close();
   });
 
+  test('preserves an access-token response row while replaying the dependent DuckDB indexes', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    const table = 'surveys_migration_dependent_response';
+
+    await migrateDatabase(repository, migrations, undefined, table, ['schema', 'data']);
+    await repository.run("INSERT INTO survey_responses(id, survey_id, survey_name, answer_data, access_token, state, idempotency_key) VALUES ('dependent-response', 'survey-demo-feedback', 'Feedback Form', '{\"answer\":\"preserve-me\"}', 'dependent-access-token', 'Submitted', 'dependent-idempotency-key')");
+    const before = await repository.query("SELECT id, survey_id, answer_data, access_token, state FROM survey_responses WHERE id = 'dependent-response'");
+
+    await migrateDatabase(repository, migrations, '0.0.16', table, ['schema', 'data']);
+
+    expect(await repository.query("SELECT id, survey_id, answer_data, access_token, state FROM survey_responses WHERE id = 'dependent-response'")).toEqual(before);
+    expect(await repository.query("SELECT index_name FROM duckdb_indexes() WHERE index_name IN ('survey_responses_access_token_idx', 'survey_responses_survey_idx')")).toHaveLength(2);
+
+    await migrateDatabase(repository, migrations, undefined, table, ['schema', 'data']);
+    expect(await repository.query("SELECT id, survey_id, answer_data, access_token, state FROM survey_responses WHERE id = 'dependent-response'")).toEqual(before);
+    expect(await repository.query("SELECT idempotency_key FROM survey_responses WHERE id = 'dependent-response'")).toEqual([{ idempotency_key: null }]);
+
+    database.close();
+  });
+
   test('upgrades after rollback and replay remains stable', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);

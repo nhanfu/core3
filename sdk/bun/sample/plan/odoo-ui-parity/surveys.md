@@ -1005,3 +1005,28 @@ The Odoo reference database used for this run has Surveys uninstalled and
 redirects `/odoo/surveys` to Discuss; that fallback is recorded explicitly and
 is not a paired visual sign-off. The overall Surveys module remains
 in-progress.
+
+## Bounded gate repair: DuckDB dependent-response rollback (2026-09-20)
+
+The current gate blocker was the DuckDB rollback/dependent-entry path around
+Surveys migration `0.0.17`. The active repair in
+`20260913100000-016-survey-public-idempotency.yaml` drops the indexes that
+depend on `survey_responses` before removing `idempotency_key`, then recreates
+the earlier access-token and survey indexes. This follow-up adds an explicit
+access-token-bearing response row to the rollback regression and verifies that
+its relation, answer data, token, state, and dependent indexes survive
+rollback to `0.0.16` and replay to the current chain.
+
+This is a bounded persistence/gate repair, not a new UI surface. Existing
+YAML-first Survey contracts remain the source of truth: `surveys.read` protects
+catalog reads, `surveys.write` protects mutations, and file-backed restart
+tests cover durable state after reopen. The authenticated Admin/Fleet browser
+matrix and desktop/mobile Survey-detail smoke evidence are captured under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-MIGRATION-ROLLBACK-001/`.
+
+The full Surveys suite now passes 45 tests with 374 assertions. The full
+repository regression completed with 1,379 passed and 3 unrelated failures in
+CRM/Ecommerce expectations caused by concurrent owner changes. The current
+Odoo reference database remains authenticated but has Surveys uninstalled;
+`/odoo/surveys` redirects to Discuss, so the Odoo captures are recorded as
+exact fallback blocker evidence and no paired visual sign-off is claimed.
