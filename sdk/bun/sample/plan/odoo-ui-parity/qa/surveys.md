@@ -680,3 +680,42 @@ Disposition: Core3 question validation passes; Surveys remains
 Disposition: Core3 deadline workflow and guard tests pass; authenticated
 desktop/mobile and paired Odoo evidence are blocked. Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-LIVE-SESSION-PREVIOUS-001` — 2026-09-21
+
+- Source comparison: Odoo's authenticated
+  `survey_session_next_question` controller accepts `go_back` and calls the
+  ordered session-question resolver; Core3 implements the host back transition
+  as `surveys.sessions.previous_question` in the separate
+  `api/live-session.yaml` contract, bound to `page.id: survey-live-session`.
+- Persistence/guards: the mutation moves `survey_live_sessions.current_question_id`
+  and text backward, advances the durable row version, uses a deterministic
+  start timestamp, requires `surveys.manage`, rejects closed/non-progress,
+  stale row versions, and the first-question boundary. A stale replay leaves
+  the cursor and version unchanged.
+- Focused verification: **3 passed / 13 assertions** in
+  `test/surveys_live_session_previous.integration.test.ts`; the adjacent
+  live-session focused set is **15 passed / 107 assertions**.
+- Full Surveys glob: **76 passed / 6 failed / 630 assertions**. Existing
+  failures are four DuckDB migration rollback dependent-entry cases, one
+  authenticated test-entry fixture-count case, and one shared Employee
+  page-schema discovery failure; no new failure is attributable to this slice.
+- Scoped verification: ESLint passed for the changed test, `bun run audit`
+  passed with **692 pages, 701 routes, and 1,290 datasources**, and
+  `git diff --check` passed.
+- Core3 browser evidence: authenticated desktop/mobile probes reached the
+  frontend route, but `/api/pages/survey-live-session` returned exact HTTP 404
+  `{"error":"Unknown page: survey-live-session"}` because the concurrent
+  backend registry exposed only Blog pages. Error screenshots/results are
+  recorded; no Core3 visual sign-off is claimed.
+- Odoo comparison: authenticated source instance `/s/5822` returned HTTP 200
+  at 1440x900 and 390x844, but
+  `/survey/check_session_code/5822` returned JSON-RPC
+  `{"error":"survey_wrong"}`. There is no matching active reference live
+  session, so no paired previous-question mutation or visual sign-off is
+  claimed.
+
+Disposition: the YAML/API workflow, durable cursor, permission boundary,
+stale/idempotent replay safety, and restart test pass; browser and Odoo
+comparison remain conditional on the shared registry and reference fixture.
+Surveys remains **qa-in-progress / conditional**.
