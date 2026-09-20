@@ -10,6 +10,18 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001
+
+- ECOM-FUNC-044: trace Odoo product display dimensions and pair Products,
+  Shop, and Product Detail page/API contracts.
+- ECOM-WF-055: seed, create, edit, query, and restart product display
+  dimensions with deterministic values.
+- ECOM-PERM-051: require `ecommerce.write`; reject wrong company, values
+  outside 1–12, and stale row writes without changing the product.
+- ECOM-UI-037: display width/height fields and catalog projections at desktop
+  and mobile; Core3 browser and Odoo comparison remain blocked by runtime
+  availability and `/shop` HTTP 404.
+
 ## ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001
 
 - ECOM-FUNC-043: trace the Odoo category menu/action, HTML field, form, and
@@ -92,6 +104,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-033 | Product optional recommendations | Durable ordered product optionals expose published same-company Product Detail recommendations, guarded assignment/removal, idempotent cart addition, migration replay, and restart persistence | pass: `ecommerce_product_optionals.integration.test.ts`; rendered actor coverage remains open |
 | ECOM-FUNC-034 | Product variant extra media | Durable variant-scoped image media exposes active same-company Product Variant reads, guarded upload/removal, deterministic fixture replay, and restart persistence | pass: `ecommerce_product_variant_images.integration.test.ts`; rendered actor coverage remains open |
 | ECOM-FUNC-035 | Product variant base-unit pricing | Durable variant base-unit count/name exposes a derived same-company unit price, zero-count hiding, guarded configuration, migration replay, and restart persistence | pass: `ecommerce_variant_base_units.integration.test.ts`; rendered actor coverage remains open |
+| ECOM-FUNC-044 | Product display dimensions | Product/Shop/Detail projections, CRUD, migration replay, restart | Durable `website_size_x/y` values expose deterministic catalog dimensions; 1–12 validation, company scope, optimistic concurrency, paired YAML, and restart persistence are covered | pass: `ecommerce_product_display_dimensions.integration.test.ts` — 3 tests, 31 assertions |
 
 ## Workflow and integration cases
 
@@ -167,6 +180,7 @@ the all-customer scope.
 | ECOM-PERM-037 | Product alternatives read/write/company boundary | `ecommerce.read` protects published recommendation reads and `ecommerce.write` protects assignment/removal; self-target, unpublished, inactive, cross-company, duplicate, and stale requests leave the source and relation rows unchanged | pass: `ecommerce_product_alternatives.integration.test.ts`; authenticated HTTP actor coverage remains open |
 | ECOM-PERM-038 | Product accessories/cart boundary | `ecommerce.read` exposes only active published same-company non-carted accessories and `ecommerce.write` protects assignment/removal/cart add; unpublished, cross-company, duplicate, foreign-cart, and stale requests preserve catalog/cart rows | pass: `ecommerce_product_accessories.integration.test.ts`; authenticated HTTP actor coverage remains open |
 | ECOM-PERM-039 | Checkout address ownership/company boundary | `ecommerce.read` exposes only active addresses belonging to the open cart customer/company and `ecommerce.write` protects create/update/archive/selection; foreign customer/company, invalid type/fields, duplicate labels, and stale writes preserve address/cart/order rows | pass: `ecommerce_checkout_customer_address.integration.test.ts`; authenticated HTTP actor coverage remains open |
+| ECOM-PERM-051 | Product display dimensions permission/company boundary | `ecommerce.read` protects Products/Shop/Detail projections and `ecommerce.write` protects create/edit; wrong-company, invalid-range, and stale writes preserve product dimensions | pass: `ecommerce_product_display_dimensions.integration.test.ts` |
 | ECOM-PERM-040 | Product optional read/write/cart boundary | `ecommerce.read` exposes only active published same-company optional targets and `ecommerce.write` protects assignment/removal/cart add; self-target, unpublished, cross-company, duplicate, foreign-cart, and stale requests preserve catalog/cart rows | pass: `ecommerce_product_optionals.integration.test.ts`; authenticated HTTP actor coverage remains open |
 | ECOM-PERM-041 | Product variant media read/write/company boundary | `ecommerce.read` protects variant detail/media reads and downloads while `ecommerce.write` protects upload/removal; wrong company, inactive product, non-image/oversized, duplicate, missing, and stale requests preserve the variant media rows | pass: `ecommerce_product_variant_images.integration.test.ts`; authenticated HTTP actor coverage remains open |
 | ECOM-PERM-042 | Product variant base-unit read/write/company boundary | `ecommerce.read` protects variant price/unit projections and `ecommerce.write` protects configuration; wrong company, negative count, invalid unit name, zero-count, and stale requests preserve variant pricing metadata | pass: `ecommerce_variant_base_units.integration.test.ts`; authenticated HTTP actor coverage remains open |
@@ -227,6 +241,7 @@ the all-customer scope.
 | ECOM-WF-052 | Product SEO metadata workflow | Product Detail → website head projection | Permissioned SEO form persists all four metadata fields, computes optimization state, and survives restart without overwriting stale edits | pass: focused CRUD, projection, and restart coverage |
 | ECOM-PERM-048 | Product SEO metadata permission/company boundary | Product Detail SEO form | `ecommerce.write` protects SEO updates; wrong-company, inactive, invalid, and stale requests preserve product metadata | pass: focused permission declarations and guard matrix |
 | ECOM-UI-034 | Product SEO metadata | 1440x900, 390x844 | Authenticated Core3 Product Detail should render SEO Metadata fields and optimization state responsively; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by unavailable runtime/browser | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-21/ecom-catalog-product-seo-metadata-001/` |
+| ECOM-UI-037 | Product display dimensions | 1440x900, 390x844 | Authenticated Core3 Products, Shop, and Product Detail should render Display Width/Height projections and edit controls responsively; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by unavailable runtime/browser | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-21/ecom-catalog-product-display-dimensions-001/` |
 
 ## Reference blocker
 

@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Product Display Dimensions (`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product.template` defines `website_size_x/y` with
+  default 1; Website Sale clamps both values during product grid placement and
+  its editor writes the x/y options back to the product.
+- Core3 lifecycle: pass for this bounded contract. Migrations 094/095 add
+  durable dimensions and deterministic Mug/Chair fixtures. Products, Shop,
+  and Product Detail use separate page/API YAML; create/edit requires
+  `ecommerce.write`, enforces 1–12 validation, current-company scope, and
+  optimistic concurrency, and preserves values across restart.
+- Focused verification: `bun test
+  test/ecommerce_product_display_dimensions.integration.test.ts` — **3
+  passed, 31 assertions, 0 failures**. The suite covers source tracing,
+  paired schema validation, deterministic fixtures, CRUD, company and stale
+  boundaries, migration replay, and restart persistence.
+- Audit/lint/diff: recorded in the evidence directory after the scoped UI
+  audit, ESLint, and `git diff --check` runs.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 are
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-display-dimensions-001/`.
+
 ## Category Website Description (`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product.public.category` defines HTML

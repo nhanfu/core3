@@ -13,6 +13,8 @@ components:
       - { field: category, label: Category }
       - { field: sales_price, label: Price, align: right }
       - { field: compare_at_price, label: Compare to Price, align: right }
+      - { field: website_size_x, label: Display Width, align: right }
+      - { field: website_size_y, label: Display Height, align: right }
       - { field: website_description, label: Description }
       - { field: product_type, label: Type }
     row_actions: menu

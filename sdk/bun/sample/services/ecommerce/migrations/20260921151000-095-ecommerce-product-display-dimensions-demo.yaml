@@ -1,0 +1,18 @@
+version: 0.0.95
+kind: data
+description: deterministic Website Sale product display dimensions fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_products
+      SET website_size_x = CASE WHEN id = 'ecommerce-product-mug' THEN 2 ELSE 1 END,
+          website_size_y = CASE WHEN id = 'ecommerce-product-chair' THEN 2 ELSE 1 END
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair');
+    down: |
+      UPDATE ecommerce_products
+      SET website_size_x = 1, website_size_y = 1
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

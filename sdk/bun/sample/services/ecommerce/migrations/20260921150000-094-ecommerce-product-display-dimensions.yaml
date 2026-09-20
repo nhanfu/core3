@@ -1,0 +1,15 @@
+version: 0.0.94
+kind: schema
+description: durable Website Sale product display dimensions
+type:
+  postgres:
+    up: |
+          ALTER TABLE ecommerce_products ADD COLUMN website_size_x INTEGER DEFAULT 1;
+          ALTER TABLE ecommerce_products ADD COLUMN website_size_y INTEGER DEFAULT 1;
+    down: |
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_size_y;
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_size_x;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

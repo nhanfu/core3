@@ -1,6 +1,28 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product-reviews slice; module sign-off remains open)
+Status: qa-in-progress (bounded product display dimensions slice; module sign-off remains open)
+
+## Bounded feature — Product Display Dimensions (`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines
+durable `website_size_x` and `website_size_y` integer fields with default 1.
+`website_sale/controllers/main.py` clamps both values while placing products
+on the website grid and writes them from the Website editor's x/y options.
+
+Core3 migrations 094/095 add durable product display dimensions and
+deterministic Mug/Chair fixtures. Products, Shop, and Product Detail retain
+separate page/API YAML contracts; list/detail projections expose both values,
+and the permissioned product create/edit workflow validates dimensions from 1
+through 12, enforces current-company scope and optimistic row versions, and
+survives DuckDB restart.
+
+Focused CRUD, company, validation, concurrency, migration replay, paired
+schema, audit, scoped lint, and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-display-dimensions-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by the missing
+persistent browser runtime and unavailable local ports; supplied Odoo `/shop`
+probes are exact HTTP 404 on 8069 and 8073. This bounded slice is not module
+sign-off.
 
 ## Bounded feature — Category Website Description (`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`)
 

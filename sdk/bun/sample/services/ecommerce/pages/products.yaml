@@ -18,6 +18,8 @@ components:
       - { field: product_type, label: Product Type }
       - { field: sales_price, label: Sales Price, align: right }
       - { field: compare_at_price, label: Compare to Price, align: right }
+      - { field: website_size_x, label: Display Width, align: right }
+      - { field: website_size_y, label: Display Height, align: right }
       - { field: website_description, label: Website Description }
       - { field: is_published, label: Is Published, type: StatusChip }
       - { field: publish_date, label: Published At }

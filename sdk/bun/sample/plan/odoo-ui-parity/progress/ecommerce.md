@@ -4,8 +4,25 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `2e117416fe241bd612356a2c8c472042f96f7e68`
-(`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`, committed locally; not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`
+
+Wave 15 selected Odoo Website Sale product display dimensions. Odoo persists
+`website_size_x/y`, clamps them in the product grid, and writes them from the
+Website editor. Core3 migrations 094/095 add durable columns and deterministic
+Mug/Chair values. Products, Shop, and Product Detail use separate page/API
+YAML; create/edit enforces 1–12 validation, current-company scope, optimistic
+concurrency, and restart persistence.
+
+Focused verification passed **3 tests, 31 assertions, 0 failures**, including
+source tracing, paired schema validation, CRUD, invalid/company/stale guards,
+migration replay, and restart persistence. Scoped audit, ESLint, and
+`git diff --check` are being finalized with evidence. Core3 authenticated
+desktop/mobile capture is blocked by missing `js_repl` and unavailable local
+ports; Odoo `/shop` is exact HTTP 404 on 8069/8073. Ecommerce module sign-off
+remains open.
 
 ## Current bounded task — `ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`
 
