@@ -15,8 +15,125 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_PRICELIST_RULES_UNAUTHENTICATED, message: Sign in to view pricelist rules. }
       forbidden: { status: 403, code: ECOMMERCE_PRICELIST_RULES_FORBIDDEN, message: You do not have access to pricelist rules. }
       transport_error: { status: 503, code: ECOMMERCE_PRICELIST_RULES_UNAVAILABLE, message: Pricelist rules are temporarily unavailable. }
-    query: "SELECT id, apply_on, price, min_quantity, date_start, date_end FROM ecommerce_pricelist_rules WHERE pricelist_id = :id ORDER BY min_quantity, apply_on"
+    query: "SELECT r.id, r.row_version, r.pricelist_id, r.applied_on, r.apply_on, r.product_id, r.category_name, r.compute_price, r.base, COALESCE(r.fixed_price, r.price) AS price, r.fixed_price, r.percent_price, r.price_discount, r.price_round, r.price_surcharge, r.price_min_margin, r.price_max_margin, r.base_pricelist_id, r.min_quantity, CAST(r.date_start AS VARCHAR) AS date_start, CAST(r.date_end AS VARCHAR) AS date_end FROM ecommerce_pricelist_rules r WHERE r.pricelist_id = :id ORDER BY r.min_quantity, r.applied_on, r.apply_on, r.id"
+  - id: ecommerce_pricelist_rule_apply_on
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('3_global', 'All Products'), ('2_product_category', 'Product Category'), ('1_product', 'Product'), ('0_product_variant', 'Product Variant')) scopes(value, label)"
+  - id: ecommerce_pricelist_rule_compute_price
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('fixed', 'Fixed Price'), ('percentage', 'Discount'), ('formula', 'Formula')) methods(value, label)"
+  - id: ecommerce_pricelist_rule_base
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('list_price', 'Sales Price'), ('standard_price', 'Cost'), ('pricelist', 'Other Pricelist')) bases(value, label)"
+  - id: ecommerce_pricelist_rule_products
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_products WHERE active = TRUE AND (:company_name IS NULL OR company_name = :company_name) ORDER BY name, id"
+  - id: ecommerce_pricelist_rule_categories
+    permission: ecommerce.read
+    query: "SELECT name AS value, name AS label FROM ecommerce_categories WHERE active = TRUE ORDER BY sequence, name"
+  - id: ecommerce_pricelist_rule_base_pricelists
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_pricelists WHERE active = TRUE AND id <> :id AND (company IS NULL OR :company_name IS NULL OR company = :company_name) ORDER BY sequence, name"
 actions:
+  - id: create_ecommerce_pricelist_rule
+    type: server_form
+    permission: ecommerce.write
+    title: Add Price Rule
+    action: ecommerce.pricelists.rules.create
+    handler: line_item
+    operation: create
+    domain: ecommerce_pricelist
+    params: { id: '{state.ecommerce_pricelist_detail.id}' }
+    refresh: [ecommerce_pricelist_detail, ecommerce_pricelist_rules]
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT 'ecommerce-rule-' || :id || '-custom-' || CAST(COUNT(*) + 1 AS VARCHAR) AS line_id FROM ecommerce_pricelist_rules WHERE pricelist_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_pricelists WHERE id = :id AND (COALESCE(NULLIF(:current_company_name, ''), '') = '' OR company IS NULL OR company = :current_company_name)", status: 403, code: ECOMMERCE_PRICELIST_COMPANY_SCOPE_REQUIRED, message: This pricelist belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:applied_on AS VARCHAR) IN ('3_global', '2_product_category', '1_product', '0_product_variant') AND ((CAST(:applied_on AS VARCHAR) = '3_global' AND COALESCE(:product_id, '') = '' AND COALESCE(:category_name, '') = '') OR (CAST(:applied_on AS VARCHAR) IN ('1_product', '0_product_variant') AND EXISTS (SELECT 1 FROM ecommerce_products WHERE id = :product_id AND active = TRUE)) OR (CAST(:applied_on AS VARCHAR) = '2_product_category' AND EXISTS (SELECT 1 FROM ecommerce_categories WHERE name = :category_name AND active = TRUE)))", status: 422, code: ECOMMERCE_PRICELIST_RULE_TARGET_INVALID, message: Choose a valid product rule target. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:compute_price AS VARCHAR) IN ('fixed', 'percentage', 'formula') AND CAST(:base AS VARCHAR) IN ('list_price', 'standard_price', 'pricelist') AND CAST(:min_quantity AS DECIMAL(12,2)) >= 0 AND CAST(:fixed_price AS DECIMAL(12,2)) >= 0 AND CAST(:price_round AS DECIMAL(12,2)) >= 0 AND CAST(:price_min_margin AS DECIMAL(12,2)) >= 0 AND CAST(:price_max_margin AS DECIMAL(12,2)) >= CAST(:price_min_margin AS DECIMAL(12,2))", status: 422, code: ECOMMERCE_PRICELIST_RULE_VALUES_INVALID, message: Enter valid non-negative rule values and margins. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:date_start AS VARCHAR), '') IS NULL OR NULLIF(CAST(:date_end AS VARCHAR), '') IS NULL OR CAST(:date_start AS DATE) < CAST(:date_end AS DATE)", status: 422, code: ECOMMERCE_PRICELIST_RULE_DATES_INVALID, message: The rule end date must be after its start date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_pricelist_rules WHERE pricelist_id = :id AND applied_on = :applied_on AND COALESCE(product_id, '') = COALESCE(:product_id, '') AND COALESCE(category_name, '') = COALESCE(:category_name, '') AND min_quantity = CAST(:min_quantity AS DECIMAL(12,2)) AND COALESCE(date_start, '') = COALESCE(:date_start, '') AND COALESCE(date_end, '') = COALESCE(:date_end, ''))", status: 409, code: ECOMMERCE_PRICELIST_RULE_EXISTS, message: A matching pricelist rule already exists. }
+      steps:
+        - { query: "INSERT INTO ecommerce_pricelist_rules(id, pricelist_id, row_version, apply_on, applied_on, product_id, category_name, compute_price, base, price, fixed_price, percent_price, price_discount, price_round, price_surcharge, price_min_margin, price_max_margin, base_pricelist_id, min_quantity, date_start, date_end) VALUES(:line_id, :id, 1, COALESCE(NULLIF(:apply_on, ''), CASE WHEN :applied_on = '3_global' THEN 'All Products' WHEN :applied_on = '2_product_category' THEN :category_name ELSE :product_id END), :applied_on, NULLIF(:product_id, ''), NULLIF(:category_name, ''), :compute_price, :base, CASE WHEN :compute_price = 'fixed' THEN CAST(:fixed_price AS DECIMAL(12,2)) ELSE 0 END, CAST(:fixed_price AS DECIMAL(12,2)), CAST(:percent_price AS DECIMAL(8,2)), CAST(:price_discount AS DECIMAL(8,2)), CAST(:price_round AS DECIMAL(12,2)), CAST(:price_surcharge AS DECIMAL(12,2)), CAST(:price_min_margin AS DECIMAL(12,2)), CAST(:price_max_margin AS DECIMAL(12,2)), NULLIF(:base_pricelist_id, ''), CAST(:min_quantity AS DECIMAL(12,2)), NULLIF(:date_start, ''), NULLIF(:date_end, ''))" }
+      result: { query: "SELECT * FROM ecommerce_pricelist_rules WHERE id = :line_id" }
+    fields:
+      - { field: applied_on, label: Apply On, type: select, options_source: ecommerce_pricelist_rule_apply_on, required: true, default: '3_global' }
+      - { field: apply_on, label: Rule Label, type: text, placeholder: 'All Products' }
+      - { field: product_id, label: Product or Variant, type: select, options_source: ecommerce_pricelist_rule_products }
+      - { field: category_name, label: Category, type: select, options_source: ecommerce_pricelist_rule_categories }
+      - { field: compute_price, label: Price Type, type: select, options_source: ecommerce_pricelist_rule_compute_price, required: true, default: fixed }
+      - { field: fixed_price, label: Fixed Price, type: number, min: 0, default: 0 }
+      - { field: percent_price, label: Discount %, type: number, default: 0 }
+      - { field: base, label: Based On, type: select, options_source: ecommerce_pricelist_rule_base, default: list_price }
+      - { field: price_discount, label: Formula Discount %, type: number, default: 0 }
+      - { field: price_round, label: Round Off, type: number, min: 0, default: 0 }
+      - { field: price_surcharge, label: Extra Fee, type: number, default: 0 }
+      - { field: price_min_margin, label: Min Margin, type: number, min: 0, default: 0 }
+      - { field: price_max_margin, label: Max Margin, type: number, min: 0, default: 0 }
+      - { field: base_pricelist_id, label: Other Pricelist, type: select, options_source: ecommerce_pricelist_rule_base_pricelists }
+      - { field: min_quantity, label: Min Quantity, type: number, min: 0, default: 1, required: true }
+      - { field: date_start, label: Start Date, type: text }
+      - { field: date_end, label: End Date, type: text }
+  - id: edit_ecommerce_pricelist_rule
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Price Rule
+    action: ecommerce.pricelists.rules.update
+    handler: line_item
+    operation: update
+    domain: ecommerce_pricelist
+    params: { id: '{state.ecommerce_pricelist_detail.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [ecommerce_pricelist_detail, ecommerce_pricelist_rules]
+    mutation:
+      concurrency: { required: true }
+      fields: [apply_on, applied_on, product_id, category_name, compute_price, base, fixed_price, percent_price, price_discount, price_round, price_surcharge, price_min_margin, price_max_margin, base_pricelist_id, min_quantity, date_start, date_end]
+      guards:
+        - { query: "SELECT id FROM ecommerce_pricelist_rules WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_PRICELIST_RULE_STALE, message: This pricelist rule changed or was deleted. Reload before saving. }
+        - { query: "SELECT id FROM ecommerce_pricelists WHERE id = :id AND (COALESCE(NULLIF(:current_company_name, ''), '') = '' OR company IS NULL OR company = :current_company_name)", status: 403, code: ECOMMERCE_PRICELIST_COMPANY_SCOPE_REQUIRED, message: This pricelist belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:applied_on AS VARCHAR) IN ('3_global', '2_product_category', '1_product', '0_product_variant') AND ((CAST(:applied_on AS VARCHAR) = '3_global' AND COALESCE(:product_id, '') = '' AND COALESCE(:category_name, '') = '') OR (CAST(:applied_on AS VARCHAR) IN ('1_product', '0_product_variant') AND EXISTS (SELECT 1 FROM ecommerce_products WHERE id = :product_id AND active = TRUE)) OR (CAST(:applied_on AS VARCHAR) = '2_product_category' AND EXISTS (SELECT 1 FROM ecommerce_categories WHERE name = :category_name AND active = TRUE)))", status: 422, code: ECOMMERCE_PRICELIST_RULE_TARGET_INVALID, message: Choose a valid product rule target. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:compute_price AS VARCHAR) IN ('fixed', 'percentage', 'formula') AND CAST(:base AS VARCHAR) IN ('list_price', 'standard_price', 'pricelist') AND CAST(:min_quantity AS DECIMAL(12,2)) >= 0 AND CAST(:fixed_price AS DECIMAL(12,2)) >= 0 AND CAST(:price_round AS DECIMAL(12,2)) >= 0 AND CAST(:price_min_margin AS DECIMAL(12,2)) >= 0 AND CAST(:price_max_margin AS DECIMAL(12,2)) >= CAST(:price_min_margin AS DECIMAL(12,2))", status: 422, code: ECOMMERCE_PRICELIST_RULE_VALUES_INVALID, message: Enter valid non-negative rule values and margins. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:date_start AS VARCHAR), '') IS NULL OR NULLIF(CAST(:date_end AS VARCHAR), '') IS NULL OR CAST(:date_start AS DATE) < CAST(:date_end AS DATE)", status: 422, code: ECOMMERCE_PRICELIST_RULE_DATES_INVALID, message: The rule end date must be after its start date. }
+      steps:
+        - { query: "UPDATE ecommerce_pricelist_rules SET row_version = row_version + 1, apply_on = COALESCE(NULLIF(:apply_on, ''), apply_on), applied_on = :applied_on, product_id = NULLIF(:product_id, ''), category_name = NULLIF(:category_name, ''), compute_price = :compute_price, base = :base, price = CASE WHEN :compute_price = 'fixed' THEN CAST(:fixed_price AS DECIMAL(12,2)) ELSE 0 END, fixed_price = CAST(:fixed_price AS DECIMAL(12,2)), percent_price = CAST(:percent_price AS DECIMAL(8,2)), price_discount = CAST(:price_discount AS DECIMAL(8,2)), price_round = CAST(:price_round AS DECIMAL(12,2)), price_surcharge = CAST(:price_surcharge AS DECIMAL(12,2)), price_min_margin = CAST(:price_min_margin AS DECIMAL(12,2)), price_max_margin = CAST(:price_max_margin AS DECIMAL(12,2)), base_pricelist_id = NULLIF(:base_pricelist_id, ''), min_quantity = CAST(:min_quantity AS DECIMAL(12,2)), date_start = NULLIF(:date_start, ''), date_end = NULLIF(:date_end, '') WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRICELIST_RULE_STALE, message: This pricelist rule changed or was deleted. Reload before saving. }
+      result: { query: "SELECT * FROM ecommerce_pricelist_rules WHERE id = :line_id" }
+    fields:
+      - { field: applied_on, label: Apply On, type: select, options_source: ecommerce_pricelist_rule_apply_on, required: true }
+      - { field: apply_on, label: Rule Label, type: text }
+      - { field: product_id, label: Product or Variant, type: select, options_source: ecommerce_pricelist_rule_products }
+      - { field: category_name, label: Category, type: select, options_source: ecommerce_pricelist_rule_categories }
+      - { field: compute_price, label: Price Type, type: select, options_source: ecommerce_pricelist_rule_compute_price, required: true }
+      - { field: fixed_price, label: Fixed Price, type: number, min: 0 }
+      - { field: percent_price, label: Discount %, type: number }
+      - { field: base, label: Based On, type: select, options_source: ecommerce_pricelist_rule_base }
+      - { field: price_discount, label: Formula Discount %, type: number }
+      - { field: price_round, label: Round Off, type: number, min: 0 }
+      - { field: price_surcharge, label: Extra Fee, type: number }
+      - { field: price_min_margin, label: Min Margin, type: number, min: 0 }
+      - { field: price_max_margin, label: Max Margin, type: number, min: 0 }
+      - { field: base_pricelist_id, label: Other Pricelist, type: select, options_source: ecommerce_pricelist_rule_base_pricelists }
+      - { field: min_quantity, label: Min Quantity, type: number, min: 0, required: true }
+      - { field: date_start, label: Start Date, type: text }
+      - { field: date_end, label: End Date, type: text }
+  - id: delete_ecommerce_pricelist_rule
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.pricelists.rules.delete
+    handler: line_item
+    operation: delete
+    domain: ecommerce_pricelist
+    params: { id: '{state.ecommerce_pricelist_detail.id}', line_id: '{row.id}' }
+    refresh: [ecommerce_pricelist_detail, ecommerce_pricelist_rules]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_pricelist_rules WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_PRICELIST_RULE_STALE, message: This pricelist rule changed or was deleted. Reload before deleting. }
+        - { query: "SELECT id FROM ecommerce_pricelists WHERE id = :id AND (COALESCE(NULLIF(:current_company_name, ''), '') = '' OR company IS NULL OR company = :current_company_name)", status: 403, code: ECOMMERCE_PRICELIST_COMPANY_SCOPE_REQUIRED, message: This pricelist belongs to another company. }
+      steps:
+        - { query: "DELETE FROM ecommerce_pricelist_rules WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRICELIST_RULE_STALE, message: This pricelist rule changed or was deleted. Reload before deleting. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }
   - id: edit_ecommerce_pricelist
     type: server_form
     permission: ecommerce.write

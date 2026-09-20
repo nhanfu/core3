@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `62b822ae812df234c6da981173b58248003edd7d` (Payment Methods); previous bounded slice: `e32c84f95a9e` (Combo Choices).
+Latest committed bounded slice: `4a4d156ceb4d1db88b8072d198215bbfe52f8828` (Delivery Methods); previous bounded slice: `62b822ae812df234c6da981173b58248003edd7d` (Payment Methods).
 
 ## Current state
 
@@ -96,3 +96,22 @@ authenticated Odoo `/shop` 404 blocker are recorded at
 The paired Odoo surface, broader actor/company browser matrix, and external
 carrier-rate/shipment gates remain open; this is a bounded implementation, not
 full Ecommerce sign-off. The bounded commit is recorded in the handoff.
+
+## Completed bounded task — `ECOM-CATALOG-PRICELIST-RULES-001`
+
+The smallest remaining source-backed catalog gap was Odoo's
+`product.pricelist.item` rule surface. Core3 now persists Odoo target and
+pricing metadata through migrations 046/047, exposes separated page/API YAML,
+provides deterministic rule option sources and `ecommerce.write` CRUD, and
+guards target, date, value, company, duplicate, and stale-row failures. Cart
+pricelist application consumes global/product/category rules with fixed,
+percentage, and formula modes. Isolated restart coverage proves the rule and
+cart price survive database reopen.
+
+Focused verification and authenticated Core3 desktop/mobile evidence are
+recorded at `plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-pricelist-rules-001/`.
+The browser company boundary is visible for the seeded `My Company` fixture;
+the Odoo paired comparison is blocked by exact `/shop` 404 responses on ports
+8069 and 8073. Variant-specific resolution remains open because the current
+catalog has no separate variant table. This is a bounded implementation, not
+full Ecommerce sign-off. The local commit is reported in the handoff.

@@ -1,0 +1,26 @@
+version: 0.0.46
+kind: schema
+description: durable Odoo-compatible eCommerce pricelist rule fields
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN row_version BIGINT DEFAULT 1;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN applied_on VARCHAR DEFAULT '3_global';
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN product_id VARCHAR;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN category_name VARCHAR;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN compute_price VARCHAR DEFAULT 'fixed';
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN base VARCHAR DEFAULT 'list_price';
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN fixed_price DECIMAL(12,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN percent_price DECIMAL(8,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN price_discount DECIMAL(8,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN price_round DECIMAL(12,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN price_surcharge DECIMAL(12,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN price_min_margin DECIMAL(12,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN price_max_margin DECIMAL(12,2) DEFAULT 0;
+      ALTER TABLE ecommerce_pricelist_rules ADD COLUMN base_pricelist_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_pricelist_rules_scope_idx ON ecommerce_pricelist_rules(pricelist_id, applied_on, min_quantity, id);
+    down: DROP INDEX IF EXISTS ecommerce_pricelist_rules_scope_idx; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS base_pricelist_id; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS price_max_margin; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS price_min_margin; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS price_surcharge; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS price_round; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS price_discount; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS percent_price; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS fixed_price; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS base; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS compute_price; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS category_name; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS product_id; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS applied_on; ALTER TABLE ecommerce_pricelist_rules DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

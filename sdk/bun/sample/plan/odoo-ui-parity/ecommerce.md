@@ -1,6 +1,37 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded checkout delivery-methods slice; module sign-off remains open)
+Status: qa-in-progress (bounded catalog pricelist-rules slice; module sign-off remains open)
+
+## Bounded feature — Pricelist Rules (`ECOM-CATALOG-PRICELIST-RULES-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` places the
+Pricelists action under Website > Configuration > eCommerce > Products and
+opens `product.product_pricelist_action2`. The supplied
+`product/models/product_pricelist_item.py` and
+`product/views/product_pricelist_item_views.xml` define
+`product.pricelist.item` targets (global, category, product, variant), minimum
+quantity/date windows, list/cost/pricelist bases, fixed/percentage/formula
+pricing, rounding, surcharge, and margins with target/date/value constraints.
+
+Core3 comparison: `services/ecommerce/pages/pricelist-detail.yaml` owns the
+authenticated pricelist detail route and visible rules `ListView`, while
+`services/ecommerce/api/pricelist-detail.yaml` owns the matching `page.id`
+detail/rules/options datasources and permissioned server-form CRUD. Migrations
+046/047 add durable rule fields, row-version concurrency, and deterministic
+upgrades for the three existing demo rules. Cart pricing resolves
+global/product/category rules and fixed, percentage, and formula computations
+from persisted rows. Focused tests cover CRUD, permissions, company scope,
+target/date/value validation, stale writes, migration rerun, restart
+persistence, and cart application.
+
+Authenticated Core3 desktop/mobile and rule-form evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-pricelist-rules-001/`. The browser
+records the expected cross-company rejection because the authenticated Core3
+company is `Core3 Demo Company` while deterministic pricelist fixtures belong
+to `My Company`. Both supplied Odoo references return exact HTTP 404 for
+`/shop`, so paired comparison is blocked. True product-template/variant
+resolution remains open because the current Ecommerce catalog has no separate
+`product.product` table. This bounded slice and Ecommerce remain unsigned off.
 
 ## Bounded feature — Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`)
 

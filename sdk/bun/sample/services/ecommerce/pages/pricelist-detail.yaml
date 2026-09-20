@@ -16,20 +16,30 @@ components:
       - { field: company, label: Company, type: text, placeholder: Visible to all }
       - { field: country_groups, label: Country Groups, type: text, placeholder: All countries }
       - { field: active, label: Active, type: checkbox }
-    notebook:
-      active: pricelist_rules
-      tabs:
-        - id: pricelist_rules
-          label: Sales Prices
-          component:
-            type: ListView
-            variant: odoo
-            source: ecommerce_pricelist_rules
-            columns:
-              - { field: apply_on, label: Apply on, type: PrimaryEntityCell }
-              - { field: price, label: Price, align: right }
-              - { field: min_quantity, label: Min Quantity, align: right }
-              - { field: date_start, label: Start Date }
-              - { field: date_end, label: End Date }
-            row_key: id
-            empty_state: { title: No pricelist rules, description: Add a sales price rule to this pricelist. }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_pricelist_rules
+    create_action: create_ecommerce_pricelist_rule
+    create_label: Add a price rule
+    search: { label: Search price rules, placeholder: 'Search target or pricing mode...' }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No pricelist rules, description: Add a sales price rule to this pricelist. }
+    columns:
+      - { field: apply_on, label: Apply On, type: PrimaryEntityCell }
+      - { field: price, label: Price, align: right }
+      - { field: compute_price, label: Price Type }
+      - { field: min_quantity, label: Min Quantity, align: right }
+      - { field: date_start, label: Start Date }
+      - { field: date_end, label: End Date }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 120
+        actions:
+          - { id: edit_ecommerce_pricelist_rule, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
+          - { id: delete_ecommerce_pricelist_rule, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }
+    actions:
+      - { id: edit_ecommerce_pricelist_rule, label: Edit, permission: ecommerce.write, show_if: 'row.id != null' }
+      - { id: delete_ecommerce_pricelist_rule, label: Delete, permission: ecommerce.write, variant: danger, show_if: 'row.id != null' }

@@ -1,0 +1,35 @@
+version: 0.0.47
+kind: data
+description: normalize deterministic eCommerce pricelist rule fixtures
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_pricelist_rules
+      SET applied_on = CASE
+            WHEN apply_on = 'Core3 Ceramic Mug' THEN '1_product'
+            WHEN apply_on = 'Ergonomic Office Chair' THEN '1_product'
+            WHEN apply_on = 'Desk Lamp' THEN '1_product'
+            ELSE '3_global'
+          END,
+          product_id = CASE
+            WHEN apply_on = 'Core3 Ceramic Mug' THEN 'ecommerce-product-mug'
+            WHEN apply_on = 'Ergonomic Office Chair' THEN 'ecommerce-product-chair'
+            WHEN apply_on = 'Desk Lamp' THEN 'ecommerce-product-lamp'
+            ELSE NULL
+          END,
+          compute_price = 'fixed',
+          base = 'list_price',
+          fixed_price = price,
+          percent_price = 0,
+          price_discount = 0,
+          price_round = 0,
+          price_surcharge = 0,
+          price_min_margin = 0,
+          price_max_margin = 0,
+          row_version = COALESCE(row_version, 1)
+      WHERE id IN ('ecommerce-rule-public-mug', 'ecommerce-rule-retail-chair', 'ecommerce-rule-eu-lamp');
+    down: SELECT 1;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

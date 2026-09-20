@@ -24,7 +24,7 @@ describe('eCommerce Pricelists parity', () => {
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Kanban']);
     expect(page.components[0].views[1].mobile).toBe(true);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Sequence', 'Name', 'Country Groups', 'Currency', 'Company']);
-    expect(detail.components[0].notebook.tabs[0].label).toBe('Sales Prices');
+    expect(detail.components[1]).toMatchObject({ type: 'ListView', source: 'ecommerce_pricelist_rules', create_action: 'create_ecommerce_pricelist_rule' });
   });
 
   test('serves ordered fixtures, states, validation, and write permissions', async () => {

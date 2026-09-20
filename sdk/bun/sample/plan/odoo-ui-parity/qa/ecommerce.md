@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Pricelist Rules (`ECOM-CATALOG-PRICELIST-RULES-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: Website > Configuration > eCommerce >
+  Products > Pricelists, `product.product_pricelist_action2`, and
+  `product.pricelist.item` list/form target, date, quantity, and fixed/
+  percentage/formula fields were traced in the supplied source.
+- Core3 lifecycle: migrations 046/047 add durable rule metadata and
+  deterministic fixture upgrades; page/API YAML is separated by `page.id`;
+  rule option sources, permissioned CRUD, target/date/value/duplicate guards,
+  company scope, stale row-version protection, and cart price application are
+  implemented.
+- Focused verification: `bun test
+  test/ecommerce_pricelist_rules.integration.test.ts
+  test/ecommerce_cart.integration.test.ts --timeout 20000` — **6 passed,
+  40 assertions, 0 failures**. Full module counts and audit/lint results are
+  recorded with the commit handoff.
+- Browser verification: authenticated Core3 desktop/mobile detail, rule form,
+  company-boundary attempt, and Odoo 404 blocker captures are under
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-pricelist-rules-001/`.
+- Odoo `/shop` returned exact HTTP 404 on ports 8069 and 8073; paired visual
+  comparison is blocked. True product-variant pricing is also open because
+  this catalog has no separate variant table.
+- QA disposition: **bounded implementation verified, not signed off**.
+  Ecommerce module sign-off remains open for the paired Website/eCommerce
+  reference, broader actor/company browser matrix, and external pricing gates.
+
 ## Delivery Methods (`ECOM-CHECKOUT-DELIVERY-METHODS-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `menu_ecommerce_delivery` /
