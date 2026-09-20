@@ -1597,3 +1597,26 @@ reach Abigail Peterson's Personal tab, but that source employee has no
 birthday, so Odoo correctly hides the conditional checkbox. Evidence is under
 `evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`. This is
 conditional feature evidence, not aggregate Employees sign-off.
+
+## EMP-LEGAL-NAME-001: Employee legal name (2026-09-21)
+
+Odoo's `hr.employee.legal_name` is an editable, stored field in the Personal
+Information group. Its source compute defaults an empty value to the employee
+name. Core3 adds the durable `legal_name` column with migration
+`20260921170000-047`, deterministic demo values, and a separate page field plus
+employee-detail/create/edit API fields. Create applies the same source-backed
+fallback when legal name is omitted.
+
+Create and edit require `employees.write`, current-company scope, and the
+existing optimistic row-version guard. Focused coverage is **4 tests / 18
+assertions**, including source mapping, fallback CRUD, stale/company atomicity,
+migration replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile captures show Abigail Peterson's Personal
+Information Legal Name. Core3 desktop authenticates and renders the new label,
+but the deterministic employee is `Core3 Vietnam` while the session is
+`Core3 Demo Company`. Core3 mobile is additionally blocked by a shared
+Inventory page-discovery error referencing unresolved `inventory_route_detail`
+and related actions/datasources; Employees did not modify Inventory. Evidence is
+under `evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`. This is conditional
+feature evidence, not aggregate Employees sign-off.

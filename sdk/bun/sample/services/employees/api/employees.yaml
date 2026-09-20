@@ -52,7 +52,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display]
+      fields: [employee_number, name, legal_name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display]
       boolean_fields: [birthday_public_display, has_work_permit]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0, distance_home_work_unit: kilometers }
@@ -62,10 +62,12 @@ actions:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:employee_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND :hire_date IS NOT NULL", status: 422, code: EMPLOYEES_RECORD_VALUES_INVALID, message: Employee number, name, and start date are required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE LOWER(employee_number) = LOWER(TRIM(CAST(:employee_number AS VARCHAR))))", status: 409, code: EMPLOYEES_RECORD_NUMBER_EXISTS, message: An employee with this number already exists. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EMPLOYEES_COMPANY_SCOPE_REQUIRED, message: Employee must belong to the current company. }
+        - { query: "SELECT COALESCE(NULLIF(TRIM(CAST(:legal_name AS VARCHAR)), ''), TRIM(CAST(:name AS VARCHAR))) AS legal_name", assign: true }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: employee_number, label: Employee number, type: text, required: true }
       - { field: name, label: Name, type: text, required: true }
+      - { field: legal_name, label: Legal Name, type: text }
       - { field: work_email, label: Work Email, type: text }
       - { field: work_phone, label: Work Phone, type: text }
       - { field: private_email, label: Private Email, type: text }

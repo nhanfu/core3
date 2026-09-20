@@ -1,0 +1,18 @@
+version: 0.0.47
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS legal_name VARCHAR;
+      UPDATE employees
+      SET legal_name = COALESCE(NULLIF(legal_name, ''), CASE id
+        WHEN 'employee-demo-001' THEN 'Nguyen Van Admin'
+        WHEN 'employee-demo-002' THEN 'Nguyen Minh Anh'
+        WHEN 'employee-demo-003' THEN 'Tran Bao Long'
+        ELSE name END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS legal_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

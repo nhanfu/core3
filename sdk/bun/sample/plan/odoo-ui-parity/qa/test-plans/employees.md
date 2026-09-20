@@ -346,3 +346,17 @@ Focused test: `test/employees_private_contact.integration.test.ts` (4 tests,
 Focused test: `test/employees_birthday_visibility.integration.test.ts` (4
 tests, 22 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`.
+
+## EMP-LEGAL-NAME-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Personal Information `legal_name` maps to separate page/API contracts | pass |
+| Employee CRUD | Create without legal name uses the Odoo name fallback; explicit edit persists | pass |
+| Permission and scope | Employees write, current company, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic legal names | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile captures | conditional; Core3 company mismatch and unrelated Inventory discovery failure recorded |
+
+Focused test: `test/employees_legal_name.integration.test.ts` (4 tests, 18
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`.

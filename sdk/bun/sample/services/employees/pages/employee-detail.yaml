@@ -96,7 +96,7 @@ components:
               fields: [{ field: private_email, label: Email }, { field: private_phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
             - title: Personal Information
               permission: employees.read
-              fields: [{ field: birthday, label: Birthday, type: date }, { field: birthday_public_display, label: Show to all employees, type: checkbox, show_if: "!!state.employee_detail.birthday" }, { field: place_of_birth, label: Place of Birth }, { field: country_of_birth, label: Country of Birth }, { field: sex, label: Gender }]
+              fields: [{ field: legal_name, label: Legal Name }, { field: birthday, label: Birthday, type: date }, { field: birthday_public_display, label: Show to all employees, type: checkbox, show_if: "!!state.employee_detail.birthday" }, { field: place_of_birth, label: Place of Birth }, { field: country_of_birth, label: Country of Birth }, { field: sex, label: Gender }]
             - title: Emergency Contact
               permission: employees.read
               fields: [{ field: emergency_contact, label: Contact }, { field: emergency_phone, label: Phone }]

@@ -791,3 +791,18 @@ claimed.
 Evidence is under
 `evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-LEGAL-NAME-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-030 | Personal Information legal-name create/edit/read | pass; omitted legal name follows Odoo's name fallback and explicit edits persist |
+| EMP-PERM-030 | `employees.write`, current company, row version | pass; stale and out-of-company changes reject atomically |
+| EMP-DATA-030 | Migration replay and file-backed restart | pass; deterministic legal names survive restart without duplicates |
+| EMP-UI-026 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo source field is visible, Core3 desktop is company-blocked, and mobile is blocked by concurrent Inventory discovery failure |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`. The Core3 mobile
+500 is recorded in `browser.json`; runtime logs identify unresolved Inventory
+route datasources/actions, not an Employees contract failure. No aggregate
+Employees sign-off is claimed.

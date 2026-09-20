@@ -468,6 +468,21 @@ Candidate commit: current working tree
   Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
   sign-off.
 
+## EMP-LEGAL-NAME-001 (2026-09-21)
+
+- Selected Odoo's editable Personal Information `hr.employee.legal_name` as
+  the next uncovered source-backed Employee behavior.
+- Added migration `20260921170000-047`, deterministic legal-name fixtures,
+  paired page/API fields, create fallback, and existing permission/company/
+  optimistic-concurrency guards.
+- Focused verification: **4 tests / 18 assertions**; scoped ESLint and
+  `git diff --check` pass. The shared UI audit is conditional because
+  concurrent Inventory YAML prevents global page discovery.
+- Evidence: `evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`. Odoo desktop/
+  mobile pass; Core3 desktop is authenticated but fixture-company blocked, and
+  Core3 mobile hits the unrelated Inventory page-schema error. No aggregate
+  Employees sign-off is claimed.
+
 ## EMP-BIRTHDAY-VISIBILITY-001 (2026-09-21)
 
 - Selected the next uncovered source-backed Personal behavior: Odoo's

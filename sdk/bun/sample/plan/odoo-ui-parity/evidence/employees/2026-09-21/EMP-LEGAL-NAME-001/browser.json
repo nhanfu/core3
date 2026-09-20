@@ -1,0 +1,141 @@
+{
+  "feature": "EMP-LEGAL-NAME-001",
+  "generated_at": "2026-09-20T19:48:26.689Z",
+  "core3": [
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:3310/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "visible_labels": [
+        "Legal Name",
+        "Employee Name"
+      ],
+      "company_blocker": true,
+      "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n—\n0\nTimesheets\n0\nHistory\nEmployee Name\n—\nLegal Name\n—\nWork Email\n—\nWork Phone\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Location\n—\nWork Address\n—\nDeparture Reason\n—\nDeparture Description\n—\nDeparture Date\n—\nNote\n—\nStart Date\n—\nContract Start\n—\nContract End\n—\nEmployment Type\n—\nPhone\n—\nPrivate Email\n—\nPrivate Phone\n—\nBirthday\n—\nShow to all employees\n—\nWage\n—\nWorking Schedule\n—\nTimezone\n—\nBadge ID\n—\nSkills\n—\nResume\n—\nPrivate Address\n—\nEmergency Contact\n—\nEmergency Phone\n—\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nCertificate Level\n—\nField of Study\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nVisa No\n—\nVisa Expiration\n—\nWork Permit No\n—\nWork Permit Expiration\n—\nWork Permit Document\n—\nDocument Filename\n—\nNationality (Country)\n—\nIdentification No\n—\nSSN No\n—\nPassport No\n—\nPassport Expiration\n—\nPrivate Street\n—\nPrivate Street 2\n—\nPrivate City\n—\nPrivate State\n—\nPrivate ZIP\n—\nPrivate Country\n—\nHome-Work Distance\n—\nDistance Unit\n—\nWork\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—",
+      "api_responses": [],
+      "request_failures": [
+        {
+          "url": "http://127.0.0.1:3310/api/v1/companies",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3310/packages/client/src/components/OdooFormView.ts",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "page_errors": [],
+      "width": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:3310/employees/detail?id=employee-demo-001",
+      "title": "TMS — Transport Management System",
+      "visible_labels": [],
+      "company_blocker": false,
+      "body_excerpt": "AU\n⚠️\nFailed to load page\nInternal server error",
+      "api_responses": [
+        {
+          "status": 500,
+          "url": "http://127.0.0.1:3310/api/pages/employee-detail?lc=en&id=employee-demo-001"
+        }
+      ],
+      "request_failures": [
+        {
+          "url": "http://127.0.0.1:3310/api/v1/notifications",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3310/api/pages/employee-detail?lc=en&id=employee-demo-001",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "page_errors": [],
+      "width": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  ],
+  "odoo": [
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "employee": "Abigail Peterson",
+      "personal_tab_found": true,
+      "visible_labels": [
+        "PERSONAL INFORMATION",
+        "Legal Name",
+        "Birthday"
+      ],
+      "legal_name_value": "Abigail Peterson",
+      "body_excerpt": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nPRIVATE CONTACT\nEmail\nPhone\nBank Accounts?\nPERSONAL INFORMATION\nLegal Name\nBirthday\nPlace of Birth\n─\nGender?\nEMERGENCY CONTACT\nContact\nPhone\nVISA & WORK PERMIT\nVisa No\nWork Permit No\nDocument\nUpload your file\nCITIZENSHIP\nNationality (Country)\nIdentification No?\nSSN No?\nPassport No\nLOCATION\nPrivate Address\nHome-Work Distance\nFAMILY\nMarital Status\nSpouse Legal Name\nSpouse Birthdate\nDependent Children\nEDUCATION\nCertificate Level\nField of Study\nDOCUMENTS\nID Card Copy\nUpload your file\nDriving License\nUpload your file\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "request_failures": [],
+      "page_errors": [],
+      "width": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "employee": "Abigail Peterson",
+      "personal_tab_found": true,
+      "visible_labels": [
+        "PERSONAL INFORMATION",
+        "Legal Name",
+        "Birthday"
+      ],
+      "legal_name_value": "Abigail Peterson",
+      "body_excerpt": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nPRIVATE CONTACT\nEmail\nPhone\nBank Accounts?\nPERSONAL INFORMATION\nLegal Name\nBirthday\nPlace of Birth\n─\nGender?\nEMERGENCY CONTACT\nContact\nPhone\nVISA & WORK PERMIT\nVisa No\nWork Permit No\nDocument\nUpload your file\nCITIZENSHIP\nNationality (Country)\nIdentification No?\nSSN No?\nPassport No\nLOCATION\nPrivate Address\nHome-Work Distance\nFAMILY\nMarital Status\nSpouse Legal Name\nSpouse Birthdate\nDependent Children\nEDUCATION\nCertificate Level\nField of Study\nDOCUMENTS\nID Card Copy\nUpload your file\nDriving License\nUpload your file\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "request_failures": [
+        {
+          "url": "http://127.0.0.1:8069/web/image/discuss.channel/1/avatar_128?unique=6bcdb6979fa99411571c869762afb447623e48bab8d9cf58d1643b63e91a137684f19bcaa4df674f4dfbc8748ad542314fa16e6ed6751195c0568137fe3733bc",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:8069/web/image/discuss.channel/2/avatar_128?unique=5ac394b1d9571199c67715c92032deff1fde40077af0496f670cb39334e546294e594b54c9cc1dcc00233d05ec4a70fa3d533b41d8874e93749ad50cea91f67d",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:8069/web/image/discuss.channel/9/avatar_128?unique=efae9b203576aaa9cd104244f631d105926372e66d9824ebc158c1cb5949513b0a417a8af0b702f73270967819bc6c96e8f0e92095b34e54954bf9885f81e91a",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:8069/web/image/discuss.channel/7/avatar_128?unique=b9b7c4e9e170ed0d93385ec69405b90ab75552e274dc633e6662f64032099d84431ff46e4d44c711c5eb5edcca51b369773a8e371eaa5513014cd37949849dd3",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "page_errors": [],
+      "width": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  ],
+  "blockers": [
+    "Core3 deterministic employee fixtures are Core3 Vietnam while the authenticated Admin session is Core3 Demo Company, so populated legal-name values are correctly company-scoped out.",
+    "Odoo Abigail Peterson Personal is authenticated and renders Legal Name; shell/reference request aborts are recorded in browser.json and are unrelated to the feature."
+  ]
+}
