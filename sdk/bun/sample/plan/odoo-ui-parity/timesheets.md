@@ -698,3 +698,33 @@ source report binding. This is recorded as an exact paired-reference blocker,
 not as a parity claim. Core3's browser print surface is not claimed to be an
 Odoo QWeb/PDF renderer. Project report binding and the full authenticated
 route/action comparison remain open.
+
+## Project report binding slice — `TIMESHEET-PROJECT-REPORT-BINDING` (2026-09-20)
+
+The next smallest report/context gap is Odoo's `timesheet_report_project` from
+`addons/hr_timesheet/report/report_timesheet_templates.xml` lines 199-213.
+It binds the `hr_timesheet.report_timesheet_project` QWeb-PDF report to
+`project.project` for the Timesheets user group. The owning project form exposes
+the context action; it is not a global Timesheets menu entry.
+
+Core3 extends the existing project-context `/timesheets/project-timesheets`
+page/API pair without moving the action. The page adds a permissioned `Print`
+header action. The API derives the project name, scoped entry count, and total
+hours from the authenticated company, records deterministic report history in
+`timesheet_project_report_runs`, and exposes that history through a matching
+datasource. Migration `0.0.12` seeds eight entries and 33 hours for the fixed
+Core3 project report fixture and is replay-safe. Missing/empty project,
+stale-count, actor, company, and read-permission guards reject without a
+partial run; file-backed restart coverage proves history durability.
+
+Focused coverage is `test/timesheets_project_report.integration.test.ts` (4
+tests, 21 assertions). Authenticated Core3 desktop and mobile evidence opens
+the Project detail `Actions > Timesheets` path, loads eight project entries,
+and receives HTTP 200 from `timesheets.project_entries.print_report` after the
+project Print action, with zero page/request errors and no horizontal
+overflow. Authenticated Odoo reaches `/odoo/project/5` at both viewports and
+shows a project Actions menu containing `Timesheets`, `Duplicate`, `Archive`,
+`Delete`, and `Convert to Template`, but no `Print`; this exact reference UI
+blocker is recorded rather than claimed as report parity. Core3's browser print
+surface remains distinct from Odoo's QWeb/PDF renderer. Full route/action
+comparison and module sign-off remain open.

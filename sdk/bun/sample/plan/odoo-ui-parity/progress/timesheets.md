@@ -8,7 +8,7 @@ Candidate commit: current working tree
 
 ## Current state
 
-The focused Timesheets suite passes 45 tests across 13 files with 375
+The focused Timesheets suite passes 49 tests across 14 files with 396
 assertions. The initial authenticated matrix covered 13 routes at desktop and
 mobile; an isolated fresh-page rerun now passes 26/26 route checks with valid
 detail IDs and no page/request errors or horizontal overflow. Timesheet Analysis
@@ -46,8 +46,18 @@ its Actions menu has no Print item, so the paired report execution is recorded
 as an exact reference blocker rather than a parity pass. This does not change
 the module status to signed off.
 
+The current bounded feature `TIMESHEET-PROJECT-REPORT-BINDING` extends the
+existing project-context action from Project detail `Actions > Timesheets`.
+It adds durable project report history, deterministic migration data,
+read/company/actor/stale/empty guards, and authenticated Core3 desktop/mobile
+evidence with HTTP 200 report actions. Authenticated Odoo project evidence is
+paired at `/odoo/project/5`, where the project Actions menu has no Print item;
+the source report execution is therefore an exact reference blocker. This
+does not change the module status to signed off.
+
 ## Next bounded task
 
 Continue remaining report/context interaction and integration gates, including
-the project report binding and full authenticated route/action comparison.
+the full authenticated route/action comparison and any remaining report
+renderer/project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.

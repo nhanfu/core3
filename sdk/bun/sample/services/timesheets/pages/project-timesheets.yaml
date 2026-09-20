@@ -6,6 +6,8 @@ components:
     source: project_timesheet_entries
     create_action: create_project_timesheet_entry
     create_label: New
+    header_actions:
+      - { id: print_project_timesheets_report, label: Print, permission: timesheets.read, variant: secondary }
     search: { label: Search timesheets, placeholder: 'Search project timesheets...' }
     filters:
       - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }

@@ -90,6 +90,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-task-report/`](../evidence/timesheets/2026-09-20/timesheet-task-report/).
 - Disposition: **bounded Core3 slice verified; paired Odoo report binding and full module sign-off remain pending**.
 
+### 2026-09-20 `TIMESHEET-PROJECT-REPORT-BINDING`
+
+- Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml:199-213`, `timesheet_report_project`, binds `hr_timesheet.report_timesheet_project` as a project report for `project.project`.
+- Core3 contract: Project detail `Actions > Timesheets` reaches the existing `/timesheets/project-timesheets` page/API pair; the page owns `Print`, and the API owns project context, report history, and `timesheets.project_entries.print_report`.
+- Focused gate: `bun test test/timesheets_project_report.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 21 assertions. Full suite: `bun test test/timesheets*.integration.test.ts --timeout 20000` — 49 passed, 0 failed, 396 assertions.
+- Persistence/security gate: migration replay, file-backed restart, missing/empty/stale/actor/company guards, and no-partial-write behavior pass. Scoped ESLint and `git diff --check` pass; audit reports 670 pages, 679 routes, and 1210 datasources.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 captures open Project detail → Actions → Timesheets, load eight project entries, expose Print, and each emit one HTTP 200 POST to `/api/actions/timesheets.project_entries.print_report`; page/request errors are empty and scroll widths match the viewport.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/project/5` for `Home Construction` at desktop and mobile. The project Actions menu contains `Timesheets`, `Duplicate`, `Archive`, `Delete`, and `Convert to Template`, but no `Print`; the paired report execution is blocked by the current reference UI and is not claimed as parity.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-project-report/`](../evidence/timesheets/2026-09-20/timesheet-project-report/).
+- Disposition: **bounded Core3 slice verified; paired Odoo report binding, full route/action comparison, and module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,
