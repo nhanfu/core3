@@ -1,9 +1,48 @@
 # Appraisals parity source gate
 
-Status: blocked — the exact Odoo 19 `hr_appraisal` addon is unavailable; no UI
-implementation is authorized.
+Status: implementation in progress — the live Odoo reference is reachable, but
+`hr_appraisal` is installed as `uninstallable` and exposes no visible menu.
+The implementation below is a bounded Core3 appraisal workflow slice; no full
+Odoo visual-parity claim is made until an installable reference is available.
 
 Audit date: 2026-09-12
+
+## Current-wave live inventory (2026-09-20)
+
+The required live reference check used `http://localhost:8069`, database
+`core3_reference`, and the local QA account. Credentials are not recorded
+here. Authentication succeeded at `/odoo`.
+
+The authoritative model queries returned:
+
+| Inventory item | Result |
+| --- | --- |
+| `ir.module.module`, `name = hr_appraisal` | id `699`, `shortdesc = Appraisal`, `state = uninstallable`, no `latest_version` |
+| `ir.ui.menu`, name contains `Appraisal` | zero records |
+| Odoo Appraisal application/menu/action route | not reachable because the addon is not installable |
+| Odoo Appraisal views, demo records, and action contexts | not available from the running database |
+
+This is a stronger runtime gate than the previous source-only audit: the
+reference server is available, but it does not expose an Appraisals surface to
+inventory. The empty menu result is retained as evidence; it is not evidence
+that Odoo has no Appraisals feature in an installable Enterprise deployment.
+
+## Current-wave gap matrix
+
+| Stable ID | Odoo reference item | Current Core3 implementation | Gap / required change | QA evidence |
+| --- | --- | --- | --- | --- |
+| APP-MENU-001 | Appraisal application/menu/action | `manifest.yaml` exposes Appraisals, Appraisal Cycles, and Analysis | Live reference has no visible menu; preserve Core3 route aliases and mark exact menu parity open | authenticated menu inventory plus Core3 menu capture |
+| APP-LIST-001 | Appraisal list action and records | `pages/reviews.yaml` has a real `appraisals` SQL datasource and Odoo-style ListView | Add detail navigation and complete CRUD contract; validate against any installable reference later | list query, create, edit, archive/delete, reload |
+| APP-FORM-001 | Appraisal form/detail | `pages/review-detail.yaml` reads a persisted record and declares statusbar | Add permissioned edit mutation and visible action bindings for form state | detail render, edit persistence, stale write |
+| APP-WORK-001 | Appraisal state changes | `pages/appraisal-workflow.yaml` declares Draft → In Progress → Manager Review → Completed/Cancelled | Exercise guards and actor boundaries through real mutation requests | transition matrix and negative guards |
+| APP-CYCLE-001 | Appraisal cycle administration | `pages/cycles.yaml` reads and creates persisted cycles | Add update/delete lifecycle and deterministic validation | cycle CRUD and restart persistence |
+| APP-REPORT-001 | Appraisal analysis/reporting | `pages/analysis.yaml` reads persisted totals and state counts | Add explicit report datasource metadata and verify empty/data states | analysis counts before/after mutation |
+| APP-PERM-001 | Odoo visibility groups | `permissions.yaml` declares read/write/manage capabilities | Live groups cannot be observed while addon is uninstallable; prove Core3 read/write/manage boundaries | authenticated admin/ordinary/anonymous checks |
+| APP-DATA-001 | Odoo demo data | migration seeds one cycle and appraisal | Expand deterministic data to cover each workflow state and analysis | clean migration, rerun, restart, state counts |
+
+The bounded implementation target for this wave is APP-LIST-001 through
+APP-DATA-001. APP-MENU-001 remains explicitly reference-blocked, and no
+Odoo-specific labels, action ids, or screenshots are invented for it.
 
 ## Wave 2 verification evidence
 
