@@ -89,3 +89,24 @@ components:
         width: 120
         actions:
           - { id: remove_ecommerce_product_accessory, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_optionals
+    create_action: create_ecommerce_product_optional
+    create_label: Add Optional
+    page_size: 16
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No optional products, description: Recommend products when this product is added to the cart. }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: sequence, label: Sequence }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 150
+        actions:
+          - { id: add_ecommerce_product_optional_to_cart, label: Add to Cart, icon: cart, variant: primary, permission: ecommerce.write }
+          - { id: remove_ecommerce_product_optional, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }

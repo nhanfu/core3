@@ -39,6 +39,16 @@ datasources:
   - id: ecommerce_product_accessory_options
     permission: ecommerce.read
     query: "SELECT p.id AS value, p.name AS label FROM ecommerce_products p JOIN ecommerce_products source ON source.id = :source_product_id WHERE p.id <> :source_product_id AND p.active = TRUE AND p.is_published = TRUE AND p.company_name = source.company_name AND (:company_name IS NULL OR p.company_name = :company_name) ORDER BY p.website_sequence, p.name, p.id"
+  - id: ecommerce_product_optionals
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_OPTIONALS_UNAUTHENTICATED, message: Sign in to view optional products. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_OPTIONALS_FORBIDDEN, message: You do not have permission to view optional products. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_OPTIONALS_UNAVAILABLE, message: Optional products are temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.source_product_id, o.optional_product_id, p.name, p.internal_reference, p.product_type, p.category, p.sales_price, p.website_sequence, p.company_name, o.sequence FROM ecommerce_product_optionals o JOIN ecommerce_products source ON source.id = o.source_product_id JOIN ecommerce_products p ON p.id = o.optional_product_id WHERE o.source_product_id = :id AND o.active = TRUE AND source.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND source.company_name = p.company_name AND (:company_name IS NULL OR source.company_name = :company_name) ORDER BY o.sequence, p.website_sequence, p.name, o.id"
+  - id: ecommerce_product_optional_options
+    permission: ecommerce.read
+    query: "SELECT p.id AS value, p.name AS label FROM ecommerce_products p JOIN ecommerce_products source ON source.id = :source_product_id WHERE p.id <> :source_product_id AND p.active = TRUE AND p.is_published = TRUE AND p.company_name = source.company_name AND (:company_name IS NULL OR p.company_name = :company_name) ORDER BY p.website_sequence, p.name, p.id"
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
@@ -86,6 +96,28 @@ actions:
     fields:
       - { field: accessory_product_id, label: Accessory Product, type: select, options_source: ecommerce_product_accessory_options, required: true }
       - { field: sequence, label: Sequence, type: number, default: 10, min: 0 }
+  - id: create_ecommerce_product_optional
+    type: server_form
+    permission: ecommerce.write
+    title: Add Optional Product
+    action: ecommerce.products.optionals.add
+    handler: yaml_mutation
+    operation: create
+    params: { source_product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_optionals, ecommerce_product_detail]
+    mutation:
+      generated: [id]
+      required: [optional_product_id]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :source_product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_OPTIONAL_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_products source JOIN ecommerce_products optional_product ON optional_product.id = :optional_product_id WHERE source.id = :source_product_id AND optional_product.id <> source.id AND optional_product.active = TRUE AND optional_product.is_published = TRUE AND optional_product.company_name = source.company_name AND (COALESCE(:current_company_name, '') = '' OR optional_product.company_name = :current_company_name)", status: 422, code: ECOMMERCE_PRODUCT_OPTIONAL_TARGET_INVALID, message: Choose another active published product from the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_optionals WHERE source_product_id = :source_product_id AND optional_product_id = :optional_product_id)", status: 409, code: ECOMMERCE_PRODUCT_OPTIONAL_EXISTS, message: This optional product is already assigned. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_optionals(id, source_product_id, optional_product_id, sequence, company_name, active) SELECT :id, :source_product_id, :optional_product_id, COALESCE(:sequence, 10), source.company_name, TRUE FROM ecommerce_products source WHERE source.id = :source_product_id" }
+      result: { query: "SELECT o.*, p.name AS optional_name, p.sales_price AS optional_price FROM ecommerce_product_optionals o JOIN ecommerce_products p ON p.id = o.optional_product_id WHERE o.id = :id" }
+    fields:
+      - { field: optional_product_id, label: Optional Product, type: select, options_source: ecommerce_product_optional_options, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 0 }
   - id: remove_ecommerce_product_alternative
     type: server
     permission: ecommerce.write
@@ -116,6 +148,38 @@ actions:
       steps:
         - { query: "DELETE FROM ecommerce_product_accessories WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_ACCESSORY_STALE, message: This accessory assignment changed before removal. }
       result: { query: "SELECT TRUE AS deleted, :id AS id" }
+  - id: remove_ecommerce_product_optional
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.optionals.remove
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_optionals, ecommerce_product_detail]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT o.id FROM ecommerce_product_optionals o JOIN ecommerce_products source ON source.id = o.source_product_id WHERE o.id = :id AND o.row_version = :expected_row_version AND o.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR source.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_OPTIONAL_STALE, message: This optional assignment changed or was removed. Reload before removing. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_optionals WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_OPTIONAL_STALE, message: This optional assignment changed before removal. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }
+  - id: add_ecommerce_product_optional_to_cart
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.cart.add_optional
+    handler: yaml_mutation
+    operation: create
+    params: { source_product_id: '{state.ecommerce_product_detail.id}', product_id: '{row.optional_product_id}' }
+    refresh: [ecommerce_product_optionals, ecommerce_cart, ecommerce_cart_lines]
+    mutation:
+      guards:
+        - { query: "SELECT COALESCE((SELECT 'ecommerce-cart-' || id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'ecommerce-cart-open-001') AS cart_id, 'ecommerce-cart-line-' || COALESCE((SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'admin') || '-' || :product_id AS line_id", assign: true }
+        - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open' AND (COALESCE(:customer_scope, 'all') = 'all' OR customer_id = (SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart belongs to another customer or is no longer open. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_product_optionals o JOIN ecommerce_products source ON source.id = o.source_product_id JOIN ecommerce_products p ON p.id = o.optional_product_id WHERE o.source_product_id = :source_product_id AND o.optional_product_id = :product_id AND o.active = TRUE AND source.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND source.company_name = p.company_name AND (COALESCE(:current_company_name, '') = '' OR source.company_name = :current_company_name)", status: 422, code: ECOMMERCE_PRODUCT_OPTIONAL_UNAVAILABLE, message: This optional product is no longer available for the current product. }
+      steps:
+        - { query: "INSERT INTO ecommerce_cart_lines(id, cart_id, product_id, variant_id, variant_name, product_name, unit_price, quantity) SELECT :line_id, :cart_id, p.id, NULL, NULL, p.name, p.sales_price, 1 FROM ecommerce_products p WHERE p.id = :product_id ON CONFLICT (id) DO UPDATE SET quantity = ecommerce_cart_lines.quantity + 1, row_version = ecommerce_cart_lines.row_version + 1" }
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-21 10:00:00' WHERE id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_cart_lines WHERE cart_id = :cart_id AND product_id = :product_id" }
   - id: add_ecommerce_product_variant_to_cart
     type: server
     permission: ecommerce.write

@@ -4,9 +4,34 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `a84ab3862f080dfaf43cb30b47928c1150eb82ea` (Product Accessories).
+Latest committed bounded slice before this wave: `c7aef9bba489d9e1482490d6f71d9bc0da88db69` (Checkout Customer Addresses).
 
-## Current bounded task — `ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`
+## Current bounded task — `ECOM-CATALOG-PRODUCT-OPTIONALS-001`
+
+The next uncovered source-backed catalog behavior is Odoo's optional-product
+recommendation/configurator relation. `sale` defines `optional_product_ids`,
+the Sale and Website Sale configurator controllers return optional products,
+and the product template view recommends them when adding to cart or quotation.
+
+Core3 migrations 072/073 add durable ordered company-scoped assignments with
+deterministic Mug → Lamp and Chair → Mug fixtures. Product Detail page/API YAML
+remains separated by `page.id`; the API lists only active published
+same-company targets, exposes guarded assignment/removal mutations, and lets a
+customer add an assigned optional to the owned open cart with repeat-safe
+quantity increments. Company, publication, self-target, duplicate, stale, and
+cart ownership boundaries are explicit.
+
+Focused verification: the optional-products test passed **3 tests, 25
+assertions, 0 failures**; adjacent Product Detail, Variant, Cart, Alternatives,
+and Accessories tests passed **17 tests, 120 assertions, 0 failures**. The
+bounded set therefore passed **20 tests, 145 assertions, 0 failures**. The UI
+audit passed at 695 pages, 704 routes, and 1310 datasources; scoped ESLint and
+`git diff --check` passed. Authenticated Core3 desktop/mobile capture is
+blocked by unavailable ports 3000/4312/4313; Odoo `/shop` returns exact HTTP
+404 on ports 8069/8073. Browser actor coverage, paired Odoo rendering, and
+module sign-off remain open.
+
+## Completed bounded task — `ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`
 
 The next uncovered Website Sale checkout behavior is authenticated customer
 address management. Odoo's `/shop/address` flow creates and updates billing or

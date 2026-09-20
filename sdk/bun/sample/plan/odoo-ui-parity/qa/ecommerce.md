@@ -1,5 +1,29 @@
 # ecommerce QA ledger
 
+## Product Optional Recommendations (`ECOM-CATALOG-PRODUCT-OPTIONALS-001`, 2026-09-21)
+
+- Odoo source/page: pass. `sale/models/product_template.py` defines
+  `optional_product_ids`; Sale and Website Sale product configurator routes
+  return `optional_products`; and the product template view describes these as
+  recommendations when adding to cart or quotation.
+- Core3 lifecycle: pass for this bounded contract. Migrations 072/073 add
+  durable ordered company-scoped assignments and deterministic Mug → Lamp /
+  Chair → Mug fixtures. Separate Product Detail API/page YAML exposes
+  published same-company optionals, permissioned assignment/removal, and an
+  optional-to-cart mutation with self-target, publication, company, duplicate,
+  cart ownership, idempotency, and optimistic stale guards.
+- Focused verification: `bun test
+  ./test/ecommerce_product_optionals.integration.test.ts --timeout 20000` —
+  **3 passed, 25 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Browser actor coverage, paired Odoo rendering, and external checkout gates
+  remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-optionals-001/`.
+
 ## Checkout Customer Addresses (`ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`, 2026-09-21)
 
 - Odoo source/page: pass. `controllers/main.py` supplies `/shop/address`,

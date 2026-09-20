@@ -1,6 +1,31 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded customer checkout address slice; module sign-off remains open)
+Status: qa-in-progress (bounded optional-product configurator slice; module sign-off remains open)
+
+## Bounded feature — Product Optional Recommendations (`ECOM-CATALOG-PRODUCT-OPTIONALS-001`)
+
+Odoo source comparison: `sale/models/product_template.py` defines the
+`optional_product_ids` relation; the Sale and Website Sale product configurator
+controllers expose optional products when a product is added to the cart; and
+the product template view labels the field as a recommendation for adding to
+cart or quotation.
+
+Core3 comparison: Product Detail already had variants, alternatives, and
+accessories, but no durable optional-product relation or add-to-cart workflow.
+Migrations 072/073 add ordered company-scoped assignments and deterministic
+Mug → Lamp / Chair → Mug fixtures. The separate Product Detail page/API
+contracts expose published same-company optionals, permissioned assignment and
+stale removal, and an idempotent optional-to-cart action. The page/API join is
+`page.id: ecommerce-product-detail`.
+
+Focused tests cover source tracing, page/API separation, deterministic fixture
+replay, company/publication/self/duplicate guards, idempotent cart addition,
+stale removal, and DuckDB restart persistence in
+`test/ecommerce_product_optionals.integration.test.ts`. Authenticated Core3
+desktop/mobile capture is blocked by unavailable runtime ports; supplied Odoo
+references return exact HTTP 404 for `/shop`. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-optionals-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Checkout Customer Addresses (`ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`)
 
