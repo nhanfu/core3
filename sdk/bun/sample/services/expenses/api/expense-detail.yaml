@@ -426,6 +426,7 @@ actions:
       guards:
         - { query: "SELECT id FROM expenses WHERE id = :id", status: 404, code: EXPENSE_RECEIPT_EXPENSE_NOT_FOUND, message: This expense no longer exists. }
         - { query: "SELECT id FROM expenses WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: EXPENSE_RECEIPT_COMPANY_FORBIDDEN, message: This receipt belongs to another company. }
+        - { query: "SELECT id FROM expense_receipt_processing WHERE expense_id = :id AND (:expected_row_version IS NULL OR row_version = :expected_row_version)", status: 409, code: EXPENSE_RECEIPT_STALE, message: Receipt processing changed. Reload the expense before retrying. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:request_key AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:receipt_reference AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: EXPENSE_RECEIPT_INPUT_INVALID, message: A request key and receipt reference are required. }
         - { query: "SELECT 1 AS ok WHERE :provider_result IN ('success', 'failure')", status: 422, code: EXPENSE_RECEIPT_RESULT_INVALID, message: Receipt processing result must be success or failure. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM expense_receipt_processing WHERE expense_id = :id AND state = 'Succeeded' AND COALESCE(request_key, '') <> :request_key)", status: 409, code: EXPENSE_RECEIPT_IDEMPOTENCY_CONFLICT, message: This expense already has a successful receipt with another request key. }

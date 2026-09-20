@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const serviceRoot = join(import.meta.dir, '../services/expenses');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -72,6 +73,64 @@ describe('Expenses receipt processing contract', () => {
         { action: 'expenses.receipt.processed', detail: 'Receipt processed by expense_ocr' },
       ]);
     database.close();
+  });
+
+  test('preserves attempts and retry idempotency across a file-backed restart', async () => {
+    const databasePath = `/tmp/core3-expenses-receipt-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `expenses_receipt_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const action = processAction();
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const before = await firstRepository.query("SELECT receipt_reference, receipt_checksum FROM expenses WHERE id = 'expense-demo-draft'");
+    const failed = await firstRepository.executeMutation(action.mutation, input({ provider_result: 'failure', failure_reason: 'OCR timeout' }));
+    expect(failed).toMatchObject({ state: 'Failed', attempt_count: 1, provider_code: 'expense_ocr', attachment_id: null, failure_reason: 'OCR timeout', row_version: 2 });
+    expect(await firstRepository.query("SELECT receipt_reference, receipt_checksum FROM expenses WHERE id = 'expense-demo-draft'")).toEqual(before);
+    expect(await firstRepository.query("SELECT attachment_id FROM expense_receipt_processing WHERE expense_id = 'expense-demo-draft'")).toEqual([{ attachment_id: null }]);
+    expect(await firstRepository.query("SELECT COUNT(*) AS count FROM expense_attachments WHERE expense_id = 'expense-demo-draft'")).toEqual([{ count: 0 }]);
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect(await secondRepository.query("SELECT state, attempt_count, failure_reason, attachment_id, row_version FROM expense_receipt_processing WHERE expense_id = 'expense-demo-draft'"))
+      .toEqual([{ state: 'Failed', attempt_count: 1, failure_reason: 'OCR timeout', attachment_id: null, row_version: 2 }]);
+    const retried = await secondRepository.executeMutation(action.mutation, input({ request_key: 'receipt-request-002', expected_row_version: 2 }));
+    expect(retried).toMatchObject({ state: 'Succeeded', attempt_count: 2, failure_reason: null, attachment_id: 'receipt-processed-expense-demo-draft', row_version: 3 });
+    await expect(secondRepository.executeMutation(action.mutation, input({ request_key: 'receipt-request-003', expected_row_version: 2 })))
+      .rejects.toMatchObject({ status: 409, code: 'EXPENSE_RECEIPT_STALE' });
+    second.close();
+
+    const third = await DuckDbDatabase.open(databasePath);
+    const thirdRepository = new YamlRepository(third);
+    await migrateDatabase(thirdRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const replay = await thirdRepository.executeMutation(action.mutation, input({ request_key: 'receipt-request-002', expected_row_version: 3 }));
+    expect(replay).toMatchObject({ state: 'Succeeded', attempt_count: 2, attachment_id: 'receipt-processed-expense-demo-draft', row_version: 4 });
+    expect(await thirdRepository.query("SELECT COUNT(*) AS count FROM expense_attachments WHERE expense_id = 'expense-demo-draft'")).toEqual([{ count: 1 }]);
+    expect(await thirdRepository.query("SELECT action, COUNT(*) AS count FROM expense_activity WHERE expense_id = 'expense-demo-draft' AND action LIKE 'expenses.receipt.%' GROUP BY action ORDER BY action")).toEqual([
+      { action: 'expenses.receipt.failed', count: 1 },
+      { action: 'expenses.receipt.processed', count: 1 },
+    ]);
+
+    let actor: any = { sub: 'dispatcher', name: 'Dispatcher User', email: 'dispatcher@example.com', company: { name: 'Core3 Demo Company' }, permissions: ['expenses.read'] };
+    const api = createYamlApi({
+      repository: thirdRepository,
+      authProvider: { async getCurrentUser() { return actor; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map(), pageSources: new Map(), pages: new Map([['expense-detail', { actions: [action] }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['expenses.read', 'expenses.write'], tables: {}, endpoints: {} },
+      uploadRoot: '/tmp/core3-expenses-receipt-test-uploads', eventStore: {}, topics: {},
+    });
+    const request = (values: Record<string, unknown>) => api(new Request('http://expenses.test/api/actions/expenses.detail.receipt.process', {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'expense-demo-draft', values }),
+    }), new URL('http://expenses.test/api/actions/expenses.detail.receipt.process'));
+    await expect(request(input({ request_key: 'receipt-request-002', expected_row_version: 4 }))).rejects.toMatchObject({ status: 403 });
+    actor = { ...actor, permissions: ['expenses.read', 'expenses.write'], company: { name: 'Core3 Vietnam' } };
+    await expect(request(input({ request_key: 'receipt-request-002', expected_row_version: 4 }))).rejects.toMatchObject({ status: 403, code: 'EXPENSE_RECEIPT_COMPANY_FORBIDDEN' });
+    third.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('rejects wrong-company, invalid, and conflicting replay requests', async () => {
