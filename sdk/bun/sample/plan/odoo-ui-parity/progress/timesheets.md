@@ -699,3 +699,12 @@ the responsive Kanban state. Mobile inline editing is not claimed because
 neither source nor Core3 exposes the editable list at that viewport.
 Odoo Print/PDF/report-action gaps remain exact broader blockers; no module
 sign-off is claimed.
+
+## 2026-09-21 — `TIMESHEET-MY-DEPARTMENT-GROUP-001`
+
+- Selected the next source-backed gap after total footer: authenticated My Timesheets Department group-by from Odoo's stored `department_id` and `groupby_department` search filter.
+- Added migration `20260921130000-018-timesheets-department-group.yaml` with deterministic Engineering/Delivery employee relation metadata and an index.
+- Added `department_id`/`department_name` to the API list/pivot projection and `Department` to the page ListView group-by. Page/API separation remains joined by `page.id: timesheets`.
+- Focused verification: `test/timesheets_my_department_group.integration.test.ts` passed 4/4 with 28 expectations, including durable reads, actor/company/empty guards, stale concurrency, migration replay, and file-backed restart.
+- Odoo authenticated desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-my-department-group/`. Desktop selects Department and renders the grouped result; mobile is responsive Kanban without the desktop search control.
+- Core3 browser evidence is blocked by backend `127.0.0.1:3001` readiness during the bounded startup probe; see `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.

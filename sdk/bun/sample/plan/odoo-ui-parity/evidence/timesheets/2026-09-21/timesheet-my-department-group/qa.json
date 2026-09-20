@@ -1,0 +1,14 @@
+{
+  "feature_id": "TIMESHEET-MY-DEPARTMENT-GROUP-001",
+  "source": "hr_timesheet department_id stored relation and groupby_department search filter",
+  "odoo": {
+    "desktop": "authenticated Department group-by menu and selected grouped result captured",
+    "mobile": "authenticated responsive Kanban captured; desktop group-by is not exposed",
+    "errors": []
+  },
+  "core3": {
+    "desktop": "blocked before authentication: backend 127.0.0.1:3001 did not accept /api/modules during bounded startup",
+    "mobile": "blocked by same backend readiness condition"
+  },
+  "signoff": false
+}

@@ -732,3 +732,23 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
   exposed Vite on 3002 but did not expose backend 3001 before the process was
   stopped; no other module was repaired or staged. Existing Odoo Print/PDF/
   action blockers remain open and this slice is not sign-off.
+
+## `TIMESHEET-MY-DEPARTMENT-GROUP-001` — My Timesheets Department grouping (2026-09-21)
+
+- Source gate: Odoo stores analytic-line `department_id` from the employee
+  relation and exposes `groupby_department` in the authenticated Timesheets
+  search view.
+- Core3 gate: the layout-only page adds `Department` to the ListView group-by;
+  the API adds durable employee department identity/name to the list/pivot
+  projection through `page.id: timesheets`.
+- Focused gate: `test/timesheets_my_department_group.integration.test.ts`
+  passes 4/4 tests / 28 expectations, including relation reads,
+  actor/company/empty guards, stale concurrency, replay, and file restart.
+- Odoo browser gate: authenticated desktop opens and applies Department
+  grouping; authenticated mobile captures the responsive Kanban without the
+  desktop search control. Captures and results are under
+  `evidence/timesheets/2026-09-21/timesheet-my-department-group/`.
+- Core3 browser blocker: backend `127.0.0.1:3001` did not accept
+  `/api/modules` during the bounded startup probe; exact output is in
+  `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this
+  slice is not sign-off.

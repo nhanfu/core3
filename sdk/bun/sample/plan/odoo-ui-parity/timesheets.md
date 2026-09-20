@@ -1521,3 +1521,13 @@ on 3002 but did not expose backend 3001 during the bounded readiness check;
 the exact blocker is recorded in the evidence directory. Odoo Print/PDF/action
 surfaces and full route/action comparison remain open; no Timesheets sign-off
 is claimed.
+
+## Eleventh-wave My Timesheets Department grouping — `TIMESHEET-MY-DEPARTMENT-GROUP-001` (2026-09-21)
+
+The next uncovered source-backed search behavior is Odoo's authenticated Department group-by. `addons/hr_timesheet/models/hr_timesheet.py:74` stores `department_id` on analytic lines from the employee relation, and `addons/hr_timesheet/views/hr_timesheet_views.xml:226-240` exposes the Department field and `groupby_department` search filter.
+
+Core3 keeps `pages/entries.yaml` layout-only and joins it to the API contract through `page.id: timesheets`. A deterministic migration adds department identity/name metadata to durable `timesheet_employees`, and the personal `timesheet_entries` source projects it into the list/pivot data. The read source remains `timesheets.read` and retains actor/company/empty guards; detail writes retain the existing write permission and required optimistic row-version concurrency guard.
+
+Focused coverage is `test/timesheets_my_department_group.integration.test.ts`: 4 tests / 28 expectations. It covers Odoo source comparison, page/API separation, deterministic relation data, actor/company/empty guards, stale CRUD concurrency, migration replay, and file-backed restart persistence.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-my-department-group/`. Desktop opens the Group By menu, selects Department, and captures the grouped result; mobile captures the responsive Kanban where the desktop group-by control is unavailable. Core3 browser capture is blocked before authentication because the bounded startup never exposed backend `127.0.0.1:3001`; the exact readiness output is preserved in the evidence directory. Odoo Print/PDF/action surfaces remain open and this bounded slice is not module sign-off.

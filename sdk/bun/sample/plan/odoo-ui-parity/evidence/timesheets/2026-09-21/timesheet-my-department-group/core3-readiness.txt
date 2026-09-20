@@ -1,0 +1,6 @@
+Bounded command: timeout 18s bun dev --db=ddb --memory
+exit=124 (SIGTERM from bounded timeout)
+port=3001 api_modules=000 (connection refused)
+port=3002 api_modules=000 after process termination
+Startup reached the Core3 backend/frontend configuration log, Vite 3002 readiness, and event mediator ws://127.0.0.1:3010/events, but backend 3001 never accepted /api/modules before the bounded probe ended.
+No Core3 authenticated desktop/mobile capture was possible. This is a shared runtime/discovery blocker, not a Timesheets implementation failure.

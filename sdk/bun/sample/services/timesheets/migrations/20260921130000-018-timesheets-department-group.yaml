@@ -1,0 +1,29 @@
+version: 0.0.18
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_employees ADD COLUMN IF NOT EXISTS department_id VARCHAR;
+      ALTER TABLE timesheet_employees ADD COLUMN IF NOT EXISTS department_name VARCHAR;
+      UPDATE timesheet_employees
+      SET department_id = CASE id
+            WHEN 'employee-demo-001' THEN 'department-demo-engineering'
+            WHEN 'employee-demo-002' THEN 'department-demo-engineering'
+            WHEN 'employee-demo-003' THEN 'department-demo-delivery'
+            ELSE department_id
+          END,
+          department_name = CASE id
+            WHEN 'employee-demo-001' THEN 'Engineering'
+            WHEN 'employee-demo-002' THEN 'Engineering'
+            WHEN 'employee-demo-003' THEN 'Delivery'
+            ELSE department_name
+          END;
+      CREATE INDEX IF NOT EXISTS timesheet_employees_department_idx ON timesheet_employees(department_id, company_name, active);
+    down: |
+      DROP INDEX IF EXISTS timesheet_employees_department_idx;
+      ALTER TABLE timesheet_employees DROP COLUMN IF EXISTS department_name;
+      ALTER TABLE timesheet_employees DROP COLUMN IF EXISTS department_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
