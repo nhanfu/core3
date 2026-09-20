@@ -157,10 +157,31 @@ be presented as copied Odoo behavior.
 - `git diff --check` — passed.
 - `cd sdk/bun && bun run lint` — blocked before linting because `eslint` is not
   installed in this fresh worktree (`eslint: command not found`).
-- `cd sdk/bun/sample && bun run audit` — blocked before discovery because the
-  workspace dependency `@core3/server/discovery` is unavailable.
-- Focused Marketing Automation implementation test — pending the current-wave
-  API/page split and CRUD/enrollment slice.
+- `cd sdk/bun/sample && bun run audit` — passed (661 pages, 670 routes, 1162
+  datasources; all discovered pages use supported shared components and have a
+  route).
+- `cd sdk/bun/sample && bun test services/marketing-automation/tests/marketing-automation.increment.test.ts`
+  — passed (2 tests, 25 assertions) for the current API/page split and bounded
+  CRUD/enrollment/workflow slice.
+
+## Checkpoint evidence — 2026-09-20
+
+The implementation commit `edb34a2b262a5fb46677c5f2a54fbce6434075f1` remains
+the validated code baseline. A fresh Core3 runtime preflight was attempted with
+isolated QA database paths. The first attempt hit a DuckDB WAL replay assertion
+from the runtime-only `sample/coredb/accounting.duckdb.wal`; that explicitly
+created directory was moved to the desktop trash and recreated. A subsequent
+launch eventually reached gateway `:4311`, service host `:4312`, and frontend
+`:4313`.
+
+Direct probes then returned `/api/modules` HTTP 200 and unauthenticated
+`/api/pages/automations` HTTP 401. The authenticated browser matrix was not
+completed before this checkpoint, so no screenshots or authenticated
+list/detail/form/permission/persistence claims are made. The Odoo
+`marketing_automation` source gate remains explicit: the live registry marks it
+uninstallable and no paired Odoo parity claim is made. The next safe action is
+to use the healthy runtime for authenticated desktop/mobile captures and then
+restart without `--demo-data` for persistence verification.
 
 ## Revalidation — wave 2 (2026-09-12)
 
