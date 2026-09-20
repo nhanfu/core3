@@ -57,12 +57,31 @@ describe('Sale Subscription authenticated actor boundaries', () => {
     const writer = { sub: 'subscription-writer', permissions: ['subscriptions.read', 'subscriptions.write'] };
     const manager = { sub: 'subscription-manager', permissions: ['subscriptions.read', 'subscriptions.write', 'subscriptions.manage'] };
 
+    const moduleActions = [...modulePages.values()]
+      .flatMap((page: any) => page.actions || [])
+      .filter((action: any) => action.type === 'server' || action.type === 'server_form');
+    const actionNames = [...new Set(moduleActions.map((action: any) => action.action).filter(Boolean))].sort();
+    expect(actionNames).toEqual([
+      'subscriptions.activate',
+      'subscriptions.churn',
+      'subscriptions.close',
+      'subscriptions.create',
+      'subscriptions.invoices.generate',
+      'subscriptions.invoices.post',
+      'subscriptions.pause',
+      'subscriptions.plans.archive',
+      'subscriptions.plans.create',
+      'subscriptions.update',
+    ]);
+    for (const action of moduleActions) {
+      expect(['subscriptions.read', 'subscriptions.write', 'subscriptions.manage']).toContain(action.permission);
+    }
+
     expect((await request(reader, '/api/pages/subscriptions')).status).toBe(200);
 
-    const readerLifecycle = await request(reader, '/api/actions/subscriptions.activate', 'POST', {
-      id: 'subscription-demo-002', expected_row_version: 1,
-    });
-    expect(readerLifecycle.status).toBe(403);
+    for (const actionName of actionNames) {
+      expect((await request(reader, `/api/actions/${actionName}`, 'POST', {})).status).toBe(403);
+    }
     expect((await repository.query('SELECT state, row_version FROM sale_subscriptions WHERE id = ?', ['subscription-demo-002']))[0])
       .toEqual({ state: 'Quotation', row_version: 1 });
 
