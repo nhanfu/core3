@@ -697,3 +697,24 @@ matching viewport widths. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-TEST-ENTRY-001/`.
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-NUMERICAL-QUESTION-001`
+
+Selected the next uncovered source-backed question behavior after the completed
+image, background, identity/comment, conditional, navigation, and excluded
+question-type slices: Odoo numerical-box range validation. Migration `0.0.36`
+adds durable validation-required/min/max/message fields and a separate
+published numerical fixture. The existing paired `page.id: surveys` contract
+projects the fields, and public progress/submit reject malformed or out-of-range
+values before mutation. The renderer presents the inclusive range as a number
+input and preserves the source validation message.
+
+Focused coverage passes 2/2 with 26 assertions and the public/core Surveys
+regression passes 77/77 with 708 assertions, including invalid no-mutation,
+valid decimal persistence, file-backed restart, concurrent idempotent submit,
+response count, and wrong-token denial. Core3 authenticated admin/public
+desktop/mobile evidence passes at 1440x900 and 390x844 with no browser errors or
+overflow. Audit passes with 718 pages, 727 routes, and 1375 datasources. Odoo
+redirects both viewports to login and proxy 8072 is unavailable; no paired Odoo
+fixture or module sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.

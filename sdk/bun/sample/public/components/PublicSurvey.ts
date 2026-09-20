@@ -5,6 +5,10 @@ type SurveyQuestion = {
   sequence: number;
   required: boolean;
   answer_options?: string;
+  validation_required?: boolean;
+  validation_min_float_value?: number;
+  validation_max_float_value?: number;
+  validation_error_msg?: string | null;
   image_answers?: string | null;
   matrix_rows?: string;
   matrix_columns?: string;
@@ -143,6 +147,12 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
     ? `<div class="core3-public-survey__matrix-wrap"><table class="core3-public-survey__matrix"><thead><tr><th></th>${matrixColumns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr></thead><tbody>${matrixRows.map((row) => `<tr data-matrix-row="${escapeHtml(row)}"><th>${escapeHtml(row)}</th>${matrixColumns.map((column) => { const checked = Array.isArray(matrixAnswer[row]) && matrixAnswer[row].includes(column) ? ' checked' : ''; return `<td><input type="${question.matrix_subtype === 'multiple' ? 'checkbox' : 'radio'}" name="matrix-${escapeHtml(question.id)}-${escapeHtml(row)}" value="${escapeHtml(column)}"${checked}></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`
     : '';
   const identityInput = question.save_as_email || question.save_as_nickname;
+  const numericalInput = question.question_type === 'Numerical';
+  const numericalRange = numericalInput && question.validation_required
+    && Number.isFinite(Number(question.validation_min_float_value))
+    && Number.isFinite(Number(question.validation_max_float_value))
+    ? ` min="${escapeHtml(question.validation_min_float_value)}" max="${escapeHtml(question.validation_max_float_value)}" step="any"`
+    : '';
   const input = identityInput
     ? `<input class="core3-public-survey__input" data-answer type="${question.save_as_email ? 'email' : 'text'}" autocomplete="${question.save_as_email ? 'email' : 'nickname'}" value="${escapeHtml(currentValues[0])}" placeholder="${question.save_as_email ? 'you@example.com' : 'Your name'}">`
     : question.question_type === 'Text'
@@ -157,7 +167,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         const image = imageId && answerToken ? `<img class="core3-public-survey__option-image" src="${escapeHtml(questionImageUrl(surveyToken, answerToken, question.id, imageId))}" alt="">` : '';
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}>${image}<span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
-      : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : 'Your answer'}">`;
+      : `<input class="core3-public-survey__input" data-answer type="${numericalInput ? 'number' : 'text'}" inputmode="${numericalInput ? 'decimal' : 'numeric'}"${numericalRange}${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : numericalInput && question.validation_required ? `${escapeHtml(question.validation_min_float_value)}–${escapeHtml(question.validation_max_float_value)}` : 'Your answer'}">`;
   const commentInput = question.comments_allowed
     ? `<label class="core3-public-survey__comment"><span>${escapeHtml(question.comments_message || 'Comment')}</span><textarea class="core3-public-survey__input" rows="2" data-comment>${escapeHtml(comment)}</textarea></label>`
     : '';
@@ -335,6 +345,19 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         error.textContent = 'Enter a valid datetime in YYYY-MM-DD HH:MM:SS format.';
         body.prepend(error);
         return;
+      }
+      if (!empty && question.question_type === 'Numerical' && question.validation_required) {
+        const numericValue = Number(value);
+        const minimum = Number(question.validation_min_float_value);
+        const maximum = Number(question.validation_max_float_value);
+        if (!Number.isFinite(numericValue) || numericValue < minimum || numericValue > maximum) {
+          actionButton.disabled = false;
+          const error = document.createElement('div');
+          error.className = 'core3-public-survey__error';
+          error.textContent = question.validation_error_msg || 'Enter a valid number within the allowed range.';
+          body.prepend(error);
+          return;
+        }
       }
       answers[question.id] = value;
       const comment = body.querySelector<HTMLTextAreaElement>('[data-comment]')?.value.trim() || '';

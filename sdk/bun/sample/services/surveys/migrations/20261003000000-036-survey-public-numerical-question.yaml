@@ -1,0 +1,27 @@
+version: 0.0.36
+description: Odoo-compatible public numerical question validation fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_required BOOLEAN DEFAULT FALSE;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_min_float_value DOUBLE DEFAULT 0;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_max_float_value DOUBLE DEFAULT 0;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_error_msg VARCHAR;
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-numerical', 'SURVEY/NUMERICAL', 'Numerical Range Survey', 'Enter a measured value within the allowed range.', 'Mitchell Admin', 0, 'Published', 'numerical-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, validation_required, validation_min_float_value, validation_max_float_value, validation_error_msg)
+      VALUES ('question-numerical-range', 'survey-demo-numerical', 'What is the measured service time in minutes?', 'Numerical', 1, true, '', true, 1.5, 10.5, 'Enter a value from 1.5 to 10.5 minutes.')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options, validation_required = excluded.validation_required, validation_min_float_value = excluded.validation_min_float_value, validation_max_float_value = excluded.validation_max_float_value, validation_error_msg = excluded.validation_error_msg;
+    down: |
+      DELETE FROM survey_questions WHERE id = 'question-numerical-range';
+      DELETE FROM surveys WHERE id = 'survey-demo-numerical';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_error_msg;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_max_float_value;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_min_float_value;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_required;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

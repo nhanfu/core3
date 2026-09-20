@@ -1062,3 +1062,26 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGR
 - Odoo desktop/mobile redirect to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is connection-refused. No paired Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.
+
+## Bounded QA run: Public Numerical question — `SURVEYS-PUBLIC-NUMERICAL-QUESTION-001`
+
+- Source comparison: Odoo `survey_question._validate_numerical_box` defines
+  numeric parsing and inclusive configured range validation; Core3 persists the
+  corresponding validation fields in migration `0.0.36`.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate through `page.id: surveys`; public question metadata carries the
+  range and public mutations retain `surveys.public`.
+- Focused verification: **2 passed / 26 assertions**; public/core Surveys
+  regression: **77 passed / 708 assertions**; audit **718 pages, 727 routes,
+  1375 datasources**; scoped ESLint and diff-check pass.
+- Persistence/guards: malformed, below-range, and above-range values return
+  422 without mutation; a valid decimal survives file-backed reopen; concurrent
+  same-key submit produces one response/count; a wrong token returns 404.
+- Core3 authenticated admin/public desktop/mobile probes passed at 1440x900
+  and 390x844 with range attributes, client validation evidence, no request/page
+  failures, and no horizontal overflow.
+- Odoo desktop/mobile redirect to
+  `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable. No
+  authenticated Numerical fixture or paired Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.

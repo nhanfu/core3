@@ -1,0 +1,71 @@
+{
+  "feature": "SURVEYS-PUBLIC-NUMERICAL-QUESTION-001",
+  "base": "http://127.0.0.1:3391",
+  "viewports": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "adminText": "Surveys\nQuestions & Answers\nReporting\n⌘ K\nAU\nCards\nList\nNew survey\nMarketing / Surveys\n1-11 / 11\n‹\n›\nBurger Quiz\n\nMarc Demo\n\nCompleted\n0\nStatus\nDraft\nMyCompany Vendor Certification\n\nMitchell Admin\n\nCompleted\n4\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nConditional Questions\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nFeedback Form\n\nMitchell Admin\n\nCompleted\n6\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nDelete Candidate Survey\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nBrand Survey\n\nMit",
+      "adminWidth": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "overflow": false
+      },
+      "publicText": "Numerical Range Survey\nWhat is the measured service time in minutes?*\nQuestion 1 of 1\nSubmit",
+      "numeric": {
+        "type": "number",
+        "inputMode": "decimal",
+        "min": "1.5",
+        "max": "10.5",
+        "step": "any",
+        "placeholder": "1.5–10.5"
+      },
+      "publicWidth": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "overflow": false
+      },
+      "requestFailures": [],
+      "pageErrors": []
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "adminText": "AU\nNew survey\nSurveys\n1-11 / 11\n‹\n›\nBurger Quiz\n\nMarc Demo\n\nCompleted\n0\nStatus\nDraft\nMyCompany Vendor Certification\n\nMitchell Admin\n\nCompleted\n4\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nConditional Questions\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nFeedback Form\n\nMitchell Admin\n\nCompleted\n6\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nDelete Candidate Survey\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nBrand Survey\n\nMitchell Admin\n\nCompleted\n0\nPublished at\n2026-01-15 09:00:00\nStatus\n",
+      "adminWidth": {
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "overflow": false
+      },
+      "publicText": "Numerical Range Survey\nWhat is the measured service time in minutes?*\nQuestion 1 of 1\nSubmit",
+      "numeric": {
+        "type": "number",
+        "inputMode": "decimal",
+        "min": "1.5",
+        "max": "10.5",
+        "step": "any",
+        "placeholder": "1.5–10.5"
+      },
+      "publicWidth": {
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "overflow": false
+      },
+      "requestFailures": [],
+      "pageErrors": []
+    }
+  ],
+  "generatedAt": "2026-09-20T23:10:07.496Z",
+  "clientValidation": {
+    "message": "Enter a value from 1.5 to 10.5 minutes.",
+    "inputValue": "11.1",
+    "failures": [],
+    "errors": []
+  }
+}

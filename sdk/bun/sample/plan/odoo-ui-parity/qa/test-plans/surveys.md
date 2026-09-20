@@ -447,3 +447,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.
+
+## 2026-09-21 public Numerical question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-041 | public question | Numerical validation metadata | Return durable validation-required/min/max/message fields through the paired page/API contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-038 | restart/idempotency | Invalid → valid decimal → reopen → concurrent submit | Reject invalid values without mutation and converge on one durable submitted response after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-040 | token/input guard | Wrong token and invalid numeric input | Retain `surveys.public`, reject malformed/out-of-range values with no mutation, and return 404 for a wrong answer token | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-039 | responsive/reference | Numerical range desktop/mobile + Odoo comparison | Capture Core3 range controls and exact current Odoo login/proxy blockers; no sign-off until reference is available | `core3-{admin,public}-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.

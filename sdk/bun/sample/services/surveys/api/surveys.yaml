@@ -65,6 +65,8 @@ actions:
   # and submit while retaining the original answer_data.
   # Odoo survey background_image_url is exposed through the token-scoped public
   # asset handler below; the page renderer consumes the paired survey field.
+  # Odoo numerical_box validation metadata is projected by the public question
+  # operation and enforced before progress/submit mutates answer_data.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form

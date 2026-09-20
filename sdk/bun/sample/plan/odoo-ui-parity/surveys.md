@@ -1815,3 +1815,27 @@ Authenticated Core3 desktop/mobile probes render the image at 1440x900 and
 overflow. Odoo desktop and mobile redirect to login and port 8072 refuses; no
 paired Odoo fixture or parity sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.
+
+## Bounded slice: Public Numerical question validation (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-NUMERICAL-QUESTION-001`.
+
+Odoo's `survey.question._validate_numerical_box` rejects malformed values and,
+when validation is enabled, values outside the inclusive persisted minimum and
+maximum. Core3 migration `20261003000000-036-survey-public-numerical-question.yaml`
+adds those durable fields and seeds a separate published `Numerical Range
+Survey` with a 1.5–10.5 minute range and deterministic validation message.
+The paired `page.id: surveys` API/page contract projects the fields through
+`survey.public.questions`; token-scoped `surveys.public` progress and submit
+reject invalid values before mutating `answer_data`. The public renderer binds
+the same metadata to a numeric control and client-side guard.
+
+Focused verification is **2 passed / 26 assertions**; the public/core Surveys
+regression is **77 passed / 708 assertions**. The source-served Core3
+authenticated admin/public desktop and mobile probes passed with no page or
+request failures and no horizontal overflow; the desktop exploratory `11.1`
+submission displayed the durable validation message. Audit, scoped lint, and
+diff-check pass. Odoo desktop/mobile redirect to
+`/web/login?redirect=%2Fodoo%2Fsurveys%3F`, while port 8072 is unavailable, so
+no paired Odoo fixture or parity sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.

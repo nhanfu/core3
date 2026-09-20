@@ -627,8 +627,17 @@ export default class SurveysModule implements ModuleLifecycle {
         invalid.push(String(question.question_text || question.id));
         continue;
       }
-      if (['Numerical', 'Number'].includes(questionType) && (values.length !== 1 || !Number.isFinite(Number(values[0])))) {
-        invalid.push(String(question.question_text || question.id));
+      if (['Numerical', 'Number'].includes(questionType)) {
+        const numericValue = Number(values[0]);
+        const minimum = Number(question.validation_min_float_value);
+        const maximum = Number(question.validation_max_float_value);
+        const outOfRange = question.validation_required
+          && Number.isFinite(minimum)
+          && Number.isFinite(maximum)
+          && (numericValue < minimum || numericValue > maximum);
+        if (values.length !== 1 || !Number.isFinite(numericValue) || outOfRange) {
+          invalid.push(String(question.question_text || question.id));
+        }
       }
       if (['Date', 'date'].includes(questionType) && (values.length !== 1 || !this.isIsoDate(values[0]))) {
         invalid.push(String(question.question_text || question.id));

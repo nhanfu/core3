@@ -19,6 +19,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # The public survey frame also consumes the persisted background_image_url from
 # the paired API contract; its token-scoped asset route stays outside this
 # authenticated admin layout.
+# Numerical questions consume the paired API validation_required/min/max fields
+# in the same token-scoped renderer; the page remains layout-only.
 components:
   - type: ListView
     variant: odoo
