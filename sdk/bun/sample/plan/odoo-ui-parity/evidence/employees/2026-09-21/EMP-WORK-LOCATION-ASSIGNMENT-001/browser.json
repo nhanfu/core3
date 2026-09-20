@@ -1,0 +1,9 @@
+{
+  "surface": "Odoo",
+  "authenticated": true,
+  "route": "/odoo/employees/6",
+  "desktop": { "viewport": "1440x900", "state": "Work tab", "work_location_label": true, "page_errors": 0 },
+  "mobile": { "viewport": "390x844", "state": "Work tab", "work_location_label": true, "page_errors": 0 },
+  "captures": ["odoo-desktop.png", "odoo-mobile.png"],
+  "notes": ["The reference employee renders the Work Location control but has no populated value in the reference database."]
+}

@@ -1849,3 +1849,26 @@ file-backed restart. Authenticated Odoo desktop/mobile captures are under
 visible at both viewports. The bounded Core3 runtime printed its backend URL
 but never bound port 3001, so Core3 browser comparison remains a precise
 conditional blocker. No aggregate Employees sign-off is claimed.
+
+## EMP-WORK-LOCATION-ASSIGNMENT-001: Employee Work Location assignment (2026-09-21)
+
+Odoo's Work tab exposes the current Payroll version's
+`hr.version.work_location_id` as Work Location. The source relation is
+company/address constrained. Core3 already had the standalone Work Locations
+catalog, but the employee detail only projected a free-text work location.
+This slice adds the missing employee-to-location assignment lifecycle.
+
+Migration `20260922040000-058` adds durable `work_location_id` columns to
+employees and employee versions, backfills deterministic relations, and keeps
+the existing display names stable. The paired employee-detail page/API
+contracts add an employee Work Location options datasource and guarded Edit Work
+Location action. The action updates the employee and active Payroll record and
+requires actor identity, active/current-company scope, an active location
+matching the employee address, an active version, and optimistic row-version
+concurrency.
+
+Focused coverage is **4 tests / 20 assertions**. Authenticated Odoo
+desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-WORK-LOCATION-ASSIGNMENT-001/`; both show the
+control. The bounded Core3 runtime did not bind port 3001, so Core3 browser
+comparison remains conditional. No aggregate Employees sign-off is claimed.

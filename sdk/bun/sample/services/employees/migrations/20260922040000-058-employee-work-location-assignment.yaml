@@ -1,0 +1,34 @@
+version: 0.0.58
+kind: data
+description: Persist the Odoo employee-specific Work Location assignment
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_location_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS work_location_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS work_location_name VARCHAR;
+      UPDATE employees e
+      SET work_location_id = (
+        SELECT w.id FROM employee_work_locations w
+        WHERE w.name = e.work_location AND w.active = true
+        ORDER BY w.id LIMIT 1
+      )
+      WHERE e.work_location_id IS NULL AND NULLIF(TRIM(COALESCE(e.work_location, '')), '') IS NOT NULL;
+      UPDATE employees
+      SET work_location = 'Ho Chi Minh City'
+      WHERE id = 'employee-demo-001' AND NULLIF(TRIM(COALESCE(work_location, '')), '') IS NULL;
+      UPDATE employees
+      SET work_location_id = 'work-location-hcm'
+      WHERE id = 'employee-demo-001' AND work_location_id IS NULL;
+      UPDATE employee_versions v
+      SET work_location_id = (SELECT e.work_location_id FROM employees e WHERE e.id = v.employee_id),
+          work_location_name = (SELECT e.work_location FROM employees e WHERE e.id = v.employee_id)
+      WHERE v.work_location_id IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_location_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS work_location_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS work_location_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

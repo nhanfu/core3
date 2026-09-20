@@ -711,6 +711,28 @@ Candidate commit: current working tree
   Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
   No aggregate Employees sign-off is claimed.
 
+## EMP-WORK-LOCATION-ASSIGNMENT-001 (2026-09-21)
+
+- Selected the next uncovered source-visible employee behavior: Odoo's
+  `hr.version.work_location_id`, rendered in the Work tab's Location group.
+  This is distinct from the completed standalone Work Locations catalog.
+- Added migration `20260922040000-058` with durable `work_location_id`
+  columns on employees and employee versions, deterministic relation backfill,
+  and stable display-name fixtures.
+- Added the paired employee-detail API options datasource and guarded
+  `edit_employee_work_location` action. The page keeps Work Location in the
+  existing Work/Location group and adds the action binding; the API updates
+  both employee and active Payroll version.
+- Guards require `employees.write`, actor identity, active/current-company
+  employee, active location matching the employee address, active Payroll
+  version, and stale row-version protection. Focused verification is **4 tests
+  / 20 assertions**.
+- Authenticated Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-WORK-LOCATION-ASSIGNMENT-001/`; both show
+  the Work Location control. Core3 backend port 3001 did not bind during the
+  bounded memory-mode attempt; the exact blocker is in `verification.md`.
+  No aggregate Employees sign-off is claimed.
+
 ## EMP-WORKING-HOURS-001 (2026-09-21)
 
 - Selected the next uncovered source-visible employee behavior: Odoo's

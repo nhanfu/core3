@@ -711,6 +711,22 @@ session is `Core3 Demo Company` while deterministic employee fixtures are
 `Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
 sign-off is claimed.
 
+## EMP-WORK-LOCATION-ASSIGNMENT-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-039 | Employee Work Location assignment | pass; selected location persists on employee and active Payroll record |
+| EMP-PERM-039 | `employees.write`, actor, current company/address, active location/version, row version | pass; actor, invalid, stale, and wrong-company requests reject atomically |
+| EMP-DATA-039 | Migration replay and file-backed restart | pass; deterministic location relations and display names survive restart without duplicates |
+| EMP-UI-035 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo control appears at both viewports, while Core3 backend port 3001 did not bind during bounded startup |
+
+Focused test: `test/employees_work_location_assignment.integration.test.ts` (4
+tests, 20 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-WORK-LOCATION-ASSIGNMENT-001/`. Odoo
+reference data does not populate the selected employee's value; this is a
+comparison limitation, not a sign-off. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-WORKING-HOURS-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |
