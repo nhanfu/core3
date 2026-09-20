@@ -699,6 +699,22 @@ session is `Core3 Demo Company` while deterministic employee fixtures are
 `Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
 sign-off is claimed.
 
+## EMP-PRIVATE-LOCATION-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-027 | Personal Location create/edit/read | pass; structured private address and distance/unit persist through employee CRUD |
+| EMP-PERM-027 | `employees.write`, current company, row version, distance/unit guards | pass; invalid, stale, and out-of-company changes reject atomically |
+| EMP-DATA-027 | Migration replay and file-backed restart | pass; deterministic private-location fixtures survive restart without duplicates |
+| EMP-UI-023 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo source group captured, Core3 blocked by unrelated Inventory page schema error |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`. Core3 startup and
+shared audit fail on `components[1].search.lots` and
+`components[1].search.or packages... is not allowed` in an Inventory page;
+Inventory remains untouched. Odoo has seven unrelated app-icon 404s. No
+aggregate Employees sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

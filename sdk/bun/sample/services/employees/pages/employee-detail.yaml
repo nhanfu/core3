@@ -105,6 +105,9 @@ components:
             - title: Citizenship
               permission: employees.read
               fields: [{ field: country_id, label: Nationality (Country) }, { field: identification_id, label: Identification No }, { field: ssnid, label: SSN No }, { field: passport_id, label: Passport No }, { field: passport_expiration_date, label: Passport Expiration, type: date, show_if: "!!state.employee_detail.passport_id" }]
+            - title: Location
+              permission: employees.read
+              fields: [{ field: private_street, label: Private Street }, { field: private_street2, label: Private Street 2 }, { field: private_city, label: Private City }, { field: private_state_id, label: Private State }, { field: private_zip, label: Private ZIP }, { field: private_country_id, label: Private Country }, { field: distance_home_work, label: Home-Work Distance, type: number }, { field: distance_home_work_unit, label: Distance Unit }]
             - title: Family
               permission: employees.read
               fields: [{ field: marital, label: Marital Status }, { field: spouse_complete_name, label: Spouse Legal Name, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: spouse_birthdate, label: Spouse Birthdate, type: date, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: children, label: Dependent Children, type: number }]

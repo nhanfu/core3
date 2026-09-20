@@ -467,3 +467,21 @@ Candidate commit: current working tree
   authenticated Odoo desktop/mobile show Abigail Peterson's source group. Seven
   Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
   sign-off.
+
+## EMP-PRIVATE-LOCATION-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Employee Personal behavior: Odoo's
+  structured private Location group and home-to-work distance/unit fields.
+- Added page/API-separated fields and migration `20260921140000-044` with
+  idempotent deterministic fixtures. State and country are durable visible-name
+  projections because the sample service has no shared catalog relation.
+- Employee create/edit is guarded by `employees.write`, current-company scope,
+  row-version concurrency, non-negative distance, and kilometers/miles unit
+  validation.
+- Focused verification: **4 tests / 23 assertions**; new slice passes; scoped
+  ESLint and `git diff --check` pass. Full Employees discovery/audit is blocked
+  by the unrelated Inventory schema error recorded below.
+- Evidence: `evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`.
+  Authenticated Odoo desktop/mobile show the source group. Core3 cannot start
+  until the shared Inventory page removes unsupported `search.lots` and
+  `search.or packages...` keys. Conditional evidence only; no sign-off.

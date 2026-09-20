@@ -1528,3 +1528,26 @@ Peterson's Personal tab and shows the source Citizenship group; seven unrelated
 app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
+
+## EMP-PRIVATE-LOCATION-001: Employee private location details (2026-09-21)
+
+Odoo's Personal-tab Location group exposes structured private street, street 2,
+city, state, ZIP, country, and home-to-work distance/unit fields. Core3 adds a
+page-only Personal Location group and projects the fields through the separate
+`employee-detail` API/action YAML. `private_state_id` and `private_country_id`
+are durable visible-name projections because this bounded sample service has no
+shared state/country catalog relation.
+
+Migration `20260921140000-044-employee-private-location.yaml` adds the durable
+columns and replay-safe fixtures. Employee create/edit uses `employees.write`,
+current-company, optimistic row-version, non-negative distance, and kilometers /
+miles unit guards. Focused coverage is **4 tests / 23 assertions**, including
+source mapping, create/edit/read, invalid/stale/company guards, migration replay,
+and file-backed restart.
+
+The authenticated Odoo desktop/mobile Personal captures show the source
+Location group. Core3 runtime evidence is blocked before authentication by an
+unrelated shared Inventory page schema error (`components[1].search.lots` and
+`components[1].search.or packages...` are not allowed); no Core3 UI sign-off is
+claimed. Evidence is under
+`evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`.

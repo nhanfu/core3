@@ -304,3 +304,17 @@ Focused test: `test/employees_visa_work_permit.integration.test.ts` (4 tests,
 Focused test: `test/employees_citizenship.integration.test.ts` (4 tests,
 21 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`.
+
+## EMP-PRIVATE-LOCATION-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Personal Location fields map to separate page/API contracts | pass |
+| Employee CRUD | Create, read, and edit private address and home-work distance durably | pass |
+| Permission and scope | Write permission, current company, stale row version, distance, and unit guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic fixtures | pass |
+| Browser comparison | Authenticated Odoo desktop/mobile plus Core3 attempt | conditional; Core3 startup blocked by unrelated Inventory schema error |
+
+Focused test: `test/employees_private_location.integration.test.ts` (4 tests,
+23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`.

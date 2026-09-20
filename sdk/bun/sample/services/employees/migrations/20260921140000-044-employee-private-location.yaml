@@ -1,0 +1,61 @@
+version: 0.0.44
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_street VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_street2 VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_city VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_state_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_zip VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_country_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS distance_home_work INTEGER;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS distance_home_work_unit VARCHAR;
+      UPDATE employees
+      SET private_street = COALESCE(private_street, CASE id
+        WHEN 'employee-demo-001' THEN '12 Nguyen Hue Boulevard'
+        WHEN 'employee-demo-002' THEN '88 Le Loi Street'
+        WHEN 'employee-demo-003' THEN '5 Tran Phu Street'
+        ELSE NULL END),
+          private_street2 = COALESCE(private_street2, CASE id
+        WHEN 'employee-demo-001' THEN 'Apartment 8A'
+        ELSE NULL END),
+          private_city = COALESCE(private_city, CASE id
+        WHEN 'employee-demo-001' THEN 'Ho Chi Minh City'
+        WHEN 'employee-demo-002' THEN 'Ho Chi Minh City'
+        WHEN 'employee-demo-003' THEN 'Da Nang'
+        ELSE NULL END),
+          private_state_id = COALESCE(private_state_id, CASE id
+        WHEN 'employee-demo-001' THEN 'Ho Chi Minh'
+        WHEN 'employee-demo-002' THEN 'Ho Chi Minh'
+        WHEN 'employee-demo-003' THEN 'Da Nang'
+        ELSE NULL END),
+          private_zip = COALESCE(private_zip, CASE id
+        WHEN 'employee-demo-001' THEN '700000'
+        WHEN 'employee-demo-002' THEN '700000'
+        WHEN 'employee-demo-003' THEN '550000'
+        ELSE NULL END),
+          private_country_id = COALESCE(private_country_id, CASE id
+        WHEN 'employee-demo-001' THEN 'Vietnam'
+        WHEN 'employee-demo-002' THEN 'Vietnam'
+        WHEN 'employee-demo-003' THEN 'Vietnam'
+        ELSE NULL END),
+          distance_home_work = COALESCE(distance_home_work, CASE id
+        WHEN 'employee-demo-001' THEN 8
+        WHEN 'employee-demo-002' THEN 12
+        WHEN 'employee-demo-003' THEN 4
+        ELSE NULL END),
+          distance_home_work_unit = COALESCE(distance_home_work_unit, 'kilometers');
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_street;
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_street2;
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_city;
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_state_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_zip;
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_country_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS distance_home_work;
+      ALTER TABLE employees DROP COLUMN IF EXISTS distance_home_work_unit;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
