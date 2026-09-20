@@ -1,0 +1,28 @@
+version: 0.0.9
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_report_runs (
+        id VARCHAR PRIMARY KEY,
+        entry_id VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL DEFAULT 'Timesheets',
+        requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        entry_row_version BIGINT NOT NULL,
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_report_runs_entry_idx ON timesheet_report_runs(entry_id, generated_at);
+      INSERT OR IGNORE INTO timesheet_report_runs(
+        id, entry_id, report_name, requested_by, company_name, entry_row_version, generated_at, row_version
+      ) VALUES (
+        'timesheet-report-run-demo-001', 'timesheet-demo-001', 'Timesheets', 'Admin User',
+        'Core3 Demo Company', 1, TIMESTAMP '2026-01-15 00:00:00', 1
+      );
+    down: |
+      DROP TABLE IF EXISTS timesheet_report_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

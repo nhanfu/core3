@@ -57,6 +57,22 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 
 ## Current regression evidence
 
+### 2026-09-20 bounded report-binding slice
+
+- Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,
+  `timesheet_report` (`account.analytic.line`, `qweb-pdf`, report name
+  `hr_timesheet.report_timesheet`).
+- Core3 implementation: entry-detail YAML `Print` action, API-owned
+  `timesheets.entries.print_report` report mutation, and durable
+  `timesheet_report_runs` migration `0.0.9`.
+- Focused evidence: `bun test test/timesheets_report.integration.test.ts
+  --timeout 20000` — 4 passed, 0 failed, 22 assertions. This includes
+  page/API separation, deterministic replay, file-backed restart persistence,
+  personal/company scope, stale-row, missing-entry, and invalid-request guards.
+- Browser print is intentionally the existing client print surface after the
+  server-side run record is persisted. Project/task report bindings and a
+  QWeb/PDF renderer remain open and are not claimed by this slice.
+
 - Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 27 passed, 0 failed, 275 assertions across 8 files; the reporting retest after the fix passed 8/8 with 118 assertions.
 - Authenticated module-scoped route matrix: 13 routes × desktop/mobile; an isolated fresh-page rerun with valid detail IDs passed 26/26 with no page/request errors or horizontal overflow. The earlier 22/26 bare-route result was a reused-page traversal artifact; Timesheet Analysis exposed a real missing-pivot-fields contract.
 - Fix: declared `pivot.fields` for `timesheet_analysis` in `services/timesheets/api/analysis.yaml`; a fresh authenticated retest rendered Pivot/Graph/List with no HTTP or browser failures.

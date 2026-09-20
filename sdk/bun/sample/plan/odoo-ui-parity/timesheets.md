@@ -601,3 +601,25 @@ state captures for My Timesheets, All Timesheets, and By Employee completed
 12/12 across Core3/Odoo and desktop/mobile with no page/request failures:
 `/tmp/odoo-timesheets/*-20260912.png`. Remaining report routes, settings,
 context actions, and interaction-level parity comparison remain open.
+
+## Bounded report binding slice — 2026-09-20
+
+The supplied Odoo source defines `hr_timesheet.timesheet_report` as a bound
+`ir.actions.report` for `account.analytic.line` in
+`addons/hr_timesheet/report/report_timesheet_templates.xml`. The current
+Core3 Timesheet entry detail had no equivalent report action or durable report
+execution record.
+
+This slice adds a layout-only/API-owned `Print` action to
+`/timesheets/detail`. The API records a deterministic `Timesheets` report run
+in `timesheet_report_runs` before opening the browser print surface. Runs are
+company- and employee-scoped, require the current entry row version, and
+expose report history through a matching API datasource. Migration `0.0.9`
+seeds one fixed `2026-01-15` run and is replay-safe; no moving-clock or random
+fixture values are used.
+
+Focused evidence: `test/timesheets_report.integration.test.ts`, 4 tests and
+22 assertions passed. The slice proves page/API ownership, missing-entry,
+cross-employee, stale-row, invalid-request, migration replay, and file-backed
+restart persistence. It does not claim project/task report bindings or the
+full Odoo PDF/QWeb renderer; those remain separate parity work.
