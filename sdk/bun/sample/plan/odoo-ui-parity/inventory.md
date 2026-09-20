@@ -1087,3 +1087,36 @@ boundary (`surveys/live-session-join.yaml`); the evidence runtime isolated
 Auth/Chat/Inventory to avoid changing another owner's files. Full Inventory
 sign-off remains open for the broader actor/company matrix, relocation, and
 remaining report/export semantics.
+
+## Operations > On Hand quant relocation — `INV-PHYSICAL-RELOCATE-001` (2026-09-20)
+
+This bounded slice closes the smallest remaining source-backed relocation gap.
+Odoo's `stock.action_view_quants` server action (`stock_quant_views.xml:213-223`)
+opens the Locations/On Hand quant list; its manager-only `Relocate` object action
+is declared at `stock_quant_views.xml:108-117`. The action opens the transient
+`stock.quant.relocate` wizard (`wizard/stock_quant_relocate.py:9-99`), which
+requires an active internal destination and invokes `stock.quant.move_quants`
+with the source quant's full positive quantity. The move implementation records
+the source/destination as `Quantity Relocated` (`models/stock_quant.py:452-466,
+1545-1557`).
+
+Core3 keeps `pages/stock.yaml` presentation-only and joins it by `page.id: stock`
+to the separate `api/stock.yaml`. The API owns the manager-only row action and
+wizard fields, while migration `20260920250000-028-inventory-quant-relocation.yaml`
+adds durable `inventory_quant_relocations` audit rows and a deterministic opening
+fixture. Relocation updates the quant location with optimistic concurrency,
+preserves lot/product/quantity metadata, inserts a durable relocation audit and
+`inventory_move_lines` row, and rejects non-positive, stale, same-location,
+non-internal, and same-product destination conflicts.
+
+Focused coverage passes 4 tests / 21 assertions, including page/API separation,
+deterministic workflow guards and move-history side effects, manager-only runtime
+permission, and file-backed restart persistence. Authenticated Core3 desktop
+modal/complete and mobile evidence plus authenticated Odoo desktop/mobile source
+comparison are under
+`evidence/inventory/2026-09-20/INV-PHYSICAL-RELOCATE-001/`; final browser runs
+reported no page failures or horizontal overflow. No Odoo mutation was made.
+
+Status: bounded relocation lifecycle complete for review. Full Inventory sign-off
+remains open for the broader actor/company matrix and remaining report/export
+semantics.

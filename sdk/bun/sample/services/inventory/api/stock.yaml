@@ -1,0 +1,47 @@
+page: { id: stock }
+datasources:
+  - id: inventory_stock_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_locations WHERE state = 'Active' AND usage = 'Internal' ORDER BY name, id"
+  - id: inventory_stock
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_STOCK_UNAVAILABLE, message: On Hand stock is temporarily unavailable. } }
+    query: "SELECT q.id, q.row_version, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, q.quantity, q.reserved_quantity, q.quantity - q.reserved_quantity AS available_quantity, q.unit_cost, q.quantity * q.unit_cost AS stock_value FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') ORDER BY q.product_name, w.name, l.name, q.id"
+  - id: inventory_quant_relocations
+    single: false
+    permission: inventory.read
+    query: "SELECT r.id, r.row_version, r.quant_id, r.product_name, COALESCE(r.lot_serial_number, '') AS lot_serial_number, sl.name AS source_location, dl.name AS destination_location, CAST(r.quantity AS DOUBLE) AS quantity, r.unit_name, COALESCE(r.message, '') AS message, r.relocated_by, CAST(r.relocated_at AS VARCHAR) AS relocated_at FROM inventory_quant_relocations r JOIN inventory_locations sl ON sl.id = r.source_location_id JOIN inventory_locations dl ON dl.id = r.destination_location_id ORDER BY r.relocated_at DESC, r.id DESC"
+actions:
+  - id: relocate_inventory_quant
+    type: server_form
+    permission: inventory.manage
+    title: Relocate stock
+    action: inventory.quants.relocate
+    handler: yaml_mutation
+    operation: relocate
+    prefill: row
+    refresh: [inventory_stock, inventory_quant_relocations]
+    success_message: Stock relocated.
+    mutation:
+      operation: update
+      table: inventory_quants
+      fields: [location_id]
+      required: [location_id]
+      generated: [relocation_id]
+      before_steps:
+        - query: "SELECT 'inventory-relocation-' || LPAD(CAST((SELECT COUNT(*) + 1 FROM inventory_quant_relocations) AS VARCHAR), 4, '0') AS relocation_id, q.id AS quant_id, q.product_id, q.product_name, q.lot_serial_number, q.location_id AS source_location_id, q.quantity, COALESCE(q.unit_name, 'Units') AS unit_name, COALESCE(q.company_name, 'My Company (San Francisco)') AS company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS relocated_by, TIMESTAMP '2026-01-15 00:00:00' AS relocated_at FROM inventory_quants q WHERE q.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND row_version = :expected_row_version AND quantity > 0", status: 409, code: INVENTORY_QUANT_RELOCATION_STALE, message: This quantity changed or is not positive. Reload before relocating it. }
+        - { query: "SELECT 1 AS ok FROM inventory_locations WHERE id = :location_id AND state = 'Active' AND usage = 'Internal'", status: 422, code: INVENTORY_RELOCATION_LOCATION_INVALID, message: Stock can only be relocated to an active internal location. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants q WHERE q.id = :id AND q.location_id <> :location_id", status: 422, code: INVENTORY_RELOCATION_SAME_LOCATION, message: Choose a different destination location. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants q WHERE q.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_quants other WHERE other.product_id = q.product_id AND other.location_id = :location_id AND other.id <> q.id)", status: 409, code: INVENTORY_RELOCATION_DESTINATION_CONFLICT, message: The destination already contains this product. Use a transfer workflow to merge stock. }
+      steps:
+        - query: "INSERT INTO inventory_quant_relocations(id, quant_id, product_id, product_name, lot_serial_number, source_location_id, destination_location_id, quantity, unit_name, message, company_name, relocated_by, relocated_at) VALUES (:relocation_id, :quant_id, :product_id, :product_name, :lot_serial_number, :source_location_id, :location_id, :quantity, :unit_name, NULLIF(TRIM(CAST(:message AS VARCHAR)), ''), :company_name, :relocated_by, :relocated_at)"
+        - query: "INSERT INTO inventory_move_lines(id,date,reference,product_id,product_name,product_category_name,lot_serial_number,source_package,result_package,source_location_id,destination_location_id,picking_partner_name,company_name,quantity,quantity_product_uom,unit_name,state,done_by,origin,movement_type,created_at) SELECT :relocation_id || '-move', TIMESTAMP '2026-01-15 00:00:00', 'Quantity Relocated', :product_id, :product_name, CASE WHEN :product_name ILIKE '%box%' OR :product_name ILIKE '%chair%' THEN 'Office Supplies' ELSE 'Furniture' END, :lot_serial_number, NULL, NULL, :source_location_id, :location_id, NULL, :company_name, :quantity, :quantity, :unit_name, 'Done', :relocated_by, COALESCE(NULLIF(TRIM(CAST(:message AS VARCHAR)), ''), 'Quantity Relocated'), 'internal', TIMESTAMP '2026-01-15 00:00:00'"
+      result: { query: "SELECT r.id, r.quant_id, r.product_name, sl.name AS source_location, dl.name AS destination_location, r.quantity, r.unit_name, r.message, r.relocated_by FROM inventory_quant_relocations r JOIN inventory_locations sl ON sl.id = r.source_location_id JOIN inventory_locations dl ON dl.id = r.destination_location_id WHERE r.id = :relocation_id" }
+    fields:
+      - { field: location_id, label: To Location, type: select, options_source: inventory_stock_locations, required: true }
+      - { field: message, label: Reason for relocation, type: textarea, placeholder: 'e.g. Move to a replenishment shelf' }

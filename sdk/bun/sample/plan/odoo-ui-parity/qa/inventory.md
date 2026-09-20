@@ -497,3 +497,35 @@ QA disposition: PASS for the bounded Moves Analysis report lifecycle,
 read-only contract, persistence, permissions, and evidence. Full shared-runner
 verification is PARTIAL because an unrelated committed Surveys YAML boundary
 prevents global discovery; no other module files were changed.
+
+## On Hand quant relocation QA — `INV-PHYSICAL-RELOCATE-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.action_view_quants` (`stock_quant_views.xml:213-223`)
+  opens the quant Locations/On Hand list. Manager-only `Relocate` is the
+  `action_stock_quant_relocate` object action (`stock_quant_views.xml:108-117`),
+  backed by `stock.quant.relocate` (`wizard/stock_quant_relocate.py:9-99`).
+  Positive quantity, active-internal destination, and `Quantity Relocated` move
+  semantics are recorded in the evidence source note.
+- Core3 implementation: `pages/stock.yaml` contains only the On Hand layout;
+  `api/stock.yaml` owns `inventory_stock`, active-internal location options,
+  relocation history, and the `inventory.manage` server form. Migration `0.0.28`
+  persists deterministic relocation audits. The mutation is optimistic and
+  atomic across quant location, relocation audit, and move history.
+- Focused test: `bun test test/inventory_quant_relocation.integration.test.ts`
+  — PASS, 4 tests / 21 assertions. Coverage includes source contract,
+  deterministic positive-quantity relocation, lot/move-history preservation,
+  invalid/same/conflicting/stale guards, manager permission denial, and
+  file-backed restart.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-RELOCATE-001/`: desktop On Hand,
+  desktop Relocate modal, completed relocation, and mobile On Hand. The final
+  run had no page failures and no horizontal overflow.
+- Authenticated Odoo evidence is in the same directory. XML IDs resolve to
+  `stock.action_view_quants` res_id 506 and `stock.menu_action_inventory_tree`
+  res_id 314; `/odoo/action-506` redirects to `/odoo/stock-locations` and
+  renders the source Locations/On Hand list at 1440x900 and 390x844 with no
+  failed requests or overflow. No Odoo mutation was made.
+
+QA disposition: PASS for the bounded relocation lifecycle, durable data,
+permissions, and authenticated desktop/mobile evidence. Full Inventory sign-off
+remains open for the broader actor/company matrix and report/export semantics.

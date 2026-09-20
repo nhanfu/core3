@@ -1,0 +1,21 @@
+{
+  "feature": "INV-PHYSICAL-RELOCATE-001",
+  "user": "admin@tms.local",
+  "desktop": {
+    "viewport": "1440x900",
+    "route": "/inventory/stock",
+    "modal": "captured",
+    "completed": true
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "route": "/inventory/stock",
+    "horizontal_overflow": false
+  },
+  "failed_requests": [
+    {
+      "url": "http://127.0.0.1:4544/api/v1/notifications",
+      "error": "net::ERR_ABORTED"
+    }
+  ]
+}

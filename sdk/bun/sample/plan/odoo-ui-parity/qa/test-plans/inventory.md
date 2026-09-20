@@ -42,6 +42,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-011 | Stock report Inventory at Date | Date wizard persists company context, filters report rows, handles invalid dates, and survives restart | pass: `INV-STOCK-AT-DATE-001` focused suite |
 | INV-FUNC-012 | Operations Types lifecycle | Create/edit/archive/restore operation types with durable row versions, source/destination locations, validation, and restart persistence | pass: `INV-OP-TYPES-001` focused suite |
 | INV-FUNC-013 | Scrap validation Product Move | Draft Scrap validation sets Done/date, persists one Product Move relation, and exposes it on the detail page | pass: `INV-SCRAP-001` bounded suite; shared discovery boundary recorded |
+| INV-FUNC-014 | On Hand quant relocation | Manager relocates a positive quant to an active internal location, preserves lot/quantity metadata, and records a durable relocation audit and move line | pass: `INV-PHYSICAL-RELOCATE-001` focused suite |
 
 ## Workflow and integration cases
 
@@ -78,6 +79,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-015 | Moves Analysis report | `stock.move` report exposes source columns, default Done state, state/type/date/search filters, list/pivot/graph/kanban/form states, and traceable detail | pass: `INV-MOVES-ANALYSIS-001` focused lifecycle test |
 | INV-WF-011 | Moves Analysis read-only report | pivot aggregation, detail navigation, empty/404/503 states, no CRUD mutation, and restart-stable fixtures | pass: `INV-MOVES-ANALYSIS-001` focused lifecycle test |
 | INV-PERM-013 | Moves Analysis report boundary | `inventory.read` is required for list/detail and direct API access; no write/manage action is exposed | pass: `INV-MOVES-ANALYSIS-001` focused runtime test |
+| INV-PERM-014 | On Hand relocation manager boundary | `inventory.read` permits the On Hand list; `inventory.manage` is required for Relocate and ordinary readers receive 403 without mutation | pass: `INV-PHYSICAL-RELOCATE-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -95,6 +97,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-010 | Scrap Orders list/detail/Product Moves | 1440x1000, 390x844 | Draft/Done form, Validate action, Product Moves relation, desktop/mobile list/detail, and paired Odoo list/kanban comparison are captured | pass Core3/Odoo evidence; repository discovery boundary remains partial |
 | INV-UI-011 | Physical Inventory list/Apply All wizard | 1440x1000, 390x844 | Physical Inventory list, Apply All reason/date modal, counted-only result, responsive route, and paired Odoo list comparison are captured | pass Core3/Odoo evidence; residual conflict/reset/relocation semantics remain |
 | INV-UI-012 | Moves Analysis report modes | 1440x1000, 390x844 | Core3 list/pivot/detail/mobile report and Odoo pivot/list/mobile kanban show source-backed report modes with no request errors or horizontal overflow | pass Core3/Odoo evidence; broader actor/company matrix remains |
+| INV-UI-013 | On Hand relocation wizard | 1440x900, 390x844 | Authenticated manager sees On Hand Relocate modal and completed location move on desktop; mobile On Hand remains usable without overflow; paired Odoo Locations/On Hand source surface is captured | pass Core3/Odoo evidence; no Odoo mutation |
 
 ## Exit criteria
 

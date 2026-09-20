@@ -1,0 +1,23 @@
+version: 0.0.28
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_quant_relocations (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        quant_id VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL, lot_serial_number VARCHAR,
+        source_location_id VARCHAR NOT NULL, destination_location_id VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL,
+        message VARCHAR, company_name VARCHAR NOT NULL, relocated_by VARCHAR NOT NULL,
+        relocated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_quant_relocations_quant ON inventory_quant_relocations(quant_id, relocated_at DESC);
+      INSERT INTO inventory_quant_relocations(id, quant_id, product_id, product_name, source_location_id, destination_location_id, quantity, unit_name, message, company_name, relocated_by, relocated_at)
+      VALUES ('inventory-relocation-0001', 'quant-cable-lot-a', 'product-cable-box', 'Cable Management Box', 'location-stock', 'location-stock-shelf-1', 50, 'Units', 'Opening bin relocation', 'My Company (San Francisco)', 'Mitchell Admin', TIMESTAMP '2026-01-14 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_quant_relocations;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

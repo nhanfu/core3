@@ -371,3 +371,28 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 - Status: bounded report lifecycle complete for review. Full shared runner
   verification is blocked by the unrelated committed Surveys schema boundary;
   no Surveys/Employees/Ecommerce paths were changed or staged.
+
+## `INV-PHYSICAL-RELOCATE-001` — On Hand quant relocation (2026-09-20)
+
+- Selected the smallest remaining source-backed relocation behavior after the
+  completed Settings, package/transfer, stock-at-date, operation type, scrap,
+  physical inventory, and Moves Analysis slices.
+- Compared Odoo `stock.action_view_quants`, the manager-only
+  `action_stock_quant_relocate` object action, and `stock.quant.relocate`; the
+  source requires positive quantities and active internal destination locations,
+  then records a `Quantity Relocated` internal move.
+- Added API-owned `stock` relocation action and location options while keeping
+  `pages/stock.yaml` layout-only. Migration `0.0.28` persists relocation audits
+  and a deterministic opening row. The mutation updates the quant, preserves
+  lot metadata, inserts move history, validates stale/same/invalid/conflicting
+  destinations, and requires `inventory.manage`.
+- Focused test passes 4 tests / 21 assertions, including CRUD/workflow guards,
+  permission denial, and file-backed restart persistence.
+- Authenticated Core3 desktop/mobile and Odoo desktop/mobile evidence is under
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-RELOCATE-001/`; no Odoo write was
+  performed. Full module test discovery remains partially blocked by unrelated
+  shared-checkout Surveys schema/action-boundary files; Inventory paths were
+  not changed to repair that boundary.
+
+Status: bounded Core3 lifecycle and evidence complete for review; broader
+Inventory sign-off remains open.
