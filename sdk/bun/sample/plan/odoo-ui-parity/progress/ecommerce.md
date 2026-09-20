@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: pending local commit
+Latest committed bounded slice: `81b7038a4dfc9ef151714206942d6e05d5cf93de`
 (`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`, not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`
