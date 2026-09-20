@@ -1590,3 +1590,33 @@ Authenticated Core3 desktop/mobile evidence is under
 probe reached the Odoo login route but its POST failed for the supplied account;
 the source/menu/group blocker and untrusted comparison state are recorded in
 the paired evidence. No Odoo mutation or full Inventory sign-off is claimed.
+
+## Overview operation cards — `INV-OVERVIEW-001` (2026-09-21)
+
+This bounded ninth-wave slice covers Odoo's Inventory root
+`stock_picking_type_menu` / `stock_picking_type_action` from
+`addons/stock/views/stock_picking_type_views.xml:16-39,180-293`. The source is a
+non-editable `kanban,form` operation dashboard: each operation card exposes
+Ready, Waiting, Late, Back Orders, and Operations counters, plus the
+All/Ready/Waiting queue actions and operation-kind-specific primary label.
+
+Core3 adds `pages/overview.yaml` and `api/overview.yaml`, joined by
+`page.id: inventory-overview`, and exposes `/inventory/overview` in the
+Inventory menu. The API aggregates durable operation types, pickings, and move
+lines into deterministic cards, while `stock.inventory_overview.open` records
+the selected queue filter and actor in durable `inventory_overview_runs`.
+Migration `20260921200000-046-inventory-overview.yaml` seeds the opening
+history row. The queue action requires `inventory.read`, current-company
+scope (including the existing Core3 Demo Company/My Company fixture alias), an
+authenticated actor, a valid source filter, and the current operation-card
+row version.
+
+Focused verification passes 4 tests / 22 assertions, including discovery and
+page/API separation, deterministic counters/history, permission/company/
+filter/stale guards, and restart persistence. Authenticated Core3 desktop and
+mobile captures include card and queue-form states under
+`evidence/inventory/2026-09-21/INV-OVERVIEW-001/`. Authenticated Odoo desktop
+and mobile `/odoo/inventory` captures render the source operation cards; the
+fixture count differences and one unrelated mobile Discuss-avatar abort are
+recorded in paired evidence. New/configuration/report card-menu behavior
+remains explicitly deferred; full Inventory sign-off remains open.

@@ -1,0 +1,57 @@
+title: Inventory Overview
+page: { id: inventory-overview, route: /inventory/overview, breadcrumb: [Supply Chain, Inventory, Overview], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_overview_cards
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Overview
+        icon: dashboard
+        mobile: true
+        group_by: operation_kind
+        card:
+          compact: true
+          title: name
+          subtitle: warehouse_name
+          primary_metric: count_picking_ready
+          primary_metric_label: Ready
+          fields:
+            - { field: ready_label, label: Queue }
+            - { field: count_picking_waiting, label: Waiting }
+            - { field: count_picking_late, label: Late }
+            - { field: count_picking_backorders, label: Back Orders }
+            - { field: count_move_ready, label: Operations }
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: name, label: Operation Type, type: PrimaryEntityCell }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: ready_label, label: Ready Queue }
+      - { field: count_picking_ready, label: Ready, align: right }
+      - { field: count_picking_waiting, label: Waiting, align: right }
+      - { field: count_picking_late, label: Late, align: right }
+      - { field: count_picking_backorders, label: Back Orders, align: right }
+      - { field: count_move_ready, label: Operations, align: right }
+    header_actions:
+      - { id: open_inventory_overview, label: Open card, variant: primary, permission: inventory.read }
+    actions: [{ id: open_inventory_overview, label: Open All, permission: inventory.read }]
+    page_size: 20
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No operation types, description: Active operation types appear here when they have an Inventory workflow. }
+  - type: ListView
+    variant: odoo
+    source: inventory_overview_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: operation_name, label: Operation Type }
+      - { field: filter_name, label: Filter, type: StatusChip }
+      - { field: requested_by, label: Opened By }
+      - { field: company_name, label: Company }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No overview history, description: Opening an operation card records the actor and filter context. }

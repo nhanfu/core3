@@ -11,6 +11,13 @@ menu:
     icon: warehouse
     permission: inventory.read
   groups:
+    - id: overview
+      label: Overview
+      items:
+        - path: /inventory/overview
+          label: Overview
+          icon: dashboard
+          permission: inventory.read
     - id: transfers
       label: Transfers
       items:

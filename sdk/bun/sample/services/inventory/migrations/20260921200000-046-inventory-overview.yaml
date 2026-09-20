@@ -1,0 +1,26 @@
+version: 0.0.46
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_overview_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        operation_type_id VARCHAR NOT NULL,
+        operation_name VARCHAR NOT NULL,
+        filter_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        opened_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS inventory_overview_runs_operation_idx
+        ON inventory_overview_runs(operation_type_id, opened_at, id);
+      INSERT INTO inventory_overview_runs(id, operation_type_id, operation_name, filter_name, requested_by, company_name, opened_at)
+      VALUES ('inventory-overview-open-0001', 'operation-receipts', 'Receipts', 'ready', 'Mitchell Admin', 'My Company (San Francisco)', TIMESTAMP '2026-01-15 10:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_overview_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

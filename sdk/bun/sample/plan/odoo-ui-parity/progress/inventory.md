@@ -749,3 +749,22 @@ Inventory sign-off remains open.
 - Odoo source comparison is complete, but the bounded live probe failed at
   `POST /web/login` for the supplied account; no authenticated Odoo state or
   mutation is claimed. Full Inventory sign-off remains open.
+
+## `INV-OVERVIEW-001` — Inventory Overview operation cards (2026-09-21)
+
+- Selected the smallest uncovered source-backed root workflow after the
+  completed configuration/report slices: Odoo's
+  `stock_picking_type_action` operation-card overview.
+- Added separate page/API YAML joined by `page.id`, deterministic counters
+  from operation types/pickings/moves, durable overview-open history migration
+  0.0.46, and a queue form covering All, Ready, Waiting, Late, Back Orders,
+  and Operations.
+- Focused verification passes 4 tests / 22 assertions. Guards cover
+  `inventory.read`, actor, company alias/scope, valid filters, row-version
+  concurrency, and file-backed restart reads.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-OVERVIEW-001/`; authenticated Odoo
+  desktop/mobile source comparison is also present. Odoo counts differ from
+  Core3 deterministic fixtures and one unrelated mobile avatar request abort
+  is recorded. Source New/configuration/report card actions remain open, and
+  full Inventory sign-off remains open.

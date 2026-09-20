@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-09-20T21:11:27.497Z",
+  "results": [
+    {
+      "name": "desktop",
+      "url": "http://127.0.0.1:8069/odoo/inventory",
+      "title": "Inventory Overview",
+      "inventoryVisible": true,
+      "body": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nInventory Overview\n1-3 / 3\nReceipts\n4 To Receive\nLate\n4\nOperations\n5\nDelivery Orders\n11 To Deliver\nWaiting\n1\nLate\n10\nOperations\n12\nPoS Orders\nOpen",
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "name": "mobile",
+      "url": "http://127.0.0.1:8069/odoo/inventory",
+      "title": "Inventory Overview",
+      "inventoryVisible": true,
+      "body": "Inventory Overview\n7\n40\nReceipts\n4 To Receive\nLate\n4\nOperations\n5\nDelivery Orders\n11 To Deliver\nWaiting\n1\nLate\n10\nOperations\n12\nPoS Orders\nOpen",
+      "failedRequests": [
+        "GET http://127.0.0.1:8069/web/image/discuss.channel/7/avatar_128?unique=b9b7c4e9e170ed0d93385ec69405b90ab75552e274dc633e6662f64032099d84431ff46e4d44c711c5eb5edcca51b369773a8e371eaa5513014cd37949849dd3 net::ERR_ABORTED",
+        "GET http://127.0.0.1:8069/web/image/discuss.channel/2/avatar_128?unique=5ac394b1d9571199c67715c92032deff1fde40077af0496f670cb39334e546294e594b54c9cc1dcc00233d05ec4a70fa3d533b41d8874e93749ad50cea91f67d net::ERR_ABORTED",
+        "GET http://127.0.0.1:8069/web/image/discuss.channel/1/avatar_128?unique=6bcdb6979fa99411571c869762afb447623e48bab8d9cf58d1643b63e91a137684f19bcaa4df674f4dfbc8748ad542314fa16e6ed6751195c0568137fe3733bc net::ERR_ABORTED",
+        "GET http://127.0.0.1:8069/web/image/discuss.channel/9/avatar_128?unique=efae9b203576aaa9cd104244f631d105926372e66d9824ebc158c1cb5949513b0a417a8af0b702f73270967819bc6c96e8f0e92095b34e54954bf9885f81e91a net::ERR_ABORTED"
+      ],
+      "badResponses": []
+    }
+  ]
+}

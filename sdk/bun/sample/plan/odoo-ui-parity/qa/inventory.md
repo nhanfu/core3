@@ -999,3 +999,34 @@ open.
 
 QA disposition: PASS for the bounded Core3 Putaway Rules lifecycle and guards;
 BLOCKED for live Odoo comparison. Full Inventory sign-off remains open.
+
+## Inventory Overview QA — `INV-OVERVIEW-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_type_views.xml:16-39,180-293`.
+  `stock_picking_type_menu` opens `stock_picking_type_action` at
+  `/odoo/inventory`; the source kanban exposes Ready, Waiting, Late, Back
+  Orders, Operations, and operation-kind-specific queue labels.
+- Core3 contract: PASS. `pages/overview.yaml` is presentation-only and
+  `api/overview.yaml` owns the two datasources and queue action under
+  `page.id: inventory-overview`. Migration 0.0.46 adds durable overview-open
+  history and a deterministic opening fixture.
+- Focused test: `bun test test/inventory_overview.integration.test.ts` — PASS,
+  4 tests / 22 assertions. Coverage includes discovery/separation, cards and
+  history, reader boundary, actor/company/filter/stale guards, migration
+  replay, and restart persistence. `bun run audit` — PASS, 705 pages, 714
+  routes, 1,340 datasources. `git diff --check` — PASS.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 card and Open operation queue states. Four cards and seeded history
+  render; both viewports have no horizontal overflow, console errors, failed
+  requests, or bad HTTP responses. Evidence is under
+  `evidence/inventory/2026-09-21/INV-OVERVIEW-001/`.
+- Odoo comparison: PASS for authenticated desktop/mobile `/odoo/inventory`.
+  Receipts, Delivery Orders, and PoS Orders render. Paired evidence records
+  deterministic fixture/count differences and four unrelated mobile Discuss
+  avatar aborts; no Odoo mutation was attempted.
+
+QA disposition: PASS for the bounded Core3 Overview card/queue lifecycle and
+guards; PARTIAL for exact Odoo fixture/menu-card parity because New,
+configuration, reporting links, and source-specific card counts remain open.
+Full Inventory sign-off remains open.

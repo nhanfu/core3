@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-09-20T21:13:53.562Z",
+  "results": [
+    {
+      "name": "desktop",
+      "url": "http://127.0.0.1:4330/inventory/overview",
+      "title": "Inventory Overview",
+      "cardVisible": true,
+      "dialog": 1,
+      "dialogText": "ders\n\tOperations\n\n\nReceipts\n\tMain Warehouse\tTo Receive\t3\t1\t2\t0\t0\n\nDeliveries\n\tMain Warehouse\tTo Deliver\t11\t2\t7\t0\t8\n\nInternal Transfers\n\tMain Warehouse\tTo Process\t1\t1\t1\t0\t1\n\nQuality Control\n\tMain Warehouse\tTo Process\t0\t0\t0\t0\t0\nSupply Chain / Inventory / Overview\n1-1 / 1\n‹\n›\nOpened At\n\tOperation Type\n\tFilter\n\tOpened By\n\tCompany\n\n\n2026-01-15 10:00:00\n\tReceipts\tready\tMitchell Admin\tMy Company (San Francisco)\nOpen operation queue\nQueue *\nChọn…\nAll\nReady\nWaiting\nLate\nBack Orders\nOperations\nCancel\nSave",
+      "width": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440
+      },
+      "consoleErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "name": "mobile",
+      "url": "http://127.0.0.1:4330/inventory/overview",
+      "title": "Inventory Overview",
+      "cardVisible": true,
+      "dialog": 1,
+      "dialogText": "ery\n1\nDeliveries\nMW\nMain Warehouse\n11 Ready\nQueue\nTo Deliver\nWaiting\n2\nLate\n7\nOperations\n8\ninternal\n2\nInternal Transfers\nMW\nMain Warehouse\n1 Ready\nQueue\nTo Process\nWaiting\n1\nLate\n1\nOperations\n1\nQuality Control\nMW\nMain Warehouse\n0 Ready\nQueue\nTo Process\nOverview\n1-1 / 1\n‹\n›\nOpened At\n\tOperation Type\n\tFilter\n\tOpened By\n\tCompany\n\n\n2026-01-15 10:00:00\n\tReceipts\tready\tMitchell Admin\tMy Company (San Francisco)\nOpen operation queue\nQueue *\nChọn…\nAll\nReady\nWaiting\nLate\nBack Orders\nOperations\nCancel\nSave",
+      "width": {
+        "scrollWidth": 390,
+        "innerWidth": 390
+      },
+      "consoleErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    }
+  ]
+}

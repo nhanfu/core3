@@ -1,0 +1,38 @@
+page: { id: inventory-overview }
+datasources:
+  - id: inventory_overview_cards
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_OVERVIEW_UNAVAILABLE, message: Inventory overview is temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, t.code, t.operation_kind, COALESCE(w.name, '') AS warehouse_name, CAST((SELECT COUNT(*) FROM inventory_pickings p WHERE p.operation_type_id = t.id AND p.state = 'Ready') AS BIGINT) AS count_picking_ready, CAST((SELECT COUNT(*) FROM inventory_pickings p WHERE p.operation_type_id = t.id AND p.state = 'Waiting') AS BIGINT) AS count_picking_waiting, CAST((SELECT COUNT(*) FROM inventory_pickings p WHERE p.operation_type_id = t.id AND p.state NOT IN ('Done', 'Cancelled') AND p.scheduled_date < DATE '2026-01-15') AS BIGINT) AS count_picking_late, CAST((SELECT COUNT(*) FROM inventory_pickings p WHERE p.operation_type_id = t.id AND p.backorder_of_id IS NOT NULL) AS BIGINT) AS count_picking_backorders, CAST((SELECT COUNT(*) FROM inventory_picking_moves m JOIN inventory_pickings p ON p.id = m.picking_id WHERE p.operation_type_id = t.id AND p.state = 'Ready' AND m.done_quantity < m.quantity) AS BIGINT) AS count_move_ready, CASE t.operation_kind WHEN 'receipt' THEN 'To Receive' WHEN 'delivery' THEN 'To Deliver' ELSE 'To Process' END AS ready_label FROM inventory_operation_types t LEFT JOIN inventory_warehouses w ON w.id = t.warehouse_id WHERE t.active = TRUE AND (NULLIF(:current_company_name, '') IS NULL OR t.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)')) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY t.sequence_number, t.name, t.id"
+  - id: inventory_overview_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_OVERVIEW_HISTORY_UNAVAILABLE, message: Inventory overview history is temporarily unavailable. } }
+    query: "SELECT id, row_version, operation_type_id, operation_name, filter_name, requested_by, company_name, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_overview_runs WHERE NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)') ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: open_inventory_overview
+    type: server_form
+    permission: inventory.read
+    title: Open operation queue
+    action: stock.inventory_overview.open
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_overview_cards, inventory_overview_runs]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', filter_name: all }
+    mutation:
+      generated: [run_id]
+      concurrency: { required: true }
+      before_steps:
+        - query: "SELECT 'inventory-overview-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS run_id, t.name AS operation_name FROM inventory_operation_types t LEFT JOIN inventory_overview_runs r ON r.operation_type_id = t.id WHERE t.id = :id GROUP BY t.id, t.name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_operation_types WHERE id = :id AND active = TRUE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)')) AND row_version = :expected_row_version", status: 409, code: INVENTORY_OVERVIEW_STALE, message: This operation card changed before it was opened. Reload the overview and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL OR NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: INVENTORY_OVERVIEW_ACTOR_REQUIRED, message: An authenticated inventory operator is required to open an overview card. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)')) = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND COALESCE(:company_name, '') = 'My Company (San Francisco)')", status: 403, code: INVENTORY_OVERVIEW_COMPANY, message: The overview company must match the current company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:filter_name, 'all') IN ('all', 'ready', 'waiting', 'late', 'backorders', 'operations')", status: 422, code: INVENTORY_OVERVIEW_FILTER_INVALID, message: Select a valid overview filter. }
+      steps:
+        - query: "INSERT INTO inventory_overview_runs(id, operation_type_id, operation_name, filter_name, requested_by, company_name, opened_at, row_version) VALUES(:run_id, :id, :operation_name, COALESCE(:filter_name, 'all'), COALESCE(NULLIF(:current_user_name, ''), 'Inventory Operator'), COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), 'My Company (San Francisco)'), TIMESTAMP '2026-01-15 10:00:00', 1)"
+      result: { query: "SELECT id, operation_type_id, operation_name, filter_name, requested_by, company_name, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_overview_runs WHERE id = :run_id" }
+    fields:
+      - { field: filter_name, label: Queue, type: select, options: [{ value: all, label: All }, { value: ready, label: Ready }, { value: waiting, label: Waiting }, { value: late, label: Late }, { value: backorders, label: Back Orders }, { value: operations, label: Operations }], default: all, required: true }
