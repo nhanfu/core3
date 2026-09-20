@@ -4,9 +4,33 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `fc0e486d58a668d7829fbd02fedfbb8f19677a59` (Product Alternatives).
+Latest committed bounded slice before this wave: `a84ab3862f080dfaf43cb30b47928c1150eb82ea` (Product Accessories).
 
-## Current bounded task — `ECOM-CATALOG-PRODUCT-ACCESSORIES-001`
+## Current bounded task — `ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`
+
+The next uncovered Website Sale checkout behavior is authenticated customer
+address management. Odoo's `/shop/address` flow creates and updates billing or
+delivery partner addresses, and checkout binds the selected address to the
+sale order; Core3 had only free-text order shipping addresses.
+
+Migrations 070/071 add deterministic company/customer-scoped address records.
+The separate Checkout API/page contracts list only active addresses for the
+open owned cart, expose permissioned create/update/archive actions with field,
+duplicate, company, ownership, and optimistic row-version guards, and let
+checkout select an address whose normalized display is persisted on the order.
+Guest checkout remains free-text and does not gain access to customer records.
+
+Focused verification: `bun test
+./test/ecommerce_checkout_customer_address.integration.test.ts
+./test/ecommerce_checkout.integration.test.ts
+./test/ecommerce_checkout_payment_token.integration.test.ts
+./test/ecommerce_cart.integration.test.ts --timeout 20000` — **21 passed,
+136 assertions, 0 failures**. Core3 desktop/mobile capture is blocked by
+unavailable ports 3000/4312/4313; Odoo `/shop` returns exact HTTP 404 on
+8069/8073. Browser actor coverage, paired Odoo rendering, external provider
+behavior, and module sign-off remain open.
+
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-ACCESSORIES-001`
 
 The next uncovered Website Sale catalog/checkout behavior is accessory
 products shown while reviewing the cart before payment. Odoo supplies a

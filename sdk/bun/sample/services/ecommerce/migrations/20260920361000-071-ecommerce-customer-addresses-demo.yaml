@@ -1,0 +1,20 @@
+version: 0.0.71
+kind: data
+description: deterministic eCommerce customer checkout address fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_customer_addresses (
+        id, row_version, customer_id, address_type, label, recipient_name,
+        street, city, state, postal_code, country, company_name, active, is_default
+      ) VALUES
+        ('ecommerce-address-acme-hq', 1, 'ecommerce-customer-001', 'delivery', 'Acme HQ', 'Acme Corporation', '1 Market Street', 'San Francisco', 'CA', '94105', 'US', 'My Company', TRUE, TRUE),
+        ('ecommerce-address-acme-billing', 1, 'ecommerce-customer-001', 'billing', 'Acme Billing', 'Acme Corporation', '1 Market Street', 'San Francisco', 'CA', '94105', 'US', 'My Company', TRUE, TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_customer_addresses
+      WHERE id IN ('ecommerce-address-acme-hq', 'ecommerce-address-acme-billing');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

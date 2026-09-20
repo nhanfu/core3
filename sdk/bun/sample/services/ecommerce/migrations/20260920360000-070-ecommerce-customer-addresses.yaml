@@ -1,0 +1,34 @@
+version: 0.0.70
+kind: schema
+description: durable eCommerce customer checkout addresses
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_customer_addresses (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        customer_id VARCHAR NOT NULL,
+        address_type VARCHAR NOT NULL DEFAULT 'delivery',
+        label VARCHAR NOT NULL,
+        recipient_name VARCHAR NOT NULL,
+        street VARCHAR NOT NULL,
+        city VARCHAR NOT NULL,
+        state VARCHAR,
+        postal_code VARCHAR,
+        country VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(customer_id, address_type, label)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_customer_addresses_customer_idx
+        ON ecommerce_customer_addresses(customer_id, company_name, address_type, active);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_customer_addresses_customer_idx;
+      DROP TABLE IF EXISTS ecommerce_customer_addresses;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

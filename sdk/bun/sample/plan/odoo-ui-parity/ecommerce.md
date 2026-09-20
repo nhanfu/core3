@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product accessories slice; module sign-off remains open)
+Status: qa-in-progress (bounded customer checkout address slice; module sign-off remains open)
+
+## Bounded feature — Checkout Customer Addresses (`ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`)
+
+Odoo source comparison: `website_sale/controllers/main.py` provides
+`/shop/address`, `shop_address_submit`, and `shop_update_address`; its address
+flow creates/updates billing or delivery partner addresses and binds them to
+the website sale order. `website_sale/models/res_partner.py` extends the
+frontend-writable address fields, and `views/templates.xml` renders Address
+Management and the address-on-checkout card.
+
+Core3 comparison: checkout previously accepted only free-text
+`shipping_address`. Migrations 070/071 add durable company/customer-scoped
+billing and delivery addresses with deterministic Acme fixtures. The separate
+Checkout page/API contracts expose owned saved addresses, permissioned
+create/update/archive actions with field, duplicate, ownership, company, and
+row-version guards, and an optional selected address that is rendered into the
+persisted order shipping address. Guest checkout keeps its existing free-text
+contract.
+
+Focused tests cover Odoo source tracing, page/API separation, deterministic
+fixtures, ownership/company/type/field/duplicate validation, optimistic CRUD,
+saved-address order selection, migration replay, guest regression, and DuckDB
+restart persistence in `test/ecommerce_checkout_customer_address.integration.test.ts`.
+Core3 authenticated desktop/mobile capture is blocked by unavailable runtime
+ports; supplied Odoo references return exact HTTP 404 for `/shop`. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-checkout-customer-address-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Accessories (`ECOM-CATALOG-PRODUCT-ACCESSORIES-001`)
 

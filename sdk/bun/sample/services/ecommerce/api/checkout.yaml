@@ -22,6 +22,13 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_CHECKOUT_TOKENS_FORBIDDEN, message: You do not have access to these payment tokens. }
       transport_error: { status: 503, code: ECOMMERCE_CHECKOUT_TOKENS_UNAVAILABLE, message: Saved payment tokens are temporarily unavailable. }
     query: "SELECT t.id AS value, t.payment_details || ' - ' || t.provider_name AS label FROM ecommerce_payment_tokens t JOIN ecommerce_payment_providers p ON p.code = t.provider_code AND p.company_name = t.company_name JOIN ecommerce_carts c ON c.id = COALESCE(:cart_id, 'ecommerce-cart-open-001') WHERE c.state = 'Open' AND c.customer_id IS NOT NULL AND t.customer_id = c.customer_id AND t.company_name = c.company_name AND t.active = TRUE AND t.verified = TRUE AND p.state <> 'disabled' AND (COALESCE(:company_name, '') = '' OR c.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(t.customer_email, '')) = lower(:current_user_email)) ORDER BY t.created_at DESC, t.id"
+  - id: ecommerce_checkout_addresses
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_CHECKOUT_ADDRESSES_UNAUTHENTICATED, message: Sign in to use saved checkout addresses. }
+      forbidden: { status: 403, code: ECOMMERCE_CHECKOUT_ADDRESSES_FORBIDDEN, message: You do not have access to these checkout addresses. }
+      transport_error: { status: 503, code: ECOMMERCE_CHECKOUT_ADDRESSES_UNAVAILABLE, message: Saved checkout addresses are temporarily unavailable. }
+    query: "SELECT a.id, a.id AS value, a.row_version, a.customer_id, a.address_type, a.label, a.recipient_name, a.street, a.city, a.state, a.postal_code, a.country, a.company_name, a.active, a.is_default FROM ecommerce_customer_addresses a JOIN ecommerce_carts c ON c.customer_id = a.customer_id AND c.company_name = a.company_name WHERE c.id = COALESCE(:cart_id, 'ecommerce-cart-open-001') AND c.state = 'Open' AND a.active = TRUE AND (COALESCE(:company_name, '') = '' OR c.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE((SELECT email FROM ecommerce_customers WHERE id = a.customer_id), '')) = lower(:current_user_email)) ORDER BY a.address_type, a.is_default DESC, a.label, a.id"
 actions:
   - { id: back_to_ecommerce_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/cart, params: {} }
   - id: confirm_ecommerce_checkout
@@ -38,6 +45,7 @@ actions:
       required: [customer_name, customer_email, shipping_address, delivery_method, payment_method]
       before_steps:
         - { query: "SELECT COALESCE(:cart_id, 'ecommerce-cart-open-001') AS cart_id, 'ecommerce-order-checkout-' || COALESCE(:cart_id, 'ecommerce-cart-open-001') AS id", assign: true }
+        - { query: "SELECT CASE WHEN NULLIF(:shipping_address_id, '') IS NULL THEN :shipping_address ELSE a.recipient_name || ', ' || a.street || ', ' || a.city || CASE WHEN COALESCE(a.state, '') = '' THEN '' ELSE ', ' || a.state END || CASE WHEN COALESCE(a.postal_code, '') = '' THEN '' ELSE ' ' || a.postal_code END || ', ' || a.country END AS shipping_address FROM ecommerce_carts c LEFT JOIN ecommerce_customer_addresses a ON a.id = NULLIF(:shipping_address_id, '') AND a.customer_id = c.customer_id AND a.company_name = c.company_name AND a.active = TRUE WHERE c.id = :cart_id", assign: true }
       guards:
         - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND (:company_name IS NULL OR company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_id, '')) IN (SELECT lower(id) FROM ecommerce_customers WHERE lower(COALESCE(email, '')) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CHECKOUT_OWNERSHIP_REQUIRED, message: This cart belongs to another customer or company. }
         - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open' AND (:company_name IS NULL OR company_name = :company_name)", status: 409, code: ECOMMERCE_CHECKOUT_CART_CLOSED, message: This cart is no longer available for checkout. }
@@ -47,6 +55,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE :payment_method <> 'Cash on Delivery' OR EXISTS (SELECT 1 FROM ecommerce_delivery_methods WHERE name = :delivery_method AND active = TRUE AND allow_cash_on_delivery = TRUE AND (:company_name IS NULL OR NULLIF(company_name, '') IS NULL OR company_name = :company_name))", status: 422, code: ECOMMERCE_CHECKOUT_CASH_ON_DELIVERY_UNSUPPORTED, message: Choose a delivery method that supports Cash on Delivery. }
         - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM ecommerce_payment_methods WHERE name = :payment_method AND active = TRUE AND primary_payment_method_id IS NULL)", status: 422, code: ECOMMERCE_CHECKOUT_PAYMENT_INVALID, message: Choose a valid payment method. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:payment_token_id, '') = '' OR EXISTS (SELECT 1 FROM ecommerce_payment_tokens t JOIN ecommerce_payment_providers p ON p.code = t.provider_code AND p.company_name = t.company_name WHERE t.id = :payment_token_id AND t.customer_id = (SELECT customer_id FROM ecommerce_carts WHERE id = :cart_id) AND t.company_name = (SELECT company_name FROM ecommerce_carts WHERE id = :cart_id) AND t.payment_method_name = :payment_method AND t.active = TRUE AND t.verified = TRUE AND p.state <> 'disabled')", status: 422, code: ECOMMERCE_CHECKOUT_PAYMENT_TOKEN_INVALID, message: Choose an active saved token for this customer, company, provider, and payment method. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:shipping_address_id, '') = '' OR EXISTS (SELECT 1 FROM ecommerce_customer_addresses a JOIN ecommerce_carts c ON c.customer_id = a.customer_id AND c.company_name = a.company_name WHERE a.id = :shipping_address_id AND a.active = TRUE AND c.id = :cart_id AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE((SELECT email FROM ecommerce_customers WHERE id = a.customer_id), '')) = lower(:current_user_email)))", status: 422, code: ECOMMERCE_CHECKOUT_ADDRESS_INVALID, message: Choose an active saved address for this customer and company. }
       steps:
         - { query: "INSERT INTO ecommerce_orders (id, order_number, customer_id, customer_name, customer_email, amount_total, currency, state, date_order, company_name, cart_id, shipping_address, delivery_method, payment_method) SELECT :id, 'WEB/2026/' || LPAD(CAST((SELECT COUNT(*) + 1 FROM ecommerce_orders) AS VARCHAR), 4, '0'), c.customer_id, :customer_name, :customer_email, COALESCE((SELECT SUM(quantity * unit_price) FROM ecommerce_cart_lines WHERE cart_id = :cart_id), 0), c.currency, 'Quotation', TIMESTAMP '2026-09-13 09:00:00', c.company_name, c.id, :shipping_address, :delivery_method, :payment_method FROM ecommerce_carts c WHERE c.id = :cart_id AND (:company_name IS NULL OR c.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(c.customer_id, '')) IN (SELECT lower(id) FROM ecommerce_customers WHERE lower(COALESCE(email, '')) = lower(:current_user_email)))" }
         - { query: "INSERT INTO ecommerce_payment_transactions (id, order_id, reference, idempotency_key, payment_method, provider_name, token_id, amount, currency, state, operation, is_live, customer_id, customer_name, customer_email, company_name) SELECT 'ecommerce-payment-tx-' || o.id, o.id, 'ECOM-TX-' || REPLACE(o.order_number, '/', '-'), 'checkout:' || o.cart_id, o.payment_method, COALESCE(NULLIF(pm.provider_names, ''), 'Core3 Offline'), NULLIF(:payment_token_id, ''), o.amount_total, o.currency, 'pending', CASE WHEN NULLIF(:payment_token_id, '') IS NULL THEN 'offline' ELSE 'offline_token' END, FALSE, o.customer_id, o.customer_name, o.customer_email, o.company_name FROM ecommerce_orders o LEFT JOIN ecommerce_payment_methods pm ON pm.name = o.payment_method WHERE o.id = :id ON CONFLICT (order_id) DO NOTHING" }
@@ -62,6 +71,81 @@ actions:
       - { field: delivery_method, label: Delivery Method, type: select, options_source: ecommerce_delivery_methods, required: true }
       - { field: payment_method, label: Payment Method, type: select, options_source: ecommerce_payment_methods, required: true }
       - { field: payment_token_id, label: Saved Payment Token, type: select, options_source: ecommerce_checkout_payment_tokens }
+      - { field: shipping_address_id, label: Saved Address, type: select, options_source: ecommerce_checkout_addresses }
+  - id: create_ecommerce_checkout_address
+    type: server_form
+    permission: ecommerce.write
+    title: New Checkout Address
+    action: ecommerce.checkout.address.create
+    handler: yaml_mutation
+    operation: create
+    params: { cart_id: '{state.ecommerce_checkout_cart.id}' }
+    refresh: [ecommerce_checkout_addresses, ecommerce_checkout_cart]
+    mutation:
+      generated: [id]
+      required: [label, recipient_name, street, city, country, address_type]
+      guards:
+        - { query: "SELECT c.id FROM ecommerce_carts c WHERE c.id = :cart_id AND c.state = 'Open' AND c.customer_id IS NOT NULL AND (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE((SELECT email FROM ecommerce_customers WHERE id = c.customer_id), '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CHECKOUT_ADDRESS_OWNERSHIP_REQUIRED, message: Sign in to manage addresses for this cart. }
+        - { query: "SELECT 1 AS ok WHERE :address_type IN ('billing', 'delivery')", status: 422, code: ECOMMERCE_CHECKOUT_ADDRESS_TYPE_INVALID, message: Choose a billing or delivery address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:label AS VARCHAR))) BETWEEN 1 AND 80 AND LENGTH(TRIM(CAST(:recipient_name AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(:street AS VARCHAR))) BETWEEN 1 AND 240 AND LENGTH(TRIM(CAST(:city AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:country AS VARCHAR))) BETWEEN 2 AND 3", status: 422, code: ECOMMERCE_CHECKOUT_ADDRESS_INVALID, message: Complete the saved address fields. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_customer_addresses a JOIN ecommerce_carts c ON c.customer_id = a.customer_id AND c.company_name = a.company_name WHERE c.id = :cart_id AND a.address_type = :address_type AND lower(a.label) = lower(:label) AND a.active = TRUE)", status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_EXISTS, message: An active address with this label already exists. }
+      steps:
+        - { query: "INSERT INTO ecommerce_customer_addresses(id, customer_id, address_type, label, recipient_name, street, city, state, postal_code, country, company_name, active, is_default) SELECT :id, c.customer_id, :address_type, TRIM(:label), TRIM(:recipient_name), TRIM(:street), TRIM(:city), NULLIF(TRIM(:state), ''), NULLIF(TRIM(:postal_code), ''), UPPER(TRIM(:country)), c.company_name, TRUE, COALESCE(CAST(:is_default AS BOOLEAN), FALSE) FROM ecommerce_carts c WHERE c.id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_customer_addresses WHERE id = :id" }
+    fields:
+      - { field: label, label: Label, type: text, required: true }
+      - { field: address_type, label: Address Type, type: select, options: [{ value: delivery, label: Delivery }, { value: billing, label: Billing }], required: true, default: delivery }
+      - { field: recipient_name, label: Recipient, type: text, required: true }
+      - { field: street, label: Street, type: text, required: true }
+      - { field: city, label: City, type: text, required: true }
+      - { field: state, label: State, type: text }
+      - { field: postal_code, label: Postal Code, type: text }
+      - { field: country, label: Country, type: text, required: true }
+      - { field: is_default, label: Default, type: checkbox, default: false }
+  - id: edit_ecommerce_checkout_address
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Checkout Address
+    action: ecommerce.checkout.address.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { cart_id: '{state.ecommerce_checkout_cart.id}', id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_checkout_addresses, ecommerce_checkout_cart]
+    mutation:
+      required: [id, expected_row_version, label, recipient_name, street, city, country, address_type]
+      guards:
+        - { query: "SELECT a.id FROM ecommerce_customer_addresses a JOIN ecommerce_carts c ON c.customer_id = a.customer_id AND c.company_name = a.company_name WHERE a.id = :id AND a.row_version = :expected_row_version AND a.active = TRUE AND c.id = :cart_id AND (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE((SELECT email FROM ecommerce_customers WHERE id = a.customer_id), '')) = lower(:current_user_email))", status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_STALE, message: This address changed or is no longer available. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :address_type IN ('billing', 'delivery') AND LENGTH(TRIM(CAST(:label AS VARCHAR))) BETWEEN 1 AND 80 AND LENGTH(TRIM(CAST(:recipient_name AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(:street AS VARCHAR))) BETWEEN 1 AND 240 AND LENGTH(TRIM(CAST(:city AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:country AS VARCHAR))) BETWEEN 2 AND 3", status: 422, code: ECOMMERCE_CHECKOUT_ADDRESS_INVALID, message: Complete the saved address fields. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_customer_addresses a JOIN ecommerce_customer_addresses current_address ON current_address.id = :id WHERE a.customer_id = current_address.customer_id AND a.address_type = :address_type AND lower(a.label) = lower(:label) AND a.id <> :id AND a.active = TRUE)", status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_EXISTS, message: An active address with this label already exists. }
+      steps:
+        - { query: "UPDATE ecommerce_customer_addresses SET row_version = row_version + 1, address_type = :address_type, label = TRIM(:label), recipient_name = TRIM(:recipient_name), street = TRIM(:street), city = TRIM(:city), state = NULLIF(TRIM(:state), ''), postal_code = NULLIF(TRIM(:postal_code), ''), country = UPPER(TRIM(:country)), is_default = COALESCE(CAST(:is_default AS BOOLEAN), FALSE), updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_STALE, message: This address changed before saving. }
+      result: { query: "SELECT * FROM ecommerce_customer_addresses WHERE id = :id" }
+    fields:
+      - { field: label, label: Label, type: text, required: true }
+      - { field: address_type, label: Address Type, type: select, options: [{ value: delivery, label: Delivery }, { value: billing, label: Billing }], required: true }
+      - { field: recipient_name, label: Recipient, type: text, required: true }
+      - { field: street, label: Street, type: text, required: true }
+      - { field: city, label: City, type: text, required: true }
+      - { field: state, label: State, type: text }
+      - { field: postal_code, label: Postal Code, type: text }
+      - { field: country, label: Country, type: text, required: true }
+      - { field: is_default, label: Default, type: checkbox }
+  - id: archive_ecommerce_checkout_address
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.checkout.address.archive
+    handler: yaml_mutation
+    operation: update
+    params: { cart_id: '{state.ecommerce_checkout_cart.id}', id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_checkout_addresses, ecommerce_checkout_cart]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT a.id FROM ecommerce_customer_addresses a JOIN ecommerce_carts c ON c.customer_id = a.customer_id AND c.company_name = a.company_name WHERE a.id = :id AND a.row_version = :expected_row_version AND a.active = TRUE AND c.id = :cart_id AND (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE((SELECT email FROM ecommerce_customers WHERE id = a.customer_id), '')) = lower(:current_user_email))", status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_STALE, message: This address changed or is no longer available. Reload before archiving. }
+      steps:
+        - { query: "UPDATE ecommerce_customer_addresses SET active = FALSE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_CHECKOUT_ADDRESS_STALE, message: This address changed before archiving. }
+      result: { query: "SELECT TRUE AS archived, :id AS id" }
   - id: anonymous_confirm_ecommerce_checkout
     type: server_form
     permission: ecommerce.read

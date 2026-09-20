@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Checkout Customer Addresses (`ECOM-CHECKOUT-CUSTOMER-ADDRESS-001`, 2026-09-21)
+
+- Odoo source/page: pass. `controllers/main.py` supplies `/shop/address`,
+  `shop_address_submit`, and `shop_update_address`; `res_partner.py` extends
+  frontend-writable address fields; `templates.xml` renders Address Management
+  and the address-on-checkout surface.
+- Core3 lifecycle: pass for this bounded contract. Migrations 070/071 add
+  durable customer/company-scoped billing and delivery addresses. Checkout
+  page/API YAML exposes saved-address selection plus permissioned create,
+  update, and archive actions with required-field, type, duplicate, ownership,
+  company, and optimistic stale guards; selected values are persisted into the
+  order shipping address.
+- Focused verification: `bun test
+  ./test/ecommerce_checkout_customer_address.integration.test.ts
+  ./test/ecommerce_checkout.integration.test.ts
+  ./test/ecommerce_checkout_payment_token.integration.test.ts
+  ./test/ecommerce_cart.integration.test.ts --timeout 20000` — **21 passed,
+  136 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Browser actor coverage, paired Odoo rendering, and external payment/delivery
+  gates remain open. Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-customer-address-001/`.
+
 ## Product Accessories (`ECOM-CATALOG-PRODUCT-ACCESSORIES-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product_template.py` supplies

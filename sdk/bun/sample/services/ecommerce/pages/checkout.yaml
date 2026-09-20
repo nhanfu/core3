@@ -9,4 +9,21 @@ components:
       - { id: confirm_ecommerce_checkout, label: Confirm Order, variant: primary, permission: ecommerce.write }
     groups:
       - { title: Order Summary, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: state, label: Status, type: StatusChip }, { field: item_count, label: Items }, { field: amount_total, label: Total }] }
-      - { title: Checkout, columns: 1, fields: [{ field: customer_name, label: Customer Name, type: text }, { field: customer_email, label: Customer Email, type: text }, { field: shipping_address, label: Shipping Address, type: textarea }, { field: delivery_method, label: Delivery Method, type: select, options_source: ecommerce_delivery_methods }, { field: payment_method, label: Payment Method, type: select, options_source: ecommerce_payment_methods }, { field: payment_token_id, label: Saved Payment Token, type: select, options_source: ecommerce_checkout_payment_tokens }] }
+      - { title: Checkout, columns: 1, fields: [{ field: customer_name, label: Customer Name, type: text }, { field: customer_email, label: Customer Email, type: text }, { field: shipping_address_id, label: Saved Address, type: select, options_source: ecommerce_checkout_addresses }, { field: shipping_address, label: Shipping Address, type: textarea }, { field: delivery_method, label: Delivery Method, type: select, options_source: ecommerce_delivery_methods }, { field: payment_method, label: Payment Method, type: select, options_source: ecommerce_payment_methods }, { field: payment_token_id, label: Saved Payment Token, type: select, options_source: ecommerce_checkout_payment_tokens }] }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_checkout_addresses
+    create_action: create_ecommerce_checkout_address
+    create_label: New Address
+    page_size: 20
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No saved addresses, description: Save a billing or delivery address for the next checkout. }
+    columns:
+      - { field: label, label: Address, type: PrimaryEntityCell }
+      - { field: address_type, label: Type }
+      - { field: recipient_name, label: Recipient }
+      - { field: city, label: City }
+    actions:
+      - { id: edit_ecommerce_checkout_address, label: Edit, permission: ecommerce.write }
+      - { id: archive_ecommerce_checkout_address, label: Archive, permission: ecommerce.write, variant: danger }
