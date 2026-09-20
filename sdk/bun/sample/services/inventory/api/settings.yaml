@@ -7,7 +7,7 @@ datasources:
       unauthorized: { status: 401, code: INVENTORY_SETTINGS_UNAUTHORIZED, message: Sign in to view Inventory settings. }
       forbidden: { status: 403, code: INVENTORY_SETTINGS_FORBIDDEN, message: You do not have permission to manage Inventory settings. }
       transport_error: { status: 503, code: INVENTORY_SETTINGS_UNAVAILABLE, message: Inventory settings are temporarily unavailable. }
-    query: "SELECT id, row_version, company_name, group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report FROM inventory_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'inventory-settings-demo'"
+    query: "SELECT id, row_version, company_name, group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report, annual_inventory_day, annual_inventory_month FROM inventory_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'inventory-settings-demo'"
 actions:
   - id: inventory_settings_update_server
     type: server
@@ -19,7 +19,7 @@ actions:
       operation: update
       table: inventory_settings
       key_field: id
-      fields: [group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report]
+      fields: [group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report, annual_inventory_day, annual_inventory_month]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM inventory_settings WHERE id = :id", status: 404, code: INVENTORY_SETTINGS_NOT_FOUND, message: Inventory settings no longer exist. }

@@ -38,6 +38,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate stock records or moving dates | planned migration/restart gate |
 | INV-FUNC-008 | Attachments/import/export/print | Exercise transfer documents, product/lot import/export and exposed report/print actions | planned browser interaction gate |
 | INV-FUNC-009 | Put in Pack | Create package, contents, result relation, timeline and picking row-version update; reject stale/duplicate/invalid requests and survive restart | pass: `INV-PACK-001` focused suite and Core3 browser |
+| INV-FUNC-010 | Annual inventory settings | Day/month defaults 31/12, manager save, stale/missing guards, idempotent migration and restart persistence | pass: `INV-SETTINGS-001` focused suite |
 
 ## Workflow and integration cases
 
@@ -62,6 +63,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | INV-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current inventory rows and moves unchanged | pass: focused suite |
 | INV-PERM-007 | Put in Pack action | `inventory.write` required; stale row, already-packed, blank/duplicate reference, no-lines and invalid-state requests are rejected without partial package state | pass: `INV-PACK-001` focused suite |
+| INV-PERM-008 | Annual settings manager boundary | `inventory.manage` is required for the Settings page and mutation; read-only users receive 403 and rows remain unchanged | pass: `INV-SETTINGS-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -73,6 +75,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-004 | Current route regression | all 24 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 48-check matrix |
 | INV-UI-005 | Put in Pack transfer dialog | 1440x900, 390x844 | Permissioned transfer action, package reference/type form, timeline/package result and responsive no-overflow state are rendered | pass Core3; Odoo reference control gated |
 | INV-UI-006 | Package Transfers stat/list | 1440x900, 390x844 | Package stat opens the scoped transfer list, source/result relation labels render, row navigation works, and no horizontal overflow occurs | pass Core3; Odoo reference package menu group-gated |
+| INV-UI-007 | Annual Inventory Day and Month | 1440x900, 390x844 | Number/select controls, Save/reload persistence, no request errors or horizontal overflow; paired Odoo result is recorded | pass Core3; Odoo action RPC blocker captured |
 
 ## Exit criteria
 

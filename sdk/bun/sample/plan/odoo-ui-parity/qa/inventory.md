@@ -26,7 +26,7 @@ Authenticated user: `admin@tms.local`
 | INV-SET-06 | Desktop render at 1440x900, no failed requests/errors/overflow | PASS | `/tmp/core3-inventory-settings-desktop.png`; Playwright state |
 | INV-SET-07 | Mobile render at 390x844, no failed requests/errors/overflow | PASS | `/tmp/core3-inventory-settings-mobile.png`; Playwright state |
 | INV-SET-08 | Authenticated Save click persists changed checkbox | PASS | Playwright POST `/api/mutate` includes `values`; Save succeeds and reload preserves the changed checkbox |
-| INV-SET-09 | Odoo paired desktop/mobile visual comparison | PARTIAL | Packages paired at both viewports; Settings pair remains open |
+| INV-SET-09 | Odoo paired desktop/mobile visual comparison | PARTIAL / blocker recorded | Authenticated Settings action at both viewports returns the exact `ir.actions.server(445)` RPC traceback in `evidence/inventory/2026-09-20/INV-SETTINGS-001/odoo.json` |
 
 ## Current route and reference evidence (2026-09-12)
 
@@ -337,3 +337,33 @@ The Inventory module remains open and this slice does not sign off the module.
 QA disposition: PASS for the Core3 Package Transfers lifecycle and paired
 evidence gate; Odoo action execution remains blocked by the authenticated
 reference user's source permission. Inventory module sign-off remains open.
+
+## Annual Inventory settings QA — `INV-SETTINGS-001` (2026-09-20)
+
+- Odoo source comparison covered `stock.action_stock_config_settings`,
+  `stock.menu_stock_general_settings`, `base.group_system`,
+  `stock.group_stock_manager`, and the `res.company` annual day/month related
+  fields. The source defaults are day 31 and month `'12'`.
+- Core3 keeps the page and API YAML separate, joined by
+  `page.id: inventory-settings`. Migration `0.0.22` adds durable annual fields
+  and deterministic null backfills; the manager-only Save mutation uses the
+  existing row-version contract.
+- Focused test: `bun test test/inventory_settings.integration.test.ts
+  --timeout 20000` — 4 passed, 21 assertions. Coverage includes CRUD/save,
+  stale and missing guards, read-only 403 page/mutation boundaries, idempotent
+  migration, and file-backed restart persistence.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-SETTINGS-001/`: desktop 1440x900 and
+  mobile 390x844 Save/reload captures have empty failed-request lists and no
+  horizontal overflow. Browser persistence was 20/3 on desktop and 21/4 on
+  mobile.
+- Odoo paired capture was attempted with the authenticated reference user at
+  both viewports. The supplied `/odoo/action-445` action fails before rendering
+  the Settings form with `RPC_ERROR`; technical details identify
+  `ir.actions.server(445)` evaluating `record.action_convert_to_subtask()` on a
+  `None` record. Screenshots and the full response are retained as exact blocker
+  evidence, so this remains partial rather than a false sign-off.
+
+QA disposition: PASS for the bounded Core3 annual-settings lifecycle and
+permission/restart contract; PARTIAL for Odoo visual parity because the supplied
+reference action is server-blocked. Full Inventory sign-off remains open.

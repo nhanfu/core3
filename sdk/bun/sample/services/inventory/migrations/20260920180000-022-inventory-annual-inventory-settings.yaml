@@ -1,0 +1,17 @@
+version: 0.0.22
+kind: schema
+description: Durable annual inventory day and month settings
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_settings ADD COLUMN IF NOT EXISTS annual_inventory_day INTEGER;
+      ALTER TABLE inventory_settings ADD COLUMN IF NOT EXISTS annual_inventory_month VARCHAR;
+      UPDATE inventory_settings SET annual_inventory_day = 31 WHERE annual_inventory_day IS NULL;
+      UPDATE inventory_settings SET annual_inventory_month = '12' WHERE annual_inventory_month IS NULL OR annual_inventory_month = '';
+    down: |
+      ALTER TABLE inventory_settings DROP COLUMN IF EXISTS annual_inventory_month;
+      ALTER TABLE inventory_settings DROP COLUMN IF EXISTS annual_inventory_day;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

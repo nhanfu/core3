@@ -1,0 +1,38 @@
+{
+  "runtime": "http://127.0.0.1:8069",
+  "route": "/odoo/action-445",
+  "user": "codex@core3.local",
+  "sourceAction": "stock.action_stock_config_settings",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:8069/odoo/action-445",
+    "title": "Odoo",
+    "initial": "7\n40\nMy Company (San Francisco)\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nSee technical details\nClose",
+    "details": "7\n40\nMy Company (San Francisco)\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nHide technical details\n\nOdoo Server Error\n\nRPC_ERROR\n\nOdoo Server Error\n\nOccured on 127.0.0.1:8069 on 2026-09-20 10:49:35 GMT\n\nTraceback (most recent call last):\n  File \"/usr/lib/python3/dist-packages/odoo/tools/safe_eval.py\", line 408, in safe_eval\n    return unsafe_eval(c, globals_dict, None)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"ir.actions.server(445,)\", line 1, in <module>\nAttributeError: 'NoneType' object has no attribute 'action_convert_to_subtask'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2329, in _serve_db\n    return service_model.retrying(serve_func, env=self.env)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/service/model.py\", line 188, in retrying\n    result = func()\n             ^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2384, in _serve_ir_http\n    response = self.dispatcher.dispatch(rule.endpoint, args)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2599, in dispatch\n    result = self.request.registry['ir.http']._dispatch(endpoint)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_http.py\", line 353, in _dispatch\n    result = endpoint(**request.params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 838, in route_wrapper\n    result = endpoint(self, *args, **params_ok)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/web/controllers/action.py\", line 58, in run\n    result = action.run()\n             ^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1179, in run\n    res = action.sudo()._run(records, eval_context)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1192, in _run\n    res = runner(run_self, eval_context=eval_context)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1016, in _run_action_code_multi\n    safe_eval(self.code.strip(), eval_context, mode=\"exec\", filename=str(self))\n  File \"/usr/lib/python3/dist-packages/odoo/tools/safe_eval.py\", line 414, in safe_eval\n    raise ValueError('%r while evaluating\\n%r' % (e, expr))\nValueError: AttributeError(\"'NoneType' object has no attribute 'action_convert_to_subtask'\") while evaluating\n'action = record.action_convert_to_subtask()'\n\nThe above server error caused the following client error:\nRPC_ERROR: Odoo Server Error\n    RPC_ERROR\n        at makeErrorFromResponse (http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js:3198:165)\n        at XMLHttpRequest.<anonymous> (http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js:3205:13)\nClose",
+    "failed": [],
+    "width": {
+      "doc": 1440,
+      "client": 1440,
+      "inner": 1440
+    }
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:8069/odoo/action-445",
+    "title": "Odoo",
+    "initial": "7\n40\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nSee technical details\nClose",
+    "details": "7\n40\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nHide technical details\n\nOdoo Server Error\n\nRPC_ERROR\n\nOdoo Server Error\n\nOccured on 127.0.0.1:8069 on 2026-09-20 10:49:43 GMT\n\nTraceback (most recent call last):\n  File \"/usr/lib/python3/dist-packages/odoo/tools/safe_eval.py\", line 408, in safe_eval\n    return unsafe_eval(c, globals_dict, None)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"ir.actions.server(445,)\", line 1, in <module>\nAttributeError: 'NoneType' object has no attribute 'action_convert_to_subtask'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2329, in _serve_db\n    return service_model.retrying(serve_func, env=self.env)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/service/model.py\", line 188, in retrying\n    result = func()\n             ^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2384, in _serve_ir_http\n    response = self.dispatcher.dispatch(rule.endpoint, args)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 2599, in dispatch\n    result = self.request.registry['ir.http']._dispatch(endpoint)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_http.py\", line 353, in _dispatch\n    result = endpoint(**request.params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/http.py\", line 838, in route_wrapper\n    result = endpoint(self, *args, **params_ok)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/web/controllers/action.py\", line 58, in run\n    result = action.run()\n             ^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1179, in run\n    res = action.sudo()._run(records, eval_context)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1192, in _run\n    res = runner(run_self, eval_context=eval_context)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3/dist-packages/odoo/addons/base/models/ir_actions.py\", line 1016, in _run_action_code_multi\n    safe_eval(self.code.strip(), eval_context, mode=\"exec\", filename=str(self))\n  File \"/usr/lib/python3/dist-packages/odoo/tools/safe_eval.py\", line 414, in safe_eval\n    raise ValueError('%r while evaluating\\n%r' % (e, expr))\nValueError: AttributeError(\"'NoneType' object has no attribute 'action_convert_to_subtask'\") while evaluating\n'action = record.action_convert_to_subtask()'\n\nThe above server error caused the following client error:\nRPC_ERROR: Odoo Server Error\n    RPC_ERROR\n        at makeErrorFromResponse (http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js:3198:165)\n        at XMLHttpRequest.<anonymous> (http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js:3205:13)\nClose",
+    "failed": [],
+    "width": {
+      "doc": 390,
+      "client": 390,
+      "inner": 390
+    }
+  }
+}

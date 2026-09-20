@@ -1,0 +1,757 @@
+{
+  "runtime": "http://127.0.0.1:4541",
+  "user": "admin@tms.local",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "initial": {},
+  "initialControls": [
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Switch application",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Close application launcher",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Close application launcher",
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "aria": "Search applications",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ContactsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "OrdersSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ChatSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Core3 AgentSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "CRMSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Point of SaleSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "SubscriptionsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "RentalSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "AccountingSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ExpensesSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "DocumentsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ApprovalsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Spreadsheet / DashboardsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Inventory"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ManufacturingSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "PurchaseSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "MaintenanceSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Field ServiceSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "HelpdeskSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "QualitySoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "PLMSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "EmployeesSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "RecruitmentSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Time OffSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "AppraisalsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ReferralsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "FleetSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Email MarketingSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "SMS MarketingSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "EventsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "SurveysSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Marketing AutomationSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ProjectSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "TimesheetsSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "WebsiteSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "eCommerceSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "BlogSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "ForumSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Live ChatSoon"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Transfers"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Receipts"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Deliveries"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Internal"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Physical Inventory"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Adjustments"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Scrap Orders"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Procurement"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Replenishment"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Reporting"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Stock"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Moves History"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Products"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Lots / Serial Numbers"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Packages"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Configuration"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Settings"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Warehouses"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Locations"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Operations Types"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Inventory Analysis"
+    },
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "aria": "Ask Core3 anything or search pages",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Messages",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "submit",
+      "value": "",
+      "checked": false,
+      "aria": "Notifications",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Use dark theme",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": "Admin User",
+      "text": "AU"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Core3"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Core3 VN"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "My profile"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Preferences"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Change password"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Sign out"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Save"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Discard"
+    },
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Inventory"
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "number",
+      "value": "20",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "SELECT",
+      "type": "select-one",
+      "value": "3",
+      "checked": false,
+      "aria": null,
+      "text": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember"
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "aria": null,
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "submit",
+      "value": "",
+      "checked": false,
+      "aria": null,
+      "text": "Mark all read"
+    }
+  ],
+  "after": {},
+  "reload": {},
+  "persisted": {
+    "day": "21",
+    "month": "4"
+  },
+  "api": [
+    {
+      "url": "http://127.0.0.1:4541/api/pages/inventory-settings?lc=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:4541/api/mutate",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:4541/api/pages/inventory-settings?lc=en",
+      "status": 200
+    }
+  ],
+  "failed": [],
+  "width": {
+    "doc": 390,
+    "client": 390,
+    "inner": 390
+  }
+}

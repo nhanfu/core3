@@ -19,6 +19,8 @@ components:
               - { field: group_stock_tracking_lot, label: Lots and Serial Numbers, description: Track products by lots or serial numbers., type: checkbox }
               - { field: group_stock_production_lot, label: Lots / Serial Numbers, description: Assign lots or serial numbers to stock operations., type: checkbox }
               - { field: group_stock_packaging, label: Packages, description: Pack products into packages during transfers., type: checkbox }
+              - { field: annual_inventory_day, label: Annual Inventory Day and Month, description: Day of the month, type: number }
+              - { field: annual_inventory_month, label: Annual Inventory Month, type: select, options: [{ value: '1', label: January }, { value: '2', label: February }, { value: '3', label: March }, { value: '4', label: April }, { value: '5', label: May }, { value: '6', label: June }, { value: '7', label: July }, { value: '8', label: August }, { value: '9', label: September }, { value: '10', label: October }, { value: '11', label: November }, { value: '12', label: December }] }
           - title: Advanced Operations
             fields:
               - { field: group_stock_adv_location, label: Storage Locations, description: Configure removal strategies and putaway rules., type: checkbox }
@@ -40,11 +42,13 @@ actions:
       group_stock_adv_location: '{row.group_stock_adv_location}'
       module_stock_barcode: '{row.module_stock_barcode}'
       group_stock_reception_report: '{row.group_stock_reception_report}'
+      annual_inventory_day: '{row.annual_inventory_day}'
+      annual_inventory_month: '{row.annual_inventory_month}'
     mutation:
       operation: update
       table: inventory_settings
       key_field: id
-      fields: [group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report]
+      fields: [group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report, annual_inventory_day, annual_inventory_month]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM inventory_settings WHERE id = :id", status: 404, code: INVENTORY_SETTINGS_NOT_FOUND, message: Inventory settings no longer exist. }

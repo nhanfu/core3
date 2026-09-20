@@ -1,0 +1,139 @@
+{
+  "runtime": "http://127.0.0.1:4541",
+  "user": "admin@tms.local",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "initial": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nSettings\nSave\nDiscard\nSettings\nInventory\nOperations\nStorage Locations\n\nManage multiple locations and internal transfers.\n\nStorage Warehouses\n\nManage multiple warehouses in one company.\n\nLots and Serial Numbers\n\nTrack products by lots or serial numbers.\n\nLots / Serial Numbers\n\nAssign lots or serial numbers to stock operations.\n\nPackages\n\nPack products into packages during transfers.\n\nAnnual Inventory Day and Month\nDay of the month\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember\nAnnual Inventory Month\nAdvanced Operations\nStorage Locations\n\nConfigure removal strategies and putaway rules.\n\nBarcode Scanner\n\nProcess inventory operations with barcode scanning.\n\nReception Report\n\nView and allocate incoming quantities.",
+  "controls": [
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "placeholder": "Search applications",
+      "aria": "Search applications"
+    },
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "placeholder": "Ask Core3 anything…",
+      "aria": "Ask Core3 anything or search pages"
+    },
+    {
+      "tag": "INPUT",
+      "type": "search",
+      "value": "",
+      "checked": false,
+      "placeholder": "Search settings...",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": true,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "number",
+      "value": "31",
+      "checked": false,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "SELECT",
+      "type": "select-one",
+      "value": "12",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "placeholder": "",
+      "aria": null
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "value": "on",
+      "checked": false,
+      "placeholder": "",
+      "aria": null
+    }
+  ],
+  "after": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nSettings\nSaved\nDiscard\nSettings\nInventory\nOperations\nStorage Locations\n\nManage multiple locations and internal transfers.\n\nStorage Warehouses\n\nManage multiple warehouses in one company.\n\nLots and Serial Numbers\n\nTrack products by lots or serial numbers.\n\nLots / Serial Numbers\n\nAssign lots or serial numbers to stock operations.\n\nPackages\n\nPack products into packages during transfers.\n\nAnnual Inventory Day and Month\nDay of the month\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember\nAnnual Inventory Month\nAdvanced Operations\nStorage Locations\n\nConfigure removal strategies and putaway rules.\n\nBarcode Scanner\n\nProcess inventory operations with barcode scanning.\n\nReception Report\n\nView and allocate incoming quantities.",
+  "reload": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nSettings\nSave\nDiscard\nSettings\nInventory\nOperations\nStorage Locations\n\nManage multiple locations and internal transfers.\n\nStorage Warehouses\n\nManage multiple warehouses in one company.\n\nLots and Serial Numbers\n\nTrack products by lots or serial numbers.\n\nLots / Serial Numbers\n\nAssign lots or serial numbers to stock operations.\n\nPackages\n\nPack products into packages during transfers.\n\nAnnual Inventory Day and Month\nDay of the month\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember\nAnnual Inventory Month\nAdvanced Operations\nStorage Locations\n\nConfigure removal strategies and putaway rules.\n\nBarcode Scanner\n\nProcess inventory operations with barcode scanning.\n\nReception Report\n\nView and allocate incoming quantities.",
+  "persisted": {
+    "day": "20",
+    "month": "3"
+  },
+  "api": [
+    {
+      "url": "http://127.0.0.1:4541/api/pages/inventory-settings?lc=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:4541/api/mutate",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:4541/api/pages/inventory-settings?lc=en",
+      "status": 200
+    }
+  ],
+  "failed": [],
+  "width": {
+    "doc": 1440,
+    "client": 1440,
+    "inner": 1440
+  }
+}

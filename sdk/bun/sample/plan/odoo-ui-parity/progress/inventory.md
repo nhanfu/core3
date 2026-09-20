@@ -67,6 +67,26 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
   and full Odoo workflow parity still require QA coverage; the single passing
   receipt workflow is not module completion.
 
+## `INV-SETTINGS-001` — Annual Inventory Day and Month (2026-09-20)
+
+- Compared the Odoo `stock.action_stock_config_settings` / `menu_stock_general_settings`
+  source and `res.company` defaults: day 31 and month December (`'12'`).
+- Added durable annual day/month columns and deterministic backfill migration
+  `20260920180000-022-inventory-annual-inventory-settings.yaml`.
+- Extended the separate Settings API and `SettingsView` YAML contracts with the
+  number/select controls and Save parameters, joined by `page.id`.
+- Focused lifecycle coverage is 4 tests and 21 assertions: defaults and
+  idempotence, save/row-version/stale/missing guards, read-only 403 page/API
+  boundaries, and file-backed restart persistence.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-20/INV-SETTINGS-001/`; Save/reload preserved the
+  values with no failed requests or horizontal overflow.
+- The paired authenticated Odoo action was captured at both viewports but is
+  blocked before form render by the exact `ir.actions.server(445)` RPC traceback
+  recorded in the evidence folder.
+- Status: bounded settings slice complete for review; full Inventory sign-off
+  remains open for broader reports, operations, actors, and Odoo workflows.
+
 ## Transfer operation slice — Unreserve (2026-09-13)
 
 - Added the Odoo form-bound `Unreserve` action to transfer detail for current
