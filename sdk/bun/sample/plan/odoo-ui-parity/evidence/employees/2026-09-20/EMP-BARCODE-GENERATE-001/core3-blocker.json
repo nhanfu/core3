@@ -1,0 +1,20 @@
+{
+  "feature_id": "EMP-BARCODE-GENERATE-001",
+  "actor": "admin@tms.local",
+  "authenticated": true,
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900, "screenshot": "core3-desktop-settings.png" },
+    "mobile": { "width": 390, "height": 844, "screenshot": "core3-mobile-settings.png" }
+  },
+  "route": "/employees/detail?id=employee-demo-003",
+  "session_company": "Core3 Demo Company",
+  "fixture_company": "Core3 Vietnam",
+  "observed": {
+    "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-003",
+    "employee_name": "—",
+    "badge_id": "—",
+    "generate_action": "not rendered because the scoped datasource has no employee row"
+  },
+  "blocker": "The authenticated Core3 default company is Core3 Demo Company, while employee-demo-003 is seeded in Core3 Vietnam. The company guard correctly withholds the fixture, so an authenticated UI action exercise requires switching the session company or a matching fixture.",
+  "claim": "exact blocker; no Core3 UI pass claimed"
+}

@@ -531,3 +531,19 @@ Reasons comparison.
 Evidence is under `evidence/employees/2026-09-20/EMP-TEMPLATE-LOAD-001/`.
 This bounded slice is not module sign-off; the Core3 fixture-company blocker and
 broader Employees parity review remain conditional.
+
+## EMP-BARCODE-GENERATE-001 evidence ledger (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-011 | Odoo Settings Generate Badge ID; deterministic Core3 employee update and retry | pass; 4 focused tests / 23 assertions |
+| EMP-PERM-011 | Authenticated actor, employees.write, active/current-company, stale and uniqueness boundaries | pass; rejected writes leave employee unchanged |
+| EMP-DATA-011 | Unique barcode migration replay and file-backed restart | pass; `041000000003` and row version 2 survive restart |
+| EMP-UI-007 | Authenticated Core3/Odoo desktop/mobile Settings comparison | Odoo pass at 1440x900 and 390x844; Core3 exact blocker recorded because session `Core3 Demo Company` has no `Core3 Vietnam` fixture row |
+
+Evidence is under `evidence/employees/2026-09-20/EMP-BARCODE-GENERATE-001/`.
+Focused verification is **4 tests / 23 assertions**; the full Employees suite
+is **65 tests / 658 assertions** across 21 files; audit is **673 pages / 682
+routes / 1,219 datasources**; focused ESLint and diff-check pass.
+The bounded feature is not module sign-off; the Core3 company-context blocker,
+separate Print Badge report, and broader Employees parity review remain open.

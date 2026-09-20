@@ -1,0 +1,13 @@
+{
+  "feature_id": "EMP-BARCODE-GENERATE-001",
+  "actor": "codex@core3.local",
+  "authenticated": true,
+  "viewport": { "width": 390, "height": 844 },
+  "route": "/odoo/employees/6",
+  "employee": "Abigail Peterson",
+  "tab": "Settings",
+  "observed_controls": ["Badge ID?", "Generate"],
+  "screenshot": "odoo-mobile-settings.png",
+  "page_errors": [],
+  "failed_requests": []
+}

@@ -1142,3 +1142,32 @@ modal captures pass desktop/mobile in
 desktop/mobile evidence is an exact blocker: Admin session company is
 `Core3 Vietnam Branch`, seeded Employees data is `Core3 Vietnam`, and the
 list is empty. No UI pass or aggregate Employees sign-off is claimed.
+
+## EMP-BARCODE-GENERATE-001: employee Settings Generate Badge ID (2026-09-20)
+
+The next smallest source-backed employee gap was Odoo's Settings-tab
+`generate_random_barcode` action. Odoo's `hr_employee_views.xml:402-406`
+places Generate beside the Badge ID field when empty, while
+`hr_employee.py:244-247,1296-1301,1541-1543` defines uniqueness, the
+alphanumeric/18-character constraint, and the `041` + nine-digit generator.
+
+Core3 now binds `generate_employee_barcode` through the separate
+`employee-detail` page/API contracts. The `employees.write` mutation requires
+an authenticated actor, active/current-company employee, matching row version,
+empty badge field, and a unique valid generated value. It persists the badge
+ID and increments `row_version`; migration
+`20260920200000-031-employee-barcode-generation.yaml` adds the durable unique
+index. Deterministic employee-number-derived output keeps fixtures/restarts
+reproducible while preserving Odoo's format.
+
+Focused coverage is in `test/employees_barcode_generate.integration.test.ts`:
+4 tests / 23 assertions, including source mapping, actor/company/active/stale/
+retry guards, persistence, migration replay, unique-index presence, and
+file-backed restart. Odoo authenticated Settings captures pass at desktop and
+mobile in `evidence/employees/2026-09-20/EMP-BARCODE-GENERATE-001/`. Core3
+authenticated desktop/mobile captures are an exact blocker: the session is
+`Core3 Demo Company` while `employee-demo-003` is seeded in `Core3 Vietnam`,
+so the company-scoped detail is empty and no Core3 action pass is claimed.
+
+This slice completes Generate; the separate Odoo Print Badge report remains a
+future bounded gap.

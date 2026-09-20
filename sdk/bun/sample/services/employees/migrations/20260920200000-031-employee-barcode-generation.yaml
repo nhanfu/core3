@@ -1,0 +1,13 @@
+version: 0.0.31
+kind: schema
+description: Enforce unique employee badge IDs for the deterministic Generate workflow
+type:
+  postgres:
+    up: |
+      CREATE UNIQUE INDEX IF NOT EXISTS employees_barcode_unique_idx ON employees(barcode);
+    down: |
+      DROP INDEX IF EXISTS employees_barcode_unique_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

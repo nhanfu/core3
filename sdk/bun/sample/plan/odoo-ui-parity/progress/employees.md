@@ -20,6 +20,29 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-BARCODE-GENERATE-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed Employee gap: Odoo Settings
+  `generate_random_barcode` / Generate control.
+- Implemented page/API-separated `generate_employee_barcode`, durable
+  `employees.barcode` update with row-version increment, actor/company/active
+  guards, Odoo-compatible format/length/uniqueness checks, and migration
+  `20260920200000-031-employee-barcode-generation.yaml`.
+- Focused verification currently passes **4 tests / 23 assertions**. The
+  initial invalid-generation failure was traced to mutation guard ordering
+  (`before_steps` run after guards); generation is now assigned in the
+  actor/company-scoped guard before validation.
+- Authenticated Odoo Settings evidence passes desktop/mobile. Authenticated
+  Core3 desktop/mobile evidence is an exact blocker: session company `Core3
+  Demo Company` does not match fixture company `Core3 Vietnam`; no UI pass is
+  claimed. Evidence: `evidence/employees/2026-09-20/EMP-BARCODE-GENERATE-001/`.
+- Full verification passes **65 tests / 658 assertions** across 21 Employees
+  integration files; UI audit passes **673 pages / 682 routes / 1,219
+  datasources**; focused ESLint and `git diff --check` pass. Evidence details
+  are in `verification.md`.
+- Verification trigger: feature-complete pending Employees-only staging and
+  commit.
+
 ## EMP-ROUTE-CRUD-GATE-001 (2026-09-20)
 
 - Completed authenticated parameterized matrix: 28/28 routes at desktop and

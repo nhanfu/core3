@@ -94,6 +94,34 @@ actions:
     permission: employees.read
     navigate_to: /employees/versions
     params: { employee_id: '{state.id}' }
+  - id: generate_employee_barcode
+    type: server
+    permission: employees.write
+    action: employees.records.generate_barcode
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.employee_detail.row_version}', current_user_id: '{current_user_id}' }
+    refresh: [employee_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - query: "SELECT id, CASE WHEN NULLIF(REGEXP_REPLACE(COALESCE(employee_number, ''), '[^0-9]', '', 'g'), '') IS NOT NULL THEN '041' || RIGHT('000000000' || REGEXP_REPLACE(employee_number, '[^0-9]', '', 'g'), 9) ELSE 'B' || SUBSTR(REGEXP_REPLACE(UPPER(id), '[^A-Z0-9]', '', 'g'), 1, 17) END AS generated_barcode FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          assign: true
+          status: 404
+          code: EMPLOYEES_BARCODE_EMPLOYEE_NOT_FOUND
+          message: Active employee not found in the current company.
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before a badge ID was generated. Reload the employee and try again. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND NULLIF(TRIM(COALESCE(barcode, '')), '') IS NULL", status: 409, code: EMPLOYEES_BADGE_ALREADY_ASSIGNED, message: This employee already has a badge ID. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(:generated_barcode AS VARCHAR)) BETWEEN 1 AND 18 AND regexp_matches(CAST(:generated_barcode AS VARCHAR), '^[A-Za-z0-9]+$')", status: 422, code: EMPLOYEES_BADGE_INVALID, message: The generated badge ID is invalid. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE barcode = :generated_barcode AND id <> :id)", status: 409, code: EMPLOYEES_BADGE_EXISTS, message: The generated badge ID is already assigned. }
+      steps:
+        - query: "UPDATE employees SET barcode = :generated_barcode, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND NULLIF(TRIM(COALESCE(barcode, '')), '') IS NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before a badge ID was generated. Reload the employee and try again.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
   - id: create_employee_user
     type: server_form
     permission: auth.users.manage

@@ -111,3 +111,16 @@ feature was missing after the settled route/data/permission pass.
 | EMP-PERM-010 | Template actor/company boundary | employees.write is required; wrong company, inactive employee, ineligible template, and stale row reject without writes | pass |
 | EMP-DATA-010 | Restart durability | Template provenance and copied fields remain after migration replay and DuckDB restart | pass |
 | EMP-UI-006 | Core3/Odoo desktop and mobile | Odoo modal captured; Core3 authenticated company/fixture mismatch is an exact blocker | conditional |
+
+## EMP-BARCODE-GENERATE-001 execution (2026-09-20)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-011 | Employee Settings Generate Badge ID, durable output and retry | pass; 4 focused tests / 23 assertions |
+| EMP-PERM-011 | Actor, `employees.write`, company, active, stale and uniqueness guards | pass |
+| EMP-DATA-011 | Unique index migration replay and DuckDB restart | pass |
+| EMP-UI-007 | Authenticated Core3/Odoo desktop/mobile Settings comparison | Odoo pass; Core3 exact company/fixture blocker recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-BARCODE-GENERATE-001/`.
+Verification: full Employees **65 tests / 658 assertions**, audit **673 pages /
+682 routes / 1,219 datasources**, focused ESLint, and diff-check pass.
