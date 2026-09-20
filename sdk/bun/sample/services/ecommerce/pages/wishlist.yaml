@@ -1,0 +1,20 @@
+title: Wishlist
+page: { id: ecommerce-wishlist, route: /ecommerce/wishlist, breadcrumb: [eCommerce, Shop, Wishlist], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_wishlist_items
+    responsive_card: true
+    search: { label: Search wishlist, placeholder: 'Search saved products or variants...' }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: variant_name, label: Variant }
+      - { field: price, label: Saved Price, align: right }
+      - { field: customer_name, label: Customer }
+      - { field: added_at, label: Added }
+    row_actions: menu
+    actions:
+      - { id: remove_ecommerce_wishlist_item, label: Remove, permission: ecommerce.write, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: Your wishlist is empty, description: Save a published product to find it here later. }

@@ -4,7 +4,27 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `11e777b73d47b200e1c79780205ec0e7253599a7` (Payment Provider Configuration).
+Latest committed bounded slice before this wave: `084031b889b6ad3756dd1185dafd20cae3e47eb0` (Payment Token Lifecycle).
+
+## Current bounded task — `ECOM-CATALOG-WISHLIST-001`
+
+The smallest remaining source-backed catalog behavior after payment tokens is
+the supplied `website_sale_wishlist` addon. Core3 now persists anonymous and
+customer wishlist owners/items, deterministic fixtures, product/variant and
+company/publication guards, unique product/variant duplicate prevention,
+optimistic removal, and DuckDB restart state. Separate page/API contracts are
+joined by `page.id: ecommerce-wishlist`; the public module exposes the
+HttpOnly-cookie add/list/remove boundary.
+
+Focused verification: `bun test ./test/ecommerce_wishlist.integration.test.ts`
+— **4 passed, 31 assertions, 0 failures**. The UI audit passes at 690 pages,
+699 routes, and 1284 datasources; scoped ESLint and `git diff --check` pass.
+Core3 authenticated desktop/mobile capture is blocked because ports 3000,
+4312, and 4313 were unavailable. Odoo `/shop` returns exact HTTP 404 on ports
+8069 and 8073. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-wishlist-001/`. Login session
+merge, broader actor/browser coverage, paired Odoo rendering, and full module
+sign-off remain open.
 
 ## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TOKENS-001`
 

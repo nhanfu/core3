@@ -1,0 +1,93 @@
+page: { id: ecommerce-wishlist }
+datasources:
+  - id: ecommerce_wishlist_items
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_WISHLIST_UNAUTHENTICATED, message: Sign in to view your wishlist. }
+      forbidden: { status: 403, code: ECOMMERCE_WISHLIST_FORBIDDEN, message: You do not have access to this wishlist. }
+      transport_error: { status: 503, code: ECOMMERCE_WISHLIST_UNAVAILABLE, message: Wishlist is temporarily unavailable. }
+    query: "SELECT i.id, i.row_version, i.wishlist_id, i.product_id, i.variant_id, i.product_name, i.variant_name, i.price, i.company_name, i.active, CAST(i.added_at AS VARCHAR) AS added_at, w.owner_type, w.customer_id, w.customer_name, w.customer_email FROM ecommerce_wishlist_items i JOIN ecommerce_wishlists w ON w.id = i.wishlist_id JOIN ecommerce_products p ON p.id = i.product_id WHERE i.active = TRUE AND w.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND (:wishlist_id IS NULL OR i.wishlist_id = :wishlist_id) AND (:company_name IS NULL OR i.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(w.customer_email, '')) = lower(:current_user_email)) ORDER BY i.added_at DESC, i.id"
+actions:
+  - id: add_ecommerce_wishlist_item
+    type: server_form
+    permission: ecommerce.write
+    title: Add to Wishlist
+    action: ecommerce.wishlist.add
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      required: [wishlist_id, item_id, owner_type, product_id, company_name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :owner_type IN ('anonymous', 'customer')", status: 422, code: ECOMMERCE_WISHLIST_OWNER_INVALID, message: Choose a valid wishlist owner. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_WISHLIST_COMPANY_SCOPE_REQUIRED, message: Wishlist belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :wishlist_id) OR EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :wishlist_id AND active = TRUE AND company_name = :company_name AND ((:owner_type = 'anonymous' AND owner_type = 'anonymous' AND session_key = :session_key) OR (:owner_type = 'customer' AND owner_type = 'customer' AND customer_id = :customer_id)))", status: 403, code: ECOMMERCE_WISHLIST_OWNERSHIP_REQUIRED, message: This wishlist belongs to another customer or company. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND is_published = TRUE AND company_name = :company_name", status: 404, code: ECOMMERCE_WISHLIST_PRODUCT_UNAVAILABLE, message: This product is no longer available. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:variant_id, '') = '' OR EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE id = :variant_id AND product_id = :product_id AND active = TRUE AND company_name = :company_name)", status: 422, code: ECOMMERCE_WISHLIST_VARIANT_INVALID, message: Select an active variant for this product. }
+      steps:
+        - { query: "INSERT INTO ecommerce_wishlists(id, owner_type, session_key, customer_id, customer_name, customer_email, company_name, website_id, currency, active) VALUES(:wishlist_id, :owner_type, NULLIF(:session_key, ''), NULLIF(:customer_id, ''), COALESCE(NULLIF(:customer_name, ''), 'Guest Shopper'), NULLIF(:customer_email, ''), :company_name, COALESCE(NULLIF(:website_id, ''), 'core3-main-website'), COALESCE(NULLIF(:currency, ''), 'USD'), TRUE) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_wishlist_items(id, wishlist_id, product_id, variant_id, variant_key, product_name, variant_name, price, company_name, active) SELECT :item_id, :wishlist_id, p.id, NULLIF(:variant_id, ''), COALESCE(:variant_key, ''), p.name, v.name, COALESCE(v.sales_price, p.sales_price), p.company_name, TRUE FROM ecommerce_products p LEFT JOIN ecommerce_product_variants v ON v.id = NULLIF(:variant_id, '') AND v.product_id = p.id WHERE p.id = :product_id ON CONFLICT (wishlist_id, product_id, variant_key) DO NOTHING" }
+        - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
+      result: { query: "SELECT * FROM ecommerce_wishlist_items WHERE id = :item_id OR (wishlist_id = :wishlist_id AND product_id = :product_id AND variant_key = COALESCE(:variant_key, '')) ORDER BY id LIMIT 1" }
+    fields:
+      - { field: wishlist_id, label: Wishlist, type: hidden, required: true }
+      - { field: item_id, label: Item, type: hidden, required: true }
+      - { field: owner_type, label: Owner Type, type: hidden, default: customer }
+      - { field: session_key, label: Session, type: hidden }
+      - { field: customer_id, label: Customer, type: text }
+      - { field: customer_name, label: Customer Name, type: text }
+      - { field: customer_email, label: Customer Email, type: text }
+      - { field: product_id, label: Product, type: text, required: true }
+      - { field: variant_id, label: Variant, type: text }
+      - { field: variant_key, label: Variant Key, type: hidden, default: '' }
+      - { field: company_name, label: Company, type: text, default: 'My Company', required: true }
+      - { field: website_id, label: Website, type: hidden, default: core3-main-website }
+      - { field: currency, label: Currency, type: hidden, default: USD }
+  - id: remove_ecommerce_wishlist_item
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.wishlist.remove
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', wishlist_id: '{row.wishlist_id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_wishlist_items]
+    mutation:
+      required: [id, wishlist_id, expected_row_version]
+      guards:
+        - { query: "SELECT i.id FROM ecommerce_wishlist_items i JOIN ecommerce_wishlists w ON w.id = i.wishlist_id WHERE i.id = :id AND i.wishlist_id = :wishlist_id AND i.row_version = :expected_row_version AND i.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR w.company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(w.customer_email, '')) = lower(:current_user_email))", status: 409, code: ECOMMERCE_WISHLIST_STALE, message: This wishlist item changed or was removed. Reload before removing. }
+      steps:
+        - { query: "DELETE FROM ecommerce_wishlist_items WHERE id = :id AND wishlist_id = :wishlist_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_WISHLIST_STALE, message: This wishlist item changed before removal. }
+        - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
+      result: { query: "SELECT TRUE AS removed, :id AS id" }
+  - id: add_ecommerce_public_wishlist_item
+    type: server
+    permission: ecommerce.read
+    action: ecommerce.wishlist.public_add
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      required: [wishlist_id, item_id, owner_type, session_key, product_id, company_name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :owner_type = 'anonymous' AND :wishlist_id = :session_key", status: 422, code: ECOMMERCE_PUBLIC_WISHLIST_INVALID, message: This public wishlist session is invalid. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_WISHLIST_COMPANY_SCOPE_REQUIRED, message: Wishlist belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :wishlist_id) OR EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :wishlist_id AND owner_type = 'anonymous' AND session_key = :session_key AND company_name = :company_name)", status: 403, code: ECOMMERCE_PUBLIC_WISHLIST_INVALID, message: This public wishlist session is no longer available. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND is_published = TRUE AND company_name = :company_name", status: 404, code: ECOMMERCE_WISHLIST_PRODUCT_UNAVAILABLE, message: This product is no longer available. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:variant_id, '') = '' OR EXISTS (SELECT 1 FROM ecommerce_product_variants WHERE id = :variant_id AND product_id = :product_id AND active = TRUE AND company_name = :company_name)", status: 422, code: ECOMMERCE_WISHLIST_VARIANT_INVALID, message: Select an active variant for this product. }
+      steps:
+        - { query: "INSERT INTO ecommerce_wishlists(id, owner_type, session_key, customer_name, company_name, website_id, currency, active) VALUES(:wishlist_id, 'anonymous', :session_key, 'Guest Shopper', :company_name, COALESCE(NULLIF(:website_id, ''), 'core3-main-website'), COALESCE(NULLIF(:currency, ''), 'USD'), TRUE) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_wishlist_items(id, wishlist_id, product_id, variant_id, variant_key, product_name, variant_name, price, company_name, active) SELECT :item_id, :wishlist_id, p.id, NULLIF(:variant_id, ''), COALESCE(:variant_key, ''), p.name, v.name, COALESCE(v.sales_price, p.sales_price), p.company_name, TRUE FROM ecommerce_products p LEFT JOIN ecommerce_product_variants v ON v.id = NULLIF(:variant_id, '') AND v.product_id = p.id WHERE p.id = :product_id ON CONFLICT (wishlist_id, product_id, variant_key) DO NOTHING" }
+        - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
+      result: { query: "SELECT * FROM ecommerce_wishlist_items WHERE id = :item_id OR (wishlist_id = :wishlist_id AND product_id = :product_id AND variant_key = COALESCE(:variant_key, '')) ORDER BY id LIMIT 1" }
+  - id: remove_ecommerce_public_wishlist_item
+    type: server
+    permission: ecommerce.read
+    action: ecommerce.wishlist.public_remove
+    handler: yaml_mutation
+    operation: delete
+    mutation:
+      required: [id, wishlist_id, session_key, expected_row_version]
+      guards:
+        - { query: "SELECT i.id FROM ecommerce_wishlist_items i JOIN ecommerce_wishlists w ON w.id = i.wishlist_id WHERE i.id = :id AND i.wishlist_id = :wishlist_id AND i.row_version = :expected_row_version AND w.owner_type = 'anonymous' AND w.session_key = :session_key AND w.company_name = :company_name", status: 409, code: ECOMMERCE_PUBLIC_WISHLIST_STALE, message: This public wishlist item changed or was removed. Reload before removing. }
+      steps:
+        - { query: "DELETE FROM ecommerce_wishlist_items WHERE id = :id AND wishlist_id = :wishlist_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PUBLIC_WISHLIST_STALE, message: This public wishlist item changed before removal. }
+        - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
+      result: { query: "SELECT TRUE AS removed, :id AS id" }

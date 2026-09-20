@@ -1,0 +1,29 @@
+version: 0.0.63
+kind: data
+description: deterministic eCommerce wishlist fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_wishlists (
+        id, row_version, owner_type, customer_id, customer_name, customer_email,
+        company_name, website_id, currency, active
+      ) VALUES (
+        'ecommerce-wishlist-customer-001', 1, 'customer',
+        'ecommerce-customer-001', 'Acme Corporation', 'hello@workspace.example',
+        'My Company', 'core3-main-website', 'USD', TRUE
+      ) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_wishlist_items (
+        id, row_version, wishlist_id, product_id, variant_id, variant_key,
+        product_name, variant_name, price, company_name, active
+      ) VALUES (
+        'ecommerce-wishlist-customer-001-mug', 1,
+        'ecommerce-wishlist-customer-001', 'ecommerce-product-mug', NULL, '',
+        'Core3 Ceramic Mug', NULL, 18, 'My Company', TRUE
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_wishlist_items WHERE wishlist_id = 'ecommerce-wishlist-customer-001';
+      DELETE FROM ecommerce_wishlists WHERE id = 'ecommerce-wishlist-customer-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

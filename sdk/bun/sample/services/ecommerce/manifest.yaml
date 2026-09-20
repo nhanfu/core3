@@ -39,6 +39,10 @@ menu:
           label: Cart
           icon: cart
           permission: ecommerce.read
+        - path: /ecommerce/wishlist
+          label: Wishlist
+          icon: heart
+          permission: ecommerce.read
     - id: products
       label: Products
       items:

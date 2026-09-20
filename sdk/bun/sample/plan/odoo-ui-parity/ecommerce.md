@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded payment-token lifecycle slice; module sign-off remains open)
+Status: qa-in-progress (bounded wishlist lifecycle slice; module sign-off remains open)
+
+## Bounded feature — Wishlist Lifecycle (`ECOM-CATALOG-WISHLIST-001`)
+
+Odoo source comparison: the supplied `website_sale_wishlist` addon defines
+`product.wishlist` with unique product/partner ownership, website/pricelist/
+price metadata, active state, unpublished-product filtering, and public add,
+list, remove, and product-ID routes. Anonymous wishlists use session IDs;
+login merges session items into the customer list and removes duplicates.
+Wishlist buttons are injected into product cards, product detail, and cart
+Save for Later controls.
+
+Core3 comparison: migrations 062/063 add durable wishlist owner/item tables,
+deterministic customer fixture data, and a unique `(wishlist, product, variant)`
+key. Separate wishlist page/API YAML contracts expose customer/company-scoped
+published items, guarded customer add/remove, anonymous cookie-scoped public
+add/list/remove routes, product/variant validation, optimistic row-version
+checks, and idempotent duplicate adds. Saved product metadata and price are
+stored; payment secrets and live gateway behavior are not involved.
+
+Focused tests cover Odoo source tracing, page/API separation, migration replay,
+customer/company ownership, publication/variant validation, duplicate replay,
+anonymous cookie routes, stale removal, and DuckDB restart persistence in
+`test/ecommerce_wishlist.integration.test.ts`. Core3 authenticated desktop/
+mobile capture was blocked because ports 3000, 4312, and 4313 were unavailable;
+both supplied Odoo references return exact HTTP 404 for `/shop`. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-catalog-wishlist-001/`. This bounded
+feature is verified but Ecommerce remains unsigned off.
 
 ## Bounded feature — Payment Token Lifecycle (`ECOM-CHECKOUT-PAYMENT-TOKENS-001`)
 

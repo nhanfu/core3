@@ -1,0 +1,53 @@
+version: 0.0.62
+kind: schema
+description: durable eCommerce wishlist ownership and items
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_wishlists (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        owner_type VARCHAR NOT NULL DEFAULT 'anonymous',
+        session_key VARCHAR,
+        customer_id VARCHAR,
+        customer_name VARCHAR NOT NULL DEFAULT 'Guest Shopper',
+        customer_email VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        website_id VARCHAR NOT NULL DEFAULT 'core3-main-website',
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_wishlists_session_idx
+        ON ecommerce_wishlists(session_key);
+      CREATE INDEX IF NOT EXISTS ecommerce_wishlists_customer_idx
+        ON ecommerce_wishlists(company_name, customer_id, active, id);
+      CREATE TABLE IF NOT EXISTS ecommerce_wishlist_items (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        wishlist_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        variant_id VARCHAR,
+        variant_key VARCHAR NOT NULL DEFAULT '',
+        product_name VARCHAR NOT NULL,
+        variant_name VARCHAR,
+        price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(wishlist_id, product_id, variant_key)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_wishlist_items_list_idx
+        ON ecommerce_wishlist_items(wishlist_id, active, added_at, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_wishlist_items_list_idx;
+      DROP TABLE IF EXISTS ecommerce_wishlist_items;
+      DROP INDEX IF EXISTS ecommerce_wishlists_customer_idx;
+      DROP INDEX IF EXISTS ecommerce_wishlists_session_idx;
+      DROP TABLE IF EXISTS ecommerce_wishlists;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

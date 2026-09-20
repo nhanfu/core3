@@ -1,5 +1,27 @@
 # ecommerce QA ledger
 
+## Wishlist Lifecycle (`ECOM-CATALOG-WISHLIST-001`, 2026-09-21)
+
+- Odoo source/menu: pass. The supplied `website_sale_wishlist` model enforces
+  unique product/partner ownership and filters unpublished products; its
+  controller exposes public add/list/remove/product-ID routes and its template
+  injects product-card/detail/cart controls.
+- Core3 lifecycle: pass for this bounded contract. Migrations 062/063,
+  separate page/API YAML, customer and anonymous owner rows, deterministic
+  fixture, cookie public routes, product/variant/company/publication guards,
+  duplicate replay, optimistic removal, and restart persistence are present.
+- Focused verification: `bun test ./test/ecommerce_wishlist.integration.test.ts`
+  — **4 passed, 31 assertions, 0 failures**.
+- UI audit: **pass** — 690 pages, 699 routes, 1284 datasources. Scoped ESLint
+  and `git diff --check` pass.
+- Browser: Core3 authenticated desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Login session merge, broader actor/browser coverage, and paired Odoo
+  rendering remain gates.
+
 ## Payment Token Lifecycle (`ECOM-CHECKOUT-PAYMENT-TOKENS-001`, 2026-09-20)
 
 - Odoo source/menu: pass. `menu_ecommerce_payment_tokens` maps to

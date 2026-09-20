@@ -60,6 +60,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-024 | Payment Transactions | Durable checkout transactions expose unique references, amount/provider/payment state, company scope, guarded transitions, migration replay, and restart persistence | pass: `ecommerce_payment_transactions.integration.test.ts`; external provider execution remains open |
 | ECOM-FUNC-025 | Payment Providers | Durable company-scoped provider fixtures expose state/publication/features/availability, permissioned CRUD and disable/restore, validation, migration replay, and restart persistence | pass: `ecommerce_payment_providers.integration.test.ts`; credentials and external gateway execution remain open |
 | ECOM-FUNC-026 | Payment Tokens | Durable masked token records expose provider/method/customer/company scope, provider-created idempotent registration, ownership filtering, archive lifecycle, migration replay, and restart persistence | pass: `ecommerce_payment_tokens.integration.test.ts`; raw token creation, checkout selection, and external gateway execution remain open |
+| ECOM-FUNC-027 | Wishlist | Durable customer/anonymous wishlist owners and items expose published-product filtering, unique product/variant adds, permissioned removal, cookie routes, migration replay, and restart persistence | pass: `ecommerce_wishlist.integration.test.ts`; login session merge and browser actor coverage remain open |
 
 ## Workflow and integration cases
 
@@ -87,6 +88,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-035 | Payment transaction lifecycle | Checkout creates one pending transaction per order; authorized/confirmed/canceled/error transitions require valid state, provider reference where applicable, company scope, and current row version; replay/restart preserve one durable transaction | pass: `ecommerce_payment_transactions.integration.test.ts`; live provider callback/capture/refund remains open |
 | ECOM-WF-036 | Payment provider configuration | Authorized Ecommerce editor creates/edits a company provider, validates technical code/state/features/amount, disables/restores it with optimistic concurrency, and preserves the provider across restart | pass: `ecommerce_payment_providers.integration.test.ts`; live credentials/module installation remains open |
 | ECOM-WF-037 | Payment token lifecycle | Provider-created masked token registration is idempotent and validates provider/method/customer/company; authorized retirement is optimistic and durable; unarchive is intentionally not exposed | pass: `ecommerce_payment_tokens.integration.test.ts`; external gateway/token vault remains open |
+| ECOM-WF-038 | Wishlist lifecycle | A public or customer wishlist adds one published product/variant idempotently, lists only available rows, removes with ownership/row-version guards, and survives restart | pass: `ecommerce_wishlist.integration.test.ts`; login merge remains open |
 
 ## Permission and security cases
 
@@ -120,6 +122,7 @@ the all-customer scope.
 | ECOM-PERM-031 | Payment transaction company/state boundary | `ecommerce.read` protects transaction list/state sources and `ecommerce.write` protects transitions; wrong-company, stale, invalid-state, and missing-provider-reference writes are rejected without changing the transaction | pass: `ecommerce_payment_transactions.integration.test.ts` |
 | ECOM-PERM-032 | Payment provider company/write boundary | `ecommerce.read` protects provider sources and `ecommerce.write` protects create/edit/disable/restore; duplicate code, wrong-company, invalid feature/amount, and stale writes preserve the provider catalog | pass: `ecommerce_payment_providers.integration.test.ts` |
 | ECOM-PERM-033 | Payment token customer/company/write boundary | `ecommerce.read` filters token rows by customer/company scope and `ecommerce.write` protects provider registration/retirement; masked-value, provider/method/customer, wrong-company, and stale requests preserve the token | pass: `ecommerce_payment_tokens.integration.test.ts`; technical-group HTTP actor coverage remains open |
+| ECOM-PERM-034 | Wishlist owner/company/write boundary | `ecommerce.read` protects wishlist reads and public contract; `ecommerce.write` protects customer add/remove; wrong-company, other-customer, unpublished, invalid-variant, duplicate, and stale requests preserve ownership and rows | pass: `ecommerce_wishlist.integration.test.ts`; authenticated HTTP actor coverage remains open |
 
 ## Visual, responsive, and regression cases
 
@@ -144,6 +147,7 @@ the all-customer scope.
 | ECOM-UI-017 | Payment Transactions list/state lifecycle | 1440x900, 390x844 | Authenticated Core3 Payment Transactions list renders deterministic references/statuses and status transition form at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by backend 502 | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-transactions-001/` |
 | ECOM-UI-018 | Payment Providers list/configuration | 1440x900, 390x844 | Authenticated Core3 Payment Providers list renders deterministic provider state/features and create/edit/disable controls at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by the backend/runtime boundary | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-providers-001/` |
 | ECOM-UI-019 | Payment Tokens list/retirement | 1440x900, 390x844 | Technical/authenticated Core3 Payment Tokens list renders masked details, provider/customer/company fields, archived filter, and retirement boundary at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by unavailable runtime ports | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-tokens-001/` |
+| ECOM-UI-020 | Wishlist list/add/remove | 1440x900, 390x844 | Authenticated/customer and public Core3 wishlist list, saved product state, duplicate add, and removal render responsively; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by unavailable runtime ports | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-21/ecom-catalog-wishlist-001/` |
 
 ## Reference blocker
 
