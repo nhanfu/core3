@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -85,6 +86,40 @@ describe('Events attendee confirmation parity', () => {
     database.close();
   });
 
+  test('persists confirmation scheduler work across a file-backed restart and rejects replay', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-events-confirmation-'));
+    const databasePath = join(directory, 'events.duckdb');
+    const migrationName = 'events_registration_confirmation_scheduler_restart_migrations';
+    const confirm = action('attendees.yaml', 'confirm_event_attendee').mutation;
+    const first = await DuckDbDatabase.open(databasePath);
+    const repository = new YamlRepository(first);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+
+    const confirmed = await repository.executeMutation(confirm, { id: 'registration-demo-unconfirmed', expected_row_version: 1 });
+    expect(confirmed).toMatchObject({ state: 'Registered', row_version: 2 });
+    expect((await repository.query("SELECT scheduler_id, registration_id, attendee_name, mail_sent FROM event_mail_scheduler_registrations WHERE id = 'event-mail-registration-registration-demo-unconfirmed'")).at(0)).toEqual({
+      scheduler_id: 'event-mail-openwood-registration',
+      registration_id: 'registration-demo-unconfirmed',
+      attendee_name: 'Unconfirmed Guest',
+      mail_sent: false,
+    });
+    expect((await repository.query("SELECT registration_mail_count, last_registration_id FROM event_mail_schedulers WHERE id = 'event-mail-openwood-registration'")).at(0)).toEqual({
+      registration_mail_count: 5,
+      last_registration_id: 'registration-demo-unconfirmed',
+    });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const reopened = new YamlRepository(second);
+    await migrateDatabase(reopened, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await reopened.query("SELECT state, row_version FROM event_registrations WHERE id = 'registration-demo-unconfirmed'")).at(0)).toEqual({ state: 'Registered', row_version: 2 });
+    expect((await reopened.query("SELECT COUNT(*) AS count FROM event_mail_scheduler_registrations WHERE registration_id = 'registration-demo-unconfirmed'")).at(0).count).toBe(1);
+    await expect(reopened.executeMutation(confirm, { id: 'registration-demo-unconfirmed', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'EVENT_ATTENDEE_STALE_OR_INVALID' });
+    expect((await reopened.query("SELECT COUNT(*) AS count FROM event_mail_scheduler_registrations WHERE registration_id = 'registration-demo-unconfirmed'")).at(0).count).toBe(1);
+    second.close();
+    rmSync(directory, { recursive: true, force: true });
+  });
+
   test('keeps the fixture migration deterministic and event-owned', () => {
     const migration = readFileSync(join(serviceRoot, 'migrations/20260911160000-019-event-registration-confirmation.yaml'), 'utf8');
     expect(migration).toContain("'Unconfirmed'");
@@ -92,5 +127,11 @@ describe('Events attendee confirmation parity', () => {
     expect(migration).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)|random\(\)/i);
     expect(yaml('manifest.yaml').id).toBe('events');
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['events.read', 'events.write']));
+  });
+
+  test('keeps the scheduler persistence migration DuckDB-compatible and deterministic', () => {
+    const migration = readFileSync(join(serviceRoot, 'migrations/20260920100000-031-event-registration-confirmation-scheduler.yaml'), 'utf8');
+    expect(migration).toContain('ADD COLUMN IF NOT EXISTS registration_id VARCHAR');
+    expect(migration).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)|random\(\)/i);
   });
 });

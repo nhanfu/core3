@@ -114,7 +114,10 @@ actions:
       guards:
         - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
         - { query: "SELECT id FROM event_registrations WHERE id = :id AND state = 'Unconfirmed' AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_STALE_OR_INVALID, message: Only unconfirmed attendees can be registered, and the record must be current. }
-      steps: [{ query: "UPDATE event_registrations SET state = 'Registered', row_version = COALESCE(row_version, 0) + 1 WHERE id = :id AND state = 'Unconfirmed' AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Attendee registration was changed by another user. Reload it before registering. }]
+      steps:
+        - { query: "UPDATE event_registrations SET state = 'Registered', row_version = COALESCE(row_version, 0) + 1 WHERE id = :id AND state = 'Unconfirmed' AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Attendee registration was changed by another user. Reload it before registering. }
+        - { query: "INSERT INTO event_mail_scheduler_registrations(id, scheduler_id, registration_id, attendee_name, scheduled_date, mail_sent) SELECT 'event-mail-registration-' || CAST(r.id AS VARCHAR), s.id, r.id, r.attendee_name, s.scheduled_date, FALSE FROM event_registrations r JOIN event_mail_schedulers s ON s.event_id = r.event_id AND s.interval_type = 'after_sub' AND s.template_ref = 'Event: Registration Confirmation' WHERE r.id = :id ON CONFLICT (id) DO NOTHING" }
+        - { query: "UPDATE event_mail_schedulers SET registration_mail_count = registration_mail_count + 1, last_registration_id = :id WHERE id = (SELECT scheduler_id FROM event_mail_scheduler_registrations WHERE registration_id = :id)" }
       result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
   - id: mark_attendee_attended_detail
     type: server

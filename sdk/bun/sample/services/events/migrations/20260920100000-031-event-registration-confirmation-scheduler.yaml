@@ -1,0 +1,15 @@
+version: 0.0.31
+description: Persist registration confirmation mail scheduler work
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_mail_scheduler_registrations ADD COLUMN IF NOT EXISTS registration_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS event_mail_scheduler_registrations_registration_idx ON event_mail_scheduler_registrations(registration_id);
+    down: |
+      DROP INDEX IF EXISTS event_mail_scheduler_registrations_registration_idx;
+      ALTER TABLE event_mail_scheduler_registrations DROP COLUMN IF EXISTS registration_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
