@@ -1,0 +1,35 @@
+version: 0.0.33
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_returns (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        source_picking_id VARCHAR NOT NULL,
+        return_picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        return_quantity DECIMAL(18,3) NOT NULL,
+        returned_by VARCHAR NOT NULL,
+        returned_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        reason VARCHAR NOT NULL DEFAULT '',
+        state VARCHAR NOT NULL DEFAULT 'Waiting',
+        UNIQUE(source_picking_id, return_picking_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_returns_source_idx
+        ON inventory_transfer_returns(source_picking_id, returned_at, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-return-0001', 'operation-deliveries', 'WH/OUT/RETURN/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/RETURN/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Done')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-return-0001-move-001', 'delivery-return-0001', '[E-COM08] Storage Box', 4, 4)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_returns WHERE source_picking_id = 'delivery-return-0001';
+      DELETE FROM inventory_picking_moves WHERE picking_id = 'delivery-return-0001' OR picking_id LIKE 'return-delivery-return-0001-%';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-return-0001' OR id LIKE 'return-delivery-return-0001-%';
+      DROP TABLE IF EXISTS inventory_transfer_returns;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

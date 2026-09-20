@@ -1237,3 +1237,34 @@ asset failures are recorded in `odoo.json`. No Odoo mutation was made.
 Status: bounded report lifecycle complete for review. Full Inventory sign-off
 remains open for the broader actor/company matrix and remaining report/export
 semantics.
+
+## Operations > Transfer Return lifecycle — `INV-TRANSFER-RETURN-001` (2026-09-20)
+
+This bounded slice closes the smallest remaining non-duplicated transfer
+workflow after reservation/availability: Odoo's completed-transfer Return
+wizard. The source action is `act_stock_return_picking` from the Done picking
+form (`addons/stock/views/stock_picking_views.xml:129-143`), with wizard
+fields/actions in `addons/stock/wizard/stock_picking_return_views.xml` and
+reverse-picking behavior in `stock_picking_return.py`.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and joins it to
+`api/transfer-detail.yaml` by `page.id`. The API owns the permissioned Done-only
+Return form, quantity/reason fields, company/actor/current-row guards, durable
+return history, reverse source/destination picking and move, and timeline
+event. Migration `20260920300000-033-inventory-transfer-returns.yaml` adds
+deterministic data and durable return rows. This bounded implementation
+supports exactly one completed source move line and returns a Waiting receipt;
+multi-line selection, Return All, exchange, and later return validation remain
+open source-backed gaps.
+
+Focused tests pass 8 tests / 73 assertions across the return and transfer
+workflow suites, including permission, company, quantity, stale, actor,
+restart, and no-partial-state checks. Authenticated Core3 desktop/mobile and
+paired Odoo comparison/blocker evidence is under
+`evidence/inventory/2026-09-20/INV-TRANSFER-RETURN-001/`. The supplied Odoo
+account reached Done/Available deliveries but exposed no Return action or
+wizard across delivery routes 1-10; the exact blocker is recorded and no
+Odoo mutation was made.
+
+Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
+remains open.

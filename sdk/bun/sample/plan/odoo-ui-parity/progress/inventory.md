@@ -397,6 +397,32 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-TRANSFER-RETURN-001` — completed transfer Return lifecycle (2026-09-20)
+
+- Selected the smallest remaining non-duplicated transfer behavior: Odoo's
+  completed-picking `Return` action and `stock.return.picking` wizard.
+- Compared `stock_picking_views.xml:129-143` and
+  `stock_picking_return_views.xml` with `stock_picking_return.py`. Core3 keeps
+  the page/API split, exposes Return only for Done transfers, reverses source
+  and destination, and records actor/reason/quantity in a durable return
+  ledger and timeline. The bounded contract accepts exactly one completed
+  source move line; multi-line and exchange wizard semantics remain open.
+- Migration `20260920300000-033-inventory-transfer-returns.yaml` adds the
+  durable ledger, reverse picking/move fixture, and deterministic completed
+  delivery. Company, actor, state, quantity, row-version, permission, and
+  file-backed restart guards are covered by the focused return suite.
+- Focused coverage passes 8 tests / 73 assertions across the return and
+  transfer workflow suites. Authenticated Core3 desktop/mobile evidence and
+  paired authenticated Odoo comparison/blocker evidence are under
+  `evidence/inventory/2026-09-20/INV-TRANSFER-RETURN-001/`.
+- Odoo `/odoo/deliveries/1` through `/odoo/deliveries/10` rendered completed
+  delivery forms but did not expose Return, its wizard, or Returns stat for
+  `codex@core3.local`; the exact blocker is recorded and no Odoo mutation was
+  attempted.
+
+Status: bounded Core3 lifecycle and evidence complete for review; broader
+Inventory sign-off remains open.
+
 ## INV-TRANSFER-CHECK-AVAILABILITY-001 — transfer reservation lifecycle (2026-09-20)
 
 - Selected the smallest remaining source-backed transfer gap: Odoo

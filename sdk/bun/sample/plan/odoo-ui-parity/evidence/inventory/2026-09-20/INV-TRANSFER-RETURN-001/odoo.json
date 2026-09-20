@@ -1,0 +1,12 @@
+{
+  "feature_id": "INV-TRANSFER-RETURN-001",
+  "runtime": "http://127.0.0.1:8069",
+  "user": "codex@core3.local",
+  "route_checked": "/odoo/deliveries/1",
+  "route_scan": "/odoo/deliveries/1 through /odoo/deliveries/10",
+  "desktop": { "viewport": "1440x1000", "capture": "odoo-desktop-no-return.png", "status": "Done / Available", "return_action": "not exposed" },
+  "mobile": { "viewport": "390x844", "capture": "odoo-mobile-no-return.png", "status": "Done / Available", "return_action": "not exposed" },
+  "blocker": "The supplied authenticated Odoo account reaches completed delivery forms but the Return action, return wizard, and Returns stat are not exposed on the reachable delivery routes. No Odoo mutation was attempted.",
+  "page_errors": [],
+  "request_errors": []
+}

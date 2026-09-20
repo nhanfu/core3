@@ -1,0 +1,10 @@
+{
+  "feature_id": "INV-TRANSFER-RETURN-001",
+  "runtime": "http://127.0.0.1:3002",
+  "user": "admin@tms.local",
+  "route": "/inventory/transfer/detail?id=delivery-return-0001",
+  "desktop": { "viewport": "1440x1000", "before": "core3-desktop-before.png", "after": "core3-desktop-after.png", "result": "Return form submitted; Return created timeline event rendered" },
+  "mobile": { "viewport": "390x844", "after": "core3-mobile-after.png", "result": "persisted Return created timeline rendered" },
+  "checks": { "authenticated": true, "page_errors": [], "request_errors": [], "horizontal_overflow": false },
+  "mutation": { "quantity": 2, "actor": "Admin User", "reason": "Customer changed order", "return_id": "return-delivery-return-0001-1" }
+}

@@ -111,6 +111,10 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-012 | Transfer reservation workflow | current-company, move-line, available-stock, duplicate, stale-row, and unreserve guards leave no partial state | pass: `INV-TRANSFER-CHECK-AVAILABILITY-001` focused suite |
 | INV-PERM-018 | Transfer reservation permission boundary | `inventory.write` is required for Check Availability and Unreserve; read-only users receive 403 without changing picking or quant rows | pass: `INV-TRANSFER-CHECK-AVAILABILITY-001` focused runtime test |
 | INV-UI-017 | Transfer Check Availability responsive action | 1440x900, 390x844 | Authenticated Core3 manager sees Check Availability, Reserved quantity, Available state, and persisted actor timeline without overflow; paired Odoo transfer action result or exact blocker is recorded | pass Core3; Odoo action hidden on reachable Ready/Available transfer |
+| INV-FUNC-020 | Completed transfer Return lifecycle | Done transfer | Return creates a durable reverse picking/move, ledger row, actor/reason timeline, and current-row guarded result | pass: `INV-TRANSFER-RETURN-001` focused suite |
+| INV-WF-013 | Return workflow | Done transfer with one completed move | company/actor/quantity/stale guards leave no partial reverse transfer; restart preserves source revision and return data | pass: `INV-TRANSFER-RETURN-001` focused suite; multi-line/exchange remains open |
+| INV-PERM-019 | Transfer Return permission boundary | inventory.read vs inventory.write | read-only users cannot create a return; current-company scope is enforced | pass: `INV-TRANSFER-RETURN-001` focused runtime test |
+| INV-UI-018 | Transfer Return form and responsive result | 1440x1000, 390x844 | Authenticated Core3 Done transfer exposes Return form, submits quantity/reason, and reloads the actor timeline without overflow; paired Odoo result or exact blocker is recorded | pass Core3; Odoo Return action absent on reachable authenticated deliveries |
 
 ## Exit criteria
 

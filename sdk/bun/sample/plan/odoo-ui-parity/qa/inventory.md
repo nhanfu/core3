@@ -647,3 +647,35 @@ QA disposition: PASS for the bounded Core3 reservation lifecycle and
 permissions; PARTIAL for direct Odoo action execution because the reachable
 reference transfer was already Ready/Available and hid Check Availability. No
 Odoo mutation was made. Full Inventory sign-off remains open.
+
+## Transfer Return lifecycle QA — `INV-TRANSFER-RETURN-001` (2026-09-20)
+
+- Odoo source/menu/action: the completed transfer form's Return button in
+  `stock_picking_views.xml:129-143` invokes `act_stock_return_picking` and the
+  `stock.return.picking` wizard. Its source reverses locations, creates a
+  `Return of <name>` picking, and confirms/assigns it.
+- Core3 implementation: `pages/transfer-detail.yaml` is layout-only;
+  `api/transfer-detail.yaml` owns the Done-only Return action, quantity/reason
+  form, company/actor/current-row guards, return-history datasource, and
+  timeline refresh. Migration `20260920300000-033-inventory-transfer-returns.yaml`
+  persists the return ledger, reverse picking/move, and deterministic fixture.
+  The bounded contract supports one completed source move line and explicitly
+  leaves multi-line and exchange wizard behavior open.
+- Focused test:
+  `bun test test/inventory_transfer_returns.integration.test.ts test/inventory_transfer_workflow.integration.test.ts`
+  — PASS, 8 tests / 73 assertions. Coverage includes page/API separation,
+  durable reverse picking and move, actor/company/quantity/stale guards,
+  `inventory.write` permission denial, timeline/detail refresh, and restart.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-TRANSFER-RETURN-001/`: desktop Return
+  form/submission, mobile persisted timeline, and JSON browser records.
+- Authenticated Odoo evidence is in the same directory. Desktop 1440x1000 and
+  mobile 390x844 `/odoo/deliveries/1` captures show Done/Available but no
+  Return action; `/odoo/deliveries/1` through `/odoo/deliveries/10` were scanned
+  with the same result. This is an exact blocker for direct wizard comparison;
+  no Odoo mutation was made.
+
+QA disposition: PASS for the bounded Core3 return lifecycle, durable data,
+permissions, and responsive evidence; PARTIAL for direct Odoo wizard parity
+because the supplied authenticated account exposes no Return action. Full
+Inventory sign-off remains open.

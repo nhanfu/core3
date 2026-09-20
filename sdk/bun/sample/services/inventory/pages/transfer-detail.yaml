@@ -25,6 +25,7 @@ components:
       - { id: put_inventory_transfer_in_pack, label: Put in Pack, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Ready'" }
       - { id: unreserve_inventory_transfer, label: Unreserve, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
+      - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     message_source: inventory_transfer_timeline
     chatter_label: Messages and activities
@@ -43,6 +44,7 @@ components:
       inventory.transfer.note: Note
       inventory.transfer.availability_checked: Availability checked
       inventory.transfer.unreserved: Unreserved
+      inventory.transfer.return_created: Return created
     content_slot: true
     group_columns: 2
     groups:
@@ -58,7 +60,7 @@ components:
           label: Additional Info
           groups:
             - title: Additional information
-              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }]
+              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }, { field: return_count, label: Returns }]
         - id: note
           label: Note
           groups:
