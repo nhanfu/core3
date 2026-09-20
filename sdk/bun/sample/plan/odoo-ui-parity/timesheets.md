@@ -1087,6 +1087,38 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## Billing report drilldown — `TIMESHEET-REPORT-BILLING-DRILLDOWN` (2026-09-21)
+
+The smallest remaining distinct report interaction was the source-backed
+Timesheets by Billing Type action recorded in the authenticated Odoo menu
+inventory. The shared `timesheets.analysis.report` form exposes employee,
+project, task, date, description, and time context. Core3's existing
+`/timesheets-billing` route had durable billing rows and Pivot/Graph/List
+controls but no row-to-entry action.
+
+Core3 now keeps the billing page and API separate by `page.id`. The API returns
+employee/project/task relation IDs and company context from durable
+`timesheet_entries`, filters to the active company, and owns the manager-only
+`view_billing_report_entry` navigation action. The page binds row-open and
+double-click to that action, which opens the existing guarded
+`/timesheets/detail` route with `view_scope: all` and `report_scope: billing`.
+Migration replay and a file-backed restart preserve the billing row and detail
+context; empty fixtures and wrong-company reads fail closed, with no moving or
+generated values.
+
+Focused coverage is `test/timesheets_billing_report_drilldown.integration.test.ts`
+(4 tests / 20 expectations). Authenticated Odoo desktop/mobile evidence is
+under
+`evidence/timesheets/2026-09-21/timesheet-billing-report-drilldown/`; the report
+renders at both viewports but exposes no loaded row-to-entry action.
+
+Core3 browser capture is blocked by the concurrent non-Timesheets discovery
+boundary: `services/surveys/pages/surveys.yaml` fails with
+`actions[4].fields is not allowed` (and the audit also identifies the same
+stale action shape in `services/accounting/pages/invoices.yaml`). Those files
+were not changed or staged. This slice makes no browser parity or module
+sign-off claim.
+
 ## Timesheets analysis report drilldown — `TIMESHEET-ANALYSIS-DRILLDOWN` (2026-09-21)
 
 The next smallest unfinished report interaction was Odoo's

@@ -325,6 +325,28 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-REPORT-BILLING-DRILLDOWN`
+
+The next smallest unfinished source-backed report interaction was the Billing
+Type report row context. Core3's existing durable billing report had no row
+action. Its page remains layout-only and the API now returns company-scoped
+employee/project/task relation context and owns the `timesheets.manage`-
+guarded `view_billing_report_entry` action. Row open and double-click navigate
+to the existing `/timesheets/detail` route with billing scope. Migration replay,
+file-backed restart, company/empty guards, and deterministic fixture checks are
+covered.
+
+Focused coverage passes 4 tests / 20 expectations. Authenticated Odoo desktop
+and mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-billing-report-drilldown/`; the
+aggregate report renders but exposes no loaded row-to-entry form action.
+
+Core3 browser evidence is blocked by the concurrent non-Timesheets discovery
+boundary: `services/surveys/pages/surveys.yaml` fails at
+`actions[4].fields is not allowed`; the audit also finds the stale shape in
+`services/accounting/pages/invoices.yaml`. Neither file was changed or staged.
+No browser parity or module sign-off is claimed.
+
 ## 2026-09-21 `TIMESHEET-ANALYSIS-DRILLDOWN`
 
 The next smallest owned report interaction was the Odoo analysis row form:

@@ -26,4 +26,7 @@ components:
       - { field: unit_amount, label: Time Spent, align: right }
     page_size: 50
     row_key: id
+    row_open_action: view_billing_report_entry
+    row_double_click_action: view_billing_report_entry
+    row_actions: menu
     empty_state: { title: No data yet!, description: Review your timesheets by billing type and make sure your time is billable. }

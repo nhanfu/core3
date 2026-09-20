@@ -392,6 +392,30 @@ row-to-project-timesheet action/form is exposed. The source form contract is
 therefore recorded without claiming paired interaction parity. Remaining
 route/action comparison and module sign-off remain pending.
 
+## 2026-09-21 `TIMESHEET-REPORT-BILLING-DRILLDOWN`
+
+- Source gate: authenticated Odoo menu inventory exposes Timesheets by Billing
+  Type on the shared analysis report model; its source form contract includes
+  employee, project, task, date, description, and time context.
+- Core3 contract: `/timesheets-billing` stays page/API-separated; the API
+  returns active-company durable relation context and owns the
+  `timesheets.manage`-guarded `view_billing_report_entry` action. The page
+  binds row open and double-click to the existing Timesheet detail route.
+- Focused gate: `bun test test/timesheets_billing_report_drilldown.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 20 expectations.
+- Persistence/security gate: migration replay and file-backed restart preserve
+  the billing row and detail context; wrong-company and empty fixture reads
+  return no rows; page and action require `timesheets.manage`.
+- Odoo browser gate: authenticated `/odoo/timesheets-billing` renders at
+  desktop and mobile without overflow, but exposes no loaded row-to-entry form
+  action. This is an exact paired-action blocker.
+- Core3 browser blocker: discovery stops on the concurrent non-Timesheets
+  `services/surveys/pages/surveys.yaml` `actions[4].fields` schema error; the
+  audit also identifies `services/accounting/pages/invoices.yaml`. Neither
+  owner boundary was repaired.
+- Evidence: [`evidence/timesheets/2026-09-21/timesheet-billing-report-drilldown/`](../evidence/timesheets/2026-09-21/timesheet-billing-report-drilldown/).
+- Disposition: **bounded API/contract/restart slice verified; Core3 runtime and
+  paired Odoo row action remain blocked, so no module sign-off is claimed**.
+
 ## 2026-09-21 `TIMESHEET-ANALYSIS-DRILLDOWN`
 
 - Source gate: Odoo `timesheets_analysis_report_form` and
