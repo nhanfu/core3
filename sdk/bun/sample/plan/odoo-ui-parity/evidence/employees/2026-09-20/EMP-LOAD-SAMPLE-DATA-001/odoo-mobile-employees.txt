@@ -1,0 +1,140 @@
+Employees
+7
+40
+New
+My Company (San Francisco)
+Department
+CLEAR ALL
+Abigail Peterson
+Consultant
+abigail.peterson39@example.com
+(555)-233-3393
+Aug 1 - Nov 10
+Amy Watson
+Interior Designer
+(535)-495-4222
+Employee
+Anita Oliver
+Experienced Developer
+anita.oliver32@example.com
+(555)-497-4804
+Jan 1
+Employee
+Audrey Peterson
+Consultant
+audrey.peterson25@example.com
+(555)-276-7903
+Jan 1, 2015 - Dec 1, 2017
+Employee
+Consultant
+Barty McBly
+Consultant
+barty.mcbly@example.com
+(555)-234-3424
+Oct 21, 2015
+Beth Evans
+Experienced Developer
+beth.evans77@example.com
+(555)-532-3841
+Doris Cole
+Consultant
+doris.cole31@example.com
+(555)-331-5378
+Eli Lambert
+Marketing and Community Manager
+eli.lambert22@example.com
+(555)-169-1352
+Ernest Reed
+Consultant
+ernest.reed47@example.com
+(555)-518-8232
+Jeffrey Kelly
+Marketing and Community Manager
+jeffrey.kelly72@example.com
+(555)-264-7362
+Aug 1 - Nov 10
+Sales
+Employee
+Jennie Fletcher
+Experienced Developer
+jennie.fletcher76@example.com
+(555)-363-8229
+Jul 1 - Dec 1
+Employee
+High Potential
+Jessica Johnson
+Site Manager
+(535)-495-4164
+Employee
+Justin Smith
+Handyman
+(535)-495-4444
+Employee
+Keith Byrd
+Experienced Developer
+keith.byrd52@example.com
+(555)-505-5146
+Jan 1, 2015 - Sep 10
+Employee
+Marc Demo
+Experienced Developer
+mark.brown23@example.com
+(441)-695-2334
+Jan 1, 2025
+Employee
+Mitchell Admin
+Chief Technical Officer
+codex@core3.local
++1 555-555-5555
+Jan 1, 2020
+Trainer
+Employee
+Paul Williams
+Experienced Developer
+paul.williams59@example.com
+(555)-262-1607
+Jul 1 - Dec 1
+Rachel Perry
+Marketing and Community Manager
+jod@odoo.com
+(555)-267-3735
+Randall Lewis
+Experienced Developer
+randall.lewis74@example.com
+(555)-775-6660
+Feb 1 - Dec 1
+Employee
+Ronnie Hart
+Chief Technical Officer
+ronnie.hart87@example.com
+(555)-310-7863
+Jan 1
+Trainer
+Employee
+Sharlene Rhodes
+Experienced Developer
+sharlene.rhodes49@example.com
+(555)-719-4182
+Jul 1 - Dec 1
+Employee
+High Potential
+Tina Williamson
+Human Resources Manager
+tina.williamson98@example.com
+(555)-694-7266
+Jan 1, 2015 - Feb 1, 2018
+Employee
+High Potential
+Toni Jimenez
+Consultant
+toni.jimenez23@example.com
+(555)-707-8451
+Jul 1 - Dec 1
+Employee
+Consultant
+Standard 20 hours/week
+Walter Horton
+Experienced Developer
+walter.horton80@example.com
+(555)-912-1201
+Mar 1

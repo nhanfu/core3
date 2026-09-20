@@ -1197,3 +1197,30 @@ runtime rejects an Auth page action with `actions[0].action` and
 `actions[0].refresh` not allowed. No Core3 UI pass or module sign-off is
 claimed. Evidence is under
 `evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.
+
+## EMP-LOAD-SAMPLE-DATA-001: Employees empty-state Load Sample Data (2026-09-20)
+
+Odoo's `action_hr_employee_load_demo_data` is an Employees server action bound
+to the empty-list help in `addons/hr/views/hr_employee_views.xml`; it calls
+`hr.employee._load_demo_data()` to load the HR scenario and reload safely when
+the demo department already exists. Core3 implements the same bounded behavior
+through separate `pages/employees.yaml` and `api/employees.yaml` contracts.
+
+The API action requires an authenticated `employees.write` actor and a current
+company, rejects non-empty active company scopes, inserts deterministic
+company-scoped department and employee fixtures, and records the load in
+`employee_sample_load_runs`. Migration
+`20260920220000-033-employee-sample-load.yaml` creates the audit table and
+company index. The load is idempotency guarded, migration-replay safe, and
+survives a file-backed DuckDB restart.
+
+Focused coverage is in `test/employees_sample_load.integration.test.ts`:
+3 tests / 21 assertions, including source mapping, actor/company/empty-state
+guards, deterministic persistence, and restart. Authenticated Core3 desktop
+and mobile evidence shows the action, successful creation of Michael Williams,
+Emma Granger, and Simon Jones, and reload persistence; Fleet is denied before
+the action. Authenticated Odoo desktop/mobile captures show a healthy seeded
+24-row list, but its empty-state comparison is blocked because the reference
+company already has 24 employees. The exact comparison boundary and all
+artifacts are under
+`evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.

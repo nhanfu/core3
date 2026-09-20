@@ -1,0 +1,15 @@
+{
+  "url": "http://127.0.0.1:4043/employees",
+  "title": "Employees",
+  "buttonCount": 1,
+  "clickError": null,
+  "before": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nKanban\nList\nCards\nActivity\nGraph\nPivot\nNew employee\nLoad Sample Data\nHuman Resources / Employees\n0-0 / 0\n‹\n›\nNew\n0\nActive\n0\nOn leave\n0\nDeparted\n0",
+  "after": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nKanban\nList\nCards\nActivity\nGraph\nPivot\nNew employee\nLoad Sample Data\nHuman Resources / Employees\n1-3 / 3\n‹\n›\nNew\n0\nActive\n3\nEG\nEmma Granger\n\nConsultant\n\nDepartment\nResearch & Development\nWork Email\ngranger@sample.core3.local\nWork Phone\n+1 555-555-6231\nStatus\nActive\nMW\nMichael Williams\n\nChief Executive Officer\n\nDepartment\nManagement\nWork Email\nwilliams@sample.core3.local\nWork Phone\n+1 555-555-6230\nStatus\nActive\nSJ\nSimon Jones\n\nExperienced Developer\n\nDepartment\nResearch & Development\nWork Email\njones@sample.core3.local\nWork Phone\n+1 555-555-6232\nStatus\nActive\nOn leave\n0\nDeparted\n0",
+  "afterHasMichael": true,
+  "afterHasEmma": true,
+  "afterHasSimon": true,
+  "restartHasMichael": true,
+  "errors": [],
+  "failed": [],
+  "http": []
+}

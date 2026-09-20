@@ -138,3 +138,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.
 Full Employees rerun records 57 pass / 12 fail across 69 tests because of the
 concurrent Surveys duplicate action `print_survey_results`; audit remains
 green at 675 / 684 / 1,225 and Employees-scoped lint/diff-check pass.
+
+## EMP-LOAD-SAMPLE-DATA-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-013 | Empty Employees / Load Sample Data | Three deterministic current-company employees and departments are created; retry rejects without duplication | pass |
+| EMP-PERM-013 | Actor/company boundary | Authenticated `employees.write` actor and current company required; non-empty scope rejects; Fleet cannot read or invoke | pass |
+| EMP-DATA-013 | Replay/restart | Audit row and employee rows survive migration replay and file-backed restart | pass |
+| EMP-UI-009 | Core3/Odoo desktop and mobile | Core3 Admin action/create/reload pass; Odoo seeded list pass, empty action not rendered because reference company is non-empty | conditional |
+
+Evidence: `evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.

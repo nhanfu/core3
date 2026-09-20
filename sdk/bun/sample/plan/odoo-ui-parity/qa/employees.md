@@ -562,3 +562,19 @@ The full Employees rerun records **57 pass / 12 fail across 69 tests** because
 the unrelated concurrent Surveys change duplicates `print_survey_results`
 during global discovery. Employees-scoped ESLint and diff-check pass; no
 aggregate module sign-off is claimed.
+
+## EMP-LOAD-SAMPLE-DATA-001 evidence ledger (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-013 | Empty Employees Load Sample Data, deterministic rows, retry | pass; 3 focused tests / 21 assertions |
+| EMP-PERM-013 | Authenticated actor, employees.write, current-company and non-empty guards | pass in mutation tests; Fleet browser received 403 and did not see the action |
+| EMP-DATA-013 | Migration replay and DuckDB restart | pass; audit row and three employees persisted |
+| EMP-UI-009 | Authenticated Core3/Odoo desktop and mobile | Core3 pass after toolbar binding repair; Odoo seeded non-empty list pass, empty-state action comparison blocked by 24 existing reference employees |
+
+Evidence is under
+`evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`. The module rerun
+was **78 passed / 8 failed across 24 files** because the concurrent shared
+Inventory changes reference missing actions during global discovery; this is
+not an Employees failure. The repository audit has the same external blocker.
+No aggregate Employees sign-off is claimed.

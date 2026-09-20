@@ -1,0 +1,87 @@
+[
+  {
+    "mode": "desktop-empty",
+    "url": "http://127.0.0.1:4043/employees",
+    "hasLoadSample": true,
+    "hasRows": true,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:4043/api/pages/employee-analysis?lc=en",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  {
+    "mode": "desktop-loaded",
+    "hasMichael": true,
+    "hasEmma": true,
+    "hasSimon": true,
+    "departmentScoped": true,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:4043/api/pages/employee-analysis?lc=en",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  {
+    "mode": "desktop-reload",
+    "hasMichael": true,
+    "hasEmma": true,
+    "hasSimon": true,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:4043/api/pages/employee-analysis?lc=en",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  {
+    "mode": "mobile-loaded",
+    "url": "http://127.0.0.1:4043/employees",
+    "hasMichael": true,
+    "hasEmma": true,
+    "hasSimon": true,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:4043/api/v1/company",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:4043/packages/client/src/components/StatCard.ts",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  {
+    "mode": "fleet-boundary",
+    "url": "http://127.0.0.1:4043/employees",
+    "hasLoadSample": false,
+    "body": "⌘ K\nFM\n⚠️\nFailed to load page\nRequires permission: employees.read",
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:4043/api/v1/companies",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": [
+      {
+        "status": 403,
+        "url": "http://127.0.0.1:4043/api/pages/employee-analysis?lc=en"
+      },
+      {
+        "status": 403,
+        "url": "http://127.0.0.1:4043/api/pages/employees?lc=en"
+      }
+    ]
+  }
+]

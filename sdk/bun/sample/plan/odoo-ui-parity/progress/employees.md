@@ -20,6 +20,30 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-LOAD-SAMPLE-DATA-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed behavior after Print Badge:
+  Odoo's empty Employees `action_hr_employee_load_demo_data` server action.
+- Added YAML-first page/API separation, a company-scoped `employees.write`
+  mutation, deterministic department and employee fixtures, an audit table
+  migration, actor/company/empty-state guards, and migration-replay/restart
+  coverage.
+- Focused feature verification passes **3 tests / 21 assertions**. The module
+  rerun reached **78 passed / 8 failed across 24 files**; the eight failures
+  are the pre-existing shared Inventory page-discovery error for missing
+  `create_inventory_quant`, `set_inventory_quantity`, and related actions.
+  Employees feature tests pass; the repository audit is blocked by that same
+  unrelated Inventory discovery error. Scoped ESLint and diff-check pass.
+- Authenticated Core3 desktop/mobile captures pass after fixing the toolbar
+  binding: Admin loaded three sample employees and reload/mobile retained them;
+  Fleet received 403. Authenticated Odoo desktop/mobile captures pass for the
+  seeded list with no errors, but the empty-state comparison is blocked because
+  the reference company already has 24 employees. Evidence:
+  `evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.
+
+Verification trigger: feature-complete with unrelated shared Inventory audit blocker
+Candidate commit: pending local commit
+
 ## EMP-BARCODE-GENERATE-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed Employee gap: Odoo Settings

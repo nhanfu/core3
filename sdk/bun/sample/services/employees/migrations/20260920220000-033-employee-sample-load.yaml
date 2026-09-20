@@ -1,0 +1,23 @@
+id: employees_sample_load
+version: 0.0.33
+kind: data
+description: Persist deterministic employee sample-load audit records
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_sample_load_runs (
+        id VARCHAR PRIMARY KEY,
+        company_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        employee_count INTEGER NOT NULL DEFAULT 0,
+        loaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS employee_sample_load_runs_company_idx ON employee_sample_load_runs(company_name, loaded_at);
+    down: |
+      DROP INDEX IF EXISTS employee_sample_load_runs_company_idx;
+      DROP TABLE IF EXISTS employee_sample_load_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

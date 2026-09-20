@@ -1,0 +1,40 @@
+AU
+New employee
+Load Sample Data
+Employees
+1-3 / 3
+‹
+›
+EG
+Emma Granger
+
+Consultant
+
+Department
+Research & Development - Core3 Demo Company
+Work Email
+granger@sample.core3.local
+Status
+Active
+MW
+Michael Williams
+
+Chief Executive Officer
+
+Department
+Management - Core3 Demo Company
+Work Email
+williams@sample.core3.local
+Status
+Active
+SJ
+Simon Jones
+
+Experienced Developer
+
+Department
+Research & Development - Core3 Demo Company
+Work Email
+jones@sample.core3.local
+Status
+Active

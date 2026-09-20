@@ -1,0 +1,15 @@
+{
+  "text": "AU\nNew employee\nLoad Sample Data\nEmployees\n1-3 / 3\n‹\n›\nEG\nEmma Granger\n\nConsultant\n\nDepartment\nResearch & Development - Core3 Demo Company\nWork Email\ngranger@sample.core3.local\nStatus\nActive\nMW\nMichael Williams\n\nChief Executive Officer\n\nDepartment\nManagement - Core3 Demo Company\nWork Email\nwilliams@sample.core3.local\nStatus\nActive\nSJ\nSimon Jones\n\nExperienced Developer\n\nDepartment\nResearch & Development - Core3 Demo Company\nWork Email\njones@sample.core3.local\nStatus\nActive",
+  "errors": [],
+  "failed": [
+    {
+      "url": "http://127.0.0.1:4043/api/v1/company",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:4043/packages/client/src/components/StatCard.ts",
+      "error": "net::ERR_ABORTED"
+    }
+  ],
+  "http": []
+}

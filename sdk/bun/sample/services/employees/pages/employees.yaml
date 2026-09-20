@@ -6,6 +6,8 @@ components:
     source: employees
     create_action: create_employee
     create_label: New employee
+    header_actions:
+      - { id: load_sample_employee_data, label: Load Sample Data, permission: employees.write, variant: secondary }
     search: { label: Search employees, placeholder: 'Search employee number, name, or email...' }
     filters:
       - { field: state, label: Status, options_source: employee_states }
@@ -97,6 +99,7 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
+    empty_state: { title: Ready to start your experience?, description: Load sample data to explore Employees }
     row_double_click_action: view_employee
     form_view: { page: apps/services/employees/pages/employee-detail.yaml, side_panel: true }
     actions:
