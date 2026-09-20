@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -101,5 +101,44 @@ describe('Project task detail/form parity', () => {
     expect(await repository.executeMutation(start.mutation, { id: 'task-demo-004', expected_row_version: 1 })).toMatchObject({ id: 'task-demo-004', state: 'In Progress' });
     expect(await repository.executeMutation(complete.mutation, { id: 'task-demo-004', expected_row_version: 2 })).toMatchObject({ id: 'task-demo-004', state: 'Done' });
     await expect(repository.executeMutation(cancel.mutation, { id: 'task-demo-004', expected_row_version: 3 })).rejects.toMatchObject({ status: 409, code: 'PROJECT_TASK_INVALID_TRANSITION' });
+  });
+
+  test('persists task workflow state and row versions across file-backed restart and migration replay', async () => {
+    const databasePath = `/tmp/core3-project-task-workflow-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `project_task_workflow_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const migrations = join(serviceRoot, 'migrations');
+    const api = yaml('api/task-detail.yaml');
+    const detail = api.datasources.find((candidate: any) => candidate.id === 'project_task_detail');
+    const start = action(api, 'start_task');
+    const complete = action(api, 'complete_task');
+    const cancel = action(api, 'cancel_task');
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, migrations, undefined, migrationName, ['schema', 'data']);
+    expect(await firstRepository.executeMutation(start.mutation, { id: 'task-demo-004', expected_row_version: 1 }))
+      .toMatchObject({ id: 'task-demo-004', state: 'In Progress', row_version: 2 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, migrations, undefined, migrationName, ['schema', 'data']);
+    expect(await secondRepository.querySource(detail, { id: 'task-demo-004', fixture_state: null }, 0, 1))
+      .toMatchObject({ data: expect.objectContaining({ id: 'task-demo-004', state: 'In Progress', row_version: 2 }) });
+    await expect(secondRepository.executeMutation(complete.mutation, { id: 'task-demo-004', expected_row_version: 1 }))
+      .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    expect(await secondRepository.executeMutation(complete.mutation, { id: 'task-demo-004', expected_row_version: 2 }))
+      .toMatchObject({ id: 'task-demo-004', state: 'Done', row_version: 3 });
+    await expect(secondRepository.executeMutation(cancel.mutation, { id: 'task-demo-004', expected_row_version: 3 }))
+      .rejects.toMatchObject({ status: 409, code: 'PROJECT_TASK_INVALID_TRANSITION' });
+    second.close();
+
+    const third = await DuckDbDatabase.open(databasePath);
+    const thirdRepository = new YamlRepository(third);
+    await migrateDatabase(thirdRepository, migrations, undefined, migrationName, ['schema', 'data']);
+    expect(await thirdRepository.querySource(detail, { id: 'task-demo-004', fixture_state: null }, 0, 1))
+      .toMatchObject({ data: expect.objectContaining({ state: 'Done', row_version: 3 }) });
+    third.close();
+    rmSync(databasePath, { force: true });
   });
 });
