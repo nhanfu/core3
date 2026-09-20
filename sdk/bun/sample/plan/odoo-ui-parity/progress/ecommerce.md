@@ -7,6 +7,26 @@ Verification trigger: feature-complete
 Latest committed bounded slice: `099112b089627f3e008e3f30d70aae6f1a8cd9ae`
 (`ECOM-CATALOG-PRODUCT-REVIEWS-001`, committed locally; not pushed).
 
+## Current bounded task — `ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`
+
+Wave 14 selected the next genuinely uncovered Website Sale behavior: the
+website description on `product.public.category`. Odoo exposes the HTML field
+in the `product_public_category_action` form and renders it in the shop
+category header. Core3 migrations 092/093 add durable category description
+content and a deterministic Accessories fixture. Category Detail keeps
+page/API YAML separate and exposes a permissioned rich-text edit/clear action
+with active/current-company, safe-HTML/length, optimistic concurrency, and
+DuckDB restart coverage.
+
+Focused tests passed **3 tests, 21 assertions, 0 failures**. Category
+description/cover/CRUD regression passed **8 tests, 59 assertions, 0
+failures**. The UI audit passed at 714 pages/723 routes/1367 datasources;
+scoped ESLint and `git diff --check` pass. Core3 desktop/mobile capture is
+blocked by missing `js_repl` and unavailable ports 3000/4312/4313; Odoo
+`/shop` is exact HTTP 404 on 8069/8073. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-category-website-description-001/`.
+Ready for an Ecommerce-only local commit; not pushed.
+
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-REVIEWS-001`
 
 Wave 13 selected the next genuinely uncovered Website Sale behavior: product

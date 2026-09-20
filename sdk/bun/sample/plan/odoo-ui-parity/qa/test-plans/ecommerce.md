@@ -10,6 +10,17 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001
+
+- ECOM-FUNC-043: trace the Odoo category menu/action, HTML field, form, and
+  shop template; verify Category Detail page/API separation.
+- ECOM-WF-054: seed, edit, clear, and reload category website description.
+- ECOM-PERM-050: require `ecommerce.write`; reject wrong company, inactive
+  category, unsafe/over-length HTML, and stale row writes.
+- ECOM-UI-036: Category Detail rich-text description field and action; desktop/
+  mobile and Odoo comparison remain blocked by runtime availability and
+  `/shop` HTTP 404.
+
 ## ECOM-CATALOG-PRODUCT-REVIEWS-001
 
 - ECOM-FUNC-042: trace Odoo rating mixin, aggregates, and Customer Reviews

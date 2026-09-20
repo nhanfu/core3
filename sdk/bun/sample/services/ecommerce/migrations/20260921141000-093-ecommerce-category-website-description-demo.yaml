@@ -1,0 +1,20 @@
+version: 0.0.93
+kind: data
+description: deterministic Website Sale public category description fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_categories
+      SET website_description = CASE
+        WHEN id = 'ecommerce-category-accessories' THEN '<p>Workspace accessories for a more comfortable, organized desk.</p>'
+        ELSE website_description
+      END
+      WHERE id = 'ecommerce-category-accessories';
+    down: |
+      UPDATE ecommerce_categories
+      SET website_description = NULL
+      WHERE id = 'ecommerce-category-accessories';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

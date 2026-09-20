@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_CATEGORY_FORBIDDEN, message: You do not have access to this category. }
       missing_record: { status: 404, code: ECOMMERCE_CATEGORY_NOT_FOUND, message: Category not found. }
       transport_error: { status: 503, code: ECOMMERCE_CATEGORY_UNAVAILABLE, message: Category details are temporarily unavailable. }
-    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, c.company_name, c.cover_image_file_name, c.cover_image_mime_type, c.cover_image_size_bytes, c.cover_image_uploaded_by, CAST(c.cover_image_updated_at AS VARCHAR) AS cover_image_updated_at FROM ecommerce_categories c WHERE c.id = :id AND (COALESCE(:company_name, '') = '' OR c.company_name = :company_name OR c.company_name IS NULL)"
+    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, c.company_name, c.website_description, c.cover_image_file_name, c.cover_image_mime_type, c.cover_image_size_bytes, c.cover_image_uploaded_by, CAST(c.cover_image_updated_at AS VARCHAR) AS cover_image_updated_at FROM ecommerce_categories c WHERE c.id = :id AND (COALESCE(:company_name, '') = '' OR c.company_name = :company_name OR c.company_name IS NULL)"
   - id: ecommerce_category_cover_image
     permission: ecommerce.read
     query: "SELECT id, id AS category_id, cover_image_file_name AS file_name, cover_image_mime_type AS mime_type, cover_image_size_bytes AS size_bytes, cover_image_uploaded_by AS uploaded_by, CAST(cover_image_updated_at AS VARCHAR) AS updated_at FROM ecommerce_categories WHERE id = :id AND active = TRUE AND cover_image_file_name IS NOT NULL AND (COALESCE(:company_name, '') = '' OR company_name = :company_name OR company_name IS NULL)"
@@ -54,3 +54,23 @@ actions:
       steps:
         - { query: "UPDATE ecommerce_categories SET row_version = row_version + 1, cover_image_file_name = NULL, cover_image_mime_type = NULL, cover_image_size_bytes = NULL, cover_image_storage_key = NULL, cover_image_uploaded_by = NULL, cover_image_updated_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_CATEGORY_COVER_IMAGE_STALE, message: This category changed before its cover image was removed. }
       result: { query: "SELECT TRUE AS removed, :id AS id" }
+  - id: update_ecommerce_category_website_description
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Category Description
+    action: ecommerce.categories.website_description.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.ecommerce_category_detail.id}', expected_row_version: '{state.ecommerce_category_detail.row_version}' }
+    refresh: [ecommerce_category_detail]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT id FROM ecommerce_categories WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name OR company_name IS NULL)", status: 403, code: ECOMMERCE_CATEGORY_DESCRIPTION_COMPANY_SCOPE_REQUIRED, message: This category belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_categories WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_CATEGORY_DESCRIPTION_STALE, message: This category changed before its description could be saved. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:website_description, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:website_description, '') AS VARCHAR)) NOT LIKE '%<script%'", status: 422, code: ECOMMERCE_CATEGORY_DESCRIPTION_INVALID, message: Category description must be safe HTML up to 10000 characters. }
+      steps:
+        - { query: "UPDATE ecommerce_categories SET row_version = row_version + 1, website_description = NULLIF(TRIM(CAST(COALESCE(:website_description, '') AS VARCHAR)), ''), updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_CATEGORY_DESCRIPTION_STALE, message: This category changed before its description could be saved. }
+      result: { query: "SELECT id, row_version, name, website_description, active, company_name FROM ecommerce_categories WHERE id = :id" }
+    fields:
+      - { field: website_description, label: Category Description, type: richtext, wide: true }

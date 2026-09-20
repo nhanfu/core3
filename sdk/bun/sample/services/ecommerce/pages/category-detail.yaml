@@ -20,6 +20,7 @@ components:
     attachment_download_action: download_ecommerce_category_cover_image
     header_actions:
       - { id: back_to_ecommerce_categories, label: Back to Categories, variant: secondary }
+      - { id: update_ecommerce_category_website_description, label: Edit Description, variant: secondary, permission: ecommerce.write }
       - { id: remove_ecommerce_category_cover_image, label: Remove Cover Image, variant: danger, permission: ecommerce.write }
     groups:
       - title: Category
@@ -31,3 +32,7 @@ components:
           - { field: active, label: Active, type: StatusChip }
           - { field: company_name, label: Company }
           - { field: cover_image_file_name, label: Cover Image }
+      - title: Website Content
+        columns: 1
+        fields:
+          - { field: website_description, label: Category Description, type: richtext, wide: true }

@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Category Website Description (`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product.public.category` defines HTML
+  `website_description`; the Website Sale category menu opens
+  `product_public_category_action`, the category form exposes the field, and
+  the shop template renders `category.website_description`.
+- Core3 lifecycle: pass for this bounded contract. Migrations 092/093 add
+  durable content and a deterministic Accessories fixture. Category Detail
+  uses separate page/API YAML; the rich-text update/clear action requires
+  `ecommerce.write`, enforces active/current-company scope, safe HTML and
+  length validation, optimistic concurrency, and restart persistence.
+- Focused verification: `bun test
+  test/ecommerce_category_website_description.integration.test.ts --timeout
+  20000` — **3 passed, 21 assertions, 0 failures**. Category description,
+  cover-image, and category CRUD regression — **8 passed, 59 assertions, 0
+  failures**.
+- Paired Category Detail schema validation passed with external companion
+  datasources allowed. `bun run audit` passed at 714 pages, 723 routes, and
+  1367 datasources. Scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 were
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-category-website-description-001/`.
+
 ## Product Reviews and Ratings (`ECOM-CATALOG-PRODUCT-REVIEWS-001`, 2026-09-21)
 
 - Odoo source/page: pass. Website Sale product templates inherit

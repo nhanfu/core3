@@ -2,6 +2,29 @@
 
 Status: qa-in-progress (bounded product-reviews slice; module sign-off remains open)
 
+## Bounded feature — Category Website Description (`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`)
+
+Odoo source comparison: `website_sale/models/product_public_category.py`
+defines the HTML `website_description` field on `product.public.category`;
+the Website Sale category form exposes it through
+`product_public_category_action`, and `views/templates.xml` renders
+`category.website_description` in the shop category header. The Ecommerce
+catalog categories menu points to that action.
+
+Core3 had category hierarchy and cover-image metadata but no durable category
+description contract. Migrations 092/093 add the description column and a
+deterministic Accessories fixture. Category Detail keeps separate page/API
+YAML; its permissioned rich-text edit action enforces active/current-company
+scope, a 10,000-character safe-HTML boundary, optimistic row versions, and
+DuckDB restart persistence. Clearing the field stores NULL.
+
+Focused category CRUD/cover/description regression, paired schema validation,
+audit, scoped lint, and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-category-website-description-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+and the missing persistent browser runtime; supplied Odoo `/shop` probes are
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
+
 ## Bounded feature — Product Reviews and Ratings (`ECOM-CATALOG-PRODUCT-REVIEWS-001`)
 
 Odoo source comparison: `website_sale/models/product_template.py` inherits

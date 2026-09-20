@@ -1,0 +1,13 @@
+version: 0.0.92
+kind: schema
+description: durable Website Sale public category website description
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_categories ADD COLUMN website_description VARCHAR;
+    down: |
+      ALTER TABLE ecommerce_categories DROP COLUMN IF EXISTS website_description;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
