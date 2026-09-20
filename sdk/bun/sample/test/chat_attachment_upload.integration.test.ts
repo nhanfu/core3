@@ -120,7 +120,13 @@ describe('Chat multipart attachment upload', () => {
     authUser.sub = 'user-admin';
     const missing = await request({ thread_id: 'missing-chat-thread', expected_row_version: 1 });
     expect(missing?.status).toBe(404);
-    expect(await missing!.json()).toMatchObject({ code: 'CHAT_THREAD_NOT_FOUND' });
+    const missingBody = await missing!.json() as any;
+    expect(missingBody).toMatchObject({
+      error: 'Conversation not found.',
+      code: 'CHAT_THREAD_NOT_FOUND',
+      message_key: 'errors.chat_thread_not_found',
+    });
+    expect(missingBody.error).not.toBe('API route not found');
     expect((await repository.query('SELECT COUNT(*) AS count FROM chat_messages'))[0].count).toBe(5);
     expect(readdirSync(uploadRoot)).toHaveLength(0);
 
