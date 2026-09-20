@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
@@ -121,6 +121,57 @@ describe('Forum answer creation and moderation', () => {
     expect(flagged).toMatchObject({ state: 'Flagged', row_version: 2 });
     expect((await repository.query('SELECT state FROM forum_answers WHERE id = ?', ['forum-answer-qa-002']))[0]).toEqual({ state: 'Flagged' });
     database.close();
+  });
+
+  test('preserves answer moderation across a file-backed restart and rejects replay', async () => {
+    const databasePath = `/tmp/core3-forum-answer-moderation-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `forum_answer_moderation_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const add = actions().find((action: any) => action.id === 'add_forum_answer');
+    const accept = actions().find((action: any) => action.id === 'accept_forum_answer');
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+    const answer = await firstRepository.executeMutation(add.mutation, {
+      id: 'forum-post-demo-001',
+      line_id: 'forum-answer-restart-001',
+      parent_expected_row_version: 1,
+      current_user_name: 'Forum Moderator',
+      values: { content: 'This answer must survive a process restart.', author_name: 'Spoofed author' },
+    });
+    expect(answer).toMatchObject({ id: 'forum-answer-restart-001', author_name: 'Forum Moderator', state: 'Active', row_version: 1 });
+
+    const accepted = await firstRepository.executeMutation(accept.mutation, {
+      id: 'forum-post-demo-001',
+      line_id: 'forum-answer-restart-001',
+      parent_expected_row_version: 2,
+      expected_row_version: 1,
+    });
+    expect(accepted).toMatchObject({ id: 'forum-answer-restart-001', state: 'Accepted', row_version: 2 });
+    expect((await firstRepository.query('SELECT answer_count, row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
+      .toEqual({ answer_count: 3, row_version: 3 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT content, author_name, state, row_version FROM forum_answers WHERE id = ?', ['forum-answer-restart-001']))[0])
+      .toEqual({ content: 'This answer must survive a process restart.', author_name: 'Forum Moderator', state: 'Accepted', row_version: 2 });
+    expect((await secondRepository.query('SELECT answer_count, row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
+      .toEqual({ answer_count: 3, row_version: 3 });
+
+    await expect(secondRepository.executeMutation(accept.mutation, {
+      id: 'forum-post-demo-001',
+      line_id: 'forum-answer-restart-001',
+      parent_expected_row_version: 3,
+      expected_row_version: 2,
+    })).rejects.toMatchObject({ status: 409, code: 'FORUM_ANSWER_STALE' });
+    expect((await secondRepository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', ['forum-answer-restart-001']))[0])
+      .toEqual({ state: 'Accepted', row_version: 2 });
+    expect((await secondRepository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
+      .toEqual({ row_version: 3 });
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('binds parent versions for live authenticated accept and flag actions', async () => {
