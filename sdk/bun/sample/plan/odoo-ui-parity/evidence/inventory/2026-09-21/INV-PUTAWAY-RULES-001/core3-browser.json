@@ -1,0 +1,22 @@
+{
+  "feature_id": "INV-PUTAWAY-RULES-001",
+  "authenticated_as": "admin@tms.local",
+  "desktop": {
+    "viewport": "1440x900",
+    "screenshots": ["core3-desktop-list.png", "core3-desktop-detail.png", "core3-desktop-create-form.png"],
+    "states": ["list", "category_rule_detail", "create_form"],
+    "seeded_product_and_category_visible": true,
+    "strategy_context_visible": true,
+    "horizontal_overflow": false
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "screenshot": "core3-mobile-detail.png",
+    "state": "category_rule_detail",
+    "strategy_context_visible": true,
+    "horizontal_overflow": false
+  },
+  "console_errors": [],
+  "failed_requests": [],
+  "bad_responses": []
+}

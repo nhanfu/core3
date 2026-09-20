@@ -712,6 +712,25 @@ Inventory sign-off remains open.
   `stock.group_adv_location`; Routes is absent from the reachable Configuration
   menu. The blocker is recorded and full Inventory sign-off remains open.
 
+## `INV-PUTAWAY-RULES-001` — Warehouse Management Putaway Rules (2026-09-21)
+
+- Selected the next uncovered source-backed configuration workflow after
+  Storage Categories: Odoo `stock.putaway.rule`, including product/category
+  targeting, arrival/store locations, package/storage context, and sublocation
+  strategy.
+- Added separate Putaway Rules list/detail page and API YAML contracts joined
+  by `page.id`, migration `20260921190000-045-inventory-putaway-rules.yaml`,
+  deterministic rules, and `inventory.multi_location` read / `inventory.manage`
+  mutation boundaries.
+- Focused verification passes 4 tests / 33 assertions, covering discovery,
+  deterministic filters and context, target/strategy/location/company guards,
+  CRUD, archive/restore, concurrency, migration replay, and restart reads.
+  Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PUTAWAY-RULES-001/`.
+- The bounded Odoo probe stayed on `/web/login` for both viewports, so live
+  Odoo menu/record interaction is not claimed. Source/menu/group comparison
+  and blocker are recorded; full Inventory sign-off remains open.
+
 ## `INV-STORAGE-CATEGORIES-001` — Warehouse Management Storage Categories (2026-09-21)
 
 - Selected the next uncovered source-backed configuration workflow after

@@ -1,0 +1,66 @@
+page: { id: putaway-rules }
+datasources:
+  - id: inventory_putaway_rules
+    single: false
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_PUTAWAY_RULES_UNAVAILABLE, message: Putaway rules are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.sequence_number, r.product_id, COALESCE(r.product_name, 'All products') AS product_name, COALESCE(r.category_name, '') AS category_name, r.location_in_id, r.location_in_name, r.location_out_id, r.location_out_name, COALESCE(r.package_type_name, '') AS package_type_name, COALESCE(r.storage_category_name, '') AS storage_category_name, r.sublocation, r.company_name, r.active FROM inventory_putaway_rules r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND r.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND r.active = FALSE)) AND (r.company_name = COALESCE(:current_company_name, r.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)')) AND (:q IS NULL OR COALESCE(r.product_name, '') ILIKE '%' || :q || '%' OR COALESCE(r.category_name, '') ILIKE '%' || :q || '%' OR r.location_in_name ILIKE '%' || :q || '%' OR r.location_out_name ILIKE '%' || :q || '%') ORDER BY r.sequence_number, r.id"
+  - id: inventory_putaway_products
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, product_name AS label FROM inventory_stock_report WHERE active = TRUE ORDER BY product_name, id"
+  - id: inventory_putaway_categories
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM inventory_stock_report WHERE active = TRUE ORDER BY category_name"
+  - id: inventory_putaway_locations
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_locations WHERE active = TRUE AND usage IN ('Internal', 'View', 'Transit') ORDER BY name, id"
+  - id: inventory_putaway_storage_categories
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_storage_categories WHERE (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)')) ORDER BY name, id"
+  - id: inventory_putaway_package_types
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT DISTINCT package_type_name AS value, package_type_name AS label FROM inventory_packages WHERE NULLIF(TRIM(COALESCE(package_type_name, '')), '') IS NOT NULL ORDER BY package_type_name"
+actions:
+  - id: view_inventory_putaway_rule
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /putaway-rules/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_putaway_rule
+    type: server_form
+    permission: inventory.manage
+    title: New putaway rule
+    action: inventory.putaway_rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_putaway_rules]
+    mutation:
+      operation: insert
+      table: inventory_putaway_rules
+      generated: [id]
+      fields: [sequence_number, product_id, product_name, category_name, location_in_id, location_in_name, location_out_id, location_out_name, package_type_name, storage_category_id, storage_category_name, sublocation, company_name, active]
+      required: [location_in_id, location_out_id, sublocation]
+      defaults: { sequence_number: 10, product_id: '', product_name: 'All products', category_name: '', package_type_name: '', storage_category_id: '', storage_category_name: '', sublocation: no, company_name: 'My Company (San Francisco)', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :location_in_id IS NOT NULL AND :location_out_id IS NOT NULL AND :location_in_id <> :location_out_id", status: 422, code: INVENTORY_PUTAWAY_LOCATIONS_INVALID, message: Choose different arrival and destination locations. }
+        - { query: "SELECT 1 AS ok WHERE (:product_id IS NULL OR :product_id = '' OR :category_name IS NULL OR :category_name = '')", status: 422, code: INVENTORY_PUTAWAY_TARGET_INVALID, message: Choose a product or a product category, not both. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sublocation AS VARCHAR) IN ('no', 'last_used', 'closest_location') AND (CAST(:sublocation AS VARCHAR) <> 'closest_location' OR NULLIF(TRIM(COALESCE(:storage_category_id, '')), '') IS NOT NULL)", status: 422, code: INVENTORY_PUTAWAY_STRATEGY_INVALID, message: Closest Location requires a storage category. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_locations WHERE id = :location_in_id AND active = TRUE) AND EXISTS (SELECT 1 FROM inventory_locations WHERE id = :location_out_id AND active = TRUE)", status: 422, code: INVENTORY_PUTAWAY_LOCATION_INVALID, message: Choose active inventory locations. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(:current_company_name, :company_name) OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PUTAWAY_COMPANY_FORBIDDEN, message: The putaway rule company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_putaway_rules WHERE active = TRUE AND company_name = :company_name AND location_in_id = :location_in_id AND location_out_id = :location_out_id AND COALESCE(product_id, '') = COALESCE(:product_id, '') AND COALESCE(category_name, '') = COALESCE(:category_name, ''))", status: 409, code: INVENTORY_PUTAWAY_RULE_EXISTS, message: An active putaway rule already exists for this target and location pair. }
+      result: { query: "SELECT * FROM inventory_putaway_rules WHERE id = :id" }
+    fields:
+      - { field: sequence_number, label: Priority, type: number, default: 10 }
+      - { field: product_id, label: Product, type: select, options_source: inventory_putaway_products }
+      - { field: category_name, label: Product Category, type: select, options_source: inventory_putaway_categories }
+      - { field: location_in_id, label: When product arrives in, type: select, options_source: inventory_putaway_locations, required: true }
+      - { field: location_out_id, label: Store to, type: select, options_source: inventory_putaway_locations, required: true }
+      - { field: sublocation, label: Sublocation, type: select, options: [{ value: no, label: No }, { value: last_used, label: Last Used }, { value: closest_location, label: Closest Location }], required: true, default: no }
+      - { field: storage_category_id, label: Having Category, type: select, options_source: inventory_putaway_storage_categories }
+      - { field: package_type_name, label: Package Type, type: select, options_source: inventory_putaway_package_types }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }

@@ -1,0 +1,29 @@
+title: Putaway Rules
+page: { id: putaway-rules, route: /putaway-rules, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Putaway Rules], auth: { require: [inventory.multi_location] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_putaway_rules
+    create_action: create_inventory_putaway_rule
+    create_label: New
+    search: { label: Putaway Rules, placeholder: 'Search products, categories, or locations...' }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: sequence_number, label: Priority, optional: hide, sortable: true }
+      - { field: location_in_name, label: When product arrives in }
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: category_name, label: Product Category }
+      - { field: location_out_name, label: Store to }
+      - { field: sublocation, label: Sublocation }
+      - { field: storage_category_name, label: Having Category, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_putaway_rule
+    row_double_click_action: view_inventory_putaway_rule
+    form_view: { page: apps/services/inventory/pages/putaway-rule-detail.yaml, side_panel: false }
+    empty_state: { title: No putaway rules found, description: Create a rule to route incoming products to the right sublocation. }

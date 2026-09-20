@@ -1538,6 +1538,33 @@ Odoo account reaches Inventory Configuration but does not receive
 reachable desktop/mobile comparison boundary. The exact blocker is recorded;
 no Odoo mutation or full Inventory sign-off is claimed.
 
+## Configuration > Warehouse Management > Putaway Rules — `INV-PUTAWAY-RULES-001` (2026-09-21)
+
+This bounded slice covers Odoo's visible Putaway Rules configuration action.
+`addons/stock/views/product_strategy_views.xml:3-107` defines the
+`stock.putaway.rule` list, editable target/location/strategy fields,
+`action_putaway_tree`, search filters, and the `menu_putaway` menu under
+Warehouse Management. The model is defined in
+`addons/stock/models/product_strategy.py:17-95`: product or category target,
+arrival and destination locations, package type, storage category, priority,
+company, active state, and `no` / `last_used` / `closest_location` strategy.
+The source menu requires `stock.group_stock_multi_locations`.
+
+Core3 keeps `pages/putaway-rules.yaml` and
+`pages/putaway-rule-detail.yaml` presentation-only and joins them to
+`api/putaway-rules.yaml` and `api/putaway-rule-detail.yaml` by `page.id`.
+Migration `20260921190000-045-inventory-putaway-rules.yaml` adds deterministic
+product/category rules and location strategy fixtures. The manager-gated
+lifecycle supports list filters, create/edit, archive/restore, delete,
+current-company scope, distinct arrival/store locations, target/strategy
+validation, and row-version guards.
+
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-PUTAWAY-RULES-001/`. The bounded Odoo probe
+remained at the login route for both viewports; the exact blocker is recorded
+with the source/menu comparison. No Odoo mutation or full Inventory sign-off
+is claimed.
+
 ## Configuration > Warehouse Management > Storage Categories — `INV-STORAGE-CATEGORIES-001` (2026-09-21)
 
 This bounded slice covers Odoo's `stock.storage.category` configuration

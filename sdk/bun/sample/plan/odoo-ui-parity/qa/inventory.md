@@ -970,3 +970,32 @@ open.
 QA disposition: PASS for the bounded Core3 Storage Categories lifecycle and
 guards; BLOCKED for live Odoo comparison. Full Inventory sign-off remains
 open.
+
+## Warehouse Management Putaway Rules QA — `INV-PUTAWAY-RULES-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/product_strategy_views.xml:3-107` and
+  `addons/stock/models/product_strategy.py:17-95`. `action_putaway_tree`
+  exposes the editable rule list and search/group filters; `menu_putaway`
+  requires `stock.group_stock_multi_locations`. The source rule supports
+  product/category target, arrival/store locations, package type, storage
+  category, priority, company, active, and three sublocation strategies.
+- Core3 contract: PASS. `pages/putaway-rules.yaml` and
+  `pages/putaway-rule-detail.yaml` are separate from
+  `api/putaway-rules.yaml` and `api/putaway-rule-detail.yaml`, joined by
+  `page.id`. Migration 0.0.45 supplies deterministic active/archived rules.
+- Focused test: `bun test test/inventory_putaway_rules.integration.test.ts` —
+  PASS, 4 tests / 33 assertions. Coverage includes current-company filtering,
+  option catalogs, target/strategy/location validation, duplicate/company
+  guards, manager CRUD, archive/restore, stale rows, migration replay, and
+  restart persistence.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 list/detail/create states. Seeded product/category, Input, Small Bin,
+  and Closest Location context rendered; both viewports had equal document and
+  viewport widths with no browser errors.
+- Odoo comparison: BLOCKED. The bounded authenticated probe remained at
+  `/web/login` for `codex@core3.local` at both viewports, so no Odoo Putaway
+  Rules menu or record state is claimed and no mutation was attempted.
+
+QA disposition: PASS for the bounded Core3 Putaway Rules lifecycle and guards;
+BLOCKED for live Odoo comparison. Full Inventory sign-off remains open.

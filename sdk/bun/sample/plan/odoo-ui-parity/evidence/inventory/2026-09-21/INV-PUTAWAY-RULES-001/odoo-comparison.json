@@ -1,0 +1,22 @@
+{
+  "feature_id": "INV-PUTAWAY-RULES-001",
+  "authenticated_as": "codex@core3.local",
+  "source_menu": "Inventory > Configuration > Warehouse Management > Putaway Rules",
+  "source_menu_xml_id": "menu_putaway",
+  "source_action_xml_id": "action_putaway_tree",
+  "source_group": "stock.group_stock_multi_locations",
+  "desktop": {
+    "screenshot": "odoo-desktop-login.png",
+    "authenticated": false,
+    "route": "/web/login",
+    "putaway_rules_visible": false
+  },
+  "mobile": {
+    "screenshot": "odoo-mobile-login.png",
+    "authenticated": false,
+    "route": "/web/login",
+    "putaway_rules_visible": false
+  },
+  "blocker": "bounded probe remained on /web/login after the supplied account login attempt; no authenticated Odoo menu or record state is claimed",
+  "mutation_attempted": false
+}

@@ -1,0 +1,90 @@
+page: { id: putaway-rule-detail }
+datasources:
+  - id: inventory_putaway_rule_detail
+    single: true
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_PUTAWAY_RULE_DETAIL_UNAVAILABLE, message: Putaway rule details are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.sequence_number, r.product_id, COALESCE(r.product_name, 'All products') AS product_name, COALESCE(r.category_name, '') AS category_name, r.location_in_id, r.location_in_name, r.location_out_id, r.location_out_name, COALESCE(r.package_type_name, '') AS package_type_name, COALESCE(r.storage_category_id, '') AS storage_category_id, COALESCE(r.storage_category_name, '') AS storage_category_name, r.sublocation, r.company_name, r.active FROM inventory_putaway_rules r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id AND (r.company_name = COALESCE(:current_company_name, r.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)'))"
+actions:
+  - id: back_to_inventory_putaway_rules
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /putaway-rules
+  - id: edit_inventory_putaway_rule
+    type: server_form
+    permission: inventory.manage
+    title: Edit putaway rule
+    action: inventory.putaway_rules.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_putaway_rule_detail
+    refresh: [inventory_putaway_rule_detail, inventory_putaway_rules]
+    mutation:
+      operation: update
+      table: inventory_putaway_rules
+      fields: [sequence_number, product_id, product_name, category_name, location_in_id, location_in_name, location_out_id, location_out_name, package_type_name, storage_category_id, storage_category_name, sublocation, company_name]
+      required: [location_in_id, location_out_id, sublocation]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_putaway_rules WHERE id = :id AND company_name = COALESCE(:current_company_name, company_name)", status: 404, code: INVENTORY_PUTAWAY_RULE_NOT_FOUND, message: Putaway rule not found. }
+        - { query: "SELECT 1 AS ok WHERE :location_in_id <> :location_out_id", status: 422, code: INVENTORY_PUTAWAY_LOCATIONS_INVALID, message: Choose different arrival and destination locations. }
+        - { query: "SELECT 1 AS ok WHERE (:product_id IS NULL OR :product_id = '' OR :category_name IS NULL OR :category_name = '')", status: 422, code: INVENTORY_PUTAWAY_TARGET_INVALID, message: Choose a product or a product category, not both. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sublocation AS VARCHAR) IN ('no', 'last_used', 'closest_location') AND (CAST(:sublocation AS VARCHAR) <> 'closest_location' OR NULLIF(TRIM(COALESCE(:storage_category_id, '')), '') IS NOT NULL)", status: 422, code: INVENTORY_PUTAWAY_STRATEGY_INVALID, message: Closest Location requires a storage category. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_locations WHERE id = :location_in_id AND active = TRUE) AND EXISTS (SELECT 1 FROM inventory_locations WHERE id = :location_out_id AND active = TRUE)", status: 422, code: INVENTORY_PUTAWAY_LOCATION_INVALID, message: Choose active inventory locations. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(:current_company_name, :company_name) OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PUTAWAY_COMPANY_FORBIDDEN, message: The putaway rule company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_putaway_rules WHERE active = TRUE AND company_name = :company_name AND location_in_id = :location_in_id AND location_out_id = :location_out_id AND COALESCE(product_id, '') = COALESCE(:product_id, '') AND COALESCE(category_name, '') = COALESCE(:category_name, '') AND id <> :id)", status: 409, code: INVENTORY_PUTAWAY_RULE_EXISTS, message: An active putaway rule already exists for this target and location pair. }
+      result: { query: "SELECT * FROM inventory_putaway_rules WHERE id = :id" }
+    fields:
+      - { field: sequence_number, label: Priority, type: number }
+      - { field: product_id, label: Product, type: select, options_source: inventory_putaway_products }
+      - { field: category_name, label: Product Category, type: select, options_source: inventory_putaway_categories }
+      - { field: location_in_id, label: When product arrives in, type: select, options_source: inventory_putaway_locations, required: true }
+      - { field: location_out_id, label: Store to, type: select, options_source: inventory_putaway_locations, required: true }
+      - { field: sublocation, label: Sublocation, type: select, options: [{ value: no, label: No }, { value: last_used, label: Last Used }, { value: closest_location, label: Closest Location }], required: true }
+      - { field: storage_category_id, label: Having Category, type: select, options_source: inventory_putaway_storage_categories }
+      - { field: package_type_name, label: Package Type, type: select, options_source: inventory_putaway_package_types }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_inventory_putaway_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.putaway_rules.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [inventory_putaway_rule_detail, inventory_putaway_rules]
+    mutation:
+      operation: update
+      table: inventory_putaway_rules
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_putaway_rules WHERE id = :id AND active = TRUE AND company_name = COALESCE(:current_company_name, company_name)", status: 404, code: INVENTORY_PUTAWAY_RULE_NOT_FOUND, message: Active putaway rule not found. }]
+      result: { query: "SELECT * FROM inventory_putaway_rules WHERE id = :id" }
+  - id: restore_inventory_putaway_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.putaway_rules.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [inventory_putaway_rule_detail, inventory_putaway_rules]
+    mutation:
+      operation: update
+      table: inventory_putaway_rules
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_putaway_rules WHERE id = :id AND active = FALSE AND company_name = COALESCE(:current_company_name, company_name)", status: 404, code: INVENTORY_PUTAWAY_RULE_NOT_FOUND, message: Archived putaway rule not found. }]
+      result: { query: "SELECT * FROM inventory_putaway_rules WHERE id = :id" }
+  - id: delete_inventory_putaway_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.putaway_rules.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_putaway_rules]
+    mutation:
+      operation: delete
+      table: inventory_putaway_rules
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_putaway_rules WHERE id = :id AND company_name = COALESCE(:current_company_name, company_name)", status: 404, code: INVENTORY_PUTAWAY_RULE_NOT_FOUND, message: Putaway rule not found. }]

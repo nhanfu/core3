@@ -1,0 +1,31 @@
+version: 0.0.45
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_putaway_rules (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        sequence_number INTEGER NOT NULL DEFAULT 10,
+        product_id VARCHAR, product_name VARCHAR, category_name VARCHAR,
+        location_in_id VARCHAR NOT NULL, location_in_name VARCHAR NOT NULL,
+        location_out_id VARCHAR NOT NULL, location_out_name VARCHAR NOT NULL,
+        package_type_name VARCHAR, storage_category_id VARCHAR, storage_category_name VARCHAR,
+        sublocation VARCHAR NOT NULL DEFAULT 'no', company_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS inventory_putaway_rules_location_idx ON inventory_putaway_rules(location_in_id, location_out_id, sequence_number, id);
+      INSERT INTO inventory_putaway_rules
+        (id, sequence_number, product_id, product_name, category_name, location_in_id, location_in_name, location_out_id, location_out_name, package_type_name, storage_category_id, storage_category_name, sublocation, company_name, active)
+      VALUES
+        ('putaway-storage-box', 10, 'product-storage-box', '[E-COM08] Storage Box', NULL, 'location-input', 'Input', 'location-stock-shelf-1', 'Stock / Shelf 1', NULL, NULL, NULL, 'no', 'My Company (San Francisco)', TRUE),
+        ('putaway-office-supplies', 20, NULL, NULL, 'Office Supplies', 'location-input', 'Input', 'location-stock-shelf-2', 'Stock / Shelf 2', NULL, 'storage-bin', 'Small Bin', 'closest_location', 'My Company (San Francisco)', TRUE),
+        ('putaway-archived-demo', 30, NULL, 'All products', NULL, 'location-input', 'Input', 'location-stock', 'Stock', NULL, NULL, NULL, 'no', 'My Company (San Francisco)', FALSE)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_putaway_rules WHERE id IN ('putaway-storage-box', 'putaway-office-supplies', 'putaway-archived-demo');
+      DROP TABLE IF EXISTS inventory_putaway_rules;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
