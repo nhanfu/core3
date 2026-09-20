@@ -154,3 +154,28 @@ stat as `0`, and clicking it opens a new-entry action rather than a populated
 employee report. Mobile hides the stat and records two aborted `/mail/data`
 requests. This is an exact reference-data/action blocker, not a parity pass;
 full route/action comparison and module sign-off remain open.
+
+## 2026-09-20 `TIMESHEET-REPORT-EMPLOYEE-DRILLDOWN`
+
+The smallest remaining owned report interaction was the By Employee analysis
+row drilldown. Odoo defines the `timesheets.analysis.report` form at
+`addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46` and binds the
+By Employee action at lines 138-175. Core3 previously exposed only aggregate
+Pivot/Graph/List states.
+
+The page/API pair now returns relation IDs, applies the active-company scope,
+and maps each report row to the existing authenticated Timesheet detail route
+through the manager-only `view_employee_report_entry` action. Full-page
+navigation replaced the mobile side panel after browser QA found a 429px
+mobile overflow on the 390px viewport. File-backed restart tests confirm the
+underlying persisted entry remains available after reload.
+
+Focused coverage passes 4 tests / 15 expectations. The shared full Timesheets
+suite passes 68 tests / 490 expectations; scoped ESLint passes and the current
+UI audit passes with 679 pages, 688 routes, and 1247 datasources. Authenticated
+Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-employee-report-drilldown/`.
+Odoo renders the aggregate By Employee route but does not expose the loaded
+row-to-form interaction; that is an exact reference blocker. Timesheets module
+sign-off remains pending because the paired Odoo interaction and broader route/
+action comparison are still incomplete.

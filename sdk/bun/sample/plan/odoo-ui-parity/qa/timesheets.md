@@ -230,3 +230,15 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-TIMESHEETS-VISUAL-WAVE-20260913-R2` → `QA-TIMESHEETS-VISUAL-WAVE-20260913-R2` | existing `agent/odoo-ui-timesheets-visual3-20260912` in `/home/nhanjs/projects/core3-worktrees/timesheets-visual3-20260912` | File-backed restart persistence for entries/approvals and linked hours, migration replay, scope, stale/duplicate/employee guards, and focused tests | dispatched in `096f7239`; awaiting self-contained product commit before QA |
+
+## 2026-09-20 `TIMESHEET-REPORT-EMPLOYEE-DRILLDOWN`
+
+- Source gate: Odoo `timesheets.analysis.report` form view (`hr_timesheet/report/hr_timesheet_report_view.xml:23-46`) and By Employee action (`:138-175`) provide the report detail contract.
+- Core3 contract: `timesheets-by-employee` remains page/API-separated; the API adds relation IDs, active-company filtering, and manager-only `view_employee_report_entry` navigation to `/timesheets/detail` with `view_scope: all`.
+- Focused gate: `bun test test/timesheets_employee_report_drilldown.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 15 expectations. Full shared module gate: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 68 passed, 0 failed, 490 expectations.
+- Persistence/security gate: persisted report rows and detail survive a file-backed restart; manager permission and company scope are asserted; fixed-fixture and no-moving-time checks pass. Scoped ESLint passes; UI audit reports 676 pages, 685 routes, and 1239 datasources.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 switch By Employee from Pivot to List, open `timesheet-demo-001`, load `/timesheets/detail?id=timesheet-demo-001&view_scope=all&report_scope=employee`, and remain width-safe with no Core3 page errors.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/timesheets-by-employee` at desktop and mobile and renders aggregate analysis rows, but the loaded reference route exposes no visible row-to-form detail action. Desktop has one unrelated aborted `/mail/data` request; mobile has three unrelated aborted asset/action requests. This is an exact paired-reference blocker, not a parity pass.
+- Runtime boundary: browser capture used a temporary, non-committed runtime workaround while concurrent Ecommerce schema repairs were present; the current shared Timesheets suite and UI audit pass, and no other module files were changed or staged.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-employee-report-drilldown/`](../evidence/timesheets/2026-09-20/timesheet-employee-report-drilldown/).
+- Disposition: **bounded Core3 By Employee report drilldown verified; Odoo row-form comparison, remaining route/action comparison, and module sign-off remain pending**.

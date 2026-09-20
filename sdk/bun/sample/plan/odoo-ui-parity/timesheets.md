@@ -875,3 +875,39 @@ report-preview action in either viewport, so the equivalent Odoo interaction
 is an exact reference blocker. One unrelated shell prefetch abort for
 `/api/v1/companies` is recorded in the evidence JSON; no Timesheets request
 failed. QWeb/PDF output parity and full module sign-off remain open.
+
+## By Employee report drilldown slice — `TIMESHEET-REPORT-EMPLOYEE-DRILLDOWN` (2026-09-20)
+
+Odoo's `act_hr_timesheet_report` exposes the `timesheets.analysis.report`
+form definition in `addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46`
+alongside the By Employee action at lines 138-175. Core3's By Employee report
+had persisted analysis rows and Pivot/Graph/List states but no row route to the
+underlying Timesheet detail.
+
+Core3 now keeps the By Employee page and API separate by `page.id`. The API
+returns employee/project/task relation IDs, scopes rows to the active company,
+and owns `view_employee_report_entry`, a manager-permissioned navigation action
+to the existing persisted `/timesheets/detail` page with `view_scope: all`.
+The page uses full-page detail navigation rather than a mobile side panel, so
+the report-to-detail transition remains width-safe. Existing durable
+`timesheet_entries` persistence is reloaded through a file-backed restart in the
+focused test; no new report fixture or moving time is introduced.
+
+Focused coverage is `test/timesheets_employee_report_drilldown.integration.test.ts`
+(4 tests, 15 expectations): page/API separation, relation-backed row routing,
+company/manager guards, fixed fixtures, and restart detail persistence.
+Authenticated Core3 desktop/mobile evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-employee-report-drilldown/`;
+both viewports switch to List, open `timesheet-demo-001`, load `/timesheets/detail`
+with HTTP 200, and stay within their viewport without browser errors.
+
+Authenticated Odoo `/odoo/timesheets-by-employee` renders the aggregate
+Timesheets by Employee analysis at desktop and mobile, but the current route
+does not expose a visible row-to-form detail action; the source form definition
+is not reachable through the loaded interaction. This is an exact paired
+reference blocker, not a parity pass. Desktop records one unrelated aborted
+`/mail/data` request and mobile records three unrelated aborted asset/action
+requests. Browser capture used a temporary runtime workaround while concurrent
+Ecommerce page-schema repairs were still present in the shared checkout; the
+current shared Timesheets suite and UI audit now pass, and the workaround is
+outside the commit.

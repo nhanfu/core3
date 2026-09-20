@@ -1,0 +1,80 @@
+[
+  {
+    "product": "core3",
+    "name": "desktop",
+    "reportUrl": "http://127.0.0.1:4000/timesheets/timesheets-by-employee",
+    "detailUrl": "http://127.0.0.1:4000/timesheets/detail?id=timesheet-demo-001&view_scope=all&report_scope=employee",
+    "rowCount": 15,
+    "rowText": "07:00 15/01/2026\t\nAdmin User\n\tCore3 Implementation\tComplete module migration\t8",
+    "errors": [],
+    "routeRequests": [
+      {
+        "url": "http://127.0.0.1:4000/api/pages/timesheets-by-employee?lc=en",
+        "method": "GET"
+      },
+      {
+        "url": "http://127.0.0.1:4000/api/pages/timesheet-detail?lc=en&id=timesheet-demo-001&view_scope=all&report_scope=employee",
+        "method": "GET"
+      }
+    ],
+    "before": "ContactsSoonOrdersSoonChatSoonCore3 AgentSoonCRMSoonPoint of SaleSoonSubscriptionsSoonRentalSoonAccountingSoonExpensesSoonDocumentsSoonApprovalsSoonSpreadsheet / DashboardsSoonInventorySoonManufacturingSoonPurchaseSoonMaintenanceSoonField ServiceSoonHelpdeskSoonQualitySoonPLMSoonEmployeesSoonRecruitmentSoonTime OffSoonAppraisalsSoonReferralsSoonFleetSoonEmail MarketingSoonSMS MarketingSoonEventsSoonSurveysSoonMarketing AutomationSoonProjectSoonTimesheetsWebsiteSooneCommerceSoonBlogSoonForumSoonLive ChatSoon\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nPivotGraphList\nTimesheets / Reporting / By Employee\n1-15 / 15‹›\nDate\tEmployee\tProject\tTask\tTime Spent\n07:00 15/01/2026\t\nAdmin User\n\tCore3 Implementation\tComplete module migration\t8\n07:00 14/01/2026\t\nAdmin User\n\tCore3 Implementation\tStakeholder review\t2.5\n07:00 14/01/2026\t\nMorgan Taylor\n\tCore3 Implementation\tRequirements analysis\t6.5\n07:00 13/01/2026\t\nAdmin User\n\tCore3 Implementation\tDesign QA\t3.25\n07:00 13/01/2026\t\nMorgan Taylor\n\tCore3 Implementation\tDesign\t4.25\n07:00 12/01/2026\t\nAdmin User\n\tDelivery Enablement\tCustomer workshop\t4\n07:00 12/01/2026\t\nPriya Shah\n\tCore3 Implementation\tQuality analysis\t3.5\n07:00 11/01/2026\t\nAdmin User\n\tDelivery Enablement\tDocumentation\t5\n07:00 10/01/2026\t\nAdmin User\n\tCore3 Implementation\tRelease planning\t2\n07:00 09/01/2026\t\nAdmin User\n\tDelivery Enablement\tDelivery\t7.5\n07:00 08/01/2026\t\nAdmin User\n\tDelivery Enablement\tSprint retrospective\t1.5\n07:00 08/01/2026\t\nPriya Shah\n\tDelivery Enablement\tTraining\t5\n07:00 07/01/2026\t\nAdmin User\n\tCore3 Implementation\tAcceptance review\t3\n07:00 07/01/2026\t\nMorgan Taylor\n\tDelivery Enablement\tPresentation\t2.75\n07:00 06/01/2026\t\nAdmin User\n\tDelivery Enablement\tSprint\t6",
+    "after": "ContactsSoonOrdersSoonChatSoonCore3 AgentSoonCRMSoonPoint of SaleSoonSubscriptionsSoonRentalSoonAccountingSoonExpensesSoonDocumentsSoonApprovalsSoonSpreadsheet / DashboardsSoonInventorySoonManufacturingSoonPurchaseSoonMaintenanceSoonField ServiceSoonHelpdeskSoonQualitySoonPLMSoonEmployeesSoonRecruitmentSoonTime OffSoonAppraisalsSoonReferralsSoonFleetSoonEmail MarketingSoonSMS MarketingSoonEventsSoonSurveysSoonMarketing AutomationSoonProjectSoonTimesheetsWebsiteSooneCommerceSoonBlogSoonForumSoonLive ChatSoon\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nTimesheetsTimesheets›My Timesheets›Entry\nEditDeleteSubmitApproveRejectCancelPrint\nDraftSubmittedApprovedRejectedCancelled\nTS/2026/0001\nWork\nEntry\nTS/2026/0001\nStatus\nApproved\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nDescription\nMigration work\nTime and approval\nDate\n2026-01-15\nTime Spent\n08:00\nHours\n8\nBillable\ntrue\nUnit amount\n125\nCost\n680\nSales Order Item\nCore3 Implementation (Module Migration)\nApprover\n—\nApproved at\n—",
+    "scrollWidth": {
+      "body": 1424,
+      "document": 1440
+    }
+  },
+  {
+    "product": "core3",
+    "name": "mobile",
+    "reportUrl": "http://127.0.0.1:4000/timesheets/timesheets-by-employee",
+    "detailUrl": "http://127.0.0.1:4000/timesheets/detail?id=timesheet-demo-001&view_scope=all&report_scope=employee",
+    "rowCount": 15,
+    "rowText": "07:00 15/01/2026\t\nAdmin User\n\tCore3 Implementation\tComplete module migration\t8",
+    "errors": [],
+    "routeRequests": [
+      {
+        "url": "http://127.0.0.1:4000/api/pages/timesheets-by-employee?lc=en",
+        "method": "GET"
+      },
+      {
+        "url": "http://127.0.0.1:4000/api/pages/timesheet-detail?lc=en&id=timesheet-demo-001&view_scope=all&report_scope=employee",
+        "method": "GET"
+      }
+    ],
+    "before": "ContactsSoonOrdersSoonChatSoonCore3 AgentSoonCRMSoonPoint of SaleSoonSubscriptionsSoonRentalSoonAccountingSoonExpensesSoonDocumentsSoonApprovalsSoonSpreadsheet / DashboardsSoonInventorySoonManufacturingSoonPurchaseSoonMaintenanceSoonField ServiceSoonHelpdeskSoonQualitySoonPLMSoonEmployeesSoonRecruitmentSoonTime OffSoonAppraisalsSoonReferralsSoonFleetSoonEmail MarketingSoonSMS MarketingSoonEventsSoonSurveysSoonMarketing AutomationSoonProjectSoonTimesheetsWebsiteSooneCommerceSoonBlogSoonForumSoonLive ChatSoon\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nPivotGraphList\nTimesheets / Reporting / By Employee\n1-15 / 15‹›\nDate\tEmployee\tProject\tTask\tTime Spent\n07:00 15/01/2026\t\nAdmin User\n\tCore3 Implementation\tComplete module migration\t8\n07:00 14/01/2026\t\nAdmin User\n\tCore3 Implementation\tStakeholder review\t2.5\n07:00 14/01/2026\t\nMorgan Taylor\n\tCore3 Implementation\tRequirements analysis\t6.5\n07:00 13/01/2026\t\nAdmin User\n\tCore3 Implementation\tDesign QA\t3.25\n07:00 13/01/2026\t\nMorgan Taylor\n\tCore3 Implementation\tDesign\t4.25\n07:00 12/01/2026\t\nAdmin User\n\tDelivery Enablement\tCustomer workshop\t4\n07:00 12/01/2026\t\nPriya Shah\n\tCore3 Implementation\tQuality analysis\t3.5\n07:00 11/01/2026\t\nAdmin User\n\tDelivery Enablement\tDocumentation\t5\n07:00 10/01/2026\t\nAdmin User\n\tCore3 Implementation\tRelease planning\t2\n07:00 09/01/2026\t\nAdmin User\n\tDelivery Enablement\tDelivery\t7.5\n07:00 08/01/2026\t\nAdmin User\n\tDelivery Enablement\tSprint retrospective\t1.5\n07:00 08/01/2026\t\nPriya Shah\n\tDelivery Enablement\tTraining\t5\n07:00 07/01/2026\t\nAdmin User\n\tCore3 Implementation\tAcceptance review\t3\n07:00 07/01/2026\t\nMorgan Taylor\n\tDelivery Enablement\tPresentation\t2.75\n07:00 06/01/2026\t\nAdmin User\n\tDelivery Enablement\tSprint\t6",
+    "after": "ContactsSoonOrdersSoonChatSoonCore3 AgentSoonCRMSoonPoint of SaleSoonSubscriptionsSoonRentalSoonAccountingSoonExpensesSoonDocumentsSoonApprovalsSoonSpreadsheet / DashboardsSoonInventorySoonManufacturingSoonPurchaseSoonMaintenanceSoonField ServiceSoonHelpdeskSoonQualitySoonPLMSoonEmployeesSoonRecruitmentSoonTime OffSoonAppraisalsSoonReferralsSoonFleetSoonEmail MarketingSoonSMS MarketingSoonEventsSoonSurveysSoonMarketing AutomationSoonProjectSoonTimesheetsWebsiteSooneCommerceSoonBlogSoonForumSoonLive ChatSoon\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nTimesheetsTimesheets›My Timesheets›Entry\nEditDeleteSubmitApproveRejectCancelPrint\nDraftSubmittedApprovedRejectedCancelled\nTS/2026/0001\nWork\nEntry\nTS/2026/0001\nStatus\nApproved\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nDescription\nMigration work\nTime and approval\nDate\n2026-01-15\nTime Spent\n08:00\nHours\n8\nBillable\ntrue\nUnit amount\n125\nCost\n680\nSales Order Item\nCore3 Implementation (Module Migration)\nApprover\n—\nApproved at\n—",
+    "scrollWidth": {
+      "body": 374,
+      "document": 390
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "desktop",
+    "url": "http://127.0.0.1:8069/odoo/timesheets-by-employee",
+    "errors": [
+      "requestfailed:http://127.0.0.1:8069/mail/data:net::ERR_ABORTED"
+    ],
+    "body": "Timesheets\nTimesheets\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nTimesheets by Employee\nMeasures \n\tTotal\t\nJune 2026\tJuly 2026\tAugust 2026\tSeptember 2026\nTime Spent\tTime Spent\tTime Spent\tTime Spent\tTime Spent\nTotal\t\n32:00\n\t\n100:00\n\t\n376:00\n\t\n483:00\n\t\n991:00\n\nAbigail Peterson\t\t\t\n32:00\n\t\n14:00\n\t\n46:00\n\nAmy Watson\t\t\t\n10:00\n\t\t\n10:00\n\nAnita Oliver\t\t\n04:00\n\t\n23:00\n\t\n19:00\n\t\n46:00\n\nAudrey Peterson\t\t\n01:00\n\t\n13:00\n\t\n24:00\n\t\n38:00\n\nBeth Evans\t\t\n03:00\n\t\n08:00\n\t\n30:00\n\t\n41:00\n\nDoris Cole\t\t\n07:00\n\t\n10:00\n\t\n11:00\n\t\n28:00\n\nEli Lambert\t\t\n04:00\n\t\n05:00\n\t\n24:00\n\t\n33:00\n\nErnest Reed\t\t\n02:00\n\t\n17:00\n\t\n28:00\n\t\n47:00\n\nJeffrey Kelly\t\t\n05:00\n\t\n23:00\n\t\n22:00\n\t\n50:00\n\nJennie Fletcher\t\t\n11:00\n\t\n13:00\n\t\n13:00\n\t\n37:00\n\nJessica Johnson\t\t\t\n08:00\n\t\t\n08:00\n\nJustin Smith\t\t\t\n09:00\n\t\t\n09:00\n\nKeith Byrd\t\t\n05:00\n\t\n15:00\n\t\n17:00\n\t\n37:00\n\nMarc Demo\t\n08:00\n\t\n09:00\n\t\n47:00\n\t\n43:00\n\t\n107:00\n\nMitchell Admin\t\n24:00\n\t\n02:00\n\t\n49:00\n\t\n52:00\n\t\n127:00\n\nPaul Williams\t\t\n03:00\n\t\n08:00\n\t\n25:00\n\t\n36:00\n\nRachel Perry\t\t\n04:00\n\t\n11:00\n\t\n24:00\n\t\n39:00\n\nRandall Lewis\t\t\n07:00\n\t\n06:00\n\t\n35:00\n\t\n48:00\n\nRonnie Hart\t\t\n04:00\n\t\n12:00\n\t\n15:00\n\t\n31:00\n\nSharlene Rhodes\t\t\n02:00\n\t\n12:00\n\t\n11:00\n\t\n25:00\n\nTina Williamson\t\t\n10:00\n\t\n12:00\n\t\n18:00\n\t\n40:00\n\nToni Jimenez\t\t\n09:00\n\t\n21:00\n\t\n30:00\n\t\n60:00\n\nWalter Horton\t\t\n08:00\n\t\n12:00\n\t\n28:00\n\t\n48:00",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "mobile",
+    "url": "http://127.0.0.1:8069/odoo/timesheets-by-employee",
+    "errors": [
+      "requestfailed:http://127.0.0.1:8069/web/action/load:net::ERR_ABORTED",
+      "requestfailed:http://127.0.0.1:8069/web/image/res.partner/3/avatar_128?unique=1788992892000:net::ERR_ABORTED",
+      "requestfailed:http://127.0.0.1:8069/web/image?model=res.users&field=avatar_128&id=2:net::ERR_ABORTED"
+    ],
+    "body": "Timesheets by Employee\n7\n40\nMeasures \n\tTotal\t\nJune 2026\tJuly 2026\tAugust 2026\tSeptember 2026\nTime Spent\tTime Spent\tTime Spent\tTime Spent\tTime Spent\nTotal\t\n32:00\n\t\n100:00\n\t\n376:00\n\t\n483:00\n\t\n991:00\n\nAbigail Peterson\t\t\t\n32:00\n\t\n14:00\n\t\n46:00\n\nAmy Watson\t\t\t\n10:00\n\t\t\n10:00\n\nAnita Oliver\t\t\n04:00\n\t\n23:00\n\t\n19:00\n\t\n46:00\n\nAudrey Peterson\t\t\n01:00\n\t\n13:00\n\t\n24:00\n\t\n38:00\n\nBeth Evans\t\t\n03:00\n\t\n08:00\n\t\n30:00\n\t\n41:00\n\nDoris Cole\t\t\n07:00\n\t\n10:00\n\t\n11:00\n\t\n28:00\n\nEli Lambert\t\t\n04:00\n\t\n05:00\n\t\n24:00\n\t\n33:00\n\nErnest Reed\t\t\n02:00\n\t\n17:00\n\t\n28:00\n\t\n47:00\n\nJeffrey Kelly\t\t\n05:00\n\t\n23:00\n\t\n22:00\n\t\n50:00\n\nJennie Fletcher\t\t\n11:00\n\t\n13:00\n\t\n13:00\n\t\n37:00\n\nJessica Johnson\t\t\t\n08:00\n\t\t\n08:00\n\nJustin Smith\t\t\t\n09:00\n\t\t\n09:00\n\nKeith Byrd\t\t\n05:00\n\t\n15:00\n\t\n17:00\n\t\n37:00\n\nMarc Demo\t\n08:00\n\t\n09:00\n\t\n47:00\n\t\n43:00\n\t\n107:00\n\nMitchell Admin\t\n24:00\n\t\n02:00\n\t\n49:00\n\t\n52:00\n\t\n127:00\n\nPaul Williams\t\t\n03:00\n\t\n08:00\n\t\n25:00\n\t\n36:00\n\nRachel Perry\t\t\n04:00\n\t\n11:00\n\t\n24:00\n\t\n39:00\n\nRandall Lewis\t\t\n07:00\n\t\n06:00\n\t\n35:00\n\t\n48:00\n\nRonnie Hart\t\t\n04:00\n\t\n12:00\n\t\n15:00\n\t\n31:00\n\nSharlene Rhodes\t\t\n02:00\n\t\n12:00\n\t\n11:00\n\t\n25:00\n\nTina Williamson\t\t\n10:00\n\t\n12:00\n\t\n18:00\n\t\n40:00\n\nToni Jimenez\t\t\n09:00\n\t\n21:00\n\t\n30:00\n\t\n60:00\n\nWalter Horton\t\t\n08:00\n\t\n12:00\n\t\n28:00\n\t\n48:00",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  }
+]
