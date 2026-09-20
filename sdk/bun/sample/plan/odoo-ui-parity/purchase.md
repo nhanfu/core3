@@ -1126,3 +1126,37 @@ persisted Cancelled state/version, actor/action/detail audit data, and invalid
 repeat transition. Focused validation passed 4 tests and 35 assertions.
 Browser evidence was not added in this backend-focused follow-up; existing
 visual and authenticated browser gates remain open.
+
+## Create Bills action — 2026-09-20
+
+The next uncovered source-defined Purchase workflow is Odoo's `Create Bills`
+list action. The source trace is `addons/purchase/views/purchase_views.xml`
+(`purchase_order_view_tree`, header button `action_create_invoice`) and
+`addons/purchase/models/purchase_order.py::action_create_invoice`. It is
+available from the Purchase Orders list after selecting confirmed/received
+orders and creates draft vendor bills through Accounting.
+
+Core3 now exposes the same user-visible action on
+`pages/purchase-orders.yaml`, while `api/purchase-orders.yaml` owns the
+`purchase.orders.create_bills` mutation. The mutation calls the existing
+`yaml.service.accounting` `accounting.invoices.create_from_source` contract,
+then persists the durable purchase-to-bill link in migration
+`20260920110000-028-purchase-vendor-bills.yaml`. Purchase Orders and Purchase
+Order detail now derive `Invoiced`/`To Bill` status from that link, and detail
+exposes a `Vendor Bills` stat action to the Accounting invoice detail route.
+
+The action requires `purchase.write`, rejects empty, missing, RFQ, locked,
+already-billed, and non-confirmed selections, and performs a preflight over
+all selected IDs before calling Accounting. A local link insert is guarded
+against a changed selection. Fixed invoice and due dates keep the generated
+fixture contract deterministic. `test/purchase_create_bills.integration.test.ts`
+covers the page/API join, Accounting rejection without a local link, draft
+bill creation, billing-status/stat refresh, missing and invalid selections,
+and file-backed restart idempotency.
+
+Focused validation passed 4 tests / 27 assertions; the existing Purchase
+regression suite passed 68 tests / 616 assertions. This bounded slice creates
+one draft Accounting Vendor Bill per selected Purchase Order and records the
+order-level total; Odoo's company/vendor/currency grouping and line-level
+quantity reconciliation remain follow-up parity work. No new browser capture
+is claimed in this backend-focused change.

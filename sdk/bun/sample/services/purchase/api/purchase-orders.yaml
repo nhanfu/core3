@@ -11,8 +11,60 @@ datasources:
     workflow: purchase_orders
     pivot:
       fields: [vendor_name, state, expected_arrival, quantity, qty_received, total_amount]
-    query: "SELECT p.id, p.row_version, p.name, p.vendor_id, p.vendor_name, p.product_name, p.quantity, p.qty_received, p.unit_price, p.state, CAST(p.order_date AS VARCHAR) AS order_date, CAST(p.order_date AS VARCHAR) AS confirmation_date, CAST(p.expected_date AS VARCHAR) AS expected_date, CAST(p.expected_date AS VARCHAR) AS expected_arrival, p.reference, p.currency, 'Main Company (San Francisco)' AS company_name, p.buyer_name, CASE WHEN p.state IN ('Confirmed', 'Received') THEN 'Nothing to Bill' ELSE 'To Bill' END AS billing_status, p.total_amount, printf('%s %,.2f', p.currency, CAST(p.total_amount AS DOUBLE)) AS total_amount_display, CASE p.state WHEN 'Confirmed' THEN 'todo' WHEN 'Received' THEN 'document' ELSE 'email' END AS activity_type, CASE p.state WHEN 'Confirmed' THEN 'Review receipt' WHEN 'Received' THEN 'Match vendor bill' ELSE 'Review purchase order' END AS activity_summary, CAST(p.expected_date AS VARCHAR) AS activity_date, p.buyer_name AS activity_user, CASE p.state WHEN 'Received' THEN 'done' ELSE 'planned' END AS activity_state, 1 AS activity_count FROM purchase_orders p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.order_type = 'purchase' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:vendor_id IS NULL OR p.vendor_id = :vendor_id) ORDER BY p.order_date DESC, p.created_at DESC"
+    query: "SELECT p.id, p.row_version, p.name, p.vendor_id, p.vendor_name, p.product_name, p.quantity, p.qty_received, p.unit_price, p.state, CAST(p.order_date AS VARCHAR) AS order_date, CAST(p.order_date AS VARCHAR) AS confirmation_date, CAST(p.expected_date AS VARCHAR) AS expected_date, CAST(p.expected_date AS VARCHAR) AS expected_arrival, p.reference, p.currency, 'Main Company (San Francisco)' AS company_name, p.buyer_name, CASE WHEN EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = p.id) THEN 'Invoiced' WHEN p.state IN ('Confirmed', 'Received') THEN 'To Bill' ELSE 'To Bill' END AS billing_status, p.total_amount, printf('%s %,.2f', p.currency, CAST(p.total_amount AS DOUBLE)) AS total_amount_display, CASE p.state WHEN 'Confirmed' THEN 'todo' WHEN 'Received' THEN 'document' ELSE 'email' END AS activity_type, CASE WHEN EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = p.id) THEN 'Review vendor bill' WHEN p.state = 'Confirmed' THEN 'Review receipt' WHEN p.state = 'Received' THEN 'Match vendor bill' ELSE 'Review purchase order' END AS activity_summary, CAST(p.expected_date AS VARCHAR) AS activity_date, p.buyer_name AS activity_user, CASE p.state WHEN 'Received' THEN 'done' ELSE 'planned' END AS activity_state, 1 AS activity_count FROM purchase_orders p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.order_type = 'purchase' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:vendor_id IS NULL OR p.vendor_id = :vendor_id) ORDER BY p.order_date DESC, p.created_at DESC"
 actions:
+  - id: create_purchase_bills
+    type: server
+    permission: purchase.write
+    action: purchase.orders.create_bills
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [purchase_orders]
+    confirm: 'Create draft vendor bills for {count} selected purchase orders?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: PURCHASE_BILL_SELECTION_REQUIRED, message: Select at least one purchase order to bill. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_orders p WHERE p.id IN :selectedIds AND (p.order_type <> 'purchase' OR p.state NOT IN ('Confirmed', 'Received') OR COALESCE(p.locked, false) = true OR EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = p.id)))", status: 409, code: PURCHASE_BILL_SELECTION_INVALID, message: Only unlocked, confirmed or received, uninvoiced purchase orders can create bills. }
+        - { query: "SELECT id FROM purchase_orders WHERE id IN :selectedIds LIMIT 1", status: 404, code: PURCHASE_BILL_ORDER_NOT_FOUND, message: The selected purchase order was not found. }
+      steps:
+        - for_each:
+            input: selectedIds
+            as: selected_order_id
+            steps:
+              - query: "UPDATE purchase_orders SET updated_at = updated_at WHERE id = :selected_order_id"
+                expect_changed: true
+                status: 404
+                code: PURCHASE_BILL_ORDER_NOT_FOUND
+                message: A selected purchase order was not found. Reload and try again.
+        - for_each:
+            input: selectedIds
+            as: selected_order_id
+            steps:
+              - query: "SELECT p.vendor_name, p.name AS order_name, CAST(p.total_amount AS DECIMAL(18,2)) AS total_amount, 'BILL/' || p.name AS bill_number, CAST(DATE '2026-09-20' AS VARCHAR) AS invoice_date, CAST(DATE '2026-10-20' AS VARCHAR) AS due_date FROM purchase_orders p WHERE p.id = :selected_order_id AND p.order_type = 'purchase' AND p.state IN ('Confirmed', 'Received') AND COALESCE(p.locked, false) = false AND NOT EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = p.id)"
+                assign: true
+              - type: service
+                service: yaml.service.accounting
+                operation: accounting.invoices.create_from_source
+                request:
+                  name: bill_number
+                  partner_name: vendor_name
+                  invoice_type: Vendor Bill
+                  invoice_date: invoice_date
+                  due_date: due_date
+                  amount_untaxed: total_amount
+                  amount_total: total_amount
+                  amount_residual: total_amount
+                  reference: order_name
+                  source_service: purchase
+                  source_type: purchase_order
+                  source_id: selected_order_id
+                assign: true
+              - query: "INSERT INTO purchase_vendor_bills(id, purchase_order_id, accounting_invoice_id, invoice_number, state, amount, invoice_date, due_date) SELECT 'purchase-vendor-bill-link-' || :selected_order_id, :selected_order_id, :accounting_invoice_id, :bill_number, 'Draft', :total_amount, CAST(:invoice_date AS DATE), CAST(:due_date AS DATE) WHERE EXISTS (SELECT 1 FROM purchase_orders p WHERE p.id = :selected_order_id AND p.order_type = 'purchase' AND p.state IN ('Confirmed', 'Received') AND COALESCE(p.locked, false) = false) AND NOT EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = :selected_order_id)"
+                expect_changed: true
+                status: 409
+                code: PURCHASE_BILL_SELECTION_CHANGED
+                message: A selected purchase order changed while creating its bill. Reload and try again.
+      result: { query: "SELECT COUNT(*) AS created_count FROM purchase_vendor_bills WHERE purchase_order_id IN :selectedIds AND state = 'Draft'" }
   - id: create_purchase_order
     type: server_form
     permission: purchase.write

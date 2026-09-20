@@ -17,6 +17,7 @@ defects, retests, and sign-off remain in [`../purchase.md`](../purchase.md).
 | --- | --- | --- |
 | Orders > Requests for Quotation | `/purchase`; `/purchase/purchase-orders`; `purchase-rfqs.yaml` | List, Kanban, Pivot, Graph, Calendar, Activity; RFQ fixtures and bulk merge |
 | Orders > Purchase Orders | `/purchase/purchase-orders`; `/purchase/detail`; `purchase-orders.yaml`, `purchase-detail.yaml` | List, Kanban, Pivot, Graph, Calendar, Activity, detail, lock/acknowledge/approval/reset |
+| Orders > Purchase Orders > Create Bills | `/purchase/purchase-orders`; `purchase.orders.create_bills` | Select confirmed/received orders, create draft Accounting Vendor Bills, refresh billing status, open Vendor Bills stat |
 | Orders > Vendors | `/purchase/vendors`; `/purchase/vendors/detail`; `vendors.yaml` | List, form, active/archived, search, CRUD and lifecycle |
 | Products > Products | `/purchase/products`; `/purchase/products/detail`; `purchase-products.yaml` | List, Kanban, Activity, form, archive and product history |
 | Products > Product Variants | `/purchase/product-variants`; `/purchase/product-variants/detail` | List, Kanban, Activity, form, archive and chatter |
@@ -51,6 +52,7 @@ and the seeded receipt and supplier-information rows.
 | PURCHASE-FUNC-010 | functional | Price Comparison | `/purchase/price-comparison?id=po-demo-005` | Purchase User | Open stat action and search product history | Only selected order products and deterministic comparison rows are returned | `purchase_price_comparison.integration.test.ts` | pass |
 | PURCHASE-FUNC-011 | functional | Receipt | `/purchase/receipt?id=po-demo-005` | Purchase User | Add/edit/delete receipt lines, validate and cancel | Receipt line and parent versions, quantities, state, and audit message persist | `purchase_receipt.integration.test.ts` | pass |
 | PURCHASE-FUNC-012 | data | All Purchase migrations/seeds | module migrations | Clean and existing development DB | Run migrations twice and query fixed fixtures | Schema/demo application is idempotent and does not duplicate rows or use moving-clock data | focused suites | pass |
+| PURCHASE-FUNC-013 | functional | Purchase Orders > Create Bills | `/purchase/purchase-orders`; `purchase.orders.create_bills` | Purchase User, confirmed/received fixtures, Accounting service | Select one or more eligible orders and create bills | Draft Vendor Bills and purchase links persist; billing status becomes Invoiced and detail stat opens the linked bill; empty, missing, locked, RFQ, duplicate, and Accounting failure guards leave no local partial write | `purchase_create_bills.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -63,6 +65,7 @@ and the seeded receipt and supplier-information rows.
 | PURCHASE-WF-005 | integration | Accounting bill matching | Unmatched bill lines | Match or add to PO | Matching flags and PO lines/total update in one mutation | Invalid selection and target lock fail without partial writes | `purchase_bill_matching.integration.test.ts` | pass |
 | PURCHASE-WF-006 | integration | Chatter/messages | Any supported detail | Send message or log note | Message is stored with author and timestamp and is visible after reload | Blank content and missing record are rejected | category/variant detail tests | pass |
 | PURCHASE-WF-007 | integration | External/durable workflow boundary | N/A | Review declared integrations | No durable/third-party side effect is silently implemented as local-only; future durable work uses Temporal contract | Retry, timeout, compensation, and recovery cases are added before activation | module contract review | planned |
+| PURCHASE-WF-008 | integration | Accounting vendor-bill creation | Confirmed/Received and uninvoiced | Purchase Orders list `Create Bills` | Accounting receives a `Vendor Bill` source link and Purchase records the durable bill relation | Accounting rejection, missing selection, invalid state, duplicate retry, and restart replay are rejected or idempotent without a local partial link | `purchase_create_bills.integration.test.ts` | pass |
 
 ## Permission and security cases
 

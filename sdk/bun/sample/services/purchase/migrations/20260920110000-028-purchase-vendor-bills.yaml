@@ -1,0 +1,30 @@
+version: 0.0.28
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_vendor_bills (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        accounting_invoice_id VARCHAR NOT NULL,
+        invoice_number VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        invoice_date DATE NOT NULL,
+        due_date DATE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS purchase_vendor_bills_order_uq ON purchase_vendor_bills(purchase_order_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS purchase_vendor_bills_accounting_uq ON purchase_vendor_bills(accounting_invoice_id);
+      CREATE INDEX IF NOT EXISTS purchase_vendor_bills_order_idx ON purchase_vendor_bills(purchase_order_id);
+    down: |
+      DROP INDEX IF EXISTS purchase_vendor_bills_order_idx;
+      DROP INDEX IF EXISTS purchase_vendor_bills_accounting_uq;
+      DROP INDEX IF EXISTS purchase_vendor_bills_order_uq;
+      DROP TABLE IF EXISTS purchase_vendor_bills;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
