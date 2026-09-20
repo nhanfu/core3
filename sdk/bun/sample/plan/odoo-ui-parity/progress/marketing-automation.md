@@ -56,3 +56,18 @@ the matching module owner.
   screenshot was written or committed. The next safe action is the authenticated
   Core3 desktop/mobile matrix, followed by a second launch without
   `--demo-data` to prove persistence.
+
+## Final runtime attempt — 2026-09-20
+
+- The clean all-service database root at
+  `/tmp/core3-odoo-parity/marketing-automation-browser-20260920` failed before
+  service-host readiness with DuckDB's `Cannot alter entry "email_mailings"
+  because there are entries that depend on it.`
+- A recovered runtime loaded the authenticated admin route
+  `/marketing-automation/automations`; the seeded three-row list and selected
+  `Renewal reminder journey` detail rendered. The `New automation` interaction
+  timed out before a form state was available.
+- No screenshot, create mutation, restart-backed persistence check, or
+  dispatcher permission check was completed. Browser evidence remains blocked;
+  the Odoo `marketing_automation` source gate remains unavailable and no paired
+  parity claim is made.

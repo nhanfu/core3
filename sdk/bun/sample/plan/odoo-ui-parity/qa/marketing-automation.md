@@ -53,3 +53,21 @@ Candidate commit: edb34a2b262a5fb46677c5f2a54fbce6434075f1
   and no browser sign-off is claimed. The next safe action is the authenticated
   Core3 browser matrix against the healthy runtime, followed by a second launch
   with `--demo-data` omitted to test restart persistence.
+
+## Final runtime attempt — 2026-09-20
+
+- A clean all-service database root under
+  `/tmp/core3-odoo-parity/marketing-automation-browser-20260920` failed during
+  startup before the service host opened: DuckDB reported `Cannot alter entry
+  "email_mailings" because there are entries that depend on it.` This is a
+  migration/runtime blocker, not Marketing Automation application evidence.
+- The recovery runtime using a freshly recreated `sample/coredb` reached the
+  gateway, service host, and frontend. Authenticated browser smoke then logged
+  in as the admin fixture, redirected to `/apps`, and loaded
+  `/marketing-automation/automations` with the three seeded rows and selected
+  `Renewal reminder journey` detail. This proves only authenticated list/detail
+  loading; no screenshot was captured.
+- Clicking `New automation` did not complete within the browser timeout, so the
+  form state was not validated. No create was committed, no restart assertion
+  was run, and the dispatcher actor boundary was not exercised. Desktop/mobile
+  captures therefore remain blocked and no paired Odoo claim is made.
