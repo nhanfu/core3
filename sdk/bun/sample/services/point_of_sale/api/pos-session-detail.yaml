@@ -39,6 +39,7 @@ datasources:
         o.payment_method, o.cashier_id,
         CAST(o.date_order AS VARCHAR) AS date_order
       FROM pos_orders o WHERE o.session_id = :id AND o.company = :current_company_name
+        AND EXISTS (SELECT 1 FROM pos_sessions s WHERE s.id = o.session_id AND s.company = :current_company_name)
       ORDER BY o.date_order DESC
 
   - id: pos_session_cash_movements

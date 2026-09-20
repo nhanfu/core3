@@ -133,6 +133,7 @@ describe('POS R2 actor and company boundaries', () => {
       currentUser.value = { ...currentUser.value, permissions: [] };
       await expect(query('forbidden')).rejects.toMatchObject({ status: 403 });
       currentUser.value = { ...currentUser.value, permissions: ['pos.read'] };
+      if (source.error_states?.not_found) await expect(query('not_found', { id: 'missing-pos-record' })).rejects.toMatchObject({ status: 404 });
       await expect(query('transport_error')).rejects.toMatchObject({ status: 503 });
     }
 
@@ -206,6 +207,46 @@ describe('POS R2 actor and company boundaries', () => {
     expect(await paymentResponse!.json()).toMatchObject({ id: 'pos-order-r2-http-pay', state: 'Paid', amount_paid: 20, actor_id: 'cashier-demo' });
     expect((await repository.query('SELECT company, actor_id FROM pos_payments WHERE order_id = ?', ['pos-order-r2-http-pay']))[0])
       .toEqual({ company: 'Core3 Demo Company', actor_id: 'cashier-demo' });
+
+    await repository.run("INSERT INTO pos_orders(id, name, session_id, state, amount_total, amount_paid, company) VALUES ('pos-order-r2-http-reject', 'POS/R2/HTTP-REJECT', 'pos-session-demo-001', 'New', 20, 0, 'Core3 Demo Company')");
+    const rejectedBefore = await snapshot(repository, 'pos-order-r2-http-reject');
+    const rejectedPayments = async () => (await repository.query('SELECT COUNT(*) AS count FROM pos_payments WHERE order_id = ?', ['pos-order-r2-http-reject']))[0].count;
+    currentUser.value = { ...currentUser.value, company: { name: 'Core3 Vietnam Branch' } };
+    await expect(request(api, '/api/actions/pos.orders.pay', { id: 'pos-order-r2-http-reject', expected_row_version: 1, values: { payment_amount: 20, payment_method: 'Cash' } }))
+      .rejects.toMatchObject({ status: 403, code: 'POS_ORDER_COMPANY_FORBIDDEN' });
+    expect(await snapshot(repository, 'pos-order-r2-http-reject')).toEqual(rejectedBefore);
+    expect(await rejectedPayments()).toBe(0);
+    currentUser.value = { ...currentUser.value, company: { name: 'Core3 Demo Company' } };
+    await expect(request(api, '/api/actions/pos.orders.pay', { id: 'pos-order-r2-http-reject', expected_row_version: 9, values: { payment_amount: 20, payment_method: 'Cash' } }))
+      .rejects.toMatchObject({ status: 409, code: 'POS_ORDER_STALE' });
+    expect(await snapshot(repository, 'pos-order-r2-http-reject')).toEqual(rejectedBefore);
+    expect(await rejectedPayments()).toBe(0);
+    currentUser.value = { ...currentUser.value, permissions: ['pos.read'] };
+    await expect(request(api, '/api/actions/pos.orders.pay', { id: 'pos-order-r2-http-reject', expected_row_version: 1, values: { payment_amount: 20, payment_method: 'Cash' } }))
+      .rejects.toMatchObject({ status: 403 });
+    expect(await snapshot(repository, 'pos-order-r2-http-reject')).toEqual(rejectedBefore);
+    currentUser.value = null;
+    await expect(request(api, '/api/actions/pos.orders.pay', { id: 'pos-order-r2-http-reject', expected_row_version: 1, values: { payment_amount: 20, payment_method: 'Cash' } }))
+      .rejects.toMatchObject({ status: 401 });
+    expect(await snapshot(repository, 'pos-order-r2-http-reject')).toEqual(rejectedBefore);
+    currentUser.value = { sub: 'cashier-demo', name: 'Demo Cashier', company: { name: 'Core3 Demo Company' }, permissions: ['pos.read', 'pos.write', 'pos.manage'] };
+    await expect(request(api, '/api/actions/pos.orders.pay', { id: 'missing-pos-order', expected_row_version: 1, values: { payment_amount: 20, payment_method: 'Cash' } }))
+      .rejects.toMatchObject({ status: 404, code: 'POS_ORDER_NOT_FOUND' });
+    expect(await rejectedPayments()).toBe(0);
+
+    const closingBefore = (await repository.query('SELECT state, row_version, actor_id, balance_end FROM pos_sessions WHERE id = ?', ['pos-session-demo-closing']))[0];
+    currentUser.value = { ...currentUser.value, permissions: ['pos.read', 'pos.write'] };
+    await expect(request(api, '/api/actions/pos.sessions.close', { id: 'pos-session-demo-closing', expected_row_version: 1, values: { balance_end: 418.5 } }))
+      .rejects.toMatchObject({ status: 403 });
+    expect((await repository.query('SELECT state, row_version, actor_id, balance_end FROM pos_sessions WHERE id = ?', ['pos-session-demo-closing']))[0]).toEqual(closingBefore);
+    currentUser.value = { ...currentUser.value, permissions: ['pos.read', 'pos.write', 'pos.manage'] };
+    await expect(request(api, '/api/actions/pos.sessions.close', { id: 'pos-session-demo-closing', expected_row_version: 9, values: { balance_end: 418.5 } }))
+      .rejects.toMatchObject({ status: 409, code: 'POS_SESSION_STALE' });
+    expect((await repository.query('SELECT state, row_version, actor_id, balance_end FROM pos_sessions WHERE id = ?', ['pos-session-demo-closing']))[0]).toEqual(closingBefore);
+    await expect(request(api, '/api/actions/pos.sessions.close', { id: 'pos-session-demo-closing', expected_row_version: 1, values: { balance_end: 418.5 } }))
+      .resolves.toMatchObject({ status: 200 });
+    expect((await repository.query('SELECT state, row_version, actor_id, company FROM pos_sessions WHERE id = ?', ['pos-session-demo-closing']))[0])
+      .toMatchObject({ state: 'Closed & Posted', row_version: 2, actor_id: 'cashier-demo', company: 'Core3 Demo Company' });
     database.close();
   });
 

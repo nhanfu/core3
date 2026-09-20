@@ -21,7 +21,7 @@ describe('POS cashier payment follow-up', () => {
     const page = yaml('pages/pos-cashier.yaml');
     const payment = page.actions.find((action: any) => action.id === 'pay_cashier_ticket');
 
-    expect(payment.prefill).toEqual({ ticket_id: '{row.id}', amount: '{row.amount}' });
+    expect(payment.prefill).toEqual({ ticket_id: '{row.id}', amount: '{row.amount}', expected_row_version: '{row.row_version}' });
     expect(payment.fields).toEqual(expect.arrayContaining([
       expect.objectContaining({ field: 'amount', type: 'money', decimals: 2, min: 0.01 }),
       expect.objectContaining({ field: 'method', options_source: 'pos_cashier_payment_methods', default: 'Cash' }),

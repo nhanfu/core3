@@ -96,9 +96,23 @@ actions:
       required: [name, session_id]
       defaults: { state: New, amount_total: 0, amount_tax: 0, amount_paid: 0 }
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before starting a POS ticket.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id"
+          status: 404
+          code: POS_SESSION_NOT_FOUND
+          message: POS session not found.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS session belongs to another company.
         - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'In Progress'"
           status: 409
           message: Select an open POS session before starting a ticket
+      steps:
+        - query: "UPDATE pos_orders SET company = :current_company_name, actor_id = :current_user_id WHERE id = :id"
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
       - { field: name, label: Ticket reference, type: text, required: true }
@@ -116,6 +130,18 @@ actions:
     mutation:
       generated: [line_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before adding a POS product.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
         - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND state = 'New'"
           status: 409
           message: Select an open ticket before adding products
@@ -145,7 +171,7 @@ actions:
               amount_tax   = (SELECT COALESCE(SUM(price_tax),   0) FROM pos_order_lines WHERE order_id = :ticket_id),
               amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :ticket_id),
               row_version  = row_version + 1
-            WHERE id = :ticket_id
+            WHERE id = :ticket_id AND company = :current_company_name
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
       - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
@@ -166,11 +192,27 @@ actions:
     action: pos.cashier.ticket.pay
     handler: yaml_mutation
     operation: pay
-    prefill: { ticket_id: '{row.id}', amount: '{row.amount}' }
+    prefill: { ticket_id: '{row.id}', amount: '{row.amount}', expected_row_version: '{row.row_version}' }
     refresh: [pos_open_tickets, pos_cashier_session_stats]
     mutation:
       generated: [payment_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before registering a POS payment.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
         - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND state = 'New'"
           status: 409
           message: Ticket must be in New state to register payment
@@ -186,19 +228,25 @@ actions:
           status: 422
           message: Payment method is not available in this POS
       steps:
-        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :ticket_id, COALESCE(:method, 'Cash'), CAST(:amount AS DECIMAL(18,2)))"
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :ticket_id, COALESCE(:method, 'Cash'), CAST(:amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :ticket_id AND company = :current_company_name"
         - query: |
             UPDATE pos_orders SET
               amount_paid    = amount_paid + CAST(:amount AS DECIMAL(18,2)),
               payment_method = COALESCE(:method, 'Cash'),
               state          = CASE WHEN amount_paid + CAST(:amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END,
+              actor_id       = :current_user_id,
               row_version    = row_version + 1
-            WHERE id = :ticket_id
+            WHERE id = :ticket_id AND company = :current_company_name AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
       - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
       - { field: amount, label: Amount to collect, type: money, currency: USD, decimals: 2, min: 0.01, placeholder: '0.00', required: true }
       - { field: method, label: Payment method, type: select, options_source: pos_cashier_payment_methods, default: Cash, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
 
   - id: cancel_cashier_ticket
     type: server
