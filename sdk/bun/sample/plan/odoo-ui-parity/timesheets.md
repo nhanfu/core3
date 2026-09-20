@@ -1427,3 +1427,33 @@ Authenticated Core3 desktop/mobile captures render `/timesheets` with
 overflow. Only aborted background prefetches for unrelated All Timesheets
 surfaces are recorded. Existing Timesheets Print/PDF/action blockers remain
 open and no module sign-off is claimed.
+
+## Eighth-wave My Timesheets inline editing — `TIMESHEET-MY-INLINE-EDIT-001` (2026-09-21)
+
+The next genuinely uncovered source behavior is Odoo's desktop editable-top
+My Timesheets list. `addons/hr_timesheet/views/hr_timesheet_views.xml:4-22`
+declares `hr_timesheet_line_tree` with `editable="top"`, exposing inline
+date, project, task, activity, and time fields.
+
+Core3's layout-only `pages/entries.yaml` now binds inline create/update
+controls, while `api/entries.yaml` owns the paired
+`timesheets.entries.create_inline` and `timesheets.entries.update_inline`
+mutations through `page.id: timesheets`. Both mutations persist to the
+existing `timesheet_entries` relation, resolve active project/task links, and
+enforce `timesheets.write`, actor/company employee scope, Draft/Rejected row
+ownership, valid time, and optimistic row-version concurrency. The activity
+name is retained as the durable entry description for the existing report and
+detail surfaces.
+
+Focused coverage is
+`test/timesheets_my_inline_edit.integration.test.ts` (4 tests / 19
+expectations), including source comparison, page/API separation, CRUD,
+permission/company/relation/time guards, stale writes, migration replay, and
+file-backed restart.
+
+Authenticated Core3/Odoo desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-my-inline-edit/`.
+Core3 desktop clicks a real list row and visibly renders Save/Discard inline
+controls; Core3 mobile renders Calendar, and Odoo mobile renders Kanban, so
+mobile inline-edit parity is not claimed. Odoo Print/PDF/report-action gaps
+remain broader blockers; this bounded feature is not module sign-off.

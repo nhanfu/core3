@@ -53,6 +53,33 @@ Module owner: timesheets module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## 2026-09-21 `TIMESHEET-MY-INLINE-EDIT-001`
+
+- Source gate: `hr_timesheet/views/hr_timesheet_views.xml:4-22` declares the
+  internal My Timesheets list as `editable="top"` with date, project, task,
+  activity name, and UoM time fields.
+- Core3 contract gate: `pages/entries.yaml` owns the inline editable-top
+  controls and `api/entries.yaml` owns the `timesheets.entries.create_inline`
+  and `timesheets.entries.update_inline` mutations; both join through
+  `page.id: timesheets`.
+- Focused gate: `bun test
+  test/timesheets_my_inline_edit.integration.test.ts --timeout 20000` — 4
+  passed, 0 failed, 19 expectations. The complete Timesheets integration glob
+  also passed 140 tests / 905 expectations.
+- Persistence/security gate: inline CRUD uses durable `timesheet_entries`,
+  active actor/company employee and project/task guards, Draft/Rejected scope,
+  invalid-time checks, required `timesheets.write`, optimistic row-version
+  concurrency, idempotent migrations, and file-backed restart coverage.
+- Browser gate: authenticated Core3/Odoo desktop and mobile captures are in
+  `../evidence/timesheets/2026-09-21/timesheet-my-inline-edit/`. Core3 desktop
+  clicked a real row and rendered Save/Discard; all captures recorded no page
+  errors or failed requests. Mobile surfaces are Calendar/Core3 and Kanban/Odoo;
+  desktop-only inline editing is not claimed on mobile.
+- Blockers: Odoo Print/PDF/report-action gaps remain open across the module;
+  mobile inline editing is not claimed because the responsive source state is
+  Kanban rather than editable list. This bounded slice is verified but does
+  not sign off the Timesheets module.
+
 ## 2026-09-20 `TIMESHEET-CALENDAR-MULTI-CREATE`
 
 - Odoo source gate: `hr_timesheet/views/hr_timesheet_views.xml:328-368`

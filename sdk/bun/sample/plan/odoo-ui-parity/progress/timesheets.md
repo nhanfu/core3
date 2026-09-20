@@ -613,3 +613,37 @@ desktop/mobile captures render `/timesheets` with `Date: This Week` at both
 viewports with no page errors or horizontal overflow. Only aborted background
 prefetches for unrelated All Timesheets surfaces are recorded. Existing Odoo
 Print/PDF/action blockers remain open; no sign-off is claimed.
+
+## 2026-09-21 `TIMESHEET-MY-INLINE-EDIT-001`
+
+The eighth-wave gap is Odoo's desktop My Timesheets inline lifecycle. The
+source `hr_timesheet_line_tree` in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:4-22` declares
+`editable="top"`, allowing an activity row to be created or edited in place
+with date, project, task, activity description, and time spent fields.
+
+Core3 now keeps the layout-only `pages/entries.yaml` and API-owned
+`api/entries.yaml` separate through `page.id: timesheets`. The page binds
+inline create/update actions and the API persists inline rows in the existing
+`timesheet_entries` table, resolves project/task relations, and mirrors the
+activity description into durable entry description. The inline mutations
+require `timesheets.write`, active actor/company employee scope, active
+timesheetable project, open task relation, valid date/time, Draft/Rejected
+ownership, and optimistic row-version concurrency. No new moving fixture or
+schema state was introduced.
+
+Focused coverage is
+`test/timesheets_my_inline_edit.integration.test.ts` (4 tests / 19
+expectations), including source comparison, page/API separation, inline
+create/update CRUD, actor/company/relation/time guards, stale writes,
+idempotent migration, and a file-backed restart.
+
+Authenticated Core3 and Odoo desktop/mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-inline-edit/`. Core3 desktop
+clicks the first list row and shows Save/Discard inline controls; Core3 mobile
+renders the authenticated responsive Calendar state because the list view is
+desktop-only. Odoo desktop shows the source list and Odoo mobile resolves to
+the responsive Kanban state. Mobile inline editing is not claimed because
+neither source nor Core3 exposes the editable list at that viewport.
+Odoo Print/PDF/report-action gaps remain exact broader blockers; no module
+sign-off is claimed.

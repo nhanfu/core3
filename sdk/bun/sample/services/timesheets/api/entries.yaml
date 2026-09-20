@@ -25,6 +25,69 @@ datasources:
     meta: { mock_data_justification: Runtime-only persisted entry list; static mock data would make CRUD results and permissions unverifiable. }
     query: "SELECT t.id, t.row_version, t.name, t.company_name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, CASE WHEN COALESCE(s.timesheet_encode_method, 'hours') = 'days' THEN printf('%g d', ROUND(t.hours / 8, 2)) ELSE printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) END AS time_spent_display, COALESCE(s.timesheet_encode_method, 'hours') AS time_encoding_method, t.sales_order_item, t.billable, t.unit_amount, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id LEFT JOIN timesheet_settings s ON s.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
 actions:
+  - id: create_timesheet_entry_inline
+    type: server_form
+    permission: timesheets.write
+    title: New inline timesheet
+    action: timesheets.entries.create_inline
+    handler: yaml_mutation
+    operation: create
+    refresh: [timesheet_entries]
+    mutation:
+      operation: insert
+      table: timesheet_entries
+      fields: [id, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, state, row_version, company_name]
+      required: [work_date, project_name, name, hours]
+      defaults: { employee_id: employee-demo-001, employee_name: Admin User, billable: true, unit_amount: 125, state: Draft, row_version: 1, company_name: 'Core3 Demo Company' }
+      generated: [id]
+      before_steps:
+        - query: "SELECT 'timesheet-inline-' || strftime(TRY_CAST(:work_date AS DATE), '%Y%m%d') || '-' || CAST((SELECT COUNT(*) + 1 FROM timesheet_entries WHERE name LIKE 'TS/INLINE/%') AS VARCHAR) AS id, 'TS/INLINE/' || strftime(TRY_CAST(:work_date AS DATE), '%Y%m%d') || '/' || CAST((SELECT COUNT(*) + 1 FROM timesheet_entries WHERE name LIKE 'TS/INLINE/%') AS VARCHAR) AS name, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AS project_id, (SELECT id FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open LIMIT 1) AS task_id, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM timesheet_employees WHERE name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active", status: 403, code: TIMESHEET_INLINE_EMPLOYEE_SCOPE, message: The current employee is not active in this company. }
+        - { query: "SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_INLINE_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:task_name AS VARCHAR)), ''), '') = '' OR EXISTS (SELECT 1 FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open)", status: 422, code: TIMESHEET_INLINE_TASK_INVALID, message: Select an open task belonging to the selected project. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEET_INLINE_ENTRY_INVALID, message: Enter a valid date, activity, and time between 0 and 24 hours. }
+      steps:
+        - query: "UPDATE timesheet_entries SET description = :name, company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), employee_id = CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END, project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1), task_id = (SELECT id FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open LIMIT 1) WHERE id = :id"
+      result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    fields:
+      - { field: work_date, label: Date, type: date, required: true }
+      - { field: project_name, label: Project, type: text, required: true }
+      - { field: task_name, label: Task, type: text }
+      - { field: name, label: Description, type: text, required: true }
+      - { field: hours, label: Time Spent, type: number, required: true }
+  - id: edit_timesheet_entry_inline
+    type: server_form
+    permission: timesheets.write
+    title: Edit inline timesheet
+    action: timesheets.entries.update_inline
+    handler: yaml_mutation
+    operation: update
+    refresh: [timesheet_entries]
+    mutation:
+      operation: update
+      table: timesheet_entries
+      fields: [work_date, project_id, project_name, task_id, task_name, name, hours, billable, unit_amount]
+      required: [work_date, project_name, name, hours]
+      concurrency: { required: true }
+      before_steps:
+        - query: "SELECT (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AS project_id, (SELECT id FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open LIMIT 1) AS task_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEET_INLINE_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited inline. }
+        - { query: "SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_INLINE_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:task_name AS VARCHAR)), ''), '') = '' OR EXISTS (SELECT 1 FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open)", status: 422, code: TIMESHEET_INLINE_TASK_INVALID, message: Select an open task belonging to the selected project. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEET_INLINE_ENTRY_INVALID, message: Enter a valid date, activity, and time between 0 and 24 hours. }
+      steps:
+        - query: "UPDATE timesheet_entries SET description = :name, project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1), task_id = (SELECT id FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open LIMIT 1) WHERE id = :id"
+      result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    fields:
+      - { field: work_date, label: Date, type: date, required: true }
+      - { field: project_name, label: Project, type: text, required: true }
+      - { field: task_name, label: Task, type: text }
+      - { field: name, label: Description, type: text, required: true }
+      - { field: hours, label: Time Spent, type: number, required: true }
   - id: create_timesheet_calendar_batch
     type: server_form
     permission: timesheets.write
