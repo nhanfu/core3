@@ -80,7 +80,7 @@ export default class SurveysModule implements ModuleLifecycle {
       const answer = answerToken ? await readResponse(answerToken) : undefined;
       if (explicitAnswerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
       if (answer && this.publicResponseExpired(answer)) return this.expiredResponse();
-      const allQuestions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+      const allQuestions = await this.questionSettings(service, detail.id, (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || []);
       const questions = this.visibleQuestions(allQuestions, answer?.answer_data);
       return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
@@ -365,7 +365,7 @@ export default class SurveysModule implements ModuleLifecycle {
     }
     if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
-    const allQuestions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+    const allQuestions = await this.questionSettings(service, detail.id, (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || []);
     const questions = this.visibleQuestions(allQuestions, JSON.stringify(answers));
     const invalidAnswers = this.invalidPublicAnswers(questions, answers);
     if (invalidAnswers.length) {
@@ -385,7 +385,13 @@ export default class SurveysModule implements ModuleLifecycle {
       }
     }
     const missingRequired = questions
-      .filter((question: any) => question.required && (answers[question.id] === undefined || answers[question.id] === null || String(answers[question.id]).trim() === ''))
+      .filter((question: any) => {
+        const value = answers[question.id];
+        const comment = String(answers[`${question.id}__comment`] ?? '').trim();
+        const commentCounts = question.comments_allowed && question.comment_count_as_answer && comment;
+        const empty = value === undefined || value === null || (Array.isArray(value) ? value.length === 0 : !String(value).trim());
+        return question.required && empty && !commentCounts;
+      })
       .map((question: any) => question.question_text || question.id);
     if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
     const scoring = await this.publicScore(service, detail.id, answers);
@@ -508,6 +514,12 @@ export default class SurveysModule implements ModuleLifecycle {
     return questions.filter((question) => this.isQuestionVisible(question, answers));
   }
 
+  private async questionSettings(service: PublicService, surveyId: string, questions: any[]): Promise<any[]> {
+    const settings = (await service.call('survey.public.comment_settings', { survey_id: surveyId }))?.comment_settings || [];
+    const byId = new Map(settings.map((setting: any) => [String(setting.id), setting]));
+    return questions.map((question) => ({ ...question, ...(byId.get(String(question.id)) || {}) }));
+  }
+
   private expiredResponse(): Response {
     return this.json({ error: 'This survey response has expired', code: 'SURVEY_PUBLIC_RESPONSE_EXPIRED' }, 410);
   }
@@ -523,6 +535,11 @@ export default class SurveysModule implements ModuleLifecycle {
     for (const question of questions) {
       const value = answers[question.id];
       const values = Array.isArray(value) ? value.map((entry) => String(entry).trim()) : [String(value ?? '').trim()];
+      const comment = String(answers[`${question.id}__comment`] ?? '').trim();
+      if (comment && !question.comments_allowed) {
+        invalid.push(String(question.question_text || question.id));
+        continue;
+      }
       if (!values.some(Boolean)) continue;
       const options = String(question.answer_options || '').split(',').map((entry) => entry.trim()).filter(Boolean);
       const questionType = String(question.question_type || '');

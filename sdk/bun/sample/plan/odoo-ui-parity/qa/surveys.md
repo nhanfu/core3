@@ -987,3 +987,29 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX
   fixture exists, so no paired Odoo mutation or visual sign-off is claimed.
 - Surveys remains **qa-in-progress / conditional**; no module sign-off is
   claimed.
+
+## Bounded QA run: Public choice comments — `SURVEYS-PUBLIC-COMMENTS-001`
+
+- Source comparison: Odoo exposes `comments_allowed`, `comments_message`, and
+  `comment_count_as_answer`; its controller extracts comment payloads before
+  validation and allows a comment to satisfy a mandatory choice when configured.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate through `page.id: surveys`; `survey.public.comment_settings`
+  carries comment metadata while public mutations retain `surveys.public`.
+  The renderer stores `<question_id>__comment` beside the scalar answer.
+- Focused verification: **2 passed / 21 assertions**; public regression:
+  **46 passed / 399 assertions**. ESLint, audit (**710 pages, 719 routes,
+  1353 datasources**), and scoped diff-check pass.
+- Persistence/guards: a comment-only required Choice survives file-backed
+  reopen and allows two same-key submissions to converge on one response;
+  wrong tokens return 404; a comment on a non-comment question returns 422 and
+  leaves its response answer data unchanged.
+- Core3 desktop/mobile captures record the exact backend-not-ready 502 and
+  proxy refusal; no authenticated visual sign-off is claimed.
+- Odoo desktop/mobile captures record `/ → /odoo →
+  /web/login?redirect=%2Fodoo%3F`; no installed authenticated Survey comments
+  fixture was available, so no paired Odoo sign-off is claimed.
+- The known DuckDB migration rollback/dependent-entry gate remains open;
+  Surveys remains **qa-in-progress / conditional**.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.

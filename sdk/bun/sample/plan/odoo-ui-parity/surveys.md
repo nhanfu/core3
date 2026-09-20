@@ -1714,3 +1714,29 @@ become ready, and Odoo redirected through `/`, `/odoo`, and
 `/web/login?redirect=%2Fodoo%3F` without an installed authenticated Survey
 fixture. No browser, paired Odoo, or module sign-off is claimed; Surveys
 remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public choice comments (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-COMMENTS-001`.
+
+Odoo's `survey.question` supports `comments_allowed`, a source-defined prompt,
+and `comment_count_as_answer` for choice questions. Core3 now adds those
+durable question settings through migration `0.0.31`, seeds the published
+`SURVEY/COMMENTS` fixture, exposes settings through a separate API operation,
+and renders/persists the comment as a question-scoped answer-data entry. A
+configured non-empty comment can satisfy a required Choice; a comment attached
+to a question that does not allow comments is rejected before mutation.
+
+The page and API YAML remain separate and joined by `page.id: surveys`; public
+actions retain `surveys.public`. Focused coverage proves comment-only required
+completion, restart persistence, concurrent idempotent submit, wrong-token
+denial, and the disallowed-comment no-mutation boundary. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.
+
+Focused verification is **2 passed / 21 assertions** and the public regression
+is **46 passed / 399 assertions**. ESLint, audit, and scoped diff-check pass.
+The migration rollback gate still reports DuckDB dependent entries. Fresh
+Core3 desktop/mobile probes returned a bounded 502 because the backend did not
+expose `/api/modules`; Odoo redirected to `/web/login?redirect=%2Fodoo%3F`
+without an installed authenticated Survey fixture. No browser, paired Odoo,
+or module sign-off is claimed; Surveys remains **qa-in-progress / conditional**.

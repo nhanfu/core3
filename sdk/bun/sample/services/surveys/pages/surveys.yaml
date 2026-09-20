@@ -7,11 +7,13 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # and persisted on the response; the renderer remains joined through page.id.
 # The public completion message is likewise sourced from the survey record and
 # consumed by the token-scoped renderer after submit/resume.
-# Public Date, Datetime, Scale, Matrix, and conditional questions are rendered by the same
+# Public Date, Datetime, Scale, Matrix, conditional, and choice-comment questions are rendered by the same
 # token-scoped page binding; their answer contracts are defined by the paired
 # API fragment. Matrix answers use a row-to-column map and preserve the
 # source-defined row/column labels. Conditional follow-ups are returned and
-# navigated only when their durable trigger answer is present.
+# navigated only when their durable trigger answer is present. Choice comments
+# use a question-scoped answer-data entry and can satisfy a required choice when
+# the source question enables comment_count_as_answer.
 components:
   - type: ListView
     variant: odoo

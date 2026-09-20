@@ -141,6 +141,30 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-COMMENTS-001`
+
+Selected the next uncovered source-backed public behavior after the completed
+conditional-question slice: Odoo choice-question comments. Core3 migration
+`0.0.31` adds durable comment settings and a deterministic published
+`SURVEY/COMMENTS` fixture. The separate public API metadata operation feeds
+the page-bound renderer; comments persist as question-scoped answer-data
+entries, and `comment_count_as_answer` allows a required choice to be
+completed by a comment alone. Comments on questions without the source flag
+are rejected before mutation.
+
+Focused coverage is **2 tests / 21 assertions**; the public regression is
+**46 tests / 399 assertions**. It covers `surveys.public`, wrong tokens,
+comment-only required completion, concurrent idempotency, restart persistence,
+and the disallowed-comment boundary. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.
+
+The historical migration rollback gate remains blocked by DuckDB's
+`Cannot alter entry "survey_questions" because there are entries that depend
+on it`. Fresh Core3 desktop/mobile probes recorded HTTP 502 because the
+backend did not expose `/api/modules`; Odoo redirected to the login route
+without an installed authenticated Survey fixture. No parity or module
+sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001`
 
 Selected the next uncovered source-backed public behavior after the completed

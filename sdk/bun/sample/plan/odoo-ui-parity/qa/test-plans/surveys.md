@@ -399,3 +399,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CONDITIONAL-QUESTION-001/`.
+
+## 2026-09-21 public choice-comment additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-037 | public question | Comment settings and prompt | Return durable Odoo comment flags/message through the public question contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-034 | restart/idempotency | Comment-only required answer → reopen → concurrent submit | `comment_count_as_answer` permits completion; one durable response and idempotency row survive restart/replay | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-036 | token/input guard | Disallowed comment and wrong token | Reject comment data on a question without the source flag and reject wrong answer tokens before mutation | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-035 | authenticated responsive/reference | Choice comment desktop/mobile + Odoo comparison | Capture exact Core3 runtime and Odoo installed-fixture blockers; no sign-off until both are available | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.

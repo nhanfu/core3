@@ -10,6 +10,9 @@ type SurveyQuestion = {
   matrix_subtype?: string;
   trigger_question_id?: string | null;
   trigger_answer?: string | null;
+  comments_allowed?: boolean;
+  comments_message?: string | null;
+  comment_count_as_answer?: boolean;
 };
 
 type SurveyPayload = {
@@ -60,6 +63,7 @@ function installStyles() {
     .core3-public-survey__matrix input { accent-color:#714b67; width:17px; height:17px; }
     .core3-public-survey__input { width:100%; box-sizing:border-box; border:0; border-bottom:1px solid #aaa0a8; padding:12px 2px; font:inherit; font-size:17px; outline:0; }
     .core3-public-survey__input:focus { border-bottom:2px solid #714b67; }
+    .core3-public-survey__comment { display:grid; gap:6px; margin-top:18px; color:#625a61; font-size:14px; }
     .core3-public-survey__footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:26px; }
     .core3-public-survey__footer-actions { display:flex; align-items:center; gap:10px; }
     .core3-public-survey__progress { color:#796f78; font-size:13px; }
@@ -113,7 +117,7 @@ function isIsoDatetime(value: string): boolean {
     && parsed.getUTCSeconds() === Number(value.slice(17, 19));
 }
 
-function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '') {
+function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '', comment = '') {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
   const matrixRows = String(question.matrix_rows || '').split('||').map((value) => value.trim()).filter(Boolean);
   const matrixColumns = String(question.matrix_columns || '').split('||').map((value) => value.trim()).filter(Boolean);
@@ -133,9 +137,13 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}><span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
       : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : 'Your answer'}">`;
+  const commentInput = question.comments_allowed
+    ? `<label class="core3-public-survey__comment"><span>${escapeHtml(question.comments_message || 'Comment')}</span><textarea class="core3-public-survey__input" rows="2" data-comment>${escapeHtml(comment)}</textarea></label>`
+    : '';
   container.innerHTML = `
     <div class="core3-public-survey__question">${escapeHtml(question.question_text)}${question.required ? '<span class="core3-public-survey__required">*</span>' : ''}</div>
     ${input}
+    ${commentInput}
     <div class="core3-public-survey__footer"><span class="core3-public-survey__progress">Question ${index + 1} of ${total}</span><div class="core3-public-survey__footer-actions">${index > 0 ? '<button class="core3-public-survey__button" data-back type="button">Back</button>' : ''}<button class="core3-public-survey__button" data-next type="button">${index === total - 1 ? 'Submit' : 'Next'}</button></div></div>
   `;
 }
@@ -227,7 +235,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>There are no questions in this survey.</h2></div>';
       return;
     }
-    renderQuestion(body, questions[questionIndex], questionIndex, questions.length, answers[questions[questionIndex].id]);
+    const currentQuestion = questions[questionIndex];
+    renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''));
     body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', async (event) => {
       const backButton = event.currentTarget as HTMLButtonElement;
       backButton.disabled = true;
@@ -307,6 +316,9 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         return;
       }
       answers[question.id] = value;
+      const comment = body.querySelector<HTMLTextAreaElement>('[data-comment]')?.value.trim() || '';
+      if (question.comments_allowed && comment) answers[`${question.id}__comment`] = comment;
+      else delete answers[`${question.id}__comment`];
       if (questionIndex < questions.length - 1) {
         const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
         if (!progressResponse.ok) {

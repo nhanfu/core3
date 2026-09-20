@@ -1,0 +1,26 @@
+version: 0.0.31
+description: Deterministic public choice question comments and comment-as-answer fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS comments_allowed BOOLEAN DEFAULT FALSE;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS comments_message VARCHAR;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS comment_count_as_answer BOOLEAN DEFAULT FALSE;
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-comments', 'SURVEY/COMMENTS', 'Choice Comments', 'Share a choice and tell us what you think.', 'Mitchell Admin', 0, 'Published', 'comments-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, comments_allowed, comments_message, comment_count_as_answer)
+      VALUES ('question-comments-channel', 'survey-demo-comments', 'Which support channel helped you?', 'Choice', 1, true, 'Email,Phone', true, 'Tell us what worked well', true)
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options, comments_allowed = excluded.comments_allowed, comments_message = excluded.comments_message, comment_count_as_answer = excluded.comment_count_as_answer;
+      UPDATE surveys SET response_count = 0 WHERE id = 'survey-demo-comments';
+    down: |
+      DELETE FROM survey_questions WHERE id = 'question-comments-channel';
+      DELETE FROM surveys WHERE id = 'survey-demo-comments';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS comment_count_as_answer;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS comments_message;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS comments_allowed;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

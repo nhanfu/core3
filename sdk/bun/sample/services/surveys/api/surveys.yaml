@@ -56,6 +56,9 @@ actions:
   # Matrix values use a row-to-column JSON map; mandatory matrix questions
   # require every source-defined row to be covered. Conditional follow-ups
   # carry their durable trigger relation through the public question contract.
+  # Choice comments are returned by the public question metadata operation and
+  # persist as <question_id>__comment in answer_data; comment_count_as_answer
+  # mirrors Odoo's required-choice behavior.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form

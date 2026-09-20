@@ -5,6 +5,9 @@ operations:
   survey.public.questions:
     result_key: questions
     query: "SELECT q.id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, (SELECT string_agg(matrix_row, '||' ORDER BY sequence, id) FROM survey_suggested_values WHERE question_id = q.id AND matrix_row IS NOT NULL) AS matrix_rows, (SELECT string_agg(matrix_column, '||' ORDER BY sequence, id) FROM survey_suggested_values WHERE question_id = q.id AND matrix_column IS NOT NULL) AS matrix_columns, CASE WHEN q.question_type = 'Matrix' THEN 'multiple' ELSE NULL END AS matrix_subtype, (SELECT source_question_id FROM survey_question_triggers WHERE question_id = q.id LIMIT 1) AS trigger_question_id, (SELECT source_answer FROM survey_question_triggers WHERE question_id = q.id LIMIT 1) AS trigger_answer FROM survey_questions q WHERE q.survey_id = :survey_id AND COALESCE(is_page, false) = false ORDER BY q.sequence, q.id"
+  survey.public.comment_settings:
+    result_key: comment_settings
+    query: "SELECT id, COALESCE(comments_allowed, false) AS comments_allowed, comments_message, COALESCE(comment_count_as_answer, false) AS comment_count_as_answer FROM survey_questions WHERE survey_id = :survey_id AND COALESCE(is_page, false) = false"
   survey.public.scoring_answers:
     result_key: answers
     query: "SELECT q.id AS question_id, q.question_type, sv.value, COALESCE(sv.score, 0) AS score FROM survey_questions q LEFT JOIN survey_suggested_values sv ON sv.question_id = q.id WHERE q.survey_id = :survey_id AND COALESCE(q.is_page, false) = false ORDER BY q.sequence, q.id, sv.sequence, sv.id"
