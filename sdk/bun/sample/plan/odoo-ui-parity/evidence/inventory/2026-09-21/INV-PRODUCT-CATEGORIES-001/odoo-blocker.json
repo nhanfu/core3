@@ -1,0 +1,8 @@
+{
+  "surface": "Odoo Inventory Configuration > Products > Categories",
+  "probe": "GET http://127.0.0.1:8069/web",
+  "result": { "status": 303, "location": "/web/login?redirect=%2Fweb%3F" },
+  "blocker": "No authenticated Odoo session or supplied Odoo credentials were available in this wave; live desktop/mobile category rendering and CRUD could not be claimed.",
+  "source_comparison": "source-comparison.md",
+  "mutation_performed": false
+}

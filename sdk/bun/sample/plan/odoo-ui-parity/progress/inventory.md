@@ -829,3 +829,27 @@ Inventory sign-off remains open.
   `/web/login` without an available authenticated session, so paired Odoo
   visual/CRUD evidence is blocked and not claimed. Full Inventory sign-off
   remains open.
+
+## `INV-PRODUCT-CATEGORIES-001` — Inventory Product Categories (2026-09-21)
+
+- Selected the smallest genuinely uncovered Wave 13 Inventory behavior after
+  excluding product variants, units/packagings, package types, transfer/package
+  slices, stock forecast/locations, replenishment, routes, storage categories,
+  putaway, and overview: Odoo `menu_product_category_config_stock` →
+  `product_category_action_form` for global `product.category`.
+- Added durable migration `20260922000000-050-inventory-product-categories.yaml`,
+  deterministic hierarchical fixtures, and separate list/detail page/API YAML
+  joined by `page.id`. Category CRUD covers valid parents, duplicate siblings,
+  descendant-aware product counts, cycle prevention, safe deletion, and row
+  versions; the Products stat filters the existing Product Variants page.
+- Focused verification: 4 tests / 39 assertions pass. Authenticated Core3
+  desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-CATEGORIES-001/`; both viewports
+  have HTTP 200 page/source requests, no page errors, and no horizontal
+  overflow.
+- Direct Inventory contract validation, scoped ESLint, and diff-check pass.
+  Repository `bun run audit` remains blocked by the pre-existing Employees
+  `actions[11].result is not allowed` error; no other owner file was changed.
+  Odoo source/menu comparison is complete, but live Odoo returned HTTP 303 to
+  `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
+  Full Inventory sign-off remains open.

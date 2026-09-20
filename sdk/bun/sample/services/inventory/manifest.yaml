@@ -120,6 +120,10 @@ menu:
           label: Package Types
           icon: package
           permission: inventory.read
+        - path: /product-categories
+          label: Categories
+          icon: folder
+          permission: inventory.read
         - path: /inventory-analysis
           label: Inventory Analysis
           icon: chart

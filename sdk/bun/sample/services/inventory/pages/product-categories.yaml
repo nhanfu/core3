@@ -1,0 +1,32 @@
+title: Product Categories
+page: { id: product-categories, route: /product-categories, breadcrumb: [Supply Chain, Inventory, Configuration, Products, Categories], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_product_categories
+    responsive_card: true
+    create_action: create_inventory_product_category
+    create_label: New
+    search: { label: Search product categories, placeholder: 'Search category or parent...' }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: complete_name
+          subtitle: parent_name
+          fields: [{ field: product_count, label: Products }, { field: child_count, label: Children }]
+    columns:
+      - { field: complete_name, label: Product Category, type: PrimaryEntityCell, sortable: true }
+      - { field: parent_name, label: Parent Category, optional: hide }
+      - { field: product_count, label: Products, align: right }
+      - { field: child_count, label: Children, align: right }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_product_category
+    row_double_click_action: view_inventory_product_category
+    form_view: { page: apps/services/inventory/pages/product-category-detail.yaml, side_panel: false }
+    empty_state: { title: No product categories, description: Create a category to organize Inventory products. }

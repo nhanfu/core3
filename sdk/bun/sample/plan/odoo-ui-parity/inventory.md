@@ -1709,3 +1709,34 @@ page errors, and no horizontal overflow, is under
 comparison is recorded, but the live probe returned HTTP 303 to `/web/login`
 without an authenticated session; no paired Odoo visual or CRUD result is
 claimed. Full Inventory sign-off remains open.
+
+## Configuration > Products > Categories — `INV-PRODUCT-CATEGORIES-001` (2026-09-21)
+
+This bounded Wave 13 slice covers Odoo's global `product.category` action exposed
+from Inventory. `addons/stock/views/stock_menu_views.xml:20-27` places
+`product.product_category_action_form` under Configuration > Products as
+Categories. `addons/product/views/product_category_views.xml:4-63` defines the
+Category/Parent form, Products stat action, hierarchical list/search, and action
+path `product-categories`; `addons/product/models/product_category.py:8-55`
+defines recursive complete names, child categories, descendant product counts,
+and the recursion constraint.
+
+Core3 adds separate presentation-only `pages/product-categories.yaml` and
+`pages/product-category-detail.yaml`, paired with
+`api/product-categories.yaml` and `api/product-category-detail.yaml` by matching
+`page.id`. Migration `20260922000000-050-inventory-product-categories.yaml`
+provides durable global/shared categories and deterministic All/Furniture/Office
+hierarchy fixtures. Manager CRUD enforces required names, valid parents,
+duplicate sibling names, cycle prevention, safe deletion when children/products
+use the category, and row-version concurrency. The Products stat binds to the
+existing Product Variants list through a category filter.
+
+Focused verification passes 4 tests / 39 assertions. Authenticated Core3
+desktop/mobile list/detail evidence, with HTTP 200 page/source requests, no
+page errors, and no horizontal overflow, is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-CATEGORIES-001/`. Odoo source/menu
+comparison is recorded, but the live probe returned HTTP 303 to `/web/login`
+without an authenticated session; no paired Odoo visual or CRUD result is
+claimed. The repository-wide audit is blocked by an existing Employees page
+schema error; the Inventory direct contract audit passes. Full Inventory
+sign-off remains open.

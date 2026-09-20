@@ -1,0 +1,66 @@
+page: { id: product-categories }
+datasources:
+  - id: inventory_product_categories
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_CATEGORIES_UNAVAILABLE, message: Product categories are temporarily unavailable. } }
+    query: |
+      WITH RECURSIVE category_paths(id, name, parent_id, complete_name) AS (
+        SELECT id, name, parent_id, name FROM inventory_product_categories WHERE parent_id IS NULL
+        UNION ALL
+        SELECT c.id, c.name, c.parent_id, p.complete_name || ' / ' || c.name
+        FROM inventory_product_categories c JOIN category_paths p ON c.parent_id = p.id
+      ), category_tree(root_id, id) AS (
+        SELECT id, id FROM inventory_product_categories
+        UNION ALL
+        SELECT t.root_id, c.id FROM category_tree t JOIN inventory_product_categories c ON c.parent_id = t.id
+      )
+      SELECT c.id, c.row_version, c.name, c.parent_id, COALESCE(parent.name, '') AS parent_name,
+        COALESCE(paths.complete_name, c.name) AS complete_name, c.company_name,
+        COUNT(DISTINCT child.id) AS child_count,
+        COUNT(DISTINCT v.id) AS product_count
+      FROM inventory_product_categories c
+      LEFT JOIN inventory_product_categories parent ON parent.id = c.parent_id
+      LEFT JOIN category_paths paths ON paths.id = c.id
+      LEFT JOIN category_tree tree ON tree.root_id = c.id
+      LEFT JOIN inventory_product_categories child ON child.parent_id = c.id
+      LEFT JOIN inventory_product_variants v ON v.category_name = (SELECT name FROM inventory_product_categories WHERE id = tree.id)
+        AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)'))
+        AND v.active = TRUE
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(parent.name, '') ILIKE '%' || :q || '%' OR COALESCE(paths.complete_name, c.name) ILIKE '%' || :q || '%')
+      GROUP BY c.id, c.row_version, c.name, c.parent_id, parent.name, paths.complete_name, c.company_name
+      ORDER BY complete_name, c.id
+  - id: inventory_product_category_parents
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name AS label FROM inventory_product_categories WHERE id <> COALESCE(:id, '') ORDER BY name, id"
+actions:
+  - id: view_inventory_product_category
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-categories/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_product_category
+    type: server_form
+    permission: inventory.manage
+    title: New Product Category
+    action: inventory.product_categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_product_categories]
+    mutation:
+      operation: insert
+      table: inventory_product_categories
+      generated: [id]
+      fields: [name, parent_id, company_name, row_version]
+      required: [name]
+      defaults: { parent_id: '', company_name: Shared, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_PRODUCT_CATEGORY_NAME_REQUIRED, message: A category name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:parent_id, ''), '') = '' OR EXISTS (SELECT 1 FROM inventory_product_categories WHERE id = :parent_id)", status: 422, code: INVENTORY_PRODUCT_CATEGORY_PARENT_INVALID, message: Select an existing parent category. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(parent_id, '') = COALESCE(NULLIF(:parent_id, ''), ''))", status: 409, code: INVENTORY_PRODUCT_CATEGORY_EXISTS, message: A category with this name already exists under that parent. }
+      result: { query: "SELECT * FROM inventory_product_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Category, type: text, required: true, placeholder: 'e.g. Lamps' }
+      - { field: parent_id, label: Parent Category, type: select, options_source: inventory_product_category_parents }

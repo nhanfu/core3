@@ -1,0 +1,33 @@
+version: 0.0.50
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_categories (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        parent_id VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'Shared',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name, parent_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_product_categories_parent
+        ON inventory_product_categories(parent_id, name, id);
+      INSERT INTO inventory_product_categories (id, name, parent_id, company_name)
+      VALUES
+        ('inventory-category-all', 'All', NULL, 'Shared'),
+        ('inventory-category-furniture', 'Furniture', 'inventory-category-all', 'Shared'),
+        ('inventory-category-office', 'Office Supplies', 'inventory-category-all', 'Shared'),
+        ('inventory-category-desks', 'Desks', 'inventory-category-furniture', 'Shared'),
+        ('inventory-category-cabinets', 'Cabinets', 'inventory-category-furniture', 'Shared'),
+        ('inventory-category-qa-empty', 'QA Empty Category', 'inventory-category-office', 'Shared')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_categories WHERE id IN ('inventory-category-all', 'inventory-category-furniture', 'inventory-category-office', 'inventory-category-desks', 'inventory-category-cabinets', 'inventory-category-qa-empty');
+      DROP TABLE IF EXISTS inventory_product_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

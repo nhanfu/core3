@@ -1,0 +1,35 @@
+title: Product Category
+page: { id: product-category-detail, route: /product-categories/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Products, Categories, Product Category], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_product_category_detail
+    title_field: complete_name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_product_categories, label: Back to Categories, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_product_category, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: delete_inventory_product_category, label: Delete, variant: danger, permission: inventory.manage, show_if: "record.child_count === 0 && record.product_count === 0" }
+    group_columns: 2
+    groups:
+      - title: Product Category
+        wide: true
+        fields:
+          - { field: name, label: Category }
+          - { field: complete_name, label: Complete Name, readonly: true }
+          - { field: parent_name, label: Parent Category, readonly: true }
+          - { field: company_name, label: Visibility, readonly: true }
+      - title: Usage
+        fields:
+          - { field: product_count, label: Products, type: number, readonly: true }
+          - { field: child_count, label: Child Categories, type: number, readonly: true }
+    stat_buttons: [{ id: view_inventory_product_category_products, label: Products, icon: boxes, value_field: product_count, permission: inventory.read }]
+  - type: ListView
+    variant: odoo
+    source: inventory_product_category_children
+    columns:
+      - { field: name, label: Child Category, type: PrimaryEntityCell }
+      - { field: product_count, label: Products, align: right }
+    row_key: id
+    page_size: 20
+    empty_state: { title: No child categories, description: Create a child category under this category. }

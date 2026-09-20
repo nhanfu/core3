@@ -1,0 +1,100 @@
+{
+  "authenticated_as": "admin@tms.local",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "mobile": false,
+  "list_url": "http://127.0.0.1:4331/inventory/product-categories",
+  "detail_url": "http://127.0.0.1:4331/inventory/product-categories/detail?id=inventory-category-furniture",
+  "list_text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Configuration / Products / Categories\n1-6 / 6\n‹\n›\nProduct Category\n\tProducts\n\tChildren\n\n\nAll\n\t5\t2\n\nAll / Furniture\n\t3\t2\n\nAll / Furniture / Cabinets\n\t0\t0\n\nAll / Furniture / Desks\n\t0\t0\n\nAll / Office Supplies\n\t2\t1\n\nAll / Office Supplies / QA Empty Category\n\t0\t0",
+  "detail_text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\nConfiguration\n›\nProducts\n›\nCategories\n›\nProduct Category\nBack to Categories\nEdit\nAll / Furniture\n3\nProducts\nProduct Category\nCategory\nFurniture\nComplete Name\nAll / Furniture\nParent Category\nAll\nVisibility\nShared\nUsage\nProducts\n3\nChild Categories\n2\nSupply Chain / Inventory / Configuration / Products / Categories / Product Category\n1-2 / 2\n‹\n›\nChild Category\n\tProducts\n\n\nCabinets\n\t0\n\nDesks\n\t0",
+  "horizontal_overflow": false,
+  "api": [
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/modules"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/apps"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/auth/me"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/companies"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/company"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/pages/product-categories?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/modules"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/apps"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/auth/me"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/companies"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/company"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/pages/product-category-detail?lc=en&id=inventory-category-furniture"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4331/api/query"
+    }
+  ],
+  "page_errors": []
+}

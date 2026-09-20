@@ -14,6 +14,23 @@ Candidate commit: `HEAD` (`SettingsView mutation transport retest`)
 Runtime: `http://127.0.0.1:3316`, isolated Inventory runner
 Authenticated user: `admin@tms.local`
 
+## INV-PRODUCT-CATEGORIES-001 QA (2026-09-21)
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Odoo source/menu/action/model comparison | PASS | `evidence/inventory/2026-09-21/INV-PRODUCT-CATEGORIES-001/source-comparison.md` |
+| Page/API separation and direct schema validation | PASS | `inventory_product_categories.integration.test.ts`; matching `page.id` contracts |
+| Durable hierarchy and descendant product counts | PASS | focused integration test and migration `0.0.50` |
+| Manager CRUD, duplicate/parent/cycle/in-use guards, row version | PASS | focused integration test |
+| Reader list/detail vs manager mutation permission boundary | PASS | focused integration test |
+| Product stat to filtered Product Variants drilldown | PASS | focused integration test and `api/product-variants.yaml` category filter |
+| File-backed restart persistence | PASS | focused integration test |
+| Authenticated Core3 desktop/mobile list/detail | PASS | `evidence/inventory/2026-09-21/INV-PRODUCT-CATEGORIES-001/core3-{desktop,mobile}.*` |
+| Paired authenticated Odoo desktop/mobile | BLOCKED | Odoo probe returned HTTP 303 to `/web/login`; see `odoo-blocker.json` |
+| Repository-wide audit | BLOCKED / pre-existing | Employees `employee-detail.yaml`: `actions[11].result is not allowed`; not modified |
+
+This is a bounded feature result, not full Inventory sign-off.
+
 ## INV-PACKAGE-TYPES-001 QA (2026-09-21)
 
 | Check | Result | Evidence |

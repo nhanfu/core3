@@ -1,0 +1,84 @@
+page: { id: product-category-detail }
+datasources:
+  - id: inventory_product_category_detail
+    single: true
+    permission: inventory.read
+    error_states: { missing_record: { status: 404, code: INVENTORY_PRODUCT_CATEGORY_NOT_FOUND, message: Product category not found. }, transport_error: { status: 503, code: INVENTORY_PRODUCT_CATEGORY_DETAIL_UNAVAILABLE, message: Product category details are temporarily unavailable. } }
+    query: |
+      WITH RECURSIVE category_paths(id, name, parent_id, complete_name) AS (
+        SELECT id, name, parent_id, name FROM inventory_product_categories WHERE parent_id IS NULL
+        UNION ALL
+        SELECT c.id, c.name, c.parent_id, p.complete_name || ' / ' || c.name
+        FROM inventory_product_categories c JOIN category_paths p ON c.parent_id = p.id
+      ), category_tree(root_id, id) AS (
+        SELECT id, id FROM inventory_product_categories
+        UNION ALL
+        SELECT t.root_id, c.id FROM category_tree t JOIN inventory_product_categories c ON c.parent_id = t.id
+      )
+      SELECT c.id, c.row_version, c.name, c.parent_id, COALESCE(parent.name, '') AS parent_name,
+        COALESCE(paths.complete_name, c.name) AS complete_name, c.company_name,
+        COUNT(DISTINCT child.id) AS child_count, COUNT(DISTINCT v.id) AS product_count
+      FROM inventory_product_categories c
+      LEFT JOIN inventory_product_categories parent ON parent.id = c.parent_id
+      LEFT JOIN category_paths paths ON paths.id = c.id
+      LEFT JOIN category_tree tree ON tree.root_id = c.id
+      LEFT JOIN inventory_product_categories child ON child.parent_id = c.id
+      LEFT JOIN inventory_product_variants v ON v.category_name = (SELECT name FROM inventory_product_categories WHERE id = tree.id)
+        AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)'))
+        AND v.active = TRUE
+      WHERE c.id = :id
+      GROUP BY c.id, c.row_version, c.name, c.parent_id, parent.name, paths.complete_name, c.company_name
+  - id: inventory_product_category_children
+    single: false
+    permission: inventory.read
+    query: "SELECT c.id, c.row_version, c.name, c.parent_id, c.name AS complete_name, COUNT(DISTINCT v.id) AS product_count FROM inventory_product_categories c LEFT JOIN inventory_product_variants v ON v.category_name = c.name AND v.active = TRUE WHERE c.parent_id = :id GROUP BY c.id, c.row_version, c.name, c.parent_id ORDER BY c.name, c.id"
+actions:
+  - id: back_to_inventory_product_categories
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-categories
+  - id: view_inventory_product_category_products
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-variants
+    params: { q: '{state.inventory_product_category_detail.name}' }
+  - id: edit_inventory_product_category
+    type: server_form
+    permission: inventory.manage
+    title: Edit Product Category
+    action: inventory.product_categories.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_product_category_detail
+    refresh: [inventory_product_category_detail, inventory_product_categories, inventory_product_category_children]
+    mutation:
+      operation: update
+      table: inventory_product_categories
+      fields: [name, parent_id]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_categories WHERE id = :id", status: 404, code: INVENTORY_PRODUCT_CATEGORY_NOT_FOUND, message: Product category not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_PRODUCT_CATEGORY_NAME_REQUIRED, message: A category name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:parent_id, ''), '') = '' OR EXISTS (SELECT 1 FROM inventory_product_categories WHERE id = :parent_id)", status: 422, code: INVENTORY_PRODUCT_CATEGORY_PARENT_INVALID, message: Select an existing parent category. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:parent_id, ''), '') = '' OR :parent_id <> :id", status: 422, code: INVENTORY_PRODUCT_CATEGORY_SELF_PARENT, message: A category cannot be its own parent. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH RECURSIVE descendants(id) AS (SELECT id FROM inventory_product_categories WHERE parent_id = :id UNION ALL SELECT c.id FROM inventory_product_categories c JOIN descendants d ON c.parent_id = d.id) SELECT 1 FROM descendants WHERE id = :parent_id)", status: 422, code: INVENTORY_PRODUCT_CATEGORY_CYCLE, message: A category cannot be moved beneath one of its descendants. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(parent_id, '') = COALESCE(NULLIF(:parent_id, ''), '') AND id <> :id)", status: 409, code: INVENTORY_PRODUCT_CATEGORY_EXISTS, message: A category with this name already exists under that parent. }
+      result: { query: "SELECT * FROM inventory_product_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Category, type: text, required: true }
+      - { field: parent_id, label: Parent Category, type: select, options_source: inventory_product_category_parents }
+  - id: delete_inventory_product_category
+    type: server
+    permission: inventory.manage
+    action: inventory.product_categories.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_categories]
+    mutation:
+      operation: delete
+      table: inventory_product_categories
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_categories WHERE id = :id", status: 404, code: INVENTORY_PRODUCT_CATEGORY_NOT_FOUND, message: Product category not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_categories WHERE parent_id = :id) AND NOT EXISTS (SELECT 1 FROM inventory_product_variants v JOIN inventory_product_categories c ON c.name = v.category_name WHERE c.id = :id)", status: 409, code: INVENTORY_PRODUCT_CATEGORY_IN_USE, message: Remove child categories and products before deleting this category. }

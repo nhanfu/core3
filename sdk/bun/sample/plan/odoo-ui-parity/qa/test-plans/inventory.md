@@ -160,6 +160,10 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-035 | Package Types permission/company/concurrency boundary | inventory.read vs inventory.manage, current company, row version | readers can inspect current/shared package types; managers enforce package use, nonnegative dimensions/weights, globally unique barcode, company scope, in-use guards, and stale writes | pass: `INV-PACKAGE-TYPES-001` focused runtime test |
 | INV-UI-034 | Package Types responsive list/detail | 1440x900, 390x844 | Authenticated Core3 list/detail exposes source-shaped sequence, dimensions, max weight, contents, capacity context, and no overflow; paired Odoo result or exact login blocker is recorded | pass Core3 desktop/mobile; Odoo HTTP 303 login blocker recorded |
 
+| INV-FUNC-037 | Product Categories hierarchy lifecycle | Configuration > Products > Categories | Durable global category hierarchy exposes complete names, descendant product counts, parent/child detail, manager CRUD, duplicate/cycle/in-use guards, migration replay, and restart persistence | pass: `INV-PRODUCT-CATEGORIES-001` focused suite |
+| INV-PERM-036 | Product Categories permission/concurrency boundary | inventory.read vs inventory.manage, global category scope, row version | readers can inspect the hierarchy and product drilldown; managers enforce valid parents, duplicate siblings, cycle prevention, safe deletion, and stale writes | pass: `INV-PRODUCT-CATEGORIES-001` focused runtime test |
+| INV-UI-035 | Product Categories responsive list/detail | 1440x900, 390x844 | Authenticated Core3 list/detail exposes hierarchical names, Products/Children counts, product stat drilldown, and no overflow; paired Odoo result or exact login blocker is recorded | pass Core3 desktop/mobile; Odoo HTTP 303 login blocker recorded |
+
 ## Exit criteria
 
 Full Inventory sign-off requires the focused suite, authenticated CRUD and

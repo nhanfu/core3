@@ -25,6 +25,7 @@ datasources:
         AND (:q IS NULL OR default_code ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%'
           OR name ILIKE '%' || :q || '%' OR template_name ILIKE '%' || :q || '%'
           OR variant_values ILIKE '%' || :q || '%' OR category_name ILIKE '%' || :q || '%')
+        AND (:category_name IS NULL OR :category_name = '' OR category_name = :category_name)
         AND (:product_type IS NULL OR :product_type = '' OR product_type = :product_type)
         AND (:tracking IS NULL OR :tracking = '' OR tracking = :tracking)
       ORDER BY is_favorite DESC, default_code, name, id
