@@ -1713,3 +1713,27 @@ Inventory page-discovery error referencing unresolved `inventory_route_detail`
 and related actions/datasources; Employees did not modify Inventory. Evidence is
 under `evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
+
+## EMP-ATTENDANCE-PIN-001: Attendance and Point of Sale PIN (2026-09-21)
+
+Odoo's employee Settings tab exposes the HR-user-only `hr.employee.pin` field
+under Attendance/Point of Sale. The source model documents this PIN as the
+credential used by Attendance kiosk check-in/out and Point of Sale cashier
+switching; the form label is `PIN Code`.
+
+Core3 adds migration `20260921220000-052` with deterministic employee PIN
+fixtures, a separate page-only Settings group, and the matching
+`employee-detail` API datasource/action. Employee creation accepts an optional
+PIN, while edits use a dedicated `employees.write` action guarded by actor,
+active/current-company, optimistic row-version, and digits-only validation.
+Blank PINs clear the durable value, matching Odoo's optional Char field. PIN
+values are rendered as password inputs in action forms and read-only in the
+Settings projection; barcode generation/printing remains a separate completed
+workflow.
+
+Focused coverage is **4 tests / 20 assertions**, including source mapping,
+create/edit/read, actor/stale/company/invalid guards, migration replay, and
+file-backed restart. Authenticated Core3 and Odoo desktop/mobile comparison
+captures are recorded under
+`evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. Evidence is
+conditional and does not claim aggregate Employees sign-off.

@@ -863,3 +863,17 @@ Focused test: `test/employees_hr_responsible.integration.test.ts` (4 tests,
 `evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`. Core3 returned 200
 without browser/request errors or overflow; Odoo's seven app-icon 404s are
 unrelated shell noise. No aggregate Employees sign-off is claimed.
+
+## EMP-ATTENDANCE-PIN-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-033 | Settings Attendance / Point of Sale PIN create/read/update | pass; numeric PIN persists through employee CRUD and can be cleared |
+| EMP-PERM-033 | `employees.write`, actor, active/current company, row version, digits-only validation | pass; actor, stale, wrong-company, and invalid-PIN requests reject atomically |
+| EMP-DATA-033 | Migration replay and file-backed restart | pass; deterministic PIN fixtures remain stable without duplicates |
+| EMP-UI-029 | Authenticated Core3/Odoo desktop and mobile | conditional; captures record the PIN control, viewport checks, and any fixture/reference blockers |
+
+Focused test: `test/employees_attendance_pin.integration.test.ts` (4 tests,
+20 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. No aggregate
+Employees sign-off is claimed.

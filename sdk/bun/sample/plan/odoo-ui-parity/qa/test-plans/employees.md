@@ -416,3 +416,17 @@ Focused test: `test/employees_contract_type.integration.test.ts` (4 tests,
 Focused test: `test/employees_hr_responsible.integration.test.ts` (4 tests,
 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-HR-RESPONSIBLE-001/`.
+
+## EMP-ATTENDANCE-PIN-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.employee.pin` and Attendance/Point of Sale `PIN Code` map to paired employee-detail page/API contracts | pass |
+| Employee CRUD | Create, edit, read, and clear an optional numeric PIN durably | pass |
+| Permission and scope | Employees write, actor, active/current company, digits-only, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic PIN fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo desktop/mobile Settings captures | conditional; runtime/reference blockers recorded in evidence |
+
+Focused test: `test/employees_attendance_pin.integration.test.ts` (4 tests,
+20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`.

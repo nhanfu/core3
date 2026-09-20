@@ -1,0 +1,68 @@
+{
+  "feature_id": "EMP-ATTENDANCE-PIN-001",
+  "captured_at": "2026-09-21",
+  "qa_inventory": [
+    "authenticated employee detail",
+    "Settings tab",
+    "Attendance / Point of Sale group",
+    "PIN Code label",
+    "desktop and mobile viewport fit",
+    "empty/company-boundary state"
+  ],
+  "core3": {
+    "credentials": "admin@tms.local",
+    "route": "http://127.0.0.1:3321/employees/detail?id=employee-demo-001",
+    "desktop": {
+      "authenticated": true,
+      "settings_tab": true,
+      "attendance_group": true,
+      "pin_code": true,
+      "viewport": "1440x900",
+      "overflow_x": false,
+      "page_errors": [],
+      "request_failures": [],
+      "http_errors": []
+    },
+    "mobile": {
+      "authenticated": true,
+      "settings_tab": true,
+      "attendance_group": true,
+      "pin_code": true,
+      "viewport": "390x844",
+      "overflow_x": false,
+      "page_errors": [],
+      "request_failures": [],
+      "http_errors": []
+    },
+    "blocker": "Deterministic PIN fixtures are Core3 Vietnam; the authenticated session is Core3 Demo Company, so the captured employee projection has no populated PIN value."
+  },
+  "odoo": {
+    "credentials": "codex@core3.local / core3_owned",
+    "route": "http://127.0.0.1:8069/odoo/employees/6",
+    "employee": "Abigail Peterson",
+    "desktop": {
+      "authenticated": true,
+      "settings_tab": true,
+      "attendance_group": true,
+      "pin_code": true,
+      "viewport": "1440x900",
+      "overflow_x": false,
+      "page_errors": [],
+      "request_failures": [],
+      "http_errors": []
+    },
+    "mobile": {
+      "authenticated": true,
+      "settings_tab": true,
+      "attendance_group": true,
+      "pin_code": true,
+      "viewport": "390x844",
+      "overflow_x": false,
+      "page_errors": [],
+      "request_failures": [],
+      "http_errors": []
+    },
+    "blocker": "Abigail Peterson has an empty PIN in the reference database, so a populated source value is not claimed."
+  },
+  "signoff": "conditional feature evidence only; no aggregate Employees sign-off"
+}

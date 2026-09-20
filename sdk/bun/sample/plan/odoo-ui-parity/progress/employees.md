@@ -611,3 +611,23 @@ Candidate commit: current working tree
   desktop/mobile render the source control, but Abigail Peterson has no
   populated approver; seven app-icon 404s are unrelated shell noise.
   Conditional evidence only; no aggregate Employees sign-off.
+
+## EMP-ATTENDANCE-PIN-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Settings behavior: Odoo's
+  `hr.employee.pin` / Attendance and Point of Sale `PIN Code` field. This is
+  distinct from the completed barcode/badge and work-mobile slices.
+- Added migration `20260921220000-052` with replay-safe numeric PIN fixtures;
+  employee sample loading and creation preserve deterministic PIN behavior.
+  The page-only Settings group joins `employee-detail` API YAML by `page.id`,
+  and a dedicated `employees.write` edit action keeps the PIN separate from
+  the generic employee editor.
+- Guards require actor identity, active employee/current-company scope,
+  optimistic row version, and digits-only PIN input; blank input clears the
+  optional value. Focused verification: **4 tests / 20 assertions** covering
+  source mapping, CRUD, atomic permission/company/concurrency/validation
+  failures, migration replay, and file-backed restart.
+- Authenticated Core3/Odoo desktop and mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. Any fixture-company,
+  reference-data, shell-noise, or runtime limitations are recorded there;
+  feature evidence is conditional and does not represent aggregate sign-off.

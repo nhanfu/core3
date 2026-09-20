@@ -1,0 +1,22 @@
+version: 0.0.52
+kind: data
+description: Persist the Odoo Attendance and Point of Sale PIN on employees
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS pin VARCHAR;
+      UPDATE employees
+      SET pin = CASE id
+        WHEN 'employee-demo-001' THEN '4821'
+        WHEN 'employee-demo-002' THEN '7314'
+        WHEN 'employee-demo-003' THEN '1906'
+        WHEN 'employee-demo-004' THEN '6048'
+        ELSE pin
+      END
+      WHERE NULLIF(TRIM(COALESCE(pin, '')), '') IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS pin;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
