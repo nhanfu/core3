@@ -1,0 +1,16 @@
+version: 0.0.65
+kind: schema
+description: link saved payment tokens to eCommerce checkout transactions
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_payment_transactions ADD COLUMN IF NOT EXISTS token_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_transactions_token_idx
+        ON ecommerce_payment_transactions(token_id, company_name, created_at);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_payment_transactions_token_idx;
+      ALTER TABLE ecommerce_payment_transactions DROP COLUMN IF EXISTS token_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

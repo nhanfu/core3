@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Checkout Payment Token Selection (`ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`, 2026-09-21)
+
+- Odoo source/payment flow: pass. The payment form exposes customer-owned
+  `tokens_sudo`; Website Sale accepts `flow == 'token'` and includes the sale
+  order in transaction creation; `payment.transaction` persists `token_id`.
+- Core3 lifecycle: pass for this bounded contract. Migration 065 adds the
+  transaction token link/index; the separate checkout page/API exposes active,
+  verified, provider-enabled customer tokens; authenticated checkout guards
+  customer/company/provider/payment-method ownership and stores
+  `offline_token`; guest checkout cannot use a saved token.
+- Focused verification: `bun test
+  ./test/ecommerce_checkout_payment_token.integration.test.ts
+  ./test/ecommerce_checkout.integration.test.ts
+  ./test/ecommerce_payment_tokens.integration.test.ts
+  ./test/ecommerce_payment_transactions.integration.test.ts --timeout 20000`
+  — **23 passed, 134 assertions, 0 failures**.
+- Scoped ESLint and `git diff --check`: **pass**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Live provider/gateway/token charging, broader actor/browser coverage, and
+  paired Odoo rendering remain gates.
+
 ## Wishlist Session Merge (`ECOM-CATALOG-WISHLIST-MERGE-001`, 2026-09-21)
 
 - Odoo source/login hook: pass. `product_wishlist.py` removes duplicate

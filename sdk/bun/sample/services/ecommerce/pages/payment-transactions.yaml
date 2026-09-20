@@ -12,6 +12,7 @@ components:
       - { field: order_number, label: Order }
       - { field: payment_method, label: Payment Method }
       - { field: provider_name, label: Provider }
+      - { field: token_id, label: Payment Token }
       - { field: customer_name, label: Customer }
       - { field: amount, label: Amount, align: right }
       - { field: state, label: Status, type: StatusChip }

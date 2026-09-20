@@ -4,7 +4,32 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `03d08c26302db0c10d0b07fb73db603c3b8752a3` (Wishlist Lifecycle).
+Latest committed bounded slice before this wave: `39945845e2b8cffdd3f0f45860d329628d1c39d5` (Wishlist Session Merge).
+
+## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`
+
+The smallest remaining source-backed checkout gap after the durable payment
+token/provider slices, wishlist/merge, and variant configurator is selecting a
+saved customer token during checkout. Odoo's payment form supplies customer
+tokens, Website Sale passes token flow and sale-order identity to transaction
+creation, and `payment.transaction.token_id` preserves the relationship.
+
+Core3 now adds migration 065 `token_id` persistence/indexing, a separate
+checkout payment-token datasource/page field, strict active/verified
+customer/company/provider/payment-method guards, and token-aware payment
+transaction operation/linkage. Guest checkout remains token-free. Payment
+Transactions expose the selected token ID.
+
+Focused verification: `bun test
+./test/ecommerce_checkout_payment_token.integration.test.ts
+./test/ecommerce_checkout.integration.test.ts
+./test/ecommerce_payment_tokens.integration.test.ts
+./test/ecommerce_payment_transactions.integration.test.ts --timeout 20000` —
+**23 passed, 134 assertions, 0 failures**. Scoped ESLint and diff-check pass;
+the UI audit is a commit gate. Core3 authenticated desktop/mobile capture is
+blocked by unavailable ports 3000/4312/4313, and Odoo `/shop` returns exact
+HTTP 404 on ports 8069/8073. Provider/gateway execution, auth/browser actor
+coverage, paired Odoo rendering, and module sign-off remain open.
 
 ## Current bounded task — `ECOM-CATALOG-WISHLIST-MERGE-001`
 

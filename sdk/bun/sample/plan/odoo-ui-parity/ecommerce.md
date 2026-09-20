@@ -1,6 +1,34 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded wishlist session-merge slice; module sign-off remains open)
+Status: qa-in-progress (bounded checkout payment-token selection slice; module sign-off remains open)
+
+## Bounded feature — Checkout Payment Token Selection (`ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`)
+
+Odoo source comparison: the supplied `payment/views/payment_form_templates.xml`
+renders customer-owned `tokens_sudo` when token selection is allowed and
+passes the selected token through the payment form. The Website Sale payment
+controller accepts `flow == 'token'`, includes `sale_order_id` when creating
+the transaction, and the supplied `payment.transaction` model persists
+`token_id` with the provider/payment-method relationship.
+
+Core3 comparison: payment tokens were durable and manageable but checkout
+ignored them. Migration 065 adds durable `token_id` linkage and an index to
+payment transactions. The separate checkout API/page contracts expose only
+active, verified, provider-enabled tokens for the open customer cart. The
+authenticated checkout mutation validates customer/company/provider/payment
+method ownership, stores the token and `offline_token` operation on the
+transaction, and remains idempotent through the existing order/cart boundary;
+guest checkout cannot submit a customer token. Payment Transactions now expose
+the selected token ID.
+
+Focused tests cover Odoo source tracing, page/API separation, token option
+filtering, permission/company/provider/method validation, checkout replay,
+transaction linkage, migration replay, and DuckDB restart persistence in
+`test/ecommerce_checkout_payment_token.integration.test.ts`. Core3
+authenticated desktop/mobile capture is blocked by unavailable runtime ports;
+both supplied Odoo references return exact HTTP 404 for `/shop`. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-checkout-payment-token-selection-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Wishlist Session Merge (`ECOM-CATALOG-WISHLIST-MERGE-001`)
 
