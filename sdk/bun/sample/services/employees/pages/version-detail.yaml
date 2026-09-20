@@ -1,0 +1,36 @@
+title: Employee Record
+page: { id: employee-version-detail, route: /employees/versions/detail, breadcrumb: [Human Resources, Reporting, Employee Records, Employee Record], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_version_detail
+    title_field: employee_name
+    subtitle_field: date_version
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: false
+    labels: { save: Close, discard: Back, editDetails: View record, workflowStatus: Status }
+    header_actions:
+      - { id: open_employee_from_version, label: Open employee, variant: secondary, permission: employees.read }
+    group_columns: 2
+    groups:
+      - title: Employee Record
+        fields:
+          - { field: employee_name, label: Employee }
+          - { field: employee_number, label: Employee number }
+          - { field: date_version, label: Effective date }
+          - { field: status, label: Status, type: StatusChip }
+          - { field: contract_state, label: Contract state }
+          - { field: company_name, label: Company }
+      - title: Contract
+        fields:
+          - { field: contract_date_start, label: Contract start }
+          - { field: contract_date_end, label: Contract end }
+          - { field: contract_type_name, label: Contract type }
+          - { field: contract_template_name, label: Contract template }
+          - { field: job_name, label: Job position }
+          - { field: department_name, label: Department }
+          - { field: schedule_name, label: Working schedule }
+          - { field: wage, label: Wage, type: currency }
+      - title: Notes
+        fields:
+          - { field: additional_note, label: Note, type: textarea, wide: true }

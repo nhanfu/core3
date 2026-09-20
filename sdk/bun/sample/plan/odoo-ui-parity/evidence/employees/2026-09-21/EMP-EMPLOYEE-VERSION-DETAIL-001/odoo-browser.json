@@ -1,0 +1,46 @@
+{
+  "feature_id": "EMP-EMPLOYEE-VERSION-DETAIL-001",
+  "surface": "Odoo",
+  "captures": [
+    {
+      "feature_id": "EMP-EMPLOYEE-VERSION-DETAIL-001",
+      "surface": "Odoo",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "authenticated": true,
+      "list_url": "http://127.0.0.1:8069/odoo/versions",
+      "detail_url": "http://127.0.0.1:8069/odoo/versions/6/hr.employee/6",
+      "title": "Abigail Peterson",
+      "rows": 28,
+      "employee_records_visible": true,
+      "clicked_employee": "Abigail Peterson",
+      "detail_title": true,
+      "history_visible": true,
+      "effective_date_visible": true,
+      "body_excerpt": "Discuss\nDiscuss\nChannels\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployee Records\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "errors": []
+    },
+    {
+      "feature_id": "EMP-EMPLOYEE-VERSION-DETAIL-001",
+      "surface": "Odoo",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": true,
+      "list_url": "http://127.0.0.1:8069/odoo/versions",
+      "detail_url": "http://127.0.0.1:8069/odoo/versions/6/hr.employee/6",
+      "title": "Abigail Peterson",
+      "rows": 0,
+      "employee_records_visible": true,
+      "clicked_employee": "Abigail Peterson",
+      "detail_title": true,
+      "history_visible": false,
+      "effective_date_visible": true,
+      "body_excerpt": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "errors": []
+    }
+  ]
+}

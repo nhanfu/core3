@@ -369,3 +369,25 @@ Candidate commit: current working tree
 - Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`.
   This is conditional feature evidence; no aggregate Employees sign-off is
   claimed.
+
+## EMP-EMPLOYEE-VERSION-DETAIL-001 (2026-09-21)
+
+- Selected the smallest remaining source-backed employee action: Odoo's
+  clickable `hr.version` Employee Records row (`action_open_version`) after
+  Create User and Resume Lines.
+- Added page/API-separated `/employees/versions/detail` snapshot detail,
+  guarded `employees.read`/current-company datasource, list row-open and
+  double-click navigation, and Open employee navigation. Existing durable
+  current/future/expired/archived fixtures are reused; no duplicate migration
+  rows were introduced.
+- Focused verification: **3 tests / 21 assertions**; migration replay,
+  file-backed restart, company boundary, missing-record behavior, source
+  mapping, and page/API separation pass. Audit: **690 pages / 699 routes /
+  1,284 datasources**; scoped ESLint and diff-check pass.
+- Core3 authenticated desktop/mobile list/detail routes load with zero browser
+  or HTTP errors, but `Core3 Demo Company` has no `Core3 Vietnam` version
+  fixtures, so populated snapshot values are unavailable. Odoo desktop shows
+  28 records and opens Abigail Peterson's employee form from the version row;
+  mobile reaches the authenticated resolved detail route. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
+- Evidence is conditional; no aggregate Employees sign-off is claimed.

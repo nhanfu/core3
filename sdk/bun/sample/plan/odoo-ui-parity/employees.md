@@ -1402,3 +1402,26 @@ reference employee had no populated resume-line values. Seven known app-icon
 404s are shell noise. No aggregate Employees sign-off is claimed.
 
 Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.
+
+## EMP-EMPLOYEE-VERSION-DETAIL-001: Employee Record snapshot detail (2026-09-21)
+
+Odoo's Employee Records action (`action_hr_version`) exposes a clickable
+`hr.version` row; its `action_open_version` returns the employee form with the
+selected version context. Core3 already had durable current, future, expired,
+and archived `employee_versions` fixtures and list route, but lacked the
+row-open snapshot contract. This slice adds a read-only
+`/employees/versions/detail` page/API pair, company-scoped `hr.version`
+projection, list row/double-click navigation, and an Open employee action.
+
+The detail preserves effective date, contract dates/state, employee, company,
+job, department, schedule, wage, template, and note without exposing writes.
+`employees.read` and current-company scope apply to both list and detail; the
+existing migration/restart fixture proves durable snapshots. Focused coverage
+is **3 tests / 21 assertions**. Authenticated Core3 desktop/mobile routes and
+titles load with zero browser/request errors, but the Admin session is
+`Core3 Demo Company` while deterministic versions belong to `Core3 Vietnam`,
+so the populated snapshot is correctly absent. Authenticated Odoo desktop
+shows 28 Employee Records and opens Abigail Peterson's employee form from a
+version row; the mobile detail route also loads authenticated. Evidence is
+under `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
+This remains bounded conditional evidence, not module sign-off.

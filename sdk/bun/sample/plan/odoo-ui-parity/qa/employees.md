@@ -676,3 +676,18 @@ Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.
 
 Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-VERSION-DETAIL-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-022 | Employee Records row-open version snapshot | Odoo `hr.version` row opens the employee context; Core3 list row/double-click opens the read-only version detail route | pass; 3 focused tests / 21 assertions |
+| EMP-PERM-022 | `employees.read` and current-company boundary | Version detail returns no record outside the current company; no write actions are exposed | pass |
+| EMP-DATA-022 | Current/future/expired/archived fixtures and restart | Existing deterministic version snapshots survive migration replay and file-backed restart | pass |
+| EMP-UI-018 | Authenticated Core3/Odoo desktop and mobile | Core3 routes pass with zero errors but populated fixture is company-blocked; Odoo desktop list/detail and mobile detail are authenticated | conditional |
+
+Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
+Core3 fixture company is `Core3 Vietnam` versus session `Core3 Demo Company`;
+Odoo mobile uses the authenticated resolved detail route because the compact
+list rendered no `.o_data_row` nodes. No aggregate Employees sign-off is
+claimed.

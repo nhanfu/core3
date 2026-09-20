@@ -1,0 +1,24 @@
+{
+  "feature_id": "EMP-EMPLOYEE-VERSION-DETAIL-001",
+  "surface": "Core3",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "authenticated": true,
+  "current_company": {
+    "id": "company-demo",
+    "name": "Core3 Demo Company",
+    "short_name": "Core3",
+    "address": "100 Main Street, San Francisco",
+    "currency_code": "USD"
+  },
+  "list_url": "http://127.0.0.1:3310/employees/versions",
+  "detail_url": "http://127.0.0.1:3310/employees/versions/detail?id=employee-version-admin-current",
+  "list_has_title": true,
+  "detail_has_title": true,
+  "snapshot_visible": false,
+  "open_employee_visible": true,
+  "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nReporting\n›\nEmployee Records\n›\nEmployee Record\nOpen employee\n—\n—\nEmployee Record\nEmployee\n—\nEmployee number\n—\nEffective date\n—\nStatus\n—\nContract state\n—\nCompany\n—\nContract\nContract start\n—\nContract end\n—\nContract type\n—\nContract template\n—\nJob position\n—\nDepartment\n—\nWorking schedule\n—\nWage\n—\nNotes\nNote\n—",
+  "errors": []
+}

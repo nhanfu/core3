@@ -237,3 +237,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.
 | EMP-UI-017 | Authenticated responsive comparison | Odoo desktop/mobile modal pass; Core3 desktop/mobile fixture-company boundary is explicit, with missing-record Create User hidden | conditional |
 
 Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`.
+
+## EMP-EMPLOYEE-VERSION-DETAIL-001 execution (2026-09-21)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-022 | Employee Records row-open snapshot | Source `action_open_version`, Core3 row navigation, read-only snapshot fields, and Open employee action | pass; 3 focused tests / 21 assertions |
+| EMP-PERM-022 | Read/company boundary | `employees.read` is required and an out-of-company or missing version yields an empty detail record | pass |
+| EMP-DATA-022 | Durable version fixtures | Current, future, archived, and expired rows persist through replay and file-backed restart | pass |
+| EMP-UI-018 | Authenticated responsive comparison | Core3 exact fixture-company blocker; Odoo desktop list/detail and mobile authenticated detail evidence | conditional |
+
+Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.

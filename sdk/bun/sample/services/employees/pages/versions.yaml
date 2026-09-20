@@ -33,4 +33,7 @@ components:
     page_size: 50
     column_chooser: true
     row_key: id
+    row_actions: menu
+    row_open_action: view_employee_version
+    row_double_click_action: view_employee_version
     empty_state: { title: No employee records found, description: Employee contract records matching the current filters will appear here. }
