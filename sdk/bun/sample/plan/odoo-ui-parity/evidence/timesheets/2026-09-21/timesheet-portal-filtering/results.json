@@ -1,0 +1,46 @@
+{
+  "feature_id": "TIMESHEET-PORTAL-DATE-FILTERS",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "runtime": "blocked",
+    "error": "PageSchemaError: Invalid page definition: components[2].title is not allowed",
+    "owner": "Employees",
+    "route_capture": null
+  },
+  "odoo": {
+    "desktop": {
+      "url": "http://127.0.0.1:8069/my/timesheets",
+      "authenticated": true,
+      "route_rendered": true,
+      "table_rendered": true,
+      "viewport": "1440x900",
+      "body_width": 1440,
+      "document_width": 1440,
+      "filter_links": ["all", "last_year", "last_quarter", "last_month", "last_week", "today", "week", "month", "quarter", "year"],
+      "last_month_url": "http://127.0.0.1:8069/my/timesheets?filterby=last_month",
+      "last_month_rendered": true,
+      "page_errors": [],
+      "aborted_requests": ["/mail/data"]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/my/timesheets",
+      "authenticated": true,
+      "route_rendered": true,
+      "table_rendered": true,
+      "viewport": "390x844",
+      "body_width": 390,
+      "document_width": 390,
+      "filter_links": ["all", "last_year", "last_quarter", "last_month", "last_week", "today", "week", "month", "quarter", "year"],
+      "last_month_url": "http://127.0.0.1:8069/my/timesheets?filterby=last_month",
+      "last_month_rendered": true,
+      "page_errors": [],
+      "aborted_requests": ["/web/action/load", "/mail/data", "/web/image/*"]
+    }
+  },
+  "blockers": [
+    "Core3 authenticated browser capture could not start because an unrelated Employees page fails discovery with components[2].title is not allowed.",
+    "Odoo mobile table is visibly clipped at 390px despite document metrics reporting 390px; this is reference-runtime evidence, not a Core3 change.",
+    "Odoo background asset/action requests were aborted after the route rendered; page errors were empty.",
+    "Broader Timesheets Print/PDF/action parity blockers remain open."
+  ]
+}

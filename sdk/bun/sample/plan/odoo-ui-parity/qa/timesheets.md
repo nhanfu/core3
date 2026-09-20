@@ -516,3 +516,28 @@ Blockers: the capture records only aborted navigation-prefetch/background
 requests, with no page errors; these did not prevent the rendered states. The
 broader Odoo Print/PDF/action gaps from the report slices remain open, so this
 bounded feature does not claim Timesheets sign-off.
+
+## 2026-09-21 `TIMESHEET-PORTAL-DATE-FILTERS`
+
+- Source gate: `hr_timesheet/controllers/portal.py` defines All,
+  Last Year/Quarter/Month/Week, Today, This Week/Month/Quarter/Year filters
+  for authenticated `/my/timesheets`.
+- Core3 contract gate: `pages/portal-timesheets.yaml` and
+  `api/portal-timesheets.yaml` remain separate and join through
+  `page.id: timesheets-portal`; the API uses fixed date windows over durable
+  rows and retains `timesheets.read` actor/company scope.
+- Focused gate: `bun test
+  test/timesheets_portal_filtering.integration.test.ts
+  test/timesheets_portal.integration.test.ts --timeout 20000` passes 8 tests /
+  61 expectations. ESLint, diff-check, and audit are still required before
+  commit.
+- Persistence/security gate: date-window results survive a file-backed
+  restart; wrong actor/company and empty fixture return no rows; a stale draft
+  detail edit returns `409 STALE_RECORD`.
+- Odoo evidence: authenticated desktop/mobile `/my/timesheets` exposes all
+  source filter links and renders `filterby=last_month`; artifacts are under
+  `evidence/timesheets/2026-09-21/timesheet-portal-filtering/`.
+- Blockers: Core3 startup is blocked by the unowned Employees schema error
+  `components[2].title is not allowed`, so no Core3 browser evidence is
+  claimed. Odoo mobile visibly clips its dense table and records aborted
+  background requests. Broader Timesheets Print/PDF/action gaps remain open.

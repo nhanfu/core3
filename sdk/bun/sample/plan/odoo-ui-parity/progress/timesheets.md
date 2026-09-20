@@ -325,6 +325,27 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-PORTAL-DATE-FILTERS`
+
+Selected the smallest remaining portal behavior after the authenticated portal
+list: Odoo's full date-filter family. The page/API pair remains joined by
+`page.id: timesheets-portal`; the page adds All, month, quarter, and year
+choices, while the API applies fixed deterministic 2025/2026 windows to the
+existing durable employee/company-scoped rows.
+
+Focused verification passes 8 tests / 61 expectations across the new filtering
+test and existing portal suite. Restart persistence, permission, actor/company
+scope, empty state, stale draft edit rejection, source mapping, page/API
+separation, and no-moving-value checks pass.
+
+Odoo desktop/mobile captures are in
+`evidence/timesheets/2026-09-21/timesheet-portal-filtering/`; the authenticated
+reference exposes all source filter links and renders `filterby=last_month`.
+Core3 runtime evidence is blocked by the unrelated Employees discovery error
+`components[2].title is not allowed`; only the exact blocker is recorded.
+Odoo mobile also shows visible narrow-table clipping and aborted background
+asset/action requests. No parity or module sign-off is claimed.
+
 ## 2026-09-21 `TIMESHEET-MY-ANALYSIS-VIEWS`
 
 Selected the smallest remaining source-backed personal route gap: Odoo's

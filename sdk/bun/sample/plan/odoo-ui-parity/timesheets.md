@@ -1087,6 +1087,38 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## 2026-09-21 `TIMESHEET-PORTAL-DATE-FILTERS`
+
+The next smallest uncovered portal behavior is Odoo's authenticated date
+filter family. `hr_timesheet/controllers/portal.py` defines `all`, last
+year/quarter/month/week, today, and this week/month/quarter/year filters on
+`/my/timesheets`; the same controller also preserves actor-scoped search and
+group context. The prior Core3 portal slice only exposed Today, This Week, and
+Last Week.
+
+Core3 now adds the complete deterministic date choice set to the existing
+page/API pair (`page.id: timesheets-portal`) and translates each choice to a
+fixed 2025/2026 window against durable `timesheet_entries`. The existing
+company and current-employee scope, `timesheets.read` permission, empty state,
+read-only portal action, and detail mutation concurrency guard remain in
+force. No migration or duplicate persistence table was introduced.
+
+Focused coverage is
+`test/timesheets_portal_filtering.integration.test.ts` plus the existing portal
+suite: 8 tests / 61 expectations pass, including source comparison, every
+date-window read, actor/company/empty guards, file-backed restart, stale draft
+edit rejection, page/API separation, and moving-value checks.
+
+Authenticated Odoo desktop/mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-portal-filtering/`; Odoo exposes the
+full filter family and `/my/timesheets?filterby=last_month` renders the changed
+window at both viewports. Core3 capture is blocked before route startup by an
+unowned discovery error in Employees:
+`components[2].title is not allowed`. No Core3 screenshot or parity claim is
+fabricated. Odoo mobile's narrow table is visibly clipped, and its background
+asset/action requests are recorded as blockers; this slice makes no module
+sign-off claim.
+
 ## 2026-09-21 `TIMESHEET-MY-ANALYSIS-VIEWS`
 
 The next uncovered personal-action gap was Odoo's analysis view family. The
