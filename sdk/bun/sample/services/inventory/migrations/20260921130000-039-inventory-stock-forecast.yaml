@@ -1,0 +1,42 @@
+version: 0.0.39
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_stock_forecast_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE(product_id, id)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_stock_forecast_lines (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL, forecast_date DATE NOT NULL,
+        reference VARCHAR NOT NULL, event_type VARCHAR NOT NULL,
+        incoming_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        outgoing_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        balance_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL, source_location VARCHAR NOT NULL,
+        destination_location VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        UNIQUE(product_id, forecast_date, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_stock_forecast_lines_product_idx ON inventory_stock_forecast_lines(product_id, forecast_date, id);
+      INSERT INTO inventory_stock_forecast_lines(id, product_id, forecast_date, reference, event_type, incoming_qty, outgoing_qty, balance_qty, state, source_location, destination_location, company_name) VALUES
+        ('stock-forecast-cabinet-0001', 'stock-report-cabinet', DATE '2026-01-15', 'Opening stock', 'On Hand', 500, 0, 500, 'Done', 'WH/Stock', 'WH/Stock', 'Core3 Demo Company'),
+        ('stock-forecast-cabinet-0002', 'stock-report-cabinet', DATE '2026-01-16', 'SO/FORECAST/0001', 'Outgoing', 0, 230, 270, 'Scheduled', 'WH/Stock', 'Customers', 'Core3 Demo Company'),
+        ('stock-forecast-cabinet-0003', 'stock-report-cabinet', DATE '2026-01-18', 'PO/FORECAST/0001', 'Incoming', 120, 0, 390, 'Scheduled', 'Vendor Locations', 'WH/Stock', 'Core3 Demo Company')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_stock_forecast_runs(id, product_id, product_name, requested_by, company_name, line_count, opened_at)
+      VALUES ('stock-forecast-run-0001', 'stock-report-cabinet', '[E-COM07] Large Cabinet', 'Seeded Inventory', 'Core3 Demo Company', 3, TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_stock_forecast_runs WHERE product_id = 'stock-report-cabinet';
+      DELETE FROM inventory_stock_forecast_lines WHERE product_id = 'stock-report-cabinet';
+      DROP TABLE IF EXISTS inventory_stock_forecast_runs;
+      DROP TABLE IF EXISTS inventory_stock_forecast_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

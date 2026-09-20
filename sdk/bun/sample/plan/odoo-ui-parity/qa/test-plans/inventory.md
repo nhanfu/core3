@@ -136,6 +136,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-025 | Package location relocation | Non-empty package | Relocate records from/to locations, contained quantity, actor, reason, and row-version update in durable history | pass: `INV-PACKAGE-RELOCATE-001` focused suite |
 | INV-PERM-024 | Package relocation boundary | inventory.tracking vs inventory.write | Readers retain package detail access but cannot relocate; company, actor, empty, invalid destination, same-location, and stale requests do not create audit rows | pass: `INV-PACKAGE-RELOCATE-001` focused suite |
 | INV-UI-023 | Package relocation responsive form | 1440x900, 390x844 | Authenticated Core3 package list/detail exposes Relocate, destination/reason form, persisted history, and no horizontal overflow; paired Odoo action is source-only in this wave | pass Core3; Odoo source-only comparison |
+| INV-FUNC-026 | Forecasted Report lifecycle | Stock report product row | Forecasted Report context/lines/history are company-scoped, Refresh records a durable actor report run, and restart preserves it | pass: `INV-STOCK-FORECAST-001` focused suite |
+| INV-PERM-025 | Forecasted Report permission/context boundary | inventory.read, current company, actor, row version | read permission, authenticated actor, current company, non-empty forecast, and current row version are required; failures create no run | pass: `INV-STOCK-FORECAST-001` focused runtime test |
+| INV-UI-024 | Forecasted Report responsive action | 1440x900, 390x844 | Stock row Forecast opens the paired report, seeded opening/incoming/outgoing lines render, Refresh history persists, and no overflow occurs; paired Odoo action is recorded or blocked exactly | pass Core3; Odoo authenticated Stock route capture blocked |
 
 ## Exit criteria
 

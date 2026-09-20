@@ -49,6 +49,7 @@ components:
         actions:
           - { id: view_inventory_stock_history, label: History, icon: history, permission: inventory.read }
           - { id: view_inventory_stock_replenishment, label: Replenishment, icon: refresh, permission: inventory.read }
+          - { id: view_inventory_stock_forecast, label: Forecast, icon: trending_up, permission: inventory.read }
     page_size: 50
     row_key: id
     row_actions: buttons

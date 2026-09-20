@@ -808,3 +808,26 @@ open.
 - Open scope: full quant-chain/nested-package movement and Odoo bulk package
   list actions remain deferred. One benign desktop shell company request was
   aborted; the feature requests succeeded and mobile had no failed requests.
+## Forecasted Report QA — `INV-STOCK-FORECAST-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from source comparison. Stock menu/action is
+  `stock.menu_product_stock` / `stock.action_product_stock_view`; product
+  `View Availability` resolves the `stock_forecasted_product_product_action`
+  client action. Exact file/line references are in the evidence comparison.
+- Core3 contract: PASS. Stock list and Forecasted Report are page/API
+  separated by `page.id`; the migration is replay-safe and the API persists
+  report runs without changing stock quantities.
+- Focused test:
+  `bun test test/inventory_stock_forecast.integration.test.ts
+  test/inventory_stock_report.integration.test.ts
+  test/inventory_package_relocation.integration.test.ts` — PASS, 12 tests /
+  97 assertions. Coverage includes deterministic report history, permission
+  denial, current company, actor, empty, stale, and restart guards.
+- Audit/diff: `bun run audit` PASS (693 pages, 702 routes, 1300 datasources);
+  `git diff --check` PASS.
+- Browser evidence: PASS for authenticated Core3 desktop/mobile at 1440x900
+  and 390x844, with Forecasted Report lines/history, no page/request errors,
+  and no horizontal overflow. Odoo login was reachable, but the bounded
+  authenticated `/odoo/stock-report` capture did not render within the browser
+  window; exact blocker is in the feature evidence. No Odoo mutation or
+  parity sign-off is claimed.

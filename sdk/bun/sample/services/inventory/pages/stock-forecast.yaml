@@ -1,0 +1,46 @@
+title: Forecasted Report
+page: { id: stock-forecast, route: /stock-report/forecast, breadcrumb: [Supply Chain, Inventory, Reporting, Stock, Forecasted Report], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_stock_forecast_context
+    title: Forecasted Report
+    stats:
+      - { label: Product, field: product_name }
+      - { label: On Hand, field: on_hand }
+      - { label: Incoming, field: incoming_qty }
+      - { label: Outgoing, field: outgoing_qty }
+      - { label: Forecasted, field: forecasted }
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_forecast_lines
+    header_actions:
+      - { id: refresh_inventory_stock_forecast, label: Refresh Forecast, variant: primary, permission: inventory.read }
+      - { id: back_to_inventory_stock_report, label: Back to Stock, variant: secondary, permission: inventory.read }
+    columns:
+      - { field: forecast_date, label: Date, type: PrimaryEntityCell, sortable: true }
+      - { field: reference, label: Reference, sortable: true }
+      - { field: event_type, label: Type }
+      - { field: incoming_qty, label: Incoming, align: right }
+      - { field: outgoing_qty, label: Outgoing, align: right }
+      - { field: balance_qty, label: Forecasted, align: right }
+      - { field: state, label: Status }
+      - { field: source_location, label: From }
+      - { field: destination_location, label: To }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No forecast movements, description: Incoming and outgoing stock moves will appear here for the selected product. }
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_forecast_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: line_count, label: Lines, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No forecast runs, description: Refresh Forecast records the report request for this product. }

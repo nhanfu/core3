@@ -631,3 +631,17 @@ open.
 
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
+## `INV-STOCK-FORECAST-001` — Forecasted Report (2026-09-21)
+
+- Selected the next uncovered source-backed Stock behavior: Odoo's product
+  `View Availability` object action and `Forecasted Report` client action.
+- Added paired `stock-forecast` page/API YAML, Stock report row navigation,
+  durable deterministic forecast lines/report-run history, and refresh guards
+  for permission, company, actor, empty data, and row-version concurrency.
+- Focused verification: 12 tests / 97 assertions across forecast, Stock report,
+  and package relocation; `bun run audit` passed and `git diff --check` passed.
+- Authenticated Core3 desktop/mobile evidence is complete under
+  `evidence/inventory/2026-09-21/INV-STOCK-FORECAST-001/`. Odoo login was
+  reachable but the authenticated Stock report route did not complete within
+  the bounded browser capture; see `blockers.md`. Full module sign-off remains
+  open.

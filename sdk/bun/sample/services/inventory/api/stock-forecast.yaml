@@ -1,0 +1,59 @@
+page: { id: stock-forecast }
+datasources:
+  - id: inventory_stock_forecast_context
+    single: true
+    permission: inventory.read
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_STOCK_FORECAST_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_STOCK_FORECAST_CONTEXT_UNAVAILABLE, message: Forecast context is temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.default_code, r.product_name, r.unit_name, CAST(r.on_hand AS DOUBLE) AS on_hand, CAST(r.incoming_qty AS DOUBLE) AS incoming_qty, CAST(r.outgoing_qty AS DOUBLE) AS outgoing_qty, CAST(r.forecasted AS DOUBLE) AS forecasted, 'Core3 Demo Company' AS company_name, CAST(r.stock_date AS VARCHAR) AS stock_date FROM inventory_stock_report r WHERE r.id = :product_id AND r.active = TRUE AND COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') = 'Core3 Demo Company'"
+  - id: inventory_stock_forecast_lines
+    single: false
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_STOCK_FORECAST_LINES_UNAVAILABLE, message: Forecast movements are temporarily unavailable. }
+    query: "SELECT id, row_version, product_id, CAST(forecast_date AS VARCHAR) AS forecast_date, reference, event_type, CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty, CAST(balance_qty AS DOUBLE) AS balance_qty, state, source_location, destination_location, company_name FROM inventory_stock_forecast_lines WHERE product_id = :product_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY forecast_date, id"
+  - id: inventory_stock_forecast_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_STOCK_FORECAST_RUNS_UNAVAILABLE, message: Forecast report history is temporarily unavailable. } }
+    query: "SELECT id, row_version, product_id, product_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_stock_forecast_runs WHERE product_id = :product_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_stock_forecast
+    type: client
+    permission: inventory.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_stock_forecast_context;
+        if (!context?.id) throw new Error('Forecast context is unavailable');
+        await request('/api/actions/inventory.stock.forecast', {
+          method: 'POST',
+          body: { product_id: context.id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_stock_forecast
+    type: server
+    permission: inventory.read
+    action: inventory.stock.forecast
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_stock_forecast_context, inventory_stock_forecast_lines, inventory_stock_forecast_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'stock-forecast-' || CAST(:product_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_stock_forecast_runs WHERE product_id = :product_id) AS VARCHAR) AS id, r.id AS product_id, r.product_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COUNT(l.id) AS line_count FROM inventory_stock_report r LEFT JOIN inventory_stock_forecast_lines l ON l.product_id = r.id WHERE r.id = :product_id GROUP BY r.id, r.product_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_stock_report WHERE id = :product_id AND active = TRUE", status: 404, code: INVENTORY_STOCK_FORECAST_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_stock_report WHERE id = :product_id AND row_version = :expected_row_version", status: 409, code: INVENTORY_STOCK_FORECAST_STALE, message: The stock report row changed before the forecast was requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_stock_forecast_lines WHERE product_id = :product_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 404, code: INVENTORY_STOCK_FORECAST_EMPTY, message: This product has no forecast movements to report. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_STOCK_FORECAST_ACTOR_REQUIRED, message: An authenticated inventory actor is required to refresh the forecast. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_STOCK_FORECAST_COMPANY, message: The forecast company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_stock_forecast_runs(id, product_id, product_name, requested_by, company_name, line_count, opened_at, row_version) VALUES(:id, :product_id, :product_name, :requested_by, :company_name, :line_count, TIMESTAMP '2026-01-15 09:00:00', 1)"
+      result: { query: "SELECT id, product_id, product_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_stock_forecast_runs WHERE id = :id" }
+  - id: back_to_inventory_stock_report
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock-report

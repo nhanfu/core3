@@ -1405,3 +1405,32 @@ no-partial-state guards. Authenticated Core3 desktop/mobile evidence is under
 `evidence/inventory/2026-09-21/INV-PACKAGE-RELOCATE-001/`. Odoo live paired
 execution was not captured and no Odoo mutation or full Inventory sign-off is
 claimed.
+## Reporting > Forecasted Report — `INV-STOCK-FORECAST-001` (2026-09-21)
+
+This bounded slice covers Odoo's product Stock report `View Availability` /
+Forecasted Report client action after the existing Stock at Date report,
+Moves History, and Moves Analysis slices. Odoo binds
+`stock.menu_product_stock` / `stock.action_product_stock_view` in
+`addons/stock/views/product_views.xml:618-626,663-664`; product kanban/form
+use `action_product_forecast_report` at `product_views.xml:306-308,319-328`,
+which resolves `stock_forecasted_product_product_action` in
+`models/product.py:697-700` and `views/stock_forecasted.xml:4-14`.
+
+Core3 keeps `pages/stock-report.yaml` presentation-only and joins it to
+`api/stock-report.yaml` by `page.id`; its Forecast row action navigates to the
+new `stock-forecast` page. The paired page/API exposes company-scoped context,
+deterministic incoming/outgoing forecast lines, report history, and a
+permissioned Refresh Forecast action. Migration
+`20260921130000-039-inventory-stock-forecast.yaml` persists lines and runs.
+Refresh enforces `inventory.read`, current-company, authenticated actor,
+non-empty forecast, and product row-version guards, and survives restart.
+
+Focused verification passes 12 tests / 97 assertions across the forecast,
+stock-report regression, and package-relocation suites. Authenticated Core3
+desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-STOCK-FORECAST-001/`; both viewports show
+the product entry, Forecasted Report, seeded opening/incoming lines, refresh
+history, no request/page errors, and no horizontal overflow. Odoo login was
+reachable, but the bounded authenticated `/odoo/stock-report` capture did not
+complete; the exact blocker is recorded in the paired evidence files. No Odoo
+mutation or full Inventory sign-off is claimed.
