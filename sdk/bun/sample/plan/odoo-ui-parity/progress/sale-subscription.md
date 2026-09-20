@@ -2,9 +2,9 @@
 
 Module owner: sale-subscription module owner
 QA assignment: module-owner verification in the current five-worker wave
-Status: implementation candidate
-Verification trigger: authenticated route QA and Odoo addon availability
-Candidate commit: 762d127d
+Status: Core3 slice verified; Odoo parity blocked
+Verification trigger: authenticated actor and responsive route QA; Odoo addon availability remains a separate gate
+Candidate commit: current focused QA increment (hash recorded in git handoff)
 
 ## Current state
 
@@ -38,8 +38,32 @@ Focused implementation evidence for `762d127d`:
   next date, posting persisted the invoice state, and all action permissions
   were declared.
 
+## Authenticated actor and responsive evidence (2026-09-20)
+
+The focused actor test now exercises the discovered Sale Subscription YAML API
+with three authenticated permission sets. A read-capable actor can load the
+Subscriptions page; a reader cannot activate a subscription; a writer cannot
+create a plan; a manager can create a plan; and a writer can activate the
+deterministic quotation, advancing its row version and creating one activation
+invoice. The focused result was `1 pass`, `9 expect() calls`, `0 fail`.
+
+The live Core3 gateway was also checked with authenticated local QA accounts:
+the admin page request returned `200`, the dispatcher direct lifecycle request
+returned `403` for `subscriptions.write`, the dispatcher direct plan request
+returned `403` for `subscriptions.manage`, and the admin direct plan request
+returned `200`. Credentials and bearer tokens were not recorded.
+
+The installed Playwright fallback with Google Chrome covered the canonical
+route at exactly `1440x900` and `390x844`. Both routes ended at
+`/sale-subscription/subscriptions`, rendered the subscription tabs and seeded
+rows/cards, had no console/page/request failures, and had no horizontal
+overflow. Captures are outside Git at
+`/tmp/core3-odoo-parity/sale-subscription-20260920/desktop.png` and
+`mobile.png`.
+
 ## Next bounded task
 
-Run authenticated Core3 desktop/mobile route checks and keep the
-reference-dependent menu/view parity items explicitly blocked until the addon
-is installed in the live database.
+Keep the reference-dependent menu/action/view and paired visual parity items
+explicitly blocked until the `sale_subscription` addon is installed in the
+live database with its source, security, views, data, and assets. Do not turn
+the Core3 route evidence into an Odoo parity claim.
