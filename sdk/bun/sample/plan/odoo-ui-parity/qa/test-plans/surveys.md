@@ -255,3 +255,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ANSWER-VALIDATION-001/`.
+
+## 2026-09-21 public response deadline additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-025 | public response validity | Expired participant deadline | HTTP 410 with stable code and unchanged response | pass |
+| SURVEYS-WF-022 | restart/idempotency | Active deadline restart; expired retry/navigation/progress/submit | Deadline survives reopen; no expired mutation or duplicate retry | pass |
+| SURVEYS-PERM-024 | public token/deadline guard | Public response actions | `surveys.public`, token, state, and deadline gates run before mutation | pass |
+| SURVEYS-UI-023 | authenticated responsive/reference | Expired public response desktop/mobile | Stable rendered error/no overflow; runtime and Odoo blockers recorded precisely | blocked |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DEADLINE-001/`.

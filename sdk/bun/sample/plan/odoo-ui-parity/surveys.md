@@ -1404,3 +1404,27 @@ are recorded under
 The installed Odoo reference still lacks a stable active answer-token fixture
 for a paired mutation probe, so no Odoo sign-off is claimed. Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded slice: Public response deadline (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-DEADLINE-001`.
+
+Odoo source comparison: `addons/survey/controllers/main.py` checks the answer
+deadline in `_check_validity` before allowing public start, navigation, submit,
+or retry and returns the `answer_deadline` error state. Core3 adds durable
+`survey_responses.deadline` storage in migration `0.0.23`, exposes the deadline
+through public response operations, and keeps the token-scoped public API
+actions permissioned as `surveys.public`. Expired responses return HTTP 410
+with `SURVEY_PUBLIC_RESPONSE_EXPIRED` before any answer, cursor, response-count,
+or retry-row mutation; active responses remain editable and preserve the
+deadline through file-backed DuckDB reopen.
+
+The dynamic public page remains the Surveys-owned `PublicSurvey` binding while
+the mutation contracts remain in the separate `api/surveys.yaml` fragment.
+Focused coverage and precise evidence are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DEADLINE-001/`.
+
+The authenticated desktop/mobile browser probe was blocked before readiness by
+the shared source runtime's exact discovery error
+`PageSchemaError: actions[4].fields is not allowed`; no Core3 visual or Odoo
+deadline sign-off is claimed. Surveys remains **qa-in-progress / conditional**.

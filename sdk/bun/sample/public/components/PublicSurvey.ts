@@ -101,7 +101,10 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   try {
     const answerQuery = initialAnswerToken ? `?answer_token=${encodeURIComponent(initialAnswerToken)}` : '';
     const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}${answerQuery}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(response.status === 404 ? 'This survey is no longer available.' : `Survey could not be loaded (${response.status}).`);
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({})) as { error?: string };
+      throw new Error(errorPayload.error || (response.status === 404 ? 'This survey is no longer available.' : `Survey could not be loaded (${response.status}).`));
+    }
     payload = await response.json() as SurveyPayload;
   } catch (error) {
     outlet.innerHTML = `<div class="core3-public-survey"><div class="core3-public-survey__card"><div class="core3-public-survey__body"><div class="core3-public-survey__error">${escapeHtml(error instanceof Error ? error.message : error)}</div></div></div></div>`;

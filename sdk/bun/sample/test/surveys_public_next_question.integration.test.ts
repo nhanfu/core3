@@ -42,7 +42,7 @@ describe('Surveys public next-question navigation', () => {
     expect(api.page).toEqual({ id: 'surveys' });
     expect(next).toMatchObject({ type: 'server_form', permission: 'surveys.public', action: 'surveys.public.next_question', handler: 'yaml_mutation' });
     expect(next.mutation).toMatchObject({ operation: 'update', table: 'survey_responses' });
-    expect(next.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_NEXT_STALE', 'SURVEY_PUBLIC_NEXT_INVALID']);
+    expect(next.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_NEXT_STALE', 'SURVEY_PUBLIC_RESPONSE_EXPIRED', 'SURVEY_PUBLIC_NEXT_INVALID']);
     expect(yaml('operations.yaml').operations['survey.public.next_question'].query).toContain('next_question.sequence');
     expect(renderer).toContain('current_question_id');
     expect(renderer).toContain('/next_question');

@@ -1,0 +1,17 @@
+version: 0.0.23
+description: Durable participant deadlines for token-scoped public survey responses
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS deadline TIMESTAMP;
+      INSERT INTO survey_responses(id, survey_id, survey_name, answer_data, access_token, current_question_id, state, deadline)
+      VALUES ('expired-public-deadline-response-2026', 'survey-demo-feedback', 'Feedback Form', '{"question-feedback-rating":"5"}', 'expired-deadline-fixture-token-2026', 'question-feedback-rating', 'In Progress', TIMESTAMP '2026-01-15 08:00:00')
+      ON CONFLICT (id) DO UPDATE SET deadline = excluded.deadline, state = 'In Progress', current_question_id = excluded.current_question_id;
+    down: |
+      DELETE FROM survey_responses WHERE id = 'expired-public-deadline-response-2026';
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS deadline;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

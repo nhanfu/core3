@@ -659,3 +659,24 @@ Odoo comparison remains blocked and Surveys remains **qa-in-progress / condition
 
 Disposition: Core3 question validation passes; Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-DEADLINE-001` — 2026-09-21
+
+- Odoo's `survey/controllers/main.py:_check_validity` rejects a public answer
+  whose deadline has passed; Core3 persists `survey_responses.deadline` and
+  returns `SURVEY_PUBLIC_RESPONSE_EXPIRED` before public read/start,
+  progress, navigation, submit, or retry mutation.
+- Focused verification: **3 passed, 0 failed, 25 assertions** in
+  `test/surveys_public_deadline.integration.test.ts`, covering YAML
+  permission/410 guards, expired no-mutation behavior, active progress,
+  file-backed restart, and replay.
+- Browser status: source-served Core3 stopped during discovery with the exact
+  `PageSchemaError: Invalid page definition: actions[4].fields is not allowed`.
+  No visual result is claimed; the shared boundary was not repaired in another
+  owner's files.
+- Odoo status: no deadline comparison was run after the Core3 startup blocker;
+  no Odoo sign-off is claimed.
+
+Disposition: Core3 deadline workflow and guard tests pass; authenticated
+desktop/mobile and paired Odoo evidence are blocked. Surveys remains
+**qa-in-progress / conditional**.

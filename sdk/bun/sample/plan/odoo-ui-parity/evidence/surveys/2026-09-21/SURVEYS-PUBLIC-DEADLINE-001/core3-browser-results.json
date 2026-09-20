@@ -1,0 +1,12 @@
+{
+  "featureId": "SURVEYS-PUBLIC-DEADLINE-001",
+  "status": "blocked-before-readiness",
+  "requestedViewports": [
+    { "name": "desktop", "width": 1440, "height": 900 },
+    { "name": "mobile", "width": 390, "height": 844 }
+  ],
+  "authenticatedActor": "admin@tms.local",
+  "startupError": "PageSchemaError: Invalid page definition: actions[4].fields is not allowed",
+  "screenshots": [],
+  "claim": "No authenticated Core3 visual sign-off claimed."
+}

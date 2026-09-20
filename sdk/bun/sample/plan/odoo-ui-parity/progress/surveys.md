@@ -72,6 +72,24 @@ mutation parity is claimed. Evidence is under
 Status remains **qa-in-progress / conditional**; full repository regression was
 not run.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-DEADLINE-001`
+
+Selected the smallest remaining public expired-link behavior after answer
+validation: Odoo's `answer_deadline` validity guard. Core3 now stores a
+response deadline durably, projects it through public operations, adds HTTP-410
+YAML guards for progress/submit/next/previous, and applies the same token guard
+before public read/start/retry. The deterministic expired fixture is
+`expired-public-answer-token-2026`; active responses remain editable and retain
+their deadline after file-backed restart.
+
+Focused verification is **3 passed / 25 assertions** in
+`test/surveys_public_deadline.integration.test.ts`. The authenticated Core3
+desktop/mobile probe was blocked before serving by the shared runtime's exact
+discovery error `PageSchemaError: actions[4].fields is not allowed`; no
+screenshot or Odoo deadline sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DEADLINE-001/`.
+Status remains **qa-in-progress / conditional**.
+
 ## 2026-09-20 — `SURVEYS-LIVE-SESSION-ANSWER-001`
 
 Selected the smallest remaining source-backed behavior after Live Session Join:

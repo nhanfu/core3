@@ -82,6 +82,7 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
       steps:
         - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id" }
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
@@ -105,6 +106,7 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
       result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
@@ -122,6 +124,7 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress' AND current_question_id = :expected_question_id", status: 409, code: SURVEY_PUBLIC_NEXT_STALE, message: This survey question changed before navigation. Reload before continuing. }
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT next_question.id FROM survey_questions current_question JOIN survey_questions next_question ON next_question.survey_id = current_question.survey_id AND (next_question.sequence > current_question.sequence OR (next_question.sequence = current_question.sequence AND next_question.id > current_question.id)) WHERE current_question.id = :expected_question_id AND next_question.id = :current_question_id AND current_question.survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_NEXT_INVALID, message: The requested next question is not part of this survey. }
       result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.current_question_id, r.navigation_key, q.question_text, q.question_type, q.sequence AS current_question_sequence FROM survey_responses r JOIN survey_questions q ON q.id = r.current_question_id WHERE r.id = :id" }
     fields:
@@ -142,6 +145,7 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress' AND current_question_id = :expected_question_id", status: 409, code: SURVEY_PUBLIC_PREVIOUS_STALE, message: This survey question changed before going back. Reload before continuing. }
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT previous_question.id FROM survey_questions current_question JOIN survey_questions previous_question ON previous_question.survey_id = current_question.survey_id AND (previous_question.sequence < current_question.sequence OR (previous_question.sequence = current_question.sequence AND previous_question.id < current_question.id)) WHERE current_question.id = :expected_question_id AND previous_question.id = :current_question_id AND current_question.survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_PREVIOUS_INVALID, message: The requested previous question is not part of this survey. }
       result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.current_question_id, r.navigation_key, q.question_text, q.question_type, q.sequence AS current_question_sequence FROM survey_responses r JOIN survey_questions q ON q.id = r.current_question_id WHERE r.id = :id" }
     fields:

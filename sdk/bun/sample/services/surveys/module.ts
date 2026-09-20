@@ -78,6 +78,7 @@ export default class SurveysModule implements ModuleLifecycle {
       if (answerToken && !this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
       const answer = answerToken ? await readResponse(answerToken) : undefined;
       if (answerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (answer && this.publicResponseExpired(answer)) return this.expiredResponse();
       return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
     if (request.method !== 'POST' || !operation) return this.json({ error: 'Method not allowed' }, 405);
@@ -89,6 +90,7 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!this.isToken(existingToken)) return this.json({ error: 'A valid answer token is required' }, 400);
         const answer = await readResponse(existingToken);
         if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+        if (this.publicResponseExpired(answer)) return this.expiredResponse();
         if (answer.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
         if (answer.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
         return this.json({ survey: detail, answer });
@@ -99,7 +101,7 @@ export default class SurveysModule implements ModuleLifecycle {
           idempotency_key: idempotencyKey,
           survey_id: detail.id,
         }))?.response?.[0];
-        if (existing) return this.json({ survey: detail, answer: existing });
+        if (existing) return this.publicResponseExpired(existing) ? this.expiredResponse() : this.json({ survey: detail, answer: existing });
       }
       let result;
       try {
@@ -134,6 +136,7 @@ export default class SurveysModule implements ModuleLifecycle {
       if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
       const response = await readResponse(answerToken);
       if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (this.publicResponseExpired(response)) return this.expiredResponse();
       if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for navigation', code: 'SURVEY_PUBLIC_NEXT_NOT_IN_PROGRESS' }, 409);
       const expectedQuestionId = String(body.expected_question_id || response.current_question_id || '');
       if (!expectedQuestionId) return this.json({ error: 'The current survey question is unavailable', code: 'SURVEY_PUBLIC_NEXT_STALE' }, 409);
@@ -172,6 +175,7 @@ export default class SurveysModule implements ModuleLifecycle {
       if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
       const response = await readResponse(answerToken);
       if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (this.publicResponseExpired(response)) return this.expiredResponse();
       if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for navigation', code: 'SURVEY_PUBLIC_PREVIOUS_NOT_IN_PROGRESS' }, 409);
       const expectedQuestionId = String(body.expected_question_id || response.current_question_id || '');
       if (!expectedQuestionId) return this.json({ error: 'The current survey question is unavailable', code: 'SURVEY_PUBLIC_PREVIOUS_STALE' }, 409);
@@ -213,6 +217,7 @@ export default class SurveysModule implements ModuleLifecycle {
         survey_id: detail.id,
       }))?.response?.[0];
       if (!source) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (this.publicResponseExpired(source)) return this.expiredResponse();
       if (source.state !== 'Submitted') return this.json({ error: 'Only a submitted survey response can be retried', code: 'SURVEY_PUBLIC_RETRY_SOURCE_STATE' }, 409);
       const idempotencyKey = this.idempotencyKey(body.idempotency_key);
       if (idempotencyKey) {
@@ -272,6 +277,7 @@ export default class SurveysModule implements ModuleLifecycle {
     if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
     const response = await readResponse(answerToken);
     if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
+    if (this.publicResponseExpired(response)) return this.expiredResponse();
     const idempotencyKey = this.idempotencyKey(body.idempotency_key);
     if (response.state === 'Submitted') {
       if (idempotencyKey && response.idempotency_key === idempotencyKey) {
@@ -382,6 +388,16 @@ export default class SurveysModule implements ModuleLifecycle {
       return this.json({ error: String(error?.message || 'This survey response is no longer available for editing'), ...(error?.code ? { code: error.code } : {}) }, status);
     }
     throw error;
+  }
+
+  private expiredResponse(): Response {
+    return this.json({ error: 'This survey response has expired', code: 'SURVEY_PUBLIC_RESPONSE_EXPIRED' }, 410);
+  }
+
+  private publicResponseExpired(response: any): boolean {
+    if (!response?.deadline) return false;
+    const deadline = new Date(String(response.deadline).replace(' ', 'T') + (String(response.deadline).includes('Z') ? '' : 'Z'));
+    return Number.isFinite(deadline.getTime()) && deadline.getTime() <= Date.now();
   }
 
   private invalidPublicAnswers(questions: any[], answers: Record<string, unknown>): string[] {
