@@ -4,9 +4,30 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `f2f65926df28e689bf1252b56b32ed3b93bd0e5a` (Checkout Payment Token Selection).
+Latest committed bounded slice before this wave: `fc0e486d58a668d7829fbd02fedfbb8f19677a59` (Product Alternatives).
 
-## Current bounded task — `ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`
+## Current bounded task — `ECOM-CATALOG-PRODUCT-ACCESSORIES-001`
+
+The next uncovered Website Sale catalog/checkout behavior is accessory
+products shown while reviewing the cart before payment. Odoo supplies a
+company-aware `accessory_product_ids` relation, `_get_website_accessory_product`
+filtering, and Sale Order `_cart_accessories()`; Core3 had no durable
+accessory relation or cart action.
+
+Migrations 068/069 add deterministic Mug → Lamp and Chair → unpublished Setup
+assignments. Product Detail API/page contracts expose permissioned create and
+optimistic remove; Cart API/page contracts filter active published same-company
+targets not already in the owned open cart and add them with a deterministic,
+repeat-safe cart line and cart version update.
+
+Focused verification is `bun test
+./test/ecommerce_product_accessories.integration.test.ts --timeout 20000` —
+**3 passed, 27 assertions, 0 failures**. Core3 desktop/mobile capture is
+blocked by unavailable ports 3000/4312/4313; Odoo `/shop` returns exact HTTP
+404 on ports 8069/8073. Browser actor coverage, paired Odoo rendering,
+provider/external checkout behavior, and module sign-off remain open.
+
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`
 
 The smallest remaining uncovered catalog behavior is Odoo Website Sale's
 alternative-product recommendation relation and product-page section. Core3

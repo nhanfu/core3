@@ -69,3 +69,23 @@ components:
         width: 120
         actions:
           - { id: remove_ecommerce_product_alternative, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_accessories
+    create_action: create_ecommerce_product_accessory
+    create_label: Add Accessory
+    page_size: 16
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No accessory products, description: Suggest products before payment when this product is in the cart. }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: sequence, label: Sequence }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 120
+        actions:
+          - { id: remove_ecommerce_product_accessory, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }

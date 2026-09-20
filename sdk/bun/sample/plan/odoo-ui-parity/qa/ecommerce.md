@@ -1,5 +1,27 @@
 # ecommerce QA ledger
 
+## Product Accessories (`ECOM-CATALOG-PRODUCT-ACCESSORIES-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product_template.py` supplies
+  `accessory_product_ids` and `_get_website_accessory_product()`;
+  `sale_order.py` computes `_cart_accessories()` from cart products, and
+  `product_views.xml` exposes “Suggested accessories in the eCommerce cart”.
+- Core3 lifecycle: pass for this bounded contract. Migrations 068/069 add
+  durable ordered assignments and deterministic Mug → Lamp / Chair → Setup
+  fixtures. Product Detail assignment/removal and Cart recommendation/add
+  actions are separate YAML API/page contracts, with publication, company,
+  duplicate, ownership, idempotency, and optimistic stale guards.
+- Focused verification: `bun test
+  ./test/ecommerce_product_accessories.integration.test.ts --timeout 20000` —
+  **3 passed, 27 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Browser actor coverage, paired Odoo rendering, and external checkout gates
+  remain open. Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-accessories-001/`.
+
 ## Product Alternatives (`ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product_template.py` supplies

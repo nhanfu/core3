@@ -15,7 +15,7 @@ describe('eCommerce Cart parity', () => {
     expect(page.page).toMatchObject({ id: 'ecommerce-cart', route: '/ecommerce/cart' });
     expect(api.page).toEqual({ id: 'ecommerce-cart' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_cart' });
-    expect(api.datasources.map((source: any) => source.id)).toEqual(['ecommerce_cart', 'ecommerce_cart_lines', 'ecommerce_cart_pricelists']);
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['ecommerce_cart', 'ecommerce_cart_lines', 'ecommerce_cart_accessories', 'ecommerce_cart_pricelists']);
     expect(page.components[0].header_actions).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'apply_ecommerce_cart_pricelist' })]));
   });
 

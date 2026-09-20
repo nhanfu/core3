@@ -21,3 +21,15 @@ components:
             columns: [{ field: product_name, label: Product, type: PrimaryEntityCell }, { field: unit_price, label: Unit Price }, { field: quantity, label: Quantity }, { field: line_total, label: Total }]
             row_actions: menu
             empty_state: { title: Your cart is empty, description: Add products to begin checkout. }
+        - id: cart_accessories
+          label: Suggested Accessories
+          component:
+            type: ListView
+            source: ecommerce_cart_accessories
+            page_size: 16
+            row_key: id
+            row_actions: menu
+            empty_state: { title: No suggested accessories, description: Suggested accessories appear before payment when available. }
+            columns: [{ field: name, label: Product, type: PrimaryEntityCell }, { field: sales_price, label: Price }, { field: sequence, label: Sequence }]
+            actions:
+              - { id: add_ecommerce_cart_accessory, label: Add to Cart, permission: ecommerce.write, variant: primary }

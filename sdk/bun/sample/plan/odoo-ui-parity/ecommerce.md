@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product alternatives slice; module sign-off remains open)
+Status: qa-in-progress (bounded product accessories slice; module sign-off remains open)
+
+## Bounded feature — Product Accessories (`ECOM-CATALOG-PRODUCT-ACCESSORIES-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines the
+company-aware `accessory_product_ids` relation and
+`_get_website_accessory_product()`. `website_sale/models/sale_order.py`
+computes `_cart_accessories()` from products already in the cart, while
+`product_views.xml` labels the editor field “Suggested accessories in the eCommerce cart”.
+Website Sale shows these products for cross-sell before payment.
+
+Core3 comparison: the catalog had alternatives but no accessory relation or
+cart recommendation workflow. Migrations 068/069 add durable ordered
+source/accessory assignments with deterministic Mug → Lamp and Chair →
+unpublished Setup fixtures. Product Detail and Cart remain separate page/API
+contracts joined by `page.id`: catalog editors get permissioned assignment and
+stale removal, while Cart exposes only active published same-company
+accessories not already present and adds them through an idempotent mutation.
+
+Focused tests cover source tracing, page/API separation, deterministic
+fixtures, publication/company/duplicate guards, idempotent repeated cart add,
+stale removal, migration replay, and DuckDB restart persistence in
+`test/ecommerce_product_accessories.integration.test.ts`. Core3 authenticated
+desktop/mobile capture is blocked by unavailable runtime ports; supplied Odoo
+references return exact HTTP 404 for `/shop`. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-accessories-001/`. This
+bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Alternatives (`ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`)
 
