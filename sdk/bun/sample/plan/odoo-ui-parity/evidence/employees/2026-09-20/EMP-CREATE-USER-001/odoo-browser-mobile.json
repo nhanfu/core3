@@ -1,0 +1,211 @@
+{
+  "feature_id": "EMP-CREATE-USER-001",
+  "surface": "Odoo",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "authenticated": true,
+  "url": "http://127.0.0.1:8069/odoo/employees/6",
+  "title": "Abigail Peterson",
+  "employee": "Abigail Peterson",
+  "create_user_visible": true,
+  "modal_open": true,
+  "fields": [
+    {
+      "name": "",
+      "type": "file",
+      "value": "",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Abigail Peterson",
+      "placeholder": "Employee's Name"
+    },
+    {
+      "name": "",
+      "type": "email",
+      "value": "abigail.peterson39@example.com",
+      "placeholder": "e.g. johndoe@example.com"
+    },
+    {
+      "name": "",
+      "type": "tel",
+      "value": "(555)-233-3393",
+      "placeholder": "Work Phone"
+    },
+    {
+      "name": "",
+      "type": "tel",
+      "value": "",
+      "placeholder": "Work Mobile"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "e.g. Founder, Motorized, Building B, ..."
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "My Company (San Francisco)",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Management / Professional Services",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Consultant",
+      "placeholder": "e.g. Sales Manager"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Consultant",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Jeffrey Kelly",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "My Company (San Francisco)",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Building 1, Second Floor",
+      "placeholder": "e.g. Building 2, Remote, etc."
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "",
+      "placeholder": "Unspecified"
+    },
+    {
+      "name": "",
+      "type": "file",
+      "value": "",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "file",
+      "value": "",
+      "placeholder": ""
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "Abigail Peterson",
+      "placeholder": "e.g. John Doe"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "abigail.peterson39@example.com",
+      "placeholder": "e.g. email@core3.local"
+    },
+    {
+      "name": "",
+      "type": "tel",
+      "value": "(555)-233-3393",
+      "placeholder": "Phone"
+    },
+    {
+      "name": "",
+      "type": "text",
+      "value": "My Company (San Francisco)",
+      "placeholder": "Company"
+    }
+  ],
+  "body_excerpt": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+  "modal_excerpt": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created\n\nCreate User\nAdd Photo\nSave\nCancel",
+  "errors": [
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/ai/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/sign/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_payroll/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_referral/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/planning/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_appraisal/static/description/icon.png"
+    },
+    {
+      "kind": "http",
+      "status": 404,
+      "url": "http://127.0.0.1:8069/documents/static/description/icon.png"
+    }
+  ]
+}

@@ -1118,6 +1118,17 @@ invalid-login guards, rollback, migration replay, and file-backed restart.
 Authenticated Core3/Odoo desktop and mobile captures remain a required QA gate
 and must be recorded in the module evidence ledger before full-module sign-off.
 
+The bounded QA capture is under
+`evidence/employees/2026-09-20/EMP-CREATE-USER-001/`. Core3 authenticated
+desktop/mobile checks run cleanly, but the seeded employee is outside the
+authenticated `Core3 Demo Company` scope (`employee-demo-001` is seeded for
+`Core3 Vietnam`), so no employee form or Create User modal is populated. The
+page guard was tightened to require an employee id before rendering the action;
+the empty company-scoped detail now correctly hides it. Odoo authenticated
+desktop/mobile opens Abigail Peterson's Create User modal with Name, Login, and
+Phone defaults. Seven unrelated app-icon 404s are recorded as reference-shell
+noise. This remains bounded conditional evidence, not module sign-off.
+
 ## EMP-TEMPLATE-LOAD-001: employee Payroll Load a Template (2026-09-20)
 
 Odoo's `hr_version_wizard_action` opens `hr.version.wizard` from the employee

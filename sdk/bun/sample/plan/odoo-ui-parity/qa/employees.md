@@ -629,6 +629,20 @@ run per the bounded checkpoint.
 Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`. No aggregate
 Employees sign-off is claimed; full-repository regression was not run.
 
+## EMP-CREATE-USER-001 execution (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-021 | ERP-manager employee-form Create User modal | Odoo modal opens with deterministic Name, Login, and Phone defaults; Core3 contract creates an invited disabled user and links it atomically | pass; 4 focused tests / 30 assertions |
+| EMP-PERM-021 | `auth.users.manage`, actor, current company, login uniqueness, existing link, and stale employee | Invalid or out-of-scope requests reject without partial user or employee mutation | pass |
+| EMP-DATA-021 | Migration replay and file-backed restart | Invited auth user and employee link survive restart | pass |
+| EMP-UI-017 | Authenticated Core3/Odoo desktop and mobile | Odoo modal pass at 1440x900 and 390x844; Core3 exact fixture-company blocker recorded, and missing-record action visibility is fixed | conditional |
+
+Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`. Core3
+fixture `Core3 Vietnam` does not match the authenticated `Core3 Demo Company`;
+Odoo has seven unrelated app-icon 404s. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

@@ -226,3 +226,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.
 | EMP-UI-016 | visual/responsive | Authenticated Core3/Odoo Resume tab | Desktop/mobile comparison | conditional; exact blockers recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.
+
+## EMP-CREATE-USER-001 execution (2026-09-20)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-021 | ERP-manager Create User workflow | Contract, invited-user persistence, employee link, and Odoo modal defaults | pass; 4 focused tests / 30 assertions |
+| EMP-PERM-021 | Permission/company/concurrency boundary | `auth.users.manage`, current-company, duplicate login/link, missing, invalid, and stale guards reject atomically | pass |
+| EMP-DATA-021 | Restart durability | Migration replay and file-backed restart retain the disabled invited user and employee link | pass |
+| EMP-UI-017 | Authenticated responsive comparison | Odoo desktop/mobile modal pass; Core3 desktop/mobile fixture-company boundary is explicit, with missing-record Create User hidden | conditional |
+
+Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`.

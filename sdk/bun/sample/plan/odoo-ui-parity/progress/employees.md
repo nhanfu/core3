@@ -349,3 +349,23 @@ Departure Reasons detail/action state was not reached. No full sign-off.
 
 Verification trigger: feature-complete with authenticated Core3 fixture-scope blocker
 Candidate commit: current working tree
+
+## EMP-CREATE-USER-001 (2026-09-20)
+
+- Completed the smallest unfinished source-backed employee action: Odoo's
+  ERP-manager-only `hr.employee.action_create_user` form action. The durable
+  YAML/API/migration workflow was already present in HEAD; this wave repaired
+  the page visibility boundary so an empty or missing company-scoped employee
+  cannot expose Create User, and retained the focused contract assertion.
+- Focused verification: **4 tests / 30 assertions**; migration replay and
+  file-backed restart pass. Scoped ESLint, audit, and diff-check are recorded
+  for the final candidate commit.
+- Authenticated Core3 desktop/mobile evidence has zero browser/request errors,
+  but `employee-demo-001` is seeded for `Core3 Vietnam` while the Admin session
+  is `Core3 Demo Company`; the employee and Create User modal are therefore
+  correctly absent. Odoo authenticated desktop/mobile opens Abigail Peterson's
+  modal and shows Name, Login, and Phone defaults. Seven Odoo app-icon 404s are
+  unrelated shell noise.
+- Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`.
+  This is conditional feature evidence; no aggregate Employees sign-off is
+  claimed.

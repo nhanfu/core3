@@ -31,7 +31,7 @@ describe('Employees Create User parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(page.components[0].header_actions).toContainEqual({
-      id: 'create_employee_user', label: 'Create User', variant: 'primary', permission: 'auth.users.manage', show_if: '!state.employee_detail.auth_user_id',
+      id: 'create_employee_user', label: 'Create User', variant: 'primary', permission: 'auth.users.manage', show_if: 'state.employee_detail.id && !state.employee_detail.auth_user_id',
     });
     expect(api.page.id).toBe(page.page.id);
     expect(api.datasources.find((source: any) => source.id === 'employee_user_wizard')).toMatchObject({ single: true, permission: 'employees.read' });

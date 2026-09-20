@@ -1,0 +1,104 @@
+{
+  "feature_id": "EMP-CREATE-USER-001",
+  "surface": "Core3",
+  "captures": [
+    {
+      "feature_id": "EMP-CREATE-USER-001",
+      "surface": "Core3",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "authenticated": true,
+      "url": "http://127.0.0.1:3310/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "current_company": {
+        "id": "company-demo",
+        "name": "Core3 Demo Company",
+        "short_name": "Core3",
+        "address": "100 Main Street, San Francisco",
+        "currency_code": "USD"
+      },
+      "available_companies": {
+        "companies": [
+          {
+            "id": "company-demo",
+            "name": "Core3 Demo Company",
+            "short_name": "Core3",
+            "address": "100 Main Street, San Francisco",
+            "currency_code": "USD",
+            "is_default": true
+          },
+          {
+            "id": "company-vietnam",
+            "name": "Core3 Vietnam Branch",
+            "short_name": "Core3 VN",
+            "address": "1 Nguyen Hue, Ho Chi Minh City",
+            "currency_code": "VND",
+            "is_default": false
+          }
+        ],
+        "current_company_id": "company-demo"
+      },
+      "storage_keys": [
+        "core3_token",
+        "core3_theme"
+      ],
+      "employee_id": "employee-demo-001",
+      "employee_visible": false,
+      "create_user_visible": false,
+      "create_user_count": 0,
+      "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n—\n0\nTimesheets\n0\nHistory\nEmployee Name\n—\nWork Email\n—\nWork Phone\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Location\n—\nWork Address\n—\nDeparture Reason\n—\nDeparture Description\n—\nDeparture Date\n—\nNote\n—\nStart Date\n—\nContract Start\n—\nContract End\n—\nEmployment Type\n—\nPhone\n—\nPrivate Email\n—\nBirthday\n—\nWage\n—\nWorking Schedule\n—\nTimezone\n—\nBadge ID\n—\nSkills\n—\nResume\n—\nPrivate Address\n—\nEmergency Contact\n—\nEmergency Phone\n—\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nCertificate Level\n—\nField of Study\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nWork\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—",
+      "errors": []
+    },
+    {
+      "feature_id": "EMP-CREATE-USER-001",
+      "surface": "Core3",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": true,
+      "url": "http://127.0.0.1:3310/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "current_company": {
+        "id": "company-demo",
+        "name": "Core3 Demo Company",
+        "short_name": "Core3",
+        "address": "100 Main Street, San Francisco",
+        "currency_code": "USD"
+      },
+      "available_companies": {
+        "companies": [
+          {
+            "id": "company-demo",
+            "name": "Core3 Demo Company",
+            "short_name": "Core3",
+            "address": "100 Main Street, San Francisco",
+            "currency_code": "USD",
+            "is_default": true
+          },
+          {
+            "id": "company-vietnam",
+            "name": "Core3 Vietnam Branch",
+            "short_name": "Core3 VN",
+            "address": "1 Nguyen Hue, Ho Chi Minh City",
+            "currency_code": "VND",
+            "is_default": false
+          }
+        ],
+        "current_company_id": "company-demo"
+      },
+      "storage_keys": [
+        "core3_token",
+        "core3_theme"
+      ],
+      "employee_id": "employee-demo-001",
+      "employee_visible": false,
+      "create_user_visible": false,
+      "create_user_count": 0,
+      "body_excerpt": "AU\nEdit\nNew\nActive\nOn leave\nDeparted\n—\n0\nTimesheets\n0\nHistory\nEmployee Name\n—\nWork Email\n—\nWork Phone\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Location\n—\nWork Address\n—\nDeparture Reason\n—\nDeparture Description\n—\nDeparture Date\n—\nNote\n—\nStart Date\n—\nContract Start\n—\nContract End\n—\nEmployment Type\n—\nPhone\n—\nPrivate Email\n—\nBirthday\n—\nWage\n—\nWorking Schedule\n—\nTimezone\n—\nBadge ID\n—\nSkills\n—\nResume\n—\nPrivate Address\n—\nEmergency Contact\n—\nEmergency Phone\n—\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nCertificate Level\n—\nField of Study\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nWork\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—",
+      "errors": []
+    }
+  ]
+}
