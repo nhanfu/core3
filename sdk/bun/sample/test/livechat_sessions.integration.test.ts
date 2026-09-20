@@ -263,34 +263,44 @@ describe('Live Chat Conversations — Sessions parity', () => {
     database.close();
   });
 
-  test('persists an assigned operator transition across a file-backed restart and migration replay', async () => {
+  test('persists every assigned operator transition across file-backed restarts and migration replay', async () => {
     const databasePath = `/tmp/core3-livechat-operator-restart-${crypto.randomUUID()}.duckdb`;
     const migrationName = `livechat_operator_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
     const discovered = discoverPages(sampleRoot);
     const user = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'], view_scope: 'assigned' };
-    let first: DuckDbDatabase | undefined;
-    let second: DuckDbDatabase | undefined;
+    const sessionId = 'livechat-session-demo-002';
+    const transitions = [
+      { action: 'livechat.sessions.wait', status: 'Waiting for Customer', before: 1, after: 2 },
+      { action: 'livechat.sessions.resume', status: 'In Progress', before: 2, after: 3 },
+      { action: 'livechat.sessions.help', status: 'Looking for Help', before: 3, after: 4 },
+      { action: 'livechat.help_sessions.join', status: 'In Progress', before: 4, after: 5 },
+      { action: 'livechat.sessions.close', status: 'Closed', before: 5, after: 6 },
+    ];
+    let database: DuckDbDatabase | undefined;
     try {
-      first = await DuckDbDatabase.open(databasePath);
-      const firstRepository = new YamlRepository(first);
-      await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
-      const firstApi = createLivechatApi(firstRepository, discovered, () => user);
-      const changed = await postAction(firstApi, 'livechat.sessions.wait', { id: 'livechat-session-demo-002', expected_row_version: 1, values: {} });
-      expect(await changed.json()).toMatchObject({ id: 'livechat-session-demo-002', status: 'Waiting for Customer', row_version: 2 });
-      first.close();
-      first = undefined;
+      for (const transition of transitions) {
+        database = await DuckDbDatabase.open(databasePath);
+        const repository = new YamlRepository(database);
+        await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+        const api = createLivechatApi(repository, discovered, () => user);
+        const changed = await postAction(api, transition.action, { id: sessionId, expected_row_version: transition.before, values: {} });
+        expect(await changed.json(), transition.action).toMatchObject({ id: sessionId, status: transition.status, row_version: transition.after });
+        database.close();
+        database = undefined;
 
-      second = await DuckDbDatabase.open(databasePath);
-      const secondRepository = new YamlRepository(second);
-      await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
-      expect(await secondRepository.query('SELECT status, row_version, operator_id FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002'])).toEqual([
-        { status: 'Waiting for Customer', row_version: 2, operator_id: 'livechat-agent' },
-      ]);
-      const detail = await querySource(createLivechatApi(secondRepository, discovered, () => user), 'livechat_session_detail', { id: 'livechat-session-demo-002' });
-      expect((await detail.json()).data).toMatchObject({ id: 'livechat-session-demo-002', status: 'Waiting for Customer', row_version: 2, operator_name: 'Support Agent' });
+        database = await DuckDbDatabase.open(databasePath);
+        const reopenedRepository = new YamlRepository(database);
+        await migrateDatabase(reopenedRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+        expect(await reopenedRepository.query('SELECT status, row_version, operator_id FROM livechat_sessions WHERE id = ?', [sessionId]), transition.action).toEqual([
+          { status: transition.status, row_version: transition.after, operator_id: 'livechat-agent' },
+        ]);
+        const detail = await querySource(createLivechatApi(reopenedRepository, discovered, () => user), 'livechat_session_detail', { id: sessionId });
+        expect((await detail.json()).data, transition.action).toMatchObject({ id: sessionId, status: transition.status, row_version: transition.after, operator_name: 'Support Agent' });
+        database.close();
+        database = undefined;
+      }
     } finally {
-      second?.close();
-      first?.close();
+      database?.close();
       rmSync(databasePath, { force: true });
     }
   });
