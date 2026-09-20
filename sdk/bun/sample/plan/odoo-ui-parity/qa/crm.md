@@ -40,11 +40,15 @@ runtime at `http://127.0.0.1:3002`:
   `/tmp/core3-odoo-parity/team-opportunities-desktop-1440x900.png`, SHA-256
   `6e4ce134ba352681ec642ea3067d447aa2e3483052a049d246bba485ff1f83c1`.
 - Mobile `390x844`: HTTP 200, zero console/page/request failures, body and
-  document width 390. Capture:
+  document width 390. The Kanban board is horizontally scrollable at this
+  breakpoint, and the list surface retains more columns than the viewport;
+  this is recorded as a responsive follow-up rather than a mobile-fit
+  sign-off. Capture:
   `/tmp/core3-odoo-parity/team-opportunities-mobile-390x844.png`, SHA-256
   `734302699a7888c5a3e51ea1ed47157b1387fcfb35dcef90f5150e5a7ce87ec1`.
-- Mobile List view also rendered all three rows with zero failures and no
-  document overflow. Capture:
+- Mobile List view also rendered all three rows with zero failures; its
+  horizontally scrollable table is retained as responsive follow-up evidence.
+  Capture:
   `/tmp/core3-odoo-parity/team-opportunities-list-mobile-390x844.png`, SHA-256
   `3ecfff59590df733e1d01bfc827449ebd5a44f54f91ada81bab7a2fb7d68b26b`.
 
