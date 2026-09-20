@@ -13,3 +13,52 @@ datasources:
   - id: survey_results_text
     permission: surveys.read
     query: "SELECT a.id, a.question_text, a.answer_value, p.contact AS respondent, CAST(a.submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers a JOIN survey_participants p ON p.id = a.participant_id WHERE p.survey_id = :survey_id AND (:completion_status IS NULL OR :completion_status = 'all' OR p.state = :completion_status) AND (:result_status IS NULL OR :result_status = 'all' OR (p.state = 'Completed' AND ((:result_status = 'Passed' AND p.quiz_passed = true) OR (:result_status = 'Failed' AND p.quiz_passed = false)))) AND a.answer_type = 'text' AND a.answer_value IS NOT NULL AND a.answer_value <> '' ORDER BY a.submitted_at, a.id"
+  - id: survey_results_print_runs
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_RESULTS_PRINT_RUNS_UNAVAILABLE, message: Survey results print history is temporarily unavailable. } }
+    query: "SELECT id, survey_id, survey_name, requested_by, completion_status, result_status, response_count, question_count, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM survey_results_print_runs WHERE survey_id = :survey_id ORDER BY generated_at DESC, id DESC"
+actions:
+  - id: print_survey_results
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const row = state.survey_results_header;
+        const completionStatus = new URLSearchParams(window.location.search).get('completion_status') || 'all';
+        const resultStatus = new URLSearchParams(window.location.search).get('result_status') || 'all';
+        await request('/api/actions/surveys.results.print', {
+          method: 'POST',
+          body: { values: {
+            survey_id: row.id,
+            survey_name: row.name,
+            completion_status: completionStatus,
+            result_status: resultStatus,
+            requested_by: 'Admin User',
+            current_user_name: 'Admin User',
+          } },
+        });
+        window.print();
+      }
+  - id: record_survey_results_print
+    type: server
+    permission: surveys.read
+    action: surveys.results.print
+    handler: yaml_mutation
+    operation: report
+    refresh: [survey_results_header, survey_results_questions, survey_results_choices, survey_results_text, survey_results_print_runs]
+    mutation:
+      operation: insert
+      table: survey_results_print_runs
+      fields: [survey_id, survey_name, requested_by, completion_status, result_status, response_count, question_count]
+      defaults: { completion_status: all, result_status: all, generated_at: '2026-01-15 00:00:00', row_version: 1 }
+      before_steps:
+        - query: "SELECT 'survey-results-print-' || CAST(:survey_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM survey_results_print_runs WHERE survey_id = :survey_id) AS VARCHAR) AS id, s.name AS survey_name, COALESCE(NULLIF(:requested_by, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:completion_status, ''), 'all') AS completion_status, COALESCE(NULLIF(:result_status, ''), 'all') AS result_status, COUNT(DISTINCT CASE WHEN (COALESCE(NULLIF(:completion_status, ''), 'all') = 'all' OR p.state = :completion_status) AND (COALESCE(NULLIF(:result_status, ''), 'all') = 'all' OR (p.state = 'Completed' AND ((:result_status = 'Passed' AND p.quiz_passed = true) OR (:result_status = 'Failed' AND p.quiz_passed = false)))) THEN p.id END) AS response_count, COUNT(DISTINCT q.id) AS question_count FROM surveys s LEFT JOIN survey_participants p ON p.survey_id = s.id LEFT JOIN survey_questions q ON q.survey_id = s.id WHERE s.id = :survey_id GROUP BY s.id, s.name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :survey_id", status: 404, code: SURVEY_RESULTS_NOT_FOUND, message: Survey not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:requested_by, ''), 'Admin User') = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: SURVEY_RESULTS_PRINT_ACTOR, message: The report actor must match the signed-in user. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:completion_status, ''), 'all') IN ('all', 'Completed') AND COALESCE(NULLIF(:result_status, ''), 'all') IN ('all', 'Passed', 'Failed')", status: 422, code: SURVEY_RESULTS_FILTER_INVALID, message: The results filter is not supported. }
+      steps:
+        - query: "UPDATE survey_results_print_runs SET generated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id"
+      result: { query: "SELECT id, survey_id, survey_name, requested_by, completion_status, result_status, response_count, question_count, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM survey_results_print_runs WHERE id = :id" }

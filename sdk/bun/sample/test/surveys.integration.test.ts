@@ -331,7 +331,7 @@ describe('Surveys parity catalog and workflow', () => {
     expect(form.header_actions[0]).toMatchObject({ id: 'see_survey_results_detail', label: 'See results' });
     expect(detail.actions.find((action: any) => action.id === 'see_survey_results_detail')).toMatchObject({ navigate_to: '/surveys/results', params: { survey_id: '{row.id}' } });
     expect(yaml('api/survey-results.yaml').datasources.map((source: any) => source.id)).toEqual([
-      'survey_results_header', 'survey_results_questions', 'survey_results_choices', 'survey_results_text',
+      'survey_results_header', 'survey_results_questions', 'survey_results_choices', 'survey_results_text', 'survey_results_print_runs',
     ]);
   });
 
@@ -344,7 +344,7 @@ describe('Surveys parity catalog and workflow', () => {
     expect(tabs[1].tabs.map((tab: any) => tab.label)).toEqual(['Passed and failed', 'Passed only', 'Failed only']);
 
     const api = yaml('api/survey-results.yaml');
-    for (const source of api.datasources) {
+    for (const source of api.datasources.filter((candidate: any) => candidate.id !== 'survey_results_print_runs')) {
       expect(source.query).toContain(':completion_status');
       expect(source.query).toContain(':result_status');
     }

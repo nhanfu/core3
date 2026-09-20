@@ -303,3 +303,40 @@ restart, replay, and responsive browser evidence pass for this bounded slice.
 The module remains **qa-in-progress / conditional** pending the wider public
 retry/print/report matrix, cleanup of the unrelated shared regression reds,
 and a host-started Odoo response comparison.
+
+## Bounded QA run: Results print report — `SURVEYS-RESULTS-PRINT-001`
+
+- Source comparison: Odoo's authenticated `/survey/results/<survey>` controller
+  computes filtered statistics, `action_result_survey` opens that route, and
+  `survey_templates_statistics.xml` exposes the `Print` control. Core3 keeps
+  the results page YAML separate from `api/survey-results.yaml`, with a
+  `surveys.read` client Print action and a server mutation.
+- Persistence/workflow: the server mutation inserts a deterministic filtered
+  row into `survey_results_print_runs`; Completed + Passed against
+  `survey-demo-feedback` records one response and seven questions. The
+  migration seeds a stable report row, is DuckDB-compatible, and survives
+  file-backed close/reopen and replay.
+- Focused feature verification: **4 passed, 17 assertions** in
+  `surveys_results_print.integration.test.ts`. The final full Surveys glob is
+  **54 passed, 0 failed, 427 assertions** across 11 files. Scoped ESLint and
+  `git diff --check` pass; `bun run audit` passes with **676 pages, 685 routes,
+  and 1,228 datasources**.
+- Full repository regression: **1,445 passed, 3 failed, 13,047 assertions**
+  across 1,448 tests. The three failures are concurrent eCommerce Pricelists
+  and CRM Leads Analysis/Forecast fixture-order expectations; no Surveys test
+  failed.
+- Authenticated Core3 evidence: desktop 1440x1000 and mobile 390x844 both
+  render the Results page, filtered counts, Print control, and no horizontal
+  overflow; overriding `window.print` observed exactly one click per viewport.
+- Authenticated Odoo evidence: `codex@core3.local` on the reachable
+  `core3_reference` service at `127.0.0.1:8069` loaded
+  `/survey/results/feedback-form-1` on desktop/mobile and its Print control
+  likewise intercepted exactly once. The disposable demo proxy at port 8072
+  remains unavailable; the exact probe returned `curl: (7) Failed to connect
+  to 127.0.0.1 port 8072`. Evidence and JSON probe results are in the feature
+  directory.
+
+Disposition: Core3 persistence, permissions, filtered workflow, restart,
+responsive evidence, and paired reachable-Odoo Print comparison pass for this
+bounded slice. The Surveys module remains **qa-in-progress / conditional**;
+this does not sign off the full module or the unavailable disposable proxy.

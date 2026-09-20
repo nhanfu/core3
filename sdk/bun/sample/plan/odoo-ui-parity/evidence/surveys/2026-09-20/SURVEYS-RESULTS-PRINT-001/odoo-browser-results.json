@@ -1,0 +1,26 @@
+{
+  "desktop": {
+    "d": {
+      "url": "http://127.0.0.1:8069/survey/results/feedback-form-1",
+      "title": "Odoo",
+      "hasPrint": true,
+      "printText": "",
+      "overflow": false,
+      "body": "Feedback Form\nAll surveys\nABOUT YOU\nWhere do you live?\n3\n/\n3\nResponded\n#\tUser Responses\n1\t\nBrussels\n\n2\t\nParis\n\n3\t\nNew York\nWhen is your date of birth?\n2\n/\n3\nResponded\nTop User Responses\tOccurrence\n01/11/1980\t1\n06/15/1966\t1\nHow frequently do you buy products online?\n3\n/\n3\nResponded\nHow many times did you order products on our website?\n3\n/\n3\nResponded\nMax\n10.0\nMin\n1.0\nAvg\n5.0\nTop User Responses\tOccurrence\n4\t1\n10\t1\n1\t1\nABOUT OUR ECOMMERCE\nWhich of the following words would you use to describe our products?\n3\n/\n3\nResponded\nWhat do you think about our new eCommerce?\n3\n/\n3\nResponded\nDo you have any other comments, questions, or concerns?\n3\n/\n3\nResponded\n#\tUser Responses\n1\t\nThanks for the good quality of your products\n\n2\t\nI really appreciate your products. They are awesome !!\n\n3\t\nThe customizable desk received is not the one I ordered on your website and the quality is very poor! Really disappointed.\nPowered by "
+    },
+    "clicked": true,
+    "prints": 1
+  },
+  "mobile": {
+    "d": {
+      "url": "http://127.0.0.1:8069/survey/results/feedback-form-1",
+      "title": "Odoo",
+      "hasPrint": true,
+      "printText": "",
+      "overflow": false,
+      "body": "Feedback Form\nAll surveys\nABOUT YOU\nWhere do you live?\n3\n/\n3\nResponded\n#\tUser Responses\n1\t\nBrussels\n\n2\t\nParis\n\n3\t\nNew York\nWhen is your date of birth?\n2\n/\n3\nResponded\nTop User Responses\tOccurrence\n01/11/1980\t1\n06/15/1966\t1\nHow frequently do you buy products online?\n3\n/\n3\nResponded\nHow many times did you order products on our website?\n3\n/\n3\nResponded\nMax\n10.0\nMin\n1.0\nAvg\n5.0\nTop User Responses\tOccurrence\n4\t1\n10\t1\n1\t1\nABOUT OUR ECOMMERCE\nWhich of the following words would you use to describe our products?\n3\n/\n3\nResponded\nWhat do you think about our new eCommerce?\n3\n/\n3\nResponded\nDo you have any other comments, questions, or concerns?\n3\n/\n3\nResponded\n#\tUser Responses\n1\t\nThanks for the good quality of your products\n\n2\t\nI really appreciate your products. They are awesome !!\n\n3\t\nThe customizable desk received is not the one I ordered on your website and the quality is very poor! Really disappointed.\nPowered by "
+    },
+    "clicked": true,
+    "prints": 1
+  }
+}

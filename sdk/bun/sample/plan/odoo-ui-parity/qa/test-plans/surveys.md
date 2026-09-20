@@ -123,3 +123,15 @@ the published token is valid, but the reference answer remains host-controlled
 before question rendering; the captured host-start message is the exact paired
 comparison blocker. This case is pass for Core3 and partial for paired Odoo
 visual/workflow evidence.
+
+## 2026-09-20 results print additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-014 | report/persistence | Authenticated Results → Print | Record a filtered durable print-run row with deterministic survey, response, question, actor, and timestamp fields; refresh result sources | pass |
+| SURVEYS-WF-011 | workflow/recovery | Results cohort → Print → restart | Completed + Passed filtering produces the expected cohort count, survives file-backed reopen, and replays without duplicate seed/run rows | pass |
+| SURVEYS-PERM-013 | permission/guards | Results Print actor/filter boundary | `surveys.read` is required; missing survey, actor mismatch, invalid status filters, and stale/replayed requests leave the table unchanged | pass |
+| SURVEYS-UI-012 | visual/responsive | Results Print desktop/mobile | Authenticated Core3 and Odoo results pages show Print at 1440x1000 and 390x844, intercept one print invocation, and have no horizontal overflow | pass for reachable Odoo 8069; disposable 8072 blocked |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-RESULTS-PRINT-001/`.

@@ -1,0 +1,30 @@
+version: 0.0.19
+description: Durable deterministic survey results print history
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_results_print_runs (
+        id VARCHAR PRIMARY KEY,
+        survey_id VARCHAR NOT NULL,
+        survey_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        completion_status VARCHAR NOT NULL DEFAULT 'all',
+        result_status VARCHAR NOT NULL DEFAULT 'all',
+        response_count BIGINT NOT NULL DEFAULT 0,
+        question_count BIGINT NOT NULL DEFAULT 0,
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS survey_results_print_runs_scope_idx ON survey_results_print_runs(survey_id, generated_at, id);
+      INSERT OR IGNORE INTO survey_results_print_runs(
+        id, survey_id, survey_name, requested_by, completion_status, result_status, response_count, question_count, generated_at, row_version
+      ) VALUES (
+        'survey-results-print-demo-feedback-1', 'survey-demo-feedback', 'Feedback Form', 'Admin User', 'all', 'all', 4, 7, TIMESTAMP '2026-01-15 00:00:00', 1
+      );
+    down: |
+      DROP TABLE IF EXISTS survey_results_print_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

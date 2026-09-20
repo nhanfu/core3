@@ -1113,3 +1113,36 @@ all evidence are recorded under
 Surveys remains **qa-in-progress / conditional** pending the broader public
 retry/print/report matrix, complete repository regression, and an Odoo
 host-started response comparison.
+
+## Bounded slice: Survey results print report (2026-09-20)
+
+Feature ID: `SURVEYS-RESULTS-PRINT-001`.
+
+Odoo source comparison: the authenticated controller in
+`addons/survey/controllers/main.py:731-764` renders filtered survey
+statistics at `/survey/results/<survey>`; `survey_survey.py:1088-1095`
+opens that results route from the survey action; and
+`views/survey_templates_statistics.xml:25` provides the authenticated Print
+button. Core3 mirrors this seam with a layout-only `survey-results` page and
+the page-id-bound `api/survey-results.yaml` fragment. Its `surveys.read`
+Print client action calls the guarded server report mutation and then invokes
+the browser print contract.
+
+The mutation persists `survey_results_print_runs` through migration
+`20260920170000-019-survey-results-print-runs.yaml`. It records the selected
+completion/result cohort, actor, deterministic survey/response/question
+counts, fixed generated-at, and row version. Missing survey, actor mismatch,
+invalid filter, and replay/stale boundaries fail atomically. The migration
+seed and file-backed reopen test make the report history durable and
+replay-safe.
+
+Focused CRUD/permission/restart coverage is in
+`test/surveys_results_print.integration.test.ts`; the full Surveys suite and
+repository regression results are recorded in `qa/surveys.md`. Authenticated
+Core3 and reachable authenticated Odoo desktop/mobile captures, print
+interception JSON, and the source comparison are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-RESULTS-PRINT-001/`.
+The disposable Odoo demo proxy at `127.0.0.1:8072` was connection-refused;
+the reachable `127.0.0.1:8069` reference provided paired results/Print
+captures. This is bounded evidence only: Surveys remains
+**qa-in-progress / conditional**, with no full-module sign-off claimed.

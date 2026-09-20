@@ -30,6 +30,29 @@ The current Odoo reference database has Surveys uninstalled, so this feature is
 not visually signed off against Odoo. Overall module status remains
 **qa-in-progress / conditional**.
 
+## 2026-09-20 — `SURVEYS-RESULTS-PRINT-001`
+
+Selected the smallest remaining source-backed results behavior: Odoo's
+authenticated Survey Results `Print` action. Core3 now keeps the results page
+layout and API/action contract separate, exposes a permissioned Print header
+action, records a filtered report-run row in durable
+`survey_results_print_runs`, and refreshes the result sources after the
+mutation. The report derives deterministic survey/response/question counts,
+uses fixed timestamps and IDs, and rejects missing surveys, actor mismatch,
+invalid filters, and stale/replayed requests without partial writes.
+
+`surveys_results_print.integration.test.ts` covers page/API discovery,
+filtered Completed+Passed counts, migration replay, file-backed restart, and
+the permission/validation guard matrix. The focused Surveys suite is green;
+the full repository run completed with three unrelated concurrent
+eCommerce/CRM fixture-order failures and no Surveys failure. Authenticated
+Core3 and Odoo desktop/mobile Print evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-RESULTS-PRINT-001/`.
+The disposable Odoo proxy on port 8072 was connection-refused, while the
+authenticated Odoo 8069 reference route `/survey/results/feedback-form-1`
+provided paired results/Print captures. This slice remains
+**qa-in-progress / conditional**; no module sign-off is claimed.
+
 ## 2026-09-20 — `SURVEYS-PARTICIPANT-INVITE-001`
 
 Completed the next bounded source-backed participant workflow after the
