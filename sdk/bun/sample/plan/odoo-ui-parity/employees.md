@@ -1365,3 +1365,29 @@ Skills widget for that employee. Seven known app-icon 404s are shell noise.
 Evidence records both boundaries; no aggregate Employees sign-off is claimed.
 
 Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.
+
+## EMP-RESUME-LINES-001: Employee Resume lines (2026-09-20)
+
+The next smallest source-backed employee-form behavior is Odoo's
+`hr.resume.line` `resume_line_ids` relation and `resume_one2many` widget from
+`hr_skills`. Odoo supports employee-linked section, title, dates, duration,
+course type, description, and external URL CRUD; its source constraint requires
+the start date to precede the end date.
+
+Core3 adds migration `20260920300000-040-employee-resume-lines.yaml` with
+Odoo's three resume sections and deterministic employee fixtures, a separate
+API datasource/catalog and guarded add/edit/delete actions, and a page-only
+Resume-tab `LineItemGrid` joined by `page.id`. Focused coverage is **4 tests /
+30 assertions**, including source mapping, CRUD, actor/company/type/date/
+duplicate/concurrency guards, migration replay, and file-backed restart. Audit
+is **687 pages / 696 routes / 1,279 datasources**; scoped ESLint and diff-check
+pass.
+
+Authenticated Core3 desktop/mobile company switching returned 200, but the
+fixture company is `Core3 Vietnam` versus the authenticated `Core3 Vietnam
+Branch`, so the guarded route hides the employee and Resume lines. Authenticated
+Odoo desktop/mobile reached Abigail Peterson's Resume tab, but the selected
+reference employee had no populated resume-line values. Seven known app-icon
+404s are shell noise. No aggregate Employees sign-off is claimed.
+
+Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.

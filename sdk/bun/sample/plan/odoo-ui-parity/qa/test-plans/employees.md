@@ -215,3 +215,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.
 | EMP-UI-015 | visual/responsive | Authenticated Core3/Odoo Work tab | Desktop/mobile skill comparison | conditional; exact blockers recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.
+
+## EMP-RESUME-LINES-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-020 | workflow | Employee detail Resume / Resume Lines | Durable add, edit, and delete | pass |
+| EMP-PERM-020 | permission/security | Employee resume line actions | Actor, company, catalog, date, duplicate, and stale guards | pass |
+| EMP-DATA-020 | data/regression | Migration replay/restart | Fixtures persist without duplicates | pass |
+| EMP-UI-016 | visual/responsive | Authenticated Core3/Odoo Resume tab | Desktop/mobile comparison | conditional; exact blockers recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.

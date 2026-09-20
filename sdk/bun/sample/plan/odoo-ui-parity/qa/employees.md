@@ -617,6 +617,18 @@ Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`. No
 aggregate Employees sign-off is claimed; full-repository regression was not
 run per the bounded checkpoint.
 
+## EMP-RESUME-LINES-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-020 | Resume-tab line add/edit/delete | Education, experience, and training lines persist through CRUD | pass; 4 tests / 30 assertions |
+| EMP-PERM-020 | Actor, company, type, date, duplicate, and stale guards | Invalid or out-of-scope resume mutations reject atomically | pass |
+| EMP-DATA-020 | Migration replay and file-backed restart | Deterministic resume lines survive restart without duplicates | pass |
+| EMP-UI-016 | Authenticated Core3/Odoo Resume desktop/mobile | Resume line grid/form compares responsively | conditional; Core3 fixture-company mismatch and empty Odoo reference recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`. No aggregate
+Employees sign-off is claimed; full-repository regression was not run.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |
