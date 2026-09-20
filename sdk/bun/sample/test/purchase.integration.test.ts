@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -177,6 +178,47 @@ describe('Purchase Orders list and detail parity', () => {
     await repository.executeMutation(reset.mutation, { id: 'po-demo-004', expected_row_version: 1 });
     expect((await repository.query("SELECT state, row_version FROM purchase_orders WHERE id = 'po-demo-004'"))[0]).toEqual({ state: 'Draft', row_version: 2 });
     await expect(repository.executeMutation(reset.mutation, { id: 'po-demo-004', expected_row_version: 2 })).rejects.toThrow('Only unchanged cancelled purchase orders can be set back to draft');
+  });
+
+  test('persists cancellation across restart and rejects stale replay', async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'core3-purchase-cancel-'));
+    const databasePath = join(tempDir, 'purchase.duckdb');
+    const migrationTable = 'purchase_cancel_restart_test_schema_migrations';
+    const workflow = yaml('pages/purchase-workflow.yaml').workflow;
+    const cancel = workflow.transitions.find((transition: any) => transition.id === 'cancel');
+    expect(cancel.mutation.guards[0]).toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    expect(cancel.mutation.guards[0].query).toContain('row_version = :expected_row_version');
+
+    let database: DuckDbDatabase | undefined;
+    try {
+      database = await DuckDbDatabase.open(databasePath);
+      let repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, migrationTable, ['schema', 'data']);
+
+      const cancelled = await repository.executeMutation(cancel.mutation, {
+        id: 'po-demo-001',
+        expected_row_version: 1,
+      }) as any;
+      expect(cancelled).toMatchObject({ id: 'po-demo-001', state: 'Cancelled', row_version: 2 });
+      database.close();
+      database = undefined;
+
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, migrationTable, ['schema', 'data']);
+      expect(await repository.query('SELECT state, row_version FROM purchase_orders WHERE id = ?', ['po-demo-001']))
+        .toEqual([{ state: 'Cancelled', row_version: 2 }]);
+
+      await expect(repository.executeMutation(cancel.mutation, {
+        id: 'po-demo-001',
+        expected_row_version: 1,
+      })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+      expect(await repository.query('SELECT state, row_version FROM purchase_orders WHERE id = ?', ['po-demo-001']))
+        .toEqual([{ state: 'Cancelled', row_version: 2 }]);
+    } finally {
+      database?.close();
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   test('keeps RFQs aligned with the Odoo action view family and page/API boundary', () => {
