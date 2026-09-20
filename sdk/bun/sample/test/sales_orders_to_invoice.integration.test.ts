@@ -10,8 +10,10 @@ const accountingRoot = join(import.meta.dir, '../services/accounting');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 const accountingYaml = (file: string) => Bun.YAML.parse(readFileSync(join(accountingRoot, file), 'utf8')) as any;
 
-async function repositoryForTest(accountingCall?: (operation: string, request: Record<string, unknown>) => Promise<any>) {
-  const database = await DuckDbDatabase.open(':memory:');
+async function repositoryForTest(databasePathOrAccountingCall: string | ((operation: string, request: Record<string, unknown>) => Promise<any>) = ':memory:', accountingCall?: (operation: string, request: Record<string, unknown>) => Promise<any>) {
+  const databasePath = typeof databasePathOrAccountingCall === 'string' ? databasePathOrAccountingCall : ':memory:';
+  const resolvedAccountingCall = typeof databasePathOrAccountingCall === 'function' ? databasePathOrAccountingCall : accountingCall;
+  const database = await DuckDbDatabase.open(databasePath);
   const accountingDatabase = await DuckDbDatabase.open(':memory:');
   const accountingRepository = new YamlRepository(accountingDatabase);
   await accountingRepository.run(`CREATE TABLE accounting_invoices (
@@ -25,7 +27,7 @@ async function repositoryForTest(accountingCall?: (operation: string, request: R
   )`);
   const sourceAction = accountingYaml('pages/invoices.yaml').actions.find((candidate: any) => candidate.id === 'create_accounting_invoice_from_source');
   const repository = new YamlRepository(database, (name: string) => name === 'yaml.service.accounting'
-    ? { call: accountingCall || ((operation: string, request: Record<string, unknown>) => operation === 'accounting.invoices.create_from_source'
+    ? { call: resolvedAccountingCall || ((operation: string, request: Record<string, unknown>) => operation === 'accounting.invoices.create_from_source'
       ? accountingRepository.executeMutation(sourceAction.mutation, request)
       : undefined) }
     : undefined);
@@ -128,15 +130,12 @@ describe('Sales orders to invoice parity slice', () => {
 
   test('persists draft invoice creation across restart and keeps retries idempotent', async () => {
     const databasePath = `/tmp/core3-sales-invoice-restart-${crypto.randomUUID()}.duckdb`;
-    const migrationTable = `sales_invoice_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
-    const migrationRoot = join(root, 'migrations');
     const api = yaml('api/sale-to-invoice.yaml');
     const action = api.actions.find((candidate: any) => candidate.id === 'create_invoices_from_selected_orders');
     const params = { view_scope: 'all', current_branch_id: 'branch-hcm', selectedIds: ['order-demo-06'] };
 
-    const firstDatabase = await DuckDbDatabase.open(databasePath);
-    const firstRepository = new YamlRepository(firstDatabase);
-    await migrateDatabase(firstRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
+    const first = await repositoryForTest(databasePath);
+    const { database: firstDatabase, repository: firstRepository, accountingDatabase: firstAccountingDatabase } = first;
 
     const created = await firstRepository.executeMutation(action.mutation, params) as any;
     expect(Number(created.created_count)).toBe(1);
@@ -149,11 +148,10 @@ describe('Sales orders to invoice parity slice', () => {
       amount: 9200000,
     })]);
     await firstDatabase.close();
+    await firstAccountingDatabase.close();
 
-    const secondDatabase = await DuckDbDatabase.open(databasePath);
-    const secondRepository = new YamlRepository(secondDatabase);
-    await migrateDatabase(secondRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
-    await migrateDatabase(secondRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
+    const second = await repositoryForTest(databasePath);
+    const { database: secondDatabase, repository: secondRepository, accountingDatabase: secondAccountingDatabase } = second;
 
     expect(await secondRepository.query(
       "SELECT order_id, invoice_number, state, amount FROM sale_invoices WHERE order_id = 'order-demo-06'",
@@ -174,5 +172,6 @@ describe('Sales orders to invoice parity slice', () => {
       "SELECT COUNT(*) AS count FROM sale_invoices WHERE order_id = 'order-demo-06'",
     )).toEqual([{ count: 1 }]);
     await secondDatabase.close();
+    await secondAccountingDatabase.close();
   }, 30000);
 });
