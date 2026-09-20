@@ -53,18 +53,23 @@ describe('Inventory transfer document attachments', () => {
       permissions: { permissions: ['inventory.read', 'inventory.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
     });
     const upload = (meta: Record<string, unknown>, bytes = [65, 66, 67], name = 'packing-list.txt') => api(new Request('http://inventory.test/api/upload', { method: 'POST', body: makeForm(bytes, name, meta) }), new URL('http://inventory.test/api/upload'));
+    const expectUploadError = async (request: Promise<Response | undefined>, expected: Record<string, unknown>) => {
+      const response = await request;
+      expect(response?.status).toBe(expected.status);
+      expect(await response?.json()).toMatchObject(expected.body || {});
+    };
 
     user.permissions = ['inventory.read'];
     await expect(upload({ picking_id: 'receipt-00003', expected_row_version: 1 })).rejects.toMatchObject({ status: 403 });
     expect(await attachmentCount()).toBe(0);
     user.permissions = ['inventory.read', 'inventory.write'];
     user.company_name = 'Other Company';
-    await expect(upload({ picking_id: 'receipt-00003', expected_row_version: 1 })).rejects.toMatchObject({ status: 403, code: 'INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED' });
+    await expectUploadError(upload({ picking_id: 'receipt-00003', expected_row_version: 1 }), { status: 403, body: { code: 'INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED' } });
     expect(await attachmentCount()).toBe(0);
     user.company_name = 'Core3 Demo Company';
-    await expect(upload({ picking_id: 'missing-transfer', expected_row_version: 1 })).rejects.toMatchObject({ status: 404, code: 'INVENTORY_TRANSFER_NOT_FOUND' });
+    await expectUploadError(upload({ picking_id: 'missing-transfer', expected_row_version: 1 }), { status: 404, body: { code: 'INVENTORY_TRANSFER_NOT_FOUND' } });
     expect(await attachmentCount()).toBe(0);
-    await expect(upload({ picking_id: 'receipt-00003', expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expectUploadError(upload({ picking_id: 'receipt-00003', expected_row_version: 99 }), { status: 409, body: { code: 'STALE_RECORD' } });
     expect(await attachmentCount()).toBe(0);
     const invalidUpload = await upload({ picking_id: 'receipt-00003', expected_row_version: 1 }, [], 'invalid.txt');
     expect(invalidUpload?.status).toBe(400);
@@ -76,7 +81,7 @@ describe('Inventory transfer document attachments', () => {
     expect(uploaded).toMatchObject({ picking_id: 'receipt-00003', company_name: 'Core3 Demo Company', file_name: 'packing-list.txt', size_bytes: 3 });
     expect(await attachmentCount()).toBe(1);
     expect((await repository.query('SELECT row_version FROM inventory_pickings WHERE id = ?', ['receipt-00003']))[0].row_version).toBe(2);
-    await expect(upload({ picking_id: 'receipt-00003', expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_TRANSFER_ATTACHMENT_DUPLICATE' });
+    await expectUploadError(upload({ picking_id: 'receipt-00003', expected_row_version: 2 }), { status: 409, body: { code: 'INVENTORY_TRANSFER_ATTACHMENT_DUPLICATE' } });
     expect(await attachmentCount()).toBe(1);
 
     const download = await api(new Request(`http://inventory.test/api/inventory/transfer-attachments/${uploaded.id}`), new URL(`http://inventory.test/api/inventory/transfer-attachments/${uploaded.id}`));
