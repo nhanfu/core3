@@ -1,0 +1,129 @@
+page: { id: ecommerce-payment-providers }
+datasources:
+  - id: ecommerce_payment_providers
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PAYMENT_PROVIDERS_UNAUTHENTICATED, message: Sign in to view payment providers. }
+      forbidden: { status: 403, code: ECOMMERCE_PAYMENT_PROVIDERS_FORBIDDEN, message: You do not have permission to view payment providers. }
+      transport_error: { status: 503, code: ECOMMERCE_PAYMENT_PROVIDERS_UNAVAILABLE, message: Payment providers are temporarily unavailable. }
+    query: "SELECT id, row_version, name, code, sequence, state, is_published, company_name, payment_method_codes, allow_tokenization, capture_manually, allow_express_checkout, support_refund, maximum_amount, available_countries, available_currencies, pending_message, done_message, cancel_message, CAST(created_at AS VARCHAR) AS created_at, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_payment_providers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR code ILIKE '%' || :q || '%' OR payment_method_codes ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY sequence, name, id"
+  - id: ecommerce_payment_provider_states
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('disabled', 'Disabled'), ('test', 'Test Mode'), ('enabled', 'Enabled')) AS states(value, label) ORDER BY CASE value WHEN 'enabled' THEN 1 WHEN 'test' THEN 2 ELSE 3 END"
+  - id: ecommerce_payment_provider_capture_modes
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('none', 'Unsupported'), ('full_only', 'Full Only'), ('partial', 'Partial')) AS modes(value, label) ORDER BY value"
+  - id: ecommerce_payment_provider_refund_modes
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('none', 'Unsupported'), ('full_only', 'Full Only'), ('partial', 'Partial')) AS modes(value, label) ORDER BY value"
+actions:
+  - id: create_ecommerce_payment_provider
+    type: server_form
+    permission: ecommerce.write
+    title: New Payment Provider
+    action: ecommerce.payment_providers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_payment_providers]
+    mutation:
+      operation: insert
+      table: ecommerce_payment_providers
+      generated: [id]
+      fields: [name, code, sequence, state, is_published, company_name, payment_method_codes, allow_tokenization, capture_manually, allow_express_checkout, support_refund, maximum_amount, available_countries, available_currencies, pending_message, done_message, cancel_message]
+      required: [name, code]
+      defaults: { sequence: 100, state: disabled, is_published: false, company_name: 'My Company', payment_method_codes: '', allow_tokenization: false, capture_manually: none, allow_express_checkout: false, support_refund: none, available_countries: 'All countries', available_currencies: 'All currencies', pending_message: 'Your payment is waiting for approval.', done_message: 'Your payment has been processed.', cancel_message: 'Your payment has been cancelled.' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_NAME_INVALID, message: Provider name must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE REGEXP_MATCHES(TRIM(CAST(:code AS VARCHAR)), '^[a-z][a-z0-9_]{1,63}$')", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_CODE_INVALID, message: Use a lowercase technical provider code. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_payment_providers WHERE company_name = COALESCE(:company_name, 'My Company') AND LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: ECOMMERCE_PAYMENT_PROVIDER_CODE_EXISTS, message: This provider code already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:state, 'disabled') IN ('disabled', 'test', 'enabled') AND COALESCE(:capture_manually, 'none') IN ('none', 'full_only', 'partial') AND COALESCE(:support_refund, 'none') IN ('none', 'full_only', 'partial')", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_FEATURE_INVALID, message: Choose supported provider state and feature values. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:maximum_amount, 0) >= 0", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_AMOUNT_INVALID, message: Maximum amount cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, 'My Company') = :current_company_name", status: 403, code: ECOMMERCE_PAYMENT_PROVIDER_COMPANY_SCOPE_REQUIRED, message: Provider belongs to another company. }
+      result: { query: "SELECT * FROM ecommerce_payment_providers WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Technical Code, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: state, label: State, type: select, options_source: ecommerce_payment_provider_states, default: disabled }
+      - { field: is_published, label: Published, type: checkbox, default: false }
+      - { field: company_name, label: Company, type: text, default: 'My Company' }
+      - { field: payment_method_codes, label: Payment Method Codes, type: text }
+      - { field: allow_tokenization, label: Allow Tokenization, type: checkbox }
+      - { field: capture_manually, label: Manual Capture, type: select, options_source: ecommerce_payment_provider_capture_modes }
+      - { field: allow_express_checkout, label: Express Checkout, type: checkbox }
+      - { field: support_refund, label: Refund, type: select, options_source: ecommerce_payment_provider_refund_modes }
+      - { field: maximum_amount, label: Maximum Amount, type: number, min: 0 }
+      - { field: available_countries, label: Countries, type: text }
+      - { field: available_currencies, label: Currencies, type: text }
+      - { field: pending_message, label: Pending Message, type: textarea }
+      - { field: done_message, label: Done Message, type: textarea }
+      - { field: cancel_message, label: Cancel Message, type: textarea }
+  - id: edit_ecommerce_payment_provider
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Payment Provider
+    action: ecommerce.payment_providers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_payment_providers]
+    mutation:
+      operation: update
+      table: ecommerce_payment_providers
+      fields: [name, code, sequence, state, is_published, payment_method_codes, allow_tokenization, capture_manually, allow_express_checkout, support_refund, maximum_amount, available_countries, available_currencies, pending_message, done_message, cancel_message]
+      required: [name, code]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_payment_providers WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: ECOMMERCE_PAYMENT_PROVIDER_STALE, message: This provider changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND REGEXP_MATCHES(TRIM(CAST(:code AS VARCHAR)), '^[a-z][a-z0-9_]{1,63}$')", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_INVALID, message: Enter a valid provider name and code. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_payment_providers WHERE company_name = (SELECT company_name FROM ecommerce_payment_providers WHERE id = :id) AND LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))) AND id <> :id)", status: 409, code: ECOMMERCE_PAYMENT_PROVIDER_CODE_EXISTS, message: This provider code already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE :state IN ('disabled', 'test', 'enabled') AND :capture_manually IN ('none', 'full_only', 'partial') AND :support_refund IN ('none', 'full_only', 'partial') AND COALESCE(:maximum_amount, 0) >= 0", status: 422, code: ECOMMERCE_PAYMENT_PROVIDER_FEATURE_INVALID, message: Choose supported provider state and feature values. }
+      result: { query: "SELECT * FROM ecommerce_payment_providers WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Technical Code, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: state, label: State, type: select, options_source: ecommerce_payment_provider_states }
+      - { field: is_published, label: Published, type: checkbox }
+      - { field: payment_method_codes, label: Payment Method Codes, type: text }
+      - { field: allow_tokenization, label: Allow Tokenization, type: checkbox }
+      - { field: capture_manually, label: Manual Capture, type: select, options_source: ecommerce_payment_provider_capture_modes }
+      - { field: allow_express_checkout, label: Express Checkout, type: checkbox }
+      - { field: support_refund, label: Refund, type: select, options_source: ecommerce_payment_provider_refund_modes }
+      - { field: maximum_amount, label: Maximum Amount, type: number, min: 0 }
+      - { field: available_countries, label: Countries, type: text }
+      - { field: available_currencies, label: Currencies, type: text }
+      - { field: pending_message, label: Pending Message, type: textarea }
+      - { field: done_message, label: Done Message, type: textarea }
+      - { field: cancel_message, label: Cancel Message, type: textarea }
+  - id: archive_ecommerce_payment_provider
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_providers.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: disabled, is_published: false } }
+    refresh: [ecommerce_payment_providers]
+    mutation:
+      operation: update
+      table: ecommerce_payment_providers
+      fields: [state, is_published]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM ecommerce_payment_providers WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PAYMENT_PROVIDER_COMPANY_SCOPE_REQUIRED, message: Provider belongs to another company. }]
+      result: { query: "SELECT * FROM ecommerce_payment_providers WHERE id = :id" }
+  - id: restore_ecommerce_payment_provider
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_providers.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: test, is_published: true } }
+    refresh: [ecommerce_payment_providers]
+    mutation:
+      operation: update
+      table: ecommerce_payment_providers
+      fields: [state, is_published]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM ecommerce_payment_providers WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PAYMENT_PROVIDER_COMPANY_SCOPE_REQUIRED, message: Provider belongs to another company. }]
+      result: { query: "SELECT * FROM ecommerce_payment_providers WHERE id = :id" }

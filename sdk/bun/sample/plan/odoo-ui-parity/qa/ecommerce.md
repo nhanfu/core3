@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Payment Provider Configuration (`ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`, 2026-09-20)
+
+- Odoo source comparison: `menu_ecommerce_payment_providers` opens
+  `payment.action_payment_provider`, model `payment.provider`; the supplied
+  model and views define company/state/publication, provider code, payment
+  methods, tokenization, capture, express checkout, refund, availability, and
+  status-dependent form controls.
+- Core3 lifecycle: migrations 057/058 add durable company-scoped providers
+  and deterministic Core3 Offline/Demo Gateway fixtures. The separate
+  `payment-providers` page/API exposes `ecommerce.read` sources and
+  `ecommerce.write` create/edit/disable/restore actions with code, state,
+  feature, amount, company, duplicate, and row-version guards.
+- Focused verification: `bun test
+  ./test/ecommerce_payment_providers.integration.test.ts
+  ./test/ecommerce_payment_methods.integration.test.ts
+  ./test/ecommerce_payment_transactions.integration.test.ts --timeout 20000` —
+  **10 passed, 65 assertions, 0 failures**.
+- UI audit: **687 pages, 696 routes, 1278 datasources**, passed. Scoped
+  ESLint and `git diff --check` are recorded with the commit handoff.
+- Core3 desktop/mobile capture is blocked by the dev backend/runtime boundary
+  recorded in `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-providers-001/browser-check.md`.
+- Odoo paired comparison is blocked: `/shop` returned exact HTTP 404 on ports
+  8069 and 8073. QA disposition: **bounded implementation verified, not
+  signed off**; credentials, installation, token, gateway, and paired Odoo
+  gates remain open.
+
 ## Payment Transaction Lifecycle (`ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`, 2026-09-20)
 
 - Odoo source comparison: `menu_ecommerce_payment_transactions` opens

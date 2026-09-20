@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded payment-transaction lifecycle slice; module sign-off remains open)
+Status: qa-in-progress (bounded payment-provider configuration slice; module sign-off remains open)
+
+## Bounded feature — Payment Provider Configuration (`ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` exposes
+Website > Configuration > eCommerce > Payment Providers through
+`payment.action_payment_provider`, model `payment.provider`. The supplied
+provider model defines company-scoped name/code/sequence/state, publication,
+supported payment methods, tokenization, manual capture, express checkout,
+refund support, amount/country/currency availability, and payment messages.
+The Odoo list is non-creating while the form configures an installed provider;
+the state and published controls are status-dependent.
+
+Core3 comparison: payment methods and transactions were durable, but no
+provider configuration source existed. This slice adds migrations 057/058 for
+company-scoped providers and deterministic Core3 Offline/Demo Gateway data,
+separate page/API YAML contracts, permissioned create/edit/disable/restore,
+provider code/state/feature/amount validation, company scope, optimistic row
+versions, and restart persistence. It intentionally does not claim provider
+credentials, module installation, token vaults, or external gateway calls.
+
+Focused tests cover Odoo/menu/page/API tracing, deterministic fixtures,
+permissioned CRUD, feature and company validation, disable/restore, stale
+writes, migration replay, and DuckDB restart persistence in
+`test/ecommerce_payment_providers.integration.test.ts`. Core3 desktop/mobile
+capture remains blocked by the prior backend startup/runtime boundary; both
+supplied Odoo references return exact HTTP 404 for `/shop`. This bounded
+feature is verified but Ecommerce remains unsigned off.
 
 ## Bounded feature — Payment Transaction Lifecycle (`ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`)
 

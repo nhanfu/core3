@@ -6,6 +6,27 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Latest committed bounded slice before this wave: `e754da1af3ef3731dfabf89592c232323b40f5d8` (Variant Configurator Cart Resolution).
 
+## Current bounded task — `ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`
+
+The next smallest source-backed checkout configuration gap after transactions
+is Odoo's `payment.provider` action. Core3 now persists company-scoped provider
+configuration with deterministic Core3 Offline and Demo Gateway fixtures,
+separate Payment Providers page/API contracts, `ecommerce.write` CRUD and
+disable/restore actions, code/state/feature/amount validation, optimistic
+row-version guards, and DuckDB restart persistence. Live credentials, module
+installation, tokens, and external gateway calls remain outside this slice.
+
+Focused verification: `bun test
+./test/ecommerce_payment_providers.integration.test.ts
+./test/ecommerce_payment_methods.integration.test.ts
+./test/ecommerce_payment_transactions.integration.test.ts --timeout 20000` —
+**10 passed, 65 assertions, 0 failures**. The UI audit passes at 687 pages,
+696 routes, and 1278 datasources. Core3 desktop/mobile capture remains
+blocked by the dev backend/runtime boundary documented in evidence; Odoo
+`/shop` returns exact HTTP 404 on ports 8069 and 8073. Evidence is under
+`evidence/ecommerce/2026-09-20/ecom-checkout-payment-providers-001/`.
+Module sign-off remains open.
+
 ## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`
 
 The smallest remaining source-backed checkout gap is Odoo's durable

@@ -85,3 +85,7 @@ menu:
           label: Payment Transactions
           icon: credit-card
           permission: ecommerce.read
+        - path: /ecommerce/payment-providers
+          label: Payment Providers
+          icon: bank
+          permission: ecommerce.read

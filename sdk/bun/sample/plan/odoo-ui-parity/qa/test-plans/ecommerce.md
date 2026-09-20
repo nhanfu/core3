@@ -58,6 +58,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-022 | Product Variants | Durable variant records, deterministic fixtures, variant-specific pricelist/cart resolution, permissioned CRUD, combination/reference/price validation, stale writes, migration rerun, and restart persistence work | pass: `ecommerce_product_variants.integration.test.ts` — 4 tests, 27 assertions |
 | ECOM-FUNC-023 | Product Tag Variant Assignments | Durable variant tag relations, deterministic assignments, permissioned assign/remove, active/company/duplicate validation, stale writes, migration rerun, and restart persistence work | pass: `ecommerce_product_tag_variants.integration.test.ts` — 4 tests, 20 assertions |
 | ECOM-FUNC-024 | Payment Transactions | Durable checkout transactions expose unique references, amount/provider/payment state, company scope, guarded transitions, migration replay, and restart persistence | pass: `ecommerce_payment_transactions.integration.test.ts`; external provider execution remains open |
+| ECOM-FUNC-025 | Payment Providers | Durable company-scoped provider fixtures expose state/publication/features/availability, permissioned CRUD and disable/restore, validation, migration replay, and restart persistence | pass: `ecommerce_payment_providers.integration.test.ts`; credentials and external gateway execution remain open |
 
 ## Workflow and integration cases
 
@@ -83,6 +84,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-033 | Product export | Authorized Ecommerce reader exports current company-scoped product rows with stable escaped CSV columns; replay and restart preserve the source snapshot and edits are reflected by row version | pass: `ecommerce_product_export.integration.test.ts`; Core3 browser blocked by shared Inventory discovery |
 | ECOM-WF-034 | Variant configurator cart resolution | Authorized product-detail variant add validates the selected active/published/current-company combination, persists the variant-priced line, increments the same line idempotently, and survives restart for authenticated and anonymous carts | pass: `ecommerce_variant_configurator.integration.test.ts`; Core3 browser blocked by shared Inventory discovery and paired Odoo `/shop` 404 |
 | ECOM-WF-035 | Payment transaction lifecycle | Checkout creates one pending transaction per order; authorized/confirmed/canceled/error transitions require valid state, provider reference where applicable, company scope, and current row version; replay/restart preserve one durable transaction | pass: `ecommerce_payment_transactions.integration.test.ts`; live provider callback/capture/refund remains open |
+| ECOM-WF-036 | Payment provider configuration | Authorized Ecommerce editor creates/edits a company provider, validates technical code/state/features/amount, disables/restores it with optimistic concurrency, and preserves the provider across restart | pass: `ecommerce_payment_providers.integration.test.ts`; live credentials/module installation remains open |
 
 ## Permission and security cases
 
@@ -114,6 +116,7 @@ the all-customer scope.
 | ECOM-PERM-029 | Product export read/company boundary | `ecommerce.read` protects the Products page/query/export; company context excludes other-company rows and export performs no mutation or cross-company widening | pass: `ecommerce_product_export.integration.test.ts` |
 | ECOM-PERM-030 | Variant configurator cart boundary | `ecommerce.write` protects authenticated variant mutation; inactive, unpublished, cross-company, missing, and non-matching variants are rejected without changing the cart; anonymous YAML mutation requires a valid public cart and published current-company variant | pass: `ecommerce_variant_configurator.integration.test.ts` |
 | ECOM-PERM-031 | Payment transaction company/state boundary | `ecommerce.read` protects transaction list/state sources and `ecommerce.write` protects transitions; wrong-company, stale, invalid-state, and missing-provider-reference writes are rejected without changing the transaction | pass: `ecommerce_payment_transactions.integration.test.ts` |
+| ECOM-PERM-032 | Payment provider company/write boundary | `ecommerce.read` protects provider sources and `ecommerce.write` protects create/edit/disable/restore; duplicate code, wrong-company, invalid feature/amount, and stale writes preserve the provider catalog | pass: `ecommerce_payment_providers.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -136,6 +139,7 @@ the all-customer scope.
 | ECOM-UI-015 | Product export | 1440x900, 390x844 | Authenticated Core3 Products list exposes Export and downloads deterministic CSV; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture is additionally blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-export-001/` |
 | ECOM-UI-016 | Variant configurator cart resolution | 1440x900, 390x844 | Authenticated Core3 Product Detail variant rows expose Add to Cart and preserve the selected variant in Cart; paired Odoo comparison requires combination resolution but is blocked by exact `/shop` 404; Core3 capture is blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-variant-configurator-001/` |
 | ECOM-UI-017 | Payment Transactions list/state lifecycle | 1440x900, 390x844 | Authenticated Core3 Payment Transactions list renders deterministic references/statuses and status transition form at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by backend 502 | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-transactions-001/` |
+| ECOM-UI-018 | Payment Providers list/configuration | 1440x900, 390x844 | Authenticated Core3 Payment Providers list renders deterministic provider state/features and create/edit/disable controls at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by the backend/runtime boundary | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-providers-001/` |
 
 ## Reference blocker
 

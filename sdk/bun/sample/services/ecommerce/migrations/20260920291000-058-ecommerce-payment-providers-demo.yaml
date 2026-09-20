@@ -1,0 +1,17 @@
+version: 0.0.58
+kind: data
+description: deterministic eCommerce payment provider fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_payment_providers
+        (id, name, code, sequence, state, is_published, company_name, payment_method_codes, allow_tokenization, capture_manually, allow_express_checkout, support_refund, available_countries, available_currencies)
+      VALUES
+        ('ecommerce-provider-core3-offline', 'Core3 Offline', 'core3_offline', 10, 'enabled', TRUE, 'My Company', 'wire_transfer,cash_on_delivery', FALSE, 'none', FALSE, 'none', 'All countries', 'USD, EUR'),
+        ('ecommerce-provider-demo-gateway', 'Demo Gateway', 'demo_gateway', 20, 'test', TRUE, 'My Company', 'card', TRUE, 'full_only', TRUE, 'full_only', 'All countries', 'USD, EUR')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_payment_providers WHERE id IN ('ecommerce-provider-core3-offline', 'ecommerce-provider-demo-gateway');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

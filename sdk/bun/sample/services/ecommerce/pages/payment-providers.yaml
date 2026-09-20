@@ -1,0 +1,28 @@
+title: Payment Providers
+page: { id: ecommerce-payment-providers, route: /ecommerce/payment-providers, breadcrumb: [eCommerce, Configuration, Payment Providers], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_payment_providers
+    create_action: create_ecommerce_payment_provider
+    create_label: New Provider
+    search: { label: Search providers, placeholder: 'Search provider, code, or payment method...' }
+    filters: [{ field: state, label: State, options_source: ecommerce_payment_provider_states }]
+    responsive_card: true
+    columns:
+      - { field: name, label: Provider, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+      - { field: state, label: State, type: StatusChip }
+      - { field: payment_method_codes, label: Payment Methods }
+      - { field: allow_tokenization, label: Tokenization, type: Boolean }
+      - { field: capture_manually, label: Capture }
+      - { field: support_refund, label: Refund }
+      - { field: company_name, label: Company }
+    row_actions: menu
+    page_size: 50
+    row_key: id
+    empty_state: { title: No payment providers, description: Configure a payment provider for the current company. }
+    actions:
+      - { id: edit_ecommerce_payment_provider, label: Edit, permission: ecommerce.write }
+      - { id: archive_ecommerce_payment_provider, label: Disable, permission: ecommerce.write, show_if: "row.state !== 'disabled'", variant: danger }
+      - { id: restore_ecommerce_payment_provider, label: Enable Test Mode, permission: ecommerce.write, show_if: "row.state === 'disabled'" }

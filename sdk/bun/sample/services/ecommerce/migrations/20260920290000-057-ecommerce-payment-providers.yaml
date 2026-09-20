@@ -1,0 +1,38 @@
+version: 0.0.57
+kind: schema
+description: durable eCommerce payment providers
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_payment_providers (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        code VARCHAR NOT NULL UNIQUE,
+        sequence INTEGER NOT NULL DEFAULT 100,
+        state VARCHAR NOT NULL DEFAULT 'disabled',
+        is_published BOOLEAN NOT NULL DEFAULT FALSE,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        payment_method_codes VARCHAR NOT NULL DEFAULT '',
+        allow_tokenization BOOLEAN NOT NULL DEFAULT FALSE,
+        capture_manually VARCHAR NOT NULL DEFAULT 'none',
+        allow_express_checkout BOOLEAN NOT NULL DEFAULT FALSE,
+        support_refund VARCHAR NOT NULL DEFAULT 'none',
+        maximum_amount DECIMAL(12,2),
+        available_countries VARCHAR NOT NULL DEFAULT 'All countries',
+        available_currencies VARCHAR NOT NULL DEFAULT 'All currencies',
+        pending_message VARCHAR NOT NULL DEFAULT 'Your payment is waiting for approval.',
+        done_message VARCHAR NOT NULL DEFAULT 'Your payment has been processed.',
+        cancel_message VARCHAR NOT NULL DEFAULT 'Your payment has been cancelled.',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_payment_providers_company_code_idx
+        ON ecommerce_payment_providers(company_name, LOWER(code));
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_providers_order_idx
+        ON ecommerce_payment_providers(company_name, state, sequence, name, id);
+    down: DROP INDEX IF EXISTS ecommerce_payment_providers_order_idx; DROP INDEX IF EXISTS ecommerce_payment_providers_company_code_idx; DROP TABLE IF EXISTS ecommerce_payment_providers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
