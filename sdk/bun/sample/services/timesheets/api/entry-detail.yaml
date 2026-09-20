@@ -28,7 +28,7 @@ actions:
         const row = state.timesheet_detail;
         await request('/api/actions/timesheets.entries.print_report', {
           method: 'POST',
-          body: {
+          body: { values: {
             entry_id: row.id,
             expected_row_version: row.row_version,
             requested_by: row.employee_name,
@@ -36,9 +36,9 @@ actions:
             entry_row_version: row.row_version,
             current_user_name: row.employee_name,
             current_company_name: row.company_name,
-          },
+          } },
         });
-        window.print();
+        window.location.assign(`/timesheets/report-preview?id=${encodeURIComponent(String(row.id))}`);
       }
   - id: record_timesheet_report_run
     type: server

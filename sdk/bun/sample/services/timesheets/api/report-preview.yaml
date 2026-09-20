@@ -1,0 +1,47 @@
+page: { id: timesheet-report-preview }
+datasources:
+  - id: timesheet_report_preview
+    single: true
+    permission: timesheets.read
+    error_states:
+      missing_record: { status: 404, code: TIMESHEET_REPORT_PREVIEW_NOT_FOUND, message: The Timesheets report is no longer available. }
+      transport_error: { status: 503, code: TIMESHEET_REPORT_PREVIEW_UNAVAILABLE, message: The Timesheets report preview is temporarily unavailable. }
+    query: |
+      SELECT
+        t.id,
+        r.id AS report_run_id,
+        r.report_name,
+        t.name AS entry_name,
+        t.company_name,
+        t.employee_name,
+        t.project_name,
+        t.task_name,
+        CAST(t.work_date AS VARCHAR) AS work_date,
+        t.description,
+        t.hours,
+        printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display,
+        r.requested_by,
+        CAST(r.generated_at AS VARCHAR) AS generated_at,
+        r.entry_row_version,
+        t.row_version
+      FROM timesheet_report_runs r
+      JOIN timesheet_entries t ON t.id = r.entry_id
+      WHERE r.entry_id = :id
+        AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')
+      ORDER BY r.generated_at DESC, r.id DESC
+      LIMIT 1
+actions:
+  - id: print_timesheet_report_preview
+    type: client
+    permission: timesheets.read
+    script: |
+      // js
+      async () => {
+        window.print();
+      }
+  - id: back_to_timesheet_detail
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /timesheets/detail
+    params: { id: '{state.timesheet_report_preview.id}' }

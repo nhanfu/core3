@@ -769,3 +769,40 @@ exact reference blocker. Odoo mobile also records three aborted non-report
 asset/action requests; no report parity claim is made. Core3's browser print
 surface remains distinct from Odoo's QWeb/PDF renderer, and full module
 sign-off remains open.
+
+## Report preview renderer slice — `TIMESHEET-REPORT-PREVIEW-RENDERER` (2026-09-20)
+
+The remaining report gap after the entry, task, project, and task-line binding
+slices was the renderer itself. Odoo's `hr_timesheet.report_timesheet`
+template in `addons/hr_timesheet/report/report_timesheet_templates.xml` renders
+the Timesheets heading, date, employee, project/task context, description, Time
+Spent, and total for `account.analytic.line` rows. Core3 previously recorded a
+run and called `window.print()` from entry detail, but had no authenticated
+YAML-owned report document route.
+
+Core3 now separates the layout-only `/timesheets/report-preview` page from
+`api/report-preview.yaml` by `page.id`. The API reads the latest scoped durable
+`timesheet_report_runs` record and its analytic entry, while the page renders a
+read-only OdooFormView report document with Print and Back to entry actions.
+The existing entry Print action now posts its values through the generic YAML
+mutation envelope, persists the report run, and navigates to the preview. The
+contract enforces `timesheets.read` plus employee/company visibility; the
+underlying report mutation retains missing-entry, actor, company, stale-row,
+and invalid-request guards. Report creation/read is covered by deterministic
+CRUD-style tests and file-backed restart/replay persistence using migration
+`0.0.9`.
+
+Focused evidence is `test/timesheets_report_preview.integration.test.ts`
+(4 tests, 20 expectations). Clean isolated Timesheets verification passes 57
+tests / 436 expectations and the UI audit passes with 671 pages, 680 routes,
+and 1212 datasources. Scoped ESLint and `git diff --check` pass.
+
+Authenticated Core3 desktop/mobile evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-report-preview-renderer/`.
+Both viewports submit the report action with HTTP 200 and render the persisted
+report preview without horizontal overflow. Odoo `core3_reference` comparison
+at `/odoo/timesheets` shows the source list/kanban rows but no visible Print or
+report-preview action in either viewport, so the equivalent Odoo interaction
+is an exact reference blocker. One unrelated shell prefetch abort for
+`/api/v1/companies` is recorded in the evidence JSON; no Timesheets request
+failed. QWeb/PDF output parity and full module sign-off remain open.

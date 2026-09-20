@@ -112,6 +112,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-task-timesheets-report/`](../evidence/timesheets/2026-09-20/timesheet-task-timesheets-report/).
 - Disposition: **bounded Core3 slice verified; paired Odoo renderer execution, full route/action comparison, QWeb/PDF parity, and module sign-off remain pending**.
 
+### 2026-09-20 `TIMESHEET-REPORT-PREVIEW-RENDERER`
+
+- Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml` `report_timesheet` renders Timesheets, Date, Employee, optional Project/Task, Description, Time Spent, and a total for `account.analytic.line` rows.
+- Core3 contract: `timesheet-detail` and `timesheet-report-preview` remain page/API-separated by `page.id`; the entry Print action posts the YAML `values` envelope, records `timesheets.entries.print_report`, and navigates to a scoped read-only report document backed by `timesheet_report_runs`.
+- Focused gate: `bun test test/timesheets_report_preview.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 20 expectations. Clean isolated full suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 57 passed, 0 failed, 436 expectations.
+- Persistence/security gate: report create/read, migration replay, file-backed restart, employee/company visibility, missing-entry, actor, company, stale-row, and invalid-request guards pass. Scoped ESLint and `git diff --check` pass; clean isolated audit reports 671 pages, 680 routes, and 1212 datasources.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 submit the report action with HTTP 200, render the persisted preview, and remain viewport-width safe. The evidence JSON records one unrelated aborted `/api/v1/companies` shell prefetch and no Timesheets request failure.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/timesheets` desktop list and mobile kanban with seeded rows, but neither viewport exposes a visible Print/report-preview action, blocking the paired interaction comparison. This is an exact reference blocker, not a parity pass.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-report-preview-renderer/`](../evidence/timesheets/2026-09-20/timesheet-report-preview-renderer/).
+- Disposition: **bounded Core3 renderer verified; Odoo QWeb/PDF renderer equivalence, full route/action comparison, and module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,

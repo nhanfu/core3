@@ -55,6 +55,18 @@ paired at `/odoo/project/5`, where the project Actions menu has no Print item;
 the source report execution is therefore an exact reference blocker. This
 does not change the module status to signed off.
 
+The current bounded feature `TIMESHEET-REPORT-PREVIEW-RENDERER` closes the
+remaining Core3 renderer gap after the report binding slices. It adds the
+page/API-separated `/timesheets/report-preview` route, a scoped read-only
+report document, durable report-run creation/read, and the existing
+employee/company/stale/missing guards. The entry Print action now uses the
+YAML mutation envelope and navigates to the authenticated preview. Clean
+isolated verification passes 57 Timesheets tests / 436 expectations and the
+UI audit. Core3 desktop/mobile evidence is paired with authenticated Odoo
+Timesheets list/kanban evidence; Odoo exposes no equivalent visible Print or
+preview action, so that comparison remains an exact blocker. This does not
+change the module status to signed off.
+
 The current bounded feature `TIMESHEET-TASK-TIMESHEETS-REPORT` covers Odoo's
 remaining `timesheet_report_task_timesheets` analytic-line renderer. It adds a
 separate task-context `Print lines` page/API action, durable
