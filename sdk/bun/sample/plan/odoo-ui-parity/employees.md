@@ -1117,3 +1117,28 @@ permission boundaries, deterministic persistence, duplicate/stale/missing and
 invalid-login guards, rollback, migration replay, and file-backed restart.
 Authenticated Core3/Odoo desktop and mobile captures remain a required QA gate
 and must be recorded in the module evidence ledger before full-module sign-off.
+
+## EMP-TEMPLATE-LOAD-001: employee Payroll Load a Template (2026-09-20)
+
+Odoo's `hr_version_wizard_action` opens `hr.version.wizard` from the employee
+Payroll tab. Its company-scoped template is copied through the Odoo whitelist
+and linked to the employee's current version. Core3 implements this bounded
+workflow with separate `pages/employee-detail.yaml` and
+`api/employee-detail.yaml` contracts. The API exposes an employee wizard,
+company-eligible template options, and an atomic mutation updating employee
+contract fields plus current-version provenance.
+
+Migration `20260920190000-030-employee-template-load.yaml` adds
+`contract_template_id/name` to employees and employee versions and seeds the
+deterministic `Engineering Vietnam` template. Focused tests cover source
+mapping, durable copy, company/active/stale/template boundaries, migration
+replay, and file-backed restart.
+
+Focused verification is **4 tests / 26 assertions**; full Employees is
+**75 tests / 817 assertions**; audit is **671 pages / 680 routes / 1,216
+datasources**; scoped lint and diff-check pass. Authenticated Odoo Payroll and
+modal captures pass desktop/mobile in
+`evidence/employees/2026-09-20/EMP-TEMPLATE-LOAD-001/`. Authenticated Core3
+desktop/mobile evidence is an exact blocker: Admin session company is
+`Core3 Vietnam Branch`, seeded Employees data is `Core3 Vietnam`, and the
+list is empty. No UI pass or aggregate Employees sign-off is claimed.

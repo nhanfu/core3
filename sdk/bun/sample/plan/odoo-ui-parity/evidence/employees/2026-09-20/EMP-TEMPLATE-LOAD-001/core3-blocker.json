@@ -1,0 +1,57 @@
+{
+  "captured_at": "2026-09-20",
+  "feature_id": "EMP-TEMPLATE-LOAD-001",
+  "authenticated_actor": "admin@tms.local",
+  "session_company": "Core3 Vietnam Branch",
+  "fixture_company": "Core3 Vietnam",
+  "records": {
+    "desktop": {
+      "url": "http://127.0.0.1:3342/employees",
+      "title": "Employees",
+      "body": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nKanban\nList\nCards\nActivity\nGraph\nPivot\nNew employee\nHuman Resources / Employees\n0-0 / 0\n‹\n›\nNew\n0\nActive\n0\nOn leave\n0\nDeparted\n0",
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:3342/api/v1/companies",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3342/api/pages/employee-analysis?lc=en",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "http": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3342/api/pages/employees?lc=en",
+          "status": 200,
+          "body": "{\"title\":\"Employees\",\"page\":{\"id\":\"employees\",\"route\":\"/employees\",\"breadcrumb\":[\"Human Resources\",\"Employees\"],\"auth\":{\"require\":[\"employees.read\"]}},\"components\":[{\"type\":\"ListView\",\"variant\":\"odoo\",\"source\":\"employees\",\"create_action\":\"create_employee\",\"create_label\":\"New employee\",\"search\":{\"label\":\"Search employees\",\"placeholder\":\"Search employee number, name, or email...\"},\"filters\":[{\"field\":\"state\",\"label\":\"Status\",\"options_source\":\"employee_states\"},{\"field\":\"department_name\",\"label\":\"Department\",\"options_source\":\"employee_departments\"},{\"field\":\"active\",\"label\":\"Records\",\"options\":[{\"id\":\"true\",\"label\":\"Active\"},{\"id\":\"false\",\"label\":\"Archived\"}]}],\"group_by\":[{\"field\":\"manager_name\",\"label\":\"Manager\"},{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"job_title\",\"label\":\"Job Position\"},{\"field\":\"employment_type\",\"label\":\"Employee Type\"},{\"field\":\"state\",\"label\":\"Status\"}],\"view_navigation\":\"tabs\",\"views\":[{\"id\":\"kanban\",\"label\":\"Kanban\",\"icon\":\"dashboard\",\"mobile\":false,\"group_by\":\"state\",\"groups_source\":\"employee_states\",\"card\":{\"title\":\"name\",\"subtitle\":\"job_title\",\"image_field\":\"image_url\",\"fields\":[{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"work_phone\",\"label\":\"Work Phone\"},{\"field\":\"state\",\"label\":\"Status\"}]}},{\"id\":\"list\",\"label\":\"List\",\"icon\":\"table\",\"mobile\":false},{\"id\":\"card\",\"label\":\"Cards\",\"icon\":\"grid\",\"card\":{\"title\":\"name\",\"subtitle\":\"job_title\",\"image_field\":\"image_url\",\"fields\":[{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"state\",\"label\":\"Status\"}]}},{\"id\":\"activity\",\"label\":\"Activity\",\"icon\":\"activity\",\"mobile\":false,\"title_field\":\"name\",\"subtitle_field\":\"job_title\",\"record_date_field\":\"hire_date\",\"activity_types\":[{\"id\":\"todo\",\"label\":\"To-Do\",\"icon\":\"✓\"},{\"id\":\"email\",\"label\":\"Email\",\"icon\":\"✉\"},{\"id\":\"call\",\"label\":\"Call\",\"icon\":\"☎\"},{\"id\":\"meeting\",\"label\":\"Meeting\",\"icon\":\"◉\"},{\"id\":\"document\",\"label\":\"Document\",\"icon\":\"▣\"}],\"schedule_action\":\"view_employee\"},{\"id\":\"graph\",\"label\":\"Graph\",\"icon\":\"graph\",\"mobile\":false,\"category_field\":\"hire_date\",\"measure_field\":\"activity_count\",\"type\":\"line\"},{\"id\":\"pivot\",\"label\":\"Pivot\",\"icon\":\"pivot\",\"mobile\":false,\"pivot\":{\"fields\":[{\"field\":\"state\",\"column\":\"Status\"},{\"field\":\"department_name\",\"column\":\"Department\"},{\"field\":\"hire_date\",\"column\":\"Start Date\",\"type\":\"date\"},{\"field\":\"activity_count\",\"column\":\"Activities\"}],\"default\":{\"rows\":[\"department_name\"],\"columns\":[\"state\"],\"measures\":[{\"field\":\"activity_count\",\"aggregate\":\"sum\",\"column\":\"Activities\"}]},\"date_ranges\":{\"hire_date\":\"month\"}}}],\"columns\":[{\"field\":\"image_url\",\"label\":\"Avatar\",\"type\":\"Image\"},{\"field\":\"employee_number\",\"label\":\"Employee number\",\"type\":\"PrimaryEntityCell\"},{\"field\":\"name\",\"label\":\"Name\"},{\"field\":\"job_title\",\"label\":\"Job Position\"},{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"work_phone\",\"label\":\"Work Phone\"},{\"field\":\"state\",\"label\":\"Status\",\"type\":\"StatusChip\"}],\"page_size\":50,\"row_key\":\"id\",\"row_actions\":\"menu\",\"row_double_click_action\":\"view_employee\",\"form_view\":{\"page\":\"apps/services/employees/pages/employee-detail.yaml\",\"side_panel\":true},\"actions\":[{\"id\":\"archive_employee\",\"label\":\"Archive\",\"permission\":\"employees.write\",\"variant\":\"danger\",\"show_if\":\"row.active === true\"},{\"id\":\"restore_employee\",\"label\":\"Restore\",\"permission\":\"employees.write\",\"variant\":\"secondary\",\"show_if\":\"row.active === false\"}]}],\"actions\":[{\"id\":\"view_employee\",\"type\":\"navigate\",\"permission\":\"employees.read\",\"navigate_to\":\"/employees/detail\",\"params\":{\"id\":\"{row.id}\"}},{\"id\":\"create_employee\",\"type\":\"server_form\",\"permission\":\"employees.write\",\"title\":\"New employee\",\"action\":\"employees.records.create\",\"handler\":\"yaml_mutation\",\"operation\":\"create\",\"refresh\":[\"employees\"],\"mutation\":{\"operation\":\"insert\",\"table\":\"employees\",\"fields\":[\"employee_number\",\"name\",\"work_email\",\"work_phone\",\"company_name\",\"department_"
+        }
+      ]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:3342/employees",
+      "title": "Employees",
+      "body": "AU\nNew employee\nEmployees\n0-0 / 0\n‹\n›\nNo records found",
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:3342/api/v1/company",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3342/packages/client/src/components/Chart.ts",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "http": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3342/api/pages/employees?lc=en",
+          "status": 200,
+          "body": "{\"title\":\"Employees\",\"page\":{\"id\":\"employees\",\"route\":\"/employees\",\"breadcrumb\":[\"Human Resources\",\"Employees\"],\"auth\":{\"require\":[\"employees.read\"]}},\"components\":[{\"type\":\"ListView\",\"variant\":\"odoo\",\"source\":\"employees\",\"create_action\":\"create_employee\",\"create_label\":\"New employee\",\"search\":{\"label\":\"Search employees\",\"placeholder\":\"Search employee number, name, or email...\"},\"filters\":[{\"field\":\"state\",\"label\":\"Status\",\"options_source\":\"employee_states\"},{\"field\":\"department_name\",\"label\":\"Department\",\"options_source\":\"employee_departments\"},{\"field\":\"active\",\"label\":\"Records\",\"options\":[{\"id\":\"true\",\"label\":\"Active\"},{\"id\":\"false\",\"label\":\"Archived\"}]}],\"group_by\":[{\"field\":\"manager_name\",\"label\":\"Manager\"},{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"job_title\",\"label\":\"Job Position\"},{\"field\":\"employment_type\",\"label\":\"Employee Type\"},{\"field\":\"state\",\"label\":\"Status\"}],\"view_navigation\":\"tabs\",\"views\":[{\"id\":\"kanban\",\"label\":\"Kanban\",\"icon\":\"dashboard\",\"mobile\":false,\"group_by\":\"state\",\"groups_source\":\"employee_states\",\"card\":{\"title\":\"name\",\"subtitle\":\"job_title\",\"image_field\":\"image_url\",\"fields\":[{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"work_phone\",\"label\":\"Work Phone\"},{\"field\":\"state\",\"label\":\"Status\"}]}},{\"id\":\"list\",\"label\":\"List\",\"icon\":\"table\",\"mobile\":false},{\"id\":\"card\",\"label\":\"Cards\",\"icon\":\"grid\",\"card\":{\"title\":\"name\",\"subtitle\":\"job_title\",\"image_field\":\"image_url\",\"fields\":[{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"state\",\"label\":\"Status\"}]}},{\"id\":\"activity\",\"label\":\"Activity\",\"icon\":\"activity\",\"mobile\":false,\"title_field\":\"name\",\"subtitle_field\":\"job_title\",\"record_date_field\":\"hire_date\",\"activity_types\":[{\"id\":\"todo\",\"label\":\"To-Do\",\"icon\":\"✓\"},{\"id\":\"email\",\"label\":\"Email\",\"icon\":\"✉\"},{\"id\":\"call\",\"label\":\"Call\",\"icon\":\"☎\"},{\"id\":\"meeting\",\"label\":\"Meeting\",\"icon\":\"◉\"},{\"id\":\"document\",\"label\":\"Document\",\"icon\":\"▣\"}],\"schedule_action\":\"view_employee\"},{\"id\":\"graph\",\"label\":\"Graph\",\"icon\":\"graph\",\"mobile\":false,\"category_field\":\"hire_date\",\"measure_field\":\"activity_count\",\"type\":\"line\"},{\"id\":\"pivot\",\"label\":\"Pivot\",\"icon\":\"pivot\",\"mobile\":false,\"pivot\":{\"fields\":[{\"field\":\"state\",\"column\":\"Status\"},{\"field\":\"department_name\",\"column\":\"Department\"},{\"field\":\"hire_date\",\"column\":\"Start Date\",\"type\":\"date\"},{\"field\":\"activity_count\",\"column\":\"Activities\"}],\"default\":{\"rows\":[\"department_name\"],\"columns\":[\"state\"],\"measures\":[{\"field\":\"activity_count\",\"aggregate\":\"sum\",\"column\":\"Activities\"}]},\"date_ranges\":{\"hire_date\":\"month\"}}}],\"columns\":[{\"field\":\"image_url\",\"label\":\"Avatar\",\"type\":\"Image\"},{\"field\":\"employee_number\",\"label\":\"Employee number\",\"type\":\"PrimaryEntityCell\"},{\"field\":\"name\",\"label\":\"Name\"},{\"field\":\"job_title\",\"label\":\"Job Position\"},{\"field\":\"department_name\",\"label\":\"Department\"},{\"field\":\"work_email\",\"label\":\"Work Email\"},{\"field\":\"work_phone\",\"label\":\"Work Phone\"},{\"field\":\"state\",\"label\":\"Status\",\"type\":\"StatusChip\"}],\"page_size\":50,\"row_key\":\"id\",\"row_actions\":\"menu\",\"row_double_click_action\":\"view_employee\",\"form_view\":{\"page\":\"apps/services/employees/pages/employee-detail.yaml\",\"side_panel\":true},\"actions\":[{\"id\":\"archive_employee\",\"label\":\"Archive\",\"permission\":\"employees.write\",\"variant\":\"danger\",\"show_if\":\"row.active === true\"},{\"id\":\"restore_employee\",\"label\":\"Restore\",\"permission\":\"employees.write\",\"variant\":\"secondary\",\"show_if\":\"row.active === false\"}]}],\"actions\":[{\"id\":\"view_employee\",\"type\":\"navigate\",\"permission\":\"employees.read\",\"navigate_to\":\"/employees/detail\",\"params\":{\"id\":\"{row.id}\"}},{\"id\":\"create_employee\",\"type\":\"server_form\",\"permission\":\"employees.write\",\"title\":\"New employee\",\"action\":\"employees.records.create\",\"handler\":\"yaml_mutation\",\"operation\":\"create\",\"refresh\":[\"employees\"],\"mutation\":{\"operation\":\"insert\",\"table\":\"employees\",\"fields\":[\"employee_number\",\"name\",\"work_email\",\"work_phone\",\"company_name\",\"department_"
+        }
+      ]
+    }
+  }
+}

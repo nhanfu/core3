@@ -3,7 +3,7 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, contract_template_id, contract_template_name, timezone, barcode, presence, skills, resume_summary, street, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
   - id: employee_departure_wizard
     single: true
     permission: employees.read
@@ -60,6 +60,29 @@ datasources:
         AND (p.department_name IS NULL OR p.department_name = e.department_name)
         AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
       ORDER BY p.name, p.id
+  - id: employee_contract_template_wizard
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_TEMPLATE_EMPLOYEE_NOT_FOUND, message: Active employee not found for contract template loading. }
+      transport_error: { status: 503, code: EMPLOYEES_TEMPLATE_WIZARD_UNAVAILABLE, message: Contract template loading is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name AS employee_name, e.company_name, e.active,
+        e.contract_template_id, e.contract_template_name
+      FROM employees e
+      WHERE e.id = :id AND e.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_contract_templates_for_employee
+    single: false
+    permission: employees.write
+    query: |
+      SELECT t.id AS value, t.name AS label
+      FROM employee_contract_templates t
+      JOIN employees e ON e.id = :employee_id
+      WHERE t.active = true
+        AND (t.company_name IS NULL OR t.company_name = e.company_name)
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY t.name, t.id
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -158,6 +181,37 @@ actions:
     fields:
       - { field: plan_id, label: Activity Plan, type: select, options_source: employee_launch_plans, required: true }
       - { field: plan_date, label: Plan Date, type: text, required: true, placeholder: YYYY-MM-DD }
+  - id: load_employee_contract_template
+    type: server_form
+    permission: employees.write
+    title: Load a Template
+    description: Copy the selected company contract template into the employee's active contract version.
+    action: employees.records.load_contract_template
+    handler: yaml_mutation
+    operation: load_contract_template
+    params: { employee_id: '{state.id}' }
+    prefill: state.employee_contract_template_wizard
+    refresh: [employee_detail, employee_contract_template_wizard, employee_versions]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employees WHERE id = :employee_id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_TEMPLATE_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :employee_id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the contract template was loaded. Refresh and try again. }
+        - { query: "SELECT t.id FROM employee_contract_templates t JOIN employees e ON e.id = :employee_id WHERE t.id = :template_id AND t.active = true AND (t.company_name IS NULL OR t.company_name = e.company_name) AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)", status: 422, code: EMPLOYEES_TEMPLATE_NOT_ELIGIBLE, message: Select an active contract template for the employee's company. }
+      steps:
+        - query: "UPDATE employees SET job_position_name = (SELECT job_position FROM employee_contract_templates WHERE id = :template_id), department_name = (SELECT department_name FROM employee_contract_templates WHERE id = :template_id), employment_type = (SELECT contract_type FROM employee_contract_templates WHERE id = :template_id), wage = (SELECT wage FROM employee_contract_templates WHERE id = :template_id), working_schedule = (SELECT working_schedule FROM employee_contract_templates WHERE id = :template_id), contract_template_id = :template_id, contract_template_name = (SELECT name FROM employee_contract_templates WHERE id = :template_id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :employee_id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the contract template was loaded. Reload the employee and try again.
+        - query: "UPDATE employee_versions SET job_name = (SELECT job_position FROM employee_contract_templates WHERE id = :template_id), department_name = (SELECT department_name FROM employee_contract_templates WHERE id = :template_id), contract_type_name = (SELECT contract_type FROM employee_contract_templates WHERE id = :template_id), wage = (SELECT wage FROM employee_contract_templates WHERE id = :template_id), schedule_name = (SELECT working_schedule FROM employee_contract_templates WHERE id = :template_id), contract_template_id = :template_id, contract_template_name = (SELECT name FROM employee_contract_templates WHERE id = :template_id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :employee_id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :employee_id AND active = true AND contract_date_start <= DATE '2026-01-15')"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_TEMPLATE_VERSION_NOT_FOUND
+          message: The employee has no active contract version to update.
+      result: { query: "SELECT * FROM employees WHERE id = :employee_id" }
+    fields:
+      - { field: template_id, label: Contract Template, type: select, options_source: employee_contract_templates_for_employee, required: true }
   - id: edit_employee
     type: server_form
     permission: employees.write

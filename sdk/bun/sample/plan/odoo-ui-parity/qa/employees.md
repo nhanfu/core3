@@ -519,3 +519,15 @@ Reasons comparison.
 - Remaining gaps are explicit: no distinct browser `/api/query` request was
   observed (rendered datasource data was verified), and Odoo Departure Reasons
   detail/action state was not reached. No implementation files were changed.
+
+## EMP-TEMPLATE-LOAD-001 evidence ledger (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-010 | Odoo Load a Template wizard, employee/version copy, retry and restart | pass; 4 focused tests / 26 assertions |
+| EMP-PERM-010 | employees.write, active/company/template and stale guards | pass; rejected writes leave both records unchanged |
+| EMP-UI-006 | Authenticated Core3/Odoo desktop/mobile Payroll/modal comparison | Odoo pass; Core3 exact blocker recorded because active company `Core3 Vietnam Branch` has no seeded employee rows for `Core3 Vietnam` |
+
+Evidence is under `evidence/employees/2026-09-20/EMP-TEMPLATE-LOAD-001/`.
+This bounded slice is not module sign-off; the Core3 fixture-company blocker and
+broader Employees parity review remain conditional.

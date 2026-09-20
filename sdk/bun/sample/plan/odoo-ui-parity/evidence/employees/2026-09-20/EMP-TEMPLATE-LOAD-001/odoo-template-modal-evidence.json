@@ -1,0 +1,28 @@
+{
+  "captured_at": "2026-09-20",
+  "feature_id": "EMP-TEMPLATE-LOAD-001",
+  "desktop": {
+    "body": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nCONTRACT OVERVIEW\nLoad a Template\nContract\nAug 1\nto\nNov 10\nNew Contract\nWage?\n$ \n6,500.00\n$ \nEmployee Type\nContract Type\nPay Category\nSCHEDULE\nWorking Hours?\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created\n\nContract Template Load\nContract Template?\nLoad\nDiscard",
+    "inputs": 13,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:8069/mail/data",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  },
+  "mobile": {
+    "body": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nCONTRACT OVERVIEW\nLoad a Template\nContract\nAug 1\nto\nNov 10\nNew Contract\nWage?\n$ \n6,500.00\n$ \nEmployee Type\nContract Type\nPay Category\nSCHEDULE\nWorking Hours?\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created\n\nContract Template Load\nContract Template?\nLoad\nDiscard",
+    "inputs": 13,
+    "errors": [],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:8069/mail/data",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "http": []
+  }
+}

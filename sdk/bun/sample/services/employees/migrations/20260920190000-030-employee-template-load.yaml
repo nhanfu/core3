@@ -1,0 +1,24 @@
+version: 0.0.30
+kind: data
+description: Persist employee contract-template links and seed a company-eligible HR template
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS contract_template_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS contract_template_name VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS contract_template_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS contract_template_name VARCHAR;
+      INSERT OR IGNORE INTO employee_contract_templates
+        (id, row_version, name, job_position, department_name, hr_responsible_name, wage, contract_type, pay_category, working_schedule, company_name, effective_date, active)
+      VALUES
+        ('contract-template-engineering-vietnam', 1, 'Engineering Vietnam', 'Engineering Manager', 'Engineering', 'HR Manager', 4200.00, 'Permanent', 'Employee', 'Standard 40 hours/week', 'Core3 Vietnam', DATE '2026-01-15', true);
+    down: |
+      DELETE FROM employee_contract_templates WHERE id = 'contract-template-engineering-vietnam';
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS contract_template_name;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS contract_template_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS contract_template_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS contract_template_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

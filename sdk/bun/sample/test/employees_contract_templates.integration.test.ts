@@ -53,14 +53,14 @@ describe('Employees Contract Templates parity', () => {
     expect(discovered.pageDatasources.get('employee-contract-template-detail')).toContain('employee_contract_template_detail');
   });
 
-  test('seeds the two live Odoo templates and supports search, empty, detail, and transport states idempotently', async () => {
+  test('seeds the two live Odoo templates plus the company-eligible load fixture and supports search, empty, detail, and transport states idempotently', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'employees_contract_templates_acceptance', ['schema', 'data']);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'employees_contract_templates_acceptance', ['schema', 'data']);
     const listSource = yaml('api/contract-templates.yaml').datasources[0];
     const populated = await repository.querySource(listSource, { q: null, active: null, job_position: null, department_name: null, contract_type: null, working_schedule: null, fixture_state: null }, 0, 50);
-    expect(populated.data.map((row: any) => row.name)).toEqual(['Developer USA', 'HR Manager']);
+    expect(populated.data.map((row: any) => row.name)).toEqual(['Developer USA', 'Engineering Vietnam', 'HR Manager']);
     expect(populated.data[0]).toMatchObject({ job_position: 'Experienced Developer', department_name: 'R&D USA', wage: 3000, contract_type: 'Permanent', pay_category: 'Employee', working_schedule: 'Standard 38 hours/week', active_label: 'Current' });
     expect((await repository.querySource(listSource, { q: 'developer', active: null, job_position: null, department_name: null, contract_type: null, working_schedule: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Developer USA']);
     expect((await repository.querySource(listSource, { q: null, active: null, job_position: null, department_name: 'Administration', contract_type: null, working_schedule: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['HR Manager']);

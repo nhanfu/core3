@@ -102,3 +102,12 @@ The route matrix is enumerated in
 The browser artifacts are under
 `evidence/employees/2026-09-20/EMP-ROUTE-CRUD-GATE-001/`. No new source-backed
 feature was missing after the settled route/data/permission pass.
+
+## EMP-TEMPLATE-LOAD-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-010 | Employee Payroll / Load a Template | Eligible company template copies to employee and active version; stale/retry is safe | pass |
+| EMP-PERM-010 | Template actor/company boundary | employees.write is required; wrong company, inactive employee, ineligible template, and stale row reject without writes | pass |
+| EMP-DATA-010 | Restart durability | Template provenance and copied fields remain after migration replay and DuckDB restart | pass |
+| EMP-UI-006 | Core3/Odoo desktop and mobile | Odoo modal captured; Core3 authenticated company/fixture mismatch is an exact blocker | conditional |

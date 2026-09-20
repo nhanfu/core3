@@ -159,3 +159,24 @@ detail Edit/Archive and Odoo create/inline-edit were reachable. Company context
 remains verified. Status is **PASS for list/company context, PARTIAL for full
 parity**: no distinct browser `/api/query` request was observed, and Odoo
 Departure Reasons detail/action state was not reached. No full sign-off.
+
+## EMP-TEMPLATE-LOAD-001 (2026-09-20)
+
+- Selected gap: Odoo employee Payroll `hr_version_wizard_action` / Load a Template.
+- Added page/API-separated employee action and eligible-template datasource;
+  migration `20260920190000-030-employee-template-load.yaml` persists template
+  provenance on the employee and active contract version.
+- Guards require `employees.write`, active/current-company employee scope,
+  eligible active template, and the employee row version. Focused coverage
+  includes migration replay and file-backed restart.
+- Verification: focused **4 tests / 26 assertions**; full Employees **75 tests /
+  817 assertions**; audit **671 pages / 680 routes / 1,216 datasources**;
+  scoped ESLint and diff-check passed.
+- Evidence: `evidence/employees/2026-09-20/EMP-TEMPLATE-LOAD-001/`.
+  Authenticated Odoo desktop/mobile Payroll and modal captures pass. Core3
+  desktop/mobile is an exact blocker: Admin session company is `Core3 Vietnam
+  Branch`, deterministic Employees fixtures are `Core3 Vietnam`, and the list
+  is empty. No UI pass or module sign-off claimed.
+
+Verification trigger: feature-complete with authenticated Core3 fixture-scope blocker
+Candidate commit: current working tree
