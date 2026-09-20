@@ -153,7 +153,7 @@ catalog records, and manufacturing/inventory records.
 `auth` and `ai` are Core3 infrastructure, not Odoo-clone modules, and are outside
 this register.
 
-## Required gate for every sub-plan
+## Required analysis and acceptance gate for every sub-plan
 
 1. Record the exact Odoo menu tree first: application, menu, submenu, action,
    ordering, visibility groups, route/action context, and every screen reached
@@ -161,38 +161,64 @@ this register.
 2. Record the Odoo addon/version and whether its manifest provides official demo
    data.
 3. Enumerate every visible menu, action, and view state.
-4. Identify Odoo screenshots/routes at desktop and mobile viewports.
-5. Declare deterministic Core3 YAML seed data and the real backend datasource
+4. Break the module into functional areas and small checklist items. Give every
+   item a stable ID and record its Odoo menu/action, user goal, inputs, outputs,
+   state transitions, permissions, persistence, integrations, and expected
+   desktop/mobile behavior. Include items for hidden, empty, error, modal,
+   report, import/export, and workflow states where applicable.
+5. Inspect the current Core3 source for every checklist item before cloning.
+   Search the existing manifests, pages, YAML API/action contracts, services,
+   migrations, components, routes, styles, tests, and seed data. Record exact
+   source paths and classify each item as `implemented`, `partial`, `missing`,
+   or `incompatible` with Odoo.
+6. Create a gap matrix mapping each Odoo functionality to the current Core3
+   implementation, missing behavior, required change, dependency, and planned
+   test/evidence case. The matrix is the source of truth for the clone scope;
+   do not reimplement functionality that already satisfies the comparison.
+7. Identify Odoo screenshots/routes at desktop and mobile viewports.
+8. Declare deterministic Core3 YAML seed data and the real backend datasource
    contract for every list, form, kanban, calendar, chart, report, pivot,
    dashboard, and empty state shown by the module. Tests may use the seed
    provider, but accepted runtime behavior must use real service queries and
    mutations without changing the page-layout YAML contract.
-6. Specify the exact screen layout, colors, spacing, tabs, sections, components,
+9. Specify the exact screen layout, colors, spacing, tabs, sections, components,
    and visible text to be matched, including the ListView tab-navigation rule.
-7. Identify shared UI primitives required by the module; do not implement new
+10. Identify shared UI primitives required by the module; do not implement new
    primitives before recording them here.
-8. Define visual, menu-order, responsive, interaction, permission, and
+11. Define visual, menu-order, responsive, interaction, permission, and
    fixture-data acceptance checks, including the required headless comparison.
 
-Only after all eight are written does implementation begin.
+Only after the Odoo inventory, functionality checklist, current-source
+comparison, gap matrix, and acceptance checks are written does cloning or
+development begin.
 
 The shared mock-data contract is defined in
 `odoo-ui-parity/screen-mock-data.md` and applies to every module sub-plan.
 
-## Required QA test plan before implementation
+## Single-agent module lifecycle
 
-The existing `qa/<module>.md` files are execution ledgers, not complete test
-plans. Before a developer starts a module, its assigned QA owner MUST create
-the detailed test plan at
+Each registered module has exactly one persistent developer agent. That agent
+owns the complete module goal from Odoo analysis through implementation,
+testing, verification, evidence capture, repair, and sign-off. There are no
+separate developer, QA, reviewer, or merge-agent roles for a module, and no
+feature-slice agents may be created.
+
+The main agent may dispatch work and integrate completed module changes, but it
+does not create another role for analysis, testing, review, screenshots, or
+repairs. A stopped module agent resumes the same worktree and context; it is
+not replaced by a new agent.
+
+Before implementation, the module developer MUST create or update the
+module-specific verification plan at
 `odoo-ui-parity/qa/test-plans/<module>.md`, using
-`odoo-ui-parity/qa/test-plans/_template.md`. The developer may not mark a
-module ready for implementation until that test plan has been reviewed by the
-main agent.
+`odoo-ui-parity/qa/test-plans/_template.md`. This is a developer-owned test
+plan, not a handoff to another role.
 
-Each module test plan must be a long, module-specific checklist derived from
-the Odoo menu/action inventory and must include concrete case IDs, setup data,
+Each module test plan must be a module-specific checklist derived from the Odoo
+functionality checklist and Core3 gap matrix. It must include concrete case
+IDs, setup data,
 actor/permission boundary, exact action or route, expected result, persistence
-assertion, and required evidence. At minimum, QA must cover:
+assertion, and required evidence. At minimum, the developer must cover:
 
 - every menu, submenu, action, view mode, visible tab, search/filter/group,
   sort, pagination, empty state, loading state, error state, and responsive
@@ -222,9 +248,63 @@ assertion, and required evidence. At minimum, QA must cover:
   workflow state.
 
 Each case is classified as `functional`, `data`, `permission`, `workflow`,
-`integration`, `visual`, `responsive`, `security`, or `regression`. A module
-cannot receive QA sign-off while a required case is unplanned, unexecuted, or
+`integration`, `visual`, `responsive`, `security`, or `regression`. The module
+developer cannot sign off while a required case is unplanned, unexecuted, or
 marked pass without evidence.
+
+## Required feature-by-feature development loop
+
+The module developer MUST execute the following loop for every smallest
+feature/checklist item, not once for the module as a whole. A feature may be a
+single action, field group, view mode, workflow transition, modal, report,
+import/export path, permission boundary, or responsive state. Do not combine
+unrelated checklist items into one untraceable implementation batch.
+
+For each feature ID:
+
+1. Select the smallest unfinished checklist item and link it to its Odoo
+   menu/action, source-comparison row, gap-matrix row, test cases, and evidence
+   folder.
+2. Re-analyze the exact Odoo behavior immediately before development. Record
+   every label, tooltip, placeholder, default, field type, required rule,
+   validation message, button state, keyboard/mouse interaction, loading state,
+   empty state, error state, notification, modal, navigation result, workflow
+   transition, permission boundary, and desktop/mobile difference.
+3. Re-check the current Core3 source for that feature and identify the exact
+   files, contracts, components, queries, mutations, migrations, styles, tests,
+   and shared primitives to reuse or change. Record why each existing behavior
+   is sufficient, partial, or unsafe to reuse.
+4. Write the feature acceptance checklist before coding. It must cover backend
+   persistence and API behavior, UI structure and text, valid and invalid
+   inputs, boundary and missing-data cases, permissions, workflow side effects,
+   responsive states, and regression impact on already completed features.
+5. Clone the Odoo behavior in the required order: data/schema and migrations,
+   service/API/action contracts, permissions and workflows, then declarative
+   page/UI behavior and styling. Keep the feature ID in relevant commits,
+   tests, progress entries, and evidence names.
+6. Test the feature at its smallest useful boundary: focused unit or contract
+   tests, datasource/API tests, persistence and reload/restart checks, CRUD and
+   permission checks, workflow/error cases, and affected regression tests.
+7. Verify the actual authenticated Odoo and Core3 browser behavior at desktop
+   and mobile sizes. Exercise the feature through its real menu, route, form,
+   modal, notification, and workflow transitions; do not treat YAML parsing,
+   API-only calls, or static screenshots as feature completion.
+8. Capture the complete feature evidence, including before/after comparison
+   screenshots, test output, browser console/trace output when relevant, and
+   API/database assertions. Store it under
+   `odoo-ui-parity/evidence/<module>/<YYYY-MM-DD>/<feature-id>/`.
+9. Repair every mismatch or failed case, repeat testing and browser
+   verification, and update the feature evidence rather than merely recording
+   an unresolved pass.
+10. Mark the feature complete only when every checklist item has a result and
+    evidence path. Then start the next feature. If a shared primitive or
+    contract changes, re-run all previously completed feature checks affected
+    by that change.
+
+The developer must keep the feature checklist, source comparison, test result,
+verification result, repair history, and evidence linked by the same stable
+feature ID. A module cannot be signed off while any feature is only partially
+implemented, verified through a bypass, or missing its detail-level evidence.
 
 ## Shared agent contribution rules
 
@@ -234,161 +314,121 @@ marked pass without evidence.
   frontend, in-memory DuckDB, and loads the requested module plus `auth` for
   session/login support. File watching is disabled; restart it manually after
   source changes.
-- There are exactly 38 persistent module owners: one Luna medium-effort
-  sub-agent for every actual module row in the module register. Agent counts
-  are supplied with each goal submission, not hard-coded in this plan:
-  `DEV_AGENTS`, `QA_AGENTS`, and `REVIEW_AGENTS`. For the squad model, these
-  values are equal: `SQUADS = DEV_AGENTS = QA_AGENTS = REVIEW_AGENTS`, and
-  `SQUADS * 3 <= 16`. Each squad contains one developer, one QA owner, and one
-  review/merge owner. The scheduler must never exceed 16 worker agents in
-  total, including shared-tooling and integration workers; the main agent is
-  the 17th dispatcher and does not count as a worker. Unused capacity remains
-  idle. A QA or reviewer must not be silently shared across squads unless the
-  goal explicitly declares that exception.
-  `auth` and `ai` are excluded because they are Core3 infrastructure, not
-  registered Odoo modules.
-- A module owner receives the complete module goal, not a short UI slice. It
-  remains responsible for menu/action inventory, domain model and migrations,
-  APIs/services, permissions, workflows, UI, seeded data, CRUD, regression
-  tests, authenticated browser proof, and visual comparison until parity is
-  signed off or an exact source blocker is recorded. Do not respawn or rotate
-  owners for slices, retries, screenshots, or bug fixes.
-- A module owner's assignment, worktree, branch, ledger, and implementation
+- There are exactly 38 persistent module developers: one agent for every
+  actual module row in the module register. The module count is derived from
+  this plan, not multiplied into QA, review, or merge roles. The scheduler may
+  run as many module developers concurrently as the active goal permits,
+  subject to the global worker limit. `auth` and `ai` are excluded because
+  they are Core3 infrastructure, not registered Odoo modules.
+- A module developer receives the complete module goal, not a short UI slice.
+  It remains responsible for Odoo analysis, menu/action inventory, domain
+  model and migrations, APIs/services, permissions, workflows, UI, seeded
+  data, CRUD, regression tests, authenticated browser proof, visual comparison,
+  evidence capture, and repairs until parity is signed off or an exact source
+  blocker is recorded. Do not respawn or rotate the developer for retries,
+  screenshots, or bug fixes.
+- A module developer's assignment, worktree, branch, ledger, and implementation
   context are durable, but its process does not need to remain active. The
-  main agent dispatches bounded implementation, repair, regression, or evidence
-  tasks to the same module owner and resumes context from the module plan,
-  progress file, commits, and open findings. Do not create a new durable
-  developer agent for each event or feature slice.
+  main agent dispatches bounded lifecycle tasks to the same developer and
+  resumes context from the module plan, progress file, commits, evidence, and
+  open findings. Do not create a new agent for each lifecycle event or feature
+  slice.
 - Worktrees are isolated from the active checkout. Owners commit only their
   module changes and never merge, cherry-pick, or edit another module's
   worktree. Cross-module contracts and dependencies are documented for the
   main agent to integrate in dependency order.
-- The main agent is dispatch-only. It maintains the wave queue and ownership
-  registry, dispatches bounded tasks, passes exact event payloads to developers,
-  QA, and the review/merge agent, and reports their recorded results. It does
-  not review code, run acceptance tests, resolve conflicts, cherry-pick, merge,
-  or edit implementation and ledger files during normal wave execution.
-- A separate persistent review/merge agent is the integration gate. It reviews
-  every candidate diff and commit, checks ownership boundaries and warnings,
-  runs targeted and shared tests, audits routes/contracts, verifies authenticated
-  Odoo/Core3 browser evidence, resolves integration conflicts, and cherry-picks
-  or merges only validated commits into the active branch. This agent is a
-  bounded worker slot and must be included in the 16-worker limit.
+- The main agent maintains the dispatch registry and integrates completed
+  module changes. It dispatches only to the existing module developer and does
+  not create a second role for testing, review, merge, screenshots, or repairs.
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use the submitted number of squads for each wave. Each squad is explicitly
-  mapped to a module owner and its QA and review/merge partners. QA does not
-  need a continuously active process or a separate durable product goal, but
-  each QA owner has a durable module test plan and QA ledger. The review/merge
-  owner receives the same candidate immediately after QA returns `pass`.
-  QA creates and reviews the detailed test plans before development, then
-  consumes the exact Core3 process or worktree spawned by each paired
-  developer, runs the planned functional and authenticated Odoo/Core3 browser
-  cases, records failures, and re-tests fixes. Each module's results, failures,
-  and repairs are recorded in
-  `odoo-ui-parity/qa/<module>.md`; its pre-development cases are recorded in
-  `odoo-ui-parity/qa/test-plans/<module>.md`. The module owner must respond to
-  QA findings and retain ownership until all required cases pass or an exact
-  blocker is recorded.
-- A wave is a set of independent squads, not a barrier sequence. Each squad
-  follows `qa-plan -> development -> QA -> review/merge`, and the review step
-  starts immediately after that squad's QA pass. Other squads continue their
-  own stages concurrently. A QA result is a bounded pass, defect list, or
-  blocker per module. The same developer repairs findings, the same QA owner
-  retests them, and the same reviewer re-reviews the repair. Only dependency
-  conflicts, shared-file ownership, or global infrastructure changes may pause
-  a squad or downstream dispatch.
-- At goal submission, record `SQUADS`, `DEV_AGENTS`, `QA_AGENTS`,
-  `REVIEW_AGENTS`, `MAX_WORKERS=16`, and the module mapping in the dispatch
-  record. For example, `SQUADS=5` creates 5 developers, 5 QA owners, and 5
-  review/merge owners. Each squad may immediately advance its own module while
-  the other four squads are still developing.
-- QA triggers are `test-plan-ready`, `feature-complete`, `merge-candidate`,
-  `post-merge`, `refactor-impact`, and `release`. The module owner records the
-  trigger and candidate commit in its module progress file; the main agent
-  creates a bounded event task for the mapped QA owner with the module id,
-  developer process/worktree, candidate commit, and exact test-plan path. The
-  QA owner activates only for that event, tests the same Core3 process spawned
-  by the developer, and deactivates after recording the result. On `pass`, the
-  main agent dispatches the same candidate immediately to that squad's
-  review/merge owner. No QA or review slot continuously polls, starts duplicate
-  processes, or tests uncommitted developer work.
-- `odoo-ui-parity/progress.md` is the QA-maintained aggregate and sign-off
-  ledger. Module agents must not edit it directly. Each module agent
-  owns and may update only `odoo-ui-parity/progress/<module>.md`, following
-  `odoo-ui-parity/progress/README.md`. The assigned QA owners consolidate
-  verified module results into `progress.md` after verification. Intermediate
-  commits and failing attempts belong in the matching module QA ledger.
-- Every completed module must have corresponding test-case entries and a
-  tester result before its progress row can say parity-signed-off. A source
-  blocker may be recorded only with the exact missing addon/action evidence;
-  it is not a visual parity sign-off.
+- Each module developer follows the same sequence:
+  `odoo-analysis -> functionality-checklist -> source-comparison -> gap-matrix
+  -> verification-plan -> feature-loop -> clone -> development -> test -> verify
+  -> evidence -> repair -> developer-sign-off`. The feature loop repeats the
+  clone/development/test/verify/evidence cycle for every smallest checklist
+  item. A module may not skip the current-source comparison and begin cloning
+  or developing in Core3.
+- Lifecycle events are dispatched to the same developer. Typical triggers are
+  `analysis-ready`, `clone-ready`, `feature-complete`, `verification-failed`,
+  `refactor-impact`, and `release`. The developer records the trigger, current
+  commit, test-plan path, and evidence path in its module progress file.
+- `odoo-ui-parity/progress.md` is the aggregate sign-off ledger. Each module
+  developer owns and may update only its module progress file, following
+  `odoo-ui-parity/progress/README.md`, its verification ledger, and its
+  evidence folder. The main agent may consolidate verified module results into
+  `progress.md` during integration. Intermediate commits and failing attempts
+  belong in the matching module ledger.
+- Every completed module must have corresponding test-case entries, developer
+  test results, authenticated browser verification, and evidence paths before
+  its progress row can say parity-signed-off. A source blocker may be recorded
+  only with the exact missing addon/action evidence; it is not a visual parity
+  sign-off.
 - CRUD screens must use `FormView` for create and edit flows. Avoid bespoke or
   ugly CRUD modals. If a modal is required by the Odoo interaction, define the
   modal as a YAML-managed form contract and render it through `FormView`, so
   its fields, validation, permissions, and actions remain declarative and
   maintainable.
 
-## Shared verification and repair ledger
+## Shared verification and evidence ledger
 
 The module-level plan files describe Odoo behavior and implementation scope.
-Each module has its own execution ledger at
+Each module has its own developer-owned execution ledger at
 `odoo-ui-parity/qa/<module>.md`, with separate test-case and bug-fix tables.
 The aggregate progress file tracks only cross-module status:
 
-- `odoo-ui-parity/qa/<module>.md` is the canonical QA and repair ledger for
-  that module. It records the Odoo route/action, Core3 route, fixture/state,
+- `odoo-ui-parity/qa/<module>.md` is the canonical module verification and
+  repair ledger. It records the Odoo route/action, Core3 route, fixture/state,
   verification trigger, desktop/mobile capture paths, test result, observed
-  mismatch, evidence, owner, fix commit, regression test, retest result, and
-  blocker.
+  mismatch, evidence, developer, fix commit, regression test, retest result,
+  and blocker.
 
-The assigned QA owner must update the relevant module ledger as part of every
-verification pass. Do not combine module QA histories into one file. Module
-agents may update only their own progress and QA files; QA agents may update
-only the QA ledgers for their assigned modules. No agent may edit the
-aggregate `progress.md` directly.
-Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
-added to Git.
+The module developer must update its ledger as part of every test and
+verification pass. Do not combine module histories into one file. Evidence is
+stored under
+`odoo-ui-parity/evidence/<module>/<YYYY-MM-DD>/<feature-id>/` and must not be
+left only in `/tmp`. Each module date folder must also contain an index linking
+all feature IDs to their evidence folders. Each feature evidence folder must
+contain at least `README.md`,
+`odoo-analysis.md`, `functionality-checklist.md`, `source-comparison.md`,
+`gap-matrix.md`, `test-results.md`, and `verification.md`, plus the relevant
+menu/action inventory, API or database assertions, permission results, desktop
+and mobile screenshots, browser traces, or console logs. `README.md` maps each
+artifact to a verification case and records omitted artifacts with an exact
+reason. Never store passwords, tokens, or other secrets in evidence.
+
+Evidence artifacts are part of the module's completion record and may be
+committed with the module changes. Large or sensitive artifacts must be
+redacted or referenced by a reproducible local path with the reason recorded in
+the evidence README; a screenshot may not be claimed as captured when it is
+missing from the evidence folder.
 
 ## Persistent ownership and completion lifecycle
 
 Every registered module follows this lifecycle with the same owner:
 
-`inventory -> domain/data/migrations -> service/API/permissions -> workflows -> UI -> CRUD/permission tests -> authenticated desktop/mobile comparison -> owner sign-off -> review/merge-agent review -> cherry-pick/merge`.
+`Odoo feature analysis -> functionality checklist -> current-source comparison -> gap matrix -> clone design -> development -> domain/data/migrations -> service/API/permissions -> workflows -> UI -> CRUD/permission tests -> authenticated desktop/mobile comparison -> evidence capture -> repair and regression -> developer sign-off -> main-agent integration`.
 
 The main agent maintains the dispatch-facing ownership registry with module,
-branch, worktree, run id, dependencies, latest commit, and current event. The
-review/merge agent records acceptance evidence, merge status, and blockers in
-the module QA/progress ledgers. A module is complete only when its functionality
-and UI are both accepted; a missing upstream Odoo addon is a blocker with exact
-evidence, never an implicit fixture-only success.
-
-## Review/merge-agent protocol
-
-1. Confirm the owner changed only its assigned module and its own progress file.
-2. Review the diff and commit history for YAML contracts, migrations, runtime
-   warnings, permissions, tests, and dependency declarations.
-3. Reproduce focused tests and run `git diff --check` plus the relevant shared
-   audit.
-4. Verify authenticated Odoo and Core3 desktop/mobile evidence, including CRUD
-   and permission boundaries, with captures kept outside Git.
-5. Cherry-pick or merge the validated commit, resolve conflicts in the main
-   checkout, and update the shared QA/progress ledgers.
-6. Send concrete repair findings back to the same owner; never open a new agent
-   to replace it.
+branch, worktree, run id, dependencies, latest commit, and current lifecycle
+step. A module is complete only when its functionality and UI are both
+accepted by the module developer's recorded tests and evidence; a missing
+upstream Odoo addon is a blocker with exact evidence, never an implicit
+fixture-only success.
 
 ## Main-agent dispatch protocol
 
-1. Select the next ready module or event from the registry and dispatch it to
-   the existing module owner, mapped QA owner, or review/merge agent.
-2. Include the module id, worktree/process, dependency status, trigger,
-   candidate commit, exact test-plan path, and expected output in every task.
-3. Consume recorded agent results and dispatch the next ready squad or
-   handoff; do not block unrelated squads or perform review, testing, or merge
-   actions itself.
-4. Dispatch repairs to the same module owner after QA or review feedback, then
-   dispatch QA retest and review/merge again as separate bounded events.
-5. Keep each wave within the submitted squad allocation:
-   `DEV_AGENTS = QA_AGENTS = REVIEW_AGENTS = SQUADS`, with
-   `SQUADS * 3 <= MAX_WORKERS=16`, including the review/merge agents.
+1. Select the next ready module or lifecycle event from the registry and
+   dispatch it to that module's existing developer.
+2. Include the module id, worktree/process, dependency status, lifecycle step,
+   latest commit, exact test-plan path, evidence-folder path, and expected
+   output in every task.
+3. Consume the developer's recorded results and dispatch the next lifecycle
+   step or an explicit repair to the same developer. Do not create parallel
+   role handoffs for one module.
+4. Integrate a module only after its developer has recorded all required tests,
+   authenticated Odoo/Core3 verification, evidence paths, and sign-off.
+5. Keep concurrent work within the active global worker limit; the number of
+   workers is the number of active module developers, not a multiplier for
+   testing, review, or merge roles.
