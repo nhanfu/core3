@@ -472,3 +472,17 @@ assertions). Evidence:
 Focused test: `test/employees_private_car_plate.integration.test.ts` (4 tests,
 21 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`.
+
+## EMP-PAY-CATEGORY-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo manager-only `structure_type_id` / Pay Category maps to separate Payroll page/API contracts | pass |
+| Payroll update | Dedicated action updates employee and active Payroll record durably | pass |
+| Permission and scope | `employees.manage`, actor, active/current company, active Payroll record, supported-value, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Pay Category fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Payroll desktop/mobile captures | conditional; Odoo mobile showed the field, desktop stayed on Work, and Core3 backend did not bind |
+
+Focused test: `test/employees_pay_category.integration.test.ts` (4 tests, 21
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`.

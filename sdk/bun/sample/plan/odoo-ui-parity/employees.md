@@ -1803,3 +1803,24 @@ company has no configured Properties definition/value, so the source field is
 not visible in rendered text. Core3 backend startup was unavailable during the
 bounded browser window and is recorded precisely in the evidence. This is
 conditional feature evidence, not aggregate Employees sign-off.
+
+## EMP-PAY-CATEGORY-001: Employee Payroll Pay Category (2026-09-21)
+
+Odoo's manager-only Payroll form renders `hr.version.structure_type_id` as
+`Pay Category`. Core3 now persists the bounded supported structure names as
+`pay_category_name` on employees and employee versions, seeds deterministic
+fixtures, projects the value in its manager-gated Payroll Pay Category group,
+and exposes a dedicated Edit Pay Category action. Page YAML and API/action YAML
+remain separate and join at `employee-detail`.
+
+The action requires `employees.manage`, actor identity, an active employee in
+the current company, an active current Payroll record, a supported value, and
+optimistic row-version concurrency before updating both durable records.
+Focused coverage is **4 tests / 21 assertions**, including source mapping,
+durable update, actor/company/stale/value guards, migration replay, and restart.
+
+Authenticated Odoo desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`; mobile visibly renders
+Pay Category while desktop remained on Work during the bounded interaction.
+Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
+This is conditional feature evidence, not aggregate Employees sign-off.

@@ -922,3 +922,17 @@ Focused test: `test/employees_private_car_plate.integration.test.ts` (4 tests,
 21 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-PRIVATE-CAR-PLATE-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-PAY-CATEGORY-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-037 | Payroll Pay Category create/read/update projection | pass; the manager action updates both employee and active Payroll record |
+| EMP-PERM-037 | `employees.manage`, actor, current company, active Payroll record, supported values, row version | pass; actor, invalid, stale, wrong-company, and missing-record requests reject atomically |
+| EMP-DATA-037 | Migration replay and file-backed restart | pass; deterministic Pay Category fixtures survive restart without duplicates |
+| EMP-UI-033 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo mobile shows Pay Category, desktop interaction stayed on Work, and Core3 backend port 3001 did not bind |
+
+Focused test: `test/employees_pay_category.integration.test.ts` (4 tests, 21
+assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`. No aggregate Employees
+sign-off is claimed.

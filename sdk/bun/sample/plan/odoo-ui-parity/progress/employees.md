@@ -675,6 +675,24 @@ Candidate commit: current working tree
   dynamic Properties definition; Core3 backend startup was unavailable. No
   aggregate Employees sign-off is claimed.
 
+## EMP-PAY-CATEGORY-001 (2026-09-21)
+
+- Selected Odoo's manager-only `hr.version.structure_type_id` Payroll field,
+  rendered as Pay Category, as the next uncovered user-visible behavior.
+- Added migration `20260922020000-056` with durable employee and current-record
+  `pay_category_name` values and deterministic fixtures. The manager-gated
+  Payroll projection and dedicated API/action contract remain separate YAML
+  layers joined at `employee-detail`.
+- Guards require `employees.manage`, actor identity, active/current-company
+  scope, an active current Payroll record, supported values, and optimistic
+  row-version concurrency. Focused verification is **4 tests / 21 assertions**
+  with replay and restart coverage.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`. Authenticated Odoo
+  desktop/mobile captures completed; mobile showed Pay Category, while Core3
+  backend port 3001 did not bind during the bounded memory-mode attempt. No
+  aggregate Employees sign-off is claimed.
+
 ## EMP-PRIVATE-CAR-PLATE-001 (2026-09-21)
 
 - Selected Odoo's HR-user `hr.employee.private_car_plate` search field as the

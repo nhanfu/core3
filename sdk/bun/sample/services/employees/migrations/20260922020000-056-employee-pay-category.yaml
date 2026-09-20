@@ -1,0 +1,39 @@
+version: 0.0.56
+kind: data
+description: Persist the Odoo Payroll pay category on employees and current records
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS pay_category_name VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS pay_category_name VARCHAR;
+      UPDATE employee_versions
+      SET pay_category_name = CASE employee_id
+        WHEN 'employee-demo-001' THEN 'Employee'
+        WHEN 'employee-demo-002' THEN 'Employee'
+        WHEN 'employee-demo-003' THEN 'Contractor'
+        WHEN 'employee-demo-004' THEN 'Employee'
+        ELSE pay_category_name
+      END
+      WHERE pay_category_name IS NULL;
+      UPDATE employees e
+      SET pay_category_name = COALESCE(
+        (SELECT v.pay_category_name FROM employee_versions v
+          WHERE v.employee_id = e.id AND v.active = true
+            AND v.contract_date_start <= DATE '2026-01-15'
+          ORDER BY v.date_version DESC, v.id DESC LIMIT 1),
+        CASE e.id
+          WHEN 'employee-demo-001' THEN 'Employee'
+          WHEN 'employee-demo-002' THEN 'Employee'
+          WHEN 'employee-demo-003' THEN 'Contractor'
+          WHEN 'employee-demo-004' THEN 'Employee'
+          ELSE NULL
+        END
+      )
+      WHERE NULLIF(TRIM(COALESCE(e.pay_category_name, '')), '') IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS pay_category_name;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS pay_category_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
