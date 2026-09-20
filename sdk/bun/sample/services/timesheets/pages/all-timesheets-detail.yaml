@@ -11,6 +11,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: edit_all_timesheet_detail, label: Edit, variant: secondary, permission: timesheets.manage, show_if: "state.all_timesheet_detail.state !== 'Cancelled'" }
+      - { id: print_all_timesheet_detail, label: Print, variant: secondary, permission: timesheets.manage }
       - { id: approve_all_timesheet_detail, label: Approve, variant: primary, permission: timesheets.manage, show_if: "state.all_timesheet_detail.state === 'Submitted'" }
       - { id: reject_all_timesheet_detail, label: Reject, variant: danger, permission: timesheets.manage, show_if: "state.all_timesheet_detail.state === 'Submitted'" }
     group_columns: 2

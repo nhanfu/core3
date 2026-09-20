@@ -4,8 +4,57 @@ datasources:
     single: true
     permission: timesheets.manage
     error_states: { transport_error: { status: 503, code: TIMESHEETS_ALL_DETAIL_UNAVAILABLE, message: This timesheet entry is temporarily unavailable. } }
-    query: "SELECT id, row_version, name, employee_id, employee_name, project_id, project_name, task_id, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, printf('%02d:%02d', CAST(FLOOR(hours) AS INTEGER), CAST(ROUND((hours - FLOOR(hours)) * 60) AS INTEGER)) AS time_spent_display, sales_order_item, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE :id IS NOT NULL AND id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+    query: "SELECT id, row_version, name, company_name, employee_id, employee_name, project_id, project_name, task_id, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, printf('%02d:%02d', CAST(FLOOR(hours) AS INTEGER), CAST(ROUND((hours - FLOOR(hours)) * 60) AS INTEGER)) AS time_spent_display, sales_order_item, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE :id IS NOT NULL AND id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+  - id: all_timesheet_report_runs
+    permission: timesheets.manage
+    error_states: { transport_error: { status: 503, code: TIMESHEET_ALL_REPORT_RUNS_UNAVAILABLE, message: All Timesheets report history is temporarily unavailable. } }
+    query: "SELECT r.id, r.entry_id, r.report_name, r.requested_by, CAST(r.generated_at AS VARCHAR) AS generated_at, r.entry_row_version FROM timesheet_report_runs r JOIN timesheet_entries t ON t.id = r.entry_id WHERE r.id LIKE 'timesheet-all-report-run-%' AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND r.entry_id = :id ORDER BY r.generated_at DESC, r.id DESC"
 actions:
+  - id: print_all_timesheet_detail
+    type: client
+    permission: timesheets.manage
+    script: |
+      // js
+      async ({ state, request }) => {
+        const row = state.all_timesheet_detail;
+        await request('/api/actions/timesheets.all_entries.print_report', {
+          method: 'POST',
+          body: { values: {
+            entry_id: row.id,
+            expected_row_version: row.row_version,
+            requested_by: 'Admin User',
+            company_name: row.company_name,
+            entry_row_version: row.row_version,
+            current_user_name: 'Admin User',
+            current_company_name: row.company_name,
+          } },
+        });
+        window.location.assign(`/timesheets/all-report-preview?id=${encodeURIComponent(String(row.id))}`);
+      }
+  - id: record_all_timesheet_report_run
+    type: server
+    permission: timesheets.manage
+    action: timesheets.all_entries.print_report
+    handler: yaml_mutation
+    operation: report
+    refresh: [all_timesheet_detail, all_timesheet_report_runs]
+    mutation:
+      operation: insert
+      table: timesheet_report_runs
+      fields: [entry_id, report_name, requested_by, company_name, entry_row_version]
+      defaults: { report_name: Timesheets, generated_at: '2026-01-15 00:00:00', row_version: 1 }
+      before_steps:
+        - query: "SELECT 'timesheet-all-report-run-' || CAST(:entry_id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM timesheet_report_runs WHERE entry_id = :entry_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :entry_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 404, code: TIMESHEET_ALL_REPORT_ENTRY_NOT_FOUND, message: All Timesheets entry not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:requested_by, '') = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: TIMESHEET_ALL_REPORT_ACTOR, message: The report actor must match the signed-in approver. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, '') = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: TIMESHEET_ALL_REPORT_COMPANY, message: The report company must match the signed-in company. }
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :entry_id AND row_version = :expected_row_version", status: 409, code: TIMESHEET_ALL_REPORT_STALE, message: The all-timesheets entry changed; reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:report_name, '')), '') IS NOT NULL", status: 422, code: TIMESHEET_ALL_REPORT_INVALID, message: A report name is required. }
+      steps:
+        - query: "UPDATE timesheet_report_runs SET generated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id"
+      result: { query: "SELECT r.id, r.entry_id, r.report_name, r.requested_by, CAST(r.generated_at AS VARCHAR) AS generated_at, r.entry_row_version, t.name AS entry_name, t.project_name, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.hours, t.description FROM timesheet_report_runs r JOIN timesheet_entries t ON t.id = r.entry_id WHERE r.id = :id" }
   - id: edit_all_timesheet_detail
     type: server_form
     permission: timesheets.manage

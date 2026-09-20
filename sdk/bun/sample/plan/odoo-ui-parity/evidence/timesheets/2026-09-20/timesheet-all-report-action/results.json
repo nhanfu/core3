@@ -1,0 +1,196 @@
+[
+  {
+    "product": "core3",
+    "name": "desktop",
+    "url": "http://127.0.0.1:3002/timesheets/all-report-preview?id=timesheet-demo-001",
+    "printVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:3002/api/actions/timesheets.all_entries.print_report",
+        "method": "POST",
+        "postData": "{\"values\":{\"entry_id\":\"timesheet-demo-001\",\"expected_row_version\":1,\"requested_by\":\"Admin User\",\"company_name\":\"Core3 Demo Company\",\"entry_row_version\":1,\"current_user_name\":\"Admin User\",\"current_company_name\":\"Core3 Demo Company\"}}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:3002/api/actions/timesheets.all_entries.print_report",
+        "status": 200
+      }
+    ],
+    "errors": [
+      "requestfailed:http://127.0.0.1:3002/api/v1/companies:net::ERR_ABORTED"
+    ],
+    "before": "Work\nReporting\nConfiguration\n⌘ K\nAU\nServices\nServices\n›\nTimesheets\n›\nAll Timesheets\n›\nEntry\nEdit\nPrint\nDraft\nSubmitted\nApproved\nRejected\nCancelled\nTS/2026/0001\nWork\nEntry\nTS/2026/0001\nStatus\nApproved\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nDescription\nMigration work\nTime and approval\nDate\n2026-01-15\nTime Spent\n08:00\nHours\n8\nBillable\ntrue\nUnit amount\n125\nSales Order Item\nCore3 Implementation (Module Migration)\nApprover\n—\nApproved at\n—",
+    "after": "Work\nReporting\nConfiguration\n⌘ K\nAU\nTimesheets\nTimesheets\n›\nAll Timesheets\n›\nReport\nPrint\nBack to entry\nTimesheets\nTimesheets\nReport\nTimesheets\nRun\ntimesheet-all-report-run-timesheet-demo-001-2\nEntry\nTS/2026/0001\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nActivity\nDate\n2026-01-15\nTime Spent\n08:00\nDescription\nMigration work\nTotal Hours\n8\nGenerated at\n2026-01-15 00:00:00\nRequested by\nAdmin User",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "core3",
+    "name": "mobile",
+    "url": "http://127.0.0.1:3002/timesheets/all-report-preview?id=timesheet-demo-001",
+    "printVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:3002/api/actions/timesheets.all_entries.print_report",
+        "method": "POST",
+        "postData": "{\"values\":{\"entry_id\":\"timesheet-demo-001\",\"expected_row_version\":1,\"requested_by\":\"Admin User\",\"company_name\":\"Core3 Demo Company\",\"entry_row_version\":1,\"current_user_name\":\"Admin User\",\"current_company_name\":\"Core3 Demo Company\"}}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:3002/api/actions/timesheets.all_entries.print_report",
+        "status": 200
+      }
+    ],
+    "errors": [
+      "requestfailed:http://127.0.0.1:3002/api/v1/companies:net::ERR_ABORTED"
+    ],
+    "before": "AU\nEdit\nPrint\nDraft\nSubmitted\nApproved\nRejected\nCancelled\nTS/2026/0001\nWork\nEntry\nTS/2026/0001\nStatus\nApproved\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nDescription\nMigration work\nTime and approval\nDate\n2026-01-15\nTime Spent\n08:00\nHours\n8\nBillable\ntrue\nUnit amount\n125\nSales Order Item\nCore3 Implementation (Module Migration)\nApprover\n—\nApproved at\n—",
+    "after": "AU\nPrint\nBack to entry\nTimesheets\nTimesheets\nReport\nTimesheets\nRun\ntimesheet-all-report-run-timesheet-demo-001-3\nEntry\nTS/2026/0001\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nActivity\nDate\n2026-01-15\nTime Spent\n08:00\nDescription\nMigration work\nTotal Hours\n8\nGenerated at\n2026-01-15 00:00:00\nRequested by\nAdmin User",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "desktop",
+    "url": "http://127.0.0.1:8069/odoo/all-timesheets",
+    "buttons": [
+      "",
+      "Timesheets",
+      "Reporting",
+      "7",
+      "40",
+      "My Company (San Francisco)",
+      "Mitchell Admincore3_reference",
+      " New ",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "links": [],
+    "errors": [],
+    "body": "Timesheets\nTimesheets\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nAll Timesheets\n1-80 / 527\n\t\nDate\n\t\nEmployee\n\t\nProject\n\t\nTask\n\t\nDescription\n\t\nSales Order Item\n\t\nTime Spent\n\t\n\n\n\tSep 12\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tTraining\t\t02:00\t\n\n\tSep 12\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tOn Site Visit\t\t01:00\t\n\n\tSep 12\t\nWalter Horton\n\tResearch & Development\t\nSocial network integration\n\tDelivery\t\t01:00\t\n\n\tSep 12\t\nEli Lambert\n\tResearch & Development\t\nSocial network integration\n\tPresentation\t\t01:00\t\n\n\tSep 12\t\nAbigail Peterson\n\tResearch & Development\t\nSocial network integration\n\tDelivery\t\t03:00\t\n\n\tSep 11\t\nMarc Demo\n\tResearch & Development\t\nCreate new components\n\tDesign\t\t01:00\t\n\n\tSep 11\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 11\t\nAbigail Peterson\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 11\t\nPaul Williams\n\tResearch & Development\t\nCreate new components\n\tRequirements analysis\t\t03:00\t\n\n\tSep 11\t\nKeith Byrd\n\tResearch & Development\t\nSocial network integration\n\tOn Site Visit\t\t01:00\t\n\n\tSep 11\t\nBeth Evans\n\tResearch & Development\t\nSocial network integration\n\tOn Site Visit\t\t01:00\t\n\n\tSep 11\t\nKeith Byrd\n\tResearch & Development\t\nSocial network integration\n\tTraining\t\t01:00\t\n\n\tSep 10\t\nMarc Demo\n\tACME - S00037 - Sales Order\t\n\tImprove\t\nS00036 - Kitchen Assembly (Milestones) (Ready Mat)\n\t01:00\t\n\n\tSep 10\t\nMarc Demo\n\tDPC - S00036 - Sales Order\t\nKitchen Assembly (Milestones)\n\tImprove\t\nS00036 - Kitchen Assembly (Milestones) (Ready Mat)\n\t01:00\t\n\n\tSep 10\t\nMarc Demo\n\tDPC - S00036 - Sales Order\t\nJunior Architect (Invoice on Timesheets)\n\tRepair\t\nS00036 - Junior Architect (Invoice on Timesheets) (Ready Mat)\n\t01:00\t\n\n\tSep 10\t\nMitchell Admin\n\tAGR - S00035 - Sales Order\t\nFurniture Delivery (Manual)\n\tShifting\t\nS00035 - Furniture Delivery (Manual) (Acme Corporation)\n\t10:00\t\n\n\tSep 10\t\nToni Jimenez\n\tAGR - S00035 - Sales Order\t\nSenior Architect (Invoice on Timesheets)\n\tAssembling\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t05:00\t\n\n\tSep 10\t\nMitchell Admin\n\tAGR - S00035 - Sales Order\t\nKitchen Assembly\n\tImprove\t\nS00035 - Kitchen Assembly (Milestones) (Acme Corporation)\n\t10:00\t\n\n\tSep 10\t\nMitchell Admin\n\tInternal\t\nMeeting\n\tAnalysis\t\t00:00\t\n\n\tSep 10\t\nMitchell Admin\n\tInternal\t\nTraining\n\tAnalysis\t\t00:00\t\n\n\tSep 10\t\nAbigail Peterson\n\tResearch & Development\t\nNew portal system\n\tDelivery\t\t02:00\t\n\n\tSep 10\t\nDoris Cole\n\tResearch & Development\t\nNew portal system\n\tRequirements analysis\t\t01:00\t\n\n\tSep 10\t\nRandall Lewis\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 10\t\nAnita Oliver\n\tResearch & Development\t\nCreate new components\n\tSprint\t\t01:00\t\n\n\tSep 10\t\nRonnie Hart\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t02:00\t\n\n\tSep 10\t\nErnest Reed\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 10\t\nEli Lambert\n\tResearch & Development\t\nCreate new components\n\tPresentation\t\t02:00\t\n\n\tSep 10\t\nWalter Horton\n\tResearch & Development\t\nCreate new components\n\tSprint\t\t01:00\t\n\n\tSep 10\t\nErnest Reed\n\tResearch & Development\t\nSocial network integration\n\tTraining\t\t01:00\t\n\n\tSep 9\t\nToni Jimenez\n\tAGR - S00035 - Sales Order\t\nFurniture Delivery\n\tOn Site Visit\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 9\t\nMitchell Admin\n\tAGR - S00035 - Sales Order\t\nFurniture Delivery\n\tQuality analysis\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t02:00\t\n\n\tSep 9\t\nBeth Evans\n\tAGR - S00035 - Sales Order\t\nFurniture Delivery\n\tCall\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 9\t\nAnita Oliver\n\tAGR - S00035 - Sales Order\t\nFurniture\n\tCall\t\nS00035 - Customer Care (Prepaid Hours) (Acme Corporation)\n\t02:00\t\n\n\tSep 9\t\nWalter Horton\n\tAGR - S00035 - Sales Order\t\nFurniture\n\tOn Site Visit\t\nNon-billable\t03:00\t\n\n\tSep 9\t\nKeith Byrd\n\tAGR - S00035 - Sales Order\t\nFurniture\n\tOn Site Visit\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t02:00\t\n\n\tSep 9\t\nAbigail Peterson\n\tAGR - S00035 - Sales Order\t\nPlanning\n\tDesign\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 9\t\nRonnie Hart\n\tAGR - S00035 - Sales Order\t\nPlanning\n\tSprint\t\nNon-billable\t02:00\t\n\n\tSep 9\t\nTina Williamson\n\tAGR - S00035 - Sales Order\t\nPlanning\n\tDelivery\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 9\t\nPaul Williams\n\tAGR - S00035 - Sales Order\t\nDecoration\n\tOn Site Visit\t\nS00035 - Junior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 9\t\nJennie Fletcher\n\tAGR - S00035 - Sales Order\t\nDecoration\n\tRequirements analysis\t\nNon-billable\t02:00\t\n\n\tSep 9\t\nErnest Reed\n\tAGR - S00035 - Sales Order\t\nDecoration\n\tQuality analysis\t\nNon-billable\t01:00\t\n\n\tSep 9\t\nWalter Horton\n\tAGR - S00035 - Sales Order\t\nJunior Architect (Invoice on Timesheets)\n\tQuality Check\t\nS00035 - Junior Architect (Invoice on Timesheets) (Acme Corporation)\n\t02:00\t\n\n\tSep 9\t\nWalter Horton\n\tAGR - S00035 - Sales Order\t\nJunior Architect (Invoice on Timesheets)\n\tResearch\t\nS00035 - Junior Architect (Invoice on Timesheets) (Acme Corporation)\n\t03:00\t\n\n\tSep 9\t\nAnita Oliver\n\tResearch & Development\t\nNew portal system\n\tSprint\t\t01:00\t\n\n\tSep 9\t\nMarc Demo\n\tResearch & Development\t\nNew portal system\n\tDelivery\t\t01:00\t\n\n\tSep 9\t\nMarc Demo\n\tResearch & Development\t\nNew portal system\n\tCall\t\t01:00\t\n\n\tSep 9\t\nWalter Horton\n\tResearch & Development\t\nNew portal system\n\tCall\t\t01:00\t\n\n\tSep 9\t\nJennie Fletcher\n\tResearch & Development\t\nNew portal system\n\tPresentation\t\t03:00\t\n\n\tSep 9\t\nMitchell Admin\n\tResearch & Development\t\nCreate new components\n\tQuality analysis\t\t01:00\t\n\n\tSep 9\t\nKeith Byrd\n\tResearch & Development\t\nCreate new components\n\tDesign\t\t02:00\t\n\n\tSep 9\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tRequirements analysis\t\t03:00\t\n\n\tSep 9\t\nTina Williamson\n\tResearch & Development\t\nCreate new components\n\tRequirements analysis\t\t01:00\t\n\n\tSep 9\t\nAnita Oliver\n\tResearch & Development\t\nSocial network integratio",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "mobile",
+    "url": "http://127.0.0.1:8069/odoo/all-timesheets?view_type=kanban",
+    "buttons": [
+      "7",
+      "40",
+      "",
+      " New ",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "links": [
+      "",
+      "Research & DevelopmentCreate new componentsSep 12 - Beth EvansTraining2h",
+      "Research & DevelopmentCreate new componentsSep 12 - Beth EvansOn Site Visit1h",
+      "Research & DevelopmentSocial network integrationSep 12 - Walter HortonDelivery1h",
+      "Research & DevelopmentSocial network integrationSep 12 - Eli LambertPresentation1h",
+      "Research & DevelopmentSocial network integrationSep 12 - Abigail PetersonDelivery3h",
+      "Research & DevelopmentCreate new componentsSep 11 - Marc DemoDesign1h",
+      "Research & DevelopmentCreate new componentsSep 11 - Beth EvansDelivery1h",
+      "Research & DevelopmentCreate new componentsSep 11 - Abigail PetersonDelivery1h",
+      "Research & DevelopmentCreate new componentsSep 11 - Paul WilliamsRequirements analysis3h",
+      "Research & DevelopmentSocial network integrationSep 11 - Keith ByrdOn Site Visit1h",
+      "Research & DevelopmentSocial network integrationSep 11 - Beth EvansOn Site Visit1h",
+      "Research & DevelopmentSocial network integrationSep 11 - Keith ByrdTraining1h",
+      "ACME - S00037 - Sales OrderSep 10 - Marc DemoImprove1h",
+      "DPC - S00036 - Sales OrderKitchen Assembly (Milestones)Sep 10 - Marc DemoImprove1h",
+      "DPC - S00036 - Sales OrderJunior Architect (Invoice on Timesheets)Sep 10 - Marc DemoRepair1h",
+      "AGR - S00035 - Sales OrderFurniture Delivery (Manual)Sep 10 - Mitchell AdminShifting10h",
+      "AGR - S00035 - Sales OrderSenior Architect (Invoice on Timesheets)Sep 10 - Toni JimenezAssembling5h",
+      "AGR - S00035 - Sales OrderKitchen AssemblySep 10 - Mitchell AdminImprove10h",
+      "InternalMeetingSep 10 - Mitchell AdminAnalysis0h",
+      "InternalTrainingSep 10 - Mitchell AdminAnalysis0h",
+      "Research & DevelopmentNew portal systemSep 10 - Abigail PetersonDelivery2h",
+      "Research & DevelopmentNew portal systemSep 10 - Doris ColeRequirements analysis1h",
+      "Research & DevelopmentCreate new componentsSep 10 - Randall LewisDelivery1h",
+      "Research & DevelopmentCreate new componentsSep 10 - Anita OliverSprint1h",
+      "Research & DevelopmentCreate new componentsSep 10 - Ronnie HartDelivery2h",
+      "Research & DevelopmentCreate new componentsSep 10 - Ernest ReedDelivery1h",
+      "Research & DevelopmentCreate new componentsSep 10 - Eli LambertPresentation2h",
+      "Research & DevelopmentCreate new componentsSep 10 - Walter HortonSprint1h",
+      "Research & DevelopmentSocial network integrationSep 10 - Ernest ReedTraining1h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 9 - Toni JimenezOn Site Visit1h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 9 - Mitchell AdminQuality analysis2h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 9 - Beth EvansCall1h",
+      "AGR - S00035 - Sales OrderFurnitureSep 9 - Anita OliverCall2h",
+      "AGR - S00035 - Sales OrderFurnitureSep 9 - Walter HortonOn Site Visit3h",
+      "AGR - S00035 - Sales OrderFurnitureSep 9 - Keith ByrdOn Site Visit2h",
+      "AGR - S00035 - Sales OrderPlanningSep 9 - Abigail PetersonDesign1h",
+      "AGR - S00035 - Sales OrderPlanningSep 9 - Ronnie HartSprint2h",
+      "AGR - S00035 - Sales OrderPlanningSep 9 - Tina WilliamsonDelivery1h",
+      "AGR - S00035 - Sales OrderDecorationSep 9 - Paul WilliamsOn Site Visit1h",
+      "AGR - S00035 - Sales OrderDecorationSep 9 - Jennie FletcherRequirements analysis2h",
+      "AGR - S00035 - Sales OrderDecorationSep 9 - Ernest ReedQuality analysis1h",
+      "AGR - S00035 - Sales OrderJunior Architect (Invoice on Timesheets)Sep 9 - Walter HortonQuality Check2h",
+      "AGR - S00035 - Sales OrderJunior Architect (Invoice on Timesheets)Sep 9 - Walter HortonResearch3h",
+      "Research & DevelopmentNew portal systemSep 9 - Anita OliverSprint1h",
+      "Research & DevelopmentNew portal systemSep 9 - Marc DemoDelivery1h",
+      "Research & DevelopmentNew portal systemSep 9 - Marc DemoCall1h",
+      "Research & DevelopmentNew portal systemSep 9 - Walter HortonCall1h",
+      "Research & DevelopmentNew portal systemSep 9 - Jennie FletcherPresentation3h",
+      "Research & DevelopmentCreate new componentsSep 9 - Mitchell AdminQuality analysis1h",
+      "Research & DevelopmentCreate new componentsSep 9 - Keith ByrdDesign2h",
+      "Research & DevelopmentCreate new componentsSep 9 - Beth EvansRequirements analysis3h",
+      "Research & DevelopmentCreate new componentsSep 9 - Tina WilliamsonRequirements analysis1h",
+      "Research & DevelopmentSocial network integrationSep 9 - Anita OliverQuality analysis1h",
+      "Research & DevelopmentSocial network integrationSep 9 - Ronnie HartDelivery3h",
+      "Research & DevelopmentUser interface improvementsSep 9 - Ronnie HartCall3h",
+      "Research & DevelopmentUser interface improvementsSep 9 - Eli LambertDelivery2h",
+      "Research & DevelopmentUser interface improvementsSep 9 - Marc DemoOn Site Visit1h",
+      "Office DesignBlack Chairs for managersSep 9 - Ernest ReedSprint1h",
+      "Office DesignOffice planningSep 9 - Eli LambertDelivery1h",
+      "Office DesignOffice planningSep 9 - Marc DemoRequirements analysis1h",
+      "Research & DevelopmentSep 9 - Mitchell AdminDelivery1h",
+      "Research & DevelopmentSep 9 - Mitchell AdminQuality analysis1h",
+      "Research & DevelopmentSep 9 - Mitchell AdminQuality analysis3h",
+      "Research & DevelopmentSep 9 - Mitchell AdminDesign1h",
+      "Research & DevelopmentSep 9 - Mitchell AdminRequirements analysis2h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 8 - Walter HortonSprint3h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 8 - Toni JimenezRequirements analysis2h",
+      "AGR - S00035 - Sales OrderFurniture DeliverySep 8 - Paul WilliamsTraining1h",
+      "AGR - S00035 - Sales OrderFurnitureSep 8 - Tina WilliamsonRequirements analysis1h",
+      "AGR - S00035 - Sales OrderFurnitureSep 8 - Rachel PerryDelivery3h",
+      "AGR - S00035 - Sales OrderFurnitureSep 8 - Jeffrey KellyQuality analysis2h",
+      "AGR - S00035 - Sales OrderPlanningSep 8 - Marc DemoDelivery1h",
+      "AGR - S00035 - Sales OrderPlanningSep 8 - Jeffrey KellyPresentation1h",
+      "AGR - S00035 - Sales OrderPlanningSep 8 - Rachel PerryQuality analysis1h",
+      "AGR - S00035 - Sales OrderPlanningSep 8 - Paul WilliamsSprint2h",
+      "AGR - S00035 - Sales OrderDecorationSep 8 - Keith ByrdDelivery1h",
+      "AGR - S00035 - Sales OrderDecorationSep 8 - Audrey PetersonDesign3h",
+      "Research & DevelopmentNew portal systemSep 8 - Jeffrey KellyRequirements analysis1h",
+      "Research & DevelopmentNew portal systemSep 8 - Ronnie HartDelivery1h",
+      "Research & DevelopmentNew portal systemSep 8 - Marc DemoSprint3h"
+    ],
+    "errors": [],
+    "body": "All Timesheets\n7\n40\nNew\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nTraining\n2h\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 12 - Walter Horton\nDelivery\n1h\nResearch & Development\nSocial network integration\nSep 12 - Eli Lambert\nPresentation\n1h\nResearch & Development\nSocial network integration\nSep 12 - Abigail Peterson\nDelivery\n3h\nResearch & Development\nCreate new components\nSep 11 - Marc Demo\nDesign\n1h\nResearch & Development\nCreate new components\nSep 11 - Beth Evans\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Abigail Peterson\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Paul Williams\nRequirements analysis\n3h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nTraining\n1h\nACME - S00037 - Sales Order\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nKitchen Assembly (Milestones)\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 10 - Marc Demo\nRepair\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nSep 10 - Mitchell Admin\nShifting\n10h\nAGR - S00035 - Sales Order\nSenior Architect (Invoice on Timesheets)\nSep 10 - Toni Jimenez\nAssembling\n5h\nAGR - S00035 - Sales Order\nKitchen Assembly\nSep 10 - Mitchell Admin\nImprove\n10h\nInternal\nMeeting\nSep 10 - Mitchell Admin\nAnalysis\n0h\nInternal\nTraining\nSep 10 - Mitchell Admin\nAnalysis\n0h\nResearch & Development\nNew portal system\nSep 10 - Abigail Peterson\nDelivery\n2h\nResearch & Development\nNew portal system\nSep 10 - Doris Cole\nRequirements analysis\n1h\nResearch & Development\nCreate new components\nSep 10 - Randall Lewis\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 10 - Anita Oliver\nSprint\n1h\nResearch & Development\nCreate new components\nSep 10 - Ronnie Hart\nDelivery\n2h\nResearch & Development\nCreate new components\nSep 10 - Ernest Reed\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 10 - Eli Lambert\nPresentation\n2h\nResearch & Development\nCreate new components\nSep 10 - Walter Horton\nSprint\n1h\nResearch & Development\nSocial network integration\nSep 10 - Ernest Reed\nTraining\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Toni Jimenez\nOn Site Visit\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Mitchell Admin\nQuality analysis\n2h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Beth Evans\nCall\n1h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Anita Oliver\nCall\n2h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Walter Horton\nOn Site Visit\n3h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Keith Byrd\nOn Site Visit\n2h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Abigail Peterson\nDesign\n1h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Ronnie Hart\nSprint\n2h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Tina Williamson\nDelivery\n1h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Paul Williams\nOn Site Visit\n1h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Jennie Fletcher\nRequirements analysis\n2h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Ernest Reed\nQuality analysis\n1h\nAGR - S00035 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 9 - Walter Horton\nQuality Check\n2h\nAGR - S00035 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 9 - Walter Horton\nResearch\n3h\nResearch & Development\nNew portal system\nSep 9 - Anita Oliver\nSprint\n1h\nResearch & Development\nNew portal system\nSep 9 - Marc Demo\nDelivery\n1h\nResearch & Development\nNew portal system\nSep 9 - Marc Demo\nCall\n1h\nResearch & Development\nNew portal system\nSep 9 - Walter Horton\nCall\n1h\nResearch & Development\nNew portal system\nSep 9 - Jennie Fletcher\nPresentation\n3h\nResearch & Development\nCreate new components\nSep 9 - Mitchell Admin\nQuality analysis\n1h\nResearch & Development\nCreate new components\nSep 9 - Keith Byrd\nDesign\n2h\nResearch & Development\nCreate new components\nSep 9 - Beth Evans\nRequirements analysis\n3h\nResearch & Development\nCreate new components\nSep 9 - Tina Williamson\nRequirements analysis\n1h\nResearch & Development\nSocial network integration\nSep 9 - Anita Oliver\nQuality analysis\n1h\nResearch & Development\nSocial network integration\nSep 9 - Ronnie Hart\nDelivery\n3h\nResearch & Development\nUser interface improvements\nSep 9 - Ronnie Hart\nCall\n3h\nResearch & Development\nUser interface improvements\nSep 9 - Eli Lambert\nDelivery\n2h\nResearch & Development\nUser interface improvements\nSep 9 - Marc Demo\nOn Site Visit\n1h\nOffice Design\nBlack Chairs for managers\nSep 9 - Ernest Reed\nSprint\n1h\nOffice Design\nOffice planning\nSep 9 - Eli Lambert\nDelivery\n1h\nOffice Design\nOffice planning\nSep 9 - Marc Demo\nRequirements analysis\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nDelivery\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nQuality analysis\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nQuality analysis\n3h\nResearch & Development\nSep 9 - Mitchell Admin\nDesign\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nRequirements analysis\n2h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 8 - Walter Horton\nSprint\n3h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 8 - Toni Jimenez\nRequirements analysis\n2h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 8 - Paul Williams\nTraining\n1h\nAGR - S00035 - Sales Order\nFurniture\nSep 8 - Tina Williamson\nRequirements analysis\n1h\nAGR - S00035 - Sales Order\nFurniture\nSep 8 - Rachel Perry\nDelivery\n3h\nAGR - S00035 - Sales Order\nFurniture\nSep 8 - Jeffrey Kelly\nQuality analysis\n2h\nAGR - S00035 - Sales Order\nPlanning\nSep 8 - Marc Demo\nDelivery\n1h\nAGR - S00035 - Sales Order\nPlanning\nSep 8 - Jeffrey Kelly\nPresentation\n1h\nAGR - S00035 - Sales Order\nPlanning\nSep 8 - Rachel Perry\nQuality analysis\n1h\nAGR - S00035 - Sales Order\nPlanning\nSep 8 - Paul Williams\nSprint\n2h\nAGR - S00035 - Sales Order\nDecoration\nSep 8 - Keith Byrd\nDelivery\n1h\nAGR - S00035 - Sal",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  }
+]

@@ -123,6 +123,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-report-preview-renderer/`](../evidence/timesheets/2026-09-20/timesheet-report-preview-renderer/).
 - Disposition: **bounded Core3 renderer verified; Odoo QWeb/PDF renderer equivalence, full route/action comparison, and module sign-off remain pending**.
 
+## 2026-09-20 `TIMESHEET-ALL-ENTRY-REPORT-ACTION`
+
+- Source gate: Odoo `timesheet_action_all` (`hr_timesheet/views/hr_timesheet_views.xml:484-498`) uses `/odoo/all-timesheets` for `account.analytic.line`; `report_timesheet` is bound to that model in `hr_timesheet/report/report_timesheet_templates.xml:173-182`.
+- Core3 contract: manager-only `all-timesheets-detail` Print action and separate `all-timesheet-report-preview` page/API pair; report runs persist in `timesheet_report_runs` through `timesheets.all_entries.print_report`.
+- Focused gate: `bun test test/timesheets_all_report.integration.test.ts --timeout 20000` — 3 passed, 0 failed, 16 expectations. Full suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 60 passed, 0 failed, 452 expectations.
+- Persistence/security gate: migration replay, file-backed restart, company/actor/stale/missing/invalid guards, and no-partial-write behavior pass. UI audit: 676 pages, 685 routes, 1228 datasources. Repository-wide `git diff --check` remains noisy from a pre-existing unrelated Inventory trailing-space edit; the Timesheets-owned diff has no whitespace errors.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 open All Timesheets entry detail, expose Print, post `/api/actions/timesheets.all_entries.print_report` with HTTP 200, render the persisted preview, and remain width-safe. Evidence includes before/after screenshots and `results.json`.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/all-timesheets` desktop list and mobile kanban with seeded rows and no page/request errors, but neither viewport exposes a visible Print/report-preview action. This is an exact source/reference blocker, not a parity pass.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-all-report-action/`](../evidence/timesheets/2026-09-20/timesheet-all-report-action/).
+- Disposition: **bounded Core3 manager report action verified; Odoo action visibility/QWeb-PDF parity, remaining route/action comparison, and module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,

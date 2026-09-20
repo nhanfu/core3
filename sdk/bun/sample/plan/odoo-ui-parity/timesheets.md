@@ -729,6 +729,40 @@ blocker is recorded rather than claimed as report parity. Core3's browser print
 surface remains distinct from Odoo's QWeb/PDF renderer. Full route/action
 comparison and module sign-off remain open.
 
+## All Timesheets report action slice — `TIMESHEET-ALL-ENTRY-REPORT-ACTION` (2026-09-20)
+
+Odoo's `timesheet_action_all` in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:484-498` is the approver
+`account.analytic.line` action at `/odoo/all-timesheets`. The source
+`timesheet_report` action in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:173-182` is bound
+to that analytic-line model, so the manager context requires a report action
+separate from personal Timesheets reporting.
+
+Core3 adds the manager-only `Print` action to
+`services/timesheets/pages/all-timesheets-detail.yaml`; its client behavior
+and server mutation live in `services/timesheets/api/all-timesheets-detail.yaml`.
+The new `services/timesheets/pages/all-report-preview.yaml` and
+`services/timesheets/api/all-report-preview.yaml` form a separate
+`page.id: all-timesheet-report-preview` route/API contract. The server inserts
+into the existing durable `timesheet_report_runs` table and the preview is
+company-scoped, permissioned by `timesheets.manage`, and guarded for actor,
+company, stale-row, missing-entry, and invalid-report requests. No migration
+schema change is needed because the existing report-run table is the durable
+source for this context; replay and file-backed restart are covered.
+
+`test/timesheets_all_report.integration.test.ts` covers source binding,
+page/API separation, create/read, migration replay, restart persistence, and
+no-partial-write permission/concurrency guards (3 tests / 16 expectations).
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/timesheets/2026-09-20/timesheet-all-report-action/`; both viewports
+show HTTP 200 report creation and the rendered preview without horizontal
+overflow. Authenticated Odoo desktop `/odoo/all-timesheets` and mobile
+`/odoo/all-timesheets?view_type=kanban` show the source list/kanban but no
+visible Print/report-preview action. That is recorded as an exact paired
+reference blocker, not a parity pass. Full route/action comparison, actual
+QWeb/PDF equivalence, and module sign-off remain open.
+
 ## Task analytic-line report renderer slice — `TIMESHEET-TASK-TIMESHEETS-REPORT` (2026-09-20)
 
 The remaining task-context report action is Odoo's

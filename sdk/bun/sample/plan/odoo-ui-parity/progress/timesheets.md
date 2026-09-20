@@ -84,3 +84,40 @@ Continue remaining report/context interaction and integration gates, including
 the full authenticated route/action comparison, Odoo QWeb/PDF renderer parity,
 and any remaining project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.
+
+## 2026-09-20 `TIMESHEET-ALL-ENTRY-REPORT-ACTION`
+
+The next source-backed report/context gap was the approver All Timesheets
+action. Odoo's `timesheet_action_all` at
+`addons/hr_timesheet/views/hr_timesheet_views.xml:484-498` opens
+`/odoo/all-timesheets` on `account.analytic.line`, and the source report
+`timesheet_report` binds to that model in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:173-182`. Core3
+previously exposed the manager list and detail but had no guarded Print action
+or manager-scoped report document.
+
+Core3 now adds a manager-only `Print` action to `all-timesheets-detail`, with
+the page layout separated from `api/all-timesheets-detail.yaml` by
+`page.id`. The API records a durable all-entry run in the existing
+`timesheet_report_runs` table through `timesheets.all_entries.print_report`,
+then navigates to the separate `/timesheets/all-report-preview` page/API
+pair. The preview query is company-scoped and manager-permissioned; actor,
+company, stale-row, missing-entry, and invalid-report guards run before the
+insert. The stable seed run remains untouched, and migration replay plus a
+file-backed restart preserve the new report.
+
+Focused coverage is `test/timesheets_all_report.integration.test.ts` (3
+tests, 16 expectations). The complete Timesheets suite passes 60 tests / 452
+expectations, and the UI audit passes with 676 pages, 685 routes, and 1228
+datasources. Authenticated Core3 desktop/mobile evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-all-report-action/`:
+both viewports show the manager Print action, receive HTTP 200 from the
+report mutation, render the persisted preview, and stay viewport-width safe.
+The only Core3 failure record is the unrelated aborted `/api/v1/companies`
+shell prefetch; no Timesheets request failed.
+
+Paired authenticated Odoo evidence at `/odoo/all-timesheets` shows the seeded
+desktop list and responsive mobile kanban, but neither viewport exposes a
+visible Print/report-preview action. The source-bound Odoo report execution is
+therefore an exact reference blocker, not a parity pass. QWeb/PDF equivalence,
+the remaining route/action comparison, and module sign-off remain open.
