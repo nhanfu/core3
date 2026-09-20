@@ -1,0 +1,80 @@
+[
+  {
+    "product": "core3",
+    "name": "desktop",
+    "url": "http://127.0.0.1:3060/timesheets/task-timesheets?task_id=task-demo-001",
+    "printLinesVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:3060/api/actions/timesheets.task_entries.print_lines_report",
+        "method": "POST",
+        "postData": "{\"task_id\":\"task-demo-001\",\"expected_entry_count\":1}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:3060/api/actions/timesheets.task_entries.print_lines_report",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "before": "ContactsOrdersChatCore3 AgentCRMPoint of SaleSubscriptionsRentalAccountingExpensesDocumentsApprovalsSpreadsheet / DashboardsInventoryManufacturingPurchaseMaintenanceField ServiceHelpdeskQualityPLMEmployeesRecruitmentTime OffAppraisalsReferralsFleetEmail MarketingSMS MarketingEventsSurveysMarketing AutomationProjectTimesheetsWebsiteeCommerceBlogForumLive Chat\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nNewPrintPrint lines\nProject / Task / Timesheets\n1-1 / 1‹›\nDate\tEmployee\tEntry\tDescription\tTime Spent\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00",
+    "after": "ContactsOrdersChatCore3 AgentCRMPoint of SaleSubscriptionsRentalAccountingExpensesDocumentsApprovalsSpreadsheet / DashboardsInventoryManufacturingPurchaseMaintenanceField ServiceHelpdeskQualityPLMEmployeesRecruitmentTime OffAppraisalsReferralsFleetEmail MarketingSMS MarketingEventsSurveysMarketing AutomationProjectTimesheetsWebsiteeCommerceBlogForumLive Chat\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nNewPrintPrint lines\nProject / Task / Timesheets\n1-1 / 1‹›\nDate\tEmployee\tEntry\tDescription\tTime Spent\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00",
+    "scrollWidth": {
+      "body": 1424,
+      "document": 1440
+    }
+  },
+  {
+    "product": "core3",
+    "name": "mobile",
+    "url": "http://127.0.0.1:3060/timesheets/task-timesheets?task_id=task-demo-001",
+    "printLinesVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:3060/api/actions/timesheets.task_entries.print_lines_report",
+        "method": "POST",
+        "postData": "{\"task_id\":\"task-demo-001\",\"expected_entry_count\":1}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:3060/api/actions/timesheets.task_entries.print_lines_report",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "before": "ContactsOrdersChatCore3 AgentCRMPoint of SaleSubscriptionsRentalAccountingExpensesDocumentsApprovalsSpreadsheet / DashboardsInventoryManufacturingPurchaseMaintenanceField ServiceHelpdeskQualityPLMEmployeesRecruitmentTime OffAppraisalsReferralsFleetEmail MarketingSMS MarketingEventsSurveysMarketing AutomationProjectTimesheetsWebsiteeCommerceBlogForumLive Chat\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nNewPrintPrint lines\nProject / Task / Timesheets\n1-1 / 1‹›\nDate\tEmployee\tEntry\tDescription\tTime Spent\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00",
+    "after": "ContactsOrdersChatCore3 AgentCRMPoint of SaleSubscriptionsRentalAccountingExpensesDocumentsApprovalsSpreadsheet / DashboardsInventoryManufacturingPurchaseMaintenanceField ServiceHelpdeskQualityPLMEmployeesRecruitmentTime OffAppraisalsReferralsFleetEmail MarketingSMS MarketingEventsSurveysMarketing AutomationProjectTimesheetsWebsiteeCommerceBlogForumLive Chat\nWork\nTimesheetsTimesheet AnalysisAll Timesheets\nReporting\nBy EmployeeBy ProjectBy TaskBy Billing Type\nConfiguration\nConfiguration\n⌘ K\nAU\nNewPrintPrint lines\nProject / Task / Timesheets\n1-1 / 1‹›\nDate\tEmployee\tEntry\tDescription\tTime Spent\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00",
+    "scrollWidth": {
+      "body": 374,
+      "document": 390
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "desktop",
+    "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+    "actionsVisible": true,
+    "actions": "Project\nProjects\nTasks\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nAll Tasks\nS00038 - Solar Panel Installation\nSales Order\n1 / 1\n...\nDone\nIn Progress\n10d\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\n\n\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created\n\n Timesheets\nEdit Properties\nVersion History\nDuplicate\nArchive\nDelete\nShare Task\nSend SMS\nConvert to Task/Sub-Task\nConvert to Template\nActions",
+    "errors": [],
+    "before": "Project\nProjects\nTasks\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nAll Tasks\nS00038 - Solar Panel Installation\nSales Order\n1 / 1\n...\nDone\nIn Progress\n10d\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\n\n\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "mobile",
+    "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+    "actionsVisible": true,
+    "actions": "S00038 - Solar Panel Installation\n7\n40\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\n\n\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created\n\n Timesheets\nEdit Properties\nVersion History\nDuplicate\nArchive\nDelete\nShare Task\nSend SMS\nConvert to Task/Sub-Task\nConvert to Template",
+    "errors": [],
+    "before": "S00038 - Solar Panel Installation\n7\n40\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\n\n\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  }
+]

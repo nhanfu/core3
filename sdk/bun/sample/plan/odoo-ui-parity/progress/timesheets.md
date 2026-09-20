@@ -55,9 +55,20 @@ paired at `/odoo/project/5`, where the project Actions menu has no Print item;
 the source report execution is therefore an exact reference blocker. This
 does not change the module status to signed off.
 
+The current bounded feature `TIMESHEET-TASK-TIMESHEETS-REPORT` covers Odoo's
+remaining `timesheet_report_task_timesheets` analytic-line renderer. It adds a
+separate task-context `Print lines` page/API action, durable
+`timesheet_task_lines_report_runs` persistence in migration `0.0.13`, fixed
+fixtures, and read/task/empty/stale/actor/company guards with file-backed
+restart coverage. The clean isolated Timesheets regression passes 53 tests /
+416 expectations and the UI audit passes. Authenticated Core3 desktop/mobile
+evidence is paired with authenticated Odoo task evidence; Odoo's Actions menu
+has no Print action, so report execution is recorded as an exact blocker. This
+does not change the module status to signed off.
+
 ## Next bounded task
 
 Continue remaining report/context interaction and integration gates, including
-the full authenticated route/action comparison and any remaining report
-renderer/project-dashboard integration gaps.
+the full authenticated route/action comparison, Odoo QWeb/PDF renderer parity,
+and any remaining project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.

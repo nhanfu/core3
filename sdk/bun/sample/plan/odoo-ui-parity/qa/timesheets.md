@@ -101,6 +101,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-project-report/`](../evidence/timesheets/2026-09-20/timesheet-project-report/).
 - Disposition: **bounded Core3 slice verified; paired Odoo report binding, full route/action comparison, and module sign-off remain pending**.
 
+### 2026-09-20 `TIMESHEET-TASK-TIMESHEETS-REPORT`
+
+- Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml:215-222` defines `timesheet_report_task_timesheets` for `account.analytic.line`, using `hr_timesheet.report_timesheet_task`; the renderer template is at lines 146-171.
+- Core3 contract: `task-timesheets` page/API remain separate by `page.id`; the page owns `Print lines`, the task entry list supplies the report lines, and the API records `timesheets.task_entries.print_lines_report` in durable `timesheet_task_lines_report_runs` migration `0.0.13`.
+- Focused gate: `bun test test/timesheets_task_lines_report.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 20 expectations. Clean isolated full suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 53 passed, 0 failed, 416 expectations.
+- Persistence/security gate: migration replay, file-backed restart, task/empty/stale/actor/company guards, no-partial-write behavior, and `timesheets.read` action permissions pass. Scoped ESLint and `git diff --check` pass; clean isolated audit reports 670 pages, 679 routes, and 1211 datasources.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 captures render one task line, expose `Print lines`, and return HTTP 200 from the report action with zero Core3 page/request errors and matching viewport widths.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/all-tasks/100` at both viewports. The task Actions menu has no Print action, blocking execution of the source report binding; mobile also reports three aborted non-report asset/action requests. This is an exact paired-reference blocker, not a parity pass.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-task-timesheets-report/`](../evidence/timesheets/2026-09-20/timesheet-task-timesheets-report/).
+- Disposition: **bounded Core3 slice verified; paired Odoo renderer execution, full route/action comparison, QWeb/PDF parity, and module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,

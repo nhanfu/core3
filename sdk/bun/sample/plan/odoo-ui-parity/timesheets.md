@@ -728,3 +728,44 @@ shows a project Actions menu containing `Timesheets`, `Duplicate`, `Archive`,
 blocker is recorded rather than claimed as report parity. Core3's browser print
 surface remains distinct from Odoo's QWeb/PDF renderer. Full route/action
 comparison and module sign-off remain open.
+
+## Task analytic-line report renderer slice — `TIMESHEET-TASK-TIMESHEETS-REPORT` (2026-09-20)
+
+The remaining task-context report action is Odoo's
+`timesheet_report_task_timesheets` from
+`addons/hr_timesheet/report/report_timesheet_templates.xml` lines 215-222.
+It targets `account.analytic.line`, uses the `hr_timesheet.report_timesheet_task`
+template, and is the report renderer for selected task timesheet lines. The
+template at lines 146-171 renders the Timesheets heading, task context, date,
+employee, optional task, description, time spent, and total columns. It is
+distinct from the already-covered `project.task` report binding.
+
+Core3 keeps this source-backed action in the existing task-context
+`task-timesheets` page/API pair. The page adds a permissioned `Print lines`
+action; the API uses the task entry datasource as the deterministic line
+renderer, posts `timesheets.task_entries.print_lines_report`, and persists the
+rendered report metadata in `timesheet_task_lines_report_runs`. Migration
+`0.0.13` seeds a fixed `Timesheets` run at `2026-01-15 00:00:00` and is
+replay-safe. The server action enforces `timesheets.read`, task existence and
+non-empty scope, expected line-count freshness, signed-in actor, and company
+guards before inserting a report run; history remains queryable after a
+file-backed restart.
+
+Focused coverage is `test/timesheets_task_lines_report.integration.test.ts`
+(4 tests, 20 expectations). In a clean verification checkout containing only
+the Timesheets slice, the full Timesheets suite passes 53 tests / 416
+expectations and the UI audit passes with 670 pages, 679 routes, and 1211
+datasources. Scoped ESLint and `git diff --check` pass. The shared checkout's
+repository-wide audit is independently blocked by unrelated Employees page
+schema edits (`actions[0].result` / `result_field`), which remain unstaged.
+
+Authenticated Core3 desktop and mobile evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-task-timesheets-report/`.
+Both viewports render the task line list, expose `Print lines`, and return HTTP
+200 from the report action with no Core3 page/request errors or horizontal
+overflow. Authenticated Odoo reaches `/odoo/all-tasks/100` at both viewports,
+but its task Actions menu has no Print action, so paired report execution is an
+exact reference blocker. Odoo mobile also records three aborted non-report
+asset/action requests; no report parity claim is made. Core3's browser print
+surface remains distinct from Odoo's QWeb/PDF renderer, and full module
+sign-off remains open.
