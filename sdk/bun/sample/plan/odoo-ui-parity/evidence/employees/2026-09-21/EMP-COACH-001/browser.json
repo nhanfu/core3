@@ -1,0 +1,67 @@
+{
+  "feature_id": "EMP-COACH-001",
+  "authenticated": true,
+  "captures": [
+    {
+      "surface": "core3",
+      "viewport": "desktop",
+      "path": "/employees",
+      "status": 200,
+      "width": 1440,
+      "height": 900,
+      "scroll_width": 1440,
+      "client_width": 1440,
+      "coach_label_visible": false,
+      "rows": 0,
+      "page_errors": [],
+      "failed_requests": ["GET /api/v1/notifications: net::ERR_ABORTED during login redirect"],
+      "blocker": "Authenticated session is Core3 Demo Company; deterministic employee fixtures are Core3 Vietnam."
+    },
+    {
+      "surface": "core3",
+      "viewport": "mobile",
+      "path": "/employees",
+      "status": 200,
+      "width": 390,
+      "height": 844,
+      "scroll_width": 390,
+      "client_width": 390,
+      "coach_label_visible": false,
+      "rows": 0,
+      "page_errors": [],
+      "failed_requests": ["GET /api/v1/notifications: net::ERR_ABORTED during login redirect"],
+      "blocker": "Authenticated session is Core3 Demo Company; deterministic employee fixtures are Core3 Vietnam."
+    },
+    {
+      "surface": "odoo",
+      "viewport": "desktop",
+      "path": "/odoo/employees",
+      "status": 200,
+      "width": 1440,
+      "height": 900,
+      "scroll_width": 1440,
+      "client_width": 1440,
+      "coach_label_visible": false,
+      "rows": 24,
+      "page_errors": [],
+      "failed_requests": [],
+      "blocker": "Source Coach list column is optional and hidden in the default Odoo view."
+    },
+    {
+      "surface": "odoo",
+      "viewport": "mobile",
+      "path": "/odoo/employees",
+      "status": 200,
+      "width": 390,
+      "height": 844,
+      "scroll_width": 390,
+      "client_width": 390,
+      "coach_label_visible": false,
+      "rows": 24,
+      "page_errors": [],
+      "failed_requests": [],
+      "blocker": "Source Coach list column is optional and hidden in the default Odoo view."
+    }
+  ],
+  "signoff": "conditional_only"
+}

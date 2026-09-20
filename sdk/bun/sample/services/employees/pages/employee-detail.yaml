@@ -20,6 +20,7 @@ components:
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_hr_responsible, label: Edit HR Responsible, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_coach, label: Edit Coach, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_pin, label: Edit PIN Code, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: generate_employee_barcode, label: Generate Badge ID, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.barcode" }
       - { id: print_employee_badge, label: Print Badge, variant: secondary, permission: employees.read, show_if: "state.employee_detail.active === true && !!state.employee_detail.barcode" }
@@ -33,7 +34,7 @@ components:
           label: Work
           groups:
             - title: Work
-              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: mobile_phone, label: Work Mobile }]
+              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: coach_name, label: Coach }, { field: mobile_phone, label: Work Mobile }]
             - title: Location
               fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }]
             - title: Departure

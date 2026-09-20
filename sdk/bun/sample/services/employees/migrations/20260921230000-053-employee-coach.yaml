@@ -1,0 +1,22 @@
+version: 0.0.53
+kind: data
+description: Persist deterministic Odoo employee coach relationships
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS coach_name VARCHAR;
+      UPDATE employees
+      SET coach_name = CASE id
+        WHEN 'employee-demo-001' THEN 'Nguyen Minh Anh'
+        WHEN 'employee-demo-002' THEN 'Admin User'
+        WHEN 'employee-demo-003' THEN 'Admin User'
+        WHEN 'employee-demo-004' THEN 'Admin User'
+        ELSE coach_name
+      END
+      WHERE NULLIF(TRIM(COALESCE(coach_name, '')), '') IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS coach_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

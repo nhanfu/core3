@@ -430,3 +430,17 @@ Focused test: `test/employees_hr_responsible.integration.test.ts` (4 tests,
 Focused test: `test/employees_attendance_pin.integration.test.ts` (4 tests,
 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`.
+
+## EMP-COACH-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.employee.coach_id` search/list projection maps to separate Employees page/API contracts | pass |
+| Employee CRUD | Create, read, edit, and list/filter Coach values durably | pass |
+| Permission and scope | Employees write, actor, active/current company, active-coach, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic coach fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo desktop/mobile Employees captures | conditional; Core3 fixture-company mismatch and Odoo default-hidden optional column recorded |
+
+Focused test: `test/employees_coach.integration.test.ts` (4 tests, 23
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-COACH-001/`.

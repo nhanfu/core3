@@ -8,10 +8,11 @@ components:
     create_label: New employee
     header_actions:
       - { id: load_sample_employee_data, label: Load Sample Data, permission: employees.write, variant: secondary }
-    search: { label: Search employees, placeholder: 'Search employee number, name, or email...' }
+    search: { label: Search employees, placeholder: 'Search employee number, name, email, or coach...' }
     filters:
       - { field: state, label: Status, options_source: employee_states }
       - { field: department_name, label: Department, options_source: employee_departments }
+      - { field: coach_name, label: Coach, options_source: employee_coaches }
       - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
     group_by:
       - { field: manager_name, label: Manager }
@@ -93,6 +94,7 @@ components:
       - { field: name, label: Name }
       - { field: job_title, label: Job Position }
       - { field: department_name, label: Department }
+      - { field: coach_name, label: Coach }
       - { field: work_email, label: Work Email }
       - { field: work_phone, label: Work Phone }
       - { field: state, label: Status, type: StatusChip }

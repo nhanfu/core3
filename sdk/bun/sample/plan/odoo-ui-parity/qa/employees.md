@@ -877,3 +877,18 @@ Focused test: `test/employees_attendance_pin.integration.test.ts` (4 tests,
 20 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-COACH-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-034 | Employee coach list projection and create/edit/read | pass; durable coach relation is projected, created, edited, and returned |
+| EMP-PERM-034 | `employees.write`, actor, active/current company, row version, active coach | pass; actor, stale, wrong-company, and invalid-coach requests reject atomically |
+| EMP-DATA-034 | Migration replay and file-backed restart | pass; deterministic coach fixtures survive replay and restart without duplicates |
+| EMP-UI-030 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture company differs from session company and Odoo optional Coach column is hidden by default |
+
+Focused test: `test/employees_coach.integration.test.ts` (4 tests, 23
+assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-COACH-001/`. The focused UI audit passed
+with 712 pages, 721 routes, and 1,359 datasources; scoped ESLint and
+`git diff --check` passed. No aggregate Employees sign-off is claimed.

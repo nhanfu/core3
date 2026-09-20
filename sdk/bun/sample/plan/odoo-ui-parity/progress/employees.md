@@ -631,3 +631,22 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. Any fixture-company,
   reference-data, shell-noise, or runtime limitations are recorded there;
   feature evidence is conditional and does not represent aggregate sign-off.
+
+## EMP-COACH-001 (2026-09-21)
+
+- Selected the next uncovered source-backed employee behavior: Odoo's
+  `hr.employee.coach_id` search/list projection and current-company relation.
+- Added migration `20260921230000-053` with idempotent `coach_name` storage and
+  deterministic coach fixtures. Employees list search/filter/column projection
+  and employee Work display are page contracts; list/detail datasources and
+  the dedicated guarded Edit Coach action are API/action contracts.
+- Guards require `employees.write`, actor identity, active/current-company
+  employee and coach scope, supported active coach, and optimistic row version.
+  Invalid, stale, actor-missing, and cross-company writes remain atomic.
+- Focused verification: `test/employees_coach.integration.test.ts`, **4 tests
+  / 23 assertions**; UI audit passed at **712 pages / 721 routes / 1,359
+  datasources**; scoped ESLint and `git diff --check` pass.
+- Authenticated Core3/Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-COACH-001/`. Core3's fixture-company
+  mismatch and Odoo's default-hidden optional Coach column are recorded there;
+  no aggregate Employees sign-off is claimed.

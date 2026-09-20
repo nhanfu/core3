@@ -1737,3 +1737,24 @@ file-backed restart. Authenticated Core3 and Odoo desktop/mobile comparison
 captures are recorded under
 `evidence/employees/2026-09-21/EMP-ATTENDANCE-PIN-001/`. Evidence is
 conditional and does not claim aggregate Employees sign-off.
+
+## EMP-COACH-001: Employee coach projection and assignment (2026-09-21)
+
+Odoo's `hr.employee.coach_id` is a company-scoped relation exposed in the
+Employees search view and as an optional employee-list column. Core3 now
+projects the durable `coach_name` in the Employees list, supports a current-
+company Coach filter, and exposes Coach in Work with a guarded Edit Coach
+action. Migration `20260921230000-053` seeds deterministic coach relations.
+
+Create and edit use `employees.write`, actor identity, active/current-company
+scope, optimistic row-version concurrency, and active-coach validation. Page
+YAML and API/action YAML remain separate and join by `page.id`. Focused
+coverage is **4 tests / 23 assertions**, including source mapping, CRUD,
+invalid/stale/company/actor guards, migration replay, and restart.
+
+Authenticated Core3 and Odoo desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-COACH-001/`. Core3's authenticated session
+uses `Core3 Demo Company` while deterministic Employees fixtures are in
+`Core3 Vietnam`, so the Core3 list is empty; Odoo's Coach column is optional
+and hidden in the default list view. This is conditional feature evidence,
+not aggregate Employees sign-off.
