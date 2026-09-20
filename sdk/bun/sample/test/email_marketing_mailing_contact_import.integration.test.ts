@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -47,6 +47,47 @@ describe('Email Marketing mailing contact import wizard', () => {
       .toEqual([{ name: 'Normalized Person', email: 'normalized.person@example.com' }, { name: 'trimmed.person@example.com', email: 'trimmed.person@example.com' }]);
     expect(await repository.query('SELECT COUNT(*) AS count FROM mailing_subscriptions WHERE list_id = ? AND contact_id IN (SELECT id FROM mailing_contacts WHERE email IN (?, ?))', ['mailing-list-empty-001', 'normalized.person@example.com', 'trimmed.person@example.com']))
       .toEqual([{ count: 2 }]);
+  });
+
+  test('preserves imported recipients across a file-backed restart and keeps replay idempotent', async () => {
+    const databasePath = `/tmp/core3-email-mailing-import-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `email_mailing_import_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const values = {
+      mailing_list_id: 'mailing-list-empty-001',
+      contact_list: '  "Restart Person" < restart.person@example.com >  \r\n  restart.plain@example.com  \r\n',
+    };
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await firstRepository.executeMutation(action.mutation, { values });
+    expect(await firstRepository.query('SELECT name, email FROM mailing_contacts WHERE email IN (?, ?) ORDER BY email', ['restart.person@example.com', 'restart.plain@example.com']))
+      .toEqual([
+        { name: 'Restart Person', email: 'restart.person@example.com' },
+        { name: 'restart.plain@example.com', email: 'restart.plain@example.com' },
+      ]);
+    expect(await firstRepository.query('SELECT subscriber_count, contact_count FROM mailing_lists WHERE id = ?', ['mailing-list-empty-001']))
+      .toEqual([{ subscriber_count: 2, contact_count: 2 }]);
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect(await secondRepository.query('SELECT COUNT(*) AS count FROM mailing_contacts WHERE email IN (?, ?)', ['restart.person@example.com', 'restart.plain@example.com']))
+      .toEqual([{ count: 2 }]);
+    expect(await secondRepository.query('SELECT COUNT(*) AS count FROM mailing_subscriptions WHERE list_id = ? AND contact_id IN (SELECT id FROM mailing_contacts WHERE email IN (?, ?))', ['mailing-list-empty-001', 'restart.person@example.com', 'restart.plain@example.com']))
+      .toEqual([{ count: 2 }]);
+    expect(await secondRepository.query('SELECT subscriber_count, contact_count FROM mailing_lists WHERE id = ?', ['mailing-list-empty-001']))
+      .toEqual([{ subscriber_count: 2, contact_count: 2 }]);
+    await secondRepository.executeMutation(action.mutation, { values });
+    expect(await secondRepository.query('SELECT COUNT(*) AS count FROM mailing_contacts WHERE email IN (?, ?)', ['restart.person@example.com', 'restart.plain@example.com']))
+      .toEqual([{ count: 2 }]);
+    expect(await secondRepository.query('SELECT COUNT(*) AS count FROM mailing_subscriptions WHERE list_id = ? AND contact_id IN (SELECT id FROM mailing_contacts WHERE email IN (?, ?))', ['mailing-list-empty-001', 'restart.person@example.com', 'restart.plain@example.com']))
+      .toEqual([{ count: 2 }]);
+    expect(await secondRepository.query('SELECT subscriber_count, contact_count FROM mailing_lists WHERE id = ?', ['mailing-list-empty-001']))
+      .toEqual([{ subscriber_count: 2, contact_count: 2 }]);
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('enforces list, email, permission, transport, and deferred upload boundaries', () => {
