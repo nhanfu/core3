@@ -1,0 +1,109 @@
+page: { id: appraisals }
+datasources:
+  - id: appraisal_states
+    permission: appraisals.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Progress','In Progress'), ('Manager Review','Manager Review'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: appraisal_cycles_lookup
+    permission: appraisals.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM appraisal_cycles WHERE state IN ('Draft', 'Open') ORDER BY year DESC, id"
+  - id: appraisals
+    permission: appraisals.read
+    workflow: appraisals
+    pivot: { fields: [state, cycle_name, employee_name, manager_name, job_title, due_date] }
+    query: "SELECT a.id, a.row_version, a.name, a.cycle_name, a.employee_name, a.manager_name, a.job_title, a.self_rating, a.manager_rating, a.state, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_date AS VARCHAR) AS completed_date FROM appraisals a WHERE (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR a.state = :state) ORDER BY a.due_date DESC NULLS LAST, a.id"
+    error_states:
+      forbidden: { status: 403, code: APPRAISALS_FORBIDDEN, message: You do not have permission to view appraisals. }
+      transport_error: { status: 503, code: APPRAISALS_UNAVAILABLE, message: Appraisals are temporarily unavailable. }
+actions:
+  - id: view_appraisal
+    type: navigate
+    permission: appraisals.read
+    navigate_to: /appraisal-detail
+    params: { id: '{row.id}' }
+  - id: create_appraisal
+    type: server_form
+    permission: appraisals.write
+    title: New appraisal
+    action: appraisals.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [appraisals]
+    mutation:
+      operation: insert
+      table: appraisals
+      generated: [id]
+      before_steps: [{ query: "SELECT 'appraisal-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, goals, self_rating, manager_rating, summary, feedback, due_date]
+      required: [name, cycle_id, cycle_name, employee_id, employee_name]
+      defaults: { state: Draft, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:cycle_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:cycle_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_name AS VARCHAR))) > 0", status: 422, code: APPRAISAL_REQUIRED, message: Appraisal, cycle, and employee are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM appraisals WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: APPRAISAL_NAME_EXISTS, message: An appraisal with this name already exists. }
+      result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    fields:
+      - { field: name, label: Appraisal, type: text, required: true }
+      - { field: cycle_id, label: Cycle, type: select, options_source: appraisal_cycles_lookup, required: true }
+      - { field: cycle_name, label: Cycle name, type: text, required: true }
+      - { field: employee_id, label: Employee ID, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: job_title, label: Job title, type: text }
+      - { field: goals, label: Goals, type: textarea }
+      - { field: self_rating, label: Self rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: manager_rating, label: Manager rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: summary, label: Summary, type: textarea }
+      - { field: feedback, label: Feedback, type: textarea }
+      - { field: due_date, label: Due date, type: text }
+  - id: edit_appraisal
+    type: server_form
+    permission: appraisals.write
+    title: Edit appraisal
+    action: appraisals.records.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [appraisals, appraisal_detail]
+    mutation:
+      operation: update
+      table: appraisals
+      fields: [name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, goals, self_rating, manager_rating, summary, feedback, due_date]
+      required: [name, cycle_id, cycle_name, employee_id, employee_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM appraisals WHERE id = :id AND state NOT IN ('Completed', 'Cancelled')", status: 404, code: APPRAISAL_NOT_EDITABLE, message: Only open appraisals can be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:cycle_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:cycle_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_name AS VARCHAR))) > 0", status: 422, code: APPRAISAL_REQUIRED, message: Appraisal, cycle, and employee are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM appraisals WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: APPRAISAL_NAME_EXISTS, message: An appraisal with this name already exists. }
+      result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    fields:
+      - { field: name, label: Appraisal, type: text, required: true }
+      - { field: cycle_id, label: Cycle, type: text, required: true }
+      - { field: cycle_name, label: Cycle name, type: text, required: true }
+      - { field: employee_id, label: Employee ID, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: job_title, label: Job title, type: text }
+      - { field: goals, label: Goals, type: textarea }
+      - { field: self_rating, label: Self rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: manager_rating, label: Manager rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: summary, label: Summary, type: textarea }
+      - { field: feedback, label: Feedback, type: textarea }
+      - { field: due_date, label: Due date, type: text }
+  - id: delete_appraisal
+    type: server
+    permission: appraisals.manage
+    action: appraisals.records.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete appraisal {{row.name}}?'
+    refresh: [appraisals]
+    mutation:
+      operation: delete
+      table: appraisals
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state <> 'Completed'", status: 404, code: APPRAISAL_NOT_DELETABLE, message: Completed appraisals cannot be deleted. }]
+  - { id: start_appraisal, type: server, permission: appraisals.write, action: appraisals.records.start, handler: order_transition, workflow: appraisals, operation: start, refresh: [appraisals] }
+  - { id: submit_appraisal, type: server, permission: appraisals.write, action: appraisals.records.submit, handler: order_transition, workflow: appraisals, operation: submit, refresh: [appraisals] }
+  - { id: complete_appraisal, type: server, permission: appraisals.manage, action: appraisals.records.complete, handler: order_transition, workflow: appraisals, operation: complete, refresh: [appraisals] }
+  - { id: cancel_appraisal, type: server, permission: appraisals.manage, action: appraisals.records.cancel, handler: order_transition, workflow: appraisals, operation: cancel, refresh: [appraisals] }

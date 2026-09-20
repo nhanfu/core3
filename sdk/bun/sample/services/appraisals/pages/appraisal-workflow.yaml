@@ -18,30 +18,30 @@ workflow:
       to: In Progress
       permission: appraisals.write
       mutation:
-        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft appraisals can start }]
-        steps: [{ query: "UPDATE appraisals SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Draft'", status: 409, code: APPRAISAL_START_INVALID, message: Only draft appraisals can start. }]
+        steps: [{ query: "UPDATE appraisals SET state = 'In Progress', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM appraisals WHERE id = :id" }
     - id: submit
       from: [In Progress]
       to: Manager Review
       permission: appraisals.write
       mutation:
-        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'In Progress' AND self_rating IS NOT NULL", status: 409, message: A self rating is required before submission }]
-        steps: [{ query: "UPDATE appraisals SET state = 'Manager Review', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'In Progress' AND NULLIF(TRIM(CAST(self_rating AS VARCHAR)), '') IS NOT NULL", status: 409, code: APPRAISAL_SELF_RATING_REQUIRED, message: A self rating is required before submission. }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Manager Review', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM appraisals WHERE id = :id" }
     - id: complete
       from: [Manager Review]
       to: Completed
       permission: appraisals.manage
       mutation:
-        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Manager Review' AND manager_rating IS NOT NULL", status: 409, message: A manager rating is required before completion }]
-        steps: [{ query: "UPDATE appraisals SET state = 'Completed', completed_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Manager Review' AND NULLIF(TRIM(CAST(manager_rating AS VARCHAR)), '') IS NOT NULL", status: 409, code: APPRAISAL_MANAGER_RATING_REQUIRED, message: A manager rating is required before completion. }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Completed', completed_date = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM appraisals WHERE id = :id" }
     - id: cancel
       from: [Draft, In Progress, Manager Review]
       to: Cancelled
       permission: appraisals.manage
       mutation:
-        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state IN ('Draft', 'In Progress', 'Manager Review')", status: 409, message: Only open appraisals can be cancelled }]
-        steps: [{ query: "UPDATE appraisals SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state IN ('Draft', 'In Progress', 'Manager Review')", status: 409, code: APPRAISAL_CANCEL_INVALID, message: Only open appraisals can be cancelled. }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Cancelled', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM appraisals WHERE id = :id" }

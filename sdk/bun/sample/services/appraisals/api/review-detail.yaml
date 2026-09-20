@@ -1,0 +1,46 @@
+page: { id: appraisal-detail }
+datasources:
+  - id: appraisal_detail
+    single: true
+    permission: appraisals.read
+    query: "SELECT id, row_version, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, goals, self_rating, manager_rating, summary, feedback, state, CAST(due_date AS VARCHAR) AS due_date, CAST(completed_date AS VARCHAR) AS completed_date FROM appraisals WHERE id = :id"
+    error_states:
+      forbidden: { status: 403, code: APPRAISAL_DETAIL_FORBIDDEN, message: You do not have permission to view this appraisal. }
+      not_found: { status: 404, code: APPRAISAL_DETAIL_NOT_FOUND, message: Appraisal not found. }
+actions:
+  - id: edit_appraisal_detail
+    type: server_form
+    permission: appraisals.write
+    title: Edit appraisal
+    action: appraisals.records.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state
+    refresh: [appraisal_detail, appraisals]
+    mutation:
+      operation: update
+      table: appraisals
+      fields: [name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, goals, self_rating, manager_rating, summary, feedback, due_date]
+      required: [name, cycle_id, cycle_name, employee_id, employee_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM appraisals WHERE id = :id AND state NOT IN ('Completed', 'Cancelled')", status: 404, code: APPRAISAL_NOT_EDITABLE, message: Only open appraisals can be edited. }
+      result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    fields:
+      - { field: name, label: Appraisal, type: text, required: true }
+      - { field: cycle_id, label: Cycle, type: text, required: true }
+      - { field: cycle_name, label: Cycle name, type: text, required: true }
+      - { field: employee_id, label: Employee ID, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: job_title, label: Job title, type: text }
+      - { field: goals, label: Goals, type: textarea }
+      - { field: self_rating, label: Self rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: manager_rating, label: Manager rating, type: select, options: [{ value: Exceeds, label: Exceeds }, { value: Meets, label: Meets }, { value: Needs improvement, label: Needs improvement }] }
+      - { field: summary, label: Summary, type: textarea }
+      - { field: feedback, label: Feedback, type: textarea }
+      - { field: due_date, label: Due date, type: text }
+  - { id: start_appraisal_detail, type: server, permission: appraisals.write, action: appraisals.records.start, handler: order_transition, workflow: appraisals, operation: start, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: submit_appraisal_detail, type: server, permission: appraisals.write, action: appraisals.records.submit, handler: order_transition, workflow: appraisals, operation: submit, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: complete_appraisal_detail, type: server, permission: appraisals.manage, action: appraisals.records.complete, handler: order_transition, workflow: appraisals, operation: complete, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: cancel_appraisal_detail, type: server, permission: appraisals.manage, action: appraisals.records.cancel, handler: order_transition, workflow: appraisals, operation: cancel, params: { id: '{state.id}' }, refresh: [appraisal_detail] }

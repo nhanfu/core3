@@ -7,8 +7,17 @@ type:
       VALUES ('cycle-demo-001', 'Annual Review 2026', EXTRACT(YEAR FROM CURRENT_DATE), 'Annual performance review', 'Open', CURRENT_DATE, CURRENT_DATE + INTERVAL 60 DAY);
       INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, due_date, state)
       VALUES ('appraisal-demo-001', 'APR/2026/0001', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-001', 'Admin User', 'Engineering Manager', 'Operations Lead', CURRENT_DATE + INTERVAL 30 DAY, 'Draft');
+      INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, self_rating, due_date, state)
+      VALUES ('appraisal-demo-002', 'APR/2026/0002', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-002', 'Taylor Morgan', 'Engineering Manager', 'Product Engineer', 'Meets', CURRENT_DATE + INTERVAL 21 DAY, 'In Progress');
+      INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, self_rating, due_date, state)
+      VALUES ('appraisal-demo-003', 'APR/2026/0003', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-003', 'Jordan Lee', 'People Manager', 'UX Designer', 'Exceeds', CURRENT_DATE + INTERVAL 14 DAY, 'Manager Review');
+      INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, self_rating, manager_rating, summary, completed_date, due_date, state)
+      VALUES ('appraisal-demo-004', 'APR/2026/0004', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-004', 'Morgan Diaz', 'People Manager', 'QA Lead', 'Meets', 'Meets', 'Consistent delivery and strong collaboration.', CURRENT_DATE - INTERVAL 7 DAY, CURRENT_DATE - INTERVAL 7 DAY, 'Completed');
+      INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, due_date, state)
+      VALUES ('appraisal-demo-005', 'APR/2026/0005', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-005', 'Casey Nguyen', 'Engineering Manager', 'Support Specialist', CURRENT_DATE + INTERVAL 45 DAY, 'Cancelled');
     down: |
       DELETE FROM appraisals WHERE id = 'appraisal-demo-001';
+      DELETE FROM appraisals WHERE id IN ('appraisal-demo-002', 'appraisal-demo-003', 'appraisal-demo-004', 'appraisal-demo-005');
       DELETE FROM appraisal_cycles WHERE id = 'cycle-demo-001';
   duckdb: postgres
   mysql: postgres
