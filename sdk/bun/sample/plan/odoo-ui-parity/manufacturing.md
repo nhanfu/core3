@@ -2,6 +2,28 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-20 Work Orders action 649 bounded gap
+
+Independent inspection of the current Core3 Work Orders contract, the Odoo 19
+`mrp` source, and the restored `core3_codex_demo_20260912` reference database
+confirmed that Operations / Work Orders is action `mrp.mrp_workorder_todo`
+(runtime action 649), menu `mrp.menu_mrp_workorder_todo` under Operations, and
+the exact `list,kanban,form,calendar,pivot,graph` action modes. Odoo opens the
+action with the OR-combined Ready, In Progress, and Blocked filters; the list
+and form both disallow create/delete, while the existing-record form permits
+editing non-terminal work-order fields.
+
+The active Core3 implementation already covered the menu, modes, default
+filters, deterministic persisted rows, and guarded operator workflow. Its
+remaining bounded gap was the detail form being read-only with no update
+mutation. This continuation implements only versioned editing of an existing
+non-terminal work order (operation, work center, expected duration, and
+schedule), with required-field, positive-duration, date-order, terminal-state,
+permission, missing-record, and stale-row guards. Create/delete remain absent
+to match action 649. The focused test and authenticated desktop/mobile
+captures are recorded in `qa/test-plans/manufacturing.md` and
+`qa/manufacturing.md`.
+
 ## 2026-09-20 Work Orders action-default repair
 
 - Added the Odoo action-649 default search flags to the Work Orders page:

@@ -38,6 +38,7 @@ IDs/dates.
 | MRP-FUNC-007 | Empty/error/not-found | Missing, empty, forbidden and transport-error states are explicit for each datasource | pass at contract level |
 | MRP-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate MOs, work orders or moves | planned restart/migration gate |
 | MRP-FUNC-009 | Attachments/import/export/print | Exercise exposed BoM/MO attachments, import/export and report/print actions | planned browser interaction gate |
+| MRP-FUNC-010 | Work Orders action 649 existing-record edit | Open a non-terminal work order, edit operation/work center/duration/schedule, reload, and confirm persisted values; prove create/delete are not exposed by the Odoo action | planned bounded continuation |
 
 ## Workflow and integration cases
 
@@ -48,6 +49,7 @@ IDs/dates.
 | MRP-WF-003 | BoM consumption/moves | Component and finished moves remain linked to the MO and respect quantity/state validation | pass at contract level |
 | MRP-WF-004 | Scrap/unbuild | Scrap and unbuild update inventory-facing relations without partial writes | pass at contract level; browser integration planned |
 | MRP-WF-005 | Durable/external boundary | Scheduling, work-center callbacks, inventory/accounting integrations and notifications use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| MRP-WF-006 | Work-order edit guards | Edit a non-terminal row with its current version; reject terminal rows, invalid duration/date range, missing rows, stale versions, and unauthorized actors without partial writes | planned bounded continuation |
 
 ## Permission and security cases
 
@@ -59,6 +61,7 @@ IDs/dates.
 | MRP-PERM-004 | Wrong company | Products, BoMs, MOs, work orders and reports are not leaked or mutable | planned |
 | MRP-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | MRP-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current manufacturing row unchanged | pass at contract level |
+| MRP-PERM-007 | Work Orders action 649 edit | Manufacturing write can edit a non-terminal work order; read-only/ordinary actors cannot invoke the mutation; create/delete remain unavailable | planned bounded continuation |
 
 ## Visual, responsive, and regression cases
 
@@ -68,6 +71,7 @@ IDs/dates.
 | MRP-UI-002 | BoM/product/scrap/unbuild | both | Forms, component/operation grids, dialogs and validation states match Odoo | planned paired capture |
 | MRP-UI-003 | Reports/configuration | both | Graph/pivot/list, settings and configuration forms match Odoo | planned paired capture |
 | MRP-UI-004 | Current route regression | all 32 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 64-check matrix |
+| MRP-UI-005 | Work Orders edit form | Odoo action 649 list/detail/edit state | 1440x900 and 390x844 | Work Order form exposes Edit for non-terminal rows, preserves visible tabs/status, saves without overflow, and reload shows the persisted change | planned bounded continuation |
 
 ## Exit criteria
 
