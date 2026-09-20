@@ -182,3 +182,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.
 | EMP-UI-012 | visual/responsive | Authenticated Core3/Odoo Personal tab | Family group and conditional spouse fields visible at desktop/mobile | pass; Odoo shell noise recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.
+
+## EMP-EDUCATION-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-017 | workflow | Employee detail Personal / Education | Durable certificate and study-field CRUD | pass |
+| EMP-PERM-017 | permission/security | Employee detail API edit | Write, company, stale, and certificate guards | pass |
+| EMP-DATA-017 | data/regression | Migration replay/restart | Fixtures persist without duplicates | pass |
+| EMP-UI-013 | visual/responsive | Authenticated Core3/Odoo Personal tab | Education visible desktop/mobile | conditional; exact Core3 blocker recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`.

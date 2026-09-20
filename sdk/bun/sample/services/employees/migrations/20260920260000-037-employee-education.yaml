@@ -1,0 +1,25 @@
+version: 0.0.37
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS certificate VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS study_field VARCHAR;
+      UPDATE employees
+      SET certificate = COALESCE(certificate, CASE id
+        WHEN 'employee-demo-001' THEN 'bachelor'
+        WHEN 'employee-demo-002' THEN 'graduate'
+        WHEN 'employee-demo-003' THEN 'master'
+        ELSE NULL END),
+          study_field = COALESCE(study_field, CASE id
+        WHEN 'employee-demo-001' THEN 'Computer Science'
+        WHEN 'employee-demo-002' THEN 'Business Administration'
+        WHEN 'employee-demo-003' THEN 'Information Systems'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS certificate;
+      ALTER TABLE employees DROP COLUMN IF EXISTS study_field;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

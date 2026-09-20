@@ -33,6 +33,19 @@ Candidate commit: current working tree
   aborted desktop chatter request and app-icon 404s are documented as
   unrelated reference-shell noise.
 
+## EMP-EDUCATION-001 (2026-09-20)
+
+- Implemented Odoo Personal Education (`certificate`, `study_field`) with
+  migration 037, deterministic fixtures, separated page/API contracts,
+  employees.write/company/stale/invalid guards, CRUD, replay, and restart tests.
+- Focused: **4 passed / 21 assertions**; merged schema, scoped ESLint, and
+  diff-check pass.
+- Full Employees: **75 passed / 12 failed / 748 assertions**; failures are
+  existing shared `actions[0].title is not allowed` discovery errors. Audit is
+  blocked by the same error.
+- Core3 browser is blocked before authentication; Odoo labels are verified in
+  the authenticated Family desktop/mobile capture. No module sign-off claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed Personal-tab scalar behavior:

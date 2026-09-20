@@ -52,7 +52,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children]
+      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0 }
       generated: [id]
@@ -78,6 +78,8 @@ actions:
       - { field: spouse_complete_name, label: Spouse Legal Name, type: text }
       - { field: spouse_birthdate, label: Spouse Birthdate, type: date }
       - { field: children, label: Dependent Children, type: number, min: 0 }
+      - { field: certificate, label: Certificate Level, type: select, options: [{ value: graduate, label: Graduate }, { value: bachelor, label: Bachelor }, { value: master, label: Master }, { value: doctor, label: Doctor }, { value: other, label: Other }] }
+      - { field: study_field, label: Field of Study, type: text }
   - id: archive_employee
     type: server
     permission: employees.write

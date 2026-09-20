@@ -1295,3 +1295,21 @@ Dependent Children at desktop and mobile with viewport-matched widths and no
 page errors. Odoo records one unrelated aborted chatter request on desktop
 and known app-icon 404s as shell noise. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EDUCATION-001: Employee Personal education information (2026-09-20)
+
+The smallest uncovered source-backed Personal behavior after Family Information
+and Payroll Load a Template is Odoo's Education group: `certificate` and
+`study_field` on `hr.employee`, rendered by `hr_employee_views.xml`.
+
+Core3 adds migration `20260920260000-037-employee-education.yaml`, deterministic
+company fixtures, page/API-separated employee detail and create/edit fields,
+Odoo certificate choices, and existing employees.write company/row-version
+guards. Focused CRUD, invalid-value, stale/company, replay, and restart tests
+pass. Core3 desktop/mobile capture is blocked before authentication by the
+shared page-discovery error `actions[0].title is not allowed`; the deterministic
+fixture is `Core3 Vietnam` while the known Admin context is `Core3 Vietnam
+Branch`. Authenticated Odoo Education labels are verified in the linked Family
+capture. No aggregate Employees sign-off is claimed.
+
+Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`.

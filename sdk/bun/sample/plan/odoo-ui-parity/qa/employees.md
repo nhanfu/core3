@@ -612,3 +612,15 @@ Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.
 | EMP-UI-012 | Authenticated Core3/Odoo desktop and mobile | Family group and conditional spouse fields render responsively | pass; Odoo shell noise documented |
 
 Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.
+
+## EMP-EDUCATION-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-017 | Personal Education create/edit/read | Certificate and field of study persist | pass; 4 tests / 21 assertions |
+| EMP-PERM-017 | Employees write/company/stale/invalid certificate | Invalid or out-of-scope edits reject atomically | pass |
+| EMP-DATA-017 | Migration replay and restart | Deterministic education fields survive restart | pass |
+| EMP-UI-013 | Authenticated Core3/Odoo desktop/mobile | Education group renders responsively | conditional; Core3 shared discovery blocker, Odoo linked capture pass |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`. No aggregate
+Employees sign-off is claimed.
