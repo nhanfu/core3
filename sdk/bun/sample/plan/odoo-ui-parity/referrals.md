@@ -1,13 +1,13 @@
 # Referrals parity audit
 
-Status: blocked — source dependency unavailable (2026-09-12)
+Status: blocked — live reference has no installed source module (2026-09-20)
 
 This sub-plan is an audit gate, not an approval to clone an invented Referrals
 screen. The parent register links this file for `referrals` / `hr_referral` and
 keeps the module planned until the exact Odoo source and reference UI are
 available.
 
-## Odoo source verification
+## Odoo source and live-reference verification
 
 The exact Odoo 19 addon was checked at each relevant local checkout:
 
@@ -35,6 +35,24 @@ list/form/kanban/graph/pivot states, exact visible labels, empty/error states,
 responsive layout, and official demo-data coverage. No Odoo or Core3 browser
 captures were attempted for this blocked audit; there is no truthful Odoo
 screen to compare against.
+
+The live reference was checked on 2026-09-20 at `http://localhost:8069`,
+database `core3_reference`, using the configured local QA account without
+recording credentials. The reference database reports `hr` installed but no
+`hr_referral` module row, no `ir.ui.menu` whose label contains `Referral`, and
+no matching action. The Odoo container's extra-addons path also contains no
+referral addon. Therefore the exact live menu/action/view inventory is:
+
+| Application | Menu / submenu | Action | View states | Visibility | Result |
+| --- | --- | --- | --- | --- | --- |
+| Referrals | none present | none | none | none | blocked: application is not installed in the live reference |
+
+This is distinct from “the Odoo product does not have Referrals”: the official
+Odoo 19 documentation describes Referrals, including `Referrals → Reporting →
+Referral Analysis`, the points/rewards/alerts flows, and recruitment-access
+boundaries. Those public docs establish candidate behavior only; they do not
+establish the missing live action XML ids, view XML, groups, demo records, or
+responsive layout.
 
 ## Current Core3 ownership
 
@@ -66,7 +84,7 @@ desktop/mobile comparison evidence is present.
 
 ## Blocking dependency and next gate
 
-Obtain a matching Odoo 19 `hr_referral` addon checkout (including its
+Obtain and install a matching Odoo 19 `hr_referral` addon checkout (including its
 `__manifest__.py`, Python models, XML views/actions/menus/security, demo data,
 and static assets) and install or otherwise expose that module in the active
 Odoo reference database from the parent plan. Then record the exact visible
@@ -80,7 +98,23 @@ add permission and HTTP-state tests, and implement one bounded screen slice
 with authenticated desktop/mobile Core3 captures under `/tmp/core3-odoo-parity`.
 Until the dependency is supplied, the existing Core3 routes and labels remain
 unapproved approximations and must not be described as Odoo 19 Referrals
-parity.
+parity. Any implementation made from public documentation in the meantime is
+provisional and must retain this blocker rather than upgrading the parity
+status.
+
+## Current-wave gap matrix (provisional, source-blocked)
+
+| Stable ID | Odoo evidence | Current Core3 source | Gap / required change | Verification |
+| --- | --- | --- | --- | --- |
+| REF-MENU-001 | No live menu/action; docs indicate a Referrals application | `services/referrals/manifest.yaml` | Keep the route out of parity sign-off until the live menu tree is installed and captured | Live DB menu query plus authenticated Odoo capture |
+| REF-REPORT-001 | Docs identify `Referrals → Reporting → Referral Analysis` | `pages/analysis.yaml` embeds SQL | Move report datasource into `services/referrals/api/analysis.yaml`; retain matching `page.id`; add deterministic report states | API contract test and desktop/mobile comparison after source unblock |
+| REF-POINTS-001 | Docs describe referral points and “My Referrals” | No Core3 model or page | Add employee/referral-point domain only after model and fields are confirmed from addon source | CRUD, persistence, permission, workflow tests |
+| REF-REWARD-001 | Docs describe reward configuration and redemption | Synthetic reward amount on `referrals` table | Replace with confirmed reward/product/company relations; current field is not accepted as Odoo parity | Configuration CRUD and redemption workflow |
+| REF-ALERT-001 | Docs describe referral alerts | No Core3 alert contract | Add only after exact model/action/notification behavior is verified | Notification and dismissal tests |
+| REF-CONTRACT-001 | Shared contract requires API/page separation and fixture modes | All current page files own SQL and no `api/` directory exists | Split API/action YAML from presentation, add default/filtered/empty/error/forbidden/not-found/409/422 contracts | YAML discovery, HTTP contract, permission tests |
+
+The matrix is actionable for provisional Core3 hardening, but it does not
+close the Odoo parity blocker.
 
 ## Acceptance checklist after unblocking
 
