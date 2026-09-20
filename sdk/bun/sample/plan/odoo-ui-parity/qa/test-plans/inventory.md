@@ -139,6 +139,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-026 | Forecasted Report lifecycle | Stock report product row | Forecasted Report context/lines/history are company-scoped, Refresh records a durable actor report run, and restart preserves it | pass: `INV-STOCK-FORECAST-001` focused suite |
 | INV-PERM-025 | Forecasted Report permission/context boundary | inventory.read, current company, actor, row version | read permission, authenticated actor, current company, non-empty forecast, and current row version are required; failures create no run | pass: `INV-STOCK-FORECAST-001` focused runtime test |
 | INV-UI-024 | Forecasted Report responsive action | 1440x900, 390x844 | Stock row Forecast opens the paired report, seeded opening/incoming/outgoing lines render, Refresh history persists, and no overflow occurs; paired Odoo action is recorded or blocked exactly | pass Core3; Odoo authenticated Stock route capture blocked |
+| INV-FUNC-027 | Stock product Locations report | Stock report product row with on-hand quantity | Locations opens company-scoped internal/transit quant rows, includes lot/reserved/available/value data, records a durable report run, and survives restart | pass: `INV-STOCK-LOCATIONS-001` focused suite |
+| INV-PERM-026 | Stock product Locations boundary | inventory.read, current company, actor, row version, non-empty locations | readers with inventory.read can report; wrong company, missing actor, empty product, and stale row do not create report history | pass: `INV-STOCK-LOCATIONS-001` focused runtime test |
+| INV-UI-025 | Stock product Locations responsive action | 1440x900, 390x844 | Stock row Locations opens the location report, Refresh history persists, and no overflow occurs; Odoo group-gated action is captured or blocked exactly | pass Core3; Odoo button blocked by supplied user's multi-location group |
 
 ## Exit criteria
 

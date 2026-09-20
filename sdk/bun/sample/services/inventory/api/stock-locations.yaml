@@ -1,0 +1,59 @@
+page: { id: stock-locations }
+datasources:
+  - id: inventory_stock_locations_context
+    single: true
+    permission: inventory.read
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_STOCK_LOCATIONS_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_STOCK_LOCATIONS_CONTEXT_UNAVAILABLE, message: Stock location context is temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.default_code, r.product_name, CAST(r.on_hand AS DOUBLE) AS on_hand, COUNT(q.id) AS location_count, 'Core3 Demo Company' AS company_name FROM inventory_stock_report r LEFT JOIN inventory_quants q ON q.product_name = r.product_name AND q.company_name = 'Core3 Demo Company' AND EXISTS (SELECT 1 FROM inventory_locations l WHERE l.id = q.location_id AND l.usage IN ('Internal', 'Transit')) WHERE r.id = :product_id AND r.active = TRUE AND COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') = 'Core3 Demo Company' GROUP BY r.id, r.row_version, r.default_code, r.product_name, r.on_hand"
+  - id: inventory_stock_locations_lines
+    single: false
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_STOCK_LOCATIONS_LINES_UNAVAILABLE, message: Stock locations are temporarily unavailable. }
+    query: "SELECT q.id, q.row_version, r.id AS product_report_id, r.default_code, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number, CAST(q.quantity AS DOUBLE) AS quantity, CAST(q.reserved_quantity AS DOUBLE) AS reserved_quantity, CAST(q.quantity - q.reserved_quantity AS DOUBLE) AS available_quantity, COALESCE(q.unit_name, 'Units') AS unit_name, CAST(q.quantity * q.unit_cost AS DOUBLE) AS stock_value, q.company_name FROM inventory_quants q JOIN inventory_stock_report r ON r.id = :product_id AND r.product_name = q.product_name JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND l.usage IN ('Internal', 'Transit') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR COALESCE(q.lot_serial_number, '') ILIKE '%' || :q || '%' OR q.product_name ILIKE '%' || :q || '%') ORDER BY w.name, l.name, q.id"
+  - id: inventory_stock_locations_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_STOCK_LOCATIONS_RUNS_UNAVAILABLE, message: Stock location report history is temporarily unavailable. } }
+    query: "SELECT id, row_version, product_id, product_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_stock_location_runs WHERE product_id = :product_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_stock_locations
+    type: client
+    permission: inventory.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_stock_locations_context;
+        if (!context?.id) throw new Error('Stock location context is unavailable');
+        await request('/api/actions/inventory.stock.locations', {
+          method: 'POST',
+          body: { product_id: context.id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_stock_locations
+    type: server
+    permission: inventory.read
+    action: inventory.stock.locations
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_stock_locations_context, inventory_stock_locations_lines, inventory_stock_locations_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'stock-locations-' || CAST(:product_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_stock_location_runs WHERE product_id = :product_id) AS VARCHAR) AS id, r.id AS product_id, r.product_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COUNT(q.id) AS line_count FROM inventory_stock_report r LEFT JOIN inventory_quants q ON q.product_name = r.product_name AND q.company_name = 'Core3 Demo Company' LEFT JOIN inventory_locations l ON l.id = q.location_id AND l.usage IN ('Internal', 'Transit') WHERE r.id = :product_id AND (q.id IS NULL OR l.id IS NOT NULL) GROUP BY r.id, r.product_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_stock_report WHERE id = :product_id AND active = TRUE AND COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') = 'Core3 Demo Company'", status: 404, code: INVENTORY_STOCK_LOCATIONS_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_stock_report WHERE id = :product_id AND row_version = :expected_row_version", status: 409, code: INVENTORY_STOCK_LOCATIONS_STALE, message: The stock report row changed before locations were requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_quants q JOIN inventory_stock_report r ON r.id = :product_id AND r.product_name = q.product_name JOIN inventory_locations l ON l.id = q.location_id WHERE q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND l.usage IN ('Internal', 'Transit'))", status: 404, code: INVENTORY_STOCK_LOCATIONS_EMPTY, message: This product has no stock in internal or transit locations. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_STOCK_LOCATIONS_ACTOR_REQUIRED, message: An authenticated inventory actor is required to refresh locations. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_STOCK_LOCATIONS_COMPANY, message: The location report company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_stock_location_runs(id, product_id, product_name, requested_by, company_name, line_count, opened_at, row_version) VALUES(:id, :product_id, :product_name, :requested_by, :company_name, :line_count, TIMESTAMP '2026-01-15 09:15:00', 1)"
+      result: { query: "SELECT id, product_id, product_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_stock_location_runs WHERE id = :id" }
+  - id: back_to_inventory_stock_report_from_locations
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock-report

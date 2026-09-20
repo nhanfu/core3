@@ -645,3 +645,18 @@ Inventory sign-off remains open.
   reachable but the authenticated Stock report route did not complete within
   the bounded browser capture; see `blockers.md`. Full module sign-off remains
   open.
+## `INV-STOCK-LOCATIONS-001` — Stock product Locations (2026-09-21)
+
+- Selected the next uncovered source-backed Stock behavior: the product-row
+  Locations action (`stock.action_view_quants`) with its internal-location and
+  product context.
+- Added paired `stock-locations` page/API YAML, durable report-run history,
+  deterministic quant-backed product location data, and company/actor/
+  non-empty/row-version guards without duplicating Locations CRUD or quant
+  relocation.
+- Focused verification: 8 tests / 76 assertions across the Locations and
+  Stock report suites. Core3 authenticated desktop/mobile evidence is complete
+  under `evidence/inventory/2026-09-21/INV-STOCK-LOCATIONS-001/`.
+- Odoo Stock desktop/mobile rendered with no failed requests, but the supplied
+  account did not expose the source `stock.group_stock_multi_locations` button;
+  exact paired evidence/blocker is recorded. Full module sign-off remains open.

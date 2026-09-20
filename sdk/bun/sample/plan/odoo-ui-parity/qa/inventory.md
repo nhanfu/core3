@@ -831,3 +831,22 @@ open.
   authenticated `/odoo/stock-report` capture did not render within the browser
   window; exact blocker is in the feature evidence. No Odoo mutation or
   parity sign-off is claimed.
+## Stock product Locations QA — `INV-STOCK-LOCATIONS-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from source comparison. The Stock row
+  Locations action maps to `stock.action_view_quants`, with product and
+  internal-location context; exact source references are in the evidence.
+- Core3 contract: PASS. Stock report and product Locations are page/API
+  separated by `page.id`; existing durable quants are queried and report runs
+  are persisted through an idempotent migration.
+- Focused test:
+  `bun test test/inventory_stock_locations.integration.test.ts
+  test/inventory_stock_report.integration.test.ts` — PASS, 8 tests / 76
+  assertions. Coverage includes deterministic location rows, report CRUD-like
+  history, permission denial, company, actor, empty, stale, migration replay,
+  and restart guards.
+- Browser evidence: PASS for authenticated Core3 desktop/mobile at 1440x900
+  and 390x844, including the product location row, refresh history, no page/
+  request errors, and no horizontal overflow. Odoo Stock rendered at both
+  viewports, but its Locations button was group-gated for the supplied account;
+  exact blocker is recorded. No Odoo mutation or parity sign-off is claimed.

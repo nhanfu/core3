@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-20T18:39:36.035Z",
+  "base": "http://127.0.0.1:8069",
+  "results": [
+    {
+      "label": "desktop",
+      "url": "http://127.0.0.1:8069/odoo/stock-report",
+      "body": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nInventory at Date\nStock\n1-44 / 44\nCATEGORY\nAll\nFurniture\n37\nGoods\n7\n\t\nProduct\n\t\nUnit Cost\n\t\nTotal Value\n\t\nOn Hand\n\t\nFree to Use\n\t\nIncoming\n\t\nOutgoing\n\t\nUnit\n\t\t\n\n\n\t[DESK0005] Customizable Desk (White, Custom)\t$ 0.00\t$ 0.00\t65.00\t65.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[DESK0006] Customizable Desk (Black, Custom)\t$ 0.00\t$ 0.00\t70.00\t70.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM06] Corner Desk Right Sit\t$ 600.00\t$ 0.00\t0.00\t0.00\t0.00\t10.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM07] Large Cabinet\t$ 800.00\t$ 400,000.00\t500.00\t270.00\t0.00\t230.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM08] Storage Box\t$ 14.00\t$ 252.00\t18.00\t18.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM10] Pedal Bin\t$ 10.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM11] Cabinet with Doors\t$ 120.50\t$ 3,976.50\t33.00\t18.00\t120.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM12] Conference Chair (Steel)\t$ 0.00\t$ 0.00\t26.00\t26.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM13] Conference Chair (Aluminium)\t$ 0.00\t$ 0.00\t30.00\t30.00\t0.",
+      "failed": []
+    },
+    {
+      "label": "mobile",
+      "url": "http://127.0.0.1:8069/odoo/stock-report",
+      "body": "Stock\n7\n40\nNew\nCategory\nProduct\n\t\nUnit Cost\n\t\nTotal Value\n\t\nOn Hand\n\t\nFree to Use\n\t\nIncoming\n\t\nOutgoing\n\t\nUnit\n\t\t\n\n[DESK0005] Customizable Desk (White, Custom)\t$ 0.00\t$ 0.00\t65.00\t65.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[DESK0006] Customizable Desk (Black, Custom)\t$ 0.00\t$ 0.00\t70.00\t70.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM06] Corner Desk Right Sit\t$ 600.00\t$ 0.00\t0.00\t0.00\t0.00\t10.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM07] Large Cabinet\t$ 800.00\t$ 400,000.00\t500.00\t270.00\t0.00\t230.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM08] Storage Box\t$ 14.00\t$ 252.00\t18.00\t18.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM10] Pedal Bin\t$ 10.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM11] Cabinet with Doors\t$ 120.50\t$ 3,976.50\t33.00\t18.00\t120.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM12] Conference Chair (Steel)\t$ 0.00\t$ 0.00\t26.00\t26.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM13] Conference Chair (Aluminium)\t$ 0.00\t$ 0.00\t30.00\t30.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0001] Desk Organizer\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0002] Desk Pad\t$ 0.00\t",
+      "failed": []
+    }
+  ]
+}

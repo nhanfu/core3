@@ -1,0 +1,24 @@
+version: 0.0.40
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_stock_location_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:15:00',
+        UNIQUE(product_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_stock_location_runs_product_idx ON inventory_stock_location_runs(product_id, opened_at, id);
+      INSERT INTO inventory_stock_location_runs(id, product_id, product_name, requested_by, company_name, line_count, opened_at)
+      VALUES ('stock-locations-run-0001', 'stock-report-cabinet', '[E-COM07] Large Cabinet', 'Seeded Inventory', 'Core3 Demo Company', 1, TIMESTAMP '2026-01-15 09:15:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_stock_location_runs WHERE product_id = 'stock-report-cabinet';
+      DROP TABLE IF EXISTS inventory_stock_location_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

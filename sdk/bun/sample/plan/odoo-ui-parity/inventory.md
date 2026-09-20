@@ -1434,3 +1434,30 @@ history, no request/page errors, and no horizontal overflow. Odoo login was
 reachable, but the bounded authenticated `/odoo/stock-report` capture did not
 complete; the exact blocker is recorded in the paired evidence files. No Odoo
 mutation or full Inventory sign-off is claimed.
+## Reporting > Stock product Locations — `INV-STOCK-LOCATIONS-001` (2026-09-21)
+
+This bounded slice covers the remaining product-row Locations workflow in the
+Odoo Stock report after Stock at Date and Forecasted Report. Odoo's stock list
+defines the Locations button at
+`addons/stock/views/product_views.xml:585-592`; it invokes
+`stock.action_view_quants`, passes `search_default_product_id` and
+`default_product_id`, and is restricted to `stock.group_stock_multi_locations`.
+The action/server context is in `stock_quant_views.xml:213-224`, and
+`stock.quant.action_view_quants` sets the internal-location context in
+`stock_quant.py:395-399`.
+
+Core3 keeps `pages/stock-report.yaml` presentation-only and joins it to
+`api/stock-report.yaml` by `page.id`; its Locations row action opens the new
+`stock-locations` page. The paired page/API exposes product-scoped
+internal/transit quant rows with location, lot, reservation, availability, and
+stock value, plus a durable Refresh Locations report ledger. Migration
+`20260921140000-040-inventory-stock-locations.yaml` adds deterministic history;
+the report action enforces `inventory.read`, current company, authenticated
+actor, non-empty locations, and product row-version guards.
+
+Focused verification and authenticated Core3 desktop/mobile evidence are
+recorded under
+`evidence/inventory/2026-09-21/INV-STOCK-LOCATIONS-001/`. Odoo Stock rendered
+at both viewports, but the supplied account lacks the source multi-location
+group so the Locations button/detail could not be reached; the exact blocker
+is recorded and no Odoo mutation or full Inventory sign-off is claimed.

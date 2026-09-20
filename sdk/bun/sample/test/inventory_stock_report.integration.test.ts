@@ -39,11 +39,12 @@ describe('Inventory Reporting Stock Odoo parity', () => {
       'incoming_qty', 'outgoing_qty', 'forecasted', 'unit_name', 'actions',
     ]);
     expect(api.actions.map((action: any) => action.id)).toEqual([
-      'inventory_stock_at_date', 'view_inventory_stock_history', 'view_inventory_stock_replenishment', 'view_inventory_stock_forecast',
+      'inventory_stock_at_date', 'view_inventory_stock_history', 'view_inventory_stock_replenishment', 'view_inventory_stock_locations', 'view_inventory_stock_forecast',
     ]);
     expect(api.actions.slice(1)).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'navigate', permission: 'inventory.read', navigate_to: '/moves' }),
       expect.objectContaining({ type: 'navigate', permission: 'inventory.read', navigate_to: '/replenishment' }),
+      expect.objectContaining({ type: 'navigate', permission: 'inventory.read', navigate_to: '/stock-report/locations', params: { product_id: '{row.id}' } }),
       expect.objectContaining({ type: 'navigate', permission: 'inventory.read', navigate_to: '/stock-report/forecast', params: { product_id: '{row.id}' } }),
     ]));
   });

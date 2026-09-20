@@ -1,0 +1,44 @@
+title: Stock Locations
+page: { id: stock-locations, route: /stock-report/locations, breadcrumb: [Supply Chain, Inventory, Reporting, Stock, Locations], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_stock_locations_context
+    title: Locations
+    stats:
+      - { label: Product, field: product_name }
+      - { label: On Hand, field: on_hand }
+      - { label: Locations, field: location_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_locations_lines
+    header_actions:
+      - { id: refresh_inventory_stock_locations, label: Refresh Locations, variant: primary, permission: inventory.read }
+      - { id: back_to_inventory_stock_report_from_locations, label: Back to Stock, variant: secondary, permission: inventory.read }
+    search: { label: Search locations, placeholder: 'Search locations, lots, or packages...' }
+    columns:
+      - { field: location_name, label: Location, type: PrimaryEntityCell, sortable: true }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: lot_serial_number, label: Lot/Serial Number }
+      - { field: quantity, label: On Hand, align: right, sortable: true }
+      - { field: reserved_quantity, label: Reserved, align: right }
+      - { field: available_quantity, label: Available, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: stock_value, label: Stock Value, align: right }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No locations for this product, description: This product has no stock in internal or transit locations. }
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_locations_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: line_count, label: Locations, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No location reports, description: Refresh Locations records the report request for this product. }

@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-09-20T18:38:58.486Z",
+  "base": "http://127.0.0.1:4318",
+  "desktop": {
+    "label": "desktop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "stockReport": {
+      "containsProduct": true,
+      "containsLocationsAction": true
+    },
+    "locations": {
+      "url": "http://127.0.0.1:4318/inventory/stock-report/locations?product_id=stock-report-cabinet",
+      "containsTitle": true,
+      "containsStock": true,
+      "containsHistory": true
+    },
+    "width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    }
+  },
+  "mobile": {
+    "label": "mobile",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "stockReport": {
+      "containsProduct": true,
+      "containsLocationsAction": false
+    },
+    "locations": {
+      "url": "http://127.0.0.1:4318/inventory/stock-report/locations?product_id=stock-report-cabinet",
+      "containsTitle": true,
+      "containsStock": true,
+      "containsHistory": true
+    },
+    "width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    }
+  },
+  "failures": [],
+  "errors": []
+}
