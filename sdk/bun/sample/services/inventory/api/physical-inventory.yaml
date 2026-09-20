@@ -4,8 +4,114 @@ datasources:
     single: false
     permission: inventory.read
     query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_locations WHERE state = 'Active' AND usage IN ('Internal', 'Transit') ORDER BY usage, name"
+  - id: inventory_adjustment_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_ADJUSTMENTS_UNAVAILABLE, message: Inventory adjustment history is temporarily unavailable. } }
+    query: "SELECT id, row_version, inventory_adjustment_name, CAST(counting_date AS VARCHAR) AS counting_date, requested_by, quant_count, applied_count, CAST(created_at AS VARCHAR) AS created_at FROM inventory_adjustments ORDER BY created_at DESC, id DESC"
   - id: inventory_physical_inventory
     single: false
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_PHYSICAL_DATA_UNAVAILABLE, message: Physical inventory data is temporarily unavailable. } }
     query: "SELECT q.id, q.row_version, q.product_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number, CAST(q.inventory_date AS VARCHAR) AS scheduled, COALESCE(q.inventory_user, '') AS inventory_user, CAST(q.quantity AS DOUBLE) AS on_hand, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity AS DOUBLE) ELSE NULL END AS counted, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity - q.quantity AS DOUBLE) ELSE NULL END AS difference, COALESCE(q.unit_name, 'Units') AS unit_name, l.name AS location_name, l.usage AS location_usage, COALESCE(q.company_name, 'Core3 Demo Company') AS company_name, q.inventory_quantity_set, q.is_outdated FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.usage IN ('Internal', 'Transit') AND (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR COALESCE(q.lot_serial_number, '') ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') AND (:count_filter IS NULL OR (:count_filter = 'my_count' AND COALESCE(q.inventory_user, '') = :current_user_name) OR (:count_filter = 'internal' AND l.usage = 'Internal') OR (:count_filter = 'transit' AND l.usage = 'Transit') OR (:count_filter = 'to_count' AND q.inventory_date <= DATE '2026-01-15') OR (:count_filter = 'to_apply' AND q.inventory_quantity_set) OR (:count_filter = 'conflicts' AND q.is_outdated) OR (:count_filter = 'negative' AND q.quantity < 0)) ORDER BY l.usage, l.name, q.product_name, q.id"
+actions:
+  - id: create_inventory_quant
+    type: server_form
+    permission: inventory.write
+    title: New inventory quantity
+    action: inventory.quants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_physical_inventory]
+    success_message: Inventory quantity created.
+    mutation:
+      operation: insert
+      table: inventory_quants
+      fields: [product_id, product_name, location_id, quantity, unit_name, lot_serial_number, inventory_date, inventory_quantity_set, is_outdated, company_name]
+      required: [product_id, product_name, location_id, quantity]
+      defaults: { unit_name: Units, inventory_date: '2026-01-15', inventory_quantity_set: false, is_outdated: false, company_name: Core3 Demo Company, reserved_quantity: 0, unit_cost: 0 }
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_locations WHERE id = :location_id AND usage IN ('Internal', 'Transit') AND state = 'Active'", status: 422, code: INVENTORY_LOCATION_NOT_ALLOWED, message: Physical inventory is limited to active internal or transit locations. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_QUANTITY_INVALID, message: Quantity must be zero or greater. }
+      result: { query: "SELECT * FROM inventory_quants WHERE id = :id" }
+    fields:
+      - { field: product_id, label: Product ID, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: location_id, label: Location, type: select, options_source: inventory_physical_locations, required: true }
+      - { field: quantity, label: On Hand, type: number, min: 0, required: true }
+      - { field: lot_serial_number, label: Lot/Serial Number, type: text }
+      - { field: unit_name, label: Unit, type: text, default: Units }
+  - id: apply_all_inventory_quantities
+    type: server_form
+    permission: inventory.write
+    title: Inventory Adjustment
+    action: inventory.quants.apply_all
+    handler: yaml_mutation
+    operation: apply_all
+    refresh: [inventory_physical_inventory, inventory_adjustment_runs]
+    success_message: Inventory quantities applied.
+    fields:
+      - { field: inventory_adjustment_name, label: Inventory Reason, type: text, default: Physical Inventory, required: true }
+      - { field: counting_date, label: Counting Date, type: date, default: '2026-01-15', required: true }
+    mutation:
+      operation: insert
+      table: inventory_adjustments
+      generated: [id]
+      fields: [inventory_adjustment_name, counting_date, requested_by, quant_count, applied_count]
+      defaults: { requested_by: Admin User, quant_count: 0, applied_count: 0, created_at: '2026-01-15 00:00:00', row_version: 1 }
+      before_steps:
+        - query: "SELECT 'inventory-adjustment-' || LPAD(CAST((SELECT COUNT(*) + 1 FROM inventory_adjustments) AS VARCHAR), 6, '0') AS id, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COUNT(*) FILTER (WHERE q.inventory_quantity_set AND q.counted_quantity IS NOT NULL) AS quant_count, COUNT(*) FILTER (WHERE q.inventory_quantity_set AND q.counted_quantity IS NOT NULL AND q.counted_quantity <> q.quantity) AS applied_count FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE l.usage IN ('Internal', 'Transit')"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:inventory_adjustment_name AS VARCHAR))) BETWEEN 1 AND 120 AND TRY_CAST(:counting_date AS DATE) IS NOT NULL", status: 422, code: INVENTORY_ADJUSTMENT_INVALID, message: Enter an inventory reason and a valid counting date. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE l.usage IN ('Internal', 'Transit') AND q.inventory_quantity_set AND q.counted_quantity IS NOT NULL)", status: 409, code: INVENTORY_ADJUSTMENT_EMPTY, message: Count at least one quantity before applying the inventory adjustment. }
+      steps:
+        - query: "INSERT INTO inventory_move_lines(id,date,reference,product_id,product_name,product_category_name,lot_serial_number,source_package,result_package,source_location_id,destination_location_id,picking_partner_name,company_name,quantity,quantity_product_uom,unit_name,state,done_by,origin,movement_type,created_at) SELECT :id || '-move-' || q.id, CAST(:counting_date AS TIMESTAMP), :inventory_adjustment_name, q.product_id, q.product_name, CASE WHEN q.product_name ILIKE '%box%' OR q.product_name ILIKE '%chair%' THEN 'Office Supplies' ELSE 'Furniture' END, q.lot_serial_number, NULL, NULL, CASE WHEN q.counted_quantity < q.quantity THEN q.location_id ELSE 'location-loss' END, CASE WHEN q.counted_quantity < q.quantity THEN 'location-loss' ELSE q.location_id END, NULL, COALESCE(q.company_name, 'Core3 Demo Company'), ABS(q.counted_quantity - q.quantity), ABS(q.counted_quantity - q.quantity), COALESCE(q.unit_name, 'Units'), 'Done', COALESCE(:current_user_name, 'Admin User'), :inventory_adjustment_name, 'internal', TIMESTAMP '2026-01-15 00:00:00' FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE l.usage IN ('Internal', 'Transit') AND q.inventory_quantity_set AND q.counted_quantity IS NOT NULL AND q.counted_quantity <> q.quantity"
+        - query: "UPDATE inventory_quants SET quantity = counted_quantity, counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = :current_user_name, inventory_adjustment_name = :inventory_adjustment_name, counting_date = CAST(:counting_date AS DATE), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE location_id IN (SELECT id FROM inventory_locations WHERE usage IN ('Internal', 'Transit')) AND inventory_quantity_set AND counted_quantity IS NOT NULL"
+      result: { query: "SELECT id, inventory_adjustment_name AS message, counting_date, requested_by, quant_count, applied_count, row_version FROM inventory_adjustments WHERE id = :id" }
+  - id: set_inventory_quantity
+    type: server
+    permission: inventory.write
+    action: inventory.quants.set_on_hand
+    handler: yaml_mutation
+    operation: set_on_hand
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = FALSE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was already counted or changed. Reload before setting it. }]
+      steps: [{ query: "UPDATE inventory_quants SET counted_quantity = quantity, inventory_quantity_set = TRUE, inventory_user = :current_user_name, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed by another user. Reload before setting it. }]
+  - id: set_inventory_quantity_zero
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.set_zero
+    handler: yaml_mutation
+    operation: set_zero
+    confirm: Set the counted quantity to zero?
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = FALSE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was already counted or changed. Reload before setting it. }]
+      steps: [{ query: "UPDATE inventory_quants SET counted_quantity = 0, inventory_quantity_set = TRUE, inventory_user = :current_user_name, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed by another user. Reload before setting it. }]
+  - id: apply_inventory_quantity
+    type: server
+    permission: inventory.write
+    action: inventory.quants.apply
+    handler: yaml_mutation
+    operation: apply
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = TRUE AND counted_quantity IS NOT NULL AND counted_quantity >= 0 AND row_version = :expected_row_version", status: 422, code: INVENTORY_COUNT_INVALID, message: Enter a non-negative counted quantity before applying it. }]
+      steps: [{ query: "UPDATE inventory_quants SET quantity = counted_quantity, counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed before applying it. Reload before applying it. }]
+  - id: clear_inventory_quantity
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.clear_count
+    handler: yaml_mutation
+    operation: clear_count
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = TRUE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed before clearing it. Reload before clearing it. }]
+      steps: [{ query: "UPDATE inventory_quants SET counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed before clearing it. Reload before clearing it. }]
+  - id: view_inventory_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves
+    params: { q: '{row.product_name}' }

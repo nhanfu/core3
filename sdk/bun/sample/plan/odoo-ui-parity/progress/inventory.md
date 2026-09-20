@@ -330,3 +330,23 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 - Status: bounded Core3 lifecycle and evidence complete for review; broader
   Inventory sign-off remains open for the full actor matrix and residual source
   behaviors.
+
+## `INV-PHYSICAL-001` — Physical Inventory Apply All (2026-09-20)
+
+- Selected the smallest remaining source-backed gap after Scrap Orders: Odoo's
+  Physical Inventory Apply All action and adjustment-name wizard.
+- Compared `stock_quant_views.xml`, `stock_quant.py`, and
+  `stock_inventory_adjustment_name.py`; Core3 now keeps the page YAML layout
+  only, owns the datasources/actions in the matching API YAML, and persists
+  adjustment runs in migration `0.0.26`.
+- Apply All validates reason/date, rejects an empty counted set, updates only
+  counted quants, records deterministic non-zero inventory move history, and
+  returns the durable adjustment audit row. Focused coverage passes 4 tests /
+  39 assertions; the full Inventory suite passes 61 tests / 627 assertions.
+- Authenticated Core3 desktop/mobile and paired authenticated Odoo
+  desktop/mobile comparison evidence is complete under
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-001/`; no Odoo mutation was
+  performed.
+- Status: bounded Core3 lifecycle, permissions, restart persistence, and
+  evidence complete for review. Broader Inventory sign-off remains open for
+  the full actor matrix and residual report/relocation semantics.

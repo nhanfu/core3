@@ -1019,3 +1019,36 @@ authenticated Odoo desktop/mobile comparison are under
 the same list/form/kanban surface at `/odoo/scraps`; no Odoo mutation was made.
 The final scoped audit and full Inventory suite passed; broader Inventory
 sign-off remains open for the residual source behaviors listed above.
+
+## Operations > Physical Inventory Apply All lifecycle slice (2026-09-20)
+
+Feature `INV-PHYSICAL-001` closes the smallest remaining source-backed
+Physical Inventory gap. Odoo `stock.menu_action_inventory_tree` invokes the
+server action `stock.action_view_inventory_tree` in
+`addons/stock/views/stock_quant_views.xml:4-21,361`; the editable inventory
+list exposes Apply All and opens the `stock.inventory.adjustment.name` wizard
+(`stock_quant_views.xml:229-270` and
+`wizard/stock_inventory_adjustment_name.xml:3-31`). The wizard accepts
+Inventory Reason and Counting Date, then applies only counted quants through
+`stock_quant.py:402-468` and
+`stock_inventory_adjustment_name.py:8-22`, creating the resulting inventory
+move history.
+
+Core3 now keeps `pages/physical-inventory.yaml` layout-only and moves all
+datasources/actions to the matching `api/physical-inventory.yaml` fragment.
+Migration `0.0.26` adds durable `inventory_adjustments` audit runs and a
+deterministic opening run. The Apply All server form validates reason/date,
+rejects an empty counted set, inserts deterministic move-history rows for
+non-zero differences, updates only counted quants, and persists the run/count
+metadata. Runtime permissions cover read, write, and manager-only row actions.
+
+Focused coverage passes 4 tests / 39 assertions, including page/API
+separation, deterministic fixture/audit data, counted-only Apply All behavior,
+invalid/empty guards, move side effects, runtime permission denial, and
+file-backed restart persistence. Authenticated Core3 desktop/mobile and Odoo
+desktop/mobile evidence is under
+`evidence/inventory/2026-09-20/INV-PHYSICAL-001/`. The final Core3 mobile
+capture used a direct authenticated route with no HTTP/page errors or
+horizontal overflow; no Odoo mutation was made. Full Inventory sign-off
+remains open for the broader actor matrix and residual report/relocation
+semantics.

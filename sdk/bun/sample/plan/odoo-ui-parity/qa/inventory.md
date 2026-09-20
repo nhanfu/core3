@@ -448,3 +448,27 @@ runtime-blocked. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 Scrap lifecycle, persistence,
 permission, evidence contract, and final scoped verification. Full Inventory
 sign-off remains open for the residual source behaviors and full actor matrix.
+
+## Physical Inventory Apply All QA — `INV-PHYSICAL-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.menu_action_inventory_tree` invokes
+  `stock.action_view_inventory_tree`; the editable quant list's Apply All
+  opens `stock.inventory.adjustment.name` with Inventory Reason and Counting
+  Date, then applies only counted quants and creates inventory history.
+- Core3 implementation: `pages/physical-inventory.yaml` is layout-only; the
+  matching API YAML owns datasources and actions. Migration `0.0.26` adds
+  durable `inventory_adjustments`; Apply All records the run, updates counted
+  quants only, and writes deterministic non-zero move-history rows.
+- Focused test: 4 tests / 39 assertions pass, covering page/API ownership,
+  deterministic fixtures, CRUD/workflow guards, counted-only adjustment,
+  move side effects, runtime permission denial, and file-backed restart.
+  Full Inventory regression passes 61 tests / 627 assertions.
+- Authenticated evidence: Core3 desktop list/modal/after-apply and direct
+  mobile route captures are paired with Odoo desktop/mobile Physical Inventory
+  captures. Browser errors and mobile overflow are absent in the final Core3
+  capture; no Odoo mutation was made.
+
+QA disposition: PASS for the bounded Physical Inventory Apply All lifecycle,
+durability, permissions, evidence contract, and final scoped verification.
+Full Inventory sign-off remains open for the broader actor matrix and residual
+conflict/reset/relocation/report semantics.

@@ -72,6 +72,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-009 | Stock report date context | `inventory.read` is required for the report/context; wrong-company date requests return 403 without a run | pass: `INV-STOCK-AT-DATE-001` focused runtime test |
 | INV-PERM-010 | Operations Types manager boundary | `inventory.manage` is required for list/detail and create/edit/archive/restore; read-only users receive 403 without mutation | pass: `INV-OP-TYPES-001` focused runtime test |
 | INV-PERM-011 | Scrap Orders operator boundary | `inventory.read` permits list/detail/moves; `inventory.write` is required for create/edit/validate/delete and read-only users receive 403 | pass: `INV-SCRAP-001` focused runtime test |
+| INV-FUNC-014 | Physical Inventory Apply All | Apply All accepts reason/date, applies only counted quants, persists an audit run, and records non-zero move history | pass: `INV-PHYSICAL-001` focused lifecycle test |
+| INV-WF-010 | Physical Inventory Apply All workflow | counted-only adjustment, empty-set/invalid-input guards, deterministic audit identifier, and file-backed restart persistence | pass: `INV-PHYSICAL-001` focused lifecycle test |
+| INV-PERM-012 | Physical Inventory adjustment boundary | `inventory.read` permits the page; `inventory.write` is required for Apply All and read-only users receive 403 without mutation | pass: `INV-PHYSICAL-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -87,6 +90,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-008 | Stock report Inventory at Date | 1440x900, 390x844 | Date form opens, selected context is visible, report refreshes/reloads without overflow; paired Odoo wizard result is recorded | pass Core3; Odoo mobile control boundary captured |
 | INV-UI-009 | Operations Types list/detail | 1440x900, 390x844 | New modal, list/detail fields, edit/reload, source location labels, and responsive states render; paired Odoo result or exact blocker is recorded | pass Core3; Odoo action blocker captured |
 | INV-UI-010 | Scrap Orders list/detail/Product Moves | 1440x1000, 390x844 | Draft/Done form, Validate action, Product Moves relation, desktop/mobile list/detail, and paired Odoo list/kanban comparison are captured | pass Core3/Odoo evidence; repository discovery boundary remains partial |
+| INV-UI-011 | Physical Inventory list/Apply All wizard | 1440x1000, 390x844 | Physical Inventory list, Apply All reason/date modal, counted-only result, responsive route, and paired Odoo list comparison are captured | pass Core3/Odoo evidence; residual conflict/reset/relocation semantics remain |
 
 ## Exit criteria
 

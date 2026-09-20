@@ -1,0 +1,23 @@
+version: 0.0.26
+description: Durable Physical Inventory adjustment runs
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_adjustments (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        inventory_adjustment_name VARCHAR NOT NULL, counting_date DATE NOT NULL,
+        requested_by VARCHAR NOT NULL, quant_count INTEGER NOT NULL DEFAULT 0,
+        applied_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_adjustments_date ON inventory_adjustments(counting_date, id);
+      INSERT INTO inventory_adjustments(id, inventory_adjustment_name, counting_date, requested_by, quant_count, applied_count, created_at)
+      VALUES ('inventory-adjustment-0001', 'Opening cycle count', DATE '2026-01-15', 'System', 1, 1, TIMESTAMP '2026-01-15 08:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS idx_inventory_adjustments_date;
+      DROP TABLE IF EXISTS inventory_adjustments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
