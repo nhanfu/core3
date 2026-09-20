@@ -397,6 +397,30 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-TRANSFER-LOCK-001` — transfer Lock/Unlock actor lifecycle (2026-09-21)
+
+- Selected the smallest remaining non-duplicated transfer behavior: Odoo's
+  form-only manager `action_toggle_is_locked` operation.
+- Compared `stock_picking_views.xml:490-501` and
+  `stock_picking.py:658-661,1529-1532`. Core3 keeps the page/API split,
+  exposes a manager-only Lock / Unlock action for non-cancelled transfers,
+  persists `is_locked`, and records actor/timeline state. Field-level
+  editability changes remain a separate follow-up.
+- Migration `20260921090000-035-inventory-transfer-locks.yaml` adds durable
+  lock state and defaults existing deterministic fixtures to locked. Company,
+  actor, cancelled-state, row-version, permission, and file-backed restart
+  guards are covered by the focused lock suite.
+- Focused coverage passes 8 tests / 67 assertions across the lock and transfer
+  workflow suites. Authenticated Core3 desktop/mobile evidence and paired
+  authenticated Odoo comparison/blocker evidence are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-LOCK-001/`.
+- Odoo deliveries/receipts rendered without Lock/Unlock for
+  `codex@core3.local`; the exact `stock.group_stock_manager` blocker is
+  recorded and no Odoo mutation was attempted.
+
+Status: bounded Core3 lifecycle and evidence complete for review; broader
+Inventory sign-off remains open.
+
 ## `INV-TRANSFER-BACKORDER-001` — partial transfer backorder lifecycle (2026-09-20)
 
 - Selected the smallest remaining non-duplicated transfer workflow: Odoo's

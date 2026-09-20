@@ -1,0 +1,13 @@
+version: 0.0.35
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_pickings ADD COLUMN IF NOT EXISTS is_locked BOOLEAN;
+      UPDATE inventory_pickings SET is_locked = COALESCE(is_locked, TRUE);
+    down: |
+      ALTER TABLE inventory_pickings DROP COLUMN IF EXISTS is_locked;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

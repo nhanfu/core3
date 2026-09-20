@@ -26,6 +26,7 @@ components:
       - { id: unreserve_inventory_transfer, label: Unreserve, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: create_inventory_backorder, label: Create Backorder, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
+      - { id: toggle_inventory_transfer_lock, label: Lock / Unlock, variant: secondary, permission: inventory.manage, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     message_source: inventory_transfer_timeline
@@ -48,6 +49,7 @@ components:
       inventory.transfer.return_created: Return created
       inventory.transfer.backorder_created: Backorder created
       inventory.transfer.backorder_skipped: No backorder
+      inventory.transfer.lock_toggled: Lock state changed
     content_slot: true
     group_columns: 2
     groups:
@@ -63,7 +65,7 @@ components:
           label: Additional Info
           groups:
             - title: Additional information
-              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }, { field: return_count, label: Returns }, { field: backorder_count, label: Backorders }]
+              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }, { field: return_count, label: Returns }, { field: backorder_count, label: Backorders }, { field: is_locked, label: Locked }]
         - id: note
           label: Note
           groups:

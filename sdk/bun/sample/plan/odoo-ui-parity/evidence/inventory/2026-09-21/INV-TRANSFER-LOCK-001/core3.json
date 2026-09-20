@@ -1,0 +1,10 @@
+{
+  "feature_id": "INV-TRANSFER-LOCK-001",
+  "runtime": "http://127.0.0.1:4315",
+  "user": "admin@tms.local",
+  "route": "/inventory/transfer/detail?id=delivery-return-0001",
+  "desktop": { "viewport": "1440x1000", "before": "core3-desktop-before.png", "after": "core3-desktop-after.png", "result": "Lock / Unlock toggled Done transfer to unlocked and rendered actor timeline" },
+  "mobile": { "viewport": "390x844", "after": "core3-mobile-after.png", "result": "persisted unlocked state and actor timeline rendered" },
+  "checks": { "authenticated": true, "page_errors": [], "request_errors": [], "horizontal_overflow": false },
+  "mutation": { "initial_locked": true, "final_locked": false, "actor": "Admin User", "row_version": 2 }
+}

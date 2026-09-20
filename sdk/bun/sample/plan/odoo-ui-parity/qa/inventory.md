@@ -713,3 +713,33 @@ QA disposition: PASS for the bounded Core3 backorder lifecycle, durable data,
 permissions, and responsive evidence; PARTIAL for direct Odoo wizard parity
 because the supplied authenticated account exposes no partial fixture or
 wizard. Full Inventory sign-off remains open.
+
+## Transfer Lock/Unlock lifecycle QA — `INV-TRANSFER-LOCK-001` (2026-09-21)
+
+- Odoo source/menu/action: form-only `action_toggle_is_locked` in
+  `stock_picking_views.xml:490-501`, manager-gated by
+  `stock.group_stock_manager`; `stock.picking.action_toggle_is_locked` toggles
+  `is_locked` in `stock_picking.py:1529-1532`.
+- Core3 implementation: `pages/transfer-detail.yaml` is layout-only;
+  `api/transfer-detail.yaml` owns the manager Lock / Unlock action,
+  `is_locked` detail field, company/actor/current-row/cancelled guards, and
+  durable timeline event. Migration
+  `20260921090000-035-inventory-transfer-locks.yaml` adds the persisted lock
+  column and deterministic default.
+- Focused test:
+  `bun test test/inventory_transfer_locks.integration.test.ts test/inventory_transfer_workflow.integration.test.ts`
+  — PASS, 8 tests / 67 assertions. Coverage includes page/API/source
+  contract, toggle/toggle-back, actor/company/stale/cancelled guards,
+  `inventory.manage` permission denial, timeline/detail refresh, and restart.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-21/INV-TRANSFER-LOCK-001/`: desktop toggle,
+  mobile persisted state, and JSON browser records. The isolated runtime
+  passed with no page/request errors and 390px content width.
+- Authenticated Odoo evidence is in the same directory. Desktop 1440x1000
+  and mobile 390x844 reachable transfer forms omit Lock/Unlock because the
+  supplied account lacks the source manager group. No Odoo mutation was made.
+
+QA disposition: PASS for the bounded Core3 lock lifecycle, durable data,
+permissions, and responsive evidence; PARTIAL for direct Odoo action parity
+because of the exact manager-group blocker. Full Inventory sign-off remains
+open.

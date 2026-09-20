@@ -1,0 +1,11 @@
+{
+  "feature_id": "INV-TRANSFER-LOCK-001",
+  "runtime": "http://127.0.0.1:8069",
+  "user": "codex@core3.local",
+  "routes_checked": ["/odoo/deliveries/1", "/odoo/deliveries/2", "/odoo/receipts/1"],
+  "desktop": { "viewport": "1440x1000", "capture": "odoo-desktop-transfer.png", "result": "reachable forms expose no Lock/Unlock action" },
+  "mobile": { "viewport": "390x844", "capture": "odoo-mobile-transfer.png", "result": "reachable form exposes no Lock/Unlock action" },
+  "blocker": "Odoo source binds Lock/Unlock to stock.group_stock_manager; the supplied authenticated account reaches transfers but does not expose the manager-only action. No Odoo mutation was attempted.",
+  "page_errors": [],
+  "request_errors": []
+}

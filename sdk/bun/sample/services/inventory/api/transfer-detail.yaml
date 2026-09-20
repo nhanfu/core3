@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer data is temporarily unavailable. } }
-    query: "SELECT p.id, p.row_version, p.name, t.name AS operation_type_name, t.operation_kind, p.contact_name, p.company_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, sl.name AS source_location, dl.name AS destination_location, p.state, (SELECT COUNT(*) FROM inventory_picking_moves m WHERE m.picking_id = p.id) AS move_count, (SELECT COUNT(*) FROM inventory_transfer_returns r WHERE r.source_picking_id = p.id) AS return_count, (SELECT COUNT(*) FROM inventory_transfer_backorders b WHERE b.source_picking_id = p.id AND b.decision = 'create') AS backorder_count, EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id AND m.done_quantity > 0 AND m.done_quantity < m.quantity) AS has_partial, CASE WHEN t.operation_kind = 'delivery' AND EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id) AND NOT EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id AND COALESCE((SELECT SUM(r.quantity) FROM inventory_transfer_reservations r WHERE r.move_id = m.id AND r.state = 'Reserved'), 0) < m.quantity) THEN 'Available' WHEN t.operation_kind = 'delivery' THEN 'Waiting' ELSE NULL END AS product_availability, '' AS note FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
+    query: "SELECT p.id, p.row_version, p.name, t.name AS operation_type_name, t.operation_kind, p.contact_name, p.company_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, sl.name AS source_location, dl.name AS destination_location, p.state, p.is_locked, (SELECT COUNT(*) FROM inventory_picking_moves m WHERE m.picking_id = p.id) AS move_count, (SELECT COUNT(*) FROM inventory_transfer_returns r WHERE r.source_picking_id = p.id) AS return_count, (SELECT COUNT(*) FROM inventory_transfer_backorders b WHERE b.source_picking_id = p.id AND b.decision = 'create') AS backorder_count, EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id AND m.done_quantity > 0 AND m.done_quantity < m.quantity) AS has_partial, CASE WHEN t.operation_kind = 'delivery' AND EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id) AND NOT EXISTS (SELECT 1 FROM inventory_picking_moves m WHERE m.picking_id = p.id AND COALESCE((SELECT SUM(r.quantity) FROM inventory_transfer_reservations r WHERE r.move_id = m.id AND r.state = 'Reserved'), 0) < m.quantity) THEN 'Available' WHEN t.operation_kind = 'delivery' THEN 'Waiting' ELSE NULL END AS product_availability, '' AS note FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
   - id: inventory_transfer_lines
     single: false
     permission: inventory.read
@@ -179,6 +179,26 @@ actions:
       result: { query: "SELECT b.id, b.source_picking_id, b.backorder_picking_id, bp.name AS backorder_name, b.company_name, b.decision, b.processed_by, b.state, b.row_version FROM inventory_transfer_backorders b LEFT JOIN inventory_pickings bp ON bp.id = b.backorder_picking_id WHERE b.id = :backorder_run_id" }
     fields:
       - { field: decision, label: Backorder decision, type: select, required: true, options: [{ value: create, label: Create Backorder }, { value: none, label: No Backorder }], default: create }
+  - id: toggle_inventory_transfer_lock
+    type: server
+    permission: inventory.manage
+    action: stock.picking.action_toggle_is_locked
+    handler: yaml_mutation
+    operation: toggle_lock
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      generated: [message_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state <> 'Cancelled' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_LOCK_NOT_ALLOWED, message: Cancelled transfers cannot be locked or unlocked, or the transfer is stale. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_ACTOR_REQUIRED, message: A signed-in inventory manager is required to lock or unlock a transfer. }
+      steps:
+        - { query: "UPDATE inventory_pickings SET is_locked = NOT is_locked, row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND state <> 'Cancelled' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before its lock state could be updated. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) SELECT :message_id, id, :current_user_name, 'inventory.transfer.lock_toggled', CASE WHEN is_locked THEN 'Locked' ELSE 'Unlocked' END, CASE WHEN is_locked THEN 'Transfer locked for editing' ELSE 'Transfer unlocked for editing' END FROM inventory_pickings WHERE id = :id" }
+      result: { query: "SELECT id, row_version, is_locked, state FROM inventory_pickings WHERE id = :id" }
   - id: mark_inventory_transfer_todo
     type: server
     permission: inventory.write

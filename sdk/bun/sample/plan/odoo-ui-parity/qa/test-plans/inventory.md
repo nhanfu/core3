@@ -119,6 +119,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-014 | Backorder workflow | Ready transfer with one partial move | decision, company, actor, stale, and line-shape guards leave no partial state; restart preserves source/backorder relation and decision | pass: `INV-TRANSFER-BACKORDER-001` focused suite; multi-transfer wizard remains open |
 | INV-PERM-020 | Transfer backorder permission boundary | inventory.read vs inventory.write | read-only users cannot process Create/No Backorder; company scope and current row are required | pass: `INV-TRANSFER-BACKORDER-001` focused runtime test |
 | INV-UI-019 | Transfer backorder form and responsive result | 1440x1000, 390x844 | Authenticated Core3 partial transfer exposes decision form, persists the selected lifecycle, and reloads the actor timeline without overflow; paired Odoo wizard result or exact blocker is recorded | pass Core3; Odoo partial wizard unavailable on reachable authenticated routes |
+| INV-FUNC-022 | Transfer Lock/Unlock lifecycle | Non-cancelled transfer | Manager toggles durable `is_locked`, records actor/timeline state, and preserves row-version across reload/restart | pass: `INV-TRANSFER-LOCK-001` focused suite |
+| INV-PERM-021 | Transfer Lock/Unlock permission boundary | inventory.read vs inventory.manage | ordinary readers cannot toggle; current company, actor, stale, and cancelled guards leave picking state unchanged | pass: `INV-TRANSFER-LOCK-001` focused runtime test |
+| INV-UI-020 | Transfer Lock/Unlock responsive action | 1440x1000, 390x844 | Authenticated Core3 manager sees the action and persisted timeline/state on desktop/mobile; paired Odoo result or exact manager-group blocker is recorded | pass Core3; Odoo action hidden for supplied account |
 
 ## Exit criteria
 

@@ -1269,6 +1269,33 @@ Odoo mutation was made.
 Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
 remains open.
 
+## Operations > Transfer Lock/Unlock lifecycle — `INV-TRANSFER-LOCK-001` (2026-09-21)
+
+This bounded slice closes the smallest remaining non-duplicated transfer actor
+behavior after Return and Backorder: Odoo's form-only Lock/Unlock server action.
+The source binding is `addons/stock/views/stock_picking_views.xml:490-501`,
+manager-gated by `stock.group_stock_manager`; the model field and toggle are
+in `addons/stock/models/stock_picking.py:658-661,1529-1532`.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and joins it to
+`api/transfer-detail.yaml` by `page.id`. The API owns the manager-only
+Lock / Unlock action, persisted `is_locked` detail field, company/actor/
+current-row/cancelled guards, and timeline event. Migration
+`20260921090000-035-inventory-transfer-locks.yaml` adds durable lock state and
+deterministic defaults. This slice toggles the state and records audit context;
+broader field-level editability remains open.
+
+Focused tests pass 8 tests / 67 assertions across the lock and transfer
+workflow suites, including permission, company, actor, stale, cancelled,
+timeline, and restart checks. Authenticated Core3 desktop/mobile and paired
+Odoo comparison/blocker evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-LOCK-001/`. The supplied Odoo
+account reaches transfer forms but does not expose the manager-gated action;
+the exact blocker is recorded and no Odoo mutation was made.
+
+Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
+remains open.
+
 ## Operations > Partial transfer Backorder confirmation — `INV-TRANSFER-BACKORDER-001` (2026-09-20)
 
 This bounded slice closes the smallest remaining non-duplicated transfer
