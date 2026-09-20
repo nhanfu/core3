@@ -1,0 +1,13 @@
+{
+  "feature_id": "TIMESHEET-PORTAL-MY-TIMESHEETS",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": { "viewport": "1440x900", "authenticated": true, "routeRendered": true, "rowsRendered": true, "rowActionClicked": true, "detailRendered": true, "url": "http://127.0.0.1:4041/timesheets/my/timesheets", "detailUrl": "http://127.0.0.1:4041/timesheets/detail?id=timesheet-demo-001&view_scope=own&portal_scope=true", "bodyWidth": 1440, "documentWidth": 1440, "errors": [], "failed": [] },
+    "mobile": { "viewport": "390x844", "authenticated": true, "routeRendered": true, "rowsRendered": true, "rowActionClicked": true, "detailRendered": true, "url": "http://127.0.0.1:4041/timesheets/my/timesheets", "detailUrl": "http://127.0.0.1:4041/timesheets/detail?id=timesheet-demo-001&view_scope=own&portal_scope=true", "bodyWidth": 390, "documentWidth": 390, "errors": [], "failed": [] }
+  },
+  "odoo": {
+    "desktop": { "viewport": "1440x900", "authenticated": true, "routeRendered": true, "portalRowsRendered": true, "url": "http://127.0.0.1:8069/my/timesheets", "bodyWidth": 1440, "documentWidth": 1440, "errors": [], "failed": "Only aborted background mail/avatar asset requests during capture" },
+    "mobile": { "viewport": "390x844", "authenticated": true, "routeRendered": true, "portalRowsRendered": true, "url": "http://127.0.0.1:8069/my/timesheets", "bodyWidth": 390, "documentWidth": 390, "errors": [], "failed": "Only aborted background mail/avatar/icon asset requests during capture" }
+  },
+  "blockers": ["Odoo's captured authenticated portal list is read-only and exposes no row-to-detail action; Core3 own-scope row navigation is recorded without claiming paired Odoo row-action parity."]
+}

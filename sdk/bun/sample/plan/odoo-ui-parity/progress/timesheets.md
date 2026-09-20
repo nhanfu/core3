@@ -325,6 +325,24 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-PORTAL-MY-TIMESHEETS`
+
+- Source: Odoo authenticated `/my/timesheets` route and portal template provide
+  employee/project/task/date search/group context plus the Date, Employee,
+  Project, Task, Description, and Time Spent list.
+- Core3: added the page/API-separated `/timesheets/my/timesheets` route and
+  Portal menu item. The API reads durable `timesheet_entries` with active
+  company and signed-in employee guards; the row action opens the existing
+  own-scope detail page.
+- Verification: `bun test test/timesheets_portal.integration.test.ts
+  --timeout 20000` — 4 passed, 0 failed, 29 expectations; ESLint passed;
+  `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile and Odoo desktop/mobile captures
+  are in `evidence/timesheets/2026-09-21/timesheet-portal-my-timesheets/`.
+- Blocker: Odoo portal rows are read-only in the captured state and expose no
+  row-to-detail action. Core3's own-scope detail navigation is recorded without
+  claiming paired Odoo row-action parity or module sign-off.
+
 ## 2026-09-21 `TIMESHEET-REPORT-BILLING-DRILLDOWN`
 
 The next smallest unfinished source-backed report interaction was the Billing

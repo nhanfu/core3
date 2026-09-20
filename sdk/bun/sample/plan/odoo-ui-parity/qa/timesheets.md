@@ -469,3 +469,21 @@ Paired authenticated Odoo desktop/mobile evidence reaches
 row-to-task-timesheet action/form is exposed. The source form contract is
 therefore recorded without claiming paired interaction parity. Remaining
 route/action comparison and module sign-off remain pending.
+
+## 2026-09-21 `TIMESHEET-PORTAL-MY-TIMESHEETS`
+
+- Odoo source gate: authenticated `/my/timesheets` is declared in
+  `hr_timesheet/controllers/portal.py:69-170`; its portal template renders the
+  Date, Employee, Project, Task, Description, and Time Spent columns.
+- Core3 gate: page/API are joined by `page.id: timesheets-portal`; the durable
+  API is company and signed-in employee scoped, while the `timesheets.read`
+  row action opens the existing own-scope detail route.
+- Focused gate: `bun test test/timesheets_portal.integration.test.ts
+  --timeout 20000` passes 4 tests / 29 expectations; ESLint and
+  `git diff --check` pass.
+- Browser gate: authenticated Core3 desktop/mobile and Odoo desktop/mobile
+  evidence is in
+  `evidence/timesheets/2026-09-21/timesheet-portal-my-timesheets/`; Core3
+  renders and opens the durable row without errors or overflow.
+- Blocker: Odoo's captured portal state has no row-to-detail action, so paired
+  row-action parity remains open and no module sign-off is claimed.

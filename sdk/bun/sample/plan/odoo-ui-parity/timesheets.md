@@ -1087,6 +1087,35 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## Authenticated portal timesheet list — `TIMESHEET-PORTAL-MY-TIMESHEETS` (2026-09-21)
+
+The smallest remaining source-backed route was Odoo's authenticated portal
+timesheet list. `hr_timesheet/controllers/portal.py:69-170` defines
+`/my/timesheets` with description, employee, project, task, date filters, and
+groupings; `views/hr_timesheet_portal_templates.xml:26-112` renders Date,
+Employee, Project, Task, Description, and Time Spent.
+
+Core3 adds the page/API-separated `timesheets-portal` contract at
+`/my/timesheets` (module URL `/timesheets/my/timesheets`) and a Portal menu
+entry. `portal_timesheet_entries` reads durable `timesheet_entries`, scoped to
+the active company and signed-in employee, with deterministic empty, search,
+and date-filter behavior. The read-only `view_portal_timesheet_entry` action
+is `timesheets.read`-guarded and opens the existing own-scope durable detail
+route; no duplicate entry table or mutation workflow was introduced.
+
+Focused coverage is `test/timesheets_portal.integration.test.ts`: 4 tests / 29
+expectations, including source/controller/template comparison, page/API
+separation, migration replay, file-backed restart, employee/company/empty
+guards, stable row navigation, permissions, and moving-value rejection.
+
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-portal-my-timesheets/`; both
+viewports render the durable row and navigate to its detail without page
+errors or overflow. Authenticated Odoo desktop/mobile evidence reaches
+`/my/timesheets` and renders the source portal list. Odoo's captured portal
+state exposes no row-to-detail action, so paired row-action parity remains an
+exact blocker; no module sign-off is claimed.
+
 ## Billing report drilldown — `TIMESHEET-REPORT-BILLING-DRILLDOWN` (2026-09-21)
 
 The smallest remaining distinct report interaction was the source-backed
