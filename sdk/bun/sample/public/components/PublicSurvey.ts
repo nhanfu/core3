@@ -5,6 +5,9 @@ type SurveyQuestion = {
   sequence: number;
   required: boolean;
   answer_options?: string;
+  matrix_rows?: string;
+  matrix_columns?: string;
+  matrix_subtype?: string;
 };
 
 type SurveyPayload = {
@@ -48,6 +51,11 @@ function installStyles() {
     .core3-public-survey__option { display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid #d9d1d7; border-radius:5px; cursor:pointer; transition:border-color .15s,background .15s; }
     .core3-public-survey__option:hover { border-color:#714b67; background:#faf7f9; }
     .core3-public-survey__option input { accent-color:#714b67; width:17px; height:17px; }
+    .core3-public-survey__matrix-wrap { overflow-x:auto; border:1px solid #d9d1d7; }
+    .core3-public-survey__matrix { width:100%; min-width:620px; border-collapse:collapse; font-size:14px; }
+    .core3-public-survey__matrix th, .core3-public-survey__matrix td { padding:12px 10px; border-bottom:1px solid #eee7eb; text-align:center; vertical-align:middle; }
+    .core3-public-survey__matrix th:first-child { width:42%; text-align:left; font-weight:500; }
+    .core3-public-survey__matrix input { accent-color:#714b67; width:17px; height:17px; }
     .core3-public-survey__input { width:100%; box-sizing:border-box; border:0; border-bottom:1px solid #aaa0a8; padding:12px 2px; font:inherit; font-size:17px; outline:0; }
     .core3-public-survey__input:focus { border-bottom:2px solid #714b67; }
     .core3-public-survey__footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:26px; }
@@ -66,7 +74,14 @@ function installStyles() {
   document.head.append(style);
 }
 
-function answerValue(container: HTMLElement, question: SurveyQuestion): string | string[] {
+function answerValue(container: HTMLElement, question: SurveyQuestion): string | string[] | Record<string, string[]> {
+  if (question.question_type === 'Matrix') {
+    const answer: Record<string, string[]> = {};
+    for (const row of [...container.querySelectorAll<HTMLElement>('[data-matrix-row]')]) {
+      answer[row.dataset.matrixRow || ''] = [...row.querySelectorAll<HTMLInputElement>('input:checked')].map((input) => input.value);
+    }
+    return answer;
+  }
   if (question.question_type === 'Multiple Choice') {
     return [...container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')].map((input) => input.value);
   }
@@ -96,12 +111,20 @@ function isIsoDatetime(value: string): boolean {
     && parsed.getUTCSeconds() === Number(value.slice(17, 19));
 }
 
-function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] = '') {
+function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '') {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
+  const matrixRows = String(question.matrix_rows || '').split('||').map((value) => value.trim()).filter(Boolean);
+  const matrixColumns = String(question.matrix_columns || '').split('||').map((value) => value.trim()).filter(Boolean);
   const currentValues = Array.isArray(answer) ? answer : [answer];
+  const matrixAnswer = answer && typeof answer === 'object' && !Array.isArray(answer) ? answer as Record<string, string[]> : {};
+  const matrixInput = question.question_type === 'Matrix' && matrixRows.length > 0 && matrixColumns.length > 0
+    ? `<div class="core3-public-survey__matrix-wrap"><table class="core3-public-survey__matrix"><thead><tr><th></th>${matrixColumns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr></thead><tbody>${matrixRows.map((row) => `<tr data-matrix-row="${escapeHtml(row)}"><th>${escapeHtml(row)}</th>${matrixColumns.map((column) => { const checked = Array.isArray(matrixAnswer[row]) && matrixAnswer[row].includes(column) ? ' checked' : ''; return `<td><input type="${question.matrix_subtype === 'multiple' ? 'checkbox' : 'radio'}" name="matrix-${escapeHtml(question.id)}-${escapeHtml(row)}" value="${escapeHtml(column)}"${checked}></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`
+    : '';
   const input = question.question_type === 'Text'
     ? `<textarea class="core3-public-survey__input" rows="3" data-answer>${escapeHtml(currentValues[0])}</textarea>`
-    : ['Choice', 'Multiple Choice', 'Rating', 'Scale'].includes(question.question_type) && options.length
+    : matrixInput
+      ? matrixInput
+      : ['Choice', 'Multiple Choice', 'Rating', 'Scale'].includes(question.question_type) && options.length
       ? `<div class="core3-public-survey__options" data-answer>${options.map((option) => {
         const type = question.question_type === 'Multiple Choice' ? 'checkbox' : 'radio';
         const checked = currentValues.includes(option) ? ' checked' : '';
@@ -139,7 +162,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   let answerToken = String(payload.answer?.access_token || initialAnswerToken || '');
   let currentQuestionId = String(payload.answer?.current_question_id || '');
   let questionIndex = 0;
-  const answers: Record<string, string | string[]> = {};
+  const answers: Record<string, string | string[] | Record<string, string[]>> = {};
   try {
     const persisted = payload.answer?.answer_data ? JSON.parse(payload.answer.answer_data) : {};
     if (persisted && typeof persisted === 'object' && !Array.isArray(persisted)) Object.assign(answers, persisted);
@@ -250,7 +273,9 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       actionButton.disabled = true;
       const question = questions[questionIndex];
       const value = answerValue(body, question);
-      const empty = Array.isArray(value) ? value.length === 0 : !value.trim();
+      const empty = value && typeof value === 'object' && !Array.isArray(value)
+        ? Object.values(value).every((selection) => selection.length === 0)
+        : Array.isArray(value) ? value.length === 0 : !value.trim();
       if (question.required && empty) {
         actionButton.disabled = false;
         const error = document.createElement('div');

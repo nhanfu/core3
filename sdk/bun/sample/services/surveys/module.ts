@@ -486,6 +486,26 @@ export default class SurveysModule implements ModuleLifecycle {
       if (!values.some(Boolean)) continue;
       const options = String(question.answer_options || '').split(',').map((entry) => entry.trim()).filter(Boolean);
       const questionType = String(question.question_type || '');
+      if (questionType === 'Matrix') {
+        const matrix = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+        const rows = String(question.matrix_rows || '').split('||').map((entry) => entry.trim()).filter(Boolean);
+        const columns = String(question.matrix_columns || '').split('||').map((entry) => entry.trim()).filter(Boolean);
+        const matrixRows = matrix ? Object.keys(matrix) : [];
+        if (!matrix || matrixRows.length === 0) {
+          if (question.required) invalid.push(String(question.question_text || question.id));
+          continue;
+        }
+        const validRows = matrixRows.every((row) => rows.includes(row));
+        const validSelections = validRows && matrixRows.every((row) => {
+          const selection = matrix?.[row];
+          const selected = Array.isArray(selection) ? selection.map((entry) => String(entry).trim()).filter(Boolean) : [];
+          return selected.length > 0 && new Set(selected).size === selected.length && selected.every((entry) => columns.includes(entry));
+        });
+        if (!validRows || !validSelections || (question.required && (matrixRows.length !== rows.length || rows.some((row) => !matrixRows.includes(row))))) {
+          invalid.push(String(question.question_text || question.id));
+        }
+        continue;
+      }
       if (['Choice', 'Rating', 'Scale'].includes(questionType) && (values.length !== 1 || !options.includes(values[0]))) {
         invalid.push(String(question.question_text || question.id));
         continue;

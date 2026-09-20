@@ -1650,3 +1650,37 @@ but the shared registry returned HTTP 404 `API route not found` for the public
 API and HTTP 200 `Unauthorized` for the rendered route. Odoo 8069 redirected
 the token to `/web/login?redirect=%2Fodoo%3F` at both viewports. No browser or
 paired Odoo sign-off is claimed; Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public Matrix question (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-MATRIX-QUESTION-001`.
+
+Odoo's `survey.question` model treats Matrix as a distinct question type with
+separate suggested-answer columns and matrix rows. The public controller
+accepts a row-keyed mapping of selected columns, while `_validate_matrix`
+enforces complete row coverage only when the question is mandatory;
+`_save_line_matrix` persists each row/column selection. The source demo in
+`addons/survey/data/survey_demo_feedback.xml` uses five rows, four columns,
+and multiple selections per row.
+
+Core3 adds migration `0.0.29` with deterministic row/column labels on an
+optional certification Matrix question. Public question operations project
+the metadata through the separate `page.id: surveys` page/API pair;
+`PublicSurvey.ts` renders the table and collects a row-to-column JSON map. The
+token-scoped `surveys.public.progress` and `surveys.public.submit` paths reject
+foreign rows, foreign columns, duplicate cells, and malformed values before
+mutation; required Matrix questions also enforce complete row coverage.
+
+`test/surveys_public_matrix_question.integration.test.ts` proves the paired
+contract, invalid-cell no-mutation boundary, file-backed restart, wrong-token
+denial, and concurrent idempotent submit. Focused verification is **2/2 tests,
+22 assertions**; the public regression is **42/42 tests, 353 assertions**.
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX-QUESTION-001/`.
+
+The Core3 browser process did not expose its backend during the bounded
+readiness window, so both viewport probes record connection refusal. Odoo 8069
+redirected both viewport probes to its login form and supplied no authenticated
+Matrix response. The existing DuckDB rollback/dependent-entry failure remains
+open. No browser, paired Odoo, or module sign-off is claimed; Surveys remains
+**qa-in-progress / conditional**.

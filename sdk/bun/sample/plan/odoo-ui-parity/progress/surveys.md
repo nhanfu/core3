@@ -180,6 +180,29 @@ requests. Odoo 8069 returned its login redirect at both viewports; no
 authenticated installed Survey Datetime fixture exists. Status remains
 **qa-in-progress / conditional**; no module sign-off is claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-MATRIX-QUESTION-001`
+
+Selected the next uncovered source-backed public question behavior after the
+completed Date, Datetime, and Scale slices: Odoo Matrix answers. Core3 adds a
+deterministic certification Matrix question with source-defined row/column
+labels, projects the metadata through the separate `surveys` page/API pair,
+renders the responsive table, and persists a row-to-column answer map.
+
+Token-scoped public progress and submit reject foreign rows, foreign columns,
+duplicate cells, and malformed values before mutation. The focused test also
+proves file-backed restart, wrong-token denial, and concurrent submit replay.
+Focused verification is **2/2 tests, 22 assertions**; the public regression is
+**42/42 tests, 353 assertions**. ESLint, audit, and scoped diff-check passed.
+
+Core3 desktop/mobile browser probes record connection refusal because the fresh
+backend did not expose port 4340 during the bounded readiness window. Odoo
+desktop/mobile probes redirected to `/web/login?redirect=%2Fodoo%3F`, so no
+authenticated Matrix comparison is available. The existing DuckDB rollback
+dependent-entry blocker remains open, and one unrelated pre-existing
+`surveys_test_entry` fixture expectation remains red in the broader module run.
+No parity or module sign-off is claimed; Surveys remains **qa-in-progress /
+conditional**.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-DATE-QUESTION-001`
 
 Selected the smallest uncovered source-backed public question behavior after

@@ -902,6 +902,34 @@ remains conditional and Surveys is not signed off.
 - Surveys remains **qa-in-progress / conditional**; no module sign-off is
   claimed.
 
+## Bounded QA run: Public Matrix question — `SURVEYS-PUBLIC-MATRIX-QUESTION-001`
+
+- Source comparison: Odoo `survey_question.py` stores Matrix columns and rows
+  separately, accepts a row-keyed answer mapping, and validates mandatory row
+  coverage; the source demo defines four columns and five rows with multiple
+  selections per row.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate and joined by `page.id: surveys`; public progress and submit retain
+  `surveys.public`. The renderer exposes the Matrix row/column table while the
+  API projects deterministic row/column metadata.
+- Focused verification: **2 passed / 22 assertions**; public regression:
+  **42 passed / 353 assertions**. ESLint and audit passed (705 pages, 714
+  routes, 1340 datasources); scoped diff-check passed.
+- Persistence/guards: foreign rows and columns return 422 without mutation;
+  valid row-to-column JSON survives reopen; concurrent same-key submit retains
+  one response/idempotency row; wrong token returns 404.
+- Core3 desktop/mobile: bounded runtime startup did not expose backend port
+  4340, and both 1440x900 and 390x844 probes record `ERR_CONNECTION_REFUSED`.
+- Odoo desktop/mobile: both probes redirected to
+  `/web/login?redirect=%2Fodoo%3F`; no authenticated Matrix fixture was
+  available. No paired visual or Odoo mutation sign-off is claimed.
+- The existing migration rollback/dependent-entry blocker remains recorded;
+  the broader Surveys run also retains one unrelated pre-existing
+  `surveys_test_entry` fixture expectation failure. Surveys remains
+  **qa-in-progress / conditional**.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX-QUESTION-001/`.
+
 ## Bounded QA run: Public Scale question — `SURVEYS-PUBLIC-SCALE-QUESTION-001`
 
 - Source comparison: Odoo `survey_question._validate_scale` handles Scale

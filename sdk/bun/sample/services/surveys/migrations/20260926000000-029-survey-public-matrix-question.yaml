@@ -1,0 +1,29 @@
+version: 0.0.29
+description: Deterministic public matrix question fixture for the feedback survey
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-certification-matrix', 'survey-demo-certification', 'What do you think about our new eCommerce?', 'Matrix', 18, false, '')
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+      DELETE FROM survey_suggested_values WHERE question_id = 'question-certification-matrix';
+      INSERT INTO survey_suggested_values(id, question_id, question_text, value, sequence, score, matrix_row, matrix_column)
+      VALUES
+        ('answer-certification-matrix-column-1', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'Totally disagree', 1, 0, NULL, 'Totally disagree'),
+        ('answer-certification-matrix-column-2', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'Disagree', 2, 0, NULL, 'Disagree'),
+        ('answer-certification-matrix-column-3', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'Agree', 3, 0, NULL, 'Agree'),
+        ('answer-certification-matrix-column-4', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'Totally agree', 4, 0, NULL, 'Totally agree'),
+        ('answer-certification-matrix-row-1', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'The new layout and design is fresh and up-to-date', 1, 0, 'The new layout and design is fresh and up-to-date', NULL),
+        ('answer-certification-matrix-row-2', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'It is easy to find the product that I want', 2, 0, 'It is easy to find the product that I want', NULL),
+        ('answer-certification-matrix-row-3', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'The tool to compare the products is useful to make a choice', 3, 0, 'The tool to compare the products is useful to make a choice', NULL),
+        ('answer-certification-matrix-row-4', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'The checkout process is clear and secure', 4, 0, 'The checkout process is clear and secure', NULL),
+        ('answer-certification-matrix-row-5', 'question-certification-matrix', 'What do you think about our new eCommerce?', 'I have added products to my wishlist', 5, 0, 'I have added products to my wishlist', NULL)
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, value = excluded.value, sequence = excluded.sequence, matrix_row = excluded.matrix_row, matrix_column = excluded.matrix_column;
+    down: |
+      DELETE FROM survey_suggested_values WHERE question_id = 'question-certification-matrix';
+      DELETE FROM survey_questions WHERE id = 'question-certification-matrix';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

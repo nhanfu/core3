@@ -1,0 +1,71 @@
+{
+  "capturedAt": "2026-09-21",
+  "results": [
+    {
+      "name": "core3-desktop",
+      "url": "http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+      "status": null,
+      "finalUrl": "chrome-error://chromewebdata/",
+      "title": "127.0.0.1",
+      "body": "This site can’t be reached\n\n127.0.0.1 refused to connect.\n\nTry:\n\nChecking the connection\nChecking the proxy and the firewall\nERR_CONNECTION_REFUSED\nReload\nDetails",
+      "failed": [
+        {
+          "url": "http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "error": "Error: goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "core3-mobile",
+      "url": "http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+      "status": null,
+      "finalUrl": "chrome-error://chromewebdata/",
+      "title": "127.0.0.1",
+      "body": "This site can’t be reached\n\n127.0.0.1 refused to connect.\n\nTry:\n\nChecking the connection\nChecking the proxy and the firewall\nERR_CONNECTION_REFUSED\nReload\nDetails",
+      "failed": [
+        {
+          "url": "http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "error": "Error: goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "odoo-desktop",
+      "url": "http://127.0.0.1:8069/survey/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F",
+      "title": "Odoo",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "failed": [],
+      "error": null,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "odoo-mobile",
+      "url": "http://127.0.0.1:8069/survey/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F",
+      "title": "Odoo",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "failed": [],
+      "error": null,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ]
+}

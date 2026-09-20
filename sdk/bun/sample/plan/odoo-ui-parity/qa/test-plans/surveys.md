@@ -375,3 +375,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCALE-QUESTION-001/`.
+
+## 2026-09-21 public Matrix question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-035 | public question | Matrix catalog and answer map | Return deterministic rows/columns and persist a row-to-column answer map | `browser-results.json`, focused test | pass |
+| SURVEYS-WF-032 | restart/idempotency | Matrix progress → reopen → concurrent submit/replay | Preserve Matrix JSON across DuckDB reopen and retain one submitted response/idempotency row | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-034 | token/input guard | Foreign row/column and wrong token | Return 422/404 before mutation while retaining `surveys.public` boundaries | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-033 | authenticated responsive/reference | Matrix desktop/mobile + Odoo comparison | Capture both viewports and exact Core3/Odoo blockers; no sign-off until available | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX-QUESTION-001/`.
