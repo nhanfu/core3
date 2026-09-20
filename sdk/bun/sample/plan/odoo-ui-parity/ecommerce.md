@@ -1,6 +1,30 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded category-cover-image slice; module sign-off remains open)
+Status: qa-in-progress (bounded product-publication slice; module sign-off remains open)
+
+## Bounded feature — Product Publication (`ECOM-CATALOG-PRODUCT-PUBLICATION-001`)
+
+Odoo source comparison: `website/models/mixins.py` defines the Website
+Published mixin's `is_published`, stored `publish_date`, and
+`website_publish_button`; `website_sale/models/product_template.py` recomputes
+the publication date when a product is published. Product views expose the
+state through the website redirect button, boolean toggle, and Published
+filter.
+
+Core3 already filtered Shop by `is_published` but had no durable publication
+timestamp or dedicated publish workflow. Migrations 086/087 add
+`publish_date` and deterministic published-product timestamps. Products and
+Product Detail retain separate page/API YAML contracts with explicit publish
+and unpublish actions. The actions require `ecommerce.write`, enforce active
+current-company scope and optimistic row versions, refresh the public Shop,
+and preserve state through migration replay and DuckDB restart. Product
+Variant Detail displays the parent publication timestamp.
+
+Focused verification and schema/audit evidence are recorded in
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-publication-001/`.
+Core3 authenticated desktop/mobile rendering is blocked by the unavailable
+browser/runtime, and Odoo `/shop` returns exact HTTP 404 on ports 8069 and
+8073. This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Category Cover Image (`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`)
 

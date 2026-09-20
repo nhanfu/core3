@@ -4,8 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `ac45965a55653bf7e6a2277c6ccf530e25e45ee3`
+Latest committed bounded slice: `7bda9180a3c91787bcc53b2efb4ca9f2043a0f69`
 (`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`, committed locally; not pushed).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-PUBLICATION-001`
+
+The eleventh-wave source-backed gap is Website Sale product publication. Odoo
+products inherit `website.published.mixin`, persist `publish_date`, and flip
+`website_published` through `website_publish_button`. Core3 migrations 086/087
+add durable publication timestamps and deterministic published fixtures.
+Products and Product Detail use separate page/API YAML; explicit publish and
+unpublish actions enforce write permission, active/current-company scope, and
+optimistic row versions while refreshing Shop visibility.
+
+Focused verification is complete: **3 tests, 28 assertions, 0 failures**;
+the adjacent Product Detail/Shop regression set passed **11 tests, 81
+assertions, 0 failures**. Paired schema validation passed for 4 pairs, UI
+audit passed at 710 pages/719 routes/1353 datasources, scoped ESLint and
+`git diff --check` passed. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-publication-001/`.
+Core3 desktop/mobile capture is blocked by unavailable browser runtime; Odoo
+`/shop` is exact HTTP 404 on 8069/8073. Ready for the local Ecommerce-only
+commit; not pushed.
 
 ## Current bounded task — `ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`
 

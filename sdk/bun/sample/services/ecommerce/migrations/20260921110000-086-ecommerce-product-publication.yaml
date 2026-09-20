@@ -1,0 +1,12 @@
+version: 0.0.86
+kind: schema
+description: durable Website Sale product publication timestamps
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_products ADD COLUMN publish_date TIMESTAMP;
+    down: ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS publish_date;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

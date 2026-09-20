@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Product Publication (`ECOM-CATALOG-PRODUCT-PUBLICATION-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website/models/mixins.py` defines durable
+  `is_published`, `publish_date`, and `website_publish_button`; Website Sale
+  product templates inherit the mixin and product views expose the redirect
+  button, boolean toggle, and Published filter.
+- Core3 lifecycle: pass for this bounded publication contract. Migrations
+  086/087 add the timestamp and deterministic fixture dates. Products and
+  Product Detail use separate page/API YAML; publish/unpublish require
+  `ecommerce.write`, active/current-company scope, optimistic row versions,
+  and refresh Shop visibility. Restart preserves state and timestamp.
+- Focused verification: `bun test
+  test/ecommerce_product_publication.integration.test.ts --timeout 20000` —
+  **3 passed, 28 assertions, 0 failures**. Adjacent Product Detail/Shop
+  regression — **11 passed, 81 assertions, 0 failures**. Paired schema
+  validation passed for 4 pairs; UI audit passed at 710 pages, 719 routes,
+  and 1353 datasources; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 were
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Website editor/redirect, multi-website publication, broader actor/browser
+  coverage, and paired Odoo rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-publication-001/`.
+
 ## Category Cover Image (`ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product_public_category.py` defines

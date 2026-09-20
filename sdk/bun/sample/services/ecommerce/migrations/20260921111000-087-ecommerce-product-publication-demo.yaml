@@ -1,0 +1,22 @@
+version: 0.0.87
+kind: data
+description: deterministic Website Sale product publication fixtures
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_products
+      SET publish_date = CASE id
+        WHEN 'ecommerce-product-mug' THEN TIMESTAMP '2026-09-20 09:00:00'
+        WHEN 'ecommerce-product-chair' THEN TIMESTAMP '2026-09-20 09:05:00'
+        WHEN 'ecommerce-product-lamp' THEN TIMESTAMP '2026-09-20 09:10:00'
+        ELSE NULL
+      END
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair', 'ecommerce-product-lamp');
+    down: |
+      UPDATE ecommerce_products
+      SET publish_date = NULL
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair', 'ecommerce-product-lamp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
