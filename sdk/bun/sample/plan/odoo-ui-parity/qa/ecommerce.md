@@ -1,5 +1,36 @@
 # ecommerce QA ledger
 
+## Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `menu_product_attribute_action` /
+  `product.attribute_action`, model `product.attribute`, attribute values,
+  variant creation/display modes, eCommerce filter visibility, product-card
+  preview, and thumbnail controls verified against the supplied source.
+- Core3 lifecycle: migrations 038/039 add durable attributes and values with
+  deterministic Color, Size, and Material fixtures; page/API YAML is joined by
+  `page.id`; search/filter/empty/error states, permissioned CRUD, newline value
+  parsing, and relation cleanup are implemented. Guards cover duplicate names,
+  invalid options, multi-checkbox variant incompatibility, preview constraints,
+  and stale row versions.
+- Focused verification: `bun test
+  test/ecommerce_product_attributes.integration.test.ts --timeout 20000` —
+  **4 passed, 31 assertions, 0 failures**. `bun run audit` passed with 670
+  pages, 679 routes, and 1210 datasources. Targeted ESLint and
+  `git diff --check` passed.
+- Browser verification: authenticated Core3 desktop 1440x900 list/form/post-
+  create and mobile 390x844 list captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-product-attributes-001/`; the
+  UI created `Browser Finish Attribute` with Metal and Wood values. Core3
+  browser page/request errors were empty.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. Authenticated
+  `/shop` returned 404 on both, so paired Product Attributes comparison is
+  blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for the paired Odoo surface and existing
+  module-level actor/company and checkout gates. Bounded commit: `dada7d89`
+  (local only, not pushed).
+
 ## Product Tags (`ECOM-CATALOG-PRODUCT-TAGS-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `product_catalog_product_tags` /
@@ -29,7 +60,7 @@
   Ecommerce sign-off remains open for the paired Odoo surface and existing
   module-level actor/company and checkout gates. The optional Odoo tag image and
   variant-only assignment fields are recorded as follow-up gaps in the module
-  plan. Bounded commit: `08928189` (local only, not pushed).
+  plan. Bounded commit: `4b14f8ff` (local only, not pushed).
 
 ## Product Ribbons (`ECOM-CATALOG-RIBBONS-001`, 2026-09-20)
 

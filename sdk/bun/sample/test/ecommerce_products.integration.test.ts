@@ -21,7 +21,7 @@ describe('eCommerce Products parity', () => {
     expect(discovered.pageDatasources.get('ecommerce-products')).toEqual(expect.arrayContaining(['ecommerce_products', 'ecommerce_product_published']));
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/ecommerce/products', page: 'ecommerce-products', module: 'ecommerce' })]));
     expect(manifest.menu.groups.map((group: any) => group.label)).toEqual(['Orders', 'Products']);
-    expect(manifest.menu.groups[1].items.map((item: any) => item.label)).toEqual(['Products', 'Pricelists', 'Categories', 'Product Tags', 'Product Ribbons']);
+    expect(manifest.menu.groups[1].items.map((item: any) => item.label)).toEqual(['Products', 'Pricelists', 'Categories', 'Attributes', 'Product Tags', 'Product Ribbons']);
     expect(manifest.menu.groups[1].items[0]).toMatchObject({ path: '/ecommerce/products', permission: 'ecommerce.read' });
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['Kanban', 'List']);
   });

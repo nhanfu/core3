@@ -1,0 +1,46 @@
+version: 0.0.38
+kind: schema
+description: eCommerce product attributes and durable attribute values
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_attributes (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        create_variant VARCHAR NOT NULL DEFAULT 'always',
+        display_type VARCHAR NOT NULL DEFAULT 'radio',
+        sequence INTEGER NOT NULL DEFAULT 20,
+        visibility VARCHAR NOT NULL DEFAULT 'visible',
+        preview_variants VARCHAR NOT NULL DEFAULT 'hidden',
+        is_thumbnail_visible BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_attributes_name_idx ON ecommerce_product_attributes(LOWER(name));
+      CREATE TABLE IF NOT EXISTS ecommerce_product_attribute_values (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        attribute_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        default_extra_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        is_custom BOOLEAN NOT NULL DEFAULT FALSE,
+        html_color VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_attribute_values_name_idx ON ecommerce_product_attribute_values(attribute_id, LOWER(name));
+      CREATE INDEX IF NOT EXISTS ecommerce_product_attribute_values_attribute_idx ON ecommerce_product_attribute_values(attribute_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_attribute_values_attribute_idx;
+      DROP INDEX IF EXISTS ecommerce_product_attribute_values_name_idx;
+      DROP TABLE IF EXISTS ecommerce_product_attribute_values;
+      DROP INDEX IF EXISTS ecommerce_product_attributes_name_idx;
+      DROP TABLE IF EXISTS ecommerce_product_attributes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

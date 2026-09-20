@@ -1,0 +1,25 @@
+version: 0.0.39
+kind: data
+description: deterministic Odoo product attribute fixtures and values
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_attributes (id, name, active, create_variant, display_type, sequence, visibility, preview_variants, is_thumbnail_visible) VALUES
+        ('ecommerce-attribute-color', 'Color', TRUE, 'always', 'color', 10, 'visible', 'visible', TRUE),
+        ('ecommerce-attribute-size', 'Size', TRUE, 'dynamic', 'pills', 20, 'visible', 'hidden', FALSE),
+        ('ecommerce-attribute-material', 'Material', TRUE, 'no_variant', 'select', 30, 'hidden', 'hidden', FALSE)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_product_attribute_values (id, attribute_id, name, sequence, default_extra_price, is_custom, html_color) VALUES
+        ('ecommerce-attribute-color-red', 'ecommerce-attribute-color', 'Red', 10, 0, FALSE, '#D9534F'),
+        ('ecommerce-attribute-color-blue', 'ecommerce-attribute-color', 'Blue', 20, 2.50, FALSE, '#0275D8'),
+        ('ecommerce-attribute-size-small', 'ecommerce-attribute-size', 'Small', 10, 0, FALSE, NULL),
+        ('ecommerce-attribute-size-large', 'ecommerce-attribute-size', 'Large', 20, 5, FALSE, NULL),
+        ('ecommerce-attribute-material-cotton', 'ecommerce-attribute-material', 'Cotton', 10, 0, FALSE, NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_attribute_values WHERE attribute_id IN ('ecommerce-attribute-color', 'ecommerce-attribute-size', 'ecommerce-attribute-material');
+      DELETE FROM ecommerce_product_attributes WHERE id IN ('ecommerce-attribute-color', 'ecommerce-attribute-size', 'ecommerce-attribute-material');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

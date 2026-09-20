@@ -1,0 +1,54 @@
+{
+  "featureId": "ECOM-CATALOG-PRODUCT-ATTRIBUTES-001",
+  "capturedAt": "2026-09-20T10:42:14.588Z",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-attributes",
+      "title": "Attributes",
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Attributes\n1-3 / 3\n‹\n›\nSequence\n\tAttribute\n\tDisplay Type\n\tVariant Creation\n\tFilter Visibility\n\tValues\n\tAttribute Values\n\tActive\n\n10\t\nColor\n\tcolor\talways\tvisible\t2\tRed|0.00|#D9534F Blue|2.50|#0275D8\ttrue\n20\t\nSize\n\tpills\tdynamic\tvisible\t2\tSmall|0.00| Large|5.00|\ttrue\n30\t\nMaterial\n\tselect\tno_variant\thidden\t1\tCotton|0.00|\ttrue",
+      "errors": []
+    },
+    "create": {
+      "created": true,
+      "values": true,
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Attributes\n1-4 / 4\n‹\n›\nSequence\n\tAttribute\n\tDisplay Type\n\tVariant Creation\n\tFilter Visibility\n\tValues\n\tAttribute Values\n\tActive\n\n9\t\nBrowser Finish Attribute\n\tselect\talways\tvisible\t2\tMetal|1.50|#123456 Wood|0.00|\ttrue\n10\t\nColor\n\tcolor\talways\tvisible\t2\tRed|0.00|#D9534F Blue|2.50|#0275D8\ttrue\n20\t\nSize\n\tpills\tdynamic\tvisible\t2\tSmall|0.00| Large|5.00|\ttrue\n30\t\nMaterial\n\tselect\tno_variant\thidden\t1\tCotton|0.00|\ttrue",
+      "errors": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-attributes",
+      "title": "Attributes",
+      "listText": "AU\nNew\nAttributes\n1-4 / 4\n‹\n›\nSequence\n\tAttribute\n\tDisplay Type\n\tVariant Creation\n\tFilter Visibility\n\tValues\n\tAttribute Values\n\tActive\n\n9\t\nBrowser Finish Attribute\n\tselect\talways\tvisible\t2\tMetal|1.50|#123456 Wood|0.00|\ttrue\n10\t\nColor\n\tcolor\talways\tvisible\t2\tRed|0.00|#D9534F Blue|2.50|#0275D8\ttrue\n20\t\nSize\n\tpills\tdynamic\tvisible\t2\tSmall|0.00| Large|5.00|\ttrue\n30\t\nMaterial\n\tselect\tno_variant\thidden\t1\tCotton|0.00|\ttrue",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "odoo-8069": {
+      "desktop": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      }
+    },
+    "odoo-8073": {
+      "desktop": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      }
+    }
+  }
+}

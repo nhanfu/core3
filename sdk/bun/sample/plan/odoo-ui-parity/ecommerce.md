@@ -2,6 +2,37 @@
 
 Status: qa-in-progress (bounded catalog-ribbons slice; module sign-off remains open)
 
+## Bounded feature — Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` registers
+`menu_product_attribute_action` under Website > Configuration > eCommerce >
+Products and opens `product.attribute_action`. The supplied
+`product/models/product_attribute.py` model is ordered by sequence/id and
+defines name, active, variant creation mode, display type, sequence, and
+attribute values. `website_sale/models/product_attribute.py` adds eCommerce
+filter visibility, product-card variant preview, and thumbnail controls.
+The list/form views in `product/views/product_attribute_views.xml` and
+`website_sale/views/product_attribute_views.xml` expose those controls and
+the inline attribute-value editor.
+
+Core3 comparison: `services/ecommerce/pages/product-attributes.yaml` owns
+`/ecommerce/product-attributes` and joins
+`services/ecommerce/api/product-attributes.yaml` by
+`page.id: ecommerce-product-attributes`. Migrations 038/039 add durable
+attribute/value tables and deterministic Color, Size, and Material fixtures.
+The API supports search, active filtering, display/variant/eCommerce options,
+newline-delimited durable values, permissioned create/edit/delete, and
+optimistic row-version cleanup. Guards enforce unique names, valid options,
+the Odoo multi-checkbox/no-variant rule, and preview-mode constraints.
+
+Focused CRUD, value parsing, permission, validation, migration-rerun, and
+DuckDB restart tests pass. Authenticated Core3 desktop/mobile evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-product-attributes-001/`; the
+desktop create flow persisted `Browser Finish Attribute` with Metal and Wood
+values. Authenticated Odoo captures on ports 8069 and 8073 both show `/shop`
+404, so the paired Product Attributes comparison is blocked and Ecommerce
+remains unsigned.
+
 ## Bounded feature — Product Tags (`ECOM-CATALOG-PRODUCT-TAGS-001`)
 
 Odoo source comparison: `website_sale/views/website_sale_menus.xml` adds

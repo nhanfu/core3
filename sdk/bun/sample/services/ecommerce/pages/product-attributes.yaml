@@ -1,0 +1,28 @@
+title: Attributes
+page: { id: ecommerce-product-attributes, route: /ecommerce/product-attributes, breadcrumb: [eCommerce, Products, Attributes], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_attributes
+    create_action: create_ecommerce_product_attribute
+    create_label: New
+    search: { label: Search attributes, placeholder: Search attribute or value... }
+    filters:
+      - { field: active, label: Status, options: [{ id: 'true', label: Active }, { id: 'false', label: Inactive }] }
+      - { field: visibility, label: eCommerce Filter, options_source: ecommerce_product_attribute_visibility }
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: name, label: Attribute, type: PrimaryEntityCell }
+      - { field: display_type, label: Display Type }
+      - { field: create_variant, label: Variant Creation }
+      - { field: visibility, label: Filter Visibility }
+      - { field: value_count, label: Values, align: right }
+      - { field: value_list, label: Attribute Values }
+      - { field: active, label: Active, type: StatusChip }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_product_attribute, label: Edit, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_attribute, label: Delete, permission: ecommerce.write, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: Define a new attribute, description: Create attributes and values to configure product choices on your website. }
