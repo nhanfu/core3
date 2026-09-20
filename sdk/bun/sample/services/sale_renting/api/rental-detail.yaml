@@ -24,15 +24,23 @@ actions:
       table: sale_rentals
       fields: [name, partner_name, product_name, quantity, rental_period, start_date, return_date, price, salesperson]
       required: [name, product_name]
+      concurrency: { required: true }
       guards:
+        - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: This rental changed or was deleted; reload before saving
         - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = 'Quotation'"
           status: 409
+          code: RENTAL_EDIT_NOT_ALLOWED
           message: Only quotation rentals can be edited
         - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:price AS DECIMAL(18,2)) >= 0"
-          status: 400
+          status: 422
+          code: RENTAL_VALUES_INVALID
           message: Quantity must be positive and price cannot be negative
-        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :return_date IS NULL OR CAST(:return_date AS DATE) >= CAST(:start_date AS DATE)"
-          status: 400
+        - query: "SELECT 1 AS ok WHERE (COALESCE(TRIM(CAST(:start_date AS VARCHAR)), '') = '' OR TRY_CAST(:start_date AS DATE) IS NOT NULL) AND (COALESCE(TRIM(CAST(:return_date AS VARCHAR)), '') = '' OR TRY_CAST(:return_date AS DATE) IS NOT NULL) AND (COALESCE(TRIM(CAST(:start_date AS VARCHAR)), '') = '' OR COALESCE(TRIM(CAST(:return_date AS VARCHAR)), '') = '' OR TRY_CAST(:return_date AS DATE) >= TRY_CAST(:start_date AS DATE))"
+          status: 422
+          code: RENTAL_DATES_INVALID
           message: Return date must be on or after the rental start
       result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
     fields:

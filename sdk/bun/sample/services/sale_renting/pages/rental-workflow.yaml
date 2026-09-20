@@ -9,11 +9,19 @@ workflow:
   status_query: SELECT state AS status FROM sale_rentals WHERE id = ?
   default_mutation:
     guards:
+      - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+        status: 409
+        code: STALE_RECORD
+        message: Rental changed or was deleted; reload before saving
       - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = :current_status"
         status: 409
+        code: RENTAL_INVALID_TRANSITION
         message: Rental state has changed; refresh and try again
     steps:
-      - query: "UPDATE sale_rentals SET state = :target_status, row_version = row_version + 1 WHERE id = :id"
+      - query: "UPDATE sale_rentals SET state = :target_status, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+        expect_changed: true
+        code: STALE_RECORD
+        message: Rental changed while saving; reload before saving
     result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
   states:
     - { id: Quotation, label: Quotation, color: neutral }
@@ -28,11 +36,27 @@ workflow:
       permission: rental.write
       mutation:
         guards:
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+            status: 409
+            code: STALE_RECORD
+            message: Rental changed or was deleted; reload before reserving
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = 'Quotation'"
+            status: 409
+            code: RENTAL_INVALID_TRANSITION
+            message: Only quotation rentals can be reserved
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND start_date IS NOT NULL AND return_date IS NOT NULL AND return_date >= start_date"
+            status: 422
+            code: RENTAL_DATES_REQUIRED
+            message: Rental start and return dates are required and must be valid before reserving
           - query: "SELECT 1 AS ok FROM sale_rentals r WHERE r.id = :id AND NOT EXISTS (SELECT 1 FROM sale_rentals other WHERE other.id <> r.id AND other.product_name = r.product_name AND other.state IN ('Reserved', 'Picked Up') AND (r.start_date IS NULL OR other.return_date IS NULL OR other.return_date >= r.start_date) AND (r.return_date IS NULL OR other.start_date IS NULL OR other.start_date <= r.return_date))"
             status: 409
+            code: RENTAL_PERIOD_OVERLAP
             message: The rental period overlaps an active reservation for this product
         steps:
-          - query: "UPDATE sale_rentals SET state = 'Reserved', row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE sale_rentals SET state = 'Reserved', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            code: STALE_RECORD
+            message: Rental changed while reserving; reload before saving
           - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'reservation', :current_user_name)"
         result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
     - id: pickup
@@ -40,8 +64,20 @@ workflow:
       to: Picked Up
       permission: rental.write
       mutation:
+        guards:
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+            status: 409
+            code: STALE_RECORD
+            message: Rental changed or was deleted; reload before picking up
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = 'Reserved'"
+            status: 409
+            code: RENTAL_INVALID_TRANSITION
+            message: Only reserved rentals can be picked up
         steps:
-          - query: "UPDATE sale_rentals SET state = 'Picked Up', start_date = COALESCE(start_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE sale_rentals SET state = 'Picked Up', start_date = COALESCE(start_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            code: STALE_RECORD
+            message: Rental changed while picking up; reload before saving
           - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'pickup', :current_user_name)"
         result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
     - id: return
@@ -49,8 +85,20 @@ workflow:
       to: Returned
       permission: rental.write
       mutation:
+        guards:
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+            status: 409
+            code: STALE_RECORD
+            message: Rental changed or was deleted; reload before returning
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = 'Picked Up'"
+            status: 409
+            code: RENTAL_INVALID_TRANSITION
+            message: Only picked-up rentals can be returned
         steps:
-          - query: "UPDATE sale_rentals SET state = 'Returned', return_date = COALESCE(return_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE sale_rentals SET state = 'Returned', return_date = COALESCE(return_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            code: STALE_RECORD
+            message: Rental changed while returning; reload before saving
           - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'return', :current_user_name)"
         result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
     - id: cancel
@@ -58,7 +106,19 @@ workflow:
       to: Cancelled
       permission: rental.write
       mutation:
+        guards:
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND row_version = :expected_row_version"
+            status: 409
+            code: STALE_RECORD
+            message: Rental changed or was deleted; reload before cancelling
+          - query: "SELECT id FROM sale_rentals WHERE id = :id AND state IN ('Quotation', 'Reserved')"
+            status: 409
+            code: RENTAL_INVALID_TRANSITION
+            message: Only quotation or reserved rentals can be cancelled
         steps:
-          - query: "UPDATE sale_rentals SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE sale_rentals SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            code: STALE_RECORD
+            message: Rental changed while cancelling; reload before saving
           - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'cancellation', :current_user_name)"
         result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
