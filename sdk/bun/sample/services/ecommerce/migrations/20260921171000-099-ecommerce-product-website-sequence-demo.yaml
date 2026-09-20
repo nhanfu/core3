@@ -1,0 +1,29 @@
+version: 0.0.99
+kind: data
+description: deterministic Website Sale product ordering fixtures
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_products
+      SET website_sequence = CASE id
+        WHEN 'ecommerce-product-mug' THEN 10
+        WHEN 'ecommerce-product-chair' THEN 20
+        WHEN 'ecommerce-product-setup' THEN 30
+        WHEN 'ecommerce-product-lamp' THEN 40
+        ELSE website_sequence
+      END
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair', 'ecommerce-product-setup', 'ecommerce-product-lamp');
+    down: |
+      UPDATE ecommerce_products
+      SET website_sequence = CASE id
+        WHEN 'ecommerce-product-mug' THEN 10
+        WHEN 'ecommerce-product-chair' THEN 20
+        WHEN 'ecommerce-product-setup' THEN 30
+        WHEN 'ecommerce-product-lamp' THEN 40
+        ELSE website_sequence
+      END
+      WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair', 'ecommerce-product-setup', 'ecommerce-product-lamp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

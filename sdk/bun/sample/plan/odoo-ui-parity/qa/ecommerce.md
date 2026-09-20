@@ -1,5 +1,29 @@
 # ecommerce QA ledger
 
+## Product Website Sequence Reordering (`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`, 2026-09-21)
+
+- Odoo source/page: pass. Website Sale provides top/bottom/up/down sequence
+  methods, orders the Website Products action by `website_sequence`, renders
+  its handle widget, and exposes the action through the Products menu.
+- Core3 lifecycle: pass for this bounded contract. Migrations 098/099 add the
+  ordering index and deterministic sequence fixtures. Products uses separate
+  page/API YAML; four reorder actions require `ecommerce.write`, enforce
+  current-company/active scope and optimistic row versions, and persist
+  swaps/repositioning across restart.
+- Focused verification: `bun test
+  test/ecommerce_product_website_sequence.integration.test.ts` — **3
+  passed, 30 assertions, 0 failures**. Products/Product Detail/Shop
+  regression — **13 passed, 105 assertions, 0 failures** on the clean rerun.
+- Audit/lint/diff: `bun run audit` passed at 718 pages, 727 routes, and 1382
+  datasources; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 are
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-website-sequence-reorder-001/`.
+
 ## Product Website Category Assignments (`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product.template.public_categ_ids` is a durable

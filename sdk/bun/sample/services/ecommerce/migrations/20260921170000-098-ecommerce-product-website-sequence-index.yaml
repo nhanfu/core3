@@ -1,0 +1,11 @@
+version: 0.0.98
+kind: schema
+description: Website Sale product ordering index
+type:
+  postgres:
+    up: CREATE INDEX IF NOT EXISTS ecommerce_products_website_sequence_idx ON ecommerce_products(company_name, is_published, active, website_sequence, id);
+    down: DROP INDEX IF EXISTS ecommerce_products_website_sequence_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

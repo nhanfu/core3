@@ -1,6 +1,30 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product website category assignment slice; module sign-off remains open)
+Status: qa-in-progress (bounded product website sequence reorder slice; module sign-off remains open)
+
+## Bounded feature — Product Website Sequence Reordering (`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` exposes
+`set_sequence_top`, `set_sequence_bottom`, `set_sequence_up`, and
+`set_sequence_down`; the Website Products list defaults to
+`website_sequence` order and renders a `website_sequence` handle widget.
+`website_sale_menus.xml` maps the Products menu to
+`product_template_action_website`.
+
+Core3 migrations 098/099 add an ordering index and deterministic product
+sequence fixtures. The Products page/API remain separate and now expose
+permissioned Move Top/Up/Down/Bottom actions. Each workflow is durable,
+company-scoped, active-row and optimistic-row-version guarded, and swaps or
+repositions products within the same published state; restart coverage
+preserves the resulting order.
+
+Focused CRUD/workflow, source, paired-schema, audit, scoped lint, and
+diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-website-sequence-reorder-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by the missing
+persistent browser runtime and unavailable local ports; supplied Odoo `/shop`
+probes are exact HTTP 404 on 8069 and 8073. This bounded slice is not module
+sign-off.
 
 ## Bounded feature — Product Website Category Assignments (`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`)
 

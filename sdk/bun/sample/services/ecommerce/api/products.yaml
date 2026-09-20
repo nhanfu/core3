@@ -139,3 +139,65 @@ actions:
       steps:
         - { query: "UPDATE ecommerce_products SET is_published = FALSE, publish_date = NULL, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_PUBLICATION_STALE, message: This product changed before it could be unpublished. }
       result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+  - id: move_ecommerce_product_top
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.sequence.top
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_products, ecommerce_product_detail, ecommerce_shop_products]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be reordered. }
+      steps:
+        - { query: "UPDATE ecommerce_products SET website_sequence = COALESCE((SELECT MIN(other_product.website_sequence) - 5 FROM ecommerce_products other_product WHERE other_product.active = TRUE AND other_product.company_name = ecommerce_products.company_name AND other_product.is_published = ecommerce_products.is_published AND other_product.id <> ecommerce_products.id), 0), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be moved. }
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+  - id: move_ecommerce_product_bottom
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.sequence.bottom
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_products, ecommerce_product_detail, ecommerce_shop_products]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be reordered. }
+      steps:
+        - { query: "UPDATE ecommerce_products SET website_sequence = COALESCE((SELECT MAX(other_product.website_sequence) + 5 FROM ecommerce_products other_product WHERE other_product.active = TRUE AND other_product.company_name = ecommerce_products.company_name AND other_product.is_published = ecommerce_products.is_published AND other_product.id <> ecommerce_products.id), 10), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be moved. }
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+  - id: move_ecommerce_product_up
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.sequence.up
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_products, ecommerce_product_detail, ecommerce_shop_products]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be reordered. }
+        - { query: "SELECT previous_product.id FROM ecommerce_products current_product JOIN ecommerce_products previous_product ON previous_product.active = TRUE AND previous_product.company_name = current_product.company_name AND previous_product.is_published = current_product.is_published AND previous_product.website_sequence < current_product.website_sequence WHERE current_product.id = :id ORDER BY previous_product.website_sequence DESC, previous_product.name DESC LIMIT 1", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_EDGE, message: This product is already at the top of its published state. }
+      steps:
+        - { query: "WITH current_product AS (SELECT id, website_sequence, is_published, company_name FROM ecommerce_products WHERE id = :id), previous_product AS (SELECT p.id, p.website_sequence FROM ecommerce_products p JOIN current_product c ON p.active = TRUE AND p.company_name = c.company_name AND p.is_published = c.is_published AND p.website_sequence < c.website_sequence ORDER BY p.website_sequence DESC, p.name DESC LIMIT 1) UPDATE ecommerce_products AS product SET website_sequence = CASE WHEN product.id = current_product.id THEN previous_product.website_sequence ELSE current_product.website_sequence END, row_version = product.row_version + 1, updated_at = CURRENT_TIMESTAMP FROM current_product, previous_product WHERE product.id IN (current_product.id, previous_product.id)", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be moved. }
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+  - id: move_ecommerce_product_down
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.sequence.down
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_products, ecommerce_product_detail, ecommerce_shop_products]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be reordered. }
+        - { query: "SELECT next_product.id FROM ecommerce_products current_product JOIN ecommerce_products next_product ON next_product.active = TRUE AND next_product.company_name = current_product.company_name AND next_product.is_published = current_product.is_published AND next_product.website_sequence > current_product.website_sequence WHERE current_product.id = :id ORDER BY next_product.website_sequence ASC, next_product.name ASC LIMIT 1", status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_EDGE, message: This product is already at the bottom of its published state. }
+      steps:
+        - { query: "WITH current_product AS (SELECT id, website_sequence, is_published, company_name FROM ecommerce_products WHERE id = :id), next_product AS (SELECT p.id, p.website_sequence FROM ecommerce_products p JOIN current_product c ON p.active = TRUE AND p.company_name = c.company_name AND p.is_published = c.is_published AND p.website_sequence > c.website_sequence ORDER BY p.website_sequence ASC, p.name ASC LIMIT 1) UPDATE ecommerce_products AS product SET website_sequence = CASE WHEN product.id = current_product.id THEN next_product.website_sequence ELSE current_product.website_sequence END, row_version = product.row_version + 1, updated_at = CURRENT_TIMESTAMP FROM current_product, next_product WHERE product.id IN (current_product.id, next_product.id)", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_SEQUENCE_STALE, message: This product changed before it could be moved. }
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }

@@ -4,8 +4,25 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `b7138c2a8e9d7557a4208e3ecf8cfc1bbaf3c32e`
-(`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`, committed locally; not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`
+
+Wave 17 selected Odoo Website Sale's product website ordering workflow. Odoo
+provides top/bottom/up/down methods and a Products list handle ordered by
+`website_sequence`; Core3 previously exposed only a numeric field. Migrations
+098/099 add the ordering index and deterministic fixtures. Products uses
+separate page/API YAML with four permissioned reorder actions enforcing active
+same-company scope, optimistic concurrency, edge handling, and restart-safe
+persistence.
+
+Focused verification passed **3 tests, 30 assertions, 0 failures**; the
+Products/Product Detail/Shop regression passed **13 tests, 105 assertions, 0
+failures** on rerun. Audit, scoped ESLint, and `git diff --check` passed.
+Core3 authenticated desktop/mobile capture is blocked by missing `js_repl`
+and unavailable local ports; Odoo `/shop` is exact HTTP 404 on 8069/8073.
+Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`
 

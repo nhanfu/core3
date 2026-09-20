@@ -30,6 +30,10 @@ components:
     selectable: true
     empty_state: { title: No products found, description: Create a new product to sell it on your website. }
     actions:
+      - { id: move_ecommerce_product_top, label: Move to Top, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: move_ecommerce_product_up, label: Move Up, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: move_ecommerce_product_down, label: Move Down, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: move_ecommerce_product_bottom, label: Move to Bottom, permission: ecommerce.write, show_if: "row.active === true" }
       - { id: publish_ecommerce_product, label: Publish, permission: ecommerce.write, show_if: "row.active === true && row.is_published !== true" }
       - { id: unpublish_ecommerce_product, label: Unpublish, permission: ecommerce.write, variant: danger, show_if: "row.active === true && row.is_published === true" }
       - { id: archive_ecommerce_product, label: Archive, permission: ecommerce.write, variant: danger, show_if: "row.active === true" }
