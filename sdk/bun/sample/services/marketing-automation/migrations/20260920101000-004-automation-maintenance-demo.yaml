@@ -1,0 +1,21 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE marketing_automations SET active = TRUE WHERE active IS NULL;
+      INSERT OR IGNORE INTO marketing_automations(id, name, trigger_type, trigger_definition, action_type, action_definition, audience_description, enrollment_count, completed_count, state, active, published_at)
+      VALUES ('automation-demo-002', 'Trial conversion journey', 'Lead score changed', 'Score reaches 80 or above', 'Create activity', 'Assign a follow-up call', 'High-intent trial leads', 2, 1, 'Published', TRUE, TIMESTAMP '2026-01-16 10:00:00');
+      INSERT OR IGNORE INTO marketing_automations(id, name, trigger_type, trigger_definition, action_type, action_definition, audience_description, enrollment_count, completed_count, state, active)
+      VALUES ('automation-demo-003', 'Renewal reminder journey', 'Subscription expiring', '30 days before renewal', 'Send email', 'Renewal reminder sequence', 'Customers renewing this quarter', 0, 0, 'Paused', TRUE);
+      INSERT OR IGNORE INTO automation_enrollments(id, automation_id, automation_name, contact_name, contact_email, state, enrolled_at, completed_at, result)
+      VALUES ('automation-enrollment-demo-002-alex', 'automation-demo-002', 'Trial conversion journey', 'Alex Morgan', 'alex.morgan@example.com', 'Completed', TIMESTAMP '2026-01-16 10:30:00', TIMESTAMP '2026-01-17 08:00:00', 'Follow-up activity created');
+      INSERT OR IGNORE INTO automation_enrollments(id, automation_id, automation_name, contact_name, contact_email, state, enrolled_at, completed_at, result)
+      VALUES ('automation-enrollment-demo-002-jordan', 'automation-demo-002', 'Trial conversion journey', 'Jordan Lee', 'jordan.lee@example.com', 'Enrolled', TIMESTAMP '2026-01-16 11:00:00', NULL, NULL);
+    down: |
+      DELETE FROM automation_enrollments WHERE id IN ('automation-enrollment-demo-002-alex', 'automation-enrollment-demo-002-jordan');
+      DELETE FROM marketing_automations WHERE id IN ('automation-demo-002', 'automation-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

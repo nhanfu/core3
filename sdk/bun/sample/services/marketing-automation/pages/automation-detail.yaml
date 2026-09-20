@@ -1,13 +1,5 @@
 title: Marketing Automation
-page: { id: automation-detail, breadcrumb: [Marketing, Marketing Automation, Detail], auth: { require: [marketing_automation.read] } }
-datasources:
-  - id: automation_detail
-    single: true
-    permission: marketing_automation.read
-    query: "SELECT id, row_version, name, trigger_type, trigger_definition, action_type, action_definition, audience_description, enrollment_count, completed_count, state, CAST(published_at AS VARCHAR) AS published_at FROM marketing_automations WHERE id = :id"
-  - id: automation_enrollments
-    permission: marketing_automation.read
-    query: "SELECT id, contact_name, contact_email, state, result, CAST(enrolled_at AS VARCHAR) AS enrolled_at, CAST(completed_at AS VARCHAR) AS completed_at FROM automation_enrollments WHERE automation_id = :id ORDER BY enrolled_at DESC"
+page: { id: automation-detail, route: /automations/detail, breadcrumb: [Marketing, Marketing Automation, Detail], auth: { require: [marketing_automation.read] } }
 components:
   - type: OdooFormView
     source: automation_detail
@@ -20,10 +12,17 @@ components:
       - title: Journey
         fields: [{ field: name, label: Automation }, { field: state, label: Status }, { field: trigger_type, label: Trigger }, { field: trigger_definition, label: Trigger definition }, { field: action_type, label: Action }, { field: action_definition, label: Action definition }]
       - title: Audience
-        fields: [{ field: audience_description, label: Audience }, { field: enrollment_count, label: Enrolled }, { field: completed_count, label: Completed }, { field: published_at, label: Published at }]
+        fields: [{ field: audience_description, label: Audience }, { field: enrollment_count, label: Enrolled }, { field: completed_count, label: Completed }, { field: active, label: Active }, { field: published_at, label: Published at }]
+    header_actions:
+      - { id: edit_automation_detail, label: Edit, permission: marketing_automation.write, variant: secondary, show_if: "state.automation_detail.active === true" }
+      - { id: enroll_contact, label: Enroll contact, permission: marketing_automation.write, variant: primary, show_if: "state.automation_detail.state === 'Published' || state.automation_detail.state === 'Running'" }
+      - { id: archive_automation_detail, label: Archive, permission: marketing_automation.manage, variant: danger, show_if: "state.automation_detail.active === true" }
+      - { id: restore_automation_detail, label: Restore, permission: marketing_automation.manage, variant: secondary, show_if: "state.automation_detail.active === false" }
+      - { id: delete_automation_detail, label: Delete, permission: marketing_automation.manage, variant: danger, show_if: "state.automation_detail.state === 'Draft' && state.automation_detail.enrollment_count === 0" }
   - type: ContactGrid
     source: automation_enrollments
     row_key: id
+    title: Enrolled contacts
     columns:
       - { field: contact_name, label: Contact, type: PrimaryEntityCell }
       - { field: contact_email, label: Email }
@@ -31,8 +30,3 @@ components:
       - { field: result, label: Result }
       - { field: enrolled_at, label: Enrolled at }
       - { field: completed_at, label: Completed at }
-actions:
-  - { id: publish_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.publish, handler: order_transition, workflow: marketing_automations, operation: publish, params: { id: '{state.id}' }, refresh: [automation_detail] }
-  - { id: run_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.run, handler: order_transition, workflow: marketing_automations, operation: run, params: { id: '{state.id}' }, refresh: [automation_detail] }
-  - { id: complete_automation_detail, type: server, permission: marketing_automation.manage, action: marketing_automation.records.complete, handler: order_transition, workflow: marketing_automations, operation: complete, params: { id: '{state.id}' }, refresh: [automation_detail] }
-  - { id: pause_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.pause, handler: order_transition, workflow: marketing_automations, operation: pause, params: { id: '{state.id}' }, refresh: [automation_detail] }

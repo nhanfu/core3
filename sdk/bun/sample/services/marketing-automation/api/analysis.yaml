@@ -1,0 +1,9 @@
+page: { id: automation-analysis }
+datasources:
+  - id: automation_analysis_totals
+    single: true
+    permission: marketing_automation.read
+    query: "SELECT COUNT(*) AS automation_count, COALESCE(SUM(enrollment_count), 0) AS enrollments, COALESCE(SUM(completed_count), 0) AS completed, COUNT(*) FILTER (WHERE state = 'Running') AS running_count FROM marketing_automations WHERE active = TRUE"
+  - id: automation_analysis_states
+    permission: marketing_automation.read
+    query: "SELECT state AS category, COUNT(*) AS automation_count FROM marketing_automations WHERE active = TRUE GROUP BY state ORDER BY automation_count DESC"

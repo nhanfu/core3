@@ -1,0 +1,119 @@
+page: { id: automations }
+datasources:
+  - id: automation_states
+    permission: marketing_automation.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Running','Running'), ('Completed','Completed'), ('Paused','Paused')) states(value, label)"
+  - id: marketing_automations
+    permission: marketing_automation.read
+    workflow: marketing_automations
+    error_states: { transport_error: { status: 503, code: MARKETING_AUTOMATIONS_UNAVAILABLE, message: Marketing automations are temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.name, a.trigger_type, a.action_type, a.audience_description, a.enrollment_count, a.completed_count, a.state, a.active, CAST(a.published_at AS VARCHAR) AS published_at FROM marketing_automations a WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND a.active = TRUE) OR (:active IS NOT NULL AND a.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.trigger_type ILIKE '%' || :q || '%' OR a.action_type ILIKE '%' || :q || '%') AND (:state IS NULL OR a.state = :state) ORDER BY a.created_at DESC, a.id"
+actions:
+  - id: view_automation
+    type: navigate
+    permission: marketing_automation.read
+    navigate_to: /automations/detail
+    params: { id: '{row.id}' }
+  - id: create_automation
+    type: server_form
+    permission: marketing_automation.write
+    title: New marketing automation
+    action: marketing_automation.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [marketing_automations]
+    mutation:
+      operation: insert
+      table: marketing_automations
+      fields: [name, trigger_type, trigger_definition, action_type, action_definition, audience_description]
+      required: [name, trigger_type, action_type]
+      defaults: { active: true, state: Draft, enrollment_count: 0, completed_count: 0, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'automation-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:trigger_type AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:action_type AS VARCHAR))) > 0", status: 422, code: MARKETING_AUTOMATION_REQUIRED_FIELDS, message: A name, trigger, and action are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM marketing_automations WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: MARKETING_AUTOMATION_EXISTS, message: An automation with this name already exists. }
+      result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    fields:
+      - { field: name, label: Automation, type: text, required: true }
+      - { field: trigger_type, label: Trigger, type: text, required: true }
+      - { field: trigger_definition, label: Trigger definition, type: textarea }
+      - { field: action_type, label: Action, type: text, required: true }
+      - { field: action_definition, label: Action definition, type: textarea }
+      - { field: audience_description, label: Audience, type: text }
+  - id: edit_automation
+    type: server_form
+    permission: marketing_automation.write
+    title: Edit marketing automation
+    action: marketing_automation.records.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [marketing_automations, automation_detail]
+    mutation:
+      operation: update
+      table: marketing_automations
+      fields: [name, trigger_type, trigger_definition, action_type, action_definition, audience_description]
+      required: [name, trigger_type, action_type]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM marketing_automations WHERE id = :id AND active = TRUE", status: 404, code: MARKETING_AUTOMATION_NOT_FOUND, message: Active automation not found. }
+        - { query: "SELECT 1 AS ok FROM marketing_automations WHERE id = :id AND state IN ('Draft', 'Published', 'Paused')", status: 409, code: MARKETING_AUTOMATION_IMMUTABLE, message: Running or completed automations cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:trigger_type AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:action_type AS VARCHAR))) > 0", status: 422, code: MARKETING_AUTOMATION_REQUIRED_FIELDS, message: A name, trigger, and action are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM marketing_automations WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MARKETING_AUTOMATION_EXISTS, message: An automation with this name already exists. }
+      result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    fields:
+      - { field: name, label: Automation, type: text, required: true }
+      - { field: trigger_type, label: Trigger, type: text, required: true }
+      - { field: trigger_definition, label: Trigger definition, type: textarea }
+      - { field: action_type, label: Action, type: text, required: true }
+      - { field: action_definition, label: Action definition, type: textarea }
+      - { field: audience_description, label: Audience, type: text }
+  - { id: publish_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.publish, handler: order_transition, workflow: marketing_automations, operation: publish, refresh: [marketing_automations] }
+  - { id: run_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.run, handler: order_transition, workflow: marketing_automations, operation: run, refresh: [marketing_automations] }
+  - { id: complete_automation, type: server, permission: marketing_automation.manage, action: marketing_automation.records.complete, handler: order_transition, workflow: marketing_automations, operation: complete, refresh: [marketing_automations] }
+  - { id: pause_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.pause, handler: order_transition, workflow: marketing_automations, operation: pause, refresh: [marketing_automations] }
+  - id: archive_automation
+    type: server
+    permission: marketing_automation.manage
+    action: marketing_automation.records.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [marketing_automations]
+    mutation:
+      operation: update
+      table: marketing_automations
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND active = TRUE AND state <> 'Running'", status: 409, code: MARKETING_AUTOMATION_ARCHIVE_BLOCKED, message: Running automations cannot be archived. }]
+  - id: restore_automation
+    type: server
+    permission: marketing_automation.manage
+    action: marketing_automation.records.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [marketing_automations]
+    mutation:
+      operation: update
+      table: marketing_automations
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND active = FALSE", status: 404, code: MARKETING_AUTOMATION_NOT_FOUND, message: Archived automation not found. }]
+  - id: delete_automation
+    type: server
+    permission: marketing_automation.manage
+    action: marketing_automation.records.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [marketing_automations]
+    mutation:
+      operation: delete
+      table: marketing_automations
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM marketing_automations WHERE id = :id", status: 404, code: MARKETING_AUTOMATION_NOT_FOUND, message: Automation not found. }
+        - { query: "SELECT id FROM marketing_automations WHERE id = :id AND state = 'Draft' AND enrollment_count = 0", status: 409, code: MARKETING_AUTOMATION_DELETE_BLOCKED, message: Only empty draft automations can be deleted. }
+      before_steps: [{ query: "DELETE FROM automation_enrollments WHERE automation_id = :id" }]

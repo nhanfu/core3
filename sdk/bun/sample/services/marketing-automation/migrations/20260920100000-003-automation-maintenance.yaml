@@ -1,0 +1,20 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE marketing_automations ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE automation_enrollments ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE marketing_automations SET active = TRUE WHERE active IS NULL;
+      UPDATE automation_enrollments SET row_version = 1 WHERE row_version IS NULL;
+      CREATE INDEX IF NOT EXISTS automations_active_idx ON marketing_automations(active);
+      CREATE INDEX IF NOT EXISTS automation_enrollments_email_idx ON automation_enrollments(automation_id, contact_email);
+    down: |
+      DROP INDEX IF EXISTS automation_enrollments_email_idx;
+      DROP INDEX IF EXISTS automations_active_idx;
+      ALTER TABLE automation_enrollments DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE marketing_automations DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
