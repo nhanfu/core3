@@ -30,6 +30,15 @@ describe('Appraisals parity slice', () => {
     expect(listPage.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Kanban']);
     expect(action('api/reviews.yaml', 'view_appraisal')).toMatchObject({ navigate_to: '/appraisal-detail', params: { id: '{row.id}' } });
     expect(action('api/review-detail.yaml', 'edit_appraisal_detail').mutation.concurrency).toEqual({ required: true });
+    expect(yaml('api/reviews.yaml').datasources.find((source: any) => source.id === 'appraisals').permission).toBe('appraisals.read');
+    for (const id of ['create_appraisal', 'edit_appraisal', 'start_appraisal', 'submit_appraisal']) {
+      expect(action('api/reviews.yaml', id).permission, id).toBe('appraisals.write');
+    }
+    for (const id of ['delete_appraisal', 'complete_appraisal', 'cancel_appraisal']) {
+      expect(action('api/reviews.yaml', id).permission, id).toBe('appraisals.manage');
+    }
+    expect(yaml('pages/reviews.yaml').page.auth.require).toEqual(['appraisals.read']);
+    expect(yaml('pages/cycles.yaml').page.auth.require).toEqual(['appraisals.manage']);
   });
 
   test('seeds every workflow state and supports guarded CRUD with persistence', async () => {
