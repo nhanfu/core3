@@ -1,0 +1,30 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-SECTIONS-001",
+  "core3": {
+    "desktop": {
+      "frontend_status": 200,
+      "body": "API route not found",
+      "horizontal_overflow": false,
+      "failed_requests": []
+    },
+    "mobile": {
+      "frontend_status": 200,
+      "body": "API route not found",
+      "horizontal_overflow": false,
+      "failed_requests": []
+    },
+    "blocker": "The shared runtime did not register the Surveys public route/API for the conditional fixture, so authenticated visual sign-off is not claimed."
+  },
+  "odoo": {
+    "desktop": {
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F"
+    },
+    "mobile": {
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%3F"
+    },
+    "blocker": "The synthetic conditional-public-token-2026 fixture is not available in the installed Odoo reference; both probes redirected to the login page before a survey view."
+  },
+  "sign_off": false
+}

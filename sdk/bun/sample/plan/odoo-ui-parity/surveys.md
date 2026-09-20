@@ -1475,3 +1475,23 @@ authenticated direct calls because the Surveys route is not registered in that
 runtime. Odoo 8069 reaches the host-controlled Feedback Form waiting state;
 the disposable 8072 reference is unavailable. No visual or Odoo begin
 sign-off is claimed. Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public section boundary (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-SECTIONS-001`.
+
+Odoo keeps `is_page` section rows in the survey question graph but does not
+present them as answerable public questions. Core3 now excludes section rows
+from the public question catalog and from first/current/next/previous durable
+cursor resolution. The existing `surveys` page/API pair remains joined by
+`page.id`, public actions remain permissioned as `surveys.public`, and a
+concurrent next-question loser replays the committed navigation key.
+
+Focused persistence, concurrency, guard, and restart coverage is recorded in
+`test/surveys_public_sections.integration.test.ts`; evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SECTIONS-001/`.
+The fresh Core3 conditional-fixture probe rendered `API route not found` at
+both authenticated viewports because the shared runtime did not register the
+Surveys public route. Odoo redirected the unavailable synthetic token to its
+login page. No browser or paired Odoo sign-off is claimed. Surveys remains
+**qa-in-progress / conditional**.

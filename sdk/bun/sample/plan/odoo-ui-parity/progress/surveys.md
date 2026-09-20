@@ -141,6 +141,29 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-SECTIONS-001`
+
+Selected the next uncovered source-backed public question behavior after the
+begin transition: Odoo's `is_page` section boundary. Odoo keeps sections in
+the ordered survey graph but renders them as page headings rather than
+answerable questions. Core3 now filters `is_page` rows from the public
+question catalog and durable first/current/next/previous cursor operations.
+The existing `surveys` page and public API remain joined by `page.id`, and all
+public actions retain `surveys.public` permission. Concurrent next-question
+writes replay the committed navigation key; restart coverage preserves one
+answerable cursor and one response row.
+
+`surveys_public_sections.integration.test.ts` passes 3 tests / 27 assertions.
+The broader public regression set passes 21 tests / 180 assertions. Evidence
+is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SECTIONS-001/`.
+
+Fresh authenticated Core3 desktop/mobile probes rendered exact `API route not
+found` from the shared runtime for the synthetic conditional token. Odoo 8069
+redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
+fixture is unavailable. No browser or paired Odoo sign-off is claimed;
+Surveys remains **qa-in-progress / conditional**.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-BEGIN-001`
 
 Selected the next uncovered source-backed public lifecycle after test entry:

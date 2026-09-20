@@ -291,3 +291,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BEGIN-001/`.
+
+## 2026-09-21 public section-boundary additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-028 | public question flow | Conditional survey catalog | Section/page rows are not answerable public questions | pass |
+| SURVEYS-WF-025 | concurrency/restart | Next over section → concurrent replay → reopen | One durable answerable cursor skips the section and survives restart/idempotent replay | pass |
+| SURVEYS-PERM-027 | token/state guard | Section cursor injection | Token-scoped navigation rejects a section cursor without changing response state | pass |
+| SURVEYS-UI-026 | authenticated responsive/reference | Conditional public desktop/mobile + Odoo comparison | Capture exact shared-runtime and unavailable-fixture blockers; no sign-off until both are available | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SECTIONS-001/`.

@@ -744,3 +744,30 @@ Surveys remains **qa-in-progress / conditional**.
 Disposition: implementation and bounded persistence/guard tests pass;
 runtime/reference verification is conditional and Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-SECTIONS-001` — 2026-09-21
+
+- Source: Odoo's `is_page` rows are section/page headings in the public
+  `_prepare_question_html` flow, not answerable questions in
+  `_get_survey_questions` navigation.
+- Core3 YAML boundary: the existing `surveys` page and `api/surveys.yaml`
+  both use `page.id: surveys`; public actions remain `surveys.public`. The
+  operations backing the public route explicitly exclude
+  `COALESCE(is_page, false) = false` for catalog, first, current, next, and
+  previous question resolution.
+- Focused verification: **3 passed / 27 assertions** for the new section
+  test; the broader public set is **21 passed / 180 assertions**.
+- Persistence/concurrency: conditional section rows are skipped, two
+  concurrent next calls converge on one durable cursor with a replay, a
+  file-backed reopen preserves the cursor, and an invalid section cursor
+  leaves state unchanged.
+- Core3 desktop/mobile evidence: frontend status 200, body `API route not
+  found`, no horizontal overflow, and no failed browser requests. The shared
+  runtime route registry blocker prevents authenticated visual sign-off.
+- Odoo desktop/mobile evidence: both probes returned status 200 at the login
+  page after redirecting from the unavailable synthetic conditional token. No
+  authenticated paired comparison is claimed.
+
+Disposition: Core3 implementation and bounded tests pass; runtime/reference
+evidence remains conditional and Surveys remains **qa-in-progress /
+conditional**.
