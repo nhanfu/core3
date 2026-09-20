@@ -740,3 +740,11 @@ sign-off is claimed.
 - Focused feature coverage passed 3/3 tests with 18 expectations. The bounded All Timesheets regression passed 18/18 tests with 104 expectations, including existing company, report, grouping, and calendar slices.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`; desktop filters Mitchell to `1-42 / 42`, and mobile renders responsive Kanban without browser errors.
 - Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded 18-second startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
+
+- Selected the structured Project filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from the completed Employee filter and existing Project grouping metadata.
+- Added the separate page/API contract through `page.id: all-timesheets`; the page declares the Project options filter and the API exposes the durable `project_id` relation in list/pivot data and applies the current-company project predicate.
+- Focused feature coverage passed 3/3 tests with 20 expectations, including project options, permission, company/empty guards, and file-backed restart.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-project-filter/`; desktop filters Research & Development to `1-80 / 159`, and mobile renders responsive Kanban without browser errors.
+- Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.

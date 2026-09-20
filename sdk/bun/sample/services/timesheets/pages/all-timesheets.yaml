@@ -7,6 +7,7 @@ components:
     search: { label: Search all timesheets, placeholder: 'Search employee, project, or entry...' }
     filters:
       - { field: employee_id, label: Employee, options_source: all_timesheet_employees }
+      - { field: project_id, label: Project, options_source: all_timesheet_projects }
       - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
       - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
     group_by:

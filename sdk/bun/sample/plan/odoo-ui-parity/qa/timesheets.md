@@ -787,6 +787,14 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Odoo browser gate: authenticated desktop filters Mitchell and renders `1-42 / 42`; authenticated mobile renders responsive Kanban. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`.
 - Core3 browser blocker: the bounded startup probe did not expose backend `3001/api/modules` before timeout, so desktop/mobile authentication evidence is unavailable; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
 
+## `TIMESHEET-ALL-PROJECT-FILTER-001` — All Timesheets Project filter (2026-09-21)
+
+- Source gate: Odoo's All Timesheets search view exposes the structured `project_id` filter.
+- Core3 gate: the separate `all-timesheets` page/API pair exposes a manager-scoped active-project filter, projects durable `project_id` into list/pivot data, and applies the current-company and empty-fixture guards.
+- Focused gate: `test/timesheets_all_project_filter.integration.test.ts` passes 3/3 tests / 20 expectations; the existing All Timesheets regression is rerun with this slice.
+- Odoo browser gate: authenticated desktop filters Research & Development and renders `1-80 / 159`; authenticated mobile renders responsive Kanban. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-project-filter/`.
+- Core3 browser blocker: the bounded startup probe did not expose backend `3001/api/modules` before timeout, so desktop/mobile authentication evidence is unavailable; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
+
 ## `TIMESHEET-ALL-CALENDAR-MULTI-CREATE-001` — All Timesheets calendar multi-create (2026-09-21)
 
 - Source gate: Odoo's All Timesheets action binds its calendar view to the multi-create form `view_calendar_account_analytic_line_multi_create`.

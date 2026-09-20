@@ -120,3 +120,9 @@ Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-
 The All Timesheets Employee search-field source comparison and durable contract are covered by `test/timesheets_all_employee_filter.integration.test.ts` (3 tests / 18 expectations). The test exercises page/API separation, persisted employee filtering, manager permission, current-company and empty-fixture guards, and file-backed restart.
 
 Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`: desktop applies Employee = Mitchell and renders `1-42 / 42`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile evidence is blocked before authentication because backend `3001/api/modules` did not expose `/api/modules` during the bounded startup probe, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
+
+## Wave 16 execution — `TIMESHEET-ALL-PROJECT-FILTER-001`
+
+The All Timesheets Project search-field source comparison and durable contract are covered by `test/timesheets_all_project_filter.integration.test.ts` (3 tests / 20 expectations). The test exercises page/API separation, persisted project filtering, active project options, manager permission, current-company and empty-fixture guards, and file-backed restart.
+
+Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-project-filter/`: desktop applies Project = Research & Development and renders `1-80 / 159`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile evidence is blocked before authentication because backend `3001/api/modules` did not expose `/api/modules` during the bounded startup probe, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
