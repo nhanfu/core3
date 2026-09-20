@@ -16,7 +16,7 @@ datasources:
       SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name,
         o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid,
         COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method,
-        o.cashier_id, o.actor_id, o.company, o.receipt_number, o.original_order_id, CAST(o.date_order AS VARCHAR) AS date_order
+        o.cashier_id, o.actor_id, o.company, o.receipt_number, COALESCE(o.is_refund, false) AS is_refund, o.original_order_id, CAST(o.date_order AS VARCHAR) AS date_order
       FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id
       WHERE (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.partner_name ILIKE '%' || :q || '%')
         AND (:state IS NULL OR o.state = :state)

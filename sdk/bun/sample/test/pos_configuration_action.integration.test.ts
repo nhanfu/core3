@@ -36,7 +36,7 @@ describe('POS Point of Sale configuration action parity', () => {
       forbidden: { status: 403 }, not_found: { status: 404 }, transport_error: { status: 503 },
     });
     const fields = detailPage.components[0].groups.flatMap((group: any) => group.fields.map((field: any) => field.field));
-    expect(fields).toEqual(['name', 'login_with_employees', 'epos_printer', 'iot_box']);
+    expect(fields).toEqual(['name', 'company', 'currency', 'receipt_header', 'receipt_footer', 'login_with_employees', 'epos_printer', 'iot_box']);
     expect(detailPage.components[0].header_actions.map((entry: any) => entry.id)).toEqual(['back_to_pos_configs', 'edit_pos_config']);
   });
 
@@ -81,10 +81,10 @@ describe('POS Point of Sale configuration action parity', () => {
     const created = await repository.executeMutation(create.mutation, { values: { name: 'Garden Register', login_with_employees: true } });
     expect(created).toMatchObject({ name: 'Garden Register', login_with_employees: true, row_version: 1 });
 
-    const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Garden Register Updated', epos_printer: true } });
+    const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Garden Register Updated', currency: 'USD', epos_printer: true } });
     expect(edited).toMatchObject({ name: 'Garden Register Updated', epos_printer: true, row_version: 2 });
-    await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale Register' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
-    await expect(repository.executeMutation(edit.mutation, { id: 'pos-config-main', expected_row_version: 1, values: { name: 'Furniture Shop Updated' } })).rejects.toMatchObject({ status: 409, code: 'POS_CONFIG_SESSION_OPEN' });
+    await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale Register', currency: 'USD' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'pos-config-main', expected_row_version: 1, values: { name: 'Furniture Shop Updated', currency: 'USD' } })).rejects.toMatchObject({ status: 409, code: 'POS_CONFIG_SESSION_OPEN' });
     await expect(repository.executeMutation(remove.mutation, { id: 'pos-config-main', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'POS_CONFIG_IN_USE' });
     await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 });
     await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 })).rejects.toMatchObject({ status: 404, code: 'POS_CONFIG_NOT_FOUND' });

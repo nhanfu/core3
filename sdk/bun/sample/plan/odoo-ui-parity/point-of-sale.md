@@ -586,6 +586,31 @@ initial string/numeric guard expression; that expression is fixed and the
 focused suite passes, but the post-fix successful browser create-and-refresh
 transition was not recaptured in this handoff. Screenshots remain outside Git.
 
+## Current bounded batch: Orders > Return Products action
+
+The supplied Odoo 19 source exposes `pos.order`'s `Return Products` header
+button (`refund()` in `addons/point_of_sale/models/pos_order.py`). It creates a
+new draft refund order in the currently open session for the same Point of
+Sale, copies the still-refundable lines with negative quantities, and links the
+new order back to the original. Core3 previously exposed payment, invoice,
+and cancel actions but had no persisted counterpart for this order action.
+
+Core3 now adds the page/API-separated `return_pos_order_detail` action to
+`/point-of-sale/order-detail`. It requires `pos.write`, the authenticated
+company, the current order version, a Paid/Invoiced non-refund source, at least
+one positive line, and an open same-configuration session. The mutation creates
+a durable `is_refund`/`original_order_id` child order, copies every source line
+as a negative line, increments the source version, and rejects active-return
+replays. Migration `046` adds the relationship column and deterministic
+refundable fixture. Partial line selection, payment of the returned draft,
+and Odoo's stock/accounting integrations remain outside this bounded slice.
+
+Focused coverage is in `test/pos_order_refund.integration.test.ts`, including
+page/API ID joining, permission and company/stale guards, active-session
+requirements, full-line persistence, migration replay, and file-backed restart
+durability. Screenshots remain outside Git; authenticated browser comparison
+for this new action is still pending.
+
 ## Current batch: Floor Plans
 
 The healthy authenticated Odoo 19 personal reference exposes Configuration →

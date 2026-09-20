@@ -38,6 +38,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-FUNC-007 | Empty/error/not-found | Every list/form/report has deterministic empty, missing, forbidden and transport-error behavior | pass at contract level |
 | POS-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, sessions, orders or configuration rows | planned restart/migration gate |
 | POS-FUNC-009 | Attachments/import/export/print | Exercise receipts, attachments, product import/export and exposed report/print actions | planned browser interaction gate |
+| POS-FUNC-010 | Return Products | Paid/Invoiced order action creates a linked negative-line return in the active same-configuration session and survives restart | pass: focused contract/restart suite; browser action pending |
 
 ## Workflow and integration cases
 
@@ -48,6 +49,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-WF-003 | Product/pricing | Product, tax, category, pricelist and combo selections calculate the declared price without client-only defaults | pass at contract level |
 | POS-WF-004 | Floor/preparation | Floor/table assignment and printer/preparation transitions remain scoped and recoverable | pass at contract level; browser interaction planned |
 | POS-WF-005 | Durable/external boundary | Payment, receipt delivery, printer callbacks and cross-module flows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| POS-WF-006 | Order return | Return Products links a draft return to its source, copies refundable lines negatively, and rejects stale, duplicate, closed-session, or invalid-state replay | pass: focused mutation/restart suite; browser workflow pending |
 
 ## Permission and security cases
 
@@ -59,6 +61,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-PERM-004 | Wrong company | Products, sessions, orders, payments and customers are not leaked or mutable | planned |
 | POS-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected data in the response | planned |
 | POS-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current order/session/configuration unchanged | pass at contract level |
+| POS-PERM-007 | Return Products boundary | Read-only, wrong-company, unauthenticated, stale, and closed-session callers cannot create a return or alter the source order | pass: focused contract suite |
 
 ## Visual, responsive, and regression cases
 

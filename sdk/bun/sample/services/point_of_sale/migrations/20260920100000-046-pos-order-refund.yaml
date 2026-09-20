@@ -1,0 +1,24 @@
+version: 0.0.46
+kind: schema
+description: POS order return linkage and deterministic refundable order fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS is_refund BOOLEAN DEFAULT false;
+      UPDATE pos_orders SET is_refund = COALESCE(is_refund, false);
+      CREATE INDEX IF NOT EXISTS idx_pos_orders_original_order ON pos_orders(original_order_id);
+      INSERT INTO pos_orders(id, row_version, name, session_id, partner_name, state, amount_total, amount_tax, amount_paid, payment_method, date_order, company, is_refund)
+      VALUES ('pos-order-refund-source-001', 1, 'POS/2026/09/20/REFUND-SOURCE', 'pos-session-demo-001', 'Refund Fixture Customer', 'Paid', 12.10, 1.10, 12.10, 'Cash', TIMESTAMP '2026-01-15 12:00:00', 'Core3 Demo Company', false)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total, row_version, created_at)
+      VALUES ('pos-line-refund-source-001', 'pos-order-refund-source-001', 'Refund fixture product', 2, 5.50, 10, 0, 11.00, 1.10, 12.10, 1, TIMESTAMP '2026-01-15 12:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_order_lines WHERE order_id = 'pos-order-refund-source-001' OR order_id IN (SELECT id FROM pos_orders WHERE original_order_id = 'pos-order-refund-source-001');
+      DELETE FROM pos_orders WHERE id = 'pos-order-refund-source-001' OR original_order_id = 'pos-order-refund-source-001';
+      DROP INDEX IF EXISTS idx_pos_orders_original_order;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS is_refund;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

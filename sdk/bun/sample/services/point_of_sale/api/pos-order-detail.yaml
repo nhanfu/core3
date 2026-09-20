@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: pos.read
     error_states: { unauthorized: { status: 401, code: POS_ORDER_DETAIL_UNAUTHORIZED, message: Sign in to view this POS order. }, forbidden: { status: 403, code: POS_ORDER_DETAIL_FORBIDDEN, message: You do not have access to this POS order. }, not_found: { status: 404, code: POS_ORDER_NOT_FOUND, message: POS order not found. }, transport_error: { status: 503, code: POS_ORDER_DETAIL_UNAVAILABLE, message: POS order details are temporarily unavailable. } }
-    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.actor_id, o.company, o.receipt_number, o.original_order_id, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :id AND o.company = :current_company_name AND s.company = :current_company_name"
+    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.actor_id, o.company, o.receipt_number, COALESCE(o.is_refund, false) AS is_refund, o.original_order_id, original.name AS original_order_name, (SELECT COUNT(*) FROM pos_orders refunds WHERE refunds.original_order_id = o.id AND refunds.state <> 'Cancelled' AND refunds.company = :current_company_name) AS refund_orders_count, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id LEFT JOIN pos_orders original ON original.id = o.original_order_id AND original.company = :current_company_name WHERE o.id = :id AND o.company = :current_company_name AND s.company = :current_company_name"
   - id: pos_order_detail_lines
     single: false
     permission: pos.read
@@ -17,3 +17,57 @@ datasources:
     single: false
     permission: pos.read
     query: "SELECT operation_type, operation_id, expected_row_version, actor_id, CAST(created_at AS VARCHAR) AS created_at FROM pos_operations WHERE order_id = :id AND EXISTS (SELECT 1 FROM pos_orders o WHERE o.id = :id AND o.company = :current_company_name) ORDER BY created_at DESC"
+actions:
+  - id: return_pos_order_detail
+    type: server
+    permission: pos.write
+    action: pos.orders.refund
+    handler: yaml_mutation
+    operation: refund
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [pos_order_detail, pos_order_detail_lines, pos_order_detail_payments, pos_orders]
+    result: alert
+    mutation:
+      generated: [refund_order_id]
+      guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before returning a POS order.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before returning products.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('Paid', 'Invoiced') AND COALESCE(is_refund, false) = false"
+          status: 409
+          code: POS_ORDER_REFUND_STATE
+          message: Only paid, non-refund POS orders can return products.
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_order_lines WHERE order_id = :id AND quantity > 0)"
+          status: 409
+          code: POS_ORDER_NO_REFUNDABLE_LINES
+          message: This POS order has no refundable lines.
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_orders WHERE original_order_id = :id AND state <> 'Cancelled' AND company = :current_company_name)"
+          status: 409
+          code: POS_ORDER_ALREADY_REFUNDED
+          message: This POS order already has an active return.
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_orders source JOIN pos_sessions source_session ON source_session.id = source.session_id JOIN pos_sessions active_session ON active_session.config = source_session.config AND active_session.company = :current_company_name AND active_session.state = 'In Progress' WHERE source.id = :id AND source.company = :current_company_name)"
+          status: 409
+          code: POS_ORDER_REFUND_SESSION_REQUIRED
+          message: Open a session for this Point of Sale before returning products.
+      steps:
+        - query: "INSERT INTO pos_orders(id, name, session_id, partner_name, state, amount_total, amount_tax, amount_paid, payment_method, date_order, config_id, cashier_id, company, actor_id, original_order_id, is_refund) SELECT :refund_order_id, source.name || ' REFUND', active_session.id, source.partner_name, 'New', -source.amount_total, -COALESCE(source.amount_tax, 0), 0, NULL, CURRENT_TIMESTAMP, source.config_id, source.cashier_id, source.company, :current_user_id, source.id, true FROM pos_orders source JOIN pos_sessions source_session ON source_session.id = source.session_id JOIN pos_sessions active_session ON active_session.config = source_session.config AND active_session.company = source.company AND active_session.state = 'In Progress' WHERE source.id = :id AND source.company = :current_company_name"
+        - query: "INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total, row_version, created_at) SELECT gen_random_uuid(), :refund_order_id, product_name, -quantity, price_unit, COALESCE(tax_rate, 0), COALESCE(discount, 0), -price_subtotal, -COALESCE(price_tax, 0), -COALESCE(price_total, price_subtotal), 1, CURRENT_TIMESTAMP FROM pos_order_lines WHERE order_id = :id AND quantity > 0"
+        - query: "UPDATE pos_orders SET row_version = row_version + 1, actor_id = :current_user_id WHERE id = :id AND company = :current_company_name AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before returning products.
+      result: { query: "SELECT * FROM pos_orders WHERE id = :refund_order_id" }
