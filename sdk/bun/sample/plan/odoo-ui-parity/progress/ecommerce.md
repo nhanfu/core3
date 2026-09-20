@@ -33,6 +33,26 @@ Inventory owner committed immediately afterward while this ledger hash was
 being finalized; no Inventory paths are part of the Ecommerce implementation
 commit.
 
+## Current bounded task — `ECOM-CATALOG-PRODUCT-SEO-METADATA-001`
+
+The next uncovered source-backed gap is Odoo's `website.seo.metadata` mixin
+on products. It persists meta title, description, keywords, and OpenGraph
+image values and computes `is_seo_optimized`; Website templates consume those
+values for the document head. Core3 migrations 088/089 add durable fields and
+a deterministic Mug fixture. Product Detail uses a separate page/API pair and
+provides a permissioned SEO form with company, validation, optimistic
+concurrency, and restart coverage.
+
+Focused verification is complete: **3 tests, 22 assertions, 0 failures**;
+the adjacent Product Detail/Products/Shop regression set passed **13 tests,
+97 assertions, 0 failures**. Paired schema validation passed for 4 pairs, UI
+audit passed at 710 pages/719 routes/1354 datasources, scoped ESLint and
+`git diff --check` passed. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-seo-metadata-001/`.
+Core3 desktop/mobile capture is blocked by unavailable browser runtime; Odoo
+`/shop` is exact HTTP 404 on 8069/8073. Ready for the local Ecommerce-only
+commit; not pushed.
+
 ## Current bounded task — `ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`
 
 The tenth-wave source-backed gap is Website Sale's

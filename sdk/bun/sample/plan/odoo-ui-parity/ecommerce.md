@@ -1,6 +1,28 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product-publication slice; module sign-off remains open)
+Status: qa-in-progress (bounded product-seo-metadata slice; module sign-off remains open)
+
+## Bounded feature — Product SEO Metadata (`ECOM-CATALOG-PRODUCT-SEO-METADATA-001`)
+
+Odoo source comparison: `website/models/mixins.py` defines the
+`website.seo.metadata` mixin with `website_meta_title`,
+`website_meta_description`, `website_meta_keywords`, `website_meta_og_img`,
+and stored `is_seo_optimized`. Website Sale products inherit this mixin, and
+`website/views/website_templates.xml` consumes the SEO object for title,
+description, keywords, OpenGraph, and Twitter head metadata.
+
+Core3 had the separate customer-facing `website_description` but no durable
+SEO metadata lifecycle. Migrations 088/089 add the four SEO fields and a
+deterministic Mug fixture. Product Detail retains separate page/API YAML; its
+SEO form requires `ecommerce.write`, enforces active/current-company scope,
+length and unsafe-URL validation, optimistic row versions, and DuckDB restart
+persistence. The API returns the `is_seo_optimized` projection.
+
+Focused verification and schema/audit evidence are recorded in
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-seo-metadata-001/`.
+Core3 authenticated desktop/mobile rendering is blocked by unavailable
+browser/runtime, and Odoo `/shop` returns exact HTTP 404 on ports 8069 and
+8073. This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Publication (`ECOM-CATALOG-PRODUCT-PUBLICATION-001`)
 

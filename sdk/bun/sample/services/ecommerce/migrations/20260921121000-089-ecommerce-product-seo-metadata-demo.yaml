@@ -1,0 +1,20 @@
+version: 0.0.89
+kind: data
+description: deterministic Website Sale product SEO metadata fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_products
+      SET website_meta_title = 'Core3 Ceramic Mug | Workspace Essentials',
+          website_meta_description = 'Hand-finished ceramic mug for the Core3 workspace.',
+          website_meta_keywords = 'ceramic mug, workspace, Core3',
+          website_meta_og_img = '/web/image/ecommerce-product-mug/seo-og'
+      WHERE id = 'ecommerce-product-mug';
+    down: |
+      UPDATE ecommerce_products
+      SET website_meta_title = '', website_meta_description = '', website_meta_keywords = '', website_meta_og_img = ''
+      WHERE id = 'ecommerce-product-mug';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

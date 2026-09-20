@@ -1,0 +1,20 @@
+version: 0.0.88
+kind: schema
+description: durable Website Sale product SEO metadata
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_products ADD COLUMN website_meta_title VARCHAR;
+      ALTER TABLE ecommerce_products ADD COLUMN website_meta_description VARCHAR;
+      ALTER TABLE ecommerce_products ADD COLUMN website_meta_keywords VARCHAR;
+      ALTER TABLE ecommerce_products ADD COLUMN website_meta_og_img VARCHAR;
+      UPDATE ecommerce_products SET website_meta_title = COALESCE(website_meta_title, ''), website_meta_description = COALESCE(website_meta_description, ''), website_meta_keywords = COALESCE(website_meta_keywords, ''), website_meta_og_img = COALESCE(website_meta_og_img, '');
+    down: |
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_meta_og_img;
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_meta_keywords;
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_meta_description;
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_meta_title;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

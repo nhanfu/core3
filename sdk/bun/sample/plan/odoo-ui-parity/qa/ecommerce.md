@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Product SEO Metadata (`ECOM-CATALOG-PRODUCT-SEO-METADATA-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website.seo.metadata` defines the four product SEO
+  fields and `is_seo_optimized`; Website Sale products inherit it and the
+  Website layout consumes title, description, keywords, OpenGraph, and Twitter
+  values.
+- Core3 lifecycle: pass for this bounded SEO contract. Migrations 088/089 add
+  durable fields and the Mug fixture. Product Detail has separate page/API
+  YAML; the SEO form requires `ecommerce.write`, enforces current-company,
+  active-row, field-length, unsafe-URL, and optimistic concurrency guards;
+  restart preserves values and optimization state.
+- Focused verification: `bun test
+  test/ecommerce_product_seo_metadata.integration.test.ts --timeout 20000` —
+  **3 passed, 22 assertions, 0 failures**. Adjacent Product Detail/Products/
+  Shop regression — **13 passed, 97 assertions, 0 failures**. Paired schema
+  validation passed for 4 pairs; UI audit passed at 710 pages, 719 routes,
+  and 1354 datasources; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 were
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Website-head rendering, translations, SEO popup behavior, broader browser
+  actor coverage, and paired Odoo rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-seo-metadata-001/`.
+
 ## Product Publication (`ECOM-CATALOG-PRODUCT-PUBLICATION-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website/models/mixins.py` defines durable
