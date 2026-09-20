@@ -373,11 +373,12 @@ export default class SurveysModule implements ModuleLifecycle {
     }
     if (operation === 'progress') {
       try {
+        const identity = this.respondentIdentity(questions, answers);
         const result = await service.call('surveys.public.progress', {
           id: response.id,
           survey_id: detail.id,
           access_token: answerToken,
-          values: { answer_data: JSON.stringify(answers) },
+          values: { answer_data: JSON.stringify(answers), ...identity },
         });
         return this.json({ survey: detail, answer: result });
       } catch (error: any) {
@@ -396,6 +397,7 @@ export default class SurveysModule implements ModuleLifecycle {
     if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
     const scoring = await this.publicScore(service, detail.id, answers);
     try {
+      const identity = this.respondentIdentity(questions, answers);
       const result = await service.call('surveys.public.submit', {
         id: response.id,
         survey_id: response.survey_id,
@@ -404,6 +406,7 @@ export default class SurveysModule implements ModuleLifecycle {
           answer_data: JSON.stringify(answers),
           ...(typeof body.respondent_name === 'string' ? { respondent_name: body.respondent_name.trim() } : {}),
           ...(typeof body.respondent_email === 'string' ? { respondent_email: body.respondent_email.trim() } : {}),
+          ...identity,
           ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
           score: scoring.score,
           quiz_passed: scoring.quiz_passed,
@@ -516,8 +519,24 @@ export default class SurveysModule implements ModuleLifecycle {
 
   private async questionSettings(service: PublicService, surveyId: string, questions: any[]): Promise<any[]> {
     const settings = (await service.call('survey.public.comment_settings', { survey_id: surveyId }))?.comment_settings || [];
+    const identity = (await service.call('survey.public.identity_settings', { survey_id: surveyId }))?.identity_settings || [];
     const byId = new Map(settings.map((setting: any) => [String(setting.id), setting]));
+    for (const setting of identity) {
+      byId.set(String(setting.id), { ...(byId.get(String(setting.id)) || {}), ...setting });
+    }
     return questions.map((question) => ({ ...question, ...(byId.get(String(question.id)) || {}) }));
+  }
+
+  private respondentIdentity(questions: any[], answers: Record<string, unknown>): { respondent_name?: string; respondent_email?: string } {
+    const identity: { respondent_name?: string; respondent_email?: string } = {};
+    for (const question of questions) {
+      const raw = answers[question.id];
+      const value = Array.isArray(raw) ? raw.map((entry) => String(entry).trim()).filter(Boolean).join(', ') : String(raw ?? '').trim();
+      if (!value) continue;
+      if (question.save_as_email) identity.respondent_email = value;
+      if (question.save_as_nickname) identity.respondent_name = value;
+    }
+    return identity;
   }
 
   private expiredResponse(): Response {

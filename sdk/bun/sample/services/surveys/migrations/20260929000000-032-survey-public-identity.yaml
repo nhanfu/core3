@@ -1,0 +1,25 @@
+version: 0.0.32
+description: Odoo-compatible public respondent identity capture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS save_as_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS save_as_nickname BOOLEAN DEFAULT FALSE;
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-identity', 'SURVEY/IDENTITY', 'Contact Details', 'Tell us how to follow up with you.', 'Mitchell Admin', 0, 'Published', 'identity-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, save_as_email, save_as_nickname)
+      VALUES ('question-identity-email', 'survey-demo-identity', 'What email address should we use for follow-up?', 'Text', 1, true, '', true, false),
+             ('question-identity-nickname', 'survey-demo-identity', 'What name should we use when we contact you?', 'Text', 2, false, '', false, true)
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, save_as_email = excluded.save_as_email, save_as_nickname = excluded.save_as_nickname;
+      UPDATE surveys SET response_count = 0 WHERE id = 'survey-demo-identity';
+    down: |
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-identity';
+      DELETE FROM surveys WHERE id = 'survey-demo-identity';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS save_as_nickname;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS save_as_email;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

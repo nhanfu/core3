@@ -1,0 +1,21 @@
+{
+  "reference": "http://127.0.0.1:8069",
+  "requested_route": "/odoo/surveys",
+  "probes": [
+    {
+      "viewport": "1440x900",
+      "status": 200,
+      "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "title": "Odoo",
+      "body_prefix": "Skip to Content\nManage Databases Powered by Odoo"
+    },
+    {
+      "viewport": "390x844",
+      "status": 200,
+      "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "title": "Odoo",
+      "body_prefix": "Skip to Content\nManage Databases Powered by Odoo"
+    }
+  ],
+  "blocker": "The reachable Odoo reference redirected both viewports to the login page; no authenticated Survey route or respondent-identity fixture was available for paired capture. Disposable proxy 127.0.0.1:8072 was connection-refused."
+}

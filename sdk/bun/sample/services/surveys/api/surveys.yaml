@@ -59,6 +59,10 @@ actions:
   # Choice comments are returned by the public question metadata operation and
   # persist as <question_id>__comment in answer_data; comment_count_as_answer
   # mirrors Odoo's required-choice behavior.
+  # Odoo char_box questions can persist an answer as the respondent email or
+  # nickname. The public identity operation supplies these flags to the paired
+  # page binding, and the controller writes the derived identity on progress
+  # and submit while retaining the original answer_data.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form
@@ -73,7 +77,7 @@ actions:
       required: [survey_id, survey_name, answer_data]
       defaults: { state: In Progress }
       generated: [access_token]
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
@@ -96,7 +100,7 @@ actions:
         - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'New'", status: 409, code: SURVEY_PUBLIC_BEGIN_STATE, message: This survey response has already begun or is no longer available. }
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT id FROM survey_questions WHERE id = :current_question_id AND survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_BEGIN_QUESTION, message: The first survey question is unavailable. }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: current_question_id, label: First question, type: text, required: true }
   - id: public_survey_submit
@@ -134,15 +138,17 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [answer_data]
+      fields: [answer_data, respondent_name, respondent_email]
       required: [answer_data]
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: respondent_name, label: Respondent, type: text }
+      - { field: respondent_email, label: Email, type: text }
   - id: public_survey_next_question
     type: server_form
     permission: surveys.public

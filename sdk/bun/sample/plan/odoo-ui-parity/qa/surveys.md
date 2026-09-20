@@ -1013,3 +1013,30 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MATRIX
   Surveys remains **qa-in-progress / conditional**.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.
+
+## Bounded QA run: Public respondent identity — `SURVEYS-PUBLIC-IDENTITY-001`
+
+- Source comparison: Odoo `survey_question.py:110-115` defines stored
+  `save_as_email`/`save_as_nickname`; `survey_user_input.py:294-299` writes
+  configured answers to the participant email or nickname; the question form
+  exposes both controls at `survey_question_views.xml:153-155`.
+- YAML/UI contract: migration `0.0.32` adds durable flags and the published
+  `Contact Details` fixture. `survey.public.identity_settings` joins the
+  existing `page.id: surveys` page/API pair; public progress and submit retain
+  `surveys.public` and update only the token-scoped response identity fields.
+- Focused verification: **2 passed / 19 assertions**; public regression:
+  **71 passed / 638 assertions**.
+- Persistence/guards: email capture is visible on progress, nickname capture
+  overrides spoofed submit metadata, both values survive file-backed reopen,
+  concurrent same-key submit creates one row, and a wrong token returns 404.
+- Core3 authenticated desktop/mobile evidence passed at 1440x900 and 390x844:
+  API 200, both identity controls present, no request/page failures, and no
+  horizontal overflow.
+- Odoo 8069 redirected both viewports to
+  `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; disposable proxy 8072 was
+  connection-refused. No authenticated Odoo identity fixture was available;
+  no paired visual or module sign-off is claimed.
+- The broader Surveys run still reproduces the four DuckDB rollback dependent
+  entry failures. Surveys remains **qa-in-progress / conditional**.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.

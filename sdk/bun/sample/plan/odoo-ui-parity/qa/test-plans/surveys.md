@@ -411,3 +411,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COMMENTS-001/`.
+
+## 2026-09-21 respondent identity additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-038 | public identity | Email/nickname question flags | Public question metadata exposes durable `save_as_email` and `save_as_nickname` through the paired YAML/API contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-035 | restart/idempotency | Identity progress → reopen → concurrent submit | Derived email/nickname fields survive restart, override spoofed explicit metadata, and converge on one submitted/idempotency row | `verification.md`, focused test | pass |
+| SURVEYS-PERM-037 | token guard | Wrong answer token | Public token/state guard returns 404 without mutation | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-036 | authenticated responsive/reference | Identity controls desktop/mobile + Odoo comparison | Admin/public Core3 probes show both controls without overflow; record exact Odoo login/proxy blocker | evidence directory | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.

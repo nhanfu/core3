@@ -14,6 +14,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # navigated only when their durable trigger answer is present. Choice comments
 # use a question-scoped answer-data entry and can satisfy a required choice when
 # the source question enables comment_count_as_answer.
+# Text questions with save_as_email/save_as_nickname retain the answer in the
+# durable response identity fields, matching Odoo's respondent capture flags.
 components:
   - type: ListView
     variant: odoo

@@ -141,6 +141,31 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-IDENTITY-001`
+
+Selected the next uncovered source-backed public behavior after the completed
+question-type and comments slices: Odoo's stored `save_as_email` and
+`save_as_nickname` respondent identity flags. Core3 migration `0.0.32` adds the
+durable question metadata and deterministic published `Contact Details`
+fixture. The public API operation exposes both flags through the existing
+`page.id: surveys` YAML pair; progress and submit derive the configured answer
+into `survey_responses.respondent_email` or `respondent_name` without losing
+the original answer JSON. The renderer uses email/nickname controls.
+
+Focused identity coverage is 2 tests with 19 assertions. The public Surveys
+regression is 71 passed with 638 assertions. Authenticated Core3 desktop/mobile
+probes on Vite 3391/backend 3390 show the admin catalog, both identity inputs,
+API 200 flags, no request/page failures, and no horizontal overflow. Evidence
+is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.
+
+The broad Surveys run reproduced four existing DuckDB rollback failures with
+`Cannot alter entry "survey_questions" because there are entries that depend
+on it`; the lingering process was stopped after bounded reproduction. Odoo
+8069 redirected both viewports to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`,
+and disposable proxy 8072 refused the connection, so no paired Odoo identity
+fixture or sign-off is claimed. Status remains **qa-in-progress / conditional**.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-COMMENTS-001`
 
 Selected the next uncovered source-backed public behavior after the completed

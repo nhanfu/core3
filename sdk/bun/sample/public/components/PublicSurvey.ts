@@ -13,6 +13,8 @@ type SurveyQuestion = {
   comments_allowed?: boolean;
   comments_message?: string | null;
   comment_count_as_answer?: boolean;
+  save_as_email?: boolean;
+  save_as_nickname?: boolean;
 };
 
 type SurveyPayload = {
@@ -126,7 +128,10 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
   const matrixInput = question.question_type === 'Matrix' && matrixRows.length > 0 && matrixColumns.length > 0
     ? `<div class="core3-public-survey__matrix-wrap"><table class="core3-public-survey__matrix"><thead><tr><th></th>${matrixColumns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr></thead><tbody>${matrixRows.map((row) => `<tr data-matrix-row="${escapeHtml(row)}"><th>${escapeHtml(row)}</th>${matrixColumns.map((column) => { const checked = Array.isArray(matrixAnswer[row]) && matrixAnswer[row].includes(column) ? ' checked' : ''; return `<td><input type="${question.matrix_subtype === 'multiple' ? 'checkbox' : 'radio'}" name="matrix-${escapeHtml(question.id)}-${escapeHtml(row)}" value="${escapeHtml(column)}"${checked}></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`
     : '';
-  const input = question.question_type === 'Text'
+  const identityInput = question.save_as_email || question.save_as_nickname;
+  const input = identityInput
+    ? `<input class="core3-public-survey__input" data-answer type="${question.save_as_email ? 'email' : 'text'}" autocomplete="${question.save_as_email ? 'email' : 'nickname'}" value="${escapeHtml(currentValues[0])}" placeholder="${question.save_as_email ? 'you@example.com' : 'Your name'}">`
+    : question.question_type === 'Text'
     ? `<textarea class="core3-public-survey__input" rows="3" data-answer>${escapeHtml(currentValues[0])}</textarea>`
     : matrixInput
       ? matrixInput

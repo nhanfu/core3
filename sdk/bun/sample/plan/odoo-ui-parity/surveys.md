@@ -1740,3 +1740,32 @@ Core3 desktop/mobile probes returned a bounded 502 because the backend did not
 expose `/api/modules`; Odoo redirected to `/web/login?redirect=%2Fodoo%3F`
 without an installed authenticated Survey fixture. No browser, paired Odoo,
 or module sign-off is claimed; Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public respondent identity capture (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-IDENTITY-001`.
+
+Odoo's `survey.question` stores `save_as_email` and `save_as_nickname` for
+char-box questions, and `survey.user_input._save_lines` writes a configured
+answer to the durable participant email or nickname while retaining the answer
+line. Core3 implements the smallest corresponding public slice with migration
+`20260929000000-032-survey-public-identity.yaml`, the published deterministic
+`Contact Details` survey, and the separate `survey.public.identity_settings`
+operation. The existing `page.id: surveys` API/page pair carries the flags;
+progress and submit remain token-scoped `surveys.public` actions, derive the
+identity fields, and preserve `answer_data`. The renderer presents email and
+nickname autocomplete controls rather than a disconnected API.
+
+Focused coverage proves YAML wiring, token guards, durable progress, restart,
+spoof-resistant derived identity, and concurrent idempotent submit. Evidence
+is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTITY-001/`.
+
+Focused verification is **2 passed / 19 assertions** and the public regression
+is **71 passed / 638 assertions**. The broader Surveys run reproduces the four
+known DuckDB rollback/dependent-entry failures and was stopped after bounded
+reproduction; no full-repository pass is claimed. Authenticated Core3 desktop
+and mobile probes passed with no request/page failures or horizontal overflow.
+Odoo 8069 redirected both viewports to its login route and disposable proxy
+8072 refused the connection, so no paired Odoo identity fixture or visual
+sign-off is claimed. Surveys remains **qa-in-progress / conditional**.

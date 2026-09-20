@@ -1,0 +1,42 @@
+{
+  "feature": "SURVEYS-PUBLIC-IDENTITY-001",
+  "actor": "admin@tms.local",
+  "backend": "http://127.0.0.1:3390",
+  "frontend": "http://127.0.0.1:3391",
+  "probes": [
+    {
+      "viewport": "1440x900",
+      "authenticated_route": "/surveys",
+      "authenticated_url": "http://127.0.0.1:3391/surveys",
+      "authenticated_catalog_visible": true,
+      "public_landing_visible": true,
+      "public_question": "What name should we use when we contact you?",
+      "email_input_count": 1,
+      "nickname_input_count": 1,
+      "api_status": 200,
+      "api_flags": [
+        { "id": "question-identity-email", "save_as_email": true, "save_as_nickname": false },
+        { "id": "question-identity-nickname", "save_as_email": false, "save_as_nickname": true }
+      ],
+      "horizontal_overflow": false,
+      "request_or_page_failures": []
+    },
+    {
+      "viewport": "390x844",
+      "authenticated_route": "/surveys",
+      "authenticated_url": "http://127.0.0.1:3391/surveys",
+      "authenticated_catalog_visible": true,
+      "public_landing_visible": true,
+      "public_question": "What name should we use when we contact you?",
+      "email_input_count": 1,
+      "nickname_input_count": 1,
+      "api_status": 200,
+      "api_flags": [
+        { "id": "question-identity-email", "save_as_email": true, "save_as_nickname": false },
+        { "id": "question-identity-nickname", "save_as_email": false, "save_as_nickname": true }
+      ],
+      "horizontal_overflow": false,
+      "request_or_page_failures": []
+    }
+  ]
+}
