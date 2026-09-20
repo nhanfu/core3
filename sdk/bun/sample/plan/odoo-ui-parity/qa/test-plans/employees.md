@@ -44,6 +44,7 @@ versions.
 | --- | --- | --- | --- | --- | --- |
 | EMP-WF-001 | workflow | Employee archive/restore | Explicit action values override submitted form state; active/action visibility changes and survives reload | stale/missing row returns 409/404 | pass |
 | EMP-WF-002 | workflow | Activity plans | Launch/onboarding/offboarding plans preserve ordered steps and responsible role | duplicate/retry does not duplicate steps | planned |
+| EMP-WF-006 | workflow | Register Departure wizard | Active employee departure records reason/details/date, archives atomically, optionally closes contract and removes an unshared related user | invalid contract date, stale, missing, reason, company, and retry leave the employee unchanged | pass |
 | EMP-WF-003 | integration | Department/category links | Counts and linked forms stay consistent when records change | in-use delete returns 409 without dangling rows | pass |
 | EMP-WF-004 | integration | Employee records/contract | Version/contract state and validity reports remain deterministic | invalid dates and stale update are rejected | pass at contract level |
 | EMP-WF-005 | integration | Durable/external boundary | Mail, timers, payroll/resource integrations use Temporal when long-running or cross-module | replay/restart/retry/timeout/compensation before activation | planned |

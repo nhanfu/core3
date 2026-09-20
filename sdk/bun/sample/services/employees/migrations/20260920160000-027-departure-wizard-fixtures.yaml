@@ -1,0 +1,21 @@
+version: 0.0.27
+kind: data
+description: Make the deterministic employee departure wizard fixture contract-complete
+type:
+  postgres:
+    up: |
+      UPDATE employees
+      SET auth_user_id = COALESCE(auth_user_id, 'user-admin'),
+          user_name = COALESCE(user_name, 'Admin User'),
+          contract_start = COALESCE(contract_start, hire_date)
+      WHERE id = 'employee-demo-001';
+    down: |
+      UPDATE employees
+      SET auth_user_id = NULL,
+          user_name = NULL,
+          contract_start = NULL
+      WHERE id = 'employee-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

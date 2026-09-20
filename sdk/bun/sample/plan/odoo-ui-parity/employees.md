@@ -1015,3 +1015,29 @@ passes. The generated Core3 Work-tab captures are under
 `/tmp/core3-odoo-parity/employees-visual4-20260912/`. The Odoo files in that
 directory were not authenticated during the temporary reference throttle, so
 they are not treated as parity evidence.
+
+## Register Departure wizard bounded workflow (2026-09-20)
+
+The next source-backed employee workflow beyond direct archive/restore and
+departure-reason CRUD is Odoo's `hr.departure.wizard`, defined in
+`addons/hr/wizard/hr_departure_wizard.py` and
+`wizard/hr_departure_wizard_views.xml`. Core3 now exposes the wizard from the
+active employee detail form/API with the source fields Departure Reason,
+Contract End Date, Set Contract End Date, Remove Related User, and Detailed
+Reason. The action is HR-user gated (`employees.write`), company scoped, and
+uses a row-version guard plus the Odoo contract-start date validation.
+
+Registration is one atomic durable mutation: it records the reason,
+description, departure and termination dates, archives the employee, moves the
+state to `Terminated`, optionally closes the current contract, and removes the
+related user only when no other active employee shares that user. Migration
+`20260920160000-027-departure-wizard-fixtures.yaml` completes the stable demo
+employee's user and contract-start fixture without adding rows to the existing
+employee list. The focused integration test covers page/API ownership,
+company-scoped reason options, persistence, restart replay, optional contract
+and user side effects, invalid dates/reasons, stale/missing/cross-company
+guards, and atomic failure behavior.
+
+Authenticated browser/Odoo visual comparison for the modal remains open; this
+bounded implementation claim is limited to YAML contracts, durable mutation,
+and integration evidence.

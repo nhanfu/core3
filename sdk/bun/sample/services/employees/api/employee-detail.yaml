@@ -4,6 +4,26 @@ datasources:
     single: true
     permission: employees.read
     query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+  - id: employee_departure_wizard
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_DEPARTURE_EMPLOYEE_NOT_FOUND, message: The active employee is not available for departure registration. }
+      transport_error: { status: 503, code: EMPLOYEES_DEPARTURE_WIZARD_UNAVAILABLE, message: Departure registration is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name AS employee_name, e.company_name,
+        CAST(e.contract_start AS VARCHAR) AS contract_start, CAST(e.contract_end AS VARCHAR) AS contract_end, e.auth_user_id, e.user_name,
+        CASE WHEN e.auth_user_id IS NOT NULL OR NULLIF(TRIM(COALESCE(e.user_name, '')), '') IS NOT NULL THEN true ELSE false END AS is_user_employee,
+        COALESCE(CAST(e.departure_date AS VARCHAR), '2026-01-15') AS departure_date,
+        e.departure_reason_name, e.departure_description,
+        true AS set_date_end, false AS remove_related_user
+      FROM employees e
+      WHERE e.id = :id AND e.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_departure_wizard_reasons
+    single: false
+    permission: employees.read
+    query: "SELECT r.id AS value, r.name AS label FROM employee_departure_reasons r WHERE r.active = true AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name OR r.id IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired')) ORDER BY r.sequence, r.id"
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -64,6 +84,55 @@ actions:
       - { field: skills, label: Skills, type: text }
       - { field: resume_summary, label: Resume, type: textarea }
       - { field: street, label: Private Address, type: text }
+  - id: register_employee_departure
+    type: server_form
+    permission: employees.write
+    title: Register Departure
+    description: Archive the employee and record the departure details, following Odoo's departure wizard.
+    action: employees.records.register_departure
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_departure_wizard
+    refresh: [employee_detail, employee_departure_wizard, employees]
+    mutation:
+      boolean_fields: [set_date_end, remove_related_user]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_EMPLOYEE_NOT_FOUND, message: The active employee is not available for departure registration. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before departure registration. Reload the employee and try again. }
+        - { query: "SELECT 1 AS ok FROM employee_departure_reasons r JOIN employees e ON e.id = :id WHERE r.name = TRIM(CAST(:departure_reason_name AS VARCHAR)) AND r.active = true AND (COALESCE(r.company_name, '') = '' OR r.company_name = e.company_name OR r.id IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired'))", status: 422, code: EMPLOYEES_DEPARTURE_REASON_INVALID, message: Select an active departure reason for the employee's company. }
+        - { query: "SELECT 1 AS ok WHERE :departure_date IS NOT NULL AND regexp_matches(CAST(:departure_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_DEPARTURE_DATE_INVALID, message: Departure date must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok FROM employees WHERE id = :id AND (contract_start IS NULL OR CAST(:departure_date AS DATE) >= contract_start)", status: 422, code: EMPLOYEES_DEPARTURE_DATE_INVALID, message: Departure date cannot be earlier than the current contract start date. }
+      before_steps:
+        - query: "SELECT CASE WHEN COALESCE(CAST(:remove_related_user AS BOOLEAN), false) AND e.auth_user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM employees other WHERE other.id <> e.id AND other.auth_user_id = e.auth_user_id AND other.active = true) THEN true ELSE false END AS clear_related_user FROM employees e WHERE e.id = :id"
+          assign: true
+      steps:
+        - query: |
+            UPDATE employees
+            SET active = false,
+                state = 'Terminated',
+                departure_reason_name = TRIM(CAST(:departure_reason_name AS VARCHAR)),
+                departure_description = NULLIF(TRIM(CAST(:departure_description AS VARCHAR)), ''),
+                departure_date = CAST(:departure_date AS DATE),
+                termination_date = CAST(:departure_date AS DATE),
+                contract_end = CASE WHEN COALESCE(CAST(:set_date_end AS BOOLEAN), true) AND contract_start IS NOT NULL THEN CAST(:departure_date AS DATE) ELSE contract_end END,
+                auth_user_id = CASE WHEN COALESCE(CAST(:clear_related_user AS BOOLEAN), false) THEN NULL ELSE auth_user_id END,
+                user_name = CASE WHEN COALESCE(CAST(:clear_related_user AS BOOLEAN), false) THEN NULL ELSE user_name END,
+                row_version = row_version + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id AND active = true AND row_version = :expected_row_version
+              AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before departure registration. Reload the employee and try again.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: departure_reason_name, label: Departure Reason, type: select, options_source: employee_departure_wizard_reasons, required: true }
+      - { field: departure_date, label: Contract End Date, type: date, required: true }
+      - { field: set_date_end, label: Set Contract End Date, type: checkbox, default: true }
+      - { field: remove_related_user, label: Remove Related User, type: checkbox, show_if: "state.employee_departure_wizard.is_user_employee === true" }
+      - { field: departure_description, label: Detailed Reason, type: textarea }
   - id: archive_employee_detail
     type: server
     permission: employees.write

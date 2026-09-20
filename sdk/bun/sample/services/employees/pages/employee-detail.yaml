@@ -15,6 +15,7 @@ components:
       - { id: open_employee_history, label: History, value_field: version_count, permission: employees.read }
     header_actions:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
+      - { id: register_employee_departure, label: Register Departure, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: restore_employee_detail, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === false" }
     notebook:
