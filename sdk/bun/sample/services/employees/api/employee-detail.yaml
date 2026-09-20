@@ -99,6 +99,52 @@ datasources:
         AND b.active = true
         AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
       ORDER BY b.sequence, b.id
+  - id: employee_skill_assignments
+    single: false
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_SKILLS_UNAVAILABLE, message: Employee skills are temporarily unavailable. } }
+    query: |
+      SELECT a.id, a.row_version, a.employee_id, a.skill_type_id, t.name AS skill_type_name,
+        a.skill_id, s.name AS skill_name, a.skill_level_id, l.name AS skill_level_name,
+        l.level_progress, CAST(a.valid_from AS VARCHAR) AS valid_from,
+        CAST(a.valid_to AS VARCHAR) AS valid_to, a.active,
+        CASE WHEN a.valid_to IS NULL OR a.valid_to >= DATE '2026-01-15' THEN 'Current' ELSE 'Expired' END AS validity_status
+      FROM employee_skill_assignments a
+      JOIN employees e ON e.id = a.employee_id
+      JOIN employee_skill_types t ON t.id = a.skill_type_id
+      JOIN employee_skills s ON s.id = a.skill_id AND s.skill_type_id = a.skill_type_id
+      JOIN employee_skill_levels l ON l.id = a.skill_level_id AND l.skill_type_id = a.skill_type_id
+      WHERE a.employee_id = :employee_id AND a.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY t.sequence, s.sequence, a.id
+  - id: employee_skill_types_for_employee
+    single: false
+    permission: employees.write
+    query: |
+      SELECT t.id AS value, t.name AS label
+      FROM employee_skill_types t
+      JOIN employees e ON e.id = :employee_id
+      WHERE t.active = true AND t.is_certification = false
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY t.sequence, t.id
+  - id: employee_skills_for_type
+    single: false
+    permission: employees.write
+    query: |
+      SELECT s.id AS value, s.name AS label
+      FROM employee_skills s
+      JOIN employee_skill_types t ON t.id = s.skill_type_id
+      WHERE s.skill_type_id = :skill_type_id AND t.active = true AND t.is_certification = false
+      ORDER BY s.sequence, s.id
+  - id: employee_skill_levels_for_type
+    single: false
+    permission: employees.write
+    query: |
+      SELECT l.id AS value, l.name AS label
+      FROM employee_skill_levels l
+      JOIN employee_skill_types t ON t.id = l.skill_type_id
+      WHERE l.skill_type_id = :skill_type_id AND t.active = true AND t.is_certification = false
+      ORDER BY l.level_progress DESC, l.id
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -377,6 +423,71 @@ actions:
           status: 409
           code: STALE_RECORD
           message: The employee changed before the bank account was deleted. Reload and try again.
+  - id: add_employee_skill
+    type: server_form
+    permission: employees.write
+    title: Add Skill
+    description: Add a skill and level to the employee's current skill profile.
+    action: employees.records.skill.create
+    handler: line_item
+    operation: create
+    domain: employee_skill_assignment
+    params: { id: '{state.id}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_skill_assignments]
+    mutation:
+      generated: [assignment_id]
+      before_steps: [{ query: "SELECT 'employee-skill-' || CAST(:id AS VARCHAR) || '-' || CAST(:skill_id AS VARCHAR) AS assignment_id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_SKILL_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the skill was added. Reload and try again. }
+        - { query: "SELECT t.id FROM employee_skill_types t WHERE t.id = :skill_type_id AND t.active = true AND t.is_certification = false", status: 422, code: EMPLOYEES_SKILL_TYPE_INVALID, message: Select an active regular skill type. }
+        - { query: "SELECT s.id FROM employee_skills s WHERE s.id = :skill_id AND s.skill_type_id = :skill_type_id", status: 422, code: EMPLOYEES_SKILL_INVALID, message: Select a skill from the chosen skill type. }
+        - { query: "SELECT l.id FROM employee_skill_levels l WHERE l.id = :skill_level_id AND l.skill_type_id = :skill_type_id", status: 422, code: EMPLOYEES_SKILL_LEVEL_INVALID, message: Select a level from the chosen skill type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:valid_to AS DATE) IS NULL OR CAST(:valid_to AS DATE) >= CAST(:valid_from AS DATE)", status: 422, code: EMPLOYEES_SKILL_DATES_INVALID, message: The skill end date must be after the start date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_skill_assignments WHERE employee_id = :id AND skill_id = :skill_id AND active = true)", status: 409, code: EMPLOYEES_SKILL_EXISTS, message: This skill is already assigned to the employee. }
+      steps:
+        - query: "INSERT INTO employee_skill_assignments(id, row_version, employee_id, skill_type_id, skill_id, skill_level_id, valid_from, valid_to, active) VALUES(:assignment_id, 1, :id, :skill_type_id, :skill_id, :skill_level_id, CAST(:valid_from AS DATE), CAST(:valid_to AS DATE), true)"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the skill was added. Reload and try again.
+      result: { query: "SELECT * FROM employee_skill_assignments WHERE id = :assignment_id" }
+    fields:
+      - { field: skill_type_id, label: Category, type: select, options_source: employee_skill_types_for_employee, required: true }
+      - { field: skill_id, label: Skill, type: select, options_source: employee_skills_for_type, required: true }
+      - { field: skill_level_id, label: Level, type: select, options_source: employee_skill_levels_for_type, required: true }
+      - { field: valid_from, label: Valid From, type: date, required: true, default: '2026-01-15' }
+      - { field: valid_to, label: Valid To, type: date }
+  - id: archive_employee_skill
+    type: server
+    permission: employees.write
+    action: employees.records.skill.archive
+    handler: line_item
+    operation: update
+    domain: employee_skill_assignment
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    confirm: Archive this employee skill?
+    refresh: [employee_detail, employee_skill_assignments]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_SKILL_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the skill was archived. Reload and try again. }
+        - { query: "SELECT id FROM employee_skill_assignments WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_SKILL_STALE, message: This skill changed before it was archived. Reload and try again. }
+      steps:
+        - query: "UPDATE employee_skill_assignments SET active = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_SKILL_STALE
+          message: This skill changed before it was archived. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the skill was archived. Reload and try again.
   - id: edit_employee
     type: server_form
     permission: employees.write

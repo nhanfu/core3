@@ -204,3 +204,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`.
 | EMP-UI-014 | visual/responsive | Authenticated Core3/Odoo Personal tab | Desktop/mobile comparison | conditional; exact blockers recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.
+
+## EMP-EMPLOYEE-SKILLS-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-019 | workflow | Employee detail Work / Skills | Durable add and archive assignment | pass |
+| EMP-PERM-019 | permission/security | Employee skill line action | Actor, company, catalog, duplicate, date, and stale guards | pass |
+| EMP-DATA-019 | data/regression | Migration replay/restart | Fixture assignments persist without duplicates | pass |
+| EMP-UI-015 | visual/responsive | Authenticated Core3/Odoo Work tab | Desktop/mobile skill comparison | conditional; exact blockers recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.

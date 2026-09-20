@@ -20,6 +20,22 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-EMPLOYEE-SKILLS-001 (2026-09-20)
+
+- Selected Odoo `hr.employee.skill` current-skill assignments after birth
+  identity; source action is `open_hr_employee_skill_modal` on the
+  `skills_one2many` Work-tab widget.
+- Implemented durable assignment migration `20260920290000-039`, deterministic
+  fixtures, API catalogs/datasource, page/API-separated Work-tab grid, and
+  actor/company/relation/date/duplicate/row-version guards with archive.
+- Focused verification: **4 tests / 27 assertions**, audit **686 / 695 /
+  1,272**, scoped ESLint and diff-check pass.
+- Core3 authenticated desktop/mobile company switch returned 200, but the
+  Vietnam fixture is hidden in the Vietnam Branch session. Odoo authenticated
+  desktop/mobile Work-tab was reached, but no populated Skills widget was
+  present in the reference employee. Evidence is conditional.
+- Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.
+
 ## EMP-BIRTH-IDENTITY-001 (2026-09-20)
 
 - Implemented Odoo Personal birth identity parity: place of birth, country of

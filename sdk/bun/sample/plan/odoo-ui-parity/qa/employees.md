@@ -604,6 +604,19 @@ Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`. No
 aggregate Employees sign-off is claimed; full-repository regression was not
 run for this bounded checkpoint.
 
+## EMP-EMPLOYEE-SKILLS-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-019 | Work-tab skill add/archive | Skill category, skill, level, and validity persist; archive hides the row | pass; 4 tests / 27 assertions |
+| EMP-PERM-019 | Actor, company, relation, duplicate, date, and stale guards | Invalid or out-of-scope assignment rejects atomically | pass |
+| EMP-DATA-019 | Migration replay and file-backed restart | Deterministic assignments survive restart without duplicates | pass |
+| EMP-UI-015 | Authenticated Core3/Odoo Work-tab desktop/mobile | Skills grid and modal compare responsively | conditional; Core3 fixture-company mismatch and Odoo unpopulated widget recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`. No
+aggregate Employees sign-off is claimed; full-repository regression was not
+run per the bounded checkpoint.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

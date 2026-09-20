@@ -1,0 +1,4 @@
+[
+  {"viewport":"desktop","viewport_size":"1440x900","url":"http://127.0.0.1:3310/employees/detail?id=employee-demo-001","authenticated":true,"company_switch":{"status":200,"company":"Core3 Vietnam Branch"},"skills_grid_populated":false,"page_errors":[],"http_errors":[],"blocker":"Fixture company Core3 Vietnam differs from authenticated company Core3 Vietnam Branch; guard hides employee and skill rows"},
+  {"viewport":"mobile","viewport_size":"390x844","url":"http://127.0.0.1:3310/employees/detail?id=employee-demo-001","authenticated":true,"company_switch":{"status":200,"company":"Core3 Vietnam Branch"},"skills_grid_populated":false,"page_errors":[],"http_errors":[],"blocker":"Fixture company Core3 Vietnam differs from authenticated company Core3 Vietnam Branch; guard hides employee and skill rows"}
+]

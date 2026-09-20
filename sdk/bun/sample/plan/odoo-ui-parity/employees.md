@@ -1337,3 +1337,31 @@ the reference presents Nationality (Country) elsewhere. No aggregate
 Employees sign-off is claimed.
 
 Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.
+
+## EMP-EMPLOYEE-SKILLS-001: Employee current skill assignments (2026-09-20)
+
+The smallest remaining source-backed employee-form behavior is Odoo's
+`hr.employee.current_employee_skill_ids` `skills_one2many` widget and its
+`open_hr_employee_skill_modal` action from `hr_skills`. The source model is
+`hr.employee.skill`; regular skills select a category, skill, and level, keep
+validity dates, reject duplicate active skills, and are archived rather than
+deleted.
+
+Core3 adds migration `20260920290000-039-employee-skill-assignments.yaml` with
+deterministic employee/company-scoped skill rows, an API datasource plus
+catalogs and guarded add/archive actions, and a page-only Work-tab
+`LineItemGrid` joined by `page.id`. Focused coverage is **4 tests / 27
+assertions**, including source mapping, CRUD/archive, actor/company/relation/
+duplicate/date/concurrency guards, migration replay, and file-backed restart.
+Audit is **686 pages / 695 routes / 1,272 datasources**; scoped ESLint and
+diff-check pass.
+
+Authenticated Core3 desktop/mobile reached the employee route after a 200
+company switch, but the fixture is `Core3 Vietnam` while the authenticated
+company is `Core3 Vietnam Branch`; the company guard correctly hides the
+employee and skill rows. Authenticated Odoo desktop/mobile reached Abigail
+Peterson's Work tab, but the installed reference did not render a populated
+Skills widget for that employee. Seven known app-icon 404s are shell noise.
+Evidence records both boundaries; no aggregate Employees sign-off is claimed.
+
+Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.

@@ -1,0 +1,31 @@
+version: 0.0.39
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_skill_assignments (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        skill_type_id VARCHAR NOT NULL,
+        skill_id VARCHAR NOT NULL,
+        skill_level_id VARCHAR NOT NULL,
+        valid_from DATE NOT NULL DEFAULT DATE '2026-01-15',
+        valid_to DATE,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_skill_assignments_employee_idx ON employee_skill_assignments(employee_id, active);
+      INSERT OR IGNORE INTO employee_skill_assignments (id, employee_id, skill_type_id, skill_id, skill_level_id, valid_from, valid_to, active)
+      VALUES
+        ('employee-skill-demo-001-python', 'employee-demo-001', 'skill-type-technical', 'skill-python', 'level-intermediate', DATE '2025-06-01', NULL, true),
+        ('employee-skill-demo-001-english', 'employee-demo-001', 'skill-type-languages', 'skill-english', 'level-c1', DATE '2024-04-10', NULL, true),
+        ('employee-skill-demo-002-communication', 'employee-demo-002', 'skill-type-soft', 'skill-communication', 'level-intermediate', DATE '2025-01-15', NULL, true);
+      UPDATE employee_skill_assignments SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_skill_assignments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
