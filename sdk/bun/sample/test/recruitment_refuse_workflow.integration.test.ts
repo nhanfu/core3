@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -63,6 +64,45 @@ describe('Recruitment refusal workflow', () => {
     const reloaded = await repository.querySource(detail.datasources[0], { id: 'applicant-demo-003', fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 1);
     expect(reloaded.data).toMatchObject({ id: 'applicant-demo-003', stage: 'New', archived: false, company_name: 'Core3 Demo Company', row_version: 3 });
     database.close();
+  });
+
+  test('persists refusal and reopen across a file-backed database restart', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-recruitment-restart-'));
+    const databasePath = join(directory, 'recruitment.duckdb');
+    const migrationName = `recruitment_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    let database = await DuckDbDatabase.open(databasePath);
+    try {
+      let repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      const detail = yaml('api/applicant-detail.yaml');
+      const refuse = detail.actions.find((candidate: any) => candidate.id === 'reject_applicant_detail');
+      const reopen = yaml('pages/recruitment-workflow.yaml').workflow.transitions.find((candidate: any) => candidate.id === 'reopen');
+
+      await repository.executeMutation(refuse.mutation, {
+        id: 'applicant-demo-003', expected_row_version: 1, current_company_name: 'Core3 Demo Company',
+        refuse_reason_id: 'refuse-reason-duplicate', values: { refuse_reason_id: 'refuse-reason-duplicate' },
+      });
+      database.close();
+
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      expect((await repository.query("SELECT stage, archived, refuse_reason_id, row_version, company_name FROM recruitment_applicants WHERE id = 'applicant-demo-003'"))[0])
+        .toEqual({ stage: 'Rejected', archived: true, refuse_reason_id: 'refuse-reason-duplicate', row_version: 2, company_name: 'Core3 Demo Company' });
+
+      await repository.executeMutation(reopen.mutation, { id: 'applicant-demo-003', expected_row_version: 2, current_company_name: 'Core3 Demo Company' });
+      database.close();
+
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      expect((await repository.query("SELECT stage, archived, refuse_reason_id, row_version FROM recruitment_applicants WHERE id = 'applicant-demo-003'"))[0])
+        .toEqual({ stage: 'New', archived: false, refuse_reason_id: null, row_version: 3 });
+      await expect(repository.executeMutation(reopen.mutation, { id: 'applicant-demo-003', expected_row_version: 2, current_company_name: 'Core3 Demo Company' }))
+        .rejects.toMatchObject({ status: 409, code: 'RECRUITMENT_APPLICANT_REOPEN_STALE' });
+    } finally {
+      database.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('uses the required refusal dialog from the applicant list action', async () => {
