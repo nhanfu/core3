@@ -31,7 +31,7 @@ required; development migrations must be idempotent.
 | Case ID | Class | Surface | Expected result and persistence assertion | Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | ACC-FUNC-001 | functional | Dashboard and document lists | Search/filter/view tabs/pagination and role-specific columns render real rows | focused suite; route matrix | pass |
-| ACC-FUNC-002 | functional | Invoice/vendor bill detail | Create/edit/post/cancel, line totals, residuals and payment relations persist after reload | focused document/payment suites | pass |
+| ACC-FUNC-002 | functional | Invoice/vendor bill detail | Create/edit/post/cancel, Credit Note reversal, line totals, residuals and payment relations persist after reload | focused document/payment/reversal suites | pass |
 | ACC-FUNC-003 | functional | Payments/transfers/reconciliation | Create/edit/register/reconcile with balanced and invalid values | focused payment/reconciliation suites | pass |
 | ACC-FUNC-004 | functional | Journals/accounts/taxes/catalogs | CRUD, archive, duplicate, validation, missing and stale guards work | focused catalog suites | pass |
 | ACC-FUNC-005 | functional | Reports/ledgers/analysis | Declared graph/pivot fields and filters return deterministic scoped data | focused report suites | pass |
@@ -44,7 +44,7 @@ required; development migrations must be idempotent.
 
 | Case ID | Class | Workflow/integration | Expected side effect | Failure/recovery | Status |
 | --- | --- | --- | --- | --- | --- |
-| ACC-WF-001 | workflow | Invoice lifecycle | Draft → Posted → Paid/Cancelled with journal/residual updates | invalid/stale transition returns 409, no partial posting | pass at contract level |
+| ACC-WF-001 | workflow | Invoice lifecycle | Draft → Posted → Paid/Cancelled and posted invoice → draft Credit Note/Vendor Refund with durable relationship | invalid/stale transition returns 409, no partial posting | pass at contract level |
 | ACC-WF-002 | workflow | Vendor payment | Draft → Posted and vendor residual updates | unbalanced/invalid payment rejected atomically | pass at contract level |
 | ACC-WF-003 | workflow | Bank statement/reconciliation | Lines reconcile to payment/journal and remaining balance updates | duplicate/stale line cannot reconcile twice | pass at contract level |
 | ACC-WF-004 | workflow | Internal transfer/secure closing | Transfer and secure-entry state changes are audited | forbidden state and permission failures leave data unchanged | pass at contract level |

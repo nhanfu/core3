@@ -5,7 +5,7 @@ datasources:
     permission: accounting.read
     workflow: accounting_invoices
     error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
 actions:
   - id: edit_accounting_invoice
     type: server_form
@@ -55,3 +55,38 @@ actions:
     fields:
       - { field: payment_amount, label: Payment amount, type: number, required: true }
       - { field: payment_method, label: Payment method, type: select, options: [Bank, Cash, Card, Other], default: Bank }
+  - id: reverse_accounting_invoice
+    type: server_form
+    permission: accounting.write
+    title: Create credit note
+    action: accounting.invoices.reverse
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_invoice_detail, accounting_invoices]
+    mutation:
+      operation: insert
+      table: accounting_invoices
+      id_input: reversal_id
+      generated: [reversal_id]
+      fields: [name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, reversal_of_id, reversal_reason]
+      required: [reversal_date]
+      defaults: { state: Draft }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE try_cast(:reversal_date AS DATE) IS NOT NULL AND try_cast(:reversal_date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2026-12-31'", status: 422, code: ACCOUNTING_INVOICE_REVERSAL_DATE_INVALID, message: The reversal date must be a valid date between January 1, 2000 and December 31, 2026 }
+        - query: "SELECT id AS source_invoice_id, partner_name, CASE invoice_type WHEN 'Customer Invoice' THEN 'Customer Credit Note' ELSE 'Vendor Refund' END AS invoice_type, name || '/REV' AS name, CAST(:reversal_date AS DATE) AS invoice_date, CAST(:reversal_date AS DATE) AS due_date, amount_untaxed, amount_tax, amount_total, amount_total AS amount_residual, 'Draft' AS state, 'Reversal of: ' || name AS reference, id AS reversal_of_id, COALESCE(NULLIF(TRIM(CAST(:reason AS VARCHAR)), ''), 'Correction of posted document') AS reversal_reason FROM accounting_invoices WHERE id = :id AND row_version = :expected_row_version AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Vendor Bill') AND reversal_id IS NULL"
+          status: 409
+          code: ACCOUNTING_INVOICE_REVERSAL_UNAVAILABLE
+          message: Only an unreversed posted invoice or vendor bill can create a credit note
+          assign: true
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_invoices WHERE id = :reversal_id)", status: 409, code: ACCOUNTING_INVOICE_REVERSAL_EXISTS, message: A credit note already exists for this invoice }
+      steps:
+        - query: "UPDATE accounting_invoices SET reversal_id = :reversal_id, row_version = row_version + 1 WHERE id = :source_invoice_id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: ACCOUNTING_INVOICE_REVERSAL_STALE
+          message: The invoice changed; reload before creating a credit note
+      result:
+        query: "SELECT reversal.id, reversal.row_version, reversal.name, reversal.partner_name, reversal.invoice_type, CAST(reversal.invoice_date AS VARCHAR) AS invoice_date, reversal.amount_total, reversal.amount_residual, reversal.state, reversal.reference, reversal.reversal_of_id, reversal.reversal_reason, source.name AS source_invoice_name, source.row_version AS source_row_version FROM accounting_invoices reversal JOIN accounting_invoices source ON source.id = reversal.reversal_of_id WHERE reversal.id = :id"
+    fields:
+      - { field: reversal_date, label: Reversal date, type: date, required: true, default: '2026-01-15' }
+      - { field: reason, label: Reason, type: text, default: Correction of posted document }

@@ -1429,3 +1429,21 @@ Authenticated Chrome verification against the isolated Accounting runner at
 `accounting-purchases-export.xlsx` (3,585 bytes); every file had the XLSX ZIP
 signature `504b0304`, the expected two deterministic journal-item rows, zero
 page/request errors, and no horizontal overflow. Files remain outside Git.
+
+## Current batch: invoice Credit Note reversal workflow
+
+The Odoo 19 `account.move` form exposes `Credit Note` for posted customer
+invoices and vendor bills (`account_move_views.xml`, `action_reverse`). Core3
+now exposes the same bounded detail action through the page-ID-matched
+`invoice-detail` API. It creates one durable draft Customer Credit Note or
+Vendor Refund, copies the posted document amounts and partner, records the
+reversal date and reason, and links both records with optimistic concurrency.
+
+The source action rejects drafts, already reversed documents, unsupported
+credit notes/refunds, invalid dates, missing records, and stale source rows
+atomically. Migration `20260920110000-048-accounting-invoice-reversals.yaml`
+adds the relationship columns and deterministic source/reversal fixtures.
+Focused coverage proves YAML separation, permission ownership, persistence
+after DuckDB close/reopen, duplicate/stale/type/date guards, and no partial
+write. Posting the generated credit note and multi-document reversal remain
+outside this bounded slice.
