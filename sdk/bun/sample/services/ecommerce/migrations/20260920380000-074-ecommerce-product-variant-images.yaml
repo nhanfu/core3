@@ -1,0 +1,30 @@
+version: 0.0.74
+kind: schema
+description: durable Website Sale extra media scoped to product variants
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_variant_images (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        variant_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_variant_images_variant_idx
+        ON ecommerce_product_variant_images(variant_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_variant_images_variant_idx;
+      DROP TABLE IF EXISTS ecommerce_product_variant_images;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

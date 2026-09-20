@@ -4,9 +4,35 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `c7aef9bba489d9e1482490d6f71d9bc0da88db69` (Checkout Customer Addresses).
+Latest committed bounded slice before this wave: `f6186d5730aa8598d8f46818169f59e66a00e95d` (Product Optional Recommendations).
 
-## Current bounded task — `ECOM-CATALOG-PRODUCT-OPTIONALS-001`
+## Current bounded task — `ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`
+
+The next uncovered source-backed catalog behavior is Website Sale's
+variant-specific extra media. Odoo's `product.image` model accepts a
+`product_variant_id`, `product.product` exposes `product_variant_image_ids`,
+the variant form renders “Extra Variant Media,” and the website combination
+controller returns a carousel containing variant images before template media.
+
+Core3 migrations 074/075 add durable variant-scoped image metadata with a
+deterministic Mug Blue fixture. The Product Variant page/API YAML pair is
+separate and joined by `page.id`; Product Detail opens it from variant rows.
+The API lists only active variant media in the current company and exposes
+permissioned image upload/removal with active/product/company, MIME/size,
+duplicate, and optimistic row-version guards. Image media is bounded here;
+video URLs and external media transformation remain follow-up gaps.
+
+Focused verification: `bun test
+./test/ecommerce_product_variant_images.integration.test.ts --timeout 20000` —
+**3 passed, 33 assertions, 0 failures**. Adjacent Product Detail, Variant,
+and Cart tests passed **11 tests, 71 assertions, 0 failures**; the bounded set
+passed **14 tests, 104 assertions, 0 failures**. The UI audit passed at 697
+pages, 706 routes, and 1317 datasources; scoped ESLint and `git diff --check`
+passed. Authenticated Core3 desktop/mobile capture is blocked by unavailable
+ports 3000/4312/4313; Odoo `/shop` returns exact HTTP 404 on ports 8069/8073.
+Browser actor coverage, paired Odoo rendering, and module sign-off remain open.
+
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-OPTIONALS-001`
 
 The next uncovered source-backed catalog behavior is Odoo's optional-product
 recommendation/configurator relation. `sale` defines `optional_product_ids`,

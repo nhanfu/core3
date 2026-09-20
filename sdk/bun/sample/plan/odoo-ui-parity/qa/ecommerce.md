@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Product Variant Extra Media (`ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website_sale/models/product_image.py` defines
+  `product_variant_id`; `product_product.py` exposes
+  `product_variant_image_ids` and includes variant images in `_get_images()` and
+  the extra-image URLs; `product_views.xml` renders “Extra Variant Media”; and
+  `controllers/variant.py` returns the selected variant carousel.
+- Core3 lifecycle: pass for this bounded contract. Migrations 074/075 add
+  durable variant-scoped image metadata and a deterministic Mug Blue fixture.
+  Separate Product Variant API/page YAML lists media and exposes permissioned
+  image upload/removal with active/product/company, MIME/size, duplicate, and
+  optimistic row-version guards. Product Detail opens the dedicated variant
+  page. Video URLs and external media processing remain out of scope.
+- Focused verification: `bun test
+  ./test/ecommerce_product_variant_images.integration.test.ts --timeout 20000`
+  — **3 passed, 33 assertions, 0 failures**. Adjacent Product Detail,
+  Variant, and Cart tests added **11 passed, 71 assertions**; combined **14
+  passed, 104 assertions, 0 failures**.
+- UI audit: **pass** — 697 pages, 706 routes, 1317 datasources. Scoped ESLint
+  and `git diff --check`: **pass**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Browser actor coverage, paired Odoo rendering, video/external media, and
+  broader module gates remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-variant-extra-media-001/`.
+
 ## Product Optional Recommendations (`ECOM-CATALOG-PRODUCT-OPTIONALS-001`, 2026-09-21)
 
 - Odoo source/page: pass. `sale/models/product_template.py` defines

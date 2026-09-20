@@ -1,0 +1,43 @@
+title: Product Variant
+page: { id: ecommerce-product-variant-detail, route: /ecommerce/products/variants/detail, breadcrumb: [eCommerce, Products, Products, Product Variant], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_product_variant_detail
+    editable: false
+    title_field: name
+    subtitle_field: internal_reference
+    attachment_source: ecommerce_product_variant_images
+    attachment_panel_open: true
+    attachment_page_size: 50
+    attachment_label: Extra Variant Media
+    add_attachment_label: Add variant image
+    no_attachments_label: No variant images
+    uploading_label: Uploading variant image…
+    upload_failed_label: Variant image upload failed
+    download_label: Download variant image
+    attachment_accept: image/*
+    attachment_upload_action: upload_ecommerce_product_variant_image
+    attachment_download_action: download_ecommerce_product_variant_image
+    header_actions:
+      - { id: back_to_ecommerce_product_detail_from_variant, label: Back to Product, variant: secondary }
+    groups:
+      - { title: Product Variant, columns: 2, fields: [{ field: name, label: Variant }, { field: product_name, label: Product }, { field: internal_reference, label: Internal Reference }, { field: attribute_values, label: Attributes }] }
+      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: active, label: Active, type: StatusChip }, { field: product_is_published, label: Product Published, type: StatusChip }, { field: company_name, label: Company }] }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_variant_images
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: Add variant media, description: Upload an image that is shown when this product variant is selected. }
+    columns:
+      - { field: name, label: Media, type: PrimaryEntityCell }
+      - { field: mime_type, label: Type }
+      - { field: size_bytes, label: Size, align: right }
+      - { field: sequence, label: Sequence, align: right }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 120
+        actions:
+          - { id: remove_ecommerce_product_variant_image, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }

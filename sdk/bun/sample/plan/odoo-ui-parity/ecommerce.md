@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded optional-product configurator slice; module sign-off remains open)
+Status: qa-in-progress (bounded variant extra-media slice; module sign-off remains open)
+
+## Bounded feature — Product Variant Extra Media (`ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`)
+
+Odoo source comparison: `website_sale/models/product_image.py` defines the
+`product.image` record with `product_variant_id`; the Website Sale variant
+model exposes `product_variant_image_ids` as “Extra Variant Images” and merges
+variant images into the website carousel; and the variant form renders an
+“Extra Variant Media” viewer. The public combination controller returns the
+variant carousel when a selected combination changes.
+
+Core3 comparison: product templates already supported durable images, but
+variants had no media ownership, detail surface, or selected-variant image
+workflow. Migrations 074/075 add durable variant-scoped image metadata and a
+deterministic Mug Blue fixture. A dedicated Product Variant page/API pair,
+joined by `page.id: ecommerce-product-variant-detail`, lists media and exposes
+permissioned image upload/removal with company, active-product, file, duplicate,
+and optimistic row-version guards. Video URLs and external media processing are
+explicitly outside this bounded image-only slice.
+
+Focused tests cover Odoo source tracing, page/API separation, fixture replay,
+company/file/duplicate validation, CRUD, concurrency, and DuckDB restart
+persistence in `test/ecommerce_product_variant_images.integration.test.ts`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable runtime
+ports; supplied Odoo references return exact HTTP 404 for `/shop`. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-catalog-variant-extra-media-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Optional Recommendations (`ECOM-CATALOG-PRODUCT-OPTIONALS-001`)
 
