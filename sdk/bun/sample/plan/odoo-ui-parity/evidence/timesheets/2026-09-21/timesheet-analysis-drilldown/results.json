@@ -1,0 +1,61 @@
+{
+  "feature_id": "TIMESHEET-ANALYSIS-DRILLDOWN",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "reportVisible": true,
+      "rowActionClicked": true,
+      "detailRendered": true,
+      "persistedEntryVisible": true,
+      "url": "http://127.0.0.1:4041/timesheets/detail?id=timesheet-demo-001&view_scope=all&report_scope=analysis",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "reportVisible": true,
+      "rowActionClicked": true,
+      "detailRendered": true,
+      "persistedEntryVisible": true,
+      "url": "http://127.0.0.1:4041/timesheets/detail?id=timesheet-demo-001&view_scope=all&report_scope=analysis",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "reportVisible": true,
+      "formContextVisible": false,
+      "visibleRowAction": false,
+      "url": "http://127.0.0.1:8069/odoo/timesheets-by-employee",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "reportVisible": true,
+      "formContextVisible": false,
+      "visibleRowAction": false,
+      "url": "http://127.0.0.1:8069/odoo/timesheets-by-employee",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "blockers": [
+    "Authenticated Odoo By Employee renders the aggregate analysis route but exposes no loaded row-to-analysis-form interaction in the captured state; the source form contract is recorded, but paired row-action execution remains blocked."
+  ]
+}

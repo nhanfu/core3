@@ -325,6 +325,32 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-ANALYSIS-DRILLDOWN`
+
+The next smallest owned report interaction was the Odoo analysis row form:
+`timesheets_analysis_report_form` and `act_hr_timesheet_report` in
+`hr_timesheet/report/hr_timesheet_report_view.xml:23-46,138-175`.
+
+Core3's `/timesheet-analysis` page remains layout-only and its API now returns
+the persisted employee/project/task/date context from `timesheet_entries`,
+scoped to the active company and deterministic empty fixture state. The API
+owns the `timesheets.read`-guarded `view_timesheet_analysis_entry` action; the
+page row-open and double-click bindings navigate to the existing durable
+`/timesheets/detail` route with `view_scope: all` and
+`report_scope: analysis`. Migration replay and a file-backed restart preserve
+the analysis row and detail context.
+
+Focused coverage passes 4 tests / 20 expectations. Authenticated Core3 desktop
+and mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-analysis-drilldown/`; both viewports
+open `Complete module migration` to the persisted `Migration work` detail with
+no page/request errors or horizontal overflow.
+
+Authenticated Odoo `/odoo/timesheets-by-employee` renders the aggregate report
+at both viewports but does not expose a loaded row-to-analysis-form action.
+That exact paired interaction blocker remains open; no parity or module
+sign-off is claimed.
+
 ## 2026-09-20 `TIMESHEET-REPORT-PROJECT-DRILLDOWN`
 
 The smallest remaining distinct report interaction was the By Project row

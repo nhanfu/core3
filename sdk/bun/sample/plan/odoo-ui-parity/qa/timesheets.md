@@ -392,6 +392,31 @@ row-to-project-timesheet action/form is exposed. The source form contract is
 therefore recorded without claiming paired interaction parity. Remaining
 route/action comparison and module sign-off remain pending.
 
+## 2026-09-21 `TIMESHEET-ANALYSIS-DRILLDOWN`
+
+- Source gate: Odoo `timesheets_analysis_report_form` and
+  `act_hr_timesheet_report` in `hr_timesheet/report/hr_timesheet_report_view.xml:23-46,138-175`
+  expose the analysis row employee/project/task/date/time context.
+- Core3 contract: `/timesheet-analysis` stays page/API-separated; the API
+  returns company-scoped durable `timesheet_entries` context and owns the
+  `timesheets.read`-guarded `view_timesheet_analysis_entry` action. The page
+  binds row open and double-click to `/timesheets/detail` with analysis scope.
+- Focused gate: `bun test test/timesheets_analysis_drilldown.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 20 expectations.
+- Persistence/security gate: migration replay and file-backed restart preserve
+  the report row and detail context; wrong-company and empty fixture reads
+  return no rows; page and action require `timesheets.read`.
+- Core3 browser gate: authenticated Admin desktop `1440x900` and mobile
+  `390x844` open `Complete module migration` to the persisted `Migration work`
+  detail with no page/request errors or horizontal overflow.
+- Odoo browser gate: authenticated `/odoo/timesheets-by-employee` renders the
+  aggregate report at both viewports with no horizontal overflow, but exposes
+  no loaded row-to-analysis-form action. This exact paired interaction blocker
+  prevents a parity claim.
+- Evidence: [`evidence/timesheets/2026-09-21/timesheet-analysis-drilldown/`](../evidence/timesheets/2026-09-21/timesheet-analysis-drilldown/).
+- Disposition: **bounded Core3 analysis drilldown verified; Odoo row-form
+  comparison, remaining route/action comparison, and module sign-off remain
+  pending**.
+
 ## `TIMESHEET-REPORT-TASK-DRILLDOWN` — 2026-09-20
 
 Source gate: Odoo's `timesheets_analysis_report_form` defines the project/task

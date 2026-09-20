@@ -7,6 +7,12 @@ datasources:
     query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(t.hours), 0) AS total_hours, COALESCE(SUM(t.hours) FILTER (WHERE t.state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(t.hours) FILTER (WHERE t.billable), 0) AS billable_hours, COALESCE(SUM(t.hours * e.hourly_cost), 0) AS total_cost FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id"
   - id: timesheet_analysis
     permission: timesheets.read
-    pivot: { fields: [id, employee_name, project_name, task_name, month, hours, cost, state] }
+    pivot: { fields: [id, employee_id, employee_name, company_name, project_id, project_name, task_id, task_name, work_date, month, hours, hourly_cost, cost, state] }
     meta: { mock_data_justification: Runtime-only report over persisted employee costs; deterministic mock data would bypass the employee-cost calculation. }
-    query: "SELECT t.id, t.employee_name, t.project_name, t.task_name, CAST(strftime(t.work_date, '%Y-%m') AS VARCHAR) AS month, t.hours, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%') ORDER BY month DESC, t.employee_name, t.project_name, t.id"
+    query: "SELECT t.id, t.employee_id, t.employee_name, t.company_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS DATE) AS work_date, CAST(strftime(t.work_date, '%Y-%m') AS VARCHAR) AS month, t.hours, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') ORDER BY month DESC, t.employee_name, t.project_name, t.task_name, t.id"
+actions:
+  - id: view_timesheet_analysis_entry
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /timesheets/detail
+    params: { id: '{row.id}', view_scope: all, report_scope: analysis }

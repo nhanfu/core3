@@ -1087,6 +1087,38 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## Timesheets analysis report drilldown — `TIMESHEET-ANALYSIS-DRILLDOWN` (2026-09-21)
+
+The next smallest unfinished report interaction was Odoo's
+`act_hr_timesheet_report` action and `timesheets_analysis_report_form` in
+`addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46,138-175`.
+The source form exposes employee, project, task, date, description, and time
+spent for a persisted analysis row. Core3's existing `/timesheet-analysis`
+route had the durable report rows but no row action and its query did not scope
+rows to the active company.
+
+Core3 now keeps the layout-only page and API separate by `page.id`. The API
+returns durable employee/project/task/date relation context from
+`timesheet_entries`, applies the fixed active-company guard and deterministic
+empty fixture state, and owns the permissioned
+`view_timesheet_analysis_entry` navigation action. The page binds row-open and
+double-click to that API action, which opens the existing guarded
+`/timesheets/detail` route with `view_scope: all` and `report_scope: analysis`.
+The persisted source and detail context survive migration replay and a
+file-backed restart; no new generated or moving fixture values are introduced.
+
+Focused coverage is `test/timesheets_analysis_drilldown.integration.test.ts`
+(4 tests / 20 expectations). Authenticated Core3 desktop/mobile evidence is
+under
+`evidence/timesheets/2026-09-21/timesheet-analysis-drilldown/`; both viewports
+open the rendered row into the durable detail and have no page/request errors
+or horizontal overflow.
+
+Authenticated Odoo `/odoo/timesheets-by-employee` renders the aggregate report
+at both viewports but exposes no loaded row-to-analysis-form action. The source
+form contract is recorded, while paired browser execution is an exact blocker;
+this slice makes no parity or module sign-off claim.
+
 ## By Task report drilldown — `TIMESHEET-REPORT-TASK-DRILLDOWN`
 
 Odoo's `timesheets_analysis_report_form` exposes project and task relation
