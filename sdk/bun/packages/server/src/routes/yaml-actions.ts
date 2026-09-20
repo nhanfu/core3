@@ -70,6 +70,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
       clientMessageId: typeof body?.client_message_id === 'string' ? body.client_message_id : undefined,
       threadId: typeof body?.id === 'string' ? body.id : undefined,
     };
+    const currentCompanyName = String(authUser.company?.name || authUser.company_name || '');
     try {
       const result = await repository.executeMutation(mutation, {
         ...scalarBody,
@@ -84,8 +85,12 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         current_user_name: activityActor.name,
         current_user_email: String(authUser.email || ''),
         customer_scope: authUser.roles?.includes('admin') || !authUser.roles?.includes('customer') ? 'all' : 'own',
-        current_company_name: String(authUser.company?.name || authUser.company_name || ''),
-        company_name: authUser.roles?.includes('admin') ? undefined : String(authUser.company?.name || authUser.company_name || ''),
+        current_company_name: currentCompanyName,
+        // Do not install an own `undefined` company_name property for admins:
+        // the mutation runtime intentionally promotes nested form values into
+        // guard parameters. An own undefined value would shadow a submitted
+        // company_name and let a cross-company value bypass its guard.
+        ...(authUser.roles?.includes('admin') ? {} : { company_name: currentCompanyName }),
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       });
