@@ -741,6 +741,14 @@ sign-off is claimed.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`; desktop filters Mitchell to `1-42 / 42`, and mobile renders responsive Kanban without browser errors.
 - Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded 18-second startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
 
+## 2026-09-21 — `TIMESHEET-ALL-TASK-FILTER-001`
+
+- Selected the structured Task filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from parent-task grouping and task-progress context.
+- Added the separate page/API contract through `page.id: all-timesheets`; the page declares a manager-scoped task options filter and the API exposes durable `task_id` in list/pivot data and applies the current-company task predicate.
+- Focused feature coverage passed 3/3 tests with 21 expectations, including task options, permission, company/empty guards, and file-backed restart.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-task-filter/`; desktop filters Create new components to `1-25 / 25`, and mobile renders responsive Kanban without browser errors.
+- Core3 browser capture is blocked before authentication by the shared page-discovery error `actions[1].title is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
 ## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
 
 - Selected the structured Project filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from the completed Employee filter and existing Project grouping metadata.

@@ -1580,3 +1580,13 @@ Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml
 Focused coverage is `test/timesheets_all_project_filter.integration.test.ts`: 3 tests / 20 expectations for source mapping, paired contracts, project options, project/company/empty guards, manager permission, and file-backed restart. The existing All Timesheets focused regression is rerun with this slice.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-project-filter/`: desktop applies Project = Research & Development and renders `1-80 / 159`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile capture is blocked before authentication because the bounded startup probe never exposed backend `3001/api/modules`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
+
+## Wave 17 All Timesheets Task filter — `TIMESHEET-ALL-TASK-FILTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is the structured Task filter in Odoo's `hr_timesheet_line_search`, used by the `timesheet_action_all` All Timesheets action. This is a record filter, distinct from parent-task grouping and task-progress context.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` data/action-only, joined by `page.id: all-timesheets`. The page adds the manager-scoped Task filter backed by open tasks on active timesheetable projects in the current company. The API projects durable `task_id` into the list/pivot projection and applies the predicate while preserving company and empty-fixture guards. Existing persisted `timesheet_entries.task_id` supplies the relation, so no duplicate migration was added.
+
+Focused coverage is `test/timesheets_all_task_filter.integration.test.ts`: 3 tests / 21 expectations for source mapping, paired contracts, task options, task/company/empty guards, manager permission, and file-backed restart. The existing All Timesheets focused regression is rerun with this slice.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-task-filter/`: desktop applies Task = Create new components and renders `1-25 / 25` with `38:00`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile capture is blocked before authentication because shared page discovery rejects `actions[1].title is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.

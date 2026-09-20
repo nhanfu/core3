@@ -1,0 +1,2 @@
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit=1. Core3 printed backend 3001, frontend 3002, and Vite ready on 3002, then shared page discovery failed with `PageSchemaError: actions[1].title is not allowed`. Post-probe checks were 3001=000 and 3002=000. No authenticated Core3 desktop/mobile capture or sign-off is claimed; the failing page is outside the Timesheets-owned paths.

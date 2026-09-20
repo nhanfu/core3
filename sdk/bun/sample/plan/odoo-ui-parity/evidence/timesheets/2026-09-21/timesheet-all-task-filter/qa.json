@@ -1,0 +1,17 @@
+{
+  "feature_id": "TIMESHEET-ALL-TASK-FILTER-001",
+  "source": "hr_timesheet_line_search.task_id and timesheet_action_all",
+  "page_id": "all-timesheets",
+  "tests": "3 passed / 21 expectations",
+  "odoo": {
+    "desktop": "authenticated Task filter applied to Create new components; 1-25 / 25 with 38:00 total; no browser errors",
+    "mobile": "authenticated responsive Kanban; no browser errors",
+    "artifacts": ["odoo-desktop.png", "odoo-mobile.png", "odoo-results.json"]
+  },
+  "core3": {
+    "desktop": "blocked before authentication: shared discoverPages rejects actions[1].title",
+    "mobile": "blocked before authentication: shared discoverPages rejects actions[1].title",
+    "artifact": "core3-readiness.txt"
+  },
+  "signoff": false
+}

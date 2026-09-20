@@ -787,6 +787,14 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Odoo browser gate: authenticated desktop filters Mitchell and renders `1-42 / 42`; authenticated mobile renders responsive Kanban. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`.
 - Core3 browser blocker: the bounded startup probe did not expose backend `3001/api/modules` before timeout, so desktop/mobile authentication evidence is unavailable; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
 
+## `TIMESHEET-ALL-TASK-FILTER-001` — All Timesheets Task filter (2026-09-21)
+
+- Source gate: Odoo's All Timesheets search view exposes the structured `task_id` filter.
+- Core3 gate: the separate `all-timesheets` page/API pair exposes a manager-scoped open-task filter, projects durable `task_id` into list/pivot data, and applies current-company and empty-fixture guards.
+- Focused gate: `test/timesheets_all_task_filter.integration.test.ts` passes 3/3 tests / 21 expectations; the existing All Timesheets regression is rerun with this slice.
+- Odoo browser gate: authenticated desktop filters Create new components and renders `1-25 / 25` with `38:00`; authenticated mobile renders responsive Kanban. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-task-filter/`.
+- Core3 browser blocker: shared page discovery rejects `actions[1].title is not allowed` before authentication; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
+
 ## `TIMESHEET-ALL-PROJECT-FILTER-001` — All Timesheets Project filter (2026-09-21)
 
 - Source gate: Odoo's All Timesheets search view exposes the structured `project_id` filter.
