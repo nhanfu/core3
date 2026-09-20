@@ -1399,3 +1399,31 @@ authenticated capture is blocked by unrelated shared Inventory discovery
 errors (`view_inventory_route_rules` unknown action; invalid `title` and
 `variant` on a ListView); no Inventory files were changed. Existing Odoo
 Print/PDF/action blockers remain open and no module sign-off is claimed.
+
+## Seventh-wave My Timesheets default week — `TIMESHEET-MY-WEEK-DEFAULT-001` (2026-09-21)
+
+The next smallest uncovered internal action behavior is Odoo's default week
+context, not the already-completed portal date-filter family. The source
+`act_hr_timesheet_line` action at
+`addons/hr_timesheet/views/hr_timesheet_views.xml` uses
+`search_default_week`, `is_timesheet`, and `is_my_timesheets` when opening
+`/odoo/timesheets`.
+
+Core3's existing layout-only `pages/entries.yaml` now declares
+`default_filters: { work_date: this_week }`; the separate
+`api/entries.yaml` contract already owns the durable company/employee-scoped
+query and fixed `2026-01-12` through `2026-01-18` week window, joined by
+`page.id: timesheets`. No duplicate persistence or portal behavior was added.
+
+Focused coverage is `test/timesheets_my_week_default.integration.test.ts`:
+4 tests / 19 expectations. It covers the Odoo action comparison, page/API
+separation, read/write permissions, actor/company guards, stale detail
+concurrency, deterministic migration replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile evidence is in
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-my-week-default/`.
+Authenticated Core3 desktop/mobile captures render `/timesheets` with
+`Date: This Week` at 1440x900 and 390x844, with no page errors or horizontal
+overflow. Only aborted background prefetches for unrelated All Timesheets
+surfaces are recorded. Existing Timesheets Print/PDF/action blockers remain
+open and no module sign-off is claimed.

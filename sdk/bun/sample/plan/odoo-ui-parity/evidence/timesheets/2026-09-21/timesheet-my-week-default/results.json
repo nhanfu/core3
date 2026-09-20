@@ -1,0 +1,91 @@
+{
+  "feature_id": "TIMESHEET-MY-WEEK-DEFAULT-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "route_rendered": true,
+      "default_week_visible": true,
+      "week_request": false,
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3001/api/v1/notifications",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:3001/api/pages/all-timesheets-detail?id=timesheet-demo-001&lc=en",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "url": "http://127.0.0.1:3001/timesheets",
+      "api_requests": [
+        "http://127.0.0.1:3001/api/pages/login?lc=en&redirect=%2Ftimesheets",
+        "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+        "http://127.0.0.1:3001/api/pages/all-timesheets-detail?id=timesheet-demo-001&lc=en",
+        "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+        "http://127.0.0.1:3001/api/pages/timesheets?lc=en",
+        "http://127.0.0.1:3001/api/pages/timesheet-detail?id=timesheet-demo-001&lc=en"
+      ],
+      "body_excerpt": "Work\nPortal\nReporting\nConfiguration\n⌘ K\nAU\nList\nCalendar\nKanban\nPivot\nGraph\nNew\nLog multiple days\nTimesheets / My Timesheets\n1-4 / 4\n‹\n›\nDate: This Week\n\tProject\n\tTask\n\tDate\n\tDescription\n\tTime Spent\n\t\n\tCore3 Implementation\tComplete module migration\t2026-01-15\tMigration work\t08:00\t\n\tCore3 Implementation\tStakeholder review\t2026-01-14\tStakeholder review\t02:30\t\n\n\tCore3 Implementation\tDesign QA\t2026-01-13\tDesign QA\t03:15\t\n\n\tDelivery Enablement\tCustomer workshop\t2026-01-12\tCustomer workshop\t04:00\t\nEdit\nDelete\nSubmit\nApprove\nReject\nCancel\nPrint\nDraft\nSubmitted\nApproved\nRejected\nCancelled\nTS/2026/0001\nWork\nEntry\nTS/2026/0001\nStatus\nApproved\nEmployee\nAdmin User\nProject\nCore3 Implementation\nTask\nComplete module migration\nDescription\nMigration work\nTime and approval\nDate\n2026-01-15\nTime Spent\n08:00\nHours\n8\nBillable\ntrue\nUnit amount\n125\nCost\n680\nSales Order Item\nCore3 Implementation (Module Migration)\nApprover\n—\nApproved at\n—",
+      "body_width": 1440,
+      "document_width": 1440
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "route_rendered": true,
+      "default_week_visible": true,
+      "week_request": false,
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "url": "http://127.0.0.1:3001/timesheets",
+      "api_requests": [
+        "http://127.0.0.1:3001/api/pages/login?lc=en&redirect=%2Ftimesheets",
+        "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+        "http://127.0.0.1:3001/api/pages/all-timesheets?lc=en",
+        "http://127.0.0.1:3001/api/pages/timesheets?lc=en"
+      ],
+      "body_excerpt": "AU\nCalendar\nKanban\nNew\nLog multiple days\nMy Timesheets\n1-4 / 4\n‹\n›\nDate: This Week\n‹\nJanuary 2026\nToday\n›\nSUN\nMON\nTUE\nWED\nTHU\nFRI\nSAT\n28\n29\n30\n31\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\nDelivery Enablement\n13\nCore3 Implementation\n14\nCore3 Implementation\n15\nCore3 Implementation\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n1\n2\n3\n4\n5\n6\n7",
+      "body_width": 390,
+      "document_width": 390
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "route_rendered": true,
+      "default_week_visible": true,
+      "errors": [],
+      "failed": [],
+      "url": "http://127.0.0.1:8069/odoo/timesheets",
+      "body_excerpt": "Timesheets\nTimesheets\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nMy Timesheets\n1-42 / 42\n\t\nDate\n\t\nProject\n\t\nTask\n\t\nDescription\n\t\nSales Order Item\n\t\nTime Spent\n\t\n\n\n\tSep 10\tAGR - S00035 - Sales Order\t\nFurniture Delivery (Manual)\n\tShifting\t\nS00035 - Furniture Delivery (Manual) (Acme Corporation)\n\t10:00\t\n\n\tSep 10\tAGR - S00035 - Sales Order\t\nKitchen Assembly\n\tImprove\t\nS00035 - Kitchen Assembly (Milestones) (Acme Corporation)\n\t10:00\t\n\n\tSep 10\tInternal\t\nMeeting\n\tAnalysis\t\t00:00\t\n\n\tSep 10\tInternal\t\nTraining\n\tAnalysis\t\t00:00\t\n\n\tSep 9\tAGR - S00035 - Sales Order\t\nFurniture Delivery\n\tQuality analysis\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t02:00\t\n\n\tSep 9\tResearch & Development\t\nCreate new components\n\tQuality analysis\t\t01:00\t\n\n\tSep 9\tResearch & Development\t\n\tDelivery\t\t01:00\t\n\n\tSep 9\tResearch & Development\t\n\tQuality analysis\t\t01:00\t\n\n\tSep 9\tResearch & Development\t\n\tQuality analysis\t\t03:00\t\n\n\tSep 9\tResearch & Development\t\n\tDesign\t\t01:00\t\n\n\tSep 9\tResearch & Development\t\n\tRequirements analysis\t\t02:00\t\n\n\tSep 7\tResearch & Development\t\nNew portal system\n\tQuality analysis\t\t01:00\t\n\n\tSep 6\tAGR - S00035 - Sales Order\t\nFurniture Delivery\n\tQuality analysis\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t02:00\t\n\n\tSep 6\tResearch & Development\t\nNew portal system\n\tOn Site Visit\t\t03:00\t\n\n\tSep 6\tResearch & Development\t\nUser interface improvements\n\tDelivery\t\t03:00\t\n\n\tSep 4\tAGR - S00035 - Sales Order\t\nFurniture\n\tPresentation\t\nS00035 - Senior Architect (Invoice on Timesheets) (Acme Corporation)\n\t01:00\t\n\n\tSep 4\tResearch & Development\t\nPlanning and budget\n\tRequirements analysis\t\t01:00\t\n\n\tSep 3\tResearch & Development\t\nPlanning and budget\n\tDelivery\t\t02:00\t\n\n\tSep 1\tAGR - S00035 - Sales Order\t\nFurniture\n\tSprint\t\nNon-billable\t01:00\t\n\n\tSep 1\t",
+      "body_width": 1440,
+      "document_width": 1440
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "route_rendered": true,
+      "default_week_visible": false,
+      "errors": [],
+      "failed": [],
+      "url": "http://127.0.0.1:8069/odoo/timesheets?view_type=kanban",
+      "body_excerpt": "My Timesheets\n7\n40\nNew\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nSep 10\nShifting\n10h\nAGR - S00035 - Sales Order\nKitchen Assembly\nSep 10\nImprove\n10h\nInternal\nMeeting\nSep 10\nAnalysis\n0h\nInternal\nTraining\nSep 10\nAnalysis\n0h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9\nQuality analysis\n2h\nResearch & Development\nCreate new components\nSep 9\nQuality analysis\n1h\nResearch & Development\nSep 9\nDelivery\n1h\nResearch & Development\nSep 9\nQuality analysis\n1h\nResearch & Development\nSep 9\nQuality analysis\n3h\nResearch & Development\nSep 9\nDesign\n1h\nResearch & Development\nSep 9\nRequirements analysis\n2h\nResearch & Development\nNew portal system\nSep 7\nQuality analysis\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 6\nQuality analysis\n2h\nResearch & Development\nNew portal system\nSep 6\nOn Site Visit\n3h\nResearch & Development\nUser interface improvements\nSep 6\nDelivery\n3h\nAGR - S00035 - Sales Order\nFurniture\nSep 4\nPresentation\n1h\nResearch & Development\nPlanning and budget\nSep 4\nRequirements analysis\n1h\nResearch & Development\nPlanning and budget\nSep 3\nDelivery\n2h\nAGR - S00035 - Sales Order\nFurniture\nSep 1\nSprint\n1h\nAfter-Sales Services\nS00035 - Customer Care (Prepaid Hours)\nSep 1\nClient meeting\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nSep 1\nUnloading\n3h\nAGR - S00035 - Sales Order\nKitchen Assembly\nSep 1\nDecorate\n3h\nAfter-Sales Services\nS00035 - Customer Care (Prepaid Hours)\nAug 31\nRequirements analysis\n1h\nAfter-Sales Services\nS00035 - Customer Care (Prepaid Hours)\nAug 28\nBuilding\n2h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nAug 27\nLoading\n4h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nAug 27\nPacking\n6h\nAGR - S00035 - Sales Order\nKitchen Assembly\nAug 27\nInstall\n4h\nAGR - S00035 - Sales Order\nKitchen Assembly\nAug 27\nPrepare\n6h\nAfter-Sales",
+      "body_width": 390,
+      "document_width": 390
+    }
+  },
+  "blockers": []
+}

@@ -593,3 +593,23 @@ Authenticated Odoo desktop/mobile captures are under
 shows HH:MM and mobile shows compact h cards. Core3 evidence is blocked by the
 exact unrelated Inventory discovery/schema errors recorded in `results.json`;
 no other module was repaired or staged. No sign-off is claimed.
+
+## 2026-09-21 `TIMESHEET-MY-WEEK-DEFAULT-001`
+
+Selected the next uncovered internal My Timesheets action behavior after the
+portal, analysis, report, task-progress, and UoM slices: Odoo's default-week
+context on `act_hr_timesheet_line`. This is distinct from the excluded portal
+date-filter family.
+
+Core3's `/timesheets` page now declares the `this_week` default while the
+existing separate API fragment continues to query durable rows using the fixed
+week window and active actor/company scope. Focused verification passes 4/4
+tests with 19 expectations, including source comparison, permission/company
+guards, stale detail concurrency, migration replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile captures are under
+`evidence/timesheets/2026-09-21/timesheet-my-week-default/`. Core3 browser
+desktop/mobile captures render `/timesheets` with `Date: This Week` at both
+viewports with no page errors or horizontal overflow. Only aborted background
+prefetches for unrelated All Timesheets surfaces are recorded. Existing Odoo
+Print/PDF/action blockers remain open; no sign-off is claimed.

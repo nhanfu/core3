@@ -642,3 +642,22 @@ bounded feature does not claim Timesheets sign-off.
   ListView `title`/`variant` fields. Odoo is captured in Hours mode only; the
   live reference did not expose an authenticated Days-mode configuration in
   this run. Existing Print/PDF/action gaps remain open.
+
+## `TIMESHEET-MY-WEEK-DEFAULT-001` — internal default week (2026-09-21)
+
+- Source comparison: Odoo `act_hr_timesheet_line` opens `/odoo/timesheets`
+  with `search_default_week`, `is_timesheet`, and `is_my_timesheets` context.
+- Core3 contract: `pages/entries.yaml` adds the layout default
+  `work_date: this_week`; `api/entries.yaml` remains the separate
+  `page.id: timesheets` durable read contract with fixed deterministic week
+  dates.
+- Focused verification: `test/timesheets_my_week_default.integration.test.ts`
+  passes 4/4 tests with 19 expectations. Coverage includes permissions,
+  actor/company empty results, stale detail concurrency, migration replay, and
+  file-backed restart.
+- Evidence: authenticated Odoo desktop/mobile captures are under
+  `evidence/timesheets/2026-09-21/timesheet-my-week-default/`.
+- Browser result: authenticated Core3 desktop/mobile render `Date: This Week`
+  at 1440x900 and 390x844 with no page errors or horizontal overflow. Only
+  aborted background prefetches for unrelated All Timesheets surfaces are
+  recorded. Existing Timesheets Print/PDF/action blockers remain.
