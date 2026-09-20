@@ -14,7 +14,7 @@ recorded in [`../inventory.md`](../inventory.md).
 
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
-| Transfers | receipts/deliveries, internal transfers and detail routes | Picking CRUD, edit persistence, confirm/check/validate workflow and move completion |
+| Transfers | receipts/deliveries, internal transfers and detail routes | Picking CRUD, edit persistence, confirm/check/validate workflow, move completion and Put in Pack package creation |
 | Products/locations | locations, lots/serials, packages, package transfers, warehouses and operation types | Hierarchy, lot/package/warehouse CRUD, package-to-transfer drill-down, archive and relation guards |
 | Operations | replenishment, physical inventory and scrap routes | Counts, replenishment actions, scrap lifecycle and stale guards |
 | Reporting/settings | moves history, stock report and settings routes | Graph/pivot/list filters, manager settings and read-only report boundaries |
@@ -37,6 +37,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-006 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit for every datasource | pass: focused suite |
 | INV-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate stock records or moving dates | planned migration/restart gate |
 | INV-FUNC-008 | Attachments/import/export/print | Exercise transfer documents, product/lot import/export and exposed report/print actions | planned browser interaction gate |
+| INV-FUNC-009 | Put in Pack | Create package, contents, result relation, timeline and picking row-version update; reject stale/duplicate/invalid requests and survive restart | pass: `INV-PACK-001` focused suite and Core3 browser |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-003 | Inventory count/replenishment | Count and replenishment actions update quantities with validation and row-version guards | pass at contract level |
 | INV-WF-004 | Scrap/packages/lots | Scrap, lot and package relations remain consistent and scoped to the operation | pass at contract level; browser workflow planned |
 | INV-WF-006 | Package transfers | Package stat resolves only pickings linked through source/result package move-line relations and opens shared transfer detail | pass: focused package-transfer suite; browser workflow planned |
+| INV-WF-007 | Put in Pack | Ready/Waiting transfer opens the package form, persists package/type/content/relation, records timeline, and reloads without losing state | pass: `INV-PACK-001` Core3 desktop/mobile; Odoo action gated for reference user |
 | INV-WF-005 | Durable/external boundary | Carrier, barcode, accounting and cross-module callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 
 ## Permission and security cases
@@ -59,6 +61,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-004 | Wrong company | Warehouses, locations, products, lots, pickings and reports are not leaked or mutable | planned |
 | INV-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | INV-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current inventory rows and moves unchanged | pass: focused suite |
+| INV-PERM-007 | Put in Pack action | `inventory.write` required; stale row, already-packed, blank/duplicate reference, no-lines and invalid-state requests are rejected without partial package state | pass: `INV-PACK-001` focused suite |
 
 ## Visual, responsive, and regression cases
 
@@ -68,6 +71,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-002 | Products/locations/configuration | both | List/form/kanban, hierarchy, settings and validation states match Odoo | planned paired capture |
 | INV-UI-003 | Operations/reports | both | Replenishment, counts, scrap and graph/pivot/list reports match Odoo | planned paired capture |
 | INV-UI-004 | Current route regression | all 24 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 48-check matrix |
+| INV-UI-005 | Put in Pack transfer dialog | 1440x900, 390x844 | Permissioned transfer action, package reference/type form, timeline/package result and responsive no-overflow state are rendered | pass Core3; Odoo reference control gated |
 
 ## Exit criteria
 

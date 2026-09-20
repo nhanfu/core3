@@ -1,0 +1,34 @@
+{
+  "reference": "http://127.0.0.1:8069",
+  "authenticatedAs": "codex@core3.local",
+  "desktop": {
+    "url": "http://127.0.0.1:8069/odoo/deliveries/2",
+    "title": "WH/OUT/00002",
+    "listCount": 1,
+    "putInPack": 0,
+    "body": "Discuss\nDiscuss\nChannels\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nDeliveries\nWH/OUT/00002\nMoves\n30 / 44\nValidate\nPrint\nCancel\nDone\nReady\nWaiting\nDraft\nWH/OUT/00002\nDelivery Address\nOperation Type\nScheduled Date?\nAug 26, 12:13 PM\nProduct Availability?\nAvailable\nSource Document?\nOperations\nAdditional Info\nNote\nProduct\n\t\n\t\nDemand\n\t\nQuantity\n\t\nUnit\n\t\t\n\n\n[E-COM07] Large Cabinet\n\tAvailable\t180.00\t180.00\t\nUnits\n\t\n\t\nAdd a Product\n​\n​\n\t\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:13 PM\n\nTransfer created",
+    "failed": [],
+    "width": {
+      "doc": 1440,
+      "client": 1440,
+      "inner": 1440
+    }
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:8069/odoo/deliveries/2",
+    "title": "WH/OUT/00002",
+    "listCount": 1,
+    "putInPack": 0,
+    "body": "WH/OUT/00002\n7\n40\nNew\nValidate\nReady\nWH/OUT/00002\nDelivery Address\nOperation Type\nScheduled Date?\nAug 26, 12:13 PM\nProduct Availability?\nAvailable\nSource Document?\nOperations\nAdditional Info\nNote\n[E-COM07] Large Cabinet\nQuantity 180.00 / 180.00Units\nAdd a Product\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:13 PM\n\nTransfer created",
+    "failed": [],
+    "width": {
+      "doc": 390,
+      "client": 390,
+      "inner": 390
+    }
+  },
+  "sourceAction": "stock.picking.action_put_in_pack",
+  "sourceView": "addons/stock/views/stock_picking_views.xml",
+  "sourceWizard": "addons/stock/wizard/stock_put_in_pack_views.xml",
+  "observation": "WH/OUT/00002 is Ready with a move line, but Put in Pack is not rendered for this authenticated reference user because Odoo gates the button with stock.group_tracking_lot."
+}

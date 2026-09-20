@@ -894,3 +894,41 @@ deterministic source/result filtering, empty and transport states, tracking
 permission denial, missing-package isolation, and restart persistence. This
 bounded contract has no new authenticated browser or paired Odoo screenshot
 claim; the visual/mobile gate remains open.
+
+## Operations > Put in Pack bounded slice (2026-09-20)
+
+Feature `INV-PACK-001` closes the next source-backed transfer/package gap:
+Odoo's `stock.picking.action_put_in_pack`, exposed by the transfer Operations
+form button in `addons/stock/views/stock_picking_views.xml` and delegated to
+`stock.move.line.action_put_in_pack` in `addons/stock/models/stock_picking.py`.
+The source creates a package, assigns move lines to it, and optionally accepts
+a package type through `stock.action_put_in_pack_wizard` and
+`stock_put_in_pack_views.xml`; its transfer button is limited to current
+Waiting/Ready pickings and `stock.group_tracking_lot`.
+
+Core3 keeps page and API contracts separate: the `transfer-detail` page adds a
+permissioned `Put in Pack` header action, while the matching API fragment
+declares a `server_form` with package reference/type fields and the
+`stock.picking.put_in_pack` mutation. Migration `0.0.21` adds the deterministic
+Desk Combination move to `delivery-00002`; the mutation persists the package,
+contents, result-package relation, picking row-version increment, and timeline
+event. Guards cover missing lines, invalid state, duplicate result package,
+blank/duplicate reference, stale row, and `inventory.write` permission.
+
+Focused contract evidence: `test/inventory_put_in_pack.integration.test.ts`
+passes 3 tests and 18 assertions, including the stale boundary and file-backed
+restart persistence. Authenticated Core3 evidence is committed under
+`plan/odoo-ui-parity/evidence/inventory/2026-09-20/INV-PACK-001/`: desktop
+dialog/after/reload and package-list captures, mobile detail, and JSON result
+records. Core3 rendered the action, created `PACK-BROWSER-20260920`, showed the
+Put in Pack timeline event, and retained the package after reload; desktop and
+mobile widths remained 1440 and 390 with no failed requests.
+
+Authenticated Odoo reference evidence is recorded in the same feature folder
+for `codex@core3.local` at `http://127.0.0.1:8069`: desktop/mobile Ready
+transfer captures and `odoo.json`. The reference transfer and source action
+were inspected, but the button was not rendered for this account because the
+Odoo view gates it with `stock.group_tracking_lot`; no Odoo mutation or visual
+sign-off is claimed. The remaining parity gap is the full Odoo wizard behavior
+for selecting an existing result package/package type and line-level package
+semantics beyond this deterministic transfer path.

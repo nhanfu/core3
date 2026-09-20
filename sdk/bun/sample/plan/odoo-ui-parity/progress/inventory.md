@@ -207,3 +207,20 @@ The Inventory transfer attachment bundle is active as `1540e5f9`, `724f78ec`,
 and `f8651357`; `b5bd4325` was empty because its context propagation was
 already present. Active verification passed 48/497, audit, Inventory CSS, and
 diff-check. Odoo comparison and unrelated Website lint remain open.
+
+## `INV-PACK-001` — Put in Pack (2026-09-20)
+
+- Selected the smallest unfinished source-backed transfer/package workflow:
+  Odoo `stock.picking.action_put_in_pack`.
+- Implemented YAML-first page/API action contracts, migration `0.0.21`,
+  deterministic move fixture, durable package/contents/result relation,
+  timeline event, permission, state, duplicate, stale-row, and validation
+  boundaries.
+- Focused integration: PASS, 3 tests / 18 assertions. Authenticated Core3
+  desktop/mobile browser evidence and reload persistence: PASS. Evidence is
+  under `plan/odoo-ui-parity/evidence/inventory/2026-09-20/INV-PACK-001/`.
+- Authenticated Odoo desktop/mobile source comparison: captured; the reference
+  user's `stock.group_tracking_lot` gate hides Put in Pack, so no Odoo write or
+  paired action sign-off is claimed.
+- Status: bounded Core3 lifecycle ready for review; broader Inventory parity,
+  Odoo gated action execution, and remaining wizard semantics stay open.

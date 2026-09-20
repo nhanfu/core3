@@ -1,0 +1,18 @@
+version: 0.0.21
+kind: schema
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) VALUES
+        ('delivery-00002-move-001', 'delivery-00002', 'Desk Combination', 5, 0)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE INDEX IF NOT EXISTS inventory_package_move_lines_package_idx ON inventory_package_move_lines(package_id, move_id);
+      CREATE INDEX IF NOT EXISTS inventory_package_move_lines_move_idx ON inventory_package_move_lines(move_id, relation_type);
+    down: |
+      DROP INDEX IF EXISTS inventory_package_move_lines_move_idx;
+      DROP INDEX IF EXISTS inventory_package_move_lines_package_idx;
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-00002-move-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -276,3 +276,35 @@ no Inventory module sign-off or aggregate progress claim.
   file-backed restart persistence.
 - Browser and paired Odoo visual evidence remain open for this slice; no visual
   sign-off is claimed.
+
+## Put in Pack QA — `INV-PACK-001` (2026-09-20)
+
+- Source comparison: `stock.picking.action_put_in_pack`, its
+  `stock.move.line._put_in_pack` delegation, the Operations form button, and
+  `stock.action_put_in_pack_wizard` were inspected in the Odoo stock addon.
+  Odoo's reference button is group-gated by `stock.group_tracking_lot`.
+- Core3 implementation: page/API YAML separation on `transfer-detail`,
+  `stock.picking.put_in_pack`, migration `0.0.21`, deterministic
+  `delivery-00002` move fixture, package contents/result relation, timeline,
+  permission, state, duplicate, and row-version guards.
+- Focused test: `bun test test/inventory_put_in_pack.integration.test.ts` —
+  PASS, 3 tests / 18 assertions. The stale expected-row-version boundary,
+  read-only 403, duplicate/pre-packed 409, blank reference 422, and
+  close/reopen persistence are covered.
+- Authenticated Core3 browser: Admin at `http://127.0.0.1:4521`, desktop
+  1440x900 and mobile 390x844. The desktop dialog submitted
+  `PACK-BROWSER-20260920`, the timeline displayed `Put in Pack`, the Packages
+  list showed the persisted package, and reload retained the timeline/package.
+  No failed requests or horizontal overflow were recorded.
+- Authenticated Odoo browser: `codex@core3.local` at `http://127.0.0.1:8069`,
+  desktop/mobile 1440x900 and 390x844. `WH/OUT/00002` rendered as Ready with
+  its move line, but `Put in Pack` was absent because the authenticated user
+  lacks the source view's `stock.group_tracking_lot`; no Odoo write was made.
+  This is evidence of the source permission boundary, not a parity sign-off.
+- Evidence: `plan/odoo-ui-parity/evidence/inventory/2026-09-20/INV-PACK-001/`
+  contains Core3 before/dialog/after/reload/package/mobile captures plus JSON,
+  and paired Odoo desktop/mobile captures plus `odoo.json`.
+
+QA disposition: PASS for the bounded Core3 lifecycle and evidence handoff;
+Odoo action execution remains open behind the reference user's group gate.
+The Inventory module remains open and this slice does not sign off the module.

@@ -75,6 +75,36 @@ actions:
     fields: [{ field: contact_name, label: Contact, type: text }, { field: scheduled_date, label: Scheduled Date, type: text }, { field: source_document, label: Source Document, type: text }]
     refresh: [inventory_transfer_detail, inventory_transfer_lines]
     mutation: { operation: update, table: inventory_pickings, fields: [contact_name, scheduled_date, source_document], concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }], result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" } }
+  - id: put_inventory_transfer_in_pack
+    type: server_form
+    permission: inventory.write
+    title: Put in Pack
+    action: stock.picking.put_in_pack
+    handler: yaml_mutation
+    operation: put_in_pack
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline, inventory_transfer_attachments]
+    mutation:
+      generated: [package_id, message_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state IN ('Waiting', 'Ready') AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_PACK_NOT_ALLOWED, message: Only a current waiting or ready transfer can be packed. }
+        - { query: "SELECT id FROM inventory_picking_moves WHERE picking_id = :id", status: 422, code: INVENTORY_TRANSFER_PACK_NO_LINES, message: Add at least one move line before packing this transfer. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_package_move_lines l JOIN inventory_picking_moves m ON m.id = l.move_id WHERE m.picking_id = :id AND l.relation_type = 'result')", status: 409, code: INVENTORY_TRANSFER_ALREADY_PACKED, message: This transfer already has a result package. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:package_name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: INVENTORY_PACKAGE_NAME_REQUIRED, message: A package reference is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_packages WHERE LOWER(name) = LOWER(TRIM(CAST(:package_name AS VARCHAR))))", status: 409, code: INVENTORY_PACKAGE_EXISTS, message: A package with this reference already exists. }
+      steps:
+        - { query: "INSERT INTO inventory_packages(id, row_version, name, package_type_name, location_name, owner_name, company_name, pack_date, state, content_count) SELECT :package_id, 1, TRIM(CAST(:package_name AS VARCHAR)), NULLIF(TRIM(CAST(COALESCE(:package_type_name, '') AS VARCHAR)), ''), dl.name, '', p.company_name, DATE '2026-01-15', CASE WHEN dl.usage = 'Customer' THEN 'Customer location' ELSE 'In internal locations' END, 0 FROM inventory_pickings p JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_package_move_lines(id, package_id, move_id, relation_type) SELECT :package_id || '-move-' || m.id, :package_id, m.id, 'result' FROM inventory_picking_moves m WHERE m.picking_id = :id" }
+        - { query: "INSERT INTO inventory_package_contents(id, package_id, product_name, lot_name, quantity, unit_name) SELECT :package_id || '-content-' || m.id, :package_id, m.product_name, NULL, m.quantity, 'Unit(s)' FROM inventory_picking_moves m WHERE m.picking_id = :id" }
+        - { query: "UPDATE inventory_packages SET content_count = (SELECT COUNT(*) FROM inventory_package_contents WHERE package_id = :package_id), row_version = row_version + 1 WHERE id = :package_id", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_PACK_FAILED, message: The package could not be populated. }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND state IN ('Waiting', 'Ready') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before it could be packed. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.packed', 'Put in Pack', 'Transfer packed into a package')" }
+      result: { query: "SELECT * FROM inventory_packages WHERE id = :package_id" }
+    fields:
+      - { field: package_name, label: Package Reference, type: text, required: true, placeholder: 'e.g. PACK0000007' }
+      - { field: package_type_name, label: Package Type, type: text, placeholder: 'e.g. Box' }
   - id: mark_inventory_transfer_todo
     type: server
     permission: inventory.write

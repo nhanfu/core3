@@ -1,0 +1,12 @@
+{
+  "url": "http://127.0.0.1:4521/inventory/transfer/detail?id=delivery-00002",
+  "title": "Transfer",
+  "body": "AU\nEdit details\nPut in Pack\nUnreserve\nValidate\nCancel\nDraft\nWaiting\nReady\nDone\nCancelled\nWH/OUT/00002\n\nDeliveries\n\nTransfer\nReference\nWH/OUT/00002\nOperation Type\nDeliveries\nContact\nWood Corner\nCompany\nMy Company\nScheduling\nScheduled Date\n2026-01-02\nSource Document\noutgoing shipment\nSource Location\nStock\nDestination Location\nCustomers\nProduct Availability\nAvailable\nOperations\nAdditional Info\nNote\nProduct\n\tDemand\n\tQuantity\n\tUnit of Measure\n\tAvailability\n\t\nDesk Combination\t5\t0\tUnit(s)\tAvailable\t\nSend message\nLog note\n0\nDocuments\nAdd document\n\nNo documents attached\n\nMessages and activities\nAU\nAdmin User\nSep 20, 2026, 04:46 PM\n\nPut in Pack\n\nTransfer packed into a package",
+  "putInPack": true,
+  "failed": [],
+  "width": {
+    "doc": 390,
+    "client": 390,
+    "inner": 390
+  }
+}

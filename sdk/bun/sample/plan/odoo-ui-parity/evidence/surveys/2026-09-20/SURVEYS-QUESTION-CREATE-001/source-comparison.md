@@ -1,7 +1,7 @@
 # SURVEYS-QUESTION-CREATE-001 source comparison
 
-Date: 2026-09-20  
-Feature: Odoo Survey form Questions-tab inline `Add a question`  
+Date: 2026-09-20
+Feature: Odoo Survey form Questions-tab inline `Add a question`
 Reference source: Odoo 19 `addons/survey/views/survey_survey_views.xml`, lines 75-100
 
 ## Odoo menu/action analysis
