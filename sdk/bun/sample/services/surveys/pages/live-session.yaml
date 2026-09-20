@@ -10,6 +10,7 @@ components:
     labels: { workflowStatus: Session state }
     header_actions:
       - { id: start_live_session_question, label: Start, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'Ready'" }
+      - { id: previous_live_session_question, label: Previous, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress' && record.current_question_sequence > 1" }
       - { id: advance_live_session_question, label: Next, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'In Progress' && record.current_question_sequence < record.question_count" }
       - { id: show_live_session_results, label: Show results, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress'" }
       - { id: show_live_session_leaderboard, label: Leaderboard, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress'" }

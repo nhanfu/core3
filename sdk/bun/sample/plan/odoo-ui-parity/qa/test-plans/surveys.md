@@ -267,3 +267,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DEADLINE-001/`.
+
+## 2026-09-21 authenticated live-session previous-question additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-026 | authenticated session workflow | Question 2 → Previous | The host moves the durable live-session cursor to the previous ordered question through the page/API pair | pass |
+| SURVEYS-WF-023 | restart/idempotency | Previous → stale replay → restart | The previous cursor survives file-backed reopen; a stale replay returns 409 without a second transition | pass |
+| SURVEYS-PERM-025 | permission/state guard | Previous host action boundary | `surveys.manage`, In Progress/current-question, row-version, and first-question guards protect the mutation | pass |
+| SURVEYS-UI-024 | authenticated responsive/reference | Host Previous desktop/mobile + Odoo comparison | Core3 probes record the shared page-registry blocker; Odoo records the exact `survey_wrong` session fixture blocker | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SESSION-PREVIOUS-001/`.

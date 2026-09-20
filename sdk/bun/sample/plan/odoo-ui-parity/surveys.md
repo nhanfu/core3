@@ -1345,6 +1345,30 @@ The installed Odoo reference has no stable active answer-token fixture for a
 fresh mutation probe, so paired Odoo mutation/visual sign-off remains blocked;
 Surveys remains **qa-in-progress / conditional**.
 
+## Bounded slice: Authenticated live-session previous question (2026-09-21)
+
+Feature ID: `SURVEYS-LIVE-SESSION-PREVIOUS-001`.
+
+Odoo's `survey_session_next_question` JSON-RPC controller accepts `go_back`
+and uses the session question ordering to select the preceding question. Core3
+adds the equivalent `previous_live_session_question` server action to the
+existing `survey-live-session` API/page pair. The action is YAML-first and
+separate from the page contract, permissioned with `surveys.manage`, guarded
+by In Progress/current-question state and optimistic `row_version`, and
+persists the prior question, text, deterministic start time, and incremented
+version. A first-question attempt and stale replay are rejected atomically;
+file-backed reopen restores the moved cursor.
+
+Focused tests and evidence are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SESSION-PREVIOUS-001/`.
+The fresh Core3 browser probe reached the authenticated frontend but its
+backend page registry returned `404 Unknown page: survey-live-session`; the
+registry exposed only Blog pages, so no Core3 visual sign-off is claimed. The
+Odoo `/s/5822` route returned HTTP 200, but its exact session-code JSON-RPC
+check returned `{"error":"survey_wrong"}` because no matching live-session
+fixture exists. No paired Odoo sign-off is claimed. Surveys remains
+**qa-in-progress / conditional**.
+
 ## Bounded slice: Public answer validation (2026-09-21)
 
 Feature ID: `SURVEYS-PUBLIC-ANSWER-VALIDATION-001`.

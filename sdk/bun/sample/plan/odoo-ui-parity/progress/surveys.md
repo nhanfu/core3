@@ -90,6 +90,38 @@ screenshot or Odoo deadline sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DEADLINE-001/`.
 Status remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-LIVE-SESSION-PREVIOUS-001`
+
+Selected the smallest remaining source-backed session behavior after the
+public session and answer slices: Odoo's authenticated
+`/survey/session/next_question/<survey_token>` accepts `go_back` and moves the
+host cursor to the previous ordered question. Core3 now exposes the matching
+`previous_live_session_question` action in the existing `survey-live-session`
+page/API pair. It is restricted to `surveys.manage`, requires an in-progress
+session and matching `row_version`, rejects the first-question boundary, and
+persists the previous question/text/start timestamp before refreshing both
+session data sources.
+
+Focused verification is **3 passed / 26 assertions** in
+`test/surveys_live_session_previous.integration.test.ts`; the adjacent live
+session suites pass **15 tests / 107 assertions**. The full Surveys glob
+reaches **76 passed / 6 failed / 630 assertions**; the failures are four
+existing DuckDB rollback dependent-entry cases, one test-entry fixture-count
+failure, and a shared Employee page-schema discovery failure, none in this
+slice.
+Scoped ESLint, `bun run audit` (**692 pages / 701 routes / 1,290
+datasources**), and `git diff --check` pass.
+
+Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SESSION-PREVIOUS-001/`.
+The fresh authenticated frontend listed the Surveys route but the backend
+returned `404 {"error":"Unknown page: survey-live-session"}` because its
+current page registry exposed only Blog pages; no Core3 visual sign-off is
+claimed. Odoo desktop/mobile `/s/5822` returned HTTP 200, while the exact
+session-code validator returned `{"error":"survey_wrong"}` and no matching
+live-session fixture exists. No paired Odoo workflow or visual sign-off is
+claimed. Overall Surveys remains **qa-in-progress / conditional**.
+
 ## 2026-09-20 — `SURVEYS-LIVE-SESSION-ANSWER-001`
 
 Selected the smallest remaining source-backed behavior after Live Session Join:

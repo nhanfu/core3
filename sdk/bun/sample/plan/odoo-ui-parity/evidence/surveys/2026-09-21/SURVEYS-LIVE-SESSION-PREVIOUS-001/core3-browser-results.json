@@ -1,0 +1,20 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4019/surveys/live-session?survey_id=survey-demo-feedback",
+    "before": "⌘ K\nAU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "afterNext": "⌘ K\nAU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "afterPrevious": "⌘ K\nAU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "previousCount": 0,
+    "overflow": false,
+    "failures": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4019/surveys/live-session?survey_id=survey-demo-feedback",
+    "before": "AU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "afterNext": "AU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "afterPrevious": "AU\n⚠️\nFailed to load page\nUnknown page: survey-live-session",
+    "previousCount": 0,
+    "overflow": false,
+    "failures": []
+  }
+}

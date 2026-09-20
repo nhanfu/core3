@@ -1,0 +1,14 @@
+{
+  "desktop": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/s/5822",
+    "body": "Skip to Content\nEnter Session Code\nJoin Session\nPowered by  ",
+    "errors": []
+  },
+  "mobile": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/s/5822",
+    "body": "Skip to Content\nEnter Session Code\nOops! No survey matches this code.\nJoin Session\nPowered by  ",
+    "errors": []
+  }
+}
