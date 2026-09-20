@@ -1,0 +1,28 @@
+title: Teams Members
+page: { id: crm-team-members, route: /crm/team-members, breadcrumb: [CRM, Configuration, Teams Members], auth: { require: [crm.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_team_members
+    create_action: create_crm_team_member_configuration
+    create_label: Add member
+    search: { label: Teams Members, placeholder: Search team or member... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: user_name
+          subtitle: team_name
+          fields: [{ field: active, label: Active }]
+    columns:
+      - { field: user_name, label: Member, type: PrimaryEntityCell }
+      - { field: team_name, label: Sales team }
+      - { field: active, label: Active, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: toggle_crm_team_member_configuration, label: Toggle active, permission: crm.manage, variant: ghost }

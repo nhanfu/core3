@@ -1,0 +1,52 @@
+page: { id: crm-team-members }
+
+datasources:
+  - id: crm_team_members
+    single: false
+    permission: crm.manage
+    error_states:
+      forbidden: { status: 403, code: CRM_TEAM_MEMBERS_FORBIDDEN, message: You do not have permission to view technical team members. }
+      transport_error: { status: 503, code: CRM_TEAM_MEMBERS_UNAVAILABLE, message: Team member data is temporarily unavailable. }
+    query: "SELECT m.id, m.team_id, t.name AS team_name, m.user_name, m.active FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR m.user_name ILIKE '%' || :q || '%') AND (COALESCE(:active, 'all') = 'all' OR (CAST(:active AS VARCHAR) = 'active' AND m.active = true) OR (CAST(:active AS VARCHAR) = 'archived' AND m.active = false)) ORDER BY t.name, m.user_name"
+  - id: crm_team_member_team_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+
+actions:
+  - id: create_crm_team_member_configuration
+    type: server_form
+    permission: crm.manage
+    title: Add team member
+    action: crm.team_members.create_configuration
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_team_members]
+    mutation:
+      operation: insert
+      table: crm_team_members
+      fields: [team_id, user_name, active]
+      required: [team_id, user_name]
+      defaults: { active: true }
+      guards:
+        - { query: "SELECT id FROM crm_teams WHERE id = :team_id AND active = true", status: 422, code: CRM_TEAM_MEMBER_TEAM_INVALID, message: Select an active sales team. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:user_name AS VARCHAR))) > 0", status: 422, code: CRM_TEAM_MEMBER_NAME_REQUIRED, message: Select a team member. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_team_members WHERE team_id = :team_id AND lower(user_name) = lower(:user_name))", status: 409, code: CRM_TEAM_MEMBER_EXISTS, message: This user is already on the sales team. }
+      result: { query: "SELECT * FROM crm_team_members WHERE id = :id" }
+    fields:
+      - { field: team_id, label: Sales team, type: select, options_source: crm_team_member_team_lookup, required: true }
+      - { field: user_name, label: Member, type: text, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: toggle_crm_team_member_configuration
+    type: server
+    permission: crm.manage
+    action: crm.team_members.toggle_configuration
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_team_members]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM crm_team_members WHERE id = :id", status: 404, code: CRM_TEAM_MEMBER_NOT_FOUND, message: Sales team member no longer exists. }
+      steps:
+        - { query: "UPDATE crm_team_members SET active = NOT active WHERE id = :id" }
+      result: { query: "SELECT * FROM crm_team_members WHERE id = :id" }
