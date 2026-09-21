@@ -12,11 +12,10 @@ Website-enabled Odoo user. This blocks Odoo Theme Manager interaction and any
 paired visual claim. No credentials, cookies, or tokens were extracted.
 
 Core3 isolated Website runner: `http://localhost:4330`.
-Core3 desktop capture: `core3-desktop.png` (1916x833). The route loaded as the
-authenticated Core3 shell, but the browser session was closed before a fresh
-Theme Manager mobile capture could be completed. The incorrectly named first
-attempt was renamed to the valid desktop artifact; no Core3 mobile image is
-claimed.
+Core3 desktop diagnostic: `core3-shell-blocked-desktop.png` (1916x833). The
+route produced only a blank dark shell, not the Theme Manager. The browser
+session was closed before a mobile attempt could be completed; no Core3 mobile
+image is claimed.
 
 Final visual status: blocked for paired Odoo comparison and Core3 mobile
 coverage. Functional/API/persistence evidence remains valid from the focused

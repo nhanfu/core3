@@ -13,5 +13,6 @@ Use/Update/Remove actions.
 - Menu/action inventory: [`menu-action-inventory.md`](menu-action-inventory.md)
 
 Captured images are committed beside this README: `odoo-no-website-desktop.png`,
-`odoo-no-website-mobile.png`, and `core3-desktop.png`. No Core3 mobile image is
-claimed because the browser session was closed before that capture.
+`odoo-no-website-mobile.png`, and `core3-shell-blocked-desktop.png`. The Core3
+image is a blank-shell diagnostic, not a Theme Manager capture; no Core3 mobile
+image is claimed because the browser session was closed before that capture.

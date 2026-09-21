@@ -12,4 +12,5 @@
 - [x] Odoo desktop/mobile diagnostic evidence is captured and the missing
   Website actor is recorded.
 - [ ] Odoo Theme preview/form iframe and actual theme asset side effects.
-- [ ] Core3 authenticated mobile capture; session closed before capture.
+- [ ] Core3 authenticated desktop/mobile Theme Manager captures; desktop was a
+  blank shell and the session closed before mobile capture.

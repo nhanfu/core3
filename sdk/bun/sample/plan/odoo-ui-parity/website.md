@@ -204,9 +204,9 @@ Focused coverage passes in `test/website_themes.integration.test.ts` (6 tests,
 Authenticated Odoo desktop and mobile captures are retained in that folder and
 show Discuss/OdooBot only; the launcher exposes no Website application or
 Theme action for the shared actor, so paired Odoo Theme evidence is blocked.
-Core3 produced one valid authenticated desktop capture. The browser session was
-closed before the mobile capture could be taken; no Core3 mobile or paired
-visual-parity claim is made.
+The Core3 desktop attempt produced only a blank dark shell, and the browser
+session was closed before a mobile attempt could be completed. No Core3 desktop
+or mobile Theme Manager capture, and no paired visual-parity claim, is made.
 
 ### Updated next slice
 

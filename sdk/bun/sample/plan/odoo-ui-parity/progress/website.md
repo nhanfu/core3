@@ -47,10 +47,9 @@ coverage. Candidate files are covered by `website_themes.integration.test.ts`
 (6 tests, 35 assertions).
 
 Odoo desktop/mobile evidence is captured, but both views show the authenticated
-actor in Discuss without a Website application. Core3 desktop evidence was
-captured from the isolated Website runner; the browser session was closed
-before the mobile capture. This is a conditional bounded slice, not module
-sign-off.
+actor in Discuss without a Website application. The Core3 desktop attempt was
+only a blank shell, and the browser session was closed before the mobile
+capture. This is a conditional bounded slice, not module sign-off.
 
 ## Next bounded task
 
