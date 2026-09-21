@@ -835,3 +835,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_all_non_billable_filter.integration.test.ts` passes 4/4 tests / 20 expectations, including relation-update freshness and file-backed restart.
 - Odoo browser gate: authenticated desktop selects Non-Billable and renders `1-80 / 387`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-non-billable-filter/`.
 - Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects unrelated `components[0].header_actions[6].id references unknown action "edit_employee_type"`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
+
+## `TIMESHEET-ALL-BILLED-ON-TIMESHEETS-FILTER-001` — All Timesheets Billed on Timesheets filter (2026-09-21)
+
+- Source gate: `sale_timesheet` inserts `<filter name="billable_time" string="Billed on Timesheets" domain="[('timesheet_invoice_type', '=', 'billable_time')]"/>` into the inherited All Timesheets search view.
+- Core3 gate: the paired `all-timesheets` page/API search contract adds a manager-scoped Billed on Timesheets option, exposes durable `billing_type` in the pivot contract, and applies the billing predicate with current-company and empty-fixture guards.
+- Focused gate: `test/timesheets_all_billed_on_timesheets_filter.integration.test.ts` passes 4/4 tests / 21 expectations, including relation-update freshness and file-backed restart.
+- Odoo browser gate: authenticated desktop selects Billed on Timesheets and renders `1-80 / 92`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-on-timesheets-filter/`.
+- Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
