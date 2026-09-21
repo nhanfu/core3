@@ -1,0 +1,20 @@
+{
+  "feature": "EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001",
+  "capturedAt": "2026-09-21",
+  "results": [
+    {
+      "name": "desktop",
+      "url": "http://127.0.0.1:8069/web/login",
+      "authenticated": false,
+      "finalUrl": "http://127.0.0.1:8069/web/login",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+    },
+    {
+      "name": "mobile",
+      "url": "http://127.0.0.1:8069/web/login",
+      "authenticated": false,
+      "finalUrl": "http://127.0.0.1:8069/web/login",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\n\nToo many login failures, please wait a bit before trying again.\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+    }
+  ]
+}

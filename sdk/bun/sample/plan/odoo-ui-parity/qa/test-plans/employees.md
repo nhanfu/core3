@@ -830,3 +830,17 @@ assertions). Evidence:
 Focused test: `test/employees_bulk_create_users.integration.test.ts` (5 tests,
 28 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-BULK-CREATE-USERS-001/`.
+
+## EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `action_archive()` and relation cleanup map to paired list/detail API/page contracts | pass |
+| Archive cleanup workflow | Archiving a manager clears same-company manager/coach links and active Employee Records projections atomically | pass |
+| Permission and scope | `employees.write`, current-company, missing-record, and stale row-version boundaries reject without partial cleanup | pass |
+| Persistence | Migration replay and file-backed restart preserve archive state, cleared relations, and cleanup event | pass |
+| Browser comparison | Core3 desktop/mobile and Odoo desktop/mobile | conditional; Core3 discovery startup error and rejected/rate-limited Odoo login are documented |
+
+Focused test: `test/employees_archive_relation_cleanup.integration.test.ts`
+(4 tests, 30 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001/`.

@@ -631,6 +631,20 @@ has no live cross-service auth-user/company resolver, so the local catalog
 projection and company-label mismatch are explicit blockers. No aggregate
 Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-057 | Odoo archive cleanup of manager/coach and active Employee Records links | pass; dependent same-company links clear atomically and the archived row is persisted |
+| EMP-PERM-057 | `employees.write`, current company, missing record, and stale row version | pass; invalid requests leave the target, dependents, and cleanup events unchanged |
+| EMP-DATA-057 | Migration replay and file-backed restart | pass; archive state, cleared links, active projections, and cleanup event survive restart without duplicates |
+| EMP-UI-053 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 discovery is blocked by existing `components[1].title is not allowed`; Odoo rejected `admin/admin` and then rate-limited |
+
+Focused test: `test/employees_archive_relation_cleanup.integration.test.ts`
+(4 tests, 30 assertions). Adjacent scoped run: 25 tests passed, with 1
+pre-existing discovery failure across 214 attempted assertions. No aggregate
+Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-BULK-CREATE-USERS-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

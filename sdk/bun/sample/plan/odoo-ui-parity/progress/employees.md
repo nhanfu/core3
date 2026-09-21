@@ -1175,3 +1175,25 @@ Candidate commit: current working tree
 - Added separate API bulk action/history datasources and a selectable Employees page bulk action joined by `page.id`. Guards cover `auth.users.manage`, actor, current company, selected active employees, and optional expected row-version concurrency; retries are idempotent.
 - Focused verification is **5 tests / 28 assertions**, including Odoo source mapping, CRUD/outcome persistence, permission and guard boundaries, migration replay, and file-backed restart.
 - Browser evidence is recorded under `evidence/employees/2026-09-21/EMP-EMPLOYEE-BULK-CREATE-USERS-001/`; authenticated runtime/Odoo comparison blockers remain explicit and no aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001 (2026-09-21)
+
+- Selected Odoo `hr.employee.action_archive()` and its
+  `_get_employee_m2o_to_empty_on_archived_employees()` cleanup contract as the
+  next uncovered Employee action after bulk user creation; this is distinct
+  from the completed archive/restore CRUD gate.
+- Added migration `20260922270000-081` with durable archive cleanup event
+  records. List and detail API archive actions now clear same-company active
+  employees' manager/coach and active Employee Records relations atomically,
+  and return the persisted cleanup count. Existing layout-only page contracts
+  remain joined by `page.id`.
+- Guards retain `employees.write`, active/current-company/missing checks, and
+  optimistic row-version concurrency; failed requests leave dependent links
+  and cleanup events unchanged. Focused verification is **4 tests / 30
+  assertions**; the adjacent scoped run had **25 passing tests / 1 pre-existing
+  discovery failure** across 214 attempted assertions.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001/`.
+  Core3 could not start because shared discovery rejects an existing page with
+  `components[1].title is not allowed`; Odoo rejected `admin/admin` and then
+  rate-limited the mobile retry. No aggregate Employees sign-off is claimed.

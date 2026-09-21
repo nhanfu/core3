@@ -1,0 +1,23 @@
+version: 0.0.81
+kind: schema
+description: Persist Odoo employee archive relation-cleanup events
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_archive_cleanup_events (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        requested_by VARCHAR,
+        cleared_employee_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_archive_cleanup_events_employee_idx
+        ON employee_archive_cleanup_events(employee_id, id);
+    down: |
+      DROP INDEX IF EXISTS employee_archive_cleanup_events_employee_idx;
+      DROP TABLE IF EXISTS employee_archive_cleanup_events;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

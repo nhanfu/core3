@@ -190,7 +190,22 @@ actions:
     operation: update
     refresh: [employees]
     params: { values: { active: false } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found in the current company. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation:
+      operation: update
+      table: employees
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      before_steps:
+        - { query: "SELECT 'employee-archive-cleanup-' || CAST(:id AS VARCHAR) || '-' || CAST(:expected_row_version AS VARCHAR) AS cleanup_event_id", assign: true }
+        - { query: "SELECT COUNT(*) AS cleared_employee_count FROM employees target JOIN employees archived ON archived.id = :id WHERE target.id <> archived.id AND target.active = true AND target.company_name = archived.company_name AND (target.manager_id = archived.id OR target.manager_name = archived.name OR target.org_parent_name = archived.name OR target.coach_name = archived.name)", assign: true }
+      guards:
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found in the current company. }
+      steps:
+        - { query: "INSERT INTO employee_archive_cleanup_events(id, employee_id, company_name, requested_by, cleared_employee_count) SELECT :cleanup_event_id, archived.id, archived.company_name, NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), ''), :cleared_employee_count FROM employees archived WHERE archived.id = :id", expect_changed: true, status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "UPDATE employee_versions SET manager_id = NULL, manager_name = NULL, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE active = true AND employee_id IN (SELECT target.id FROM employees target JOIN employees archived ON archived.id = :id WHERE target.id <> archived.id AND target.active = true AND target.company_name = archived.company_name AND (target.manager_id = archived.id OR target.manager_name = archived.name OR target.org_parent_name = archived.name OR target.coach_name = archived.name))" }
+        - { query: "UPDATE employees SET manager_id = CASE WHEN manager_id = :id THEN NULL ELSE manager_id END, manager_name = CASE WHEN manager_id = :id OR manager_name = (SELECT name FROM employees WHERE id = :id) THEN NULL ELSE manager_name END, org_parent_name = CASE WHEN manager_id = :id OR org_parent_name = (SELECT name FROM employees WHERE id = :id) THEN NULL ELSE org_parent_name END, coach_name = CASE WHEN coach_name = (SELECT name FROM employees WHERE id = :id) THEN NULL ELSE coach_name END, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id <> :id AND active = true AND company_name = (SELECT company_name FROM employees WHERE id = :id) AND (manager_id = :id OR manager_name = (SELECT name FROM employees WHERE id = :id) OR org_parent_name = (SELECT name FROM employees WHERE id = :id) OR coach_name = (SELECT name FROM employees WHERE id = :id))" }
+      result: { query: "SELECT e.*, COALESCE((SELECT cleared_employee_count FROM employee_archive_cleanup_events WHERE id = :cleanup_event_id), 0) AS archive_cleanup_count FROM employees e WHERE e.id = :id" }
   - id: restore_employee
     type: server
     permission: employees.write

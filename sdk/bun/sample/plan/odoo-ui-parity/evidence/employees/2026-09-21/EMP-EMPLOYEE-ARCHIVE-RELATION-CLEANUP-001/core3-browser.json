@@ -1,0 +1,34 @@
+{
+  "feature": "EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001",
+  "capturedAt": "2026-09-21",
+  "results": [
+    {
+      "name": "desktop",
+      "url": "http://127.0.0.1:3302/employees",
+      "readyState": "not-started",
+      "title": "",
+      "body": "",
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:3302/employees",
+          "failure": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3302/employees\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3302/employees\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "name": "mobile",
+      "url": "http://127.0.0.1:3302/employees",
+      "readyState": "not-started",
+      "title": "",
+      "body": "",
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:3302/employees",
+          "failure": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3302/employees\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3302/employees\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    }
+  ]
+}

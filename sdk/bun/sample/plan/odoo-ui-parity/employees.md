@@ -1942,6 +1942,34 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001: Archive relation cleanup (2026-09-21)
+
+Odoo's `hr.employee.action_archive()` clears archived employees from the
+`parent_id` and `coach_id` links of other employees through
+`_get_employee_m2o_to_empty_on_archived_employees()` before returning the
+archive result. The existing Core3 archive/restore CRUD boundary only changed
+`active`, leaving stale manager/coach projections behind.
+
+Migration `20260922270000-081` adds durable archive-cleanup event records. The
+API YAML extends both list and detail archive actions with deterministic event
+IDs, same-company cleanup of employee and active Employee Records relations,
+and a cleanup count in the result. The existing Employees list/detail page
+YAML remains layout-only and is joined through its `employees`/
+`employee-detail` page IDs; it owns only the existing Archive action bindings.
+
+The action retains `employees.write`, current-company and active-record
+guards, and optimistic row-version concurrency. Cleanup is transactional: a
+stale, missing, or cross-company request leaves the archive target, dependent
+links, and event table unchanged. Focused verification is **4 tests / 30
+assertions**; the adjacent scoped run had **25 passing tests / 1 pre-existing
+discovery failure** across 214 attempted assertions. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001/`.
+
+Browser evidence is conditional: Core3 startup is blocked by the pre-existing
+shared discovery error `components[1].title is not allowed`, and Odoo rejected
+the local `admin/admin` probe before rate limiting. No aggregate Employees
+sign-off is claimed.
+
 ## EMP-EMPLOYEE-TYPE-001: Employee Payroll Employee Type (2026-09-21)
 
 Odoo's `hr.version.employee_type` is a required HR-user Payroll selection with
