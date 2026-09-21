@@ -1746,3 +1746,29 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.
+
+## Bounded QA run: `SURVEYS-SUGGESTED-VALUE-REORDER-001` — 2026-09-21
+
+- Source/UI: Odoo's Suggested Values list renders `sequence` with the handle
+  widget and orders `survey.question.answer` records by `question_id,
+  sequence, id`.
+- Persistence/contracts: `api/suggested-values.yaml` owns the reorder server
+  form and `pages/suggested-values.yaml` exposes the Reorder row action; both
+  join at `page.id: survey-suggested-values`. Existing migration `0.0.67`
+  provides the durable ordered lookup index; answer `sequence` and versions
+  persist through file-backed restart.
+- Guards: `surveys.write`, authenticated actor, missing answer, archived or
+  stale survey, stale question/answer, supported choice/multiple-choice/
+  matrix type, and question-scoped position bounds execute before renumbering.
+  A successful reorder advances affected answers, the question, and survey.
+  Odoo Survey has no `company_id`, so company scoping is not applicable.
+- Verification: **3 focused tests / 27 assertions**, **21 adjacent question
+  and suggested-value tests / 161 assertions**, and **23 broader Surveys
+  integration tests / 220 assertions** pass. Audit reports **760 pages, 769
+  routes, and 1,548 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072
+  were closed. Authenticated Core3 desktop/mobile and paired Odoo captures
+  are unavailable; no visual or Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.

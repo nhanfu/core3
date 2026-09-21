@@ -75,3 +75,62 @@ actions:
         - { query: "UPDATE survey_questions SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :question_id AND row_version = :expected_question_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_QUESTION_CHANGED, message: This question changed while the suggested value was being deleted. }
         - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_PARENT_CHANGED, message: This survey changed while the suggested value was being deleted. }
       result: { query: "SELECT true AS deleted, :id AS id" }
+  - id: reorder_survey_suggested_value
+    type: server_form
+    permission: surveys.write
+    title: Reorder suggested value
+    action: surveys.suggested_values.reorder
+    handler: yaml_mutation
+    operation: update
+    params:
+      id: '{row.id}'
+      question_id: '{row.question_id}'
+      expected_row_version: '{row.row_version}'
+      expected_question_row_version: '{row.question_row_version}'
+      expected_survey_row_version: '{row.survey_row_version}'
+    refresh: [survey_suggested_values]
+    fields:
+      - { field: new_sequence, label: New position, type: number, required: true, min: 1 }
+    mutation:
+      before_steps:
+        - query: "SELECT sv.question_id AS question_id, q.survey_id AS survey_id, sv.sequence AS current_sequence, (SELECT COUNT(*) FROM survey_suggested_values peers WHERE peers.question_id = sv.question_id) AS option_count FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT sv.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id", status: 404, code: SURVEY_SUGGESTED_VALUE_REORDER_NOT_FOUND, message: Suggested value not found. }
+        - { query: "SELECT s.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id AND s.state <> 'Archived' AND s.row_version = :expected_survey_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_PARENT_CHANGED, message: This survey changed or is archived. Reload before reordering the suggested value. }
+        - { query: "SELECT q.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id AND q.row_version = :expected_question_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_QUESTION_CHANGED, message: This question changed before the suggested value could be reordered. Reload it and try again. }
+        - { query: "SELECT id FROM survey_suggested_values WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_STALE, message: This suggested value changed or was removed. Reload it and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_SUGGESTED_VALUE_REORDER_ACTOR_REQUIRED, message: An authenticated survey actor is required to reorder a suggested value. }
+        - { query: "SELECT 1 AS ok FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id AND q.question_type IN ('Choice', 'Multiple Choice', 'Matrix')", status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_TYPE_INVALID, message: Suggested values can only be reordered for choice or matrix questions. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:new_sequence AS INTEGER) BETWEEN 1 AND (SELECT COUNT(*) FROM survey_suggested_values WHERE question_id = :question_id)", status: 422, code: SURVEY_SUGGESTED_VALUE_REORDER_SEQUENCE_INVALID, message: Choose a position within this question's suggested values. }
+      steps:
+        - query: |
+            UPDATE survey_suggested_values AS answer
+            SET sequence = ordered.new_sequence,
+                row_version = answer.row_version + 1,
+                updated_at = TIMESTAMP '2026-01-15 09:00:00'
+            FROM (
+              SELECT id,
+                ROW_NUMBER() OVER (
+                  ORDER BY CASE
+                    WHEN id = :id THEN CAST(:new_sequence AS INTEGER)
+                    WHEN CAST(:new_sequence AS INTEGER) < CAST(:current_sequence AS INTEGER)
+                      AND sequence >= CAST(:new_sequence AS INTEGER)
+                      AND sequence < CAST(:current_sequence AS INTEGER) THEN sequence + 1
+                    WHEN CAST(:new_sequence AS INTEGER) > CAST(:current_sequence AS INTEGER)
+                      AND sequence > CAST(:current_sequence AS INTEGER)
+                      AND sequence <= CAST(:new_sequence AS INTEGER) THEN sequence - 1
+                    ELSE sequence
+                  END, id
+                ) AS new_sequence
+              FROM survey_suggested_values
+              WHERE question_id = :question_id
+            ) AS ordered
+            WHERE answer.id = ordered.id AND answer.question_id = :question_id
+          expect_changed: true
+          status: 409
+          code: SURVEY_SUGGESTED_VALUE_REORDER_FAILED
+          message: The suggested value order could not be saved.
+        - { query: "UPDATE survey_questions SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :question_id AND row_version = :expected_question_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_QUESTION_CHANGED, message: This question changed while its suggested values were being reordered. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_REORDER_PARENT_CHANGED, message: This survey changed while its suggested values were being reordered. }
+      result: { query: "SELECT sv.id, sv.question_id, sv.sequence, sv.row_version, q.row_version AS question_row_version, s.row_version AS survey_row_version FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id" }

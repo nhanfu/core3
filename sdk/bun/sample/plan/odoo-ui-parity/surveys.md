@@ -2599,3 +2599,34 @@ authenticated desktop/mobile browser capture and paired Odoo comparison were
 unavailable. No visual or paired Odoo sign-off is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.
+
+## Wave 44 — `SURVEYS-SUGGESTED-VALUE-REORDER-001`
+
+The next uncovered source-backed Suggested Values behavior is the Odoo
+`sequence` handle in the `survey.question.answer` list. Odoo renders the
+sequence field as a draggable handle and orders answers by
+`question_id, sequence, id` (`addons/survey/views/survey_question_views.xml:335-344`,
+`addons/survey/models/survey_question.py:844-857`).
+
+Core3 adds the API-owned `reorder_survey_suggested_value` server form and a
+write-permissioned Reorder row action to `pages/suggested-values.yaml`, joined
+by `page.id: survey-suggested-values`. The transaction renumbers only the
+selected question's answers, increments each affected answer version, then
+advances the question and parent survey versions. It guards actor, missing,
+archived/stale survey, stale question/answer, supported question type, and
+position bounds. Migration `0.0.67` from the preceding deletion slice already
+provides the durable `(question_id, sequence, id)` index; no redundant schema
+migration was introduced.
+
+The inspected Odoo Survey source has no `company_id`, so company scoping is
+not applicable. Focused verification is **3 passed / 27 assertions**; the
+adjacent seven-file question/suggested-value regression is **21 passed / 161
+assertions**; and `test/surveys.integration.test.ts` is **23 passed / 220
+assertions**. The UI audit passes with **760 pages, 769 routes, and 1,548
+datasources**; scoped ESLint and `git diff --check` pass.
+
+Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. No visual or paired Odoo sign-off is claimed.
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.

@@ -9,7 +9,7 @@ components:
     search: { label: Search suggested values, placeholder: 'Search question or answer...' }
     group_by: [{ field: question_text, label: Question }]
     columns:
-      - { field: id, label: '', sortable: false, actions: [{ id: edit_survey_suggested_value, label: Edit, icon: edit, permission: surveys.write }, { id: delete_survey_suggested_value, label: Delete, icon: trash, permission: surveys.write, variant: danger }] }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_survey_suggested_value, label: Edit, icon: edit, permission: surveys.write }, { id: reorder_survey_suggested_value, label: Reorder, icon: sort, permission: surveys.write }, { id: delete_survey_suggested_value, label: Delete, icon: trash, permission: surveys.write, variant: danger }] }
       - { field: value, label: Suggested Value, type: PrimaryEntityCell }
       - { field: question_text, label: Question }
       - { field: sequence, label: Sequence, align: right }

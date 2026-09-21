@@ -1324,3 +1324,30 @@ paired Odoo evidence; no visual or parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.
+
+## 2026-09-21 — `SURVEYS-SUGGESTED-VALUE-REORDER-001`
+
+Selected the next uncovered Odoo `survey.question.answer` behavior: reorder
+Suggested Values through the list's sequence handle. Core3 now owns
+`reorder_survey_suggested_value` in `api/suggested-values.yaml` and binds the
+write-permissioned Reorder row action in `pages/suggested-values.yaml`, joined
+by `page.id: survey-suggested-values`.
+
+The mutation renumbers only the selected question's answers, increments
+affected answer versions, and advances question and survey versions. It
+requires `surveys.write` and an actor, rejects missing/archived or stale
+survey, question, and answer rows, unsupported types, and out-of-range
+positions. Existing migration `0.0.67` supplies the durable ordering index;
+the existing `sequence`, `row_version`, and `updated_at` columns persist the
+write across restart. Odoo Surveys has no `company_id`, so company scope is
+not applicable.
+
+Verification: **3 focused tests / 27 assertions**, **21 adjacent question and
+suggested-value tests / 161 assertions**, and **23 broader Surveys integration
+tests / 220 assertions** pass. Audit reports **760 pages, 769 routes, and
+1,548 datasources**; scoped ESLint and diff-check pass. Core3 and Odoo ports
+3000/3001/3390/3391/8072 are closed, blocking authenticated desktop/mobile and
+paired Odoo evidence; no visual or parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.

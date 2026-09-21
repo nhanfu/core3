@@ -792,3 +792,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.
+
+## `SURVEYS-SUGGESTED-VALUE-REORDER-001` — Suggested Value ordering
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-069 | authenticated form | Suggested Values → row menu → Reorder | Separate API/page YAML exposes Odoo sequence-handle behavior joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-068 | permission/actor/state | Missing actor/answer, archived or stale relation, unsupported type, invalid position | Reject before renumbering with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-066 | persistence/concurrency/restart | Move → advance versions → stale replay → reopen | Question-scoped ordering and versions persist; replay cannot apply twice | test-results.md, focused test | pass |
+| SURVEYS-UI-067 | authenticated responsive/reference | Suggested Values reorder desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.
