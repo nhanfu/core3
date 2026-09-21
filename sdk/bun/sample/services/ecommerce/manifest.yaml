@@ -129,3 +129,7 @@ menu:
           label: Abandoned Cart Recovery
           icon: email
           permission: ecommerce.read
+        - path: /ecommerce/order-assignment-policy
+          label: Orders Assignment
+          icon: users
+          permission: ecommerce.read

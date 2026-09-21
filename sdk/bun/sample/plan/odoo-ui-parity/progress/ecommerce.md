@@ -9,6 +9,20 @@ Latest committed bounded slice: `39fbf376a1f9ce55df8ae776c6ffb82b9f536c7a`
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
 
+## Current bounded task — `ECOM-CHECKOUT-ORDER-ASSIGNMENT-001`
+
+Wave 27 selected Odoo Website Sale's Orders Assignment settings: durable
+website Sales Team and Salesperson defaults used by online orders. Migrations
+118/119 add company-scoped policy/options and deterministic fixtures; separate
+policy page/API YAML provides permissioned optimistic updates with active
+company validation. Authenticated and guest checkout snapshot the selected
+assignment on orders and the existing Sales handoff, with idempotent retry
+boundaries. Focused source, contract, validation, checkout, handoff, replay,
+and restart tests pass. Core3 browser capture is blocked by unavailable ports
+3000/4312/4313 and missing persistent browser runtime; Odoo `/shop` is exact
+HTTP 404 on ports 8069 and 8073. The bounded slice is verified but not module
+sign-off; its local commit will be recorded after scoped checks.
+
 ## Current bounded task — `ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`
 
 Wave 26 selected Odoo Website Sale's abandoned-cart recovery workflow. Odoo's

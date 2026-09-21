@@ -1,0 +1,11 @@
+title: Online Order Assignment
+page: { id: ecommerce-order-assignment-policy, route: /ecommerce/order-assignment-policy, breadcrumb: [eCommerce, Configuration, Orders Assignment], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_order_assignment_policy
+    editable: true
+    title_field: company_name
+    header_actions:
+      - { id: edit_ecommerce_order_assignment_policy, label: Save Assignment, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Orders Assignment, columns: 2, fields: [{ field: company_name, label: Company }, { field: assignment_behavior, label: Current Assignment, type: StatusChip }, { field: sales_team_id, label: Sales Team, type: select, options_source: ecommerce_order_assignment_team_options }, { field: salesperson_id, label: Salesperson, type: select, options_source: ecommerce_order_assignment_salesperson_options }] }

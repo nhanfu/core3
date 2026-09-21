@@ -1,0 +1,29 @@
+version: 0.0.119
+kind: data
+description: deterministic eCommerce website order assignment fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_order_assignment_teams (id, name, company_name, active)
+      VALUES
+        ('ecommerce-sales-team-website', 'Website Sales', 'My Company', TRUE),
+        ('ecommerce-sales-team-enterprise', 'Enterprise Sales', 'My Company', TRUE),
+        ('ecommerce-sales-team-other', 'Other Company Sales', 'Other Company', TRUE)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, company_name = EXCLUDED.company_name, active = EXCLUDED.active;
+      INSERT INTO ecommerce_order_assignment_salespersons (id, name, company_name, active)
+      VALUES
+        ('ecommerce-salesperson-website', 'Admin User', 'My Company', TRUE),
+        ('ecommerce-salesperson-dispatcher', 'Dispatcher User', 'My Company', TRUE),
+        ('ecommerce-salesperson-other', 'Other Company User', 'Other Company', TRUE)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, company_name = EXCLUDED.company_name, active = EXCLUDED.active;
+      INSERT INTO ecommerce_order_assignment_policies (id, row_version, company_name, sales_team_id, salesperson_id)
+      VALUES ('ecommerce-order-assignment-policy-my-company', 1, 'My Company', 'ecommerce-sales-team-website', NULL)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_order_assignment_policies WHERE id = 'ecommerce-order-assignment-policy-my-company';
+      DELETE FROM ecommerce_order_assignment_salespersons WHERE id IN ('ecommerce-salesperson-website', 'ecommerce-salesperson-dispatcher', 'ecommerce-salesperson-other');
+      DELETE FROM ecommerce_order_assignment_teams WHERE id IN ('ecommerce-sales-team-website', 'ecommerce-sales-team-enterprise', 'ecommerce-sales-team-other');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,41 @@
+page: { id: ecommerce-order-assignment-policy }
+datasources:
+  - id: ecommerce_order_assignment_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ORDER_ASSIGNMENT_UNAUTHENTICATED, message: Sign in to view order assignment. }
+      forbidden: { status: 403, code: ECOMMERCE_ORDER_ASSIGNMENT_FORBIDDEN, message: You do not have permission to view order assignment. }
+      missing_record: { status: 404, code: ECOMMERCE_ORDER_ASSIGNMENT_NOT_FOUND, message: Order assignment is not configured for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_ORDER_ASSIGNMENT_UNAVAILABLE, message: Order assignment is temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.company_name, COALESCE(p.sales_team_id, '') AS sales_team_id, COALESCE(t.name, 'Unassigned') AS sales_team_name, COALESCE(p.salesperson_id, '') AS salesperson_id, COALESCE(s.name, 'Unassigned') AS salesperson_name, CASE WHEN p.sales_team_id IS NULL AND p.salesperson_id IS NULL THEN 'Unassigned' WHEN p.salesperson_id IS NULL THEN COALESCE(t.name, 'Sales team') ELSE COALESCE(s.name, 'Salesperson') END AS assignment_behavior, p.updated_at FROM ecommerce_order_assignment_policies p LEFT JOIN ecommerce_order_assignment_teams t ON t.id = p.sales_team_id AND t.active = TRUE LEFT JOIN ecommerce_order_assignment_salespersons s ON s.id = p.salesperson_id AND s.active = TRUE WHERE p.company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_order_assignment_team_options
+    permission: ecommerce.read
+    query: "SELECT '' AS value, 'Unassigned' AS label UNION ALL SELECT id AS value, name AS label FROM ecommerce_order_assignment_teams WHERE active = TRUE AND (company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') OR company_name = '') ORDER BY label"
+  - id: ecommerce_order_assignment_salesperson_options
+    permission: ecommerce.read
+    query: "SELECT '' AS value, 'Unassigned' AS label UNION ALL SELECT id AS value, name AS label FROM ecommerce_order_assignment_salespersons WHERE active = TRUE AND (company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') OR company_name = '') ORDER BY label"
+actions:
+  - id: edit_ecommerce_order_assignment_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Order Assignment
+    action: ecommerce.checkout.order_assignment.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_order_assignment_policy, ecommerce_orders]
+    mutation:
+      required: [id, expected_row_version, sales_team_id, salesperson_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_order_assignment_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_ORDER_ASSIGNMENT_STALE, message: This order assignment changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(:sales_team_id, '') IS NULL OR EXISTS (SELECT 1 FROM ecommerce_order_assignment_teams WHERE id = :sales_team_id AND active = TRUE AND company_name = (SELECT company_name FROM ecommerce_order_assignment_policies WHERE id = :id))", status: 422, code: ECOMMERCE_ORDER_ASSIGNMENT_TEAM_INVALID, message: Choose an active sales team for this company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(:salesperson_id, '') IS NULL OR EXISTS (SELECT 1 FROM ecommerce_order_assignment_salespersons WHERE id = :salesperson_id AND active = TRUE AND company_name = (SELECT company_name FROM ecommerce_order_assignment_policies WHERE id = :id))", status: 422, code: ECOMMERCE_ORDER_ASSIGNMENT_SALESPERSON_INVALID, message: Choose an active salesperson for this company. }
+      steps:
+        - { query: "UPDATE ecommerce_order_assignment_policies SET sales_team_id = NULLIF(:sales_team_id, ''), salesperson_id = NULLIF(:salesperson_id, ''), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_ORDER_ASSIGNMENT_STALE, message: This order assignment changed before saving. Reload before retrying. }
+      result: { query: "SELECT p.id, p.row_version, p.company_name, COALESCE(p.sales_team_id, '') AS sales_team_id, COALESCE(t.name, 'Unassigned') AS sales_team_name, COALESCE(p.salesperson_id, '') AS salesperson_id, COALESCE(s.name, 'Unassigned') AS salesperson_name, CASE WHEN p.sales_team_id IS NULL AND p.salesperson_id IS NULL THEN 'Unassigned' WHEN p.salesperson_id IS NULL THEN COALESCE(t.name, 'Sales team') ELSE COALESCE(s.name, 'Salesperson') END AS assignment_behavior FROM ecommerce_order_assignment_policies p LEFT JOIN ecommerce_order_assignment_teams t ON t.id = p.sales_team_id LEFT JOIN ecommerce_order_assignment_salespersons s ON s.id = p.salesperson_id WHERE p.id = :id" }
+    fields:
+      - { field: sales_team_id, label: Sales Team, type: select, options_source: ecommerce_order_assignment_team_options, required: true }
+      - { field: salesperson_id, label: Salesperson, type: select, options_source: ecommerce_order_assignment_salesperson_options, required: true }

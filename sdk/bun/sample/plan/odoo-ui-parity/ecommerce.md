@@ -2,6 +2,30 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Online Order Assignment (`ECOM-CHECKOUT-ORDER-ASSIGNMENT-001`)
+
+Wave 27 selected the next uncovered company/checkout handoff behavior: Odoo
+Website Sale's Orders Assignment settings. The supplied `website_sale` source
+defines website `salesteam_id` and `salesperson_id`, exposes both through
+`res.config.settings`, defaults the website sales team, and copies the team and
+salesperson into online orders at the website/Sales boundary.
+
+Core3 migrations 118/119 add durable company-scoped assignment policy rows,
+active deterministic sales-team/person options, and assignment snapshots on
+orders and the existing Ecommerce-to-Sales handoff. The separate
+`pages/order-assignment-policy.yaml` and `api/order-assignment-policy.yaml`
+contracts join by `page.id`; the configuration requires `ecommerce.read`, its
+optimistic update requires `ecommerce.write`, and active company validation
+rejects foreign or stale assignments. Authenticated and guest checkout both
+snapshot the selected assignment; the unique handoff insert is retry-safe.
+
+Focused verification and source comparison are recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-order-assignment-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Abandoned Cart Recovery (`ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`)
 
 Wave 26 selected Odoo Website Sale's abandoned-cart recovery behavior, which

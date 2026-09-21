@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CHECKOUT-ORDER-ASSIGNMENT-001
+
+- ECOM-FUNC-056: trace Website Sale Orders Assignment settings, default team,
+  salesperson/team order boundary, and separate Core3 page/API contracts;
+  verify deterministic team/person options and order projections.
+- ECOM-WF-067: update the company assignment policy, snapshot it on
+  authenticated and guest checkout orders, propagate the immutable snapshot to
+  the Sales handoff, reject a converted-cart retry, and preserve state across
+  migration replay and restart.
+- ECOM-PERM-063: require `ecommerce.read` for policy/options/order reads and
+  `ecommerce.write` for updates; reject foreign-company, inactive/unknown
+  option, and stale writes without mutating durable state.
+- ECOM-UI-049: render the Orders Assignment form at desktop and mobile and
+  compare the authenticated Odoo settings surface; Core3 runtime is
+  unavailable and Odoo `/shop` is HTTP 404 in the supplied references.
+
 ## ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001
 
 - ECOM-FUNC-055: trace Odoo Website Sale's abandoned-cart menu/action,

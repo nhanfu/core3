@@ -1,0 +1,60 @@
+version: 0.0.118
+kind: schema
+description: durable eCommerce website order assignment policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_order_assignment_teams (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        UNIQUE(company_name, name)
+      );
+      CREATE TABLE IF NOT EXISTS ecommerce_order_assignment_salespersons (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        UNIQUE(company_name, name)
+      );
+      CREATE TABLE IF NOT EXISTS ecommerce_order_assignment_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        sales_team_id VARCHAR,
+        salesperson_id VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name)
+      );
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS sales_team_id VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS sales_team_name VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS salesperson_id VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS salesperson_name VARCHAR;
+      ALTER TABLE ecommerce_sales_handoffs ADD COLUMN IF NOT EXISTS sales_team_id VARCHAR;
+      ALTER TABLE ecommerce_sales_handoffs ADD COLUMN IF NOT EXISTS sales_team_name VARCHAR;
+      ALTER TABLE ecommerce_sales_handoffs ADD COLUMN IF NOT EXISTS salesperson_id VARCHAR;
+      ALTER TABLE ecommerce_sales_handoffs ADD COLUMN IF NOT EXISTS salesperson_name VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_order_assignment_policy_company_idx
+        ON ecommerce_order_assignment_policies(company_name);
+      CREATE INDEX IF NOT EXISTS ecommerce_orders_assignment_idx
+        ON ecommerce_orders(company_name, sales_team_id, salesperson_id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_orders_assignment_idx;
+      DROP INDEX IF EXISTS ecommerce_order_assignment_policy_company_idx;
+      ALTER TABLE ecommerce_sales_handoffs DROP COLUMN IF EXISTS salesperson_name;
+      ALTER TABLE ecommerce_sales_handoffs DROP COLUMN IF EXISTS salesperson_id;
+      ALTER TABLE ecommerce_sales_handoffs DROP COLUMN IF EXISTS sales_team_name;
+      ALTER TABLE ecommerce_sales_handoffs DROP COLUMN IF EXISTS sales_team_id;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS salesperson_name;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS salesperson_id;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS sales_team_name;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS sales_team_id;
+      DROP TABLE IF EXISTS ecommerce_order_assignment_policies;
+      DROP TABLE IF EXISTS ecommerce_order_assignment_salespersons;
+      DROP TABLE IF EXISTS ecommerce_order_assignment_teams;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

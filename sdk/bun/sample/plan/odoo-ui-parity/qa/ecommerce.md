@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Online Order Assignment (`ECOM-CHECKOUT-ORDER-ASSIGNMENT-001`, 2026-09-21)
+
+- Odoo source/settings/order boundary: pass. `website.py` defines the default
+  website sales team plus `salesteam_id` and `salesperson_id`; the settings
+  model/view exposes Orders Assignment; and Website Sale copies the team and
+  salesperson into online order behavior.
+- Core3 lifecycle: pass for this bounded contract. Migrations 118/119 add
+  durable company policy, active deterministic option fixtures, and order and
+  Sales-handoff assignment snapshots. Separate page/API YAML exposes the
+  permissioned optimistic update with company and active-option guards.
+- Focused verification: `bun test
+  test/ecommerce_order_assignment.integration.test.ts --timeout 20000` —
+  **3 passed, 40 assertions, 0 failures**. Coverage includes authenticated
+  and guest checkout, unique handoff propagation, invalid/foreign values,
+  stale writes, migration replay, and restart persistence.
+- Audit/lint/diff: `bun run audit` passed at **733 pages, 742 routes, and 1434
+  datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-order-assignment-001/`.
+
 ## Abandoned Cart Recovery (`ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`, 2026-09-21)
 
 - Odoo source/menu/settings: pass. `website.py` defines the recovery template,

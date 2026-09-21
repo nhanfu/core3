@@ -8,7 +8,7 @@ datasources:
       missing_record: { status: 404, code: ECOMMERCE_ORDER_NOT_FOUND, message: eCommerce order not found. }
       forbidden: { status: 403, code: ECOMMERCE_ORDER_DETAIL_FORBIDDEN, message: You do not have permission to view this order. }
       transport_error: { status: 503, code: ECOMMERCE_ORDER_DETAIL_UNAVAILABLE, message: eCommerce order details are temporarily unavailable. }
-    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name, confirmation_email_template_id, confirmation_email_template_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email))"
+    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name, sales_team_id, sales_team_name, salesperson_id, salesperson_name, confirmation_email_template_id, confirmation_email_template_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email))"
   - id: ecommerce_order_lines
     permission: ecommerce.read
     error_states:
