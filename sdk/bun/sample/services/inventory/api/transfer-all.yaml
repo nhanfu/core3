@@ -1,0 +1,57 @@
+page: { id: transfer-all }
+datasources:
+  - id: inventory_transfer_all_queue_context
+    single: true
+    permission: inventory.read
+    error_states:
+      not_found: { status: 404, code: INVENTORY_ALL_QUEUE_NOT_FOUND, message: The transfers queue is not available. }
+      forbidden: { status: 403, code: INVENTORY_ALL_QUEUE_FORBIDDEN, message: You do not have permission to view transfers. }
+      transport_error: { status: 503, code: INVENTORY_ALL_QUEUE_UNAVAILABLE, message: Transfers queue context is temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.company_name, COALESCE(t.name, 'All Transfers') AS title, COALESCE(t.id, '') AS operation_type_id, CAST(COUNT(p.id) AS BIGINT) AS transfer_count FROM inventory_transfer_all_queue_context c LEFT JOIN inventory_operation_types t ON t.id = NULLIF(:operation_type_id, '') AND t.company_name = c.company_name LEFT JOIN inventory_pickings p ON p.company_name = c.company_name AND (NULLIF(:operation_type_id, '') IS NULL OR p.operation_type_id = :operation_type_id) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = 'all-transfer-queue' AND (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name) GROUP BY c.id, c.row_version, c.company_name, t.id, t.name"
+  - id: inventory_transfer_all_transfers
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_ALL_QUEUE_FORBIDDEN, message: You do not have permission to view transfers. }
+      transport_error: { status: 503, code: INVENTORY_ALL_QUEUE_UNAVAILABLE, message: Transfers are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, p.contact_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.company_name, t.name AS operation_type_name, t.operation_kind, p.state, CAST(COUNT(m.id) AS BIGINT) AS move_count FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id LEFT JOIN inventory_picking_moves m ON m.picking_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (NULLIF(:operation_type_id, '') IS NULL OR p.operation_type_id = :operation_type_id) AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR :state = '' OR p.state = :state) AND (:operation_kind IS NULL OR :operation_kind = '' OR t.operation_kind = :operation_kind) GROUP BY p.id, p.row_version, p.name, p.contact_name, p.scheduled_date, p.source_document, p.company_name, t.name, t.operation_kind, p.state ORDER BY p.scheduled_date, p.name, p.id"
+  - id: inventory_transfer_all_queue_runs
+    single: false
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_ALL_QUEUE_UNAVAILABLE, message: Transfers refresh history is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, operation_type_id, refreshed_by, CAST(refreshed_at AS VARCHAR) AS refreshed_at FROM inventory_transfer_all_queue_runs WHERE (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) AND (NULLIF(:operation_type_id, '') IS NULL OR operation_type_id = :operation_type_id) ORDER BY refreshed_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_transfer_all_queue
+    type: server_form
+    permission: inventory.read
+    title: Refresh transfers
+    action: stock.stock_picking_action_picking_type
+    handler: yaml_mutation
+    operation: refresh
+    refresh: [inventory_transfer_all_queue_context, inventory_transfer_all_transfers, inventory_transfer_all_queue_runs]
+    success_message: Transfers refreshed.
+    mutation:
+      operation: insert
+      table: inventory_transfer_all_queue_runs
+      generated: [id]
+      fields: [company_name, operation_type_id, refreshed_by]
+      required: [company_name, refreshed_by]
+      defaults: { row_version: 1, refreshed_at: '2026-01-15 08:00:00', company_name: 'My Company (San Francisco)', operation_type_id: '' }
+      before_steps:
+        - assign: true
+          query: "SELECT 'all-transfer-queue-run-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM inventory_transfer_all_queue_runs"
+      guards:
+        - { query: "SELECT id FROM inventory_transfer_all_queue_context WHERE id = 'all-transfer-queue' AND company_name = :current_company_name AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: The transfers queue changed before refresh. Reload it before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_name AS VARCHAR))) > 0", status: 403, code: INVENTORY_ALL_QUEUE_ACTOR_REQUIRED, message: A signed-in inventory operator is required to refresh transfers. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:operation_type_id, '') = '' OR EXISTS (SELECT 1 FROM inventory_operation_types WHERE id = :operation_type_id AND company_name = :current_company_name)", status: 403, code: INVENTORY_ALL_QUEUE_OPERATION_SCOPE, message: The operation type must match the current company. }
+      steps:
+        - { query: "UPDATE inventory_transfer_all_queue_context SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = 'all-transfer-queue' AND company_name = :current_company_name AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfers queue changed before refresh. Reload it before retrying. }
+      result: { query: "SELECT id, row_version, company_name, operation_type_id, refreshed_by, refreshed_at FROM inventory_transfer_all_queue_runs WHERE id = :id" }
+    fields:
+      - { field: expected_row_version, label: Queue Version, type: number, required: true }
+  - id: view_inventory_all_transfer
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }

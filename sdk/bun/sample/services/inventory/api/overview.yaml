@@ -16,6 +16,11 @@ actions:
     permission: inventory.write
     navigate_to: /inventory/transfer/new
     params: { operation_type_id: '{row.id}', current_company_name: '{row.company_name}' }
+  - id: open_inventory_all_transfers
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/all
+    params: { operation_type_id: '{row.id}', current_company_name: '{row.company_name}', expected_row_version: '{row.row_version}' }
   - id: open_inventory_backorder_queue
     type: navigate
     permission: inventory.read

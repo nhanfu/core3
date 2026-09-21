@@ -2105,3 +2105,28 @@ remains open.
 QA disposition: PASS for the bounded durable Core3 New Transfer contract;
 PARTIAL/BLOCKED for authenticated visual and live Odoo form parity. Full
 Inventory sign-off remains open.
+
+## Inventory All Transfers queue QA — `INV-TRANSFER-ALL-QUEUE-001`
+
+- Odoo source/action: PASS. The operation-type card `All` action and
+  `stock.stock_picking_action_picking_type` mapping are asserted against
+  `stock_picking_type_views.xml`, `stock_picking_views.xml`, and
+  `stock_picking.py`; the selected operation domain is recorded in the
+  evidence source comparison.
+- Core3 contract: PASS. `pages/transfer-all.yaml` is presentation-only and
+  matches `api/transfer-all.yaml` by `page.id`; the Overview card supplies
+  operation/company context. Migration `0.0.88` persists the queue context and
+  refresh history over real transfer rows.
+- Focused tests: PASS — `bun test
+  test/inventory_transfer_all_queue.integration.test.ts --timeout 30000`
+  (3 tests / 27 assertions), including filters, error states, permission,
+  stale/actor/company guards, and file-backed restart.
+- Authenticated browser: BLOCKED. bsk connected to instance `245ea108` and
+  listed the existing Odoo tab, but the required borrow confirmation did not
+  complete before session expiry. The Core3 shared runtime was not available
+  for a paired authenticated capture. No screenshots or visual-parity pass is
+  claimed; exact blocker evidence is in the feature evidence folder.
+
+QA disposition: PASS for the bounded durable Core3 All Transfers contract;
+BLOCKED for authenticated desktop/mobile visual comparison. Full Inventory
+sign-off remains open.

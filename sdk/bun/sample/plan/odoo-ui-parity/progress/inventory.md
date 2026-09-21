@@ -852,8 +852,6 @@ Inventory sign-off remains open.
   `actions[11].result is not allowed` error; no other owner file was changed.
   Odoo source/menu comparison is complete, but live Odoo returned HTTP 303 to
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
-Full Inventory sign-off remains open.
-
 ## `INV-TRANSFER-TRACEABILITY-001` — Done transfer Traceability report (2026-09-21)
 
 - Selected the next uncovered transfer-detail behavior: Odoo's Done and
@@ -1607,3 +1605,19 @@ Full Inventory sign-off remains open.
   schema errors. Exact source, test, browser, and residual details are under
   `evidence/inventory/2026-09-22/INV-TRANSFER-NEW-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-TRANSFER-ALL-QUEUE-001` — All Transfers queue (2026-09-22)
+
+- Selected the distinct operation-type card `All` action after the completed
+  Late, Backorders, and New Transfer slices. Local Odoo source maps it to
+  `get_stock_picking_action_picking_type` and the `All Transfers` action, with
+  a selected `picking_type_id` domain.
+- Added page/API YAML joined by `page.id: transfer-all`, an Overview card
+  navigation action, migration `0.0.88`, real transfer-row queries, filters,
+  guarded refresh history, permission boundaries, and restart persistence.
+- Focused test passes 3 tests / 27 assertions. Browser evidence is blocked:
+  bsk connected to instance `245ea108`, but borrowing the existing Odoo user
+  tab remained pending until the session expired; the shared Core3 runtime was
+  not available. Exact evidence is under
+  `evidence/inventory/2026-09-22/INV-TRANSFER-ALL-QUEUE-001/`.
+- Full Inventory sign-off remains open; no visual-parity claim is made.

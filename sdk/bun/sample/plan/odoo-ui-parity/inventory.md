@@ -2802,3 +2802,37 @@ claimed. Full Inventory sign-off remains open.
 
 Feature evidence: `evidence/inventory/2026-09-22/INV-TRANSFER-NEW-001/`.
 Full Inventory sign-off remains open.
+
+## Transfers > All Transfers queue — `INV-TRANSFER-ALL-QUEUE-001` (2026-09-22)
+
+This bounded slice closes the operation-type card's source-backed `All`
+action, distinct from the Ready, Waiting, Late, Backorders, Internal, and New
+Transfer slices. Odoo binds the card menu at
+`addons/stock/views/stock_picking_type_views.xml:199` to
+`get_stock_picking_action_picking_type`; the method falls back to
+`stock.stock_picking_action_picking_type` for the `All Transfers` action at
+`addons/stock/models/stock_picking.py:463-470`, while the selected operation
+type domain is applied by `_get_action` at `stock_picking.py:420-440`.
+
+Core3 adds presentation-only `pages/transfer-all.yaml` and matching
+`api/transfer-all.yaml` (`page.id: transfer-all`) at
+`/inventory/transfer/all`. The Overview card adds the permissioned `All`
+navigation action with operation/company context. The API reads real durable
+`inventory_pickings` rows across Draft, Waiting, Ready, Done, and Cancelled
+states, supports state/operation/search/group context, opens the existing
+transfer detail, and persists refresh history. Migration
+`20260922380000-088-inventory-transfer-all-queue.yaml` adds the queue context
+and durable refresh ledger with replay-safe seeded state.
+
+Focused verification passes 3 tests / 27 assertions in
+`test/inventory_transfer_all_queue.integration.test.ts`, including source
+mapping, page/API separation, company and operation scope, filters, empty/503
+states, permission/actor/stale guards, and file-backed restart persistence.
+Evidence is under
+`evidence/inventory/2026-09-22/INV-TRANSFER-ALL-QUEUE-001/`.
+
+The authenticated Odoo tab was listed through bsk on browser instance
+`245ea108`, but the required user-tab borrow remained pending and the session
+expired; the Core3 shared runtime was not available for an authenticated
+capture in this bounded turn. Screenshots are omitted and no visual-parity or
+live Odoo execution sign-off is claimed. Full Inventory sign-off remains open.

@@ -1,0 +1,11 @@
+{
+  "browser_instance_id": "245ea108",
+  "bsk_session": "yuul",
+  "user_tab_id": "1770662590",
+  "user_tab_url": "http://localhost:8069/odoo/crm",
+  "borrow": "pending_then_session_expired",
+  "authenticated_odoo_capture": false,
+  "core3_capture": false,
+  "visual_parity_claim": false,
+  "secrets_read": false
+}
