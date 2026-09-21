@@ -21,3 +21,14 @@
     grid-template-columns: 1fr;
   }
 }
+.accounting-invoice-preview-banner {
+  max-width: 72rem;
+  margin: 0 auto 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--core-border, #d9dce3);
+  border-radius: .5rem;
+  background: var(--core-surface, #fff);
+}
+
+.accounting-invoice-preview-banner p { margin: 0; }
+.accounting-invoice-preview-banner p + p { margin-top: .35rem; color: var(--core-muted, #68707d); }

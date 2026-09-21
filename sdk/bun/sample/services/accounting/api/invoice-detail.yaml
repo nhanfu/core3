@@ -179,6 +179,11 @@ actions:
         anchor.remove();
         setTimeout(() => URL.revokeObjectURL(url), 0);
       }
+  - id: preview_accounting_invoice
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/invoice-preview
+    params: { id: '{state.accounting_invoice_detail.id}' }
   - id: send_accounting_invoice_message
     type: server_form
     permission: accounting.write

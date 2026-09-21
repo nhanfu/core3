@@ -1,0 +1,33 @@
+page: { id: invoice-preview }
+datasources:
+  - id: accounting_invoice_preview
+    single: true
+    permission: accounting.read
+    error_states:
+      not_found: { status: 404, code: ACCOUNTING_INVOICE_PREVIEW_NOT_FOUND, message: This posted customer invoice is not available for preview. }
+      transport_error: { status: 503, code: ACCOUNTING_INVOICE_PREVIEW_UNAVAILABLE, message: The invoice preview is temporarily unavailable. }
+    query: "SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, reference, CASE WHEN invoice_type = 'Customer Credit Note' THEN 'Credit Note' ELSE 'Invoice' END AS portal_document_label, CASE WHEN amount_residual > 0 THEN 'Open' ELSE 'Paid' END AS portal_payment_state FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note')"
+actions:
+  - id: back_to_accounting_invoice
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/invoice-detail
+    params: { id: '{query.id}' }
+  - id: download_invoice_preview_pdf
+    type: client
+    permission: accounting.read
+    script: |
+      async ({ row, request }) => {
+        const result = await request('/api/query', { method: 'POST', body: { sourceId: 'accounting_invoice_pdf', params: { id: row.id }, top: 1 } });
+        const artifact = Array.isArray(result?.data) ? result.data[0] : result?.data;
+        if (!artifact?.content_base64) throw new Error('Invoice PDF is unavailable');
+        const bytes = Uint8Array.from(atob(artifact.content_base64), (character) => character.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], { type: artifact.mime_type || 'application/pdf' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = artifact.file_name || 'invoice.pdf';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      }

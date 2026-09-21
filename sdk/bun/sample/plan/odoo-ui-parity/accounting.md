@@ -1555,3 +1555,31 @@ is required for graph` plus missing `title_field` and `activity_types` for
 `bun run audit`, and the existing invoice Print discovery test stop there.
 Those files were not changed. No Core3 screenshot or visual-parity claim is
 made for this batch; Odoo desktop/mobile states are source-confirmed evidence.
+
+## Current batch: invoice Preview action (2026-09-22)
+
+The next distinct invoice-detail gap is Odoo's `preview_invoice` object action.
+Local Odoo 19 `account.move.preview_invoice` returns an `ir.actions.act_url`
+with `target: self` and `get_portal_url()`. The authenticated reference on
+`INV/2026/00008` shows the posted customer invoice `Preview` action on desktop
+and in the mobile overflow menu; the resulting portal-style page says `This is
+a preview of the customer portal.`, exposes `Back to edit mode`, `Pay Now`,
+and `Download`, and renders the invoice HTML plus Communication history.
+
+Core3 now adds the distinct `preview_accounting_invoice` navigation action and
+the page/API-matched `/accounting/invoice-preview` screen. Its datasource is a
+real persisted query restricted to Posted Customer Invoice/Customer Credit
+Note records and `accounting.read`; the page is read-only, includes the portal
+preview banner, invoice totals/dates, Back to edit mode, and reuses the already
+implemented PDF artifact for Download. Pay Now and public/portal sharing remain
+follow-up integration work because Core3's existing payment action is an
+internal register-payment form rather than an external portal payment flow.
+
+Focused validation passes 3 tests and 17 assertions, including Odoo source
+mapping, page/API separation, posted-customer state guards, permission denial,
+and DuckDB close/reopen persistence. Odoo desktop and mobile preview captures
+are recorded in evidence `ACC-INVOICE-PREVIEW-001`. The Accounting runner
+catalog exposes the new route and `/api/modules` returns 200. An authenticated
+Core3 capture was not possible: the fresh bsk tab had no local Core3 login
+session and redirected to `/auth/login`; credentials were not entered. No
+Core3 visual-parity claim is made for this batch.

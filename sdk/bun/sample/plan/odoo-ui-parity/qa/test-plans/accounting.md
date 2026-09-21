@@ -87,3 +87,12 @@ required; development migrations must be idempotent.
   persistence, responsive and visual case.
 - Full sign-off requires browser CRUD/actor probes and paired Odoo comparison;
   route smoke and contract tests alone are insufficient.
+
+## Invoice Preview addendum (2026-09-22)
+
+| Case ID | Class | Route | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| ACC-PREVIEW-FUNC-001 | functional | `/accounting/invoice-detail` → `/accounting/invoice-preview` | Posted customer invoice exposes Preview and opens the read-only portal-style preview; vendor/draft records are excluded | `accounting_invoice_preview.integration.test.ts` | pass at contract/API level |
+| ACC-PREVIEW-PERM-002 | permission | `/accounting/invoice-preview` | `accounting.read` is required for datasource and Back/Download actions; direct unauthorised query returns 403 | `accounting_invoice_preview.integration.test.ts` | pass |
+| ACC-PREVIEW-DATA-003 | data/regression | invoice preview datasource | Invoice name, partner, dates, totals and payment state are read from persisted Accounting rows and survive close/reopen plus idempotent migration replay | `accounting_invoice_preview.integration.test.ts` | pass |
+| ACC-PREVIEW-UI-004 | visual/responsive | Odoo `/odoo/invoicing/10` preview | Odoo desktop/mobile preview banner, portal invoice body, Back to edit mode, Pay Now, Download and Communication history are captured; Core3 capture is required when an authenticated session is available | evidence `ACC-INVOICE-PREVIEW-001` | Odoo pass; Core3 auth blocked |

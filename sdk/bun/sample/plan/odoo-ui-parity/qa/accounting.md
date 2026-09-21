@@ -839,3 +839,12 @@ sign-off is claimed.
 - Core3 authenticated browser verification is blocked before startup by unrelated
   dirty Inventory/Manufacturing/Project YAML. The exact schema errors are recorded
   in the feature evidence; no Core3 visual-parity claim is made.
+
+## QA disposition — invoice Preview candidate (2026-09-22)
+
+- **ACC-PREVIEW-001:** implemented as the next distinct invoice-detail slice;
+  Odoo source and authenticated reference behavior are recorded, and the
+  page/API contract is separated by `page.id`.
+- Focused validation: `bun test ./test/accounting_invoice_preview.integration.test.ts --timeout 20000` — **3 passed, 17 assertions, 0 failures**. Regression of the existing PDF and Reset to Draft slices: **7 passed, 51 assertions, 0 failures** across the three focused files. Audit passed with **805 pages, 814 routes, 1,664 datasources**; frontend build and diff-check passed.
+- Odoo browser evidence used instance `245ea108` and the existing authenticated session at `/odoo/invoicing/10`: desktop and mobile detail/overflow states opened Preview and the preview page showed the portal invoice, Back to edit mode, Pay Now, Download and Communication history.
+- Core3 `/api/modules` returned 200 and listed `/accounting/invoice-preview`, but the fresh bsk tab had no authenticated Core3 session and redirected to `/auth/login`. Credentials were deliberately not entered; no Core3 visual parity is claimed. Follow-up remains authenticated Core3 desktop/mobile capture and the external portal Pay Now/share behavior.

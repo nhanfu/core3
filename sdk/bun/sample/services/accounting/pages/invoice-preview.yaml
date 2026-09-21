@@ -1,0 +1,36 @@
+title: Invoice Preview
+page: { id: invoice-preview, route: /accounting/invoice-preview, breadcrumb: [Finance, Invoices, Preview], auth: { require: [accounting.read] } }
+components:
+  - type: Html
+    tag: section
+    class: accounting-invoice-preview-banner
+    children:
+      - { type: Html, tag: p, text: This is a preview of the customer portal. }
+      - { type: Html, tag: p, text: Back to edit mode }
+  - type: OdooFormView
+    source: accounting_invoice_preview
+    title_field: name
+    subtitle_field: partner_name
+    editable: false
+    header_actions:
+      - { id: back_to_accounting_invoice, label: Back to edit mode, variant: secondary, permission: accounting.read }
+      - { id: download_invoice_preview_pdf, label: Download, variant: secondary, permission: accounting.read }
+    group_columns: 2
+    groups:
+      - title: Invoice
+        fields:
+          - { field: portal_document_label, label: Document }
+          - { field: name, label: Invoice }
+          - { field: partner_name, label: Customer }
+          - { field: reference, label: Reference }
+      - title: Amounts
+        fields:
+          - { field: amount_untaxed, label: Untaxed amount }
+          - { field: amount_tax, label: Tax }
+          - { field: amount_total, label: Total }
+          - { field: amount_residual, label: Amount due }
+          - { field: portal_payment_state, label: Payment status }
+      - title: Dates
+        fields:
+          - { field: invoice_date, label: Invoice Date }
+          - { field: due_date, label: Due Date }
