@@ -1217,3 +1217,39 @@ Focused validation is `test/livechat_widget_session.integration.test.ts`: 3 test
 Core3 browser evidence could not be completed because the shared local runtime returned 502 and then stopped: the Vite proxy could not reach the backend, while the backend was blocked by an unrelated dirty-worktree Blog YAML parse failure. The desktop 502 capture is outside Git at `/tmp/core3-livechat-widget-session-blocker-desktop-20260922.png`; the mobile navigation ended with `ERR_CONNECTION_REFUSED`, so no Core3 mobile visual sign-off is claimed. The Odoo addon absence and local runtime blockers are recorded in the bounded evidence folder.
 
 Evidence is recorded under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-widget-session-001/`. Full Live Chat parity remains planned.
+
+## Bounded implementation slice: Public visitor message composer (2026-09-22)
+
+The next distinct public-widget workflow is the visitor message post. Odoo's
+embedded Live Chat routes the composer through `/mail/message/post`, and its
+CORS routing map forwards cross-origin widget traffic to
+`/im_livechat/cors/message/post`. The Live Chat CORS controller forces the
+guest environment before delegating to the mail thread post implementation;
+the embedded composer displays `Say something...` and disables posting once
+the livechat conversation has ended.
+
+The authenticated `core3_reference` service is currently not serving the
+addon: `/im_livechat/support/1` returned Odoo Error 404 at the observed
+desktop and mobile states, and the authenticated backend launcher had no Live
+Chat application entry. The blocker captures are outside Git at
+`/tmp/odoo-livechat-public-message-blocker-desktop-20260922.png` and
+`/tmp/odoo-livechat-public-message-blocker-mobile-20260922.png`.
+
+Core3 extends the existing token-scoped `/livechat/visitor-session` page and
+its separate `livechat-visitor-session` API fragment. The new
+`send_livechat_visitor_message` action retains the Odoo CORS route, requires
+`livechat.public`, inserts a visitor-authored message in the durable session
+timeline, increments message count and row version, and refreshes the public
+session/messages datasources. Guards cover wrong visitor token, blank or
+overlong content, and closed-session replay. No authenticated menu or new
+database table is added; the existing durable message table is the source of
+truth and restart persistence is asserted against file-backed DuckDB.
+
+Focused validation is
+`test/livechat_public_message.integration.test.ts`: 3 tests passed with 17
+assertions. The paired visitor-feedback, widget-bootstrap, and operator
+message regressions pass 12 tests with 77 assertions. Evidence is recorded
+under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/
+livechat-public-message-001/`. Core3 browser verification remains subject to
+the local runtime; no visual-parity claim is made without authenticated
+desktop/mobile captures.

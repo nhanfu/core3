@@ -42,6 +42,49 @@ datasources:
         AND EXISTS (SELECT 1 FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token)
 
 actions:
+  - id: send_livechat_visitor_message
+    type: server_form
+    permission: livechat.public
+    title: Send message
+    action: /im_livechat/cors/message/post
+    handler: yaml_mutation
+    operation: message_post
+    params: { id: '{state.id}', visitor_token: '{state.visitor_token}' }
+    refresh: [livechat_public_session, livechat_public_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token", status: 404, code: LIVECHAT_PUBLIC_MESSAGE_NOT_FOUND, message: The visitor conversation was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token AND status <> 'Closed'", status: 409, code: LIVECHAT_PUBLIC_MESSAGE_SESSION_CLOSED, message: This livechat conversation has ended. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: LIVECHAT_PUBLIC_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - query: |
+            INSERT INTO livechat_session_messages
+              (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+            SELECT gen_random_uuid(), s.id, s.visitor_token,
+              COALESCE(NULLIF(s.visitor_name, ''), 'Visitor'), 'visitor',
+              TRIM(CAST(:content AS VARCHAR)), 'message', 'Message', CURRENT_TIMESTAMP
+            FROM livechat_sessions s
+            WHERE s.id = :id AND s.visitor_token = :visitor_token AND s.status <> 'Closed'
+        - query: |
+            UPDATE livechat_sessions
+            SET message_count = COALESCE(message_count, 0) + 1,
+                row_version = row_version + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id AND visitor_token = :visitor_token AND status <> 'Closed'
+          expect_changed: true
+          status: 409
+          code: LIVECHAT_PUBLIC_MESSAGE_SESSION_CLOSED
+          message: This livechat conversation has ended.
+      result:
+        query: |
+          SELECT m.id, m.session_id, m.author_name, m.author_type,
+            m.body AS detail, m.action, m.action_label, CAST(m.created_at AS VARCHAR) AS created_at
+          FROM livechat_session_messages m
+          WHERE m.session_id = :id AND m.author_type = 'visitor'
+            AND m.body = TRIM(CAST(:content AS VARCHAR))
+          ORDER BY m.created_at DESC, m.id DESC
+          LIMIT 1
   - id: leave_livechat_session
     type: server_form
     permission: livechat.public

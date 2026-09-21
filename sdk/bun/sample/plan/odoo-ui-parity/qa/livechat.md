@@ -143,3 +143,26 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Focused ESLint and scoped `git diff --check` passed. Repository-wide audit remains blocked by the unrelated dirty-worktree `services/blog/api/posts.yaml` YAML parse error; no Live Chat file was changed to bypass that blocker.
 - Odoo browser evidence is a blocker, not a sign-off: authenticated `core3_reference` `/im_livechat/support/1` returned Error 404 at observed 390x844 and 1916x833 browser viewports. Core3 browser evidence is also blocked by the local frontend/backend failure (desktop 502, then mobile `ERR_CONNECTION_REFUSED`).
 - Evidence: [`livechat-widget-session-001`](evidence/livechat/2026-09-22/livechat-widget-session-001/). Full Live Chat sign-off remains open.
+
+## 2026-09-22 bounded review: public visitor message composer
+
+- Selected stable feature `livechat-public-message-001`, distinct from widget
+  bootstrap/resume and visitor feedback/leave.
+- Focused: `bun test test/livechat_public_message.integration.test.ts
+  --timeout 20000` — **3 passed, 17 assertions, 0 failed**. It covers the
+  Odoo CORS route, page/API binding, composer metadata, token ownership,
+  content validation, closed-session guard, durable timeline/counter updates,
+  migration replay, and file-backed restart recovery.
+- Paired regression:
+  `bun test test/livechat_public_message.integration.test.ts
+  test/livechat_visitor_feedback.integration.test.ts
+  test/livechat_widget_session.integration.test.ts
+  test/livechat_session_messages.integration.test.ts --timeout 20000` —
+  **12 passed, 77 assertions, 0 failed**.
+- Odoo browser evidence is blocker evidence only: authenticated
+  `/im_livechat/support/1` returned Error 404 at desktop and mobile; the
+  backend launcher did not expose Live Chat. Captures are outside Git under
+  `/tmp/odoo-livechat-public-message-blocker-desktop-20260922.png` and
+  `/tmp/odoo-livechat-public-message-blocker-mobile-20260922.png`.
+- Core3 authenticated composer captures were not claimed until the local
+  runtime is available. Full Live Chat sign-off remains open.

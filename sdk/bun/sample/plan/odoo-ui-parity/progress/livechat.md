@@ -69,3 +69,19 @@ continue with the next uncovered public-widget or transcript surface.
 Focused validation passed: 3 tests, 24 assertions; paired visitor-feedback and widget regression passed 6 tests, 44 assertions. Focused ESLint and scoped diff-check passed. Odoo `/im_livechat/support/1` returned authenticated 404 at desktop/mobile viewports; Core3 browser evidence was blocked by the local frontend 502/backend discovery failure and subsequent connection refusal. No visual-parity or full-module sign-off is claimed.
 
 Evidence is recorded under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-widget-session-001/`.
+
+## Bounded implementation slice: public visitor message composer (2026-09-22)
+
+`services/livechat/api/visitor-session.yaml` now exposes the
+`send_livechat_visitor_message` public action at Odoo's
+`/im_livechat/cors/message/post` route, while the existing visitor page binds
+the action through its `livechat-visitor-session` page id. The mutation is
+token-scoped, rejects invalid or closed conversations, inserts a visitor
+timeline message, updates message count and row version, and uses the
+existing durable message table.
+
+Focused validation passed: 3 tests, 17 assertions. The public-message plus
+visitor-feedback, widget-bootstrap, and operator-message regression passed 12
+tests and 77 assertions. Odoo remains blocked by authenticated 404/no Live
+Chat addon; Core3 browser evidence remains pending runtime availability. No
+visual-parity sign-off is claimed.

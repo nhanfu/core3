@@ -50,6 +50,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-WF-005 | Durable/external boundary | Realtime reconnect, bot calls, notifications, transcript delivery and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | LIVECHAT-WF-006 | Conversation tag assignment | Operator Add Tag/Remove Tag persists the source-backed relation, preserves session versions, scopes assigned sessions, and rejects duplicate, stale, missing, and unassigned mutations | pass: `livechat_session_tags.integration.test.ts`; browser comparison remains planned |
 | LIVECHAT-WF-007 | Visitor feedback and leave session | Public token-scoped feedback persists one rating per session; visitor leave closes the session, appends a timeline event, rejects replay, and survives restart | pass: `livechat_visitor_feedback.integration.test.ts`; Odoo widget blocked because addon is not installed |
+| LIVECHAT-WF-008 | Public visitor message composer | Token-owned visitor message persists in the transcript, increments session counters/version, rejects blank/oversize/closed sends, and survives restart | pass: `livechat_public_message.integration.test.ts`; browser/reference blocked |
 
 ## Permission and security cases
 
@@ -63,6 +64,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-PERM-006 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | LIVECHAT-PERM-007 | Stale/missing/invalid | 409/404/422 leaves the current session/channel/configuration unchanged | pass at contract level |
 | LIVECHAT-PERM-008 | Visitor token | Wrong visitor token returns 404 without disclosing or mutating another conversation | pass: `livechat_visitor_feedback.integration.test.ts` |
+| LIVECHAT-PERM-009 | Public message ownership | Wrong visitor token cannot post, and a closed visitor conversation cannot be reopened by message post | pass: `livechat_public_message.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -72,6 +74,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-UI-002 | Channel/configuration | both | Channel, rule, tag, expertise, canned-response and chatbot forms match Odoo | planned |
 | LIVECHAT-UI-003 | Reports/technical queues | both | Graph/pivot/list, filters, operational detail and empty states match Odoo | planned |
 | LIVECHAT-UI-004 | Current route regression | all manifest-owned Live Chat routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
+| LIVECHAT-UI-005 | Visitor composer | 1440x900, 390x844 | Existing visitor conversation displays the Odoo-shaped composer and refreshes the timeline; paired Odoo/Core3 capture required when runtimes are available | blocked: Odoo addon route is 404; Core3 runtime availability pending |
 
 ## Exit criteria
 

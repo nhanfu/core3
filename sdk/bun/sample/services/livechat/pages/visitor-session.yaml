@@ -33,5 +33,12 @@ components:
     message_source: livechat_public_messages
     chatter_label: Conversation
     chatter_empty: No messages in this conversation yet.
+    message_label: Send message
+    message_action: send_livechat_visitor_message
+    message_placeholder: Say something...
+    send_label: Send
+    message_actor_field: author_name
+    message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+    message_action_labels: { message: Message, leave: Visitor left, welcome: Welcome }
