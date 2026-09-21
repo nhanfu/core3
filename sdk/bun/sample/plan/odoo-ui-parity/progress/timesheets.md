@@ -1082,6 +1082,29 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
+
+- Selected the non-internal/project-sharing branch of Odoo
+  `project.task.action_view_subtask_timesheet`, which substitutes the portal
+  tree, read-only Form, and Kanban views. This does not repeat the internal
+  task-action Form, Pivot, Calendar, Kanban, Graph, context, multi-scope,
+  display-name, or earlier portal list slices.
+- Added separate `portal-task-timesheets` list/API and
+  `portal-task-timesheet-detail` read-only detail/API contracts, each joined
+  by its own `page.id`. Migration
+  `20260921194000-028-timesheets-task-action-portal-views.yaml` persists
+  actor/company task grants and an index; queries fail closed for permission,
+  actor, company, missing, empty, and stale task-version contexts.
+- Focused coverage passed 3/3 tests with 24 expectations. Related task/action/
+  report coverage passed 49/49 tests with 279 expectations. Scoped ESLint and
+  UI audit passed at 764 pages / 773 routes / 1,555 datasources.
+- Core3 port 3001 refused connections and Odoo 8069/8073 redirected to the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-portal-views-001/`.
+
 ## 2026-09-21 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
 
 - Selected Odoo's `timesheet_view_form_user`, attached to

@@ -1,0 +1,13 @@
+page: { id: portal-task-timesheet-detail }
+datasources:
+  - id: portal_task_timesheet_detail
+    permission: project.portal
+    single: true
+    error_states: { transport_error: { status: 503, code: PORTAL_TASK_TIMESHEET_DETAIL_UNAVAILABLE, message: Shared task timesheet detail is temporarily unavailable. } }
+    query: "SELECT e.id, e.row_version, e.employee_name, e.company_name, e.project_id, e.project_name, e.task_id, e.task_name, CAST(e.work_date AS VARCHAR) AS work_date, e.description, e.hours, printf('%02d:%02d', CAST(FLOOR(e.hours) AS INTEGER), CAST(ROUND((e.hours - FLOOR(e.hours)) * 60) AS INTEGER)) AS time_spent_display, e.state FROM timesheet_entries e JOIN timesheet_tasks child ON child.id = e.task_id JOIN timesheet_task_portal_access access ON access.task_id = :task_id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND child.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND (e.task_id = :task_id OR child.parent_task_id = :task_id) AND (COALESCE(:expected_task_row_version, '') = '' OR child.row_version = TRY_CAST(:expected_task_row_version AS BIGINT))"
+actions:
+  - id: back_to_portal_task_timesheets
+    type: navigate
+    permission: project.portal
+    navigate_to: /my/projects/task/timesheets
+    params: { task_id: '{query.task_id}' }

@@ -1089,6 +1089,23 @@ Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-multi-scope-001/
 Odoo Print/PDF/action-surface blockers remain open; no module sign-off is
 claimed.
 
+## Wave 45 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | Non-internal/project-sharing `action_view_subtask_timesheet` substitutes portal tree/Form/Kanban views | pass in focused source test |
+| Paired YAML contract | Separate portal list and detail page/API contracts joined by `page.id` | pass |
+| Durable persistence | Replay-safe portal task grant migration and file-backed detail reopen | pass |
+| Permission/actor/company guards | `project.portal`, portal actor, company, task/subtask scope | pass |
+| Missing/empty/stale guards | Missing task, empty fixture, foreign actor/company, stale task version fail closed | pass |
+| Focused regression | New test 3/3 (24 expectations); related task/action/report 49/49 (279 expectations) | pass |
+| Audit/lint/diff | UI audit 764/773/1555; scoped ESLint; exact-path staged `git diff --check` | pass after staging |
+| Authenticated desktop/mobile evidence | Core3 portal list/Kanban/Form and paired Odoo comparison | blocked; Core3 3001 refused connections and Odoo 8069/8073 redirected to `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-portal-views-001/`.
+The browser runtime was unavailable for authenticated capture, and Odoo
+Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
+
 ## Wave 39 — `TIMESHEET-TASK-ACTION-PROJECT-CONTEXT-001`
 
 | Check | Expected evidence | Result |

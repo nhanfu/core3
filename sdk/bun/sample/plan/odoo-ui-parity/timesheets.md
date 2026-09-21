@@ -794,6 +794,39 @@ source report execution is recorded as an exact blocker rather than parity.
 Full route/action comparison, QWeb/PDF equivalence, and module sign-off remain
 open.
 
+## Wave 45 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
+
+The next uncovered branch is the non-internal/project-sharing path of Odoo
+`project.task.action_view_subtask_timesheet`. Odoo removes unsupported
+internal views and substitutes `hr_timesheet_line_portal_tree`,
+`timesheet_view_form_portal_user`, and
+`view_kanban_account_analytic_line_portal_user`. This is distinct from the
+completed internal Form, Pivot, Calendar, Kanban, Graph, task/project context,
+multi-scope, display-name, and earlier portal list slices.
+
+Core3 adds the portal task list/API pair `portal-task-timesheets`, plus the
+read-only detail pair `portal-task-timesheet-detail`, joined independently by
+`page.id`. Migration
+`20260921194000-028-timesheets-task-action-portal-views.yaml` adds durable
+portal task grants with a replay-safe task/user/company/active index. The
+queries enforce `project.portal`, actor, company, task/subtask, missing,
+empty, and stale task-version guards; the detail form is read-only and
+restart-safe.
+
+Focused coverage is
+`test/timesheets_task_action_portal_views.integration.test.ts`: 3 tests / 24
+expectations. Related task/action/report coverage is 49 tests / 279
+expectations. Scoped ESLint and the UI audit pass at 764 pages / 773 routes /
+1,555 datasources; the exact-path staged `git diff --check` is recorded with
+the commit evidence.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-portal-views-001/`.
+Core3 port 3001 refused connections and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures and visual sign-off are
+blocked. Odoo Print/PDF/action-surface blockers remain open; no module
+sign-off is claimed.
+
 ## Task report preview slice — `TIMESHEET-TASK-REPORT-PREVIEW` (2026-09-20)
 
 Odoo's `timesheet_report_task` is a `qweb-pdf` report bound to `project.task`
