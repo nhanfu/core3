@@ -1,0 +1,17 @@
+version: 0.0.85
+kind: data
+description: Seed deterministic related-user active status in the Employees projection
+type:
+  postgres:
+    up: |
+      UPDATE employee_related_user_catalog SET enabled = CASE id
+        WHEN 'user-admin' THEN true
+        WHEN 'user-disp' THEN true
+        ELSE enabled END
+      WHERE id IN ('user-admin', 'user-disp');
+    down: |
+      UPDATE employee_related_user_catalog SET enabled = true WHERE id IN ('user-admin', 'user-disp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

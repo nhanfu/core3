@@ -57,6 +57,7 @@ components:
       - { id: remove_employee_avatar, label: Remove Avatar, variant: ghost, permission: employees.write, show_if: "state.employee_detail.active === true && !!state.employee_detail.image_url" }
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: edit_employee_related_user, label: Set Related User, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_user_active, label: Edit User Status, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true && !!state.employee_detail.auth_user_id" }
       - { id: edit_employee_study_school, label: Edit School, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_permit_activity, label: Work Permit Activity, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_contact, label: Set Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
@@ -262,7 +263,7 @@ components:
           label: Settings
           groups:
             - title: User and attendance
-              fields: [{ field: user_name, label: Related User }, { field: timezone, label: Timezone }, { field: lang, label: Language }, { field: barcode, label: Badge ID }, { field: presence, label: Presence, type: StatusChip }]
+              fields: [{ field: user_name, label: Related User }, { field: is_user_active, label: User is Active, type: checkbox, show_if: "!!state.employee_detail.auth_user_id" }, { field: timezone, label: Timezone }, { field: lang, label: Language }, { field: barcode, label: Badge ID }, { field: presence, label: Presence, type: StatusChip }]
             - title: Approvers
               permission: employees.write
               fields: [{ field: hr_responsible_name, label: HR Responsible, readonly: true }]

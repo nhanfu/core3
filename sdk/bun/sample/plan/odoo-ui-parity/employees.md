@@ -1942,6 +1942,34 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001: Related user active status (2026-09-21)
+
+The next uncovered source-backed Employee behavior is Odoo's restricted
+`hr.employee.is_user_active` related projection. The source form visibly marks
+`(User is Inactive)` when the linked `res.users.active` value is false. This is
+distinct from the completed related-user assignment workflow.
+
+Core3 adds migration `20260922310000-085-employee-related-user-active.yaml`
+with deterministic status values in the Employees-owned related-user catalog.
+The API projects `is_user_active` and adds a guarded
+`edit_employee_user_active` status action; the page remains layout-only,
+joins through `page.id: employee-detail`, and renders the status in Settings.
+The service boundary is explicit: the Auth database is separate, so the
+Employees catalog is the durable local projection used by the existing
+related-user contract.
+
+Guards cover `auth.users.manage`, authenticated actor, active/current-company
+employee, missing related-user projection, and optimistic employee
+row-version concurrency. Focused verification is **4 tests / 21 assertions**,
+including status CRUD, atomic guard boundaries, migration replay, and
+file-backed restart.
+
+Authenticated Core3 desktop/mobile captures render User is Active with zero
+failed requests. Odoo desktop/mobile comparison is blocked by rejected
+`admin/admin` credentials followed by Odoo rate limiting. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-USER-ACTIVE-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001: Work Permit scheduled activity preference (2026-09-21)
 
 The next uncovered source-backed employee setting is Odoo's restricted

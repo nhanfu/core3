@@ -887,3 +887,17 @@ assertions). Evidence:
 Focused test: `test/employees_work_permit_activity.integration.test.ts` (4
 tests, 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001/`.
+
+## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo restricted `is_user_active` maps to the local durable API projection and Settings page through `page.id` | pass |
+| Status CRUD | Dedicated guarded action persists activate/deactivate state and increments employee row version | pass |
+| Permission and scope | `auth.users.manage`, actor, active/current company, missing projection, and stale boundaries reject atomically | pass |
+| Persistence | Deterministic projection, migration replay, and file-backed restart preserve status without duplicates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 captures are authenticated with zero failed requests; Odoo credentials/rate limit block comparison |
+
+Focused test: `test/employees_related_user_active.integration.test.ts` (4
+tests, 21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-USER-ACTIVE-001/`.

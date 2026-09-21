@@ -1,0 +1,14 @@
+{
+  "login_status": 200,
+  "after_login": "http://127.0.0.1:3302/apps",
+  "final_url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-001",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "contains_related_user": true,
+  "contains_user_active": true,
+  "contains_edit_status": false,
+  "request_failures": [],
+  "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nUser and attendance\nRelated User\n—\nUser is Active\n—\nTimezone\n—\nLanguage\n—\nBadge ID\n—\nPresence\n—\nApprovers\nHR Responsible\n—\nAttendance / Point of Sale\nPIN Code\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet."
+}

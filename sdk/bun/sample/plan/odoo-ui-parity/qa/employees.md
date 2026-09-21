@@ -26,6 +26,21 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-060 | Odoo `is_user_active` related field to paired page/API contracts | pass; local durable related-user projection, detail read, status action, and Settings field use `page.id: employee-detail` |
+| EMP-WF-060 | Activate/deactivate related-user status | pass; status and employee row version persist durably |
+| EMP-PERM-060 | `auth.users.manage`, actor, current company, missing projection, and stale guards | pass; invalid requests reject atomically |
+| EMP-DATA-060 | Migration replay and file-backed restart | pass; deterministic status survives restart without duplicate effects |
+| EMP-UI-056 | Authenticated Core3 desktop/mobile and Odoo comparison | conditional; Core3 1440x1000 and 390x844 captures have zero failed requests; Odoo rejected `admin/admin` and rate-limited the mobile retry |
+
+Focused test: `test/employees_related_user_active.integration.test.ts`
+(4 tests, 21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-USER-ACTIVE-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

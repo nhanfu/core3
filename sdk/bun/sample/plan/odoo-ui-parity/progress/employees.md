@@ -1218,6 +1218,24 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 (2026-09-21)
+
+- Selected Odoo's restricted `hr.employee.is_user_active` related field after
+  the completed work-permit activity setting; the source form visibly marks
+  inactive linked users.
+- Added migration `20260922310000-085` with deterministic active status in the
+  Employees-owned related-user catalog. API/page YAML remain separate and join
+  through `page.id: employee-detail`; a guarded `edit_employee_user_active`
+  action persists the status and increments employee row version.
+- Guards cover `auth.users.manage`, actor, active/current-company employee,
+  missing related-user projection, and stale row version. Focused verification
+  is **4 tests / 21 assertions**, including migration replay and restart.
+- Authenticated Core3 desktop/mobile evidence has zero failed requests. Odoo
+  desktop/mobile is blocked by rejected `admin/admin` followed by rate
+  limiting. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-USER-ACTIVE-001/`.
+- No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001 (2026-09-21)
 
 - Selected Odoo's restricted `hr.employee.work_permit_scheduled_activity`
