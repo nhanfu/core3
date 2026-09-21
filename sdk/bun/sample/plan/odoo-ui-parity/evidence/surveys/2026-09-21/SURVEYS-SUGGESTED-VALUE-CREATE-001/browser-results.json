@@ -1,0 +1,31 @@
+{
+  "feature_id": "SURVEYS-SUGGESTED-VALUE-CREATE-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "ports": [3000, 3001], "status": "blocked", "detail": "curl connection refused or unreachable; no authenticated Core3 Suggested Values form" },
+    "mobile": { "ports": [3390, 3391], "status": "blocked", "detail": "curl connection refused or unreachable; no authenticated Core3 Suggested Values form" }
+  },
+  "odoo": {
+    "primary_port": 8069,
+    "alternate_port": 8073,
+    "route": "/odoo/surveys",
+    "desktop": {
+      "viewport": "1440x900",
+      "status": "blocked",
+      "url_after_navigation": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "playwright_snapshot": "/home/nhanjs/projects/core3/.playwright-cli/page-2026-09-21T11-30-39-290Z.yml",
+      "playwright_screenshot": "/home/nhanjs/projects/core3/.playwright-cli/page-2026-09-21T11-30-45-484Z.png"
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "url_after_navigation": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "playwright_snapshot": "/home/nhanjs/projects/core3/.playwright-cli/page-2026-09-21T11-29-49-546Z.yml",
+      "playwright_screenshot": "/home/nhanjs/projects/core3/.playwright-cli/page-2026-09-21T11-30-26-042Z.png"
+    },
+    "disposable_proxy_8072": "closed-or-unreachable"
+  },
+  "authenticated": false,
+  "signoff": false,
+  "blocker": "Odoo browser navigation reached only the unauthenticated login shell at both target viewports, and Core3 plus disposable Odoo 8072 were unavailable. No authenticated Suggested Values form or paired comparison was possible."
+}

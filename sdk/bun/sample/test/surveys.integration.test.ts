@@ -292,11 +292,24 @@ describe('Surveys parity catalog and workflow', () => {
 
   test('keeps suggested-value creation service-owned and relation-backed', () => {
     const page = yaml('pages/suggested-values.yaml');
-    const action = page.actions.find((candidate: any) => candidate.id === 'create_survey_suggested_value');
+    const api = yaml('api/suggested-values.yaml');
+    const action = api.actions.find((candidate: any) => candidate.id === 'create_survey_suggested_value');
     expect(action.permission).toBe('surveys.write');
-    expect(action.mutation.table).toBe('survey_suggested_values');
-    expect(action.mutation.required).toEqual(['question_id', 'question_text', 'value']);
-    expect(action.fields.map((field: any) => field.field)).toEqual(['question_id', 'question_text', 'value', 'sequence', 'score', 'matrix_row', 'matrix_column']);
+    expect(api.page).toEqual({ id: page.page.id });
+    expect(page.components[0].create_action).toBe('create_survey_suggested_value');
+    expect(action).toMatchObject({ type: 'server_form', action: 'surveys.suggested_values.create', handler: 'yaml_mutation', operation: 'create' });
+    expect(action.fields.map((field: any) => field.field)).toEqual(['question_id', 'value', 'sequence', 'score', 'matrix_row', 'matrix_column', 'idempotency_key']);
+    expect(action.mutation.guards.map((guard: any) => guard.code)).toEqual([
+      'SURVEY_SUGGESTED_VALUE_CREATE_QUESTION_NOT_FOUND',
+      'SURVEY_SUGGESTED_VALUE_CREATE_IDEMPOTENCY_REPLAY',
+      'SURVEY_SUGGESTED_VALUE_CREATE_PARENT_CHANGED',
+      'SURVEY_SUGGESTED_VALUE_CREATE_QUESTION_CHANGED',
+      'SURVEY_SUGGESTED_VALUE_CREATE_ACTOR_REQUIRED',
+      'SURVEY_SUGGESTED_VALUE_CREATE_TYPE_INVALID',
+      'SURVEY_SUGGESTED_VALUE_CREATE_VALUE_INVALID',
+      'SURVEY_SUGGESTED_VALUE_CREATE_SEQUENCE_INVALID',
+      'SURVEY_SUGGESTED_VALUE_CREATE_SCORE_INVALID',
+    ]);
   });
 
   test('declares guarded archive and reopen transitions', () => {

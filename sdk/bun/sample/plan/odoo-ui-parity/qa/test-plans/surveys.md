@@ -816,3 +816,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.
+
+## `SURVEYS-SUGGESTED-VALUE-CREATE-001` — Suggested Value creation
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-071 | authenticated configuration | Suggested Values → New | API-owned server form exposes Odoo create fields and joins the list by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-070 | permission/actor/state/validation | Missing actor/question, duplicate key, archived or stale parents, unsupported type, invalid value/sequence/score | Reject before insert with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-068 | persistence/concurrency/restart | Create → advance question/survey versions → replay request key → file-backed reopen | One durable relation is created atomically and replay cannot create a second row | test-results.md, focused test | pass |
+| SURVEYS-UI-069 | authenticated responsive/reference | New Suggested Value form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.

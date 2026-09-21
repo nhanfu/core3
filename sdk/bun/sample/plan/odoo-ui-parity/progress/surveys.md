@@ -1374,3 +1374,32 @@ Odoo evidence remain blocked. No sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.
+
+## 2026-09-21 — `SURVEYS-SUGGESTED-VALUE-CREATE-001`
+
+Implemented the Odoo `survey.question.answer` New/create lifecycle. The
+Suggested Values API now owns the guarded server form; the page remains a
+layout-only list with `create_action`, joined through
+`page.id: survey-suggested-values`. Migration `0.0.69` provides a deterministic
+choice-question fixture. Creation persists the relation, source question
+text, sequence, score, row version, and timestamp, then advances the question
+and parent survey versions in one transaction.
+
+Guards cover `surveys.write`, authenticated actor, missing question,
+request-key replay, archived/changed survey, stale question, choice/multiple
+choice/matrix type, 1..90 value length, sequence, and score. Odoo Survey has
+no `company_id`, so company scope is not applicable.
+
+Verification: focused **3/3 tests, 22 assertions**; neighboring
+Suggested Values/question regression **41/41 tests, 367 assertions**; full
+Surveys regression **198 passed, 4 known migration rollback failures, 1,668
+assertions across 67 files**; audit **766 pages, 775 routes, 1,562
+datasources**; scoped ESLint and diff-check pass. The four full-regression
+failures remain the dependent-entry rollback error on `survey_questions`.
+
+Playwright reached only Odoo's unauthenticated login redirect at 1440x900 and
+390x844. Core3 ports 3000/3001/3390/3391 and disposable Odoo 8072 were
+unavailable. No authenticated browser or paired Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.

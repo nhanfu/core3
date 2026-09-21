@@ -1797,3 +1797,29 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.
+
+## Bounded QA run: `SURVEYS-SUGGESTED-VALUE-CREATE-001` — 2026-09-21
+
+- Source/UI: Odoo's `survey.question.answer` model stores preconfigured
+  choice/multiple-choice/matrix labels, orders them by question and sequence,
+  and the Suggested Values list/form action supports the New lifecycle.
+- Persistence/contracts: migration `0.0.69` adds a deterministic choice
+  fixture. `api/suggested-values.yaml` owns the server form and
+  `pages/suggested-values.yaml` retains only the list presentation and
+  `create_action`; both join at `page.id: survey-suggested-values`.
+- Guards: `surveys.write`, actor, missing question, duplicate request key,
+  archived or changed parent, stale question, supported question type, value
+  length, sequence, and score are enforced before the atomic insert. The
+  inspected Odoo Survey source has no `company_id`, so company scoping is not
+  applicable.
+- Verification: **3 focused tests / 22 assertions**, **41 neighboring tests /
+  367 assertions**, and full Surveys **198 passed / 4 known migration rollback
+  failures / 1,668 assertions**. Audit reports **766 pages, 775 routes, and
+  1,562 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 3000/3001/3390/3391 and disposable Odoo 8072 were
+  unreachable. Odoo 8069/8073 were reachable only at the login shell;
+  Playwright captured the redirect at both target viewports. No authenticated
+  Core3/Odoo comparison or sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.

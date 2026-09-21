@@ -2667,3 +2667,41 @@ sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.
+
+## Wave 46 — `SURVEYS-SUGGESTED-VALUE-CREATE-001`
+
+The next uncovered source-backed Suggested Values action is Odoo's New/create
+flow for `survey.question.answer`. Odoo defines the model as the durable
+preconfigured answer relation for simple choice, multiple choice, and matrix
+questions, orders it by `question_id, sequence, id`, limits labels to 90
+characters, and rejects empty values (`addons/survey/models/survey_question.py:
+835-871`). The installed action is the `survey.question.answer` list/form
+window action (`addons/survey/views/survey_question_views.xml:335-398`).
+
+Core3 moves the New action backend into `api/suggested-values.yaml`; the
+presentation list remains in `pages/suggested-values.yaml`, joined by
+`page.id: survey-suggested-values`. Migration `0.0.69` adds a deterministic
+choice-question fixture. The mutation derives the question relation and next
+sequence, persists the answer with row/version timestamps, and advances both
+question and survey versions atomically. It requires `surveys.write` and an
+authenticated actor, rejects missing questions, duplicate request keys,
+archived or changed parents, stale questions, unsupported question types,
+blank/overlong values, and invalid sequence/score inputs. Odoo Survey has no
+`company_id` in the inspected model/view/security source, so company scope is
+not applicable.
+
+Focused verification is **3 passed / 22 assertions**; the neighboring
+Suggested Values/question regression is **41 passed / 367 assertions**. The
+full Surveys glob is **198 passed / 4 failed / 1,668 assertions** across 67
+files; the four failures are the known migration rollback/dependent-entry
+blocker. The UI audit passes with **766 pages, 775 routes, and 1,562
+datasources**; scoped ESLint and diff-check pass.
+
+Core3 ports 3000/3001/3390/3391 were closed or unreachable. Odoo 8069/8073
+returned the login shell; Playwright confirmed the redirect at both target
+viewports, while disposable Odoo port 8072 was unavailable. Authenticated
+desktop/mobile Core3 and paired Odoo Suggested Values evidence are therefore
+blocked; no visual or module sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.
