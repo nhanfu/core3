@@ -26,6 +26,18 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-ATTACHMENTS-001 execution (2026-09-21)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-016 | Employee attachment upload, read/download projection, and remove | pass; 4 focused tests / 26 assertions |
+| EMP-PERM-016 | Actor, `employees.read`/`employees.write`, active/current-company, duplicate, and stale parent/line guards | pass; rejected writes were atomic |
+| EMP-DATA-016 | Deterministic handbook fixture, migration replay, and file-backed restart | pass |
+| EMP-UI-012 | Authenticated Core3/Odoo desktop/mobile attachment comparison | conditional; Core3 company/fixture mismatch and rejected Odoo credential are recorded blockers |
+
+Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-ATTACHMENTS-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-LAUNCH-PLAN-001 evidence ledger (2026-09-20)
 
 | Surface | Result | Evidence |

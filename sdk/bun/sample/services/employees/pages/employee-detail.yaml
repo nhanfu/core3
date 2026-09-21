@@ -7,6 +7,13 @@ components:
     subtitle_field: job_title
     avatar_field: image_url
     avatar_initials_field: name
+    attachment_source: employee_attachments
+    attachment_panel_open: true
+    attachment_label: Attachments
+    add_attachment_label: Add attachment
+    no_attachments_label: No attachments yet
+    attachment_upload_action: upload_employee_attachment
+    attachment_download_action: download_employee_attachment
     status_field: state
     statusbar: [{ value: Draft, label: New }, { value: Active, label: Active }, { value: On Leave, label: On leave }, { value: Terminated, label: Departed }]
     status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }

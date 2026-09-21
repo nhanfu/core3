@@ -689,3 +689,17 @@ assertions). Evidence:
 Focused test: `test/employees_avatar.integration.test.ts` (4 tests, 25
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
+
+## EMP-EMPLOYEE-ATTACHMENTS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `mail.thread.main.attachment` inheritance and Employee chatter map to paired Core3 attachment contracts | pass |
+| Attachment CRUD | Deterministic attachment upload metadata, read/download projection, and remove persist durably | pass |
+| Permission and scope | Actor, read/write permission, active/current company, duplicate filename, and stale parent/line guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the fixture and uploaded metadata | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture-company mismatch and rejected Odoo credential are documented |
+
+Focused test: `test/employees_attachments.integration.test.ts` (4 tests, 26
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ATTACHMENTS-001/`.

@@ -1,0 +1,28 @@
+version: 0.0.71
+kind: data
+description: Add durable Odoo employee mail attachment metadata and deterministic fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_attachments(
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR,
+        content_base64 VARCHAR,
+        uploaded_by VARCHAR,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO employee_attachments(id, employee_id, company_name, file_name, mime_type, size_bytes, content_base64, uploaded_by)
+      VALUES ('employee-attachment-demo-001', 'employee-demo-001', 'Core3 Vietnam', 'employment-handbook.txt', 'text/plain', 19, 'RW1wbG95ZWUgaGFuZGJvb2s=', 'system');
+    down: |
+      DROP TABLE IF EXISTS employee_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

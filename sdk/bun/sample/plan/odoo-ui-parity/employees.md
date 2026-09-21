@@ -2146,3 +2146,32 @@ desktop/mobile captures have no request/page failures or overflow, but the
 session company is `Core3 Demo Company` while deterministic fixtures are
 `Core3 Vietnam`. Odoo desktop/mobile comparison is blocked by rejected local
 credentials. No aggregate Employees sign-off is claimed.
+## EMP-EMPLOYEE-ATTACHMENTS-001: Employee attachment lifecycle (2026-09-21)
+
+Odoo's `hr.employee` model inherits `mail.thread.main.attachment` in
+`/home/nhanjs/projects/odoo/addons/hr/models/hr_employee.py:40`, and the
+source Employee form renders a chatter at
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml:413`.
+This slice maps that source-backed attachment surface, without conflating it
+with the completed avatar or identity-document slices.
+
+Core3 adds migration `20260922170000-071`, creating durable
+`employee_attachments` metadata/content and a deterministic inline handbook
+fixture. The separate employee-detail API YAML declares the attachment
+datasource and upload/download/remove actions; page YAML only binds the
+Attachments panel and action IDs by `page.id`.
+
+Writes require an authenticated actor, `employees.write`, an active employee
+in the current company, valid filename/size, and optimistic parent/line row
+versions. Duplicate active filenames and invalid attachment/company/actor
+references reject atomically. Focused verification is **4 tests / 26
+assertions**, including migration replay and file-backed restart persistence.
+
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ATTACHMENTS-001/`.
+The Core3 session rendered the panel at 1440x900 and 390x844 with no request
+or page errors and no horizontal overflow, but its authenticated company is
+`Core3 Demo Company` while the deterministic fixture is `Core3 Vietnam`.
+The available local Odoo credential was rejected at both viewports, so the
+Odoo comparison remains an explicit blocker and no aggregate sign-off is
+claimed.

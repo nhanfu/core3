@@ -978,3 +978,26 @@ Candidate commit: current working tree
   Core3's authenticated company is `Core3 Demo Company` versus deterministic
   fixtures in `Core3 Vietnam`; Odoo's available local credential was rejected.
   These are explicit blockers and no aggregate sign-off is claimed.
+
+## EMP-EMPLOYEE-ATTACHMENTS-001 (2026-09-21)
+
+- Selected Odoo's source-visible `mail.thread.main.attachment` inheritance and
+  Employee form `<chatter reload_on_follower="True"/>` as the next uncovered
+  employee workflow, distinct from avatar and identity-document metadata.
+- Added migration `20260922170000-071` with durable `employee_attachments`
+  metadata/content projection and deterministic `employment-handbook.txt`
+  fixture for `employee-demo-001`.
+- Added separate employee-detail API datasource plus guarded upload, download,
+  and remove actions. Guards cover `employees.read`/`employees.write`, actor,
+  active/current-company employee, filename/size, duplicate names, stale
+  parent row version, and stale attachment row version.
+- Focused verification is **4 tests / 26 assertions**, including CRUD,
+  atomic permission/company/concurrency rejection, migration replay, and
+  file-backed restart persistence.
+- Authenticated Core3 desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-ATTACHMENTS-001/`; both viewports
+  render the paired Attachments panel with no request/page failures or
+  horizontal overflow. Odoo desktop/mobile comparison is blocked by the
+  available local credential being rejected; the deterministic Core3 fixture
+  company also differs from the authenticated demo company, so no aggregate
+  Employees sign-off is claimed.
