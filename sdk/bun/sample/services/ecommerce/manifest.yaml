@@ -117,3 +117,7 @@ menu:
           label: Add to Cart Redirect
           icon: cart
           permission: ecommerce.read
+        - path: /ecommerce/tax-display-policy
+          label: Tax Display Policy
+          icon: invoice
+          permission: ecommerce.read

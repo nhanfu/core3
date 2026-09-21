@@ -1,5 +1,33 @@
 # ecommerce QA ledger
 
+## Checkout Tax Display Mode (`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`, 2026-09-21)
+
+- Odoo source/settings/template: pass. `website.py` stores
+  `show_line_subtotals_tax_selection` with `tax_excluded` and `tax_included`
+  selections and a tax-excluded compute default; `res_config_settings.py`
+  relates the setting to the website; the settings view renders the radio
+  field; and `templates.xml` uses the selected value for the tax indication.
+- Core3 lifecycle: pass for this bounded contract. Migrations 112/113 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes the read form, options, `ecommerce.write` optimistic update, company
+  scope, invalid-mode validation, and stale-row guard. Cart, checkout, and the
+  public anonymous-cart operation expose the selected display mode and subtotal
+  label.
+- Focused verification: `bun test
+  test/ecommerce_checkout_tax_display_mode.integration.test.ts` — **3
+  passed, 30 assertions, 0 failures**. Adjacent cart/checkout regression and
+  scoped YAML validation are recorded in the evidence directory.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` are run for this slice. Full repository audit status is
+  recorded with the exact unrelated-owner result in evidence.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-tax-display-mode-001/`.
+
 ## Payment Transaction Post-processing (`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`, 2026-09-21)
 
 - Odoo source/menu: pass. `menu_ecommerce_payment_transactions` opens

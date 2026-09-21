@@ -1,0 +1,36 @@
+page: { id: ecommerce-tax-display-policy }
+datasources:
+  - id: ecommerce_tax_display_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_TAX_DISPLAY_POLICY_UNAUTHENTICATED, message: Sign in to view tax display policy. }
+      forbidden: { status: 403, code: ECOMMERCE_TAX_DISPLAY_POLICY_FORBIDDEN, message: You do not have permission to view tax display policy. }
+      missing_record: { status: 404, code: ECOMMERCE_TAX_DISPLAY_POLICY_NOT_FOUND, message: Tax display policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_TAX_DISPLAY_POLICY_UNAVAILABLE, message: Tax display policy is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, show_line_subtotals_tax_selection, CASE show_line_subtotals_tax_selection WHEN 'tax_excluded' THEN 'Tax Excluded' WHEN 'tax_included' THEN 'Tax Included' END AS tax_display_label, CASE show_line_subtotals_tax_selection WHEN 'tax_excluded' THEN 'Line subtotals exclude tax' WHEN 'tax_included' THEN 'Line subtotals include tax' END AS subtotal_label, updated_at FROM ecommerce_tax_display_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_tax_display_policy_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('tax_excluded', 'Tax Excluded'), ('tax_included', 'Tax Included')) modes(value, label)"
+actions:
+  - id: edit_ecommerce_tax_display_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Tax Display Policy
+    action: ecommerce.shop.tax_display_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_tax_display_policy, ecommerce_cart, ecommerce_checkout_cart]
+    mutation:
+      required: [id, expected_row_version, show_line_subtotals_tax_selection]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_tax_display_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_TAX_DISPLAY_POLICY_STALE, message: This tax display policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :show_line_subtotals_tax_selection IN ('tax_excluded', 'tax_included')", status: 422, code: ECOMMERCE_TAX_DISPLAY_POLICY_INVALID, message: Choose Tax Excluded or Tax Included. }
+      steps:
+        - { query: "UPDATE ecommerce_tax_display_policies SET show_line_subtotals_tax_selection = :show_line_subtotals_tax_selection, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_TAX_DISPLAY_POLICY_STALE, message: This tax display policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, show_line_subtotals_tax_selection, CASE show_line_subtotals_tax_selection WHEN 'tax_excluded' THEN 'Tax Excluded' WHEN 'tax_included' THEN 'Tax Included' END AS tax_display_label, CASE show_line_subtotals_tax_selection WHEN 'tax_excluded' THEN 'Line subtotals exclude tax' WHEN 'tax_included' THEN 'Line subtotals include tax' END AS subtotal_label FROM ecommerce_tax_display_policies WHERE id = :id" }
+    fields:
+      - { field: show_line_subtotals_tax_selection, label: Line Subtotals Tax Display, type: select, options_source: ecommerce_tax_display_policy_options, required: true }

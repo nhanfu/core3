@@ -1,0 +1,25 @@
+version: 0.0.112
+kind: schema
+description: durable eCommerce checkout line subtotal tax display policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_tax_display_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        show_line_subtotals_tax_selection VARCHAR NOT NULL DEFAULT 'tax_excluded',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (show_line_subtotals_tax_selection IN ('tax_excluded', 'tax_included'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_tax_display_policies_company_idx
+        ON ecommerce_tax_display_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_tax_display_policies_company_idx;
+      DROP TABLE IF EXISTS ecommerce_tax_display_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

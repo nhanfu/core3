@@ -9,7 +9,7 @@ components:
       - { id: apply_ecommerce_cart_pricelist, label: Change Pricelist, variant: secondary, permission: ecommerce.write }
       - { id: checkout_ecommerce_cart, label: Checkout, variant: primary, permission: ecommerce.write }
     groups:
-      - { title: Cart Summary, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: state, label: Status, type: StatusChip }, { field: item_count, label: Items }, { field: amount_total, label: Total }] }
+      - { title: Cart Summary, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: state, label: Status, type: StatusChip }, { field: item_count, label: Items }, { field: amount_total, label: Total }, { field: subtotal_label, label: Subtotal Tax Display, type: StatusChip }] }
     notebook:
       active: cart_lines
       tabs:

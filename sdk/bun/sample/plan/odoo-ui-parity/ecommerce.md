@@ -1,6 +1,31 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded payment transaction post-processing slice; module sign-off remains open)
+Status: qa-in-progress (bounded tax display mode slice; module sign-off remains open)
+
+## Bounded feature — Checkout Tax Display Mode (`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`)
+
+Wave 24 selected Odoo Website Sale's `website.show_line_subtotals_tax_selection`,
+the remaining checkout pricing-display setting outside the requested exclusions.
+Odoo stores `tax_excluded` or `tax_included` on the website, exposes the same
+field through `res.config.settings`, and renders the tax indication from that
+setting in the cart/order subtotal templates. Its source default is
+`tax_excluded`.
+
+Core3 migrations 112/113 add a durable company-scoped policy and deterministic
+fixture. Separate Tax Display Policy page/API YAML provides the configuration
+form, supported modes, `ecommerce.write` optimistic update, company scope,
+validation, and stale-row guards. Cart and checkout datasources plus the public
+anonymous-cart operation project the persisted mode and subtotal label so the
+setting is part of the checkout contract rather than configuration-only state.
+Migration replay and DuckDB restart preserve the selected policy.
+
+Focused source/contract, CRUD, permission, validation, concurrency, cart and
+checkout projection, public operation, migration replay, restart, scoped YAML
+audit, lint, and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-tax-display-mode-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Payment Transaction Post-processing (`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`)
 

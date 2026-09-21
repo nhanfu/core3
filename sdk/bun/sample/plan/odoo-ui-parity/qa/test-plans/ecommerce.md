@@ -4,8 +4,25 @@ Module: ecommerce
 QA owner: ecommerce-qa  
 Developer owner: ecommerce module owner  
 Reference addon/version: website_sale, Odoo 19 Community  
-Plan status: approved  
+Plan status: approved
 Last reviewed: 2026-09-12
+
+## ECOM-CHECKOUT-TAX-DISPLAY-MODE-001
+
+- ECOM-FUNC-053: trace Odoo Website Sale's
+  `show_line_subtotals_tax_selection` website field, settings relation/radio
+  control, and subtotal tax-indication template; verify the Core3 page/API
+  pairing and cart/checkout/public projections.
+- ECOM-WF-064: replay the deterministic Tax Excluded fixture, switch to Tax
+  Included and back, expose the selected subtotal contract in authenticated
+  cart/checkout and the public anonymous-cart operation, and preserve the
+  policy across migration replay and restart.
+- ECOM-PERM-060: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, unsupported-mode, and
+  stale-row writes without changing policy state.
+- ECOM-UI-046: render the Tax Display Policy form and selected checkout/cart
+  subtotal indication at desktop and mobile; Core3 browser and Odoo
+  comparison remain blocked by runtime availability and `/shop` HTTP 404.
 
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).

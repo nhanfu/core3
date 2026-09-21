@@ -1,0 +1,17 @@
+version: 0.0.113
+kind: data
+description: deterministic eCommerce checkout tax display policy fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_tax_display_policies
+        (id, row_version, company_name, show_line_subtotals_tax_selection)
+      VALUES
+        ('ecommerce-tax-display-policy-my-company', 1, 'My Company', 'tax_excluded')
+      ON CONFLICT (company_name) DO UPDATE SET
+        show_line_subtotals_tax_selection = EXCLUDED.show_line_subtotals_tax_selection;
+    down: "DELETE FROM ecommerce_tax_display_policies WHERE id = 'ecommerce-tax-display-policy-my-company';"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
