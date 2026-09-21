@@ -22,3 +22,11 @@ The focused test covers source comparison, page/API schema validation,
 migrations replayed twice, active template options, company scope, invalid
 template validation, optimistic concurrency, authenticated and guest checkout
 snapshots, and restart persistence.
+
+Scoped verification:
+
+```text
+bunx eslint test/ecommerce_checkout_confirmation_email.integration.test.ts -> passed
+bun run audit -> UI audit passed: 729 pages, 738 routes, 1419 datasources
+git diff --check -> passed
+```
