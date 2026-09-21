@@ -1124,3 +1124,21 @@ claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-kanban-view-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
+
+## Wave 42 — `TIMESHEET-TASK-ACTION-CALENDAR-VIEW-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `timesheet_action_all` Calendar view retained by task action | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page, separate API `page.id` binding, Calendar card fields | pass |
+| Durable Calendar projection | current-company task rows with date, employee, label, task, and time spent | pass |
+| Permission/company/missing/empty guards | `timesheets.read`, current company, missing task, empty fixture | pass |
+| Guarded CRUD freshness | persisted task row appears in Calendar projection; stale edit rejected | pass |
+| Restart | migration replay and file-backed rows survive reopen | pass |
+| Focused regression | new test 4/4 (21 expectations); related tests 37 pass / 1 unrelated discovery failure | pass with shared blocker |
+| Audit/lint/diff | scoped ESLint pass; UI audit blocked by duplicate Employees datasource; Timesheets diff-check at commit | partial; blocker recorded |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task Calendar capture | blocked; Core3 3001 refused and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-calendar-view-001/`.
+The unrelated Employees discovery defect and Odoo Print/PDF/action-surface
+blockers remain open; no visual or module sign-off is claimed.

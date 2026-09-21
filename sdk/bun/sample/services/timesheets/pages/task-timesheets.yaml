@@ -25,6 +25,11 @@ components:
         group_by: employee_name
         mobile: true
         card: { title: task_name, subtitle: employee_name, fields: [{ field: work_date, label: Date }, { field: time_spent_display, label: Time Spent }, { field: state, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: work_date
+        card: { title: calendar_display_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: employee_name, label: Employee }, { field: description, label: Description }] }
       - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: hours, measure_label: Time Spent, type: bar, mobile: false }
     columns:
       - { field: work_date, label: Date }

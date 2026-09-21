@@ -1,0 +1,106 @@
+import { describe, expect, test } from 'bun:test';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { migrateDatabase } from '@core3/server/migrations';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
+
+const sampleRoot = join(import.meta.dir, '..');
+const serviceRoot = join(sampleRoot, 'services/timesheets');
+const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
+const valid = { task_id: 'task-demo-001', task_ids: '', include_subtasks: 'true', q: null, state: null, work_date: null, fixture_state: null, current_company_name: 'Core3 Demo Company' };
+
+describe('Timesheets task action Calendar view parity', () => {
+  test('maps Odoo task action Calendar preservation to the paired page/API contract', () => {
+    const page = yaml('pages/task-timesheets.yaml');
+    const api = yaml('api/task-timesheets.yaml');
+    const actionSource = readFileSync('/home/nhanjs/projects/odoo/addons/hr_timesheet/views/hr_timesheet_views.xml', 'utf8');
+    const taskSource = readFileSync('/home/nhanjs/projects/odoo/addons/hr_timesheet/models/project_task.py', 'utf8');
+    const entries = api.datasources.find((candidate: any) => candidate.id === 'task_timesheet_entries');
+    const list = page.components.find((component: any) => component.type === 'ListView' && component.source === 'task_timesheet_entries');
+    const migration = readFileSync(join(serviceRoot, 'migrations/20260921191000-025-timesheets-task-action-calendar.yaml'), 'utf8');
+
+    expect(actionSource).toContain('<field name="view_mode">list,form,kanban,pivot,graph</field>');
+    expect(actionSource).toContain('<field name="view_mode">calendar</field>');
+    expect(taskSource).toContain("if view[1] == 'graph'");
+    expect(page.page).toMatchObject({ id: 'task-timesheets', route: '/task-timesheets' });
+    expect(page).not.toHaveProperty('datasources');
+    expect(api.page).toEqual({ id: 'task-timesheets' });
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'graph']);
+    expect(list.views).toContainEqual(expect.objectContaining({ id: 'calendar', date_field: 'work_date', card: expect.objectContaining({ title: 'calendar_display_name', subtitle: 'time_spent_display' }) }));
+    expect(entries).toMatchObject({ id: 'task_timesheet_entries', permission: 'timesheets.read', workflow: 'timesheet_entries' });
+    expect(entries.pivot.fields).toContain('calendar_display_name');
+    expect(migration).toContain('timesheet_entries_task_calendar_idx');
+  });
+
+  test('returns Calendar-ready durable task rows only in the current company', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    try {
+      const repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_task_calendar_scope', ['schema', 'data']);
+      const entries = yaml('api/task-timesheets.yaml').datasources.find((candidate: any) => candidate.id === 'task_timesheet_entries');
+
+      const rows = await repository.querySource(entries, valid, 0, 50);
+      expect(rows.data.map((row: any) => row.id)).toEqual(['timesheet-demo-001', 'timesheet-report-004']);
+      expect(rows.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'timesheet-demo-001', calendar_display_name: 'Core3 Implementation / Complete module migration', work_date: '2026-01-15', employee_name: 'Admin User', time_spent_display: '08:00' }),
+        expect.objectContaining({ id: 'timesheet-report-004', calendar_display_name: 'Core3 Implementation / Quality analysis', work_date: '2026-01-12', employee_name: 'Priya Shah', time_spent_display: '03:30' }),
+      ]));
+      expect((await repository.querySource(entries, { ...valid, current_company_name: 'Other Company' }, 0, 50)).data).toEqual([]);
+      expect((await repository.querySource(entries, { ...valid, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+      expect((await repository.querySource(entries, { ...valid, task_id: 'missing-task' }, 0, 50)).data).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
+  test('reflects a persisted guarded task row and rejects stale calendar edits', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    try {
+      const repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_task_calendar_create', ['schema', 'data']);
+      const api = yaml('api/task-timesheets.yaml');
+      const entries = api.datasources.find((candidate: any) => candidate.id === 'task_timesheet_entries');
+      const create = api.actions.find((candidate: any) => candidate.id === 'create_task_timesheet_entry').mutation;
+      const update = api.actions.find((candidate: any) => candidate.id === 'edit_task_timesheet_entry').mutation;
+      const values = {
+        name: 'TS/2026/TASK-CALENDAR', employee_id: 'employee-demo-001', employee_name: 'Admin User',
+        project_id: 'project-demo-001', project_name: 'Core3 Implementation', task_id: 'task-demo-001', task_name: 'Complete module migration',
+        context_task_id: 'task-demo-001', context_task_ids: 'task-demo-001', context_project_id: 'project-demo-001',
+        work_date: '2026-01-16', description: 'Calendar view row', hours: 1.25, current_company_name: 'Core3 Demo Company',
+      };
+
+      await repository.executeMutation(create, { id: 'timesheet-task-calendar-row', values });
+      expect((await repository.querySource(entries, { ...valid, include_subtasks: null }, 0, 50)).data.find((row: any) => row.id === 'timesheet-task-calendar-row')).toMatchObject({ calendar_display_name: 'Core3 Implementation / Complete module migration', work_date: '2026-01-16', time_spent_display: '01:15' });
+      expect(await repository.executeMutation(update, { id: 'timesheet-task-calendar-row', task_id: 'task-demo-001', expected_row_version: 1, values: { work_date: '2026-01-17', description: 'Calendar updated', hours: 2 } })).toMatchObject({ row_version: 2 });
+      await expect(repository.executeMutation(update, { id: 'timesheet-task-calendar-row', task_id: 'task-demo-001', expected_row_version: 1, values: { work_date: '2026-01-18', description: 'Stale calendar edit', hours: 3 } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    } finally {
+      database.close();
+    }
+  });
+
+  test('preserves Calendar-ready rows and migration replay across file-backed restart', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-timesheets-task-calendar-'));
+    const path = join(directory, 'timesheets.duckdb');
+    const migrations = join(serviceRoot, 'migrations');
+    const entries = yaml('api/task-timesheets.yaml').datasources.find((candidate: any) => candidate.id === 'task_timesheet_entries');
+    try {
+      const first = await DuckDbDatabase.open(path);
+      const repository = new YamlRepository(first);
+      await migrateDatabase(repository, migrations, undefined, 'timesheets_task_calendar_restart', ['schema', 'data']);
+      await migrateDatabase(repository, migrations, undefined, 'timesheets_task_calendar_restart', ['schema', 'data']);
+      const before = await repository.querySource(entries, valid, 0, 50);
+      first.close();
+
+      const second = await DuckDbDatabase.open(path);
+      const reopened = new YamlRepository(second);
+      await migrateDatabase(reopened, migrations, undefined, 'timesheets_task_calendar_restart', ['schema', 'data']);
+      expect(await reopened.querySource(entries, valid, 0, 50)).toEqual(before);
+      expect((await reopened.query("SELECT COUNT(*) AS count FROM timesheet_entries WHERE task_id = 'task-demo-001' AND company_name = 'Core3 Demo Company'")).at(0)?.count).toBe(1);
+      second.close();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+});

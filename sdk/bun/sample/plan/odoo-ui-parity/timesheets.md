@@ -1871,6 +1871,33 @@ Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
 visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
 open.
 
+## Wave 42 — `TIMESHEET-TASK-ACTION-CALENDAR-VIEW-001`
+
+Odoo's `timesheet_action_all` declares a Calendar view, and
+`project.task.action_view_subtask_timesheet` retains it for internal users
+while restricting rows to the task and descendants. This is distinct from the
+completed task-action Kanban and graph slices, project context, multi-scope,
+display-name, and earlier Timesheets work.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds a Calendar tab
+using `work_date`, `calendar_display_name`, employee, task, description, and
+time-spent card fields. It remains joined to the separate durable
+`api/task-timesheets.yaml` contract by `page.id: task-timesheets`; the existing
+permission, current-company, missing, empty, task-scope, guarded-create,
+stale-write, and concurrency boundaries remain enforced. Migration
+`20260921191000-025-timesheets-task-action-calendar.yaml` adds a replay-safe
+task/company/date/employee lookup index.
+
+Focused coverage is
+`test/timesheets_task_action_calendar_view.integration.test.ts`: 4 tests / 21
+expectations. The related regression reached 37 passing tests / 198
+expectations with one unrelated discovery failure from duplicate Employees
+datasource `employee_language_options`; scoped lint passes and the UI audit is
+blocked by that same shared-worktree defect. Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-calendar-view-001/`.
+Core3 and authenticated Odoo browser capture are blocked, so no visual or
+module sign-off is claimed. Odoo Print/PDF/action-surface blockers remain open.
+
 ## Wave 41 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
 
 The next uncovered branch of Odoo `project.task.action_view_subtask_timesheet`
