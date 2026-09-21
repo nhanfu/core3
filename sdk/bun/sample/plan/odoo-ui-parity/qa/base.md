@@ -18,6 +18,9 @@ Runtime: `bun run agent:module -- base --port=4010`
 - [ ] Authenticated attachment upload/download journey; attachment panel is
       not currently visible in the shared renderer.
 - [ ] Fresh paired Odoo visual comparison for this candidate.
+- [x] Contact duplicate workflow contract, guards, and restart coverage.
+- [ ] Fresh authenticated Core3 desktop/mobile duplicate captures; bsk sessions
+      stopped before the transition could be captured.
 
 ## Decision
 
@@ -25,6 +28,20 @@ Runtime: `bun run agent:module -- base --port=4010`
 and paired Odoo comparison remain open. Authenticated evidence includes the
 mobile list and desktop/mobile detail; the desktop list capture is excluded
 because its run had a transient `/api/apps` failure.
+
+## QA verification: contact duplicate workflow `BASE-CONTACT-DUPLICATE-001` (2026-09-22)
+
+- Focused Base duplicate plus regression suite: **13 tests / 132 assertions**
+  passed.
+- UI audit: **799 pages / 808 routes / 1,646 datasources** passed; frontend
+  build and `git diff --check` passed.
+- Odoo 19 live reference showed the Actions > Duplicate menu and opened
+  `Codex QA 2 (copy)`. Core3 authenticated detail and Actions > Duplicate were
+  observed before the browser session disappeared.
+- Blocker `BASE-CONTACT-DUPLICATE-QA-001`: bsk session `pwew` stopped before
+  navigation with `session not registered or already stopped`; no fresh Core3
+  desktop/mobile screenshots exist for the duplicate transition. Contract
+  sign-off is recorded, but visual parity remains open.
 
 ## QA result: attachment panel candidate `bb3487c2` (2026-09-13)
 

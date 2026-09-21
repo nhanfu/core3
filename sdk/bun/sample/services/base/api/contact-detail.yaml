@@ -71,6 +71,42 @@ actions:
       - { field: currency_code, label: Currency, type: text }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
+  - id: duplicate_contact
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    mutation:
+      before_steps:
+        - query: "SELECT COALESCE(NULLIF(CAST(:duplicate_id AS VARCHAR), ''), 'contact-copy-' || regexp_replace(lower(CAST(:source_id AS VARCHAR)), '[^a-z0-9]+', '-', 'g') || '-' || CAST((SELECT COUNT(*) + 1 FROM base_contacts existing WHERE existing.id LIKE 'contact-copy-' || regexp_replace(lower(CAST(:source_id AS VARCHAR)), '[^a-z0-9]+', '-', 'g') || '-%') AS VARCHAR)) AS duplicate_id, source.name || ' (copy)' AS duplicate_name FROM base_contacts source WHERE source.id = :source_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :source_id", status: 404, code: BASE_CONTACT_DUPLICATE_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :source_id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact is outside the current company or archived. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :source_id AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_DUPLICATE_STALE, message: The contact changed before it could be duplicated. Reload it and try again. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE id = COALESCE(NULLIF(CAST(:duplicate_id AS VARCHAR), ''), 'contact-copy-' || regexp_replace(lower(CAST(:source_id AS VARCHAR)), '[^a-z0-9]+', '-', 'g') || '-' || CAST((SELECT COUNT(*) + 1 FROM base_contacts existing WHERE existing.id LIKE 'contact-copy-' || regexp_replace(lower(CAST(:source_id AS VARCHAR)), '[^a-z0-9]+', '-', 'g') || '-%') AS VARCHAR)))", status: 409, code: BASE_CONTACT_DUPLICATE_EXISTS, message: The duplicate contact already exists. Retry with a fresh request. }
+      steps:
+        - query: "INSERT INTO base_contacts(id, row_version, name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, active, notes, created_at, updated_at, parent_company_id, website, language_code, company_id) SELECT :duplicate_id, 1, :duplicate_name, source.company_type, source.email, source.phone, source.street, source.street2, source.city, source.state_name, source.zip, source.country_name, source.currency_code, source.is_company, true, source.notes, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, source.parent_company_id, source.website, source.language_code, source.company_id FROM base_contacts source WHERE source.id = :source_id"
+          expect_changed: true
+          status: 409
+          code: BASE_CONTACT_DUPLICATE_FAILED
+          message: The contact could not be duplicated.
+        - query: "INSERT INTO base_contact_categories_rel(contact_id, category_id, category_name) SELECT :duplicate_id, category_id, category_name FROM base_contact_categories_rel WHERE contact_id = :source_id ON CONFLICT (contact_id, category_id) DO NOTHING"
+      result: { query: "SELECT * FROM base_contacts WHERE id = :duplicate_id" }
+  - id: duplicate_contact_ui
+    type: client
+    permission: base.contacts.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const result = await request('/api/actions/base.contacts.duplicate', {
+          method: 'POST',
+          body: { id: row.id, source_id: row.id, expected_row_version: row.row_version },
+        });
+        const app = await import('/app.ts');
+        await app.navigate('/contacts/detail', { id: String(result.id) });
+      }
   - id: schedule_activity
     type: server_form
     permission: base.activities.write

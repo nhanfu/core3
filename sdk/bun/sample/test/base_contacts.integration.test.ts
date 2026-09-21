@@ -222,7 +222,6 @@ describe('Base Contacts list/card/detail parity batch', () => {
     const actions = yaml('api/contacts.yaml').actions;
     const create = actions.find((candidate: any) => candidate.id === 'create_contact');
     const edit = actions.find((candidate: any) => candidate.id === 'edit_contact');
-    const duplicate = actions.find((candidate: any) => candidate.id === 'duplicate_contact');
 
     const scoped = await repository.executeMutation(create.mutation, {
       current_company_id: 'company-demo',
@@ -240,10 +239,6 @@ describe('Base Contacts list/card/detail parity batch', () => {
     await expect(repository.executeMutation(create.mutation, {
       current_company_id: 'company-demo',
       values: { name: 'Duplicate Scoped Contact', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: 'company-azure', is_company: false },
-    })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_EMAIL_EXISTS' });
-    await expect(repository.executeMutation(duplicate.mutation, {
-      current_company_id: 'company-demo',
-      values: { name: 'Duplicate Action Contact', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: 'company-azure', is_company: false },
     })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_EMAIL_EXISTS' });
     expect((await repository.query("SELECT COUNT(*) AS count FROM base_contacts WHERE email = 'scoped-hierarchy@core3.local'"))[0].count).toBe(1);
 

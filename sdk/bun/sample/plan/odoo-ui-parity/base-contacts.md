@@ -358,3 +358,20 @@ paired authenticated captures are blocked by an
 unrelated pre-existing page-discovery failure in another module:
 `components[0].filters[6].options[0].id must be a non-empty string`; no Core3
 visual-parity claim is made for this slice.
+
+## Contact duplicate workflow slice (2026-09-22)
+
+This bounded slice implements the next uncovered Contacts workflow: Odoo's
+contact-detail Actions > Duplicate flow. `pages/contact-detail.yaml` owns the
+layout-only Actions menu and `api/contact-detail.yaml` owns the client/server
+actions, joined by `page.id: contact-detail`. The durable mutation copies the
+contact fields and category relations, names the new row `<source> (copy)`,
+and enforces write permission, active/current-company scope, row-version
+concurrency, and deterministic duplicate-ID guards. File-backed restart and
+second-copy behavior are covered by
+`test/base_contact_duplicate.integration.test.ts`.
+
+Local Odoo source and the authenticated live reference were compared. Odoo
+visual behavior was observed, but the final Core3 bsk sessions stopped before a
+fresh desktop/mobile duplicate capture; the evidence folder records the exact
+blocker and makes no visual parity claim.

@@ -131,3 +131,21 @@ frontend build, and diff-check; QA reports file-backed reopen/replay, exact
 upload/download, hierarchy/CRUD/stale/permission, and desktop/mobile evidence.
 The shared attachment-panel UI journey and fresh authenticated Odoo comparison
 remain open; no full Base sign-off.
+
+## Contact duplicate workflow slice (2026-09-22)
+
+Odoo 19's authenticated Contacts form exposes Duplicate from the Actions menu
+and opens a new editable contact named with the source name plus ` (copy)`.
+Core3 now exposes the same bounded workflow from `contact-detail`: the page
+owns the Actions menu, while `api/contact-detail.yaml` owns the permissioned
+client/server actions and durable mutation. The mutation copies contact fields
+and category relations, uses deterministic IDs, and guards missing, archived,
+wrong-company, stale, and duplicate-ID requests.
+
+`test/base_contact_duplicate.integration.test.ts` covers the page/API
+separation, data and relation copying, guards, second-copy numbering, and
+file-backed restart. The suite, UI audit, frontend build, and diff check pass.
+Live Odoo menu/copy behavior was observed, but fresh Core3 desktop/mobile
+captures were blocked when bsk sessions stopped before the duplicate transition;
+no visual parity sign-off is claimed. Evidence is in
+`evidence/base/2026-09-22/BASE-CONTACT-DUPLICATE-001/`.

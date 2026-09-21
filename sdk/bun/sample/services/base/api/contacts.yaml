@@ -116,28 +116,6 @@ actions:
       - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
-  - id: duplicate_contact
-    type: server_form
-    permission: base.contacts.write
-    title: Duplicate contact
-    action: base.contacts.duplicate
-    handler: yaml_mutation
-    operation: create
-    prefill: row
-    refresh: [contacts]
-    mutation:
-      operation: insert
-      table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, company_id, parent_company_id, currency_code, is_company, notes]
-      required: [name]
-      defaults: { active: true }
-      guards:
-        - { query: "SELECT CAST(NULLIF(:current_company_id, '') AS VARCHAR) AS company_id WHERE COALESCE(:current_company_id, '') = '' OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :current_company_id AND is_company = true AND active = true)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact company is not available to the current user, assign: true }
-        - { query: "SELECT 1 WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists }
-        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id))", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company in the current company. }
-        - { query: "WITH RECURSIVE ancestors(id, parent_company_id) AS (SELECT id, parent_company_id FROM base_contacts WHERE id = :parent_company_id UNION ALL SELECT c.id, c.parent_company_id FROM base_contacts c JOIN ancestors a ON c.id = a.parent_company_id WHERE a.parent_company_id IS NOT NULL) SELECT 1 WHERE :parent_company_id IS NULL OR NOT EXISTS (SELECT 1 FROM ancestors WHERE id = :id)", status: 422, code: BASE_PARENT_COMPANY_CYCLE, message: A contact cannot be assigned below one of its descendants. }
-      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
-    fields: [{ field: name, label: Name, type: text, required: true }, { field: company_type, label: Type, type: select, options_source: contact_types }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: country_name, label: Country, type: text }, { field: notes, label: Notes, type: textarea }]
   - id: archive_contact
     type: server
     permission: base.contacts.write

@@ -16,6 +16,12 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: edit_contact_detail, label: Edit, variant: secondary, permission: base.contacts.write }
+    action_menu:
+      label: Actions
+      aria_label: Actions menu
+      icon: more-vertical
+      actions:
+        - { id: duplicate_contact_ui, label: Duplicate, icon: copy, permission: base.contacts.write }
     stat_buttons:
       - { id: open_contact_livechat, label: Live Chat, value_field: livechat_channel_count, permission: livechat.read, show_if: 'row.livechat_channel_count > 0' }
       - { id: open_contact_opportunities, label: Opportunities, value_field: opportunities_count, permission: base.contacts.read }
