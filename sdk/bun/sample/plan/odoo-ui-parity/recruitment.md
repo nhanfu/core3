@@ -1,6 +1,58 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-10-implemented-odoo-reference-menu-blocked`
+Status: `batch-11-implemented-activity-types-odoo-reference-blocked`
+
+## Batch 11 — Configuration → Activities → Activity Types
+
+The next uncovered bounded action is Odoo's Recruitment-specific Activity Types
+configuration. Local Odoo 19 source revision `659759969d535d286b656c96b675e4612b925ddd`
+defines menu `hr_recruitment_menu_config_activity_type` under Recruitment →
+Configuration → Activities, action `mail_activity_type_action_config_hr_applicant`,
+model `mail.activity.type`, view modes `list,kanban,form`, domain
+`res_model IS NULL OR res_model = 'hr.applicant'`, and default model
+`hr.applicant`. The source list exposes sequence, name, default summary, planned
+delay, delay type, and optional next-activity fields; the form exposes Activity
+Settings, scheduling, and next-activity chaining controls. Odoo's model access
+grants ordinary users read-only access and system users CRUD; Core3 maps the
+read boundary to `recruitment.read` and write/archive/delete operations to the
+existing manager-equivalent `recruitment.manage` permission.
+
+Core3 adds `/recruitment/activity-types` with page id
+`recruitment-activity-types`, visible List/Kanban tabs, Odoo empty-state copy,
+and a page-local API fragment joined by the same `page.id`. Migration
+`20260922100000-015-recruitment-activity-types.yaml` creates durable activity
+type configuration with fixed 2026-01-15 timestamps and deterministic Email,
+Call, Interview, To Do, and archived Upload Document fixtures. Create/update
+guards validate names, delay ranges/options, model scope, and mutually exclusive
+suggest/trigger chaining. Archive/restore are optimistic-concurrency guarded
+state transitions; delete rejects activity types referenced by applicant
+activities. The API explicitly declares unauthorized, forbidden, transport,
+empty, no-result, missing-record, validation, stale-row, and in-use states.
+
+Focused verification:
+
+- `bun test test/recruitment_activity_types.integration.test.ts` — 4 passed,
+  0 failed, 45 assertions.
+- `bun run audit` — passed: 782 pages, 791 routes, 1604 datasources.
+- `bunx eslint test/recruitment_activity_types.integration.test.ts` — passed.
+- `git diff --check` — passed.
+- File-backed restart coverage verifies an archived activity type remains
+  archived with incremented `row_version` after close/reopen.
+
+Browser/reference evidence is blocked and no visual-parity claim is made. In
+the authenticated BrowserSkill session on browser instance `245ea108`, the
+`core3_reference` launcher exposed Discuss, Calendar, To-do, Contacts, CRM,
+Sales, Dashboards, Point of Sale, Invoicing, Project, Timesheets, Events,
+Surveys, Purchase, Inventory, Maintenance, Employees, and Expenses, but no
+Recruitment application. Direct navigation to
+`http://localhost:8069/odoo/recruitment?db=core3_reference` returned the Discuss
+shell rather than a Recruitment action. Exact desktop/mobile blocker captures
+and hashes are recorded under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-ACTIVITY-TYPES-001/`;
+the screenshots remain outside Git under `/tmp/core3-odoo-parity/`.
+The isolated Core3 runtime attempt also stopped during YAML startup on the
+pre-existing cross-module duplicate action `time_off.requests.refuse`; this
+Recruitment batch did not modify that scope.
 
 ## Batch 10 — Applications → Calendar
 

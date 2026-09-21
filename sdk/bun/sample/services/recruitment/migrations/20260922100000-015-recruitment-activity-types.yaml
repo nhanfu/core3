@@ -1,0 +1,45 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_activity_types (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL,
+        summary VARCHAR,
+        category VARCHAR NOT NULL DEFAULT 'default',
+        default_user VARCHAR,
+        delay_count INTEGER NOT NULL DEFAULT 0,
+        delay_unit VARCHAR NOT NULL DEFAULT 'days',
+        delay_from VARCHAR NOT NULL DEFAULT 'previous_activity',
+        res_model VARCHAR,
+        chaining_type VARCHAR NOT NULL DEFAULT 'suggest',
+        triggered_next_activity VARCHAR,
+        suggested_next_activities VARCHAR,
+        default_note VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        CONSTRAINT recruitment_activity_types_delay_check CHECK (delay_count >= 0 AND delay_count <= 3650),
+        CONSTRAINT recruitment_activity_types_category_check CHECK (category IN ('default', 'upload_file', 'phonecall')),
+        CONSTRAINT recruitment_activity_types_delay_unit_check CHECK (delay_unit IN ('days', 'weeks', 'months')),
+        CONSTRAINT recruitment_activity_types_delay_from_check CHECK (delay_from IN ('current_date', 'previous_activity')),
+        CONSTRAINT recruitment_activity_types_model_check CHECK (res_model IS NULL OR res_model = 'hr.applicant'),
+        CONSTRAINT recruitment_activity_types_chain_check CHECK (chaining_type IN ('suggest', 'trigger'))
+      );
+      INSERT OR IGNORE INTO recruitment_activity_types (id, sequence, name, summary, category, default_user, delay_count, delay_unit, delay_from, res_model, chaining_type, triggered_next_activity, suggested_next_activities, default_note, active) VALUES
+        ('activity-type-email', 1, 'Email', 'Send an email to the applicant', 'default', 'Recruitment Officer', 0, 'days', 'previous_activity', 'hr.applicant', 'suggest', '', 'Call', 'Share the next step with the applicant.', TRUE),
+        ('activity-type-call', 2, 'Call', 'Call the applicant', 'phonecall', 'Recruitment Officer', 2, 'days', 'previous_activity', 'hr.applicant', 'suggest', '', 'Interview', 'Confirm availability and expectations.', TRUE),
+        ('activity-type-interview', 3, 'Interview', 'Schedule an interview', 'default', 'Recruitment Manager', 5, 'days', 'current_date', 'hr.applicant', 'trigger', 'Send Offer', '', 'Record the interview outcome in the application.', TRUE),
+        ('activity-type-to-do', 4, 'To Do', 'Follow up on the application', 'default', 'Recruitment Officer', 1, 'weeks', 'previous_activity', NULL, 'suggest', '', 'Email', 'Review the application before the next contact.', TRUE),
+        ('activity-type-upload-document', 5, 'Upload Document', 'Request a résumé or supporting document', 'upload_file', 'Recruitment Officer', 0, 'days', 'current_date', 'hr.applicant', 'suggest', '', '', 'Attach the requested document to the application.', FALSE);
+      CREATE INDEX IF NOT EXISTS recruitment_activity_types_active_idx ON recruitment_activity_types(active, sequence);
+      CREATE INDEX IF NOT EXISTS recruitment_activity_types_name_idx ON recruitment_activity_types(name);
+    down: |
+      DROP TABLE IF EXISTS recruitment_activity_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

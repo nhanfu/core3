@@ -1,0 +1,124 @@
+page: { id: recruitment-activity-types }
+datasources:
+  - id: recruitment_activity_types
+    permission: recruitment.read
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_ACTIVITY_TYPES_UNAUTHORIZED, message: Sign in to view Recruitment activity types. }
+      forbidden: { status: 403, code: RECRUITMENT_ACTIVITY_TYPES_FORBIDDEN, message: You do not have permission to view Recruitment activity types. }
+      transport_error: { status: 503, code: RECRUITMENT_ACTIVITY_TYPES_UNAVAILABLE, message: Recruitment activity types are temporarily unavailable. }
+    query: "SELECT id, row_version, sequence, name, summary, category, default_user, delay_count, delay_unit, delay_from, CAST(delay_count AS VARCHAR) || ' ' || delay_unit AS delay_label, CASE delay_from WHEN 'current_date' THEN 'After previous activity completion date' ELSE 'After previous activity deadline' END AS delay_from_label, res_model, CASE WHEN res_model = 'hr.applicant' THEN 'Applicants' ELSE 'Available everywhere' END AS res_model_label, chaining_type, triggered_next_activity, suggested_next_activities, default_note, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM recruitment_activity_types WHERE (res_model IS NULL OR res_model = 'hr.applicant') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND ((:active IS NULL AND active = TRUE) OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(summary, '') ILIKE '%' || :q || '%' OR COALESCE(default_user, '') ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+actions:
+  - id: create_recruitment_activity_type
+    type: server_form
+    permission: recruitment.manage
+    title: New Activity Type
+    action: recruitment.activity_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_activity_types]
+    mutation:
+      operation: insert
+      table: recruitment_activity_types
+      generated: [id]
+      fields: [sequence, name, summary, category, default_user, delay_count, delay_unit, delay_from, res_model, chaining_type, triggered_next_activity, suggested_next_activities, default_note, active]
+      required: [name]
+      defaults: { sequence: 10, category: default, default_user: '', delay_count: 0, delay_unit: days, delay_from: previous_activity, res_model: hr.applicant, chaining_type: suggest, triggered_next_activity: '', suggested_next_activities: '', default_note: '', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_NAME_REQUIRED, message: An activity type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_activity_types WHERE LOWER(name) = LOWER(TRIM(:name)) AND (res_model IS NULL OR res_model = 'hr.applicant'))", status: 409, code: RECRUITMENT_ACTIVITY_TYPE_NAME_EXISTS, message: An activity type with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:delay_count AS INTEGER) >= 0 AND TRY_CAST(:delay_count AS INTEGER) <= 3650", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_DELAY_INVALID, message: Delay must be between 0 and 3650. }
+        - { query: "SELECT 1 AS ok WHERE :category IN ('default', 'upload_file', 'phonecall') AND :delay_unit IN ('days', 'weeks', 'months') AND :delay_from IN ('current_date', 'previous_activity') AND :chaining_type IN ('suggest', 'trigger')", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_OPTIONS_INVALID, message: Select valid activity type options. }
+        - { query: "SELECT 1 AS ok WHERE (:chaining_type = 'trigger' AND LENGTH(TRIM(COALESCE(CAST(:triggered_next_activity AS VARCHAR), ''))) > 0 AND LENGTH(TRIM(COALESCE(CAST(:suggested_next_activities AS VARCHAR), ''))) = 0) OR (:chaining_type = 'suggest' AND LENGTH(TRIM(COALESCE(CAST(:triggered_next_activity AS VARCHAR), ''))) = 0)", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_CHAIN_INVALID, message: Choose one valid next-activity chaining mode. }
+      result: { query: "SELECT * FROM recruitment_activity_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true, placeholder: e.g. Schedule a meeting }
+      - { field: category, label: Action, type: select, options: [{ value: default, label: None }, { value: upload_file, label: Upload Document }, { value: phonecall, label: Phonecall }] }
+      - { field: default_user, label: Default User, type: text, placeholder: Optional responsible user }
+      - { field: summary, label: Default Summary, type: text, placeholder: e.g. Discuss proposal }
+      - { field: delay_count, label: Schedule, type: number, required: true, min: 0, max: 3650, step: 1 }
+      - { field: delay_unit, label: Delay units, type: select, options: [days, weeks, months], required: true }
+      - { field: delay_from, label: Delay Type, type: select, options: [{ value: current_date, label: after previous activity completion date }, { value: previous_activity, label: after previous activity deadline }], required: true }
+      - { field: chaining_type, label: Chaining Type, type: select, options: [{ value: suggest, label: Suggest Next Activity }, { value: trigger, label: Trigger Next Activity }], required: true }
+      - { field: triggered_next_activity, label: Triggered Next Activity, type: text, placeholder: Required when chaining type is Trigger }
+      - { field: suggested_next_activities, label: Suggested Next Activities, type: text, placeholder: Comma-separated activity names }
+      - { field: default_note, label: Default Note, type: textarea, placeholder: e.g. Go over the offer and discuss details }
+  - id: edit_recruitment_activity_type
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Activity Type
+    action: recruitment.activity_types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_activity_types]
+    mutation:
+      operation: update
+      table: recruitment_activity_types
+      fields: [sequence, name, summary, category, default_user, delay_count, delay_unit, delay_from, res_model, chaining_type, triggered_next_activity, suggested_next_activities, default_note]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_activity_types WHERE id = :id", status: 404, code: RECRUITMENT_ACTIVITY_TYPE_NOT_FOUND, message: Activity type not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_activity_types WHERE LOWER(name) = LOWER(TRIM(:name)) AND id <> :id AND (res_model IS NULL OR res_model = 'hr.applicant'))", status: 409, code: RECRUITMENT_ACTIVITY_TYPE_NAME_EXISTS, message: An activity type with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:delay_count AS INTEGER) >= 0 AND TRY_CAST(:delay_count AS INTEGER) <= 3650", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_DELAY_INVALID, message: Delay must be between 0 and 3650. }
+        - { query: "SELECT 1 AS ok WHERE :category IN ('default', 'upload_file', 'phonecall') AND :delay_unit IN ('days', 'weeks', 'months') AND :delay_from IN ('current_date', 'previous_activity') AND :chaining_type IN ('suggest', 'trigger')", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_OPTIONS_INVALID, message: Select valid activity type options. }
+        - { query: "SELECT 1 AS ok WHERE (:chaining_type = 'trigger' AND LENGTH(TRIM(COALESCE(CAST(:triggered_next_activity AS VARCHAR), ''))) > 0 AND LENGTH(TRIM(COALESCE(CAST(:suggested_next_activities AS VARCHAR), ''))) = 0) OR (:chaining_type = 'suggest' AND LENGTH(TRIM(COALESCE(CAST(:triggered_next_activity AS VARCHAR), ''))) = 0)", status: 422, code: RECRUITMENT_ACTIVITY_TYPE_CHAIN_INVALID, message: Choose one valid next-activity chaining mode. }
+        - { query: "SELECT id FROM recruitment_activity_types WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: The activity type changed by another user. Reload it before saving. }
+      result: { query: "SELECT * FROM recruitment_activity_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true, placeholder: e.g. Schedule a meeting }
+      - { field: category, label: Action, type: select, options: [{ value: default, label: None }, { value: upload_file, label: Upload Document }, { value: phonecall, label: Phonecall }] }
+      - { field: default_user, label: Default User, type: text, placeholder: Optional responsible user }
+      - { field: summary, label: Default Summary, type: text, placeholder: e.g. Discuss proposal }
+      - { field: delay_count, label: Schedule, type: number, required: true, min: 0, max: 3650, step: 1 }
+      - { field: delay_unit, label: Delay units, type: select, options: [days, weeks, months], required: true }
+      - { field: delay_from, label: Delay Type, type: select, options: [{ value: current_date, label: after previous activity completion date }, { value: previous_activity, label: after previous activity deadline }], required: true }
+      - { field: chaining_type, label: Chaining Type, type: select, options: [{ value: suggest, label: Suggest Next Activity }, { value: trigger, label: Trigger Next Activity }], required: true }
+      - { field: triggered_next_activity, label: Triggered Next Activity, type: text, placeholder: Required when chaining type is Trigger }
+      - { field: suggested_next_activities, label: Suggested Next Activities, type: text, placeholder: Comma-separated activity names }
+      - { field: default_note, label: Default Note, type: textarea, placeholder: e.g. Go over the offer and discuss details }
+  - id: archive_recruitment_activity_type
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_types.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_activity_types]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', values: { active: false } }
+    mutation:
+      operation: update
+      table: recruitment_activity_types
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_activity_types WHERE id = :id AND active = TRUE", status: 404, code: RECRUITMENT_ACTIVITY_TYPE_NOT_FOUND, message: Active activity type not found. }]
+      result: { query: "SELECT * FROM recruitment_activity_types WHERE id = :id" }
+  - id: restore_recruitment_activity_type
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_types.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_activity_types]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', values: { active: true } }
+    mutation:
+      operation: update
+      table: recruitment_activity_types
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_activity_types WHERE id = :id AND active = FALSE", status: 404, code: RECRUITMENT_ACTIVITY_TYPE_NOT_FOUND, message: Archived activity type not found. }]
+      result: { query: "SELECT * FROM recruitment_activity_types WHERE id = :id" }
+  - id: delete_recruitment_activity_type
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_types.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete activity type {{row.name}}?'
+    refresh: [recruitment_activity_types]
+    mutation:
+      operation: delete
+      table: recruitment_activity_types
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_activity_types WHERE id = :id", status: 404, code: RECRUITMENT_ACTIVITY_TYPE_NOT_FOUND, message: Activity type not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a JOIN recruitment_activity_types t ON t.id = :id WHERE a.activity_type = t.name)", status: 409, code: RECRUITMENT_ACTIVITY_TYPE_IN_USE, message: Activity types used by applicant activities cannot be deleted. Archive it instead. }

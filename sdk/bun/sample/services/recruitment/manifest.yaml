@@ -30,4 +30,5 @@ menu:
         - { path: /recruitment/degrees, label: Degrees, icon: list, permission: recruitment.manage }
         - { path: /recruitment/refuse-reasons, label: Refuse Reasons, icon: list, permission: recruitment.manage }
         - { path: /recruitment/tags, label: Tags, icon: list, permission: recruitment.manage }
+        - { path: /recruitment/activity-types, label: Activity Types, icon: activity, permission: recruitment.read }
         - { path: /recruitment/emails, label: Emails, icon: mail, permission: recruitment.manage }

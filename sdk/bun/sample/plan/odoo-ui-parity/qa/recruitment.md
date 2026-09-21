@@ -1,5 +1,29 @@
 # recruitment QA ledger
 
+## Batch 11 QA — Activity Types — 2026-09-22
+
+- Candidate scope: Recruitment Activity Types only.
+- Focused test: `bun test test/recruitment_activity_types.integration.test.ts` —
+  4 passed, 0 failed, 45 assertions.
+- Static gates: `bun run audit` passed (782 pages, 791 routes, 1604
+  datasources); targeted ESLint passed; `git diff --check` passed.
+- Functional coverage: page/API `page.id` join, List/Kanban contract, deterministic
+  migration and idempotent rerun, search, active/archived filtering, empty
+  results, create/update/delete, duplicate/required/option/delay/chaining
+  validation, archive/restore state guards, in-use delete protection, missing
+  and stale row conflicts, permission declarations, and file-backed restart
+  persistence.
+- Odoo blocker: the authenticated `core3_reference` BrowserSkill session had no
+  Recruitment launcher entry; direct `/odoo/recruitment?db=core3_reference`
+  returned Discuss. Desktop and mobile blocker captures are recorded in the
+  batch evidence directory; no paired Odoo visual comparison or parity sign-off
+  is claimed.
+- Core3 browser blocker: the isolated runtime stopped during YAML startup on
+  the unrelated duplicate named action `time_off.requests.refuse`; no
+  authenticated Core3 screenshot is claimed for this batch.
+- QA decision: functional batch complete; visual/reference gate blocked by the
+  live environment. Broader Recruitment sign-off remains pending.
+
 ## Bounded QA finalization — 2026-09-13
 
 - Candidate under test: `d1b2cb6615b421ac3235943e2389f366690b2ff1`
