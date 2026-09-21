@@ -2460,3 +2460,28 @@ the current Odoo Education XML also omits `study_school` even though the
 `hr.employee` model defines it. These exact blockers are recorded in
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-LANGUAGE-001: Employee language preference (2026-09-21)
+
+The next uncovered source-backed employee setting is Odoo's
+`hr.employee.lang`, populated from installed `res.lang` records and exercised
+by the HR profile form. This is distinct from the completed employee timezone
+workflow.
+
+Core3 adds migration `20260922290000-083` with a durable local language
+catalog (`en_US`, `vi_VN`, and `de_DE`) and deterministic employee language
+fixtures. The API reads `lang`, exposes a permissioned language catalog, and
+adds `edit_employee_language` with `employees.write`, actor,
+active/current-company, missing, stale row-version, and installed-language
+guards. The create/edit contracts also persist Language. The page contract is
+layout-only, joins the API through `page.id: employee-detail`, and renders the
+Language setting plus its header action.
+
+Focused verification is **4 tests / 23 assertions** for language CRUD,
+boundaries, catalog persistence, migration replay, and file-backed restart;
+the adjacent timezone and education regressions are **12 tests / 62
+assertions**. Authenticated Core3 desktop/mobile captures render Language with
+zero failed requests. Odoo desktop/mobile authentication is blocked by
+rejected `admin/admin` credentials followed by rate limiting. Evidence is
+under `evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.
+No aggregate Employees sign-off is claimed.

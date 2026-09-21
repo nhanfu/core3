@@ -859,3 +859,17 @@ Focused tests: `test/employees_education_school.integration.test.ts` plus
 `test/employees_education.integration.test.ts` (**8 tests / 42 assertions**).
 Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
+
+## EMP-EMPLOYEE-LANGUAGE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `hr.employee.lang` and profile field map to the API catalog/detail contracts and Settings page through `page.id` | pass |
+| Language CRUD | Create and dedicated guarded edit persist an installed language and increment employee row version | pass |
+| Permission and scope | `employees.write`, actor, active/current company, missing, stale, and unsupported-language boundaries reject atomically | pass |
+| Persistence | Deterministic catalog/fixtures, migration replay, and file-backed restart preserve Language without duplicates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture-company mismatch is recorded, Odoo credentials/rate limit block authenticated comparison |
+
+Focused test: `test/employees_language.integration.test.ts` (4 tests, 23
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.

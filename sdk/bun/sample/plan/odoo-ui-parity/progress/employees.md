@@ -1217,3 +1217,21 @@ Candidate commit: current working tree
   evidence. Evidence:
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-LANGUAGE-001 (2026-09-21)
+
+- Selected Odoo `hr.employee.lang` as the smallest uncovered employee setting
+  after Education School; source coverage is the model field plus the HR
+  profile form test's `<field name="lang"/>`.
+- Added migration `20260922290000-083` with durable local installed-language
+  catalog rows and deterministic employee language fixtures. API/page YAML
+  remain separate and join through `page.id: employee-detail`.
+- Added `edit_employee_language` with `employees.write`, actor,
+  active/current-company, missing, stale, and installed-language guards;
+  create/edit/read persistence is covered.
+- Focused verification: **4 tests / 23 assertions**; adjacent timezone and
+  education regression run: **12 tests / 62 assertions**. Core3 authenticated
+  desktop/mobile evidence has no failed browser requests. Odoo desktop/mobile
+  is blocked by rejected `admin/admin` followed by rate limiting. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.
+- No aggregate Employees sign-off is claimed.

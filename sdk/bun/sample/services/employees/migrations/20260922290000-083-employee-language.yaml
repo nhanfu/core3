@@ -1,0 +1,31 @@
+version: 0.0.83
+kind: data
+description: Persist Odoo employee language preference
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS lang VARCHAR;
+      CREATE TABLE IF NOT EXISTS employee_languages (
+        code VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO employee_languages(code, name, active) VALUES
+        ('en_US', 'English (US)', true),
+        ('vi_VN', 'Vietnamese', true),
+        ('de_DE', 'German', true)
+      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, active = EXCLUDED.active;
+      UPDATE employees
+      SET lang = COALESCE(NULLIF(lang, ''), CASE id
+        WHEN 'employee-demo-001' THEN 'en_US'
+        WHEN 'employee-demo-002' THEN 'vi_VN'
+        WHEN 'employee-demo-003' THEN 'de_DE'
+        WHEN 'employee-demo-004' THEN 'en_US'
+        ELSE 'en_US' END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS lang;
+      DROP TABLE IF EXISTS employee_languages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

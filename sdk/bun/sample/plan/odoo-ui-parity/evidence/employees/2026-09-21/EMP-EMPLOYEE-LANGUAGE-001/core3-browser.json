@@ -1,0 +1,24 @@
+{
+  "target": "Core3",
+  "login_status": 200,
+  "sessions": [
+    {
+      "kind": "desktop",
+      "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "settings_clicked": true,
+      "body_contains_language": true,
+      "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nUser and attendance\nRelated User\n—\nTimezone\n—\nLanguage\n—\nBadge ID\n—\nPresence\n—\nApprovers\nHR Responsible\n—\nAttendance / Point of Sale\nPIN Code\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet.",
+      "request_failures": []
+    },
+    {
+      "kind": "mobile",
+      "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "settings_clicked": true,
+      "body_contains_language": true,
+      "body_excerpt": "AU\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nUser and attendance\nRelated User\n—\nTimezone\n—\nLanguage\n—\nBadge ID\n—\nPresence\n—\nApprovers\nHR Responsible\n—\nAttendance / Point of Sale\nPIN Code\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet.",
+      "request_failures": []
+    }
+  ]
+}

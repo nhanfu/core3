@@ -1,0 +1,22 @@
+{
+  "target": "Odoo",
+  "login_attempt": "admin/admin",
+  "sessions": [
+    {
+      "kind": "desktop",
+      "url": "http://127.0.0.1:8069/web/login",
+      "title": "Odoo",
+      "authenticated": false,
+      "body_excerpt": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "request_failures": []
+    },
+    {
+      "kind": "mobile",
+      "url": "http://127.0.0.1:8069/web/login",
+      "title": "Odoo",
+      "authenticated": false,
+      "body_excerpt": "Skip to Content\nEmail\nPassword\nReset Password\n\nToo many login failures, please wait a bit before trying again.\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "request_failures": []
+    }
+  ]
+}

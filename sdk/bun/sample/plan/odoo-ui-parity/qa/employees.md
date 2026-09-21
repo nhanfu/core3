@@ -38,6 +38,21 @@ No aggregate Employees sign-off is claimed.
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-CONTACTS-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-LANGUAGE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-059 | Odoo `hr.employee.lang` to paired page/API contracts | pass; model/profile source mapping, detail projection, catalog datasource, and `page.id: employee-detail` binding are covered |
+| EMP-WF-059 | Create/edit employee Language | pass; supported language values persist and increment employee row version |
+| EMP-PERM-059 | `employees.write`, actor, company, missing, stale, and catalog validation | pass; invalid requests reject atomically without changing Language or row version |
+| EMP-DATA-059 | Migration replay and file-backed restart | pass; language catalog and employee preference survive restart without duplicate rows |
+| EMP-UI-055 | Authenticated Core3 desktop/mobile and Odoo comparison | conditional; Core3 renders Language with zero failed requests but fixture values are hidden by the Demo Company context; Odoo credentials were rejected and then rate-limited |
+
+Focused test: `test/employees_language.integration.test.ts` (4 tests, 23
+assertions). Adjacent regression run: 12 tests, 62 assertions. Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-ATTACHMENTS-001 execution (2026-09-21)
 
 | Case | Scope | Result |
