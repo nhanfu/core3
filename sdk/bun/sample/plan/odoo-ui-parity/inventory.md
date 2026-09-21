@@ -2534,3 +2534,28 @@ boundary. Core3 desktop/mobile and paired Odoo evidence are recorded under
 `evidence/inventory/2026-09-21/INV-TRANSFER-ACTIVITY-001/`; both authenticated
 comparisons remain blocked by login redirects. Full Inventory sign-off remains
 open.
+
+## Operations > Add entire package to transfer — `INV-TRANSFER-ADD-PACKS-001` (2026-09-21)
+
+This bounded Wave 42 slice covers Odoo's
+`stock.picking.action_add_entire_packs(package_ids)` action at
+`addons/stock/models/stock_picking.py:1904-1917`. The source expands a
+selected package and child packages into move lines, replacing partial pulls
+from those packages and applying package destinations. Core3 keeps
+`pages/transfer-detail.yaml` presentation-only and extends
+`api/transfer-detail.yaml`, joined by `page.id: transfer-detail`, with a
+source-location package selector, Add Entire Package form, and addition
+history list. Migration
+`services/inventory/migrations/20260922290000-079-inventory-transfer-add-packs.yaml`
+adds a deterministic open transfer and replay-safe addition ledger.
+
+The action creates a durable transfer move for every package content in the
+selected root/child package tree, links those moves through
+`inventory_package_move_lines`, records the operator/company/content count,
+increments the transfer row version, and enforces missing, company, source
+location, actor, open-state, duplicate, and stale guards. Focused verification
+passes 4 tests / 30 assertions, including restart and permission denial.
+Core3 desktop/mobile and authenticated Odoo comparison remain login-blocked;
+exact evidence is recorded under
+`evidence/inventory/2026-09-21/INV-TRANSFER-ADD-PACKS-001/`. Full Inventory
+sign-off remains open.

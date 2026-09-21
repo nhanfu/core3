@@ -1,0 +1,26 @@
+{
+  "feature": "INV-TRANSFER-ADD-PACKS-001",
+  "odoo": {
+    "model_source": "../../../../../odoo/addons/stock/models/stock_picking.py",
+    "method": "stock.picking.action_add_entire_packs(package_ids)",
+    "lines": "1904-1917",
+    "behavior": [
+      "rejects done and cancelled pickings",
+      "expands selected packages through child_of",
+      "removes partial move lines sourced from those packages",
+      "creates prepared entire-package move lines",
+      "applies package destinations"
+    ],
+    "view_source": "../../../../../odoo/addons/stock/views/stock_picking_views.xml",
+    "view_anchor": "action_see_packages"
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detail.yaml",
+    "api": "services/inventory/api/transfer-detail.yaml",
+    "page_id": "transfer-detail",
+    "action": "add_inventory_entire_package",
+    "migration": "services/inventory/migrations/20260922290000-079-inventory-transfer-add-packs.yaml",
+    "mapping": "Root packages available at the transfer source expand through parent_package_name into durable inventory_picking_moves and inventory_package_move_lines; the transfer row_version advances and a package-addition ledger/message is recorded."
+  },
+  "comparison_scope": "Core3 implements the bounded transfer move/link/persistence equivalent; authenticated visual parity and Odoo execution could not be reached without credentials."
+}

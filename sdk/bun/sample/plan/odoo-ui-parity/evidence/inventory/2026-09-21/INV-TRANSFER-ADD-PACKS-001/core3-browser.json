@@ -1,0 +1,23 @@
+{
+  "feature": "INV-TRANSFER-ADD-PACKS-001",
+  "captured_at": "2026-09-21",
+  "authenticated": false,
+  "results": [
+    {
+      "name": "desktop",
+      "final_url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-entire-pack-0001",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO logi",
+      "errors": [],
+      "horizontal_overflow": false
+    },
+    {
+      "name": "mobile",
+      "final_url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-entire-pack-0001",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO logi",
+      "errors": [],
+      "horizontal_overflow": false
+    }
+  ]
+}

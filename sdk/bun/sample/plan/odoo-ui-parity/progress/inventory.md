@@ -1431,3 +1431,26 @@ Full Inventory sign-off remains open.
   and Odoo comparison are blocked at login; exact evidence is under
   `evidence/inventory/2026-09-21/INV-TRANSFER-ACTIVITY-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-TRANSFER-ADD-PACKS-001` — Add entire package to transfer lifecycle (2026-09-21)
+
+- Selected Odoo `stock.picking.action_add_entire_packs(package_ids)` from
+  `addons/stock/models/stock_picking.py:1904-1917`. Odoo expands the selected
+  package subtree, removes partial package lines, prepares full-package move
+  lines, and applies package destinations; the picking form exposes package
+  navigation at `addons/stock/views/stock_picking_views.xml`.
+- Extended presentation-only `pages/transfer-detail.yaml` and backend
+  `api/transfer-detail.yaml`, joined by `page.id: transfer-detail`, with a
+  non-empty source-package selector, Add Entire Package form, and durable
+  addition history list. Migration
+  `20260922290000-079-inventory-transfer-add-packs.yaml` adds the replay-safe
+  addition ledger and deterministic open transfer fixture.
+- The bounded Core3 action expands root-package children into transfer moves
+  and `inventory_package_move_lines`, records actor/company/content metadata,
+  increments the transfer row version, and enforces missing, company, source
+  location, actor, open-state, duplicate, and stale guards. Focused coverage
+  includes restart persistence and `inventory.write` denial.
+- Focused tests pass 4 tests / 30 assertions. Core3 desktop/mobile and Odoo
+  comparison remain login-blocked; exact evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-ADD-PACKS-001/`. Full Inventory
+  sign-off remains open.

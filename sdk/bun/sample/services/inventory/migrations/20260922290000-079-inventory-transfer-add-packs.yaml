@@ -1,0 +1,32 @@
+version: 0.0.79
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_package_additions (
+        id VARCHAR PRIMARY KEY,
+        picking_id VARCHAR NOT NULL,
+        package_id VARCHAR NOT NULL,
+        package_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        content_count INTEGER NOT NULL,
+        added_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Added',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        UNIQUE(picking_id, package_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_package_additions_picking_idx
+        ON inventory_transfer_package_additions(picking_id, created_at, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-entire-pack-0001', 'operation-deliveries', 'WH/OUT/ENTIREPACK/0001', 'Entire Package Customer', DATE '2026-01-15', 'SO/ENTIREPACK/0001', 'My Company (San Francisco)', 'location-stock', 'location-customer', 'Waiting')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_package_additions WHERE picking_id = 'delivery-entire-pack-0001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-entire-pack-0001';
+      DROP INDEX IF EXISTS inventory_transfer_package_additions_picking_idx;
+      DROP TABLE IF EXISTS inventory_transfer_package_additions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1881,3 +1881,28 @@ sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable transfer activity lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Add Entire Package QA — `INV-TRANSFER-ADD-PACKS-001`
+
+- Odoo source/action: PASS. `stock_picking.py:1904-1917` implements
+  `action_add_entire_packs(package_ids)`, expanding child packages and creating
+  full-package move lines; the transfer form contains the package workflow
+  and source references are captured in `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-detail.yaml` and
+  backend `api/transfer-detail.yaml` share `page.id: transfer-detail`; package
+  selection is read-only and adding a package requires `inventory.write`.
+  Migration 0.0.79 persists additions, generated move rows, package links,
+  and the deterministic open-transfer fixture.
+- Focused verification: PASS — 4 tests / 30 assertions in
+  `test/inventory_transfer_add_packs.integration.test.ts`. Coverage includes
+  source/schema mapping, root/child content expansion, CRUD persistence,
+  missing/company/source-location/actor/open-state/duplicate/stale guards,
+  restart persistence, and permission denial.
+- Core3 browser evidence: BLOCKED for authenticated desktop/mobile workflow;
+  probes reach `/auth/login` only. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact captures,
+  source comparison, and blockers are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-ADD-PACKS-001/`.
+
+QA disposition: PASS for the bounded Core3 durable add-entire-package lifecycle;
+PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-off remains open.

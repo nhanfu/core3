@@ -23,6 +23,7 @@ components:
       - { id: mark_inventory_transfer_todo, label: Mark as Todo, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
       - { id: check_inventory_transfer_availability, label: Check Availability, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Draft'" }
       - { id: put_inventory_transfer_in_pack, label: Put in Pack, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Ready'" }
+      - { id: add_inventory_entire_package, label: Add Entire Package, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft' || state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Ready'" }
       - { id: unreserve_inventory_transfer, label: Unreserve, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: create_inventory_backorder, label: Create Backorder, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
@@ -105,6 +106,19 @@ components:
       - { field: reserved_quantity, label: Reserved, align: right, width: 120 }
       - { field: uom, label: Unit of Measure, width: 140 }
       - { field: availability, label: Availability, width: 150 }
+  - type: ListView
+    source: inventory_transfer_package_additions
+    variant: odoo
+    columns:
+      - { field: package_name, label: Package }
+      - { field: content_count, label: Contents, align: right }
+      - { field: added_by, label: Added by }
+      - { field: state, label: Status }
+      - { field: created_at, label: Added at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No entire packages added, description: Packages added as a whole to this transfer will appear here. }
   - type: ListView
     source: inventory_transfer_label_runs
     variant: odoo
