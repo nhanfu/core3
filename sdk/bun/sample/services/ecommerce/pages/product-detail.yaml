@@ -86,6 +86,12 @@ components:
     title_field: company_name
     groups:
       - { title: Product Page Columns Order, columns: 2, fields: [{ field: company_name, label: Company }, { field: columns_order_label, label: Current Order, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_product_page_container
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Product Page Container, columns: 2, fields: [{ field: company_name, label: Company }, { field: page_container_label, label: Current Container, type: StatusChip }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variants

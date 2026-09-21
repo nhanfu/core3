@@ -1,0 +1,36 @@
+page: { id: ecommerce-product-page-container-policy }
+datasources:
+  - id: ecommerce_product_page_container_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_UNAUTHENTICATED, message: Sign in to view product page container settings. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_FORBIDDEN, message: You do not have permission to view product page container settings. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_NOT_FOUND, message: Product page container settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_UNAVAILABLE, message: Product page container settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, page_container, CASE page_container WHEN 'regular' THEN 'Regular' WHEN 'fluid' THEN 'Full-width' ELSE 'Unset' END AS page_container_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_container_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_product_page_container_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('unset', 'Unset'), ('regular', 'Regular'), ('fluid', 'Full-width')) containers(value, label)"
+actions:
+  - id: edit_ecommerce_product_page_container_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Product Page Container
+    action: ecommerce.products.page_container.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_page_container_policy, ecommerce_product_detail]
+    mutation:
+      required: [id, expected_row_version, page_container]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_page_container_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_STALE, message: These product page container settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :page_container IN ('unset', 'regular', 'fluid')", status: 422, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_INVALID, message: Choose a supported product page container. }
+      steps:
+        - { query: "UPDATE ecommerce_product_page_container_policies SET page_container = :page_container, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_STALE, message: These product page container settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, page_container, CASE page_container WHEN 'regular' THEN 'Regular' WHEN 'fluid' THEN 'Full-width' ELSE 'Unset' END AS page_container_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_container_policies WHERE id = :id" }
+    fields:
+      - { field: page_container, label: Product Page Container, type: select, options_source: ecommerce_product_page_container_options, required: true }

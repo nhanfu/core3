@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Product Page Container (`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines Unset, Regular, and
+  Full-width; the product template applies the result of
+  `_get_product_page_container()`.
+- Core3 lifecycle: focused verification pass. Migrations 136/137 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit container validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_container.integration.test.ts --timeout
+  30000` — **2 passed, 25 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: container, columns-order, roundness, spacing, width, layout,
+  ratio, and Product Detail suites — **19 passed, 204 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **749 pages, 758 routes, and 1499
+  datasources**; scoped ESLint and `git diff --check` passed.
+- QA decision: bounded slice pending local commit;
+  Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-container-001/`.
+
 ## Product Page Columns Order (`ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines Regular order and Inverse

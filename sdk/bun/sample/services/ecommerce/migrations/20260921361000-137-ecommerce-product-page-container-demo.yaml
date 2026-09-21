@@ -1,0 +1,14 @@
+version: 0.0.137
+kind: data
+description: deterministic eCommerce product page container fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_container_policies (id, row_version, company_name, page_container)
+      VALUES ('ecommerce-product-page-container-my-company', 1, 'My Company', 'unset')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_container_policies WHERE id = 'ecommerce-product-page-container-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
