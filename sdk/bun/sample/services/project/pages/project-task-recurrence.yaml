@@ -1,0 +1,69 @@
+title: Tasks in Recurrence
+page: { id: project-task-recurrence, route: /tasks/recurrence, breadcrumb: [Services, Project, Tasks, Recurrence], auth: { require: [project.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_tasks_recurrence
+    search: { label: Search tasks, placeholder: 'Search task, project, or assignee...' }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: project_name
+          fields:
+            - { field: assignee, label: Assignees }
+            - { field: state, label: Stage }
+            - { field: due_date, label: Deadline }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        groups_source: project_task_states
+        card: { title: name, subtitle: project_name, fields: [{ field: assignee, label: Assignees }, { field: due_date, label: Deadline }, { field: state, label: Stage }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: due_date
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+      - id: graph
+        label: Graph
+        icon: chart
+        mobile: false
+        category_field: state
+        measure_field: planned_hours
+        measure_label: Planned Hours
+        type: bar
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: project_name
+        record_date_field: due_date
+        activity_types: [{ id: task, label: Task, icon: checklist }]
+    page_size: 25
+    row_key: id
+    row_open_action: view_recurrent_task
+    row_double_click_action: view_recurrent_task
+    form_view: { page: apps/services/project/pages/project-task-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state: { title: No recurring tasks, description: No tasks belong to this recurrence. }
+    columns:
+      - { field: name, label: Title, type: PrimaryEntityCell, sortable: true }
+      - { field: project_name, label: Project }
+      - { field: assignee, label: Assignees }
+      - { field: due_date, label: Deadline, sortable: true }
+      - { field: state, label: Stage, type: StatusChip }
+actions:
+  - { id: view_recurrent_task, type: navigate, permission: project.read, navigate_to: /tasks/detail, params: { id: '{row.id}' } }

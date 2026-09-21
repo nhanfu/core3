@@ -1,0 +1,47 @@
+version: 0.0.19
+kind: schema
+description: Persist Odoo Project recurring task rules and deterministic fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS recurring_task BOOLEAN DEFAULT FALSE;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS recurrence_id VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS repeat_interval INTEGER DEFAULT 1;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS repeat_unit VARCHAR DEFAULT 'week';
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS repeat_type VARCHAR DEFAULT 'forever';
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS repeat_until DATE;
+      CREATE TABLE IF NOT EXISTS project_task_recurrences (
+        id VARCHAR PRIMARY KEY,
+        root_task_id VARCHAR NOT NULL,
+        repeat_interval INTEGER NOT NULL DEFAULT 1,
+        repeat_unit VARCHAR NOT NULL DEFAULT 'week',
+        repeat_type VARCHAR NOT NULL DEFAULT 'forever',
+        repeat_until DATE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS project_task_recurrences_root_idx ON project_task_recurrences(root_task_id);
+      CREATE INDEX IF NOT EXISTS project_tasks_recurrence_idx ON project_tasks(recurrence_id);
+      INSERT INTO project_task_recurrences(id, root_task_id, repeat_interval, repeat_unit, repeat_type, repeat_until, row_version, active, created_at)
+      SELECT 'project-task-recurrence-001', 'task-demo-004', 1, 'week', 'forever', NULL, 1, TRUE, TIMESTAMP '2026-01-15 00:00:00'
+      WHERE EXISTS (SELECT 1 FROM project_tasks WHERE id = 'task-demo-004')
+        AND NOT EXISTS (SELECT 1 FROM project_task_recurrences WHERE id = 'project-task-recurrence-001');
+      UPDATE project_tasks
+      SET recurring_task = TRUE, recurrence_id = 'project-task-recurrence-001', repeat_interval = 1, repeat_unit = 'week', repeat_type = 'forever', repeat_until = NULL
+      WHERE id = 'task-demo-004';
+    down: |
+      UPDATE project_tasks SET recurring_task = FALSE, recurrence_id = NULL WHERE recurrence_id = 'project-task-recurrence-001';
+      DROP INDEX IF EXISTS project_tasks_recurrence_idx;
+      DROP INDEX IF EXISTS project_task_recurrences_root_idx;
+      DROP TABLE IF EXISTS project_task_recurrences;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS recurrence_id;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS recurring_task;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS repeat_interval;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS repeat_unit;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS repeat_type;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS repeat_until;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

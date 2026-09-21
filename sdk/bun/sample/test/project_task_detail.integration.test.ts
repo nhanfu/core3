@@ -33,7 +33,7 @@ describe('Project task detail/form parity', () => {
 
     expect(form).toMatchObject({ type: 'OdooFormView', source: 'project_task_detail', editable: true, title_field: 'name', status_field: 'state' });
     expect(form.groups.flatMap((group: any) => group.fields).map((field: any) => field.label)).toEqual([
-      'Project', 'Milestone', 'Assignees', 'Tags', 'Customer', 'Stage', 'Priority', 'Deadline', 'Allocated Time', 'Spent Time',
+      'Project', 'Milestone', 'Assignees', 'Tags', 'Customer', 'Stage', 'Priority', 'Deadline', 'Allocated Time', 'Spent Time', 'Recurrent', 'Repeat Every', 'Repeat Unit', 'Until', 'End Date',
     ]);
     expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Description', 'Sub-tasks', 'Blocked By', 'Timesheets']);
     expect(form.statusbar.map((state: any) => state.label)).toEqual(['To do', 'In progress', 'Done', 'Cancelled']);

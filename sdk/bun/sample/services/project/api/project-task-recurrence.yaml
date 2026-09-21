@@ -1,0 +1,8 @@
+page: { id: project-task-recurrence }
+datasources:
+  - id: project_tasks_recurrence
+    single: false
+    permission: project.read
+    workflow: project_tasks
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_RECURRENCE_UNAVAILABLE, message: Recurring tasks are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.recurrence_id, t.name, t.project_id, t.project_name, COALESCE(t.assignee, 'Unassigned') AS assignee, t.priority, t.state, t.stage, CAST(t.due_date AS VARCHAR) AS due_date, t.planned_hours, t.spent_hours, r.repeat_interval, r.repeat_unit, r.repeat_type, CAST(r.repeat_until AS VARCHAR) AS repeat_until FROM project_tasks t JOIN project_task_recurrences r ON r.id = t.recurrence_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.recurrence_id = (SELECT recurrence_id FROM project_tasks WHERE id = :task_id AND COALESCE(active, TRUE) = TRUE) AND COALESCE(t.active, TRUE) = TRUE AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR COALESCE(t.assignee, '') ILIKE '%' || :q || '%' OR t.state ILIKE '%' || :q || '%') ORDER BY t.due_date NULLS LAST, t.id"

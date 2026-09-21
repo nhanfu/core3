@@ -5,7 +5,7 @@ datasources:
     permission: project.read
     workflow: project_tasks
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_DETAIL_UNAVAILABLE, message: Task details are temporarily unavailable. } }
-    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN '0 / 0 (0%)' ELSE CAST(SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) AS VARCHAR) || ' / ' || CAST(COUNT(*) AS VARCHAR) || ' (' || CAST(ROUND(100.0 * SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) / COUNT(*)) AS INTEGER) || '%)' END FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '0 / 0 (0%)') AS subtask_summary, COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN '0 / 0 (0%)' ELSE CAST(SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) AS VARCHAR) || ' / ' || CAST(COUNT(*) AS VARCHAR) || ' (' || CAST(ROUND(100.0 * SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) / COUNT(*)) AS INTEGER) || '%)' END FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '0 / 0 (0%)') AS subtask_summary, COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, COALESCE(t.recurring_task, FALSE) AS recurring_task, t.recurrence_id, COALESCE(r.repeat_interval, t.repeat_interval, 1) AS repeat_interval, COALESCE(r.repeat_unit, t.repeat_unit, 'week') AS repeat_unit, COALESCE(r.repeat_type, t.repeat_type, 'forever') AS repeat_type, CAST(COALESCE(r.repeat_until, t.repeat_until) AS VARCHAR) AS repeat_until, r.row_version AS recurrence_row_version, COALESCE((SELECT COUNT(*) FROM project_tasks recurring WHERE recurring.recurrence_id = t.recurrence_id AND COALESCE(recurring.active, TRUE) = TRUE), 0) AS recurring_count, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN project_task_recurrences r ON r.id = t.recurrence_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
   - id: project_task_timesheets
     type: service
     service: yaml.service.timesheets
@@ -32,6 +32,11 @@ actions:
     permission: timesheets.read
     navigate_to: /task-timesheets
     params: { task_id: '{state.id}' }
+  - id: open_recurring_tasks
+    type: navigate
+    permission: project.read
+    navigate_to: /tasks/recurrence
+    params: { task_id: '{state.id}' }
   - id: edit_task
     type: server_form
     permission: project.write
@@ -44,12 +49,24 @@ actions:
     mutation:
       operation: update
       table: project_tasks
-      fields: [name, assignee, milestone_name, priority, description, due_date, planned_hours]
+      fields: [name, assignee, milestone_name, priority, description, due_date, planned_hours, recurring_task, repeat_interval, repeat_unit, repeat_type, repeat_until]
       required: [name]
+      normalize_empty: [repeat_until]
+      boolean_fields: [recurring_task]
       concurrency: { required: true }
+      before_steps:
+        - { query: "SELECT COALESCE(recurrence_id, 'project-task-recurrence-' || id) AS recurrence_id FROM project_tasks WHERE id = :id", assign: true }
       guards:
         - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:planned_hours, 0) >= 0", status: 422, code: PROJECT_TASK_HOURS_INVALID, message: Allocated Time cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:recurring_task, FALSE) = FALSE OR COALESCE(:repeat_interval, 0) > 0", status: 422, code: PROJECT_TASK_RECURRENCE_INTERVAL_INVALID, message: The interval should be greater than 0. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:recurring_task, FALSE) = FALSE OR COALESCE(:repeat_unit, 'week') IN ('day', 'week', 'month', 'year')", status: 422, code: PROJECT_TASK_RECURRENCE_UNIT_INVALID, message: Select a valid recurrence unit. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:recurring_task, FALSE) = FALSE OR COALESCE(:repeat_type, 'forever') <> 'until' OR (:repeat_until IS NOT NULL AND CAST(:repeat_until AS DATE) > CURRENT_DATE)", status: 422, code: PROJECT_TASK_RECURRENCE_END_INVALID, message: The end date should be in the future. }
+      steps:
+        - { query: "INSERT INTO project_task_recurrences(id, root_task_id, repeat_interval, repeat_unit, repeat_type, repeat_until, row_version, active, created_at) SELECT :recurrence_id, :id, COALESCE(:repeat_interval, 1), COALESCE(:repeat_unit, 'week'), COALESCE(:repeat_type, 'forever'), :repeat_until, 1, TRUE, TIMESTAMP '2026-01-15 00:00:00' WHERE COALESCE(:recurring_task, FALSE) = TRUE ON CONFLICT (id) DO UPDATE SET repeat_interval = EXCLUDED.repeat_interval, repeat_unit = EXCLUDED.repeat_unit, repeat_type = EXCLUDED.repeat_type, repeat_until = EXCLUDED.repeat_until, active = TRUE, row_version = project_task_recurrences.row_version + 1" }
+        - { query: "UPDATE project_tasks SET recurrence_id = CASE WHEN COALESCE(:recurring_task, FALSE) = TRUE THEN :recurrence_id ELSE NULL END WHERE id = :id" }
+        - { query: "UPDATE project_tasks SET recurring_task = FALSE, recurrence_id = NULL WHERE recurrence_id = :recurrence_id AND id <> :id AND COALESCE(:recurring_task, FALSE) = FALSE" }
+        - { query: "DELETE FROM project_task_recurrences WHERE id = :recurrence_id AND COALESCE(:recurring_task, FALSE) = FALSE" }
       result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
     fields:
       - { field: name, label: Title, type: text, required: true }
@@ -59,6 +76,11 @@ actions:
       - { field: description, label: Description, type: textarea, wide: true }
       - { field: due_date, label: Deadline, type: date }
       - { field: planned_hours, label: Allocated Time, type: number }
+      - { field: recurring_task, label: Recurrent, type: checkbox }
+      - { field: repeat_interval, label: Repeat Every, type: number, min: 1 }
+      - { field: repeat_unit, label: Repeat Unit, type: select, options: [{ value: day, label: Days }, { value: week, label: Weeks }, { value: month, label: Months }, { value: year, label: Years }] }
+      - { field: repeat_type, label: Until, type: select, options: [{ value: forever, label: Forever }, { value: until, label: Until }] }
+      - { field: repeat_until, label: End Date, type: date, show_if: "state.project_task_detail.repeat_type === 'until'" }
   - id: upload_project_task_attachment
     type: upload
     action: project.tasks.attachments.upload
@@ -228,7 +250,9 @@ actions:
       guards:
         - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
         - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND state = 'In Progress'", status: 409, code: PROJECT_TASK_INVALID_TRANSITION, message: Only In progress tasks can be marked done. }
-      steps: [{ query: "UPDATE project_tasks SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before completing. }]
+      steps:
+        - { query: "UPDATE project_tasks SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before completing. }
+        - { query: "INSERT INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, stage, due_date, row_version, created_at, customer_name, company_name, tags, subtask_summary, subtask_names, blocked_by_summary, blocked_by_names, active, description, parent_task_id, recurring_task, recurrence_id, repeat_interval, repeat_unit, repeat_type, repeat_until) SELECT 'task-recurrence-' || t.id || '-' || CAST(t.row_version AS VARCHAR), t.project_id, t.project_name, t.name, t.assignee, t.milestone_name, 'Normal', t.planned_hours, 0, 'Todo', t.stage, CASE WHEN t.due_date IS NULL THEN NULL WHEN r.repeat_unit = 'day' THEN t.due_date + (r.repeat_interval * INTERVAL '1 day') WHEN r.repeat_unit = 'week' THEN t.due_date + (r.repeat_interval * INTERVAL '1 week') WHEN r.repeat_unit = 'month' THEN t.due_date + (r.repeat_interval * INTERVAL '1 month') ELSE t.due_date + (r.repeat_interval * INTERVAL '1 year') END, 1, CURRENT_TIMESTAMP, t.customer_name, t.company_name, t.tags, '0 / 0 (0%)', '', 'None', '', TRUE, t.description, NULL, TRUE, t.recurrence_id, r.repeat_interval, r.repeat_unit, r.repeat_type, r.repeat_until FROM project_tasks t JOIN project_task_recurrences r ON r.id = t.recurrence_id WHERE t.id = :id AND t.state = 'Done' AND t.recurring_task = TRUE AND (t.due_date IS NULL OR r.repeat_type = 'forever' OR r.repeat_until IS NULL OR CASE WHEN r.repeat_unit = 'day' THEN t.due_date + (r.repeat_interval * INTERVAL '1 day') WHEN r.repeat_unit = 'week' THEN t.due_date + (r.repeat_interval * INTERVAL '1 week') WHEN r.repeat_unit = 'month' THEN t.due_date + (r.repeat_interval * INTERVAL '1 month') ELSE t.due_date + (r.repeat_interval * INTERVAL '1 year') END <= r.repeat_until) AND NOT EXISTS (SELECT 1 FROM project_tasks existing WHERE existing.id = 'task-recurrence-' || t.id || '-' || CAST(t.row_version AS VARCHAR))" }
       result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
   - id: cancel_task
     type: server

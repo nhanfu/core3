@@ -999,3 +999,28 @@ registered: yaml.service.timesheets`. This is recorded as a topology blocker,
 not hidden by removing the existing Timesheets surface. Full shared startup
 also remains separately blocked by the unrelated Employees YAML validation
 error documented above. This slice is not full Project sign-off.
+
+## Bounded slice: Project Task Recurrence / Recurring Tasks (2026-09-22)
+
+Odoo 19 source in `addons/project/models/project_task.py`,
+`project_task_recurrence.py`, and `views/project_task_views.xml` defines task
+recurrence membership, interval/unit, forever-or-until mode, end date, the
+Recurring Tasks stat action, and the Tasks in Recurrence list view. The live
+authenticated reference showed Customer review with Repeat Every, Months,
+Until, an end date, and `1 Recurring Tasks`; its linked list was titled
+`Tasks in Recurrence`.
+
+Core3 implements this bounded workflow with migration
+`20260922100000-019-project-task-recurrence.yaml`, separate page/API YAML
+joined by `page.id`, durable recurrence rules and fields, permission-bound
+reads/writes, interval/unit/end-date guards, deterministic next-occurrence
+generation on completion, and restart-safe persistence. The focused recurrence
+and existing task relation regression suite passes 13 tests and 111 assertions.
+Project CSS, the full frontend build, and diff-check pass.
+
+Odoo desktop evidence is committed under
+`evidence/project/2026-09-22/project-task-recurrence-001/`. No Core3 browser or
+mobile recurrence capture is claimed: shared startup remains blocked by the
+unrelated Employees malformed action definition, and Project-only task detail
+still depends on the unregistered Timesheets service. This is conditional
+acceptance, not full Project visual sign-off.

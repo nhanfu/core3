@@ -18,6 +18,19 @@ cleanly. A dependency-aware process selecting `project,timesheets` then loaded
 errors. Paired Odoo comparison and broader CRUD coverage remain open. No parity
 claim is made here.
 
+## Current bounded task — Project Task Recurrence / Recurring Tasks (2026-09-22)
+
+Implemented the recurrence rule, task-form controls, Recurring Tasks action and
+list, completion-generated next occurrence, guards, and file-backed replay.
+Focused recurrence plus task-detail/sub-task/dependency regression coverage
+passes 13 tests with 111 assertions. Odoo desktop evidence is committed under
+`evidence/project/2026-09-22/project-task-recurrence-001/`.
+
+Core3 authenticated browser evidence remains unavailable because shared startup
+hits the unrelated Employees YAML validation error and Project-only task detail
+requires the existing unregistered Timesheets service. No Core3 visual parity
+claim is made.
+
 ## Next bounded task
 
 Run authenticated CRUD/workflow checks and paired Odoo desktop/mobile captures;

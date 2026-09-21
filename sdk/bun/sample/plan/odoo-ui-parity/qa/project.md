@@ -30,6 +30,21 @@ Module owner: project module owner
 Verification trigger: feature-complete
 Candidate commit: c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc
 
+## Conditional review — PROJECT-TASK-RECURRENCE-001 (2026-09-22)
+
+- Contract, persistence, guards, workflow, and restart coverage: **PASS** — 13
+  tests and 111 assertions across recurrence and Project task relation suites.
+- Build checks: Project CSS, full frontend build, and `git diff --check` pass.
+- Odoo source/live reference: **PASS for bounded inspection**; authenticated
+  desktop evidence is committed under the matching evidence directory.
+- Core3 browser gate: **PENDING** — no Core3 desktop/mobile capture or mobile
+  Odoo recurrence capture is claimed. Shared discovery is blocked by the
+  unrelated Employees malformed action definition; Project-only task detail
+  still requires the unregistered Timesheets service.
+
+Disposition: conditionally accepted as a bounded recurrence workflow slice;
+not full Project visual or module sign-off.
+
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.

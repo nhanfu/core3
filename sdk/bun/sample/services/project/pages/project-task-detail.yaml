@@ -19,6 +19,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit task, workflowStatus: Task status }
     stat_buttons:
       - { id: open_task_timesheets, label: Timesheets, value_field: spent_hours, permission: timesheets.read }
+      - { id: open_recurring_tasks, label: Recurring Tasks, value_field: recurring_count, permission: project.read, show_if: 'record.recurring_count > 0' }
     header_actions:
       - { id: edit_task, label: Edit, variant: secondary, permission: project.write }
       - { id: start_task, label: Start, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'Todo'" }
@@ -29,7 +30,7 @@ components:
       - title: Task details
         fields: [{ field: project_name, label: Project }, { field: milestone_name, label: Milestone }, { field: assignee, label: Assignees }, { field: tags, label: Tags }, { field: customer_name, label: Customer }]
       - title: Planning
-        fields: [{ field: stage, label: Stage }, { field: priority, label: Priority }, { field: due_date, label: Deadline }, { field: planned_hours, label: Allocated Time }, { field: spent_hours, label: Spent Time }]
+        fields: [{ field: stage, label: Stage }, { field: priority, label: Priority }, { field: due_date, label: Deadline }, { field: planned_hours, label: Allocated Time }, { field: spent_hours, label: Spent Time }, { field: recurring_task, label: Recurrent, type: checkbox }, { field: repeat_interval, label: Repeat Every, type: number }, { field: repeat_unit, label: Repeat Unit }, { field: repeat_type, label: Until }, { field: repeat_until, label: End Date, show_if: "record.repeat_type === 'until'" }]
     notebook:
       active: description
       tabs:
