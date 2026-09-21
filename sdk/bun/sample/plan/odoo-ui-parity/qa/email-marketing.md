@@ -200,3 +200,34 @@ Add-and-Send follow-up remain open. Do not sign off the module.
 - Blockers: requested `core3_reference` has Email Marketing uninstalled/not
   exposed; isolated Core3 browser login required a human click and did not
   complete. No visual-parity claim is made.
+
+## Bounded review handoff — Mailing List Merge (2026-09-22)
+
+- Source comparison: Odoo 19 `mailing_list_merge_action` from
+  `mass_mailing/wizard/mailing_list_merge_views.xml` and
+  `wizard/mailing_list_merge.py`; selected mailing-list rows merge into a new
+  or existing destination, deduplicate by email, skip opted-out/blacklisted
+  contacts, and optionally archive source lists.
+- Core3 implementation: `pages/lists.yaml` remains layout-only and adds the
+  `Merge` bulk action; `api/lists.yaml` owns the page-ID-matched server form,
+  lookup, transaction, permission, scope, validation, stale, and refresh
+  contracts. No migration was needed because the existing durable list,
+  contact, and subscription schema is sufficient.
+- Focused validation: **4 passed, 0 failed, 23 assertions** in
+  `test/email_marketing_mailing_list_merge.integration.test.ts`.
+- Full Email Marketing regression: **59 passed, 0 failed, 535 assertions**
+  across 17 focused integration files.
+- Repository gates: `bun run audit` passed with 808 pages, 817 routes, and
+  1,675 datasources; Email Marketing CSS and frontend Vite builds passed;
+  `git diff --check` passed.
+- Browser blocker: BrowserSkill instance `245ea108` was connected, but the
+  signed-in tab `1770662590` could not be borrowed after the configured
+  confirmation window and remained user-owned. The tab was not navigated, so
+  no live Odoo merge route/action or desktop/mobile captures exist and no
+  visual-parity claim is made.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-LIST-MERGE-001/`.
+
+Disposition: bounded merge workflow is implementation- and contract-tested;
+paired authenticated Odoo/Core3 visual proof, full route-tree coverage, and
+module sign-off remain open.

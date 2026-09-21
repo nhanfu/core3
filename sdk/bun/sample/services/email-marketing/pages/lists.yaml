@@ -7,6 +7,8 @@ components:
     source: mailing_lists
     create_action: create_mailing_list
     create_label: New mailing list
+    bulk_actions:
+      - { id: merge_mailing_lists, label: Merge, permission: email_marketing.manage }
     search: { label: Search mailing lists, placeholder: Search list or description... }
     filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
     view_navigation: tabs

@@ -4,13 +4,27 @@ Module owner: email-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Mailing Duplicate commit
+Candidate commit: pending Mailing List Merge commit
 
 ## Current state
 
 This module is registered in odoo-parity-plan.md and remains in-progress. The
-2026-09-22 Mailing Duplicate bounded slice is implemented and contract-tested;
+The 2026-09-22 Mailing Duplicate and Mailing List Merge bounded slices are
+implemented and contract-tested;
 no complete module parity claim is made.
+
+## Mailing List Merge bounded slice (2026-09-22)
+
+- Odoo source action: `mailing_list_merge_action`, model
+  `mailing.list.merge`, bound to selected `mailing.list` rows.
+- Core3: `Merge` bulk server form on `pages/lists.yaml` with its mutation and
+  destination lookup in the page-ID-matched `api/lists.yaml`.
+- Focused validation: 4 tests, 23 assertions; the new destination and merged
+  subscriptions survive file-backed DuckDB restart, while source archiving and
+  duplicate-safe replay are covered.
+- Browser: BrowserSkill could not borrow the authenticated Odoo tab after the
+  configured confirmation window; no Odoo or Core3 visual claim is made.
+- Evidence: `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-LIST-MERGE-001/`.
 
 ## Mailing Duplicate bounded slice (2026-09-22)
 

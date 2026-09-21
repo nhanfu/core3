@@ -969,3 +969,43 @@ The authenticated `core3_reference` browser session was reachable but Email
 Marketing was not installed/exposed in the app menu, so no Odoo duplicate
 screen was available and no visual-parity claim is made. Core3 browser proof
 is recorded separately if its isolated runtime is available.
+
+## Mailing List Merge bounded slice (2026-09-22)
+
+The next missing mailing-list workflow is Odoo's `mailing_list_merge_action`
+bound to `mailing.list` in
+`addons/mass_mailing/wizard/mailing_list_merge_views.xml`. The source is a
+modal `form` with `Merge Option` (new or existing), conditional new-list name
+or destination list, `Archive source mailing lists`, selected source lists,
+and `Merge`/`Cancel`. `mailing.list.merge.action_mailing_lists_merge` creates
+the destination when requested, delegates to `mailing.list.action_merge`,
+deduplicates contacts by email, skips opted-out and active-blacklist rows, and
+optionally archives source lists.
+
+Core3 implements the bounded bulk action on `/mailing-lists`:
+
+- Layout: `services/email-marketing/pages/lists.yaml` adds the selectable
+  `Merge` action; it remains layout-only.
+- API: `services/email-marketing/api/lists.yaml` adds the page-ID-matched
+  `merge_mailing_lists` server form, destination lookup, permission, stable
+  validation/stale/scope errors, and an atomic merge over the existing durable
+  `mailing_lists` and `mailing_subscriptions` tables.
+- Persistence: no migration is required; the existing list/contact/
+  subscription schema persists new destinations, deduplicated membership,
+  list counts, archive state, and row versions. New destination IDs are stable
+  slugs and the operation is safe to replay against an existing destination.
+- Focused contract: `test/email_marketing_mailing_list_merge.integration.test.ts`
+  covers source mapping, existing/new destinations, email deduplication,
+  opt-out/blacklist filtering, archive behavior, restart persistence,
+  idempotent replay, empty/invalid/duplicate/stale/missing/scope guards, and
+  no partial writes.
+
+The source-backed browser gate is blocked. BrowserSkill daemon status confirmed
+browser instance `245ea108`; the signed-in user tab was `1770662590` at
+`http://localhost:8069/odoo/contacts/9` ("Acme Corporation"). The required
+`bsk tab borrow 1770662590 --session yciq` remained pending for the configured
+borrow confirmation window and the tab remained user-owned. The browser
+session was not navigated, so no live Odoo merge route/action screen or
+desktop/mobile capture exists and no visual-parity claim is made. The exact
+attempt and cleanup are indexed in
+`evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-LIST-MERGE-001/`.

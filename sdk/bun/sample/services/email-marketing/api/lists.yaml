@@ -1,10 +1,47 @@
 page: { id: mailing-lists }
 datasources:
+  - id: mailing_list_merge_destinations
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM mailing_lists WHERE active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY name, id"
   - id: mailing_lists
     permission: email_marketing.read
     error_states: { transport_error: { status: 503, code: EMAIL_MAILING_LISTS_UNAVAILABLE, message: Mailing lists are temporarily unavailable. } }
     query: "SELECT l.id, l.row_version, l.name, l.description, l.subscriber_count, l.contact_count, l.mailing_count, l.bounce_count, l.optout_count, l.blacklist_count, l.company_name, l.is_public, l.favorite, l.active, l.state FROM mailing_lists l WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND l.active = true) OR (:active IS NOT NULL AND l.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.description ILIKE '%' || :q || '%') ORDER BY l.name, l.id"
 actions:
+  - id: merge_mailing_lists
+    type: server_form
+    permission: email_marketing.manage
+    title: Merge Mass Mailing List
+    action: mailing_list_merge_action
+    handler: yaml_mutation
+    operation: merge
+    submit_label: Merge
+    cancel_label: Cancel
+    refresh: [mailing_lists, mailing_subscriptions]
+    mutation:
+      before_steps:
+        - query: "SELECT CASE WHEN :merge_options = 'new' THEN 'mailing-list-merge-' || regexp_replace(lower(trim(CAST(:new_list_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') ELSE CAST(:dest_list_id AS VARCHAR) END AS dest_list_id"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: EMAIL_MAILING_MERGE_SELECTION_REQUIRED, message: Select at least two mailing lists to merge. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_lists WHERE id IN :selectedIds AND active = false)", status: 409, code: EMAIL_MAILING_MERGE_STALE, message: One or more selected mailing lists changed before the merge. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM mailing_lists WHERE id IN :selectedIds AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)) >= 2", status: 409, code: EMAIL_MAILING_MERGE_SELECTION_INVALID, message: Select at least two active mailing lists in the current company. }
+        - { query: "SELECT 1 AS ok WHERE :merge_options IN ('new', 'existing')", status: 422, code: EMAIL_MAILING_MERGE_OPTION_INVALID, message: Select a valid merge option. }
+        - { query: "SELECT 1 AS ok WHERE :merge_options <> 'new' OR LENGTH(TRIM(COALESCE(CAST(:new_list_name AS VARCHAR), ''))) > 0", status: 422, code: EMAIL_MAILING_MERGE_NAME_REQUIRED, message: Enter a name for the new mailing list. }
+        - { query: "SELECT 1 AS ok WHERE :merge_options <> 'new' OR NOT EXISTS (SELECT 1 FROM mailing_lists WHERE lower(name) = lower(trim(CAST(:new_list_name AS VARCHAR))))", status: 409, code: EMAIL_MAILING_MERGE_NAME_EXISTS, message: A mailing list with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :merge_options <> 'existing' OR EXISTS (SELECT 1 FROM mailing_lists WHERE id = :dest_list_id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name))", status: 422, code: EMAIL_MAILING_MERGE_DESTINATION_INVALID, message: Select an active destination mailing list. }
+      steps:
+        - query: "INSERT INTO mailing_lists(id, name, description, subscriber_count, contact_count, mailing_count, bounce_count, optout_count, blacklist_count, company_name, is_public, favorite, active, state, row_version, created_at, updated_at) SELECT :dest_list_id, trim(CAST(:new_list_name AS VARCHAR)), 'Merged mailing list', 0, 0, 0, 0, 0, 0, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Vietnam'), true, false, true, 'Active', 1, TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 13:00:00' WHERE :merge_options = 'new'"
+        - query: "INSERT INTO mailing_subscriptions(id, row_version, contact_id, list_id, opt_out, subscription_date, created_at, updated_at) SELECT 'mailing-subscription-merge-' || candidate.contact_id || '-' || :dest_list_id, 1, candidate.contact_id, :dest_list_id, false, TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 13:00:00' FROM (SELECT s.contact_id, ROW_NUMBER() OVER (PARTITION BY lower(c.email) ORDER BY s.subscription_date, s.id) AS rn FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id JOIN mailing_lists source_list ON source_list.id = s.list_id WHERE source_list.id IN :selectedIds AND source_list.active = true AND s.opt_out = false AND c.is_blacklisted = false AND c.active = true AND (COALESCE(:current_company_name, '') = '' OR source_list.company_name = :current_company_name) AND NOT EXISTS (SELECT 1 FROM mailing_subscriptions existing WHERE existing.contact_id = s.contact_id AND existing.list_id = :dest_list_id)) candidate WHERE candidate.rn = 1 ON CONFLICT (contact_id, list_id) DO NOTHING"
+        - query: "UPDATE mailing_lists SET subscriber_count = (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), contact_count = (SELECT COUNT(DISTINCT contact_id) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), updated_at = TIMESTAMP '2026-01-15 13:00:00', row_version = row_version + 1 WHERE id = :dest_list_id"
+        - query: "UPDATE mailing_lists SET active = false, state = 'Archived', updated_at = TIMESTAMP '2026-01-15 13:00:00', row_version = row_version + 1 WHERE :archive_src_lists = true AND id IN :selectedIds AND id <> :dest_list_id"
+      result:
+        query: "SELECT d.id, d.name, d.description, d.subscriber_count, d.contact_count, d.active, d.state, d.row_version, (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = d.id) AS merged_subscription_count, (SELECT COUNT(*) FROM mailing_lists WHERE id IN :selectedIds AND active = false AND id <> d.id) AS archived_source_count FROM mailing_lists d WHERE d.id = :dest_list_id"
+    fields:
+      - { field: merge_options, label: Merge Option, type: select, options: [{ value: new, label: Merge into a new mailing list }, { value: existing, label: Merge into an existing mailing list }], default: new, required: true }
+      - { field: new_list_name, label: New Mailing List Name, type: text }
+      - { field: dest_list_id, label: Destination Mailing List, type: select, options_source: mailing_list_merge_destinations }
+      - { field: archive_src_lists, label: Archive source mailing lists, type: checkbox, default: true }
   - id: view_mailing_list
     type: navigate
     permission: email_marketing.read
