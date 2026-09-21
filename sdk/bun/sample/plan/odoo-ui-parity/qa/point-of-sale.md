@@ -47,3 +47,27 @@
 - Source/reference analysis and pre-code acceptance checklist are under
   `../evidence/point_of_sale/2026-09-22/POS-ORDER-REFUND-LINKS-001/`.
 - Implementation and browser verification are pending in this run.
+
+## 2026-09-22 — POS-ORDER-INVOICE-SMART-BUTTON-001
+
+- Status: bounded implementation and service verification complete; Core3
+  authenticated visual verification is blocked by the missing reusable QA
+  session.
+- Source: Odoo 19 `action_view_invoice()` in `pos_order.py`, the `Invoice`
+  smart button in `pos_order_view.xml`, and the live Orders form at
+  `http://localhost:8069`.
+- Implementation: read-only `Invoice` smart-button navigation on
+  `pos-order-detail`, separate `pos-invoice-detail` page/API contracts,
+  current-company linked-invoice projection, and migration `0.0.52` fixture.
+- Focused test: `bun test ./test/pos_order_invoice_smart_button.integration.test.ts
+  --timeout 30000` — 3 tests, 18 assertions passed.
+- Regression tests: bulk invoice (3), delete (2), pickings (3), and refund
+  links (3) suites all passed; audit reports 807 pages, 816 routes, and 1,671
+  datasources; POS CSS build, targeted ESLint, and `git diff --check` passed.
+- Browser: authenticated Odoo reference inspection passed for the live Orders
+  list/order form. Its four demo orders are all un-invoiced, so the positive
+  smart-button state is an exact reference-data blocker. Core3 `/api/modules`
+  returned 200 and discovered the route, but the protected page/API returned
+  401 without a reusable local QA login session.
+- Evidence:
+  `../evidence/point_of_sale/2026-09-22/POS-ORDER-INVOICE-SMART-BUTTON-001/`.

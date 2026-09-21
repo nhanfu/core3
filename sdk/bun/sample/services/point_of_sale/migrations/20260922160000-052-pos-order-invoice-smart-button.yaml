@@ -1,0 +1,29 @@
+version: 0.0.52
+kind: data
+description: Durable POS linked customer invoice fixture for order smart-button navigation
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_orders(
+        id, row_version, name, session_id, partner_name, state, amount_total,
+        amount_tax, amount_paid, payment_method, date_order, config_id, company,
+        invoice_id, to_invoice
+      ) VALUES (
+        'pos-order-invoice-smart-button-001', 1,
+        'POS/2026/09/22/INVOICE-SMART-BUTTON', 'pos-session-demo-001',
+        'Invoice Smart Button Customer', 'Invoiced', 24.20, 2.20, 24.20, 'Card',
+        TIMESTAMP '2026-01-15 13:00:00', 'Main Shop', 'Core3 Demo Company',
+        'pos-invoice-smart-button-001', false
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_invoices(id, order_id, invoice_number, state, amount, invoice_date)
+      VALUES (
+        'pos-invoice-smart-button-001', 'pos-order-invoice-smart-button-001',
+        'POS/2026/09/22/INV-001', 'Posted', 24.20, DATE '2026-01-15'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_invoices WHERE id = 'pos-invoice-smart-button-001';
+      DELETE FROM pos_orders WHERE id = 'pos-order-invoice-smart-button-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

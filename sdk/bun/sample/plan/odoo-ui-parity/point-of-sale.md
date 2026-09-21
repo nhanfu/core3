@@ -1406,3 +1406,34 @@ login session; the exact 401 and capture path are recorded in
 `evidence/point_of_sale/2026-09-22/POS-ORDER-REFUND-LINKS-001/verification.md`.
 Authenticated Odoo captures of the positive source, refund detail, and related
 list are retained under `/tmp`; the temporary reference refund was deleted.
+
+## Current bounded batch: Orders > Invoice smart button
+
+The local Odoo 19 source exposes `action_view_invoice()` on `pos.order`. When
+one `account.move` is linked, the order form renders the `Invoice` smart button
+and opens the linked customer invoice form; without a linked move, the header
+`Invoice` action remains the create-invoice action. The live authenticated
+`core3_reference` Orders list contained four posted, un-invoiced demo orders,
+so the positive smart-button state was not available without mutating the
+reference fixture. The live order form did show the source-backed `Invoice`
+create action and `Return Products`.
+
+Core3 adds the read-only `Invoice` smart-button navigation to the existing
+`pos-order-detail` page/API pair and a separate `pos-invoice-detail`
+page/API pair at `/point-of-sale/invoice-detail`. The detail is scoped by the
+linked order's current company and projects the durable POS invoice number,
+state, order, customer, date, and total. Migration `0.0.52` adds an idempotent
+Invoiced order and linked Posted invoice fixture without changing the existing
+paid/to-invoice demo order. Both surfaces require `pos.read`; no invoice
+mutation or accounting-service write is included in this bounded navigation
+slice.
+
+Focused coverage is `test/pos_order_invoice_smart_button.integration.test.ts`:
+source/action mapping, separate page/API IDs, linked invoice projection,
+company and missing-record boundaries, and migration replay/file-backed restart
+durability pass with 3 tests and 18 assertions. The POS-only runtime discovered
+the route and returned `/api/modules` 200. Authenticated Core3 browser proof is
+blocked by the exact protected-page 401: browser instance `245ea108` has no
+reusable local Core3 QA session, while the authenticated Odoo session is
+available. No visual-parity claim is made for the Core3 page until that session
+is available.

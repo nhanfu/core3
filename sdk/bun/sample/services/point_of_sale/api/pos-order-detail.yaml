@@ -33,6 +33,11 @@ actions:
     permission: pos.read
     navigate_to: /point-of-sale/order-pickings
     params: { order_id: '{state.id}' }
+  - id: view_pos_order_invoice
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/invoice-detail
+    params: { id: '{state.invoice_id}' }
   - id: return_pos_order_detail
     type: server
     permission: pos.write

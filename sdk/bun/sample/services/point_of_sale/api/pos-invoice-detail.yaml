@@ -1,0 +1,11 @@
+page: { id: pos-invoice-detail }
+datasources:
+  - id: pos_invoice_detail
+    single: true
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_INVOICE_DETAIL_UNAUTHORIZED, message: Sign in to view this POS invoice. }
+      forbidden: { status: 403, code: POS_INVOICE_DETAIL_FORBIDDEN, message: You do not have access to this POS invoice. }
+      not_found: { status: 404, code: POS_INVOICE_NOT_FOUND, message: POS invoice not found. }
+      transport_error: { status: 503, code: POS_INVOICE_DETAIL_UNAVAILABLE, message: POS invoice details are temporarily unavailable. }
+    query: "SELECT i.id AS invoice_id, i.invoice_number, i.state, i.amount, CAST(i.invoice_date AS VARCHAR) AS invoice_date, o.id AS order_id, o.name AS order_name, o.partner_name, o.company FROM pos_invoices i JOIN pos_orders o ON o.id = i.order_id WHERE i.id = :id AND o.company = :current_company_name"

@@ -1,0 +1,27 @@
+title: Customer Invoice
+page: { id: pos-invoice-detail, route: /point-of-sale/invoice-detail, breadcrumb: [Sales, Point of Sale, Customer Invoice], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_invoice_detail
+    title_field: invoice_number
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Posted, label: Posted }
+      - { value: Paid, label: Paid }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Draft: neutral, Posted: blue, Paid: green, Cancelled: red }
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Invoice
+        fields:
+          - { field: invoice_number, label: Invoice }
+          - { field: state, label: Status }
+          - { field: order_name, label: POS Order }
+          - { field: partner_name, label: Customer }
+      - title: Dates and amounts
+        fields:
+          - { field: invoice_date, label: Invoice date }
+          - { field: amount, label: Total }
+          - { field: invoice_id, label: Source record }

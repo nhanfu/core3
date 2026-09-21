@@ -15,6 +15,7 @@ components:
       - { id: open_pos_order_refunds, label: Refunds, variant: secondary, permission: pos.read, show_if: "state.pos_order_detail.refund_orders_count > 0" }
       - { id: open_pos_order_refunded_order, label: Refunded Orders, variant: secondary, permission: pos.read, show_if: "state.pos_order_detail.is_refund === true && state.pos_order_detail.original_order_id" }
       - { id: open_pos_order_pickings, label: Pickings, variant: secondary, permission: pos.read, show_if: "state.pos_order_detail.picking_count > 0" }
+      - { id: view_pos_order_invoice, label: Invoice, variant: secondary, permission: pos.read, show_if: "state.pos_order_detail.invoice_id" }
       - { id: pay_pos_order_detail, label: Register payment, variant: primary, permission: pos.write, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Paid'" }
       - { id: invoice_pos_order_detail, label: Create invoice, variant: secondary, permission: pos.write, show_if: "state.pos_order_detail.state === 'Paid' && state.pos_order_detail.to_invoice === true && !state.pos_order_detail.invoice_id" }
       - { id: return_pos_order_detail, label: Return Products, variant: secondary, permission: pos.write, confirm: Return all refundable products from this order?, show_if: "(state.pos_order_detail.state === 'Paid' || state.pos_order_detail.state === 'Invoiced') && state.pos_order_detail.is_refund !== true" }
