@@ -904,3 +904,46 @@ invalid-email, 503 transport, and duplicate/idempotence behavior covered by
 base-import file upload is intentionally deferred as a separate integration
 surface; no visual-parity claim or screenshot is made because this slice has
 not completed an authenticated browser capture.
+
+## Add Selected Contacts to a Mailing List bounded slice (2026-09-21)
+
+The next genuinely uncovered bounded source action is Odoo's
+`mailing_contact_to_list_action` from
+`addons/mass_mailing/wizard/mailing_contact_to_list_views.xml` at source
+revision `65975996`. Its transient model `mailing.contact.to.list` has a
+required **Mailing List** field, hidden selected-contact input, and **Add**,
+**Add and Send Mailing**, and **Cancel** buttons. The Odoo implementation adds
+only contacts missing from the selected list and returns an informational
+notification before closing; the companion button adds the contacts and opens a
+new mailing form with the target list as its default audience.
+
+Core3 implements the first durable `Add` branch at the existing
+`/mailing-contacts` route. The page remains layout-only and exposes the
+permission-bound **Add to List** bulk action; the API action
+`add_selected_contacts_to_mailing_list` is joined by `page.id:
+mailing-contacts`. It maps selected subscription rows to durable contacts,
+requires an active in-scope target list, rejects empty/missing/out-of-scope or
+inactive selections, inserts idempotently on `(contact_id, list_id)`,
+recalculates subscriber/contact counts, refreshes the list and subscriptions,
+and survives a file-backed restart. No migration was needed because the
+existing module-owned schema already provides the durable subscription
+constraint and counters. The **Add and Send Mailing** follow-up navigation is
+explicitly deferred until the declarative server-form runtime supports a
+notification `next` action that opens a new unsaved mailing form.
+
+Implementation/evidence paths:
+
+- `services/email-marketing/pages/mailing-contacts.yaml`
+- `services/email-marketing/api/mailing-contacts.yaml`
+- `test/email_marketing_add_contacts_to_list.integration.test.ts`
+- `test/email_marketing_mailing_contact_import.integration.test.ts`
+- `plan/odoo-ui-parity/evidence/email-marketing/2026-09-21/EMAIL-MARKETING-CONTACT-TO-LIST-001/`
+
+Focused validation is **8 passed, 0 failed, 50 assertions**. Authenticated
+Odoo evidence was captured at `1440x900` and `390x844`, but the requested
+`core3_reference` live database reports Email Marketing as `uninstalled` with
+only **Request Access**; no installed Odoo menu, route, or wizard exists to
+compare. The isolated Core3 browser runner was blocked before capture by the
+unrelated Live Chat discovery error recorded in the evidence bundle. The
+module remains in-progress and this slice makes no installed-reference visual
+parity claim.

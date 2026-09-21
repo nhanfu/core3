@@ -1,0 +1,17 @@
+{
+  "feature_id": "EMAIL-MARKETING-CONTACT-TO-LIST-001",
+  "page_id": "mailing-contacts",
+  "route": "/mailing-contacts",
+  "api": "services/email-marketing/api/mailing-contacts.yaml",
+  "page": "services/email-marketing/pages/mailing-contacts.yaml",
+  "action": "add_selected_contacts_to_mailing_list",
+  "migration": null,
+  "browser_capture": "blocked",
+  "blocker": "bun run agent:module -- email-marketing --port=4391 failed during global discovery because an unrelated Live Chat API action has no fields: actions[0].fields must be a non-empty array",
+  "focused_test": {
+    "command": "bun test ./test/email_marketing_add_contacts_to_list.integration.test.ts ./test/email_marketing_mailing_contact_import.integration.test.ts --timeout 20000",
+    "passed": 8,
+    "failed": 0,
+    "assertions": 50
+  }
+}

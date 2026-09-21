@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -10,14 +11,22 @@ const root = join(import.meta.dir, '../services/email-marketing');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 const api = yaml('api/mailing-contacts.yaml');
 const action = api.actions.find((candidate: any) => candidate.id === 'import_mailing_contacts');
+const isolatedDiscovery = () => {
+  const sandbox = join(tmpdir(), `core3-email-marketing-discovery-${crypto.randomUUID()}`);
+  mkdirSync(join(sandbox, 'services'), { recursive: true });
+  cpSync(root, join(sandbox, 'services/email-marketing'), { recursive: true });
+  const discovered = discoverPages(sandbox);
+  rmSync(sandbox, { recursive: true, force: true });
+  return discovered;
+};
 
 describe('Email Marketing mailing contact import wizard', () => {
   test('matches the Odoo modal and keeps page/API ownership', () => {
     const page = yaml('pages/mailing-contacts.yaml');
     expect(page.datasources).toBeUndefined();
-    expect(page.components[0]).toMatchObject({ selectable: true, bulk_actions: [{ id: 'import_mailing_contacts', label: 'Import', permission: 'email_marketing.manage' }] });
+    expect(page.components[0]).toMatchObject({ selectable: true, bulk_actions: expect.arrayContaining([{ id: 'import_mailing_contacts', label: 'Import', permission: 'email_marketing.manage' }, { id: 'add_selected_contacts_to_mailing_list', label: 'Add to List', permission: 'email_marketing.manage' }]) });
     expect(api.page.id).toBe('mailing-contacts');
-    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('mailing-contacts')).toContain('mailing_subscriptions');
+    expect(isolatedDiscovery().pageDatasources.get('mailing-contacts')).toContain('mailing_subscriptions');
     expect(action).toMatchObject({ type: 'server_form', title: 'Import Mailing Contacts', permission: 'email_marketing.manage', submit_label: 'Import', cancel_label: 'Discard', handler: 'yaml_mutation' });
     expect(action.fields.map((field: any) => field.label)).toEqual(['Import contacts in', 'Contact List']);
   });

@@ -152,3 +152,31 @@ Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-ma
 - Later owner HEAD `826f9556` remains dispatch-only and was not substituted.
   Actor/company, restart/browser mutation, complete route-tree, and paired Odoo
   gates remain open; this is conditional bounded reconciliation only.
+
+## Bounded review handoff — Add Selected Contacts to a Mailing List (2026-09-21)
+
+- Source comparison: Odoo 19 revision `65975996`,
+  `mailing_contact_to_list_action`, `mailing.contact.to.list`; the source Add
+  branch creates only missing subscriptions and closes after its info
+  notification.
+- Core3 implementation: Email Marketing page/API fragments remain separate and
+  match on `page.id: mailing-contacts`; the new `Add to List` bulk action is
+  protected by `email_marketing.manage` and uses existing durable subscription
+  storage. No migration was needed.
+- Focused validation: `bun test ./test/email_marketing_add_contacts_to_list.integration.test.ts ./test/email_marketing_mailing_contact_import.integration.test.ts --timeout 20000` — **8 passed, 0 failed, 50 assertions**.
+- Full Email Marketing regression: `bun test ./test/email_marketing*.integration.test.ts --timeout 20000` — **52 passed, 0 failed, 496 assertions** across 15 files.
+- Covered assertions: deterministic selection mapping, idempotent replay,
+  list-count refresh, file-backed restart, missing/empty/inactive/scope guards,
+  page/API discovery, permission, transport state, and deferred companion
+  navigation.
+- Evidence bundle:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-21/EMAIL-MARKETING-CONTACT-TO-LIST-001/`.
+- Live blocker: authenticated `core3_reference` at `http://localhost:8069`
+  shows Email Marketing as `uninstalled` with **Request Access**; no installed
+  Odoo screen or wizard exists. Core3 browser capture is separately blocked by
+  an unrelated Live Chat API discovery error (`actions[0].fields must be a
+  non-empty array`).
+
+Disposition: bounded Add branch implemented and test-evidenced; paired
+installed-Odoo visual parity, Core3 browser mutation proof, and the source
+Add-and-Send follow-up remain open. Do not sign off the module.

@@ -1,0 +1,26 @@
+{
+  "feature_id": "EMAIL-MARKETING-CONTACT-TO-LIST-001",
+  "url": "http://localhost:8069",
+  "database": "core3_reference",
+  "authenticated": true,
+  "module": "Email Marketing",
+  "module_state": "uninstalled",
+  "installed_reference_available": false,
+  "html_markers": ["state=uninstalled", "Request Access"],
+  "target_route": null,
+  "network_failures": [],
+  "captures": {
+    "desktop": {
+      "path": "/tmp/core3-odoo-parity/email-marketing-add-contacts-20260921/odoo-email-marketing-uninstalled-desktop-1440x900.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "69b37897bc9005b7b28752e53ed26ad8a43e64f944fe5f9cc3c06fe7f9b4aa37"
+    },
+    "mobile": {
+      "path": "/tmp/core3-odoo-parity/email-marketing-add-contacts-20260921/odoo-email-marketing-uninstalled-mobile-390x844.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "cdd1a33808a539f241c25a66c855244e17f5058a2c8eac4f0032015c1bd40bb1"
+    }
+  }
+}

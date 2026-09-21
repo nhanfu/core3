@@ -37,6 +37,33 @@ actions:
     fields:
       - { field: mailing_list_id, label: Import contacts in, type: select, options_source: mailing_subscription_lists, required: true }
       - { field: contact_list, label: Contact List, type: textarea, required: true, placeholder: '"Damien Roberts" <d.roberts@example.com>\n"Rick Sanchez" <rick_sanchez@example.com>\nvictor_hugo@example.com' }
+  - id: add_selected_contacts_to_mailing_list
+    type: server_form
+    permission: email_marketing.manage
+    title: Add Selected Contacts to a Mailing List
+    action: mass_mailing.mailing_contact_to_list_action
+    handler: yaml_mutation
+    operation: create
+    submit_label: Add
+    cancel_label: Cancel
+    refresh: [mailing_subscriptions, mailing_subscription_lists]
+    mutation:
+      before_steps:
+        - query: "SELECT COUNT(DISTINCT s.id) AS selected_count FROM mailing_subscriptions s WHERE s.id IN :selectedIds"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: EMAIL_MAILING_ADD_SELECTION_REQUIRED, message: Select at least one mailing contact. }
+        - { query: "SELECT id FROM mailing_lists WHERE id = :mailing_list_id AND active = true", status: 422, code: EMAIL_MAILING_ADD_LIST_INVALID, message: Select an active mailing list. }
+        - { query: "SELECT 1 AS ok FROM mailing_lists WHERE id = :mailing_list_id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: EMAIL_MAILING_ADD_LIST_SCOPE_REQUIRED, message: The mailing list belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id IN :selectedIds AND COALESCE(:current_company_name, '') <> '' AND c.company_name <> :current_company_name)", status: 403, code: EMAIL_MAILING_ADD_CONTACT_SCOPE_REQUIRED, message: One or more selected contacts are outside the current company scope. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id IN :selectedIds AND c.active = false)", status: 409, code: EMAIL_MAILING_ADD_CONTACT_INACTIVE, message: Only active mailing contacts can be added. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(DISTINCT s.id) FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id IN :selectedIds AND c.active = true) > 0 AND (SELECT COUNT(DISTINCT s.id) FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id IN :selectedIds AND c.active = true) = (SELECT COUNT(DISTINCT id) FROM mailing_subscriptions WHERE id IN :selectedIds)", status: 404, code: EMAIL_MAILING_ADD_CONTACTS_INVALID, message: One or more selected mailing contacts could not be found. }
+      steps:
+        - query: "INSERT INTO mailing_subscriptions(id, row_version, contact_id, list_id, opt_out, subscription_date, created_at, updated_at) SELECT 'mailing-subscription-' || c.id || '-' || :mailing_list_id, 1, c.id, :mailing_list_id, false, TIMESTAMP '2026-01-15 12:30:00', TIMESTAMP '2026-01-15 12:30:00', TIMESTAMP '2026-01-15 12:30:00' FROM mailing_subscriptions selected JOIN mailing_contacts c ON c.id = selected.contact_id WHERE selected.id IN :selectedIds AND c.active = true AND NOT EXISTS (SELECT 1 FROM mailing_subscriptions existing WHERE existing.contact_id = c.id AND existing.list_id = :mailing_list_id) ON CONFLICT (contact_id, list_id) DO NOTHING"
+        - query: "UPDATE mailing_lists SET subscriber_count = (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), contact_count = (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), updated_at = TIMESTAMP '2026-01-15 12:30:00' WHERE id = :mailing_list_id"
+      result: { query: "SELECT :mailing_list_id AS mailing_list_id, (SELECT COUNT(DISTINCT selected.contact_id) FROM mailing_subscriptions selected WHERE selected.id IN :selectedIds AND EXISTS (SELECT 1 FROM mailing_subscriptions added WHERE added.contact_id = selected.contact_id AND added.list_id = :mailing_list_id)) AS selected_count, (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = :mailing_list_id) AS subscriber_count" }
+    fields:
+      - { field: mailing_list_id, label: Mailing List, type: select, options_source: mailing_subscription_lists, required: true }
   - id: create_mailing_subscription
     type: server_form
     permission: email_marketing.manage
