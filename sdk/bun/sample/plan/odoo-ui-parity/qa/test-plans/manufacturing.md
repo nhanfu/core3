@@ -43,6 +43,7 @@ IDs/dates.
 | MRP-FUNC-012 | Work Center `action_work_orders` | Scope persisted non-terminal work orders to the selected work center across list/form/calendar/pivot/graph modes; keep create/delete absent and retain guarded operator actions | pass: focused bounded suite |
 | MRP-FUNC-013 | BoM `action_mrp_routing_time` | Scope completed work orders to the selected BoM across graph/pivot/list/form/calendar; filter by operation/work center/search and persist the BoM scope through restart | pass: focused bounded suite |
 | MRP-FUNC-014 | Work Center Waiting Availability | Scope durable Waiting work orders to the selected Work Center across list/form/calendar/pivot/graph; expose only the guarded Plan operator action | pass: focused bounded suite |
+| MRP-FUNC-015 | Work Center Late Orders | Start from the Overview Late link, scope durable late non-terminal work orders to the selected Work Center across list/form/calendar/pivot/graph, and preserve guarded operator actions | pass: focused bounded suite |
 
 ## Workflow and integration cases
 
@@ -56,6 +57,7 @@ IDs/dates.
 | MRP-WF-006 | Work-order edit guards | Edit a non-terminal row with its current version; reject terminal rows, invalid duration/date range, missing rows, stale versions, and unauthorized actors without partial writes | planned bounded continuation |
 | MRP-WF-007 | Work Center Work Orders workflow | Scoped Plan/Start/Pause/Continue/Block/Cancel actions reuse `mrp_workorders`, preserve row guards, and refresh the scoped durable source | pass: focused contract; browser blocked by reference profile |
 | MRP-WF-008 | Waiting Availability planning | Waiting rows expose Plan, transition through the existing guarded workflow, and remain durable across migration replay/restart | pass: focused contract; browser action capture pending |
+| MRP-WF-009 | Late Work Orders operator flow | Late rows reuse `mrp_workorders`; Plan/Start/Pause/Continue/Block/Cancel require `manufacturing.write`, preserve CAS guards, and refresh the scoped source | pass: focused contract; browser showed Plan/Cancel |
 
 ## Permission and security cases
 
@@ -72,6 +74,7 @@ IDs/dates.
 | MRP-PERM-009 | Work Center Work Orders | Scoped reads require `manufacturing.read`; operator mutations require `manufacturing.write`; no create/delete action is exposed | pass: focused contract |
 | MRP-PERM-010 | BoM Operations Performance | Report and filter datasources require `manufacturing.read`; the record-scoped action exposes no write/create/delete path and declares 401/403/503 responses | pass: focused contract |
 | MRP-PERM-011 | Waiting Availability | Scoped reads require `manufacturing.read`; Plan requires `manufacturing.write`; create/delete remain unavailable | pass: focused contract |
+| MRP-PERM-012 | Late Work Orders | Scoped reads require `manufacturing.read`; operator actions require `manufacturing.write`; create/delete remain unavailable | pass: focused contract |
 
 ## Visual, responsive, and regression cases
 
@@ -86,6 +89,7 @@ IDs/dates.
 | MRP-UI-007 | Work Center Work Orders scoped action | `/manufacturing/work-centers/work-orders` | 1440x900 and 390x844 | Source modes and selected-center rows render without overflow; paired Odoo capture is required where the reference action is available | blocked: shared Odoo profile redirects to Discuss and exposes no Manufacturing menu |
 | MRP-UI-008 | BoM Operations Performance stat action | `/manufacturing/boms/detail/operations-performance` | 1440x900 and 390x844 | Operations Performance stat action and graph/pivot/list/form/calendar tabs match Odoo where the reference action is available; no overflow | blocked: shared Odoo profile redirects `/odoo/boms` to Discuss and exposes no Manufacturing menu |
 | MRP-UI-009 | Work Center Waiting Availability | `/manufacturing/work-centers/waiting-availability` | 1440x900 and 390x844 | Work Center-scoped Waiting row, visible List/Calendar/Pivot/Graph tabs, Plan action, and no overflow; paired Odoo capture required where action is available | conditional: Core3 pass; Odoo reference redirects to Discuss |
+| MRP-UI-010 | Work Center Late Orders | `/manufacturing/work-centers/late-orders` | 1440x900 and 390x844 | Overview Late navigation, selected-center late rows, visible List/Form/Calendar/Pivot/Graph tabs, guarded actions, and no overflow; paired Odoo capture required where the reference action is available | conditional: Core3 captures pass; Odoo reference redirects to Discuss |
 
 ## Exit criteria
 

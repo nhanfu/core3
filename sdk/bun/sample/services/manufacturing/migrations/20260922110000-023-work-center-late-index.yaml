@@ -1,0 +1,14 @@
+version: 0.0.23
+description: Index durable late Work Orders for the Work Center Late action
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_mrp_workorders_workcenter_late_state_plan
+        ON mrp_workorders(workcenter, late, state, planned_date, sequence);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_workorders_workcenter_late_state_plan;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
