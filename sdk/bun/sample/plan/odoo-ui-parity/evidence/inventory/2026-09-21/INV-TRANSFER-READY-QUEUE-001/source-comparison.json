@@ -1,0 +1,23 @@
+{
+  "feature": "INV-TRANSFER-READY-QUEUE-001",
+  "odoo": {
+    "source": "../../../../../odoo/addons/stock/views/stock_picking_views.xml",
+    "lines": "569-577",
+    "action": "stock.action_picking_tree_ready",
+    "behavior": [
+      "labels the action To Do",
+      "opens stock.picking in list, kanban, form, and calendar views",
+      "uses search_default_available in the action context",
+      "shows the global ready/available transfer queue"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-ready-queue.yaml",
+    "api": "services/inventory/api/transfer-ready-queue.yaml",
+    "page_id": "transfer-ready-queue",
+    "action": "refresh_inventory_transfer_ready_queue",
+    "migration": "services/inventory/migrations/20260922330000-083-inventory-transfer-ready-queue.yaml",
+    "mapping": "Core3 exposes a company-scoped To Do transfer list with search, operation filters, durable queue refresh history, transfer navigation, actor/company guards, and optimistic queue row-version protection."
+  },
+  "comparison_scope": "Core3 implements the bounded ready-transfer queue lifecycle; authenticated visual parity and live Odoo execution remain blocked by login requirements."
+}
