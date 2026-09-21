@@ -71,4 +71,79 @@ describe('Base contact chatter parity slice', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test('persists follower add/remove actions, refreshes candidates, and records scope guards', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'core3-base-contact-followers-'));
+    const databasePath = join(root, 'base.duckdb');
+    let database: DuckDbDatabase | undefined;
+    try {
+      database = await DuckDbDatabase.open(databasePath);
+      const repository = new YamlRepository(database);
+      const migrations = 'base_contact_followers_migrations';
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, migrations, ['schema', 'data']);
+      const api = yaml('api/contact-detail.yaml');
+      const add = api.actions.find((action: any) => action.id === 'add_contact_follower');
+      const remove = api.actions.find((action: any) => action.id === 'remove_contact_follower');
+      expect(add).toMatchObject({ type: 'server', permission: 'base.contacts.write', handler: 'order_chatter', operation: 'follower_add' });
+      expect(remove).toMatchObject({ type: 'server', permission: 'base.contacts.write', handler: 'order_chatter', operation: 'follower_remove' });
+      expect(yaml('pages/contact-detail.yaml').components[0]).toMatchObject({
+        follower_source: 'contact_followers',
+        follower_candidates_source: 'contact_follower_candidates',
+        follower_add_action: 'add_contact_follower',
+        follower_remove_action: 'remove_contact_follower',
+      });
+
+      const candidates = await repository.querySource(source('contact-detail.yaml', 'contact_follower_candidates'), {
+        id: 'contact-demo', current_company_id: 'company-demo', fixture_state: null,
+      }, 0, 50);
+      expect(candidates.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ value: 'user-qa', label: 'QA User · qa@core3.local' }),
+      ]));
+
+      const added = await repository.executeMutation(add.mutation, {
+        id: 'contact-demo', user_id: 'user-qa', expected_row_version: 1,
+        current_company_id: 'company-demo', current_user_id: 'user-admin', current_user_name: 'Administrator',
+      }) as any;
+      expect(added).toMatchObject({ user_id: 'user-qa', name: 'QA User', removed: false });
+      const afterAdd = await repository.querySource(source('contact-detail.yaml', 'contact_followers'), {
+        id: 'contact-demo', current_company_id: 'company-demo', fixture_state: null,
+      }, 0, 50);
+      expect(afterAdd.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ user_id: 'user-admin', name: 'Administrator' }),
+        expect.objectContaining({ user_id: 'user-qa', name: 'QA User' }),
+      ]));
+      await expect(repository.executeMutation(add.mutation, {
+        id: 'contact-demo', user_id: 'user-qa', expected_row_version: 2,
+        current_company_id: 'company-demo', current_user_id: 'user-admin', current_user_name: 'Administrator',
+      })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_FOLLOWER_EXISTS' });
+      await expect(repository.executeMutation(remove.mutation, {
+        id: 'contact-demo', user_id: 'user-qa', expected_row_version: 1,
+        current_company_id: 'company-demo', current_user_id: 'user-admin', current_user_name: 'Administrator',
+      })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+
+      const removed = await repository.executeMutation(remove.mutation, {
+        id: 'contact-demo', user_id: 'user-qa', expected_row_version: 2,
+        current_company_id: 'company-demo', current_user_id: 'user-admin', current_user_name: 'Administrator',
+      }) as any;
+      expect(removed).toMatchObject({ user_id: 'user-qa', name: 'QA User', removed: true });
+      const afterRemove = await repository.querySource(source('contact-detail.yaml', 'contact_followers'), {
+        id: 'contact-demo', current_company_id: 'company-demo', fixture_state: null,
+      }, 0, 50);
+      expect(afterRemove.data).toEqual([expect.objectContaining({ user_id: 'user-admin' })]);
+      const messages = await repository.querySource(source('contact-detail.yaml', 'contact_messages'), {
+        id: 'contact-demo', current_company_id: 'company-demo', fixture_state: null,
+      }, 0, 50);
+      expect(messages.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ action: 'base.contacts.followers.add', detail: 'QA User now follows Demo Contact' }),
+        expect.objectContaining({ action: 'base.contacts.followers.remove', detail: 'QA User no longer follows Demo Contact' }),
+      ]));
+      await expect(repository.executeMutation(add.mutation, {
+        id: 'contact-demo', user_id: 'user-qa', expected_row_version: 3,
+        current_company_id: 'company-vietnam', current_user_id: 'user-admin', current_user_name: 'Administrator',
+      })).rejects.toMatchObject({ status: 404, code: 'BASE_CONTACT_FOLLOWER_CONTACT_NOT_FOUND' });
+    } finally {
+      database?.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

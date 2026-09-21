@@ -1,0 +1,38 @@
+version: 0.0.20
+kind: schema
+description: Persist contact chatter followers and candidate users
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_contact_follower_catalog (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS base_contact_followers (
+        contact_id VARCHAR NOT NULL,
+        user_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL,
+        added_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(contact_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS base_contact_followers_contact_idx ON base_contact_followers(contact_id, created_at);
+      INSERT INTO base_contact_follower_catalog(id, name, email, active) VALUES
+        ('user-admin', 'Administrator', 'admin@tms.local', true),
+        ('user-qa', 'QA User', 'qa@core3.local', true)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO base_contact_followers(contact_id, user_id, name, email, added_by, created_at)
+      VALUES ('contact-demo', 'user-admin', 'Administrator', 'admin@tms.local', 'user-admin', TIMESTAMP '2026-09-04 10:00:00')
+      ON CONFLICT (contact_id, user_id) DO NOTHING;
+    down: |
+      DELETE FROM base_contact_followers WHERE contact_id = 'contact-demo' AND user_id = 'user-admin';
+      DROP INDEX IF EXISTS base_contact_followers_contact_idx;
+      DROP TABLE IF EXISTS base_contact_followers;
+      DROP TABLE IF EXISTS base_contact_follower_catalog;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

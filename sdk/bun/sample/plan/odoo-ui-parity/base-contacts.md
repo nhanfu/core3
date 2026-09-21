@@ -317,3 +317,44 @@ validation, missing-record, and company-scope guards. The existing Contacts
 regression now expects the seeded chatter row as well. Screenshots are not
 claimed in this backend/contract slice; paired authenticated Odoo/Core3
 composer captures remain a follow-up.
+
+## Contact chatter followers slice (2026-09-21)
+
+Odoo 19's `mail.thread` contact form exposes a follower count/tool beside the
+`Send message` and `Log note` composer controls. The live authenticated
+reference at `/odoo/contacts/73` showed one follower, the message composer
+recipient chip, and the responsive follower/attachment tools. The source
+contract is `addons/mail/views/res_partner_views.xml:18` (`<chatter/>`) and
+`addons/mail/static/src/chatter/web/chatter.xml:12-25` (composer controls).
+
+Core3 now owns the follower catalog and contact relation in migration
+`services/base/migrations/20260921100000-020-contact-followers.yaml`.
+`api/contact-detail.yaml` owns the `contact_followers` and
+`contact_follower_candidates` datasources plus permissioned
+`add_contact_follower` / `remove_contact_follower` actions. The page remains
+layout-only and binds these through `page.id: contact-detail`. Add/remove
+mutations are company-scoped, require `base.contacts.write`, use the contact
+row version, reject duplicate/missing/stale followers, and append durable
+audit entries to `base_contact_messages`; reapplying the migration is
+idempotent.
+
+Focused validation is `test/base_contact_chatter.integration.test.ts`: 3
+tests / 24 assertions. It covers API/page separation, candidate discovery,
+add/remove persistence, candidate refresh, audit messages, duplicate and
+stale-row guards, and wrong-company rejection.
+
+Authenticated Odoo evidence (browser instance `245ea108`, session stopped
+after capture) is outside Git: desktop
+`/tmp/odoo-base-contact-chatter-desktop-20260921.png` (SHA-256
+`7d6b807af051bdf93f85dc296b21542b9a6ae0981bf72ee87723d824659d83bb`) and
+mobile `.../odoo-base-contact-chatter-mobile-20260921.png` (SHA-256
+`22266a8fb4899a8a9133a79b18a6cbb3467b6dc38d6259e668d3d1af2e0c9e74`). The
+mobile browser observation was 390x844 and showed the same composer and
+follower controls; opening the follower control showed `Follow`, `Add
+Followers`, and `Remove this follower`. The follower-menu capture is
+`/tmp/odoo-base-contact-followers-mobile-20260921.png` (SHA-256
+`a1a72c50aeb5aff247ee8e5c0739f59844923296139d07e084859b582f6f7bc6`). Core3
+paired authenticated captures are blocked by an
+unrelated pre-existing page-discovery failure in another module:
+`components[0].filters[6].options[0].id must be a non-empty string`; no Core3
+visual-parity claim is made for this slice.

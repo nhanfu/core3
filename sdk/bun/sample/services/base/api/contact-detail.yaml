@@ -14,7 +14,10 @@ datasources:
     query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM (SELECT 'contact-message-created-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.created' AS action, 'Contact created' AS action_label, 'Created from the deterministic Core3 demo fixture for ' || c.name AS detail, TIMESTAMP '2026-09-01 09:00:00' AS created_at FROM base_contacts c WHERE c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT 'contact-message-note-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.note' AS action, 'Internal note' AS action_label, 'Confirm contact details before the next outreach' AS detail, TIMESTAMP '2026-09-03 14:30:00' AS created_at FROM base_contacts c WHERE c.id = :id AND c.id = 'contact-demo' AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT m.id, m.contact_id, m.actor_name, m.action, m.action_label, m.detail, m.created_at FROM base_contact_messages m JOIN base_contacts c ON c.id = m.contact_id WHERE m.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)) messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
   - id: contact_followers
     permission: base.contacts.read
-    query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND EXISTS (SELECT 1 FROM base_contacts c WHERE c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id))"
+    query: "SELECT f.user_id, f.name, f.email, CAST(f.created_at AS VARCHAR) AS followed_at FROM base_contact_followers f JOIN base_contacts c ON c.id = f.contact_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND f.contact_id = :id AND c.active = true AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) ORDER BY f.created_at, f.user_id"
+  - id: contact_follower_candidates
+    permission: base.contacts.write
+    query: "SELECT u.id AS value, u.name || ' · ' || u.email AS label FROM base_contact_follower_catalog u JOIN base_contacts c ON c.id = :id WHERE u.active = true AND c.active = true AND NOT EXISTS (SELECT 1 FROM base_contact_followers f WHERE f.contact_id = :id AND f.user_id = u.id) AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) ORDER BY u.name, u.id"
   - id: contact_detail_parent_companies
     permission: base.contacts.read
     query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
@@ -112,6 +115,55 @@ actions:
         - { query: "SELECT id FROM base_contacts WHERE id = :id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact is outside the current company. }
       steps: [{ query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_id, :current_user_name, 'base.contacts.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)))" }]
       result: { query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM base_contact_messages WHERE id = :message_id" }
+  - id: add_contact_follower
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.contact_detail.row_version}' }
+    refresh: [contact_detail, contact_followers, contact_follower_candidates, contact_messages]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_FOLLOWER_ACTOR_REQUIRED, message: An authenticated contact actor is required. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 404, code: BASE_CONTACT_FOLLOWER_CONTACT_NOT_FOUND, message: Active contact not found in the current company. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 409, code: STALE_RECORD, message: The contact changed before the follower was added. }
+        - { query: "SELECT id FROM base_contact_follower_catalog WHERE id = :user_id AND active = true", status: 404, code: BASE_CONTACT_FOLLOWER_USER_NOT_FOUND, message: Select an enabled follower. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contact_followers WHERE contact_id = :id AND user_id = :user_id)", status: 409, code: BASE_CONTACT_FOLLOWER_EXISTS, message: This user already follows the contact. }
+      steps:
+        - query: "INSERT INTO base_contact_followers(contact_id, user_id, name, email, added_by) SELECT :id, u.id, u.name, u.email, :current_user_id FROM base_contact_follower_catalog u WHERE u.id = :user_id AND u.active = true"
+        - query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) SELECT :message_id, :id, :current_user_id, :current_user_name, 'base.contacts.followers.add', 'Added follower', u.name || ' now follows ' || c.name FROM base_contact_follower_catalog u JOIN base_contacts c ON c.id = :id WHERE u.id = :user_id"
+        - query: "UPDATE base_contacts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The contact changed before the follower was added.
+      result: { query: "SELECT :user_id AS user_id, u.name, u.email, false AS removed FROM base_contact_follower_catalog u WHERE u.id = :user_id" }
+  - id: remove_contact_follower
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.contact_detail.row_version}' }
+    refresh: [contact_detail, contact_followers, contact_follower_candidates, contact_messages]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_FOLLOWER_ACTOR_REQUIRED, message: An authenticated contact actor is required. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 404, code: BASE_CONTACT_FOLLOWER_CONTACT_NOT_FOUND, message: Active contact not found in the current company. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 409, code: STALE_RECORD, message: The contact changed before the follower was removed. }
+        - { query: "SELECT user_id FROM base_contact_followers WHERE contact_id = :id AND user_id = :user_id", status: 404, code: BASE_CONTACT_FOLLOWER_NOT_FOUND, message: Follower not found for this contact. }
+      steps:
+        - query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) SELECT :message_id, :id, :current_user_id, :current_user_name, 'base.contacts.followers.remove', 'Removed follower', f.name || ' no longer follows ' || c.name FROM base_contact_followers f JOIN base_contacts c ON c.id = :id WHERE f.contact_id = :id AND f.user_id = :user_id"
+        - query: "DELETE FROM base_contact_followers WHERE contact_id = :id AND user_id = :user_id"
+        - query: "UPDATE base_contacts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The contact changed before the follower was removed.
+      result: { query: "SELECT :user_id AS user_id, u.name, u.email, true AS removed FROM base_contact_follower_catalog u WHERE u.id = :user_id" }
   - { id: view_activity, type: navigate, permission: base.activities.read, navigate_to: /activity-detail, params: { id: '{row.id}' } }
   - { id: open_contact_opportunities, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: opportunities } }
   - { id: open_contact_invoices, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: invoices } }

@@ -87,7 +87,10 @@ describe('Base Contacts list/card/detail parity batch', () => {
 
   test('keeps read/write permissions and transport-error contracts explicit', () => {
     for (const file of ['api/contacts.yaml', 'api/contact-detail.yaml']) {
-      for (const item of yaml(file).datasources) expect(item.permission, `${file}:${item.id}`).toMatch(/^(base\.(contacts|activities)|livechat)\.read$/);
+      for (const item of yaml(file).datasources) {
+        const expected = item.id === 'contact_follower_candidates' ? /^(base\.contacts)\.write$/ : /^(base\.(contacts|activities)|livechat)\.read$/;
+        expect(item.permission, `${file}:${item.id}`).toMatch(expected);
+      }
     }
     expect(source('contacts.yaml', 'contacts').error_states.transport_error).toEqual({ status: 503, code: 'BASE_CONTACTS_DATA_UNAVAILABLE', message: 'Contacts data is temporarily unavailable' });
     expect(source('contact-detail.yaml', 'contact_detail').error_states.transport_error.status).toBe(503);

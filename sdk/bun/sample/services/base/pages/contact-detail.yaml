@@ -58,6 +58,16 @@ components:
           fields: [{ field: notes, label: Notes, type: textarea, wide: true }]
     message_source: contact_messages
     follower_source: contact_followers
+    follower_candidates_source: contact_follower_candidates
+    follower_candidates_page_size: 100
+    follower_add_action: add_contact_follower
+    follower_remove_action: remove_contact_follower
+    follower_label: Followers
+    add_follower_label: Add followers
+    remove_follower_label: Remove follower
+    no_followers_label: No followers
+    follower_search_placeholder: Select a follower
+    add_label: Add
     attachment_source: contact_attachments
     attachment_panel_open: true
     activity_action: schedule_activity
@@ -77,6 +87,7 @@ components:
     send_label: Send
     log_label: Log note
     message_action_field: action
+    message_action_labels: { base.contacts.message: Message, base.contacts.note: Internal note, base.contacts.followers.add: Added follower, base.contacts.followers.remove: Removed follower }
     message_detail_field: detail
     message_timestamp_field: created_at
     message_actor_field: actor_name

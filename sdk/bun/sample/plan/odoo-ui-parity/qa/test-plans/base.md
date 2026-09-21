@@ -32,6 +32,7 @@ activities.
 | --- | --- | --- | --- | --- | --- |
 | BASE-FUNC-001 | functional | Contacts/company list/detail | Search/filter/group/paginate, open detail, edit/save/discard and preserve relation fields after reload | focused contacts/companies tests | pass |
 | BASE-FUNC-002 | functional | Contact activity/chatter/stats | Schedule activity, send message, log internal note, view timeline and stat counts with deterministic records | focused contacts/chatter tests | pass at contract level |
+| BASE-FUNC-010 | functional/data/permission | Contact chatter followers | Discover candidates, add/remove a follower, persist the relation and audit entry, refresh the candidate list, and enforce company/write/stale/duplicate guards | `test/base_contact_chatter.integration.test.ts`; paired browser evidence | pass at contract level; Core3 visual blocked |
 | BASE-FUNC-003 | functional | Country groups | Create/edit/delete groups and multi-select countries; duplicate/required/stale guards persist | country group tests | pass |
 | BASE-FUNC-004 | functional | Banks/partner bank accounts | CRUD, relation validity, archive/restore, duplicate and in-use guards | bank tests | pass |
 | BASE-FUNC-005 | functional | Companies/tags/industries | CRUD/search/archive and linked record constraints | focused catalog tests | pass |
@@ -65,7 +66,7 @@ activities.
 
 | Case ID | State | Viewport | Required assertion | Status |
 | --- | --- | --- | --- | --- |
-| BASE-UI-001 | Contacts list/detail | 1440x900, 390x844 | Odoo menu, tabs, cards, form sections, smart buttons, chatter and overflow match | partial |
+| BASE-UI-001 | Contacts list/detail | 1440x900, 390x844 | Odoo menu, tabs, cards, form sections, smart buttons, chatter and overflow match | Odoo follower/composer captures; Core3 capture blocked by unrelated discovery error | partial |
 | BASE-UI-002 | Configuration lists/forms | both | Menu ordering, labels, columns, relational controls and responsive forms match | partial |
 | BASE-UI-003 | Empty/error/permission | both | Correct empty, error, denied and missing-record states are visible and safe | planned |
 | BASE-UI-004 | Current route regression | all 26 manifest routes | 52 authenticated checks with no page/request/HTTP errors, blank states or overflow | pass |
