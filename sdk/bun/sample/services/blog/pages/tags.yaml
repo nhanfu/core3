@@ -7,6 +7,11 @@ components:
     create_action: create_blog_tag
     create_label: New tag
     search: { label: Search tags, placeholder: 'Search tag or category...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/blog/pages/tag-detail.yaml, side_panel: true }
     columns:
       - { field: name, label: Tag, type: PrimaryEntityCell }
       - { field: category, label: Category }
@@ -15,4 +20,5 @@ components:
       - { field: id, label: '', sortable: false, actions: [{ id: edit_blog_tag, label: Edit, icon: edit }, { id: delete_blog_tag, label: Delete, icon: trash, variant: danger }] }
     page_size: 50
     row_key: id
+    row_actions: menu
     row_open_action: edit_blog_tag

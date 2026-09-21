@@ -100,3 +100,13 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-POST-KANBAN-WF-001 | workflow/data | Active and archived post rows | Active is default; Archived filtering excludes inactive rows from active kanban and returns them only under Archived | pass: focused slice |
 | BLOG-POST-KANBAN-RESTART-001 | data/regression | File-backed DuckDB with migrations reapplied | Published card date/state remain identical after close/reopen; no migration is needed | pass: focused slice |
 | BLOG-POST-KANBAN-UI-001 | responsive/visual | Authenticated Odoo reference, 1440x900 and 390x844 | Compare Odoo Blog Post Pages Kanban against Core3; record blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection |
+
+## BLOG-TAG-POSTS-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-TAG-POSTS-FUNC-001 | functional/visual | Blog reader; seeded `yaml` tag and demo posts | Tags action exposes List/Form modes; form shows Name, Category, Color, and Odoo `Used in` reverse post relation | pass: focused 4-test slice and source assertions |
+| BLOG-TAG-POSTS-WF-001 | workflow/data | Blog writer with `blog.write`; tag parent and relation row versions | Add/remove a post updates `blog_post_tags`, synchronized `blog_posts.tags`, and parent/line versions atomically; duplicate, invalid, missing, and stale operations fail without partial writes | pass: focused relation test |
+| BLOG-TAG-POSTS-PERM-001 | permission/security | Blog reader with `blog.read` only | Relation reads succeed by contract; add/remove actions return 403 and leave the relation unchanged | pass: focused API boundary test |
+| BLOG-TAG-POSTS-RESTART-001 | data/regression | File-backed DuckDB; add relation then close/reopen and replay migrations | Reverse relation, synchronized post tag names, and tag row version remain durable | pass: focused restart test |
+| BLOG-TAG-POSTS-UI-001 | responsive/visual | Authenticated Odoo reference, desktop and emulated mobile | Compare Blog Tag form and Used in relation at 1440x900 and 390x844; record exact blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 runtime probe refused connection |

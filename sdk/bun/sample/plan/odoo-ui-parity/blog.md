@@ -244,3 +244,56 @@ Stable ID: `BLOG-POST-KANBAN-001`.
   `/blog` returns Odoo Error 404 at desktop and 390x844 mobile sizes.
   Core3 `localhost:3001` returned `net::ERR_CONNECTION_REFUSED`; no paired
   visual-parity claim is made.
+
+## Blog Tag reverse post relation slice — 2026-09-22
+
+The next genuinely uncovered bounded source behavior is the Odoo Blog Tag
+form's reverse `post_ids` relation. `addons/website_blog/views/website_blog_views.xml`
+defines the tag form with Name, Category, Color, and a `post_ids` field labeled
+`Used in: `; the local model declares `BlogTag.post_ids` as a Many2many to
+`blog.post`. Core3 already persists the normalized `blog_post_tags` relation
+and exposes its forward controls on the post form, but the Tags form had no
+reverse relation panel or mutation path.
+
+Stable ID: `BLOG-TAG-POSTS-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| Tag form shows Name, Category, Color, and Used in posts | Tags list opened only a flat three-field form | Add a YAML tag detail form with a Used in LineItemGrid and List/Form navigation | page/API and local Odoo source assertions |
+| `post_ids` relation is readable and editable | Only the post-side relation controls existed | Add reverse relation datasource, post lookup, guarded add/remove actions, and refresh targets | relation persistence, duplicate/invalid/stale guards |
+| Relation edits remain durable | No tag-side restart test existed | Reuse `blog_post_tags`, synchronize legacy `blog_posts.tags`, and increment parent/line versions transactionally | file-backed close/reopen and migration replay |
+
+### Core3 contract
+
+- `services/blog/pages/tags.yaml` remains presentation-only and declares
+  visible List/Form tabs plus the `blog-tag-detail` side-panel form.
+- `services/blog/pages/tag-detail.yaml` is layout-only and renders the Odoo
+  Tag form fields and `Used in` relation through `LineItemGrid`.
+- `services/blog/api/tag-detail.yaml` joins by `page.id: blog-tag-detail` and
+  owns the tag detail/relation datasources, lookup, permissions, and guarded
+  add/remove mutations. The existing `api/tags.yaml` remains the list/create
+  contract and keeps the matching `page.id: blog-tags`.
+- No migration is required. The existing `blog_post_tags` table is the durable
+  source of truth; add/remove operations also update the compatibility
+  `blog_posts.tags` projection and use parent/line optimistic-concurrency
+  guards.
+- Reading the form and relation requires `blog.read`; editing tag fields and
+  adding/removing posts requires `blog.write`. Invalid, duplicate, missing,
+  wrong-company, and stale relation operations return explicit errors without
+  partial writes.
+
+### Acceptance checklist
+
+- Tags action retains Odoo List/Form modes and opens a detail form with Name,
+  Category, Color, and `Used in` posts.
+- A reader can query the tag and reverse relation but cannot mutate it; a
+  writer can add/remove a post, and duplicate, invalid, stale, and
+  cross-company writes are rejected atomically.
+- Relation state and synchronized post tag names survive file-backed restart
+  and idempotent migration replay.
+- Authenticated Odoo/Core3 desktop (1440x900) and mobile (390x844) checks are
+  captured under the feature evidence folder. The current reference has no
+  installed Website/Blog module and Core3 runtime availability is recorded
+  exactly; no visual-parity claim is made when either side is unavailable.

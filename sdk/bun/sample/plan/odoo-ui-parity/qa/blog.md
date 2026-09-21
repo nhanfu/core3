@@ -169,3 +169,14 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 | BLOG-POST-KANBAN-RESTART-001 | File-backed restart persistence | Same focused test closes/reopens DuckDB, reapplies migrations, and finds the same published card state/date | pass |
 | BLOG-POST-KANBAN-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-KANBAN-001/browser-check.md` with desktop/mobile 404 captures | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection; no visual-parity claim |
 | BLOG-QA-011 | Slice regression/tooling gates | Focused 3/18 and Blog wildcard 35/199; final tooling gates recorded at handoff | pass pending final command output |
+
+## Blog Tag reverse post relation slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-TAG-POSTS-FUNC-001 | Odoo Blog Tag form reverse `post_ids` relation | `test/blog_tag_posts.integration.test.ts` — source-backed Tag form assertion, page/API separation, List/Form tabs, detail Used in grid, and durable relation query | pass: 4 tests / 26 assertions |
+| BLOG-TAG-POSTS-WF-001 | Add/remove post relation with transaction and concurrency guards | Same focused test adds `blog-post-demo-002` to `blog-tag-demo-001`, synchronizes legacy post tag names, rejects duplicate/invalid/stale operations, removes the row, and verifies versions | pass |
+| BLOG-TAG-POSTS-PERM-001 | Reverse relation permission boundary | Same focused test sends the real `blog.tags.posts.add` action through `createYamlApi` as a `blog.read` actor; mutation is rejected with 403 and no relation is written | pass |
+| BLOG-TAG-POSTS-RESTART-001 | Restart durability | Same focused test closes/reopens file-backed DuckDB, reapplies migrations, and finds both reverse relation rows plus synchronized post tags | pass |
+| BLOG-TAG-POSTS-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-TAG-POSTS-001/browser-check.md` and `odoo-desktop-404.png`/`odoo-mobile-404.png` | blocked: authenticated `core3_reference` has no Website/Blog menu and `/blog` is Odoo Error 404; Core3 `:4311` probe was unavailable; no visual-parity claim |
+| BLOG-QA-012 | Scoped Blog regression/tooling gates | Focused relation test 4/26, full Blog wildcard 39/225, UI audit 802/811/1,656, Blog Sass, targeted ESLint, and `git diff --check` | pass; repository-wide TypeScript has unrelated pre-existing errors; paired visual parity remains blocked |

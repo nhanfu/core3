@@ -1,0 +1,47 @@
+title: Blog Tag
+page: { id: blog-tag-detail, route: /blog-tags/detail, breadcrumb: [Website, Configuration, Blog, Tags], auth: { require: [blog.read] } }
+components:
+  - type: OdooFormView
+    source: blog_tag_detail_form
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_blog_tags, label: Back to Tags, variant: secondary, permission: blog.read }
+      - { id: edit_blog_tag_detail, label: Edit, variant: primary, permission: blog.write }
+    groups:
+      - title: Tag
+        fields:
+          - { field: name, label: Name, type: text, required: true }
+          - { field: category, label: Category, type: text }
+          - { field: color, label: Color, type: ColorSwatch }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: blog_tag_posts
+    parent_source: blog_tag_detail
+    title: Used in
+    description: Blog posts using this tag.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_blog_tag_post, label: Add a post, variant: primary, permission: blog.write }
+    empty_state: { title: Not used in any posts, description: Add a post to use this tag. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Blog Post, readonly: true }
+      - { type: LineItemField, id: blog_name, field: blog_name, label: Blog, readonly: true }
+      - { type: LineItemField, id: state, field: state, label: Status, readonly: true }
+      - type: LineItemActions
+        id: blog_tag_post_actions
+        actions:
+          - { id: remove_blog_tag_post, label: Remove, icon: trash, variant: danger, permission: blog.write }
+    columns:
+      - { field: name, label: Blog Post, type: PrimaryEntityCell }
+      - { field: blog_name, label: Blog }
+      - { field: state, label: Status, type: StatusChip }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_blog_tag_post, label: Remove, icon: trash, variant: danger, permission: blog.write }
