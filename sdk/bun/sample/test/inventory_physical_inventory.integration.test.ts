@@ -45,7 +45,7 @@ describe('Inventory physical inventory parity', () => {
     expect(list.filters[0].options.map((option: any) => option.label)).toEqual([
       'My Counts', 'Internal Locations', 'Transit Locations', 'To Count', 'To Apply', 'Conflicts', 'Negative Stock',
     ]);
-    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Receipts', 'Deliveries', 'Internal', 'Physical Inventory']);
+    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Overview']);
     expect(yaml('permissions.yaml').permissions).toEqual(['inventory.read', 'inventory.write', 'inventory.manage', 'inventory.tracking', 'inventory.multi_location']);
   });
 
@@ -55,9 +55,9 @@ describe('Inventory physical inventory parity', () => {
     const params = { q: null, count_filter: null, fixture_state: null, current_user_name: 'Admin User' };
 
     const initial = await db.querySource(physical, params, 0, 50);
-    expect(initial.data).toHaveLength(9);
+    expect(initial.data).toHaveLength(10);
     expect(initial.data.map((row: any) => row.id)).toEqual([
-      'quant-pallet-main', 'quant-cabinet-main', 'quant-box-main', 'quant-cable-lot-a', 'quant-cable-lot-b',
+      'quant-trace-location-0001', 'quant-pallet-main', 'quant-cabinet-main', 'quant-box-main', 'quant-cable-lot-a', 'quant-cable-lot-b',
       'quant-desk-main', 'quant-drawer-lot', 'quant-negative-transit', 'quant-chair-transit',
     ]);
     expect(initial.data.find((row: any) => row.id === 'quant-box-main')).toMatchObject({ counted: 20, difference: 2, inventory_quantity_set: true });

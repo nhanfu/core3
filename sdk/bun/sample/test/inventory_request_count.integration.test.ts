@@ -25,7 +25,11 @@ describe('Inventory request a count parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(list.selectable).toBe(true);
-    expect(list.bulk_actions).toEqual([{ id: 'request_inventory_count', label: 'Request a Count', permission: 'inventory.manage' }]);
+    expect(list.bulk_actions).toEqual([
+      { id: 'reset_inventory_counts', label: 'Clear', permission: 'inventory.manage' },
+      { id: 'request_inventory_count', label: 'Request a Count', permission: 'inventory.manage' },
+      { id: 'resolve_inventory_conflict', label: 'Resolve Conflict', permission: 'inventory.write' },
+    ]);
     expect(api.page.id).toBe('physical-inventory');
     expect(api.datasources.map((source: any) => source.id)).toContain('inventory_count_requests');
     expect(action).toMatchObject({ type: 'server_form', permission: 'inventory.manage', action: 'inventory.quants.request_count' });

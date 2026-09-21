@@ -1388,3 +1388,25 @@ Full Inventory sign-off remains open.
 - Focused verification and authenticated Core3/Odoo evidence are recorded
   under `evidence/inventory/2026-09-21/INV-TRANSFER-EXCHANGE-001/`. Full
   Inventory sign-off remains open.
+
+## `INV-PHYSICAL-CONFLICT-001` — Physical Inventory conflict resolution (2026-09-21)
+
+- Selected Odoo's `stock.inventory.conflict` wizard after the completed
+  Physical Inventory Apply All, Reset, and Request a Count slices. The source
+  form exposes `action_keep_counted_quantity` and `action_keep_difference` in
+  `addons/stock/wizard/stock_inventory_conflict.xml:41-44`; the transient model
+  implements both choices at `stock_inventory_conflict.py:16-24`.
+- Added the paired `physical-inventory` API/page contracts, joined by
+  `page.id`, with a deterministic open-conflict datasource, Conflict
+  Resolutions list, and manager/write Resolve Conflict form. Migration
+  `20260922270000-077-inventory-count-conflicts.yaml` persists the conflict and
+  resolution ledgers and seeds an outdated counted quant.
+- Keep Counted Quantity applies the counted value; Keep Difference preserves
+  the original difference and recalculates counted quantity. Both branches
+  enforce selection, company, actor, open-state, and quant/conflict row-version
+  guards and persist across a file-backed restart.
+- Focused verification passes 16 tests / 108 assertions across the conflict,
+  physical inventory, reset, and request-count suites. Authenticated browser
+  and live Odoo comparison remain blocked at login; exact evidence is under
+  `evidence/inventory/2026-09-21/INV-PHYSICAL-CONFLICT-001/`. Full Inventory
+  sign-off remains open.

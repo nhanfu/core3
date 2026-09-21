@@ -13,6 +13,7 @@ components:
     bulk_actions:
       - { id: reset_inventory_counts, label: Clear, permission: inventory.manage }
       - { id: request_inventory_count, label: Request a Count, permission: inventory.manage }
+      - { id: resolve_inventory_conflict, label: Resolve Conflict, permission: inventory.write }
     search: { label: Search physical inventory, placeholder: 'Search products, lots, or locations...' }
     filters:
       - field: count_filter
@@ -53,3 +54,19 @@ components:
     selectable: true
     column_chooser: true
     empty_state: { title: Your stock is currently empty, description: Press New to define the quantity for a product in your stock or use the Apply All action to confirm counted quantities. }
+  - type: ListView
+    variant: odoo
+    source: inventory_count_conflicts
+    columns:
+      - { field: product_name, label: Product }
+      - { field: location_name, label: Location }
+      - { field: original_quantity, label: Original Quantity, align: right }
+      - { field: counted_quantity, label: Counted Quantity, align: right }
+      - { field: current_quantity, label: Current Quantity, align: right }
+      - { field: state, label: State }
+      - { field: decision, label: Resolution }
+      - { field: resolved_by, label: Resolved by }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No inventory conflicts, description: Conflicts caused by stock moves during counting will appear here. }

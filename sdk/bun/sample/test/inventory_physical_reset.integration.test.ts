@@ -27,6 +27,7 @@ describe('Inventory physical inventory reset parity', () => {
     expect(list.bulk_actions).toEqual([
       { id: 'reset_inventory_counts', label: 'Clear', permission: 'inventory.manage' },
       { id: 'request_inventory_count', label: 'Request a Count', permission: 'inventory.manage' },
+      { id: 'resolve_inventory_conflict', label: 'Resolve Conflict', permission: 'inventory.write' },
     ]);
     expect(api.page.id).toBe('physical-inventory');
     expect(api.datasources.map((source: any) => source.id)).toContain('inventory_reset_runs');

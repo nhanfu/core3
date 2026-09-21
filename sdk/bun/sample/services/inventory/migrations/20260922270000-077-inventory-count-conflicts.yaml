@@ -1,0 +1,44 @@
+version: 0.0.77
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_count_conflicts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        quant_id VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR NOT NULL,
+        original_quantity DECIMAL(18,3) NOT NULL,
+        counted_quantity DECIMAL(18,3) NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Open',
+        decision VARCHAR,
+        resolved_by VARCHAR,
+        resolved_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS inventory_count_conflict_resolutions (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        conflict_id VARCHAR NOT NULL,
+        quant_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        decision VARCHAR NOT NULL,
+        resolved_by VARCHAR NOT NULL,
+        resolved_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:30:00'
+      );
+      CREATE INDEX IF NOT EXISTS inventory_count_conflicts_state_idx
+        ON inventory_count_conflicts(company_name, state, created_at, id);
+      CREATE INDEX IF NOT EXISTS inventory_count_conflict_resolutions_conflict_idx
+        ON inventory_count_conflict_resolutions(conflict_id, resolved_at, id);
+      UPDATE inventory_quants SET is_outdated = TRUE WHERE id = 'quant-box-main';
+      INSERT INTO inventory_count_conflicts(id, quant_id, company_name, original_quantity, counted_quantity, state, created_at)
+      VALUES ('inventory-conflict-quant-box-main-0001', 'quant-box-main', 'Core3 Demo Company', 18, 20, 'Open', TIMESTAMP '2026-01-15 10:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      UPDATE inventory_quants SET is_outdated = FALSE WHERE id = 'quant-box-main';
+      DROP TABLE IF EXISTS inventory_count_conflict_resolutions;
+      DROP TABLE IF EXISTS inventory_count_conflicts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

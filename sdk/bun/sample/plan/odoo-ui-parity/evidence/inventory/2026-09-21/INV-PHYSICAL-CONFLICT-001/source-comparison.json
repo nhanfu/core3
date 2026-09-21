@@ -1,0 +1,25 @@
+{
+  "feature_id": "INV-PHYSICAL-CONFLICT-001",
+  "odoo": {
+    "wizard": "stock.inventory.conflict",
+    "actions": ["action_keep_counted_quantity", "action_keep_difference"],
+    "behavior": "Keep Counted Quantity recomputes the difference before applying; Keep Difference recomputes counted quantity from the original difference before applying.",
+    "source_files": [
+      "addons/stock/wizard/stock_inventory_conflict.xml:41-44",
+      "addons/stock/wizard/stock_inventory_conflict.py:16-24",
+      "addons/stock/tests/test_inventory.py:415-422"
+    ]
+  },
+  "core3": {
+    "page_id": "physical-inventory",
+    "page_yaml": "services/inventory/pages/physical-inventory.yaml",
+    "api_yaml": "services/inventory/api/physical-inventory.yaml",
+    "action_id": "resolve_inventory_conflict",
+    "action": "stock.inventory.conflict.resolve",
+    "datasource": "inventory_count_conflicts",
+    "persistence": ["inventory_count_conflicts", "inventory_count_conflict_resolutions"],
+    "migration": "services/inventory/migrations/20260922270000-077-inventory-count-conflicts.yaml",
+    "bounded_scope": "Resolve one open counted-quant conflict with either Odoo decision and record actor/company/history durably."
+  },
+  "parity": "Core3 preserves both source decisions with durable guarded state; authenticated browser and Odoo comparison are blocked by login redirects."
+}

@@ -18,6 +18,12 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_RESETS_UNAVAILABLE, message: Inventory reset history is temporarily unavailable. } }
     query: "SELECT r.id, r.row_version, r.reset_count, r.requested_by, CAST(r.created_at AS VARCHAR) AS created_at FROM inventory_count_resets r ORDER BY r.created_at DESC, r.id DESC"
+  - id: inventory_count_conflicts
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_CONFLICTS_UNAVAILABLE, message: Inventory conflicts are temporarily unavailable. } }
+    query: |
+      SELECT c.id, c.row_version, c.quant_id, q.product_name, q.location_id, l.name AS location_name, c.original_quantity, c.counted_quantity, CAST(q.quantity AS DOUBLE) AS current_quantity, c.company_name, c.state, COALESCE(c.decision, '') AS decision, COALESCE(c.resolved_by, '') AS resolved_by, CAST(c.resolved_at AS VARCHAR) AS resolved_at FROM inventory_count_conflicts c JOIN inventory_quants q ON q.id = c.quant_id JOIN inventory_locations l ON l.id = q.location_id WHERE (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name) ORDER BY c.created_at DESC, c.id
   - id: inventory_adjustment_runs
     single: false
     permission: inventory.read
@@ -102,6 +108,46 @@ actions:
       - { field: inventory_date, label: Scheduled at, type: date, default: '2026-01-15', required: true }
       - { field: user_id, label: Assign to, type: select, options_source: inventory_count_assignees, default: '' }
       - { field: show_expected_quantity, label: Show expected quantity, type: checkbox, default: false }
+  - id: resolve_inventory_conflict
+    type: server_form
+    permission: inventory.write
+    title: Resolve Inventory Conflict
+    action: stock.inventory.conflict.resolve
+    handler: yaml_mutation
+    operation: resolve_conflict
+    refresh: [inventory_physical_inventory, inventory_count_conflicts]
+    mutation:
+      generated: [resolution_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'inventory-conflict-resolution-' || CAST(c.quant_id AS VARCHAR) || '-' || CAST(COUNT(r.id) + 1 AS VARCHAR) AS resolution_id, c.id AS conflict_id, c.quant_id, c.original_quantity, c.counted_quantity, q.quantity AS current_quantity, c.company_name, q.row_version AS current_row_version FROM inventory_count_conflicts c JOIN inventory_quants q ON q.id = c.quant_id LEFT JOIN inventory_count_conflict_resolutions r ON r.conflict_id = c.id WHERE c.quant_id IN :selectedIds AND c.state = 'Open' GROUP BY c.id, c.quant_id, c.original_quantity, c.counted_quantity, q.quantity, c.company_name, q.row_version"
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '%,%' AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: INVENTORY_CONFLICT_SELECTION_REQUIRED, message: Select exactly one open conflict to resolve. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:decision, '') IN ('keep_counted', 'keep_difference')", status: 422, code: INVENTORY_CONFLICT_DECISION_INVALID, message: Choose Keep Counted Quantity or Keep Difference. }
+        - { query: "SELECT c.id FROM inventory_count_conflicts c WHERE c.quant_id IN :selectedIds", status: 404, code: INVENTORY_CONFLICT_NOT_FOUND, message: Inventory conflict not found. }
+        - { query: "SELECT c.id FROM inventory_count_conflicts c WHERE c.quant_id IN :selectedIds AND (COALESCE(:current_company_name, '') = '' OR c.company_name = :current_company_name)", status: 403, code: INVENTORY_CONFLICT_COMPANY_FORBIDDEN, message: The conflict is outside the current company scope. }
+        - { query: "SELECT c.id FROM inventory_count_conflicts c JOIN inventory_quants q ON q.id = c.quant_id WHERE c.quant_id IN :selectedIds AND c.state = 'Open' AND q.is_outdated = TRUE AND q.inventory_quantity_set = TRUE AND q.row_version = :expected_row_version", status: 409, code: INVENTORY_CONFLICT_STALE, message: The counted quantity changed before this conflict could be resolved. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: INVENTORY_CONFLICT_ACTOR_REQUIRED, message: A signed-in inventory operator is required to resolve a conflict. }
+      steps:
+        - query: "INSERT INTO inventory_count_conflict_resolutions(id, conflict_id, quant_id, company_name, decision, resolved_by, resolved_at, row_version) VALUES(:resolution_id, :conflict_id, :quant_id, :company_name, :decision, :current_user_name, TIMESTAMP '2026-01-15 10:30:00', 1)"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_CONFLICT_RESOLUTION_FAILED
+          message: The inventory conflict resolution could not be recorded.
+        - query: "UPDATE inventory_quants q SET quantity = CASE WHEN :decision = 'keep_counted' THEN c.counted_quantity ELSE q.quantity END, counted_quantity = CASE WHEN :decision = 'keep_counted' THEN NULL ELSE q.quantity + (c.counted_quantity - c.original_quantity) END, inventory_quantity_set = CASE WHEN :decision = 'keep_counted' THEN FALSE ELSE TRUE END, is_outdated = FALSE, inventory_user = :current_user_name, row_version = q.row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:30:00' FROM inventory_count_conflicts c WHERE c.quant_id = q.id AND c.id = :conflict_id AND c.state = 'Open' AND q.row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_CONFLICT_STALE
+          message: The counted quantity changed before this conflict could be resolved.
+        - query: "UPDATE inventory_count_conflicts SET state = 'Resolved', decision = :decision, resolved_by = :current_user_name, resolved_at = TIMESTAMP '2026-01-15 10:30:00', row_version = row_version + 1 WHERE id = :conflict_id AND state = 'Open'"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_CONFLICT_STALE
+          message: The conflict changed before it could be resolved.
+      result: { query: "SELECT r.id, r.conflict_id, r.quant_id, r.company_name, r.decision, r.resolved_by, CAST(r.resolved_at AS VARCHAR) AS resolved_at, r.row_version FROM inventory_count_conflict_resolutions r WHERE r.id = :resolution_id" }
+    fields:
+      - { field: decision, label: Resolution, type: select, options: [{ value: keep_counted, label: Keep Counted Quantity }, { value: keep_difference, label: Keep Difference }], required: true }
   - id: create_inventory_quant
     type: server_form
     permission: inventory.write

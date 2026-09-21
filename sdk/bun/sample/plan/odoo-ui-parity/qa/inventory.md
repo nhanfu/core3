@@ -1829,3 +1829,32 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable exchange lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Physical Inventory Conflict QA — `INV-PHYSICAL-CONFLICT-001`
+
+- Odoo source/action: PASS. The conflict wizard form declares Keep Counted
+  Quantity and Keep Difference at
+  `addons/stock/wizard/stock_inventory_conflict.xml:41-44`; the transient model
+  implements the two recalculation paths at
+  `addons/stock/wizard/stock_inventory_conflict.py:16-24`.
+- Core3 contract: PASS. Presentation-only
+  `pages/physical-inventory.yaml` and backend `api/physical-inventory.yaml`
+  share `page.id: physical-inventory`; the conflict datasource is read-only and
+  resolution requires `inventory.write`. Migration 0.0.77 is durable and
+  replay-safe.
+- Focused verification: PASS — 16 tests / 108 assertions across
+  `test/inventory_physical_conflicts.integration.test.ts`,
+  `test/inventory_physical_inventory.integration.test.ts`,
+  `test/inventory_physical_reset.integration.test.ts`, and
+  `test/inventory_request_count.integration.test.ts`. Coverage includes both
+  decisions, CRUD persistence, company/actor/missing/stale guards, restart,
+  and permission denial.
+- Core3 browser evidence: BLOCKED for authenticated desktop/mobile workflow;
+  probes reached `/auth/login` only. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact captures,
+  source comparison, and blocker details are under
+  `evidence/inventory/2026-09-21/INV-PHYSICAL-CONFLICT-001/`.
+
+QA disposition: PASS for the bounded Core3 durable conflict lifecycle;
+PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
+sign-off remains open.

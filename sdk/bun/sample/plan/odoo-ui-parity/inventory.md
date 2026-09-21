@@ -2479,3 +2479,29 @@ collision without changing Employees files. Desktop/mobile Core3 evidence and
 the paired Odoo result are under
 `evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-EDIT-001/`.
 Full Inventory sign-off remains open.
+
+## Operations > Physical Inventory conflict resolution — `INV-PHYSICAL-CONFLICT-001` (2026-09-21)
+
+This bounded Wave 40 slice closes the remaining Odoo conflict-wizard behavior
+after a stock move changes a counted quant. Odoo's
+`stock_inventory_conflict.xml:41-44` exposes Keep Counted Quantity and Keep
+Difference; `stock_inventory_conflict.py:16-24` applies those choices by
+recomputing either the difference or the counted quantity before applying the
+inventory adjustment.
+
+Core3 keeps `pages/physical-inventory.yaml` presentation-only and extends
+`api/physical-inventory.yaml`, joined by `page.id: physical-inventory`, with a
+Conflict Resolutions list and `resolve_inventory_conflict` manager/write form.
+Migration
+`services/inventory/migrations/20260922270000-077-inventory-count-conflicts.yaml`
+adds replay-safe conflict and resolution ledgers and seeds the deterministic
+outdated `quant-box-main` conflict. The mutation records the actor and company,
+updates the quant and conflict state durably, and enforces missing, selection,
+company, actor, open-state, and stale row-version guards.
+
+Focused verification passes 16 tests / 108 assertions across the new conflict
+suite and physical-inventory/reset/request-count regressions. Core3 desktop and
+mobile evidence reaches only the login shell, and Odoo returns the login
+redirect; exact blockers and source comparison are recorded under
+`evidence/inventory/2026-09-21/INV-PHYSICAL-CONFLICT-001/`. Full Inventory
+sign-off remains open.
