@@ -940,3 +940,22 @@ Candidate commit: current working tree
   Core3 desktop/mobile evidence is under
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. No aggregate
   Employees sign-off is claimed.
+
+## EMP-TRIAL-PERIOD-001 (2026-09-21)
+
+- Selected the smallest open source-backed Payroll field after confirming that
+  Home-Work Distance was already covered by the Private Location slice:
+  Odoo `hr.version.trial_date_end` / End of Trial Period.
+- Added migration `20260922150000-069` with deterministic trial dates on
+  employee and active Payroll projections, replay-safe on fresh install and
+  upgrade.
+- Added separate API/page contracts and manager-only
+  `edit_employee_trial_period`, with actor, current-company, active-version,
+  date-order, and stale row-version guards.
+- Focused verification: **4 tests / 21 assertions**, including CRUD,
+  permission boundaries, migration replay, and file-backed restart.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`. Odoo's base source
+  view omits the field, and the authenticated Core3 company does not match
+  deterministic Employees fixtures; both blockers are explicit. No aggregate
+  Employees sign-off is claimed.

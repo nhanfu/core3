@@ -1,0 +1,61 @@
+{
+  "capturedAt": "2026-09-21T04:21:28.553Z",
+  "route": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "feature": "EMP-TRIAL-PERIOD-001",
+  "authenticatedCompany": "Core3 Demo Company",
+  "deterministicFixtureCompany": "Core3 Vietnam",
+  "captures": [
+    {
+      "name": "core3-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "payrollCount": 1,
+      "trialActionVisible": false,
+      "trialFieldVisible": true,
+      "markers": [
+        "Contract Overview",
+        "Trial Period",
+        "Wage",
+        "Working Hours"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "clientWidth": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "core3-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "payrollCount": 1,
+      "trialActionVisible": false,
+      "trialFieldVisible": true,
+      "markers": [
+        "Contract Overview",
+        "Trial Period",
+        "Wage",
+        "Working Hours"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "clientWidth": 390,
+        "scrollWidth": 390
+      }
+    }
+  ]
+}

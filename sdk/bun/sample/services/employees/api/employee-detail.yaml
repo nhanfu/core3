@@ -3,7 +3,7 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, COALESCE(NULLIF(legal_name, ''), name) AS legal_name, image_url, auth_user_id, user_name, work_email, work_phone, mobile_phone, phone, private_email, private_phone, company_name, department_id, department_name, COALESCE((SELECT ARRAY_AGG(r.tag_id ORDER BY t.name, t.id) FROM employee_tag_rel r JOIN employee_tags t ON t.id = r.tag_id WHERE r.employee_id = employees.id), CAST([] AS VARCHAR[])) AS employee_tag_ids, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM employee_tag_rel r JOIN employee_tags t ON t.id = r.tag_id WHERE r.employee_id = employees.id), '') AS employee_tags, job_id, job_position_name, job_title, manager_id, manager_name, coach_name, private_car_plate, work_location_id, work_address_id, COALESCE(NULLIF(employee_properties, ''), '{}') AS employee_properties, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, employee_type, contract_type_name, pay_category_name, hr_responsible_name, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, COALESCE(birthday_public_display, false) AS birthday_public_display, CASE WHEN COALESCE(birthday_public_display, false) AND birthday IS NOT NULL THEN strftime(birthday, '%d %B') ELSE 'hidden' END AS birthday_public_display_string, wage, working_schedule, working_schedule_id, contract_template_id, contract_template_name, timezone, barcode, pin, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, CAST(passport_expiration_date AS VARCHAR) AS passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, id_card, id_card_name, driving_license, driving_license_name, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+    query: "SELECT id, row_version, employee_number, name, COALESCE(NULLIF(legal_name, ''), name) AS legal_name, image_url, auth_user_id, user_name, work_email, work_phone, mobile_phone, phone, private_email, private_phone, company_name, department_id, department_name, COALESCE((SELECT ARRAY_AGG(r.tag_id ORDER BY t.name, t.id) FROM employee_tag_rel r JOIN employee_tags t ON t.id = r.tag_id WHERE r.employee_id = employees.id), CAST([] AS VARCHAR[])) AS employee_tag_ids, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM employee_tag_rel r JOIN employee_tags t ON t.id = r.tag_id WHERE r.employee_id = employees.id), '') AS employee_tags, job_id, job_position_name, job_title, manager_id, manager_name, coach_name, private_car_plate, work_location_id, work_address_id, COALESCE(NULLIF(employee_properties, ''), '{}') AS employee_properties, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, employee_type, contract_type_name, pay_category_name, hr_responsible_name, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(trial_date_end AS VARCHAR) AS trial_date_end, CAST(birthday AS VARCHAR) AS birthday, COALESCE(birthday_public_display, false) AS birthday_public_display, CASE WHEN COALESCE(birthday_public_display, false) AND birthday IS NOT NULL THEN strftime(birthday, '%d %B') ELSE 'hidden' END AS birthday_public_display_string, wage, working_schedule, working_schedule_id, contract_template_id, contract_template_name, timezone, barcode, pin, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, CAST(passport_expiration_date AS VARCHAR) AS passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, id_card, id_card_name, driving_license, driving_license_name, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
   - id: employee_work_addresses_for_employee
     single: false
     permission: employees.write
@@ -522,6 +522,42 @@ actions:
     fields:
       - { field: contract_start, label: Contract Start Date, type: date }
       - { field: contract_end, label: Contract End Date, type: date }
+  - id: edit_employee_trial_period
+    type: server_form
+    permission: employees.manage
+    title: Edit Trial Period
+    description: Update the manager-only Payroll end of trial period on this employee's active record.
+    action: employees.records.trial_period.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_versions]
+    mutation:
+      fields: [trial_date_end]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_TRIAL_PERIOD_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the trial period was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :trial_date_end IS NULL OR regexp_matches(CAST(:trial_date_end AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_TRIAL_DATE_INVALID, message: End of Trial Period must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok WHERE :trial_date_end IS NULL OR NOT EXISTS (SELECT 1 FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start IS NOT NULL AND CAST(:trial_date_end AS DATE) < contract_date_start)", status: 422, code: EMPLOYEES_TRIAL_DATE_BEFORE_START, message: End of Trial Period must be on or after the Contract Start Date. }
+        - { query: "SELECT 1 AS ok WHERE :trial_date_end IS NULL OR NOT EXISTS (SELECT 1 FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_end IS NOT NULL AND CAST(:trial_date_end AS DATE) > contract_date_end)", status: 422, code: EMPLOYEES_TRIAL_DATE_AFTER_CONTRACT, message: End of Trial Period must be on or before the Contract End Date. }
+        - { query: "SELECT 1 AS ok FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')", status: 409, code: EMPLOYEES_TRIAL_PERIOD_VERSION_NOT_FOUND, message: The employee has no active Payroll record to update. }
+      steps:
+        - query: "UPDATE employees SET trial_date_end = CAST(:trial_date_end AS DATE), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the trial period was saved. Reload and try again.
+        - query: "UPDATE employee_versions SET trial_date_end = CAST(:trial_date_end AS DATE), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_TRIAL_PERIOD_VERSION_NOT_FOUND
+          message: The employee's active Payroll record changed before the trial period was saved.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: trial_date_end, label: End of Trial Period, type: date }
   - id: edit_employee_wage
     type: server_form
     permission: employees.manage

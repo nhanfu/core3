@@ -661,3 +661,17 @@ assertions), plus `test/employees_employee_work_tab.integration.test.ts`
 Focused test: `test/employees_timezone.integration.test.ts` (4 tests, 19
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`.
+
+## EMP-TRIAL-PERIOD-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.trial_date_end` maps to paired Core3 Payroll page/API contracts | pass |
+| Trial period CRUD | Employee create and manager action update the employee and active Payroll trial dates durably | pass |
+| Permission and scope | `employees.manage`, actor, current company, active version, ISO/order, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve both trial-date projections | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile Payroll capture plus Odoo desktop/mobile reference | conditional; Odoo base view omits the field and Core3 has a fixture-company mismatch |
+
+Focused test: `test/employees_trial_period.integration.test.ts` (4 tests, 21
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`.

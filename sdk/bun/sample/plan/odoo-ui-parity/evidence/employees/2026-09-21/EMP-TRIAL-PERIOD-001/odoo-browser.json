@@ -1,0 +1,64 @@
+{
+  "capturedAt": "2026-09-21T04:19:02.002Z",
+  "route": "http://127.0.0.1:8069/odoo/employees/1",
+  "source": "addons/hr/models/hr_version.py",
+  "sourceView": "addons/hr/views/hr_employee_views.xml",
+  "feature": "EMP-TRIAL-PERIOD-001",
+  "captures": [
+    {
+      "name": "odoo-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/1",
+      "title": "Mitchell Admin",
+      "payrollCount": 1,
+      "payrollSelected": true,
+      "trialFieldCount": 0,
+      "markers": [
+        "Wage",
+        "Contract Type",
+        "Working Hours"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "clientWidth": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "odoo-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/1",
+      "title": "Mitchell Admin",
+      "payrollCount": 1,
+      "payrollSelected": true,
+      "trialFieldCount": 0,
+      "markers": [
+        "Wage",
+        "Contract Type",
+        "Working Hours"
+      ],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "clientWidth": 390,
+        "scrollWidth": 390
+      }
+    }
+  ]
+}

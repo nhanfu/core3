@@ -1,0 +1,27 @@
+version: 0.0.69
+kind: data
+description: Add durable Odoo employee trial-period dates to the active Payroll projection
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS trial_date_end DATE;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS trial_date_end DATE;
+      UPDATE employees
+      SET trial_date_end = CASE id
+        WHEN 'employee-demo-001' THEN DATE '2026-03-31'
+        WHEN 'employee-demo-002' THEN DATE '2026-04-15'
+        WHEN 'employee-demo-003' THEN DATE '2026-02-28'
+        ELSE trial_date_end
+      END
+      WHERE trial_date_end IS NULL;
+      UPDATE employee_versions v
+      SET trial_date_end = e.trial_date_end
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.active = true AND v.trial_date_end IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS trial_date_end;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS trial_date_end;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1118,3 +1118,17 @@ Focused test: `test/employees_timezone.integration.test.ts` (4 tests, 19
 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-TRIAL-PERIOD-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-048 | Odoo `hr.version.trial_date_end` create/read/update workflow | pass; employee and active Payroll trial dates persist together |
+| EMP-PERM-048 | `employees.manage`, actor, current company, active version, date ordering, and row version | pass; actor, stale, wrong-company, invalid, and missing-version requests reject atomically |
+| EMP-DATA-048 | Migration replay and file-backed restart | pass; deterministic trial dates and edited values survive restart |
+| EMP-UI-044 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo base form omits the source field and Core3 fixture company does not match the authenticated company |
+
+Focused test: `test/employees_trial_period.integration.test.ts` (4 tests,
+21 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`. No aggregate Employees
+sign-off is claimed.

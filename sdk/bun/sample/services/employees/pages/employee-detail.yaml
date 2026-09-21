@@ -22,6 +22,7 @@ components:
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_period, label: Edit Contract Dates, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_trial_period, label: Edit Trial Period, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_wage, label: Edit Wage, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_pay_category, label: Edit Pay Category, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_type, label: Edit Employee Type, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
@@ -203,6 +204,9 @@ components:
             - title: Contract Dates
               permission: employees.manage
               fields: [{ field: contract_start, label: Contract Start Date, readonly: true }, { field: contract_end, label: Contract End Date, readonly: true }]
+            - title: Trial Period
+              permission: employees.manage
+              fields: [{ field: trial_date_end, label: End of Trial Period, readonly: true }]
             - title: Wage
               permission: employees.manage
               fields: [{ field: wage, label: Monthly Wage, readonly: true }]

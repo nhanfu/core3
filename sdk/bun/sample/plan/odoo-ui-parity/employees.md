@@ -2096,3 +2096,29 @@ invalid guards, migration replay, and file-backed restart.
 Authenticated Odoo and Core3 desktop/mobile evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. Runtime or fixture
 limitations are recorded there; no aggregate Employees sign-off is claimed.
+
+## EMP-TRIAL-PERIOD-001: Employee Payroll end of trial period (2026-09-21)
+
+Odoo's `hr.version` source defines the manager-only tracked
+`trial_date_end` field as End of Trial Period. The supplied base Employee form
+source does not render that field in its Payroll view; this is recorded as an
+explicit source-view limitation, not treated as an Odoo visual match.
+
+Core3 adds migration `20260922150000-069` with deterministic replay-safe trial
+dates on both `employees` and `employee_versions`. The separate employee-detail
+API contract adds manager-only `edit_employee_trial_period`, synchronizing the
+employee projection and the active Payroll version. The page contract adds the
+Payroll Trial Period group and header action, joined by `page.id`.
+
+Guards cover authenticated actor, active/current-company employee, active
+Payroll version, ISO date format, contract start/end ordering, and optimistic
+employee row-version concurrency. Focused verification is **4 tests / 21
+assertions**, including migration replay and file-backed restart.
+
+Authenticated Odoo and Core3 desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`. Odoo shows the
+surrounding Payroll form but no Trial Period control because the source view
+omits it. Core3 loads the paired Trial Period group, but the authenticated
+company is `Core3 Demo Company` while deterministic fixtures are `Core3
+Vietnam`, so populated values and the manager action are not visible in that
+session. No aggregate Employees sign-off is claimed.
