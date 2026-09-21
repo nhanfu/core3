@@ -1081,3 +1081,25 @@ Candidate commit: current working tree
 - Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`; runtime and local
   credential blockers remain explicit and no aggregate sign-off is claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-001 (2026-09-21)
+
+- Selected Odoo's `mail.activity.mixin` Employee activity composer as the next
+  uncovered chatter workflow after notes and followers; this is an ad-hoc
+  single activity and is distinct from the completed Launch Plan workflow.
+- Added migration `20260922220000-076` with `activity_origin` provenance and a
+  deterministic ad-hoc activity fixture in the durable `employee_activities`
+  relation.
+- Added a separate company-scoped activity datasource and guarded
+  `schedule_employee_activity` API action. The page binds the shared
+  OdooChatter activity composer through `page.id`; the action also writes an
+  auditable scheduled-activity message.
+- Guards cover `employees.write`, authenticated actor, active/current-company
+  employee, supported activity type, non-empty content, due-date format, and
+  optimistic employee row-version concurrency. Focused verification is **4
+  tests / 25 assertions**, including CRUD, atomic guards, migration replay, and
+  file-backed restart.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-001/`; fixture/company
+  alignment and local Odoo credential limitations remain explicit. No aggregate
+  Employees sign-off is claimed.

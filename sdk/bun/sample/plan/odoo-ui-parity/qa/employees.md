@@ -1210,3 +1210,17 @@ Focused test: `test/employees_followers.integration.test.ts` (4 tests, 26
 assertions). Merged API/page validation, scoped lint, UI audit, and staged
 diff-check are recorded with the commit. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-052 | Employee ad-hoc Schedule activity CRUD and chatter audit | pass; durable activity and scheduled-activity message are created together |
+| EMP-PERM-052 | `employees.write`, actor, current company, activity type/content/date, and row version | pass; actor, stale, wrong-company, invalid type/content/date requests reject atomically |
+| EMP-DATA-052 | Migration replay and file-backed restart | pass; deterministic and newly-scheduled activities survive restart without duplicate seed rows |
+| EMP-UI-048 | Authenticated Core3/Odoo desktop and mobile | conditional; exact Core3 fixture-company and local Odoo credential blockers are recorded |
+
+Focused test: `test/employees_activity.integration.test.ts` (4 tests, 25
+assertions). Merged API/page validation, scoped lint, UI audit, and staged
+diff-check are recorded with the commit. No aggregate Employees sign-off is
+claimed.

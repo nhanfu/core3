@@ -28,8 +28,12 @@ components:
     add_label: Add
     note_action: log_employee_note
     note_label: Log note
+    activity_action: schedule_employee_activity
+    activity_label: Schedule activity
+    schedule_label: Schedule
+    activity_placeholder: Describe the activity…
     message_action_field: action_label
-    message_action_labels: { employees.note: Internal note, employees.followers.add: Added follower, employees.followers.remove: Removed follower }
+    message_action_labels: { employees.note: Internal note, employees.activity.schedule: Scheduled activity, employees.followers.add: Added follower, employees.followers.remove: Removed follower }
     chatter_label: Messages and activities
     chatter_empty: No messages or activities yet.
     status_field: state

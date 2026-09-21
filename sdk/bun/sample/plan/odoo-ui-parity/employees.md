@@ -2269,3 +2269,29 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`; Core3 runtime and
 local Odoo credential limitations remain explicit. No aggregate Employees
 sign-off is claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-001: Employee ad-hoc Schedule activity (2026-09-21)
+
+Odoo's `hr.employee` inherits `mail.activity.mixin` and its Employee form
+renders the chatter supplied by the HR view. The existing Employees Launch
+Plan workflow schedules a predefined ordered plan, but it did not expose the
+source-backed one-off Schedule activity action from the chatter composer.
+
+Migration `20260922220000-076` adds replay-safe `activity_origin` provenance
+and one deterministic ad-hoc activity to the durable `employee_activities`
+relation. The API YAML owns the company-scoped activity datasource and guarded
+`schedule_employee_activity` action; the page YAML owns only the
+`OdooChatter.activity_action` binding through `page.id`. Scheduling also adds
+an audit entry to the employee message stream.
+
+The workflow requires `employees.write`, an authenticated actor, an active
+employee in the current company, a supported activity type, 1-4000 characters
+of content, a `YYYY-MM-DD` due date when supplied, and the expected employee
+row version. Activity insertion, audit, and employee version increment are one
+transaction. Focused verification is **4 tests / 25 assertions**, including
+CRUD, guard atomicity, migration replay, and restart persistence.
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-001/`; Core3 fixture/company
+alignment and the rejected local Odoo credential remain explicit blockers. No
+aggregate Employees sign-off is claimed.

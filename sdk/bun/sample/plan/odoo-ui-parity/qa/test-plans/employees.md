@@ -759,3 +759,17 @@ assertions). Evidence:
 Focused test: `test/employees_followers.integration.test.ts` (4 tests, 26
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`.
+
+## EMP-EMPLOYEE-ACTIVITY-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `mail.activity.mixin` and Employee chatter map to paired API/page contracts | pass |
+| Schedule activity CRUD | An ad-hoc activity is stored, attributed, returned by the datasource, and increments the employee version | pass |
+| Permission and scope | `employees.write`, actor, current-company, activity type/content/date, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the deterministic and newly-created activities and audit event | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile activity composer plus Odoo comparison | conditional; exact fixture-company and rejected-credential blockers are recorded |
+
+Focused test: `test/employees_activity.integration.test.ts` (4 tests, 25
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-001/`.

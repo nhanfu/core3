@@ -1,0 +1,25 @@
+version: 0.0.76
+kind: data
+description: Add durable ad-hoc Employee activity scheduling provenance and deterministic fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_activities ADD COLUMN IF NOT EXISTS activity_origin VARCHAR;
+      UPDATE employee_activities SET activity_origin = CASE WHEN plan_id IS NULL THEN 'legacy' ELSE 'plan' END WHERE activity_origin IS NULL;
+      INSERT INTO employee_activities(
+        id, row_version, employee_id, employee_name, job_title, activity_type, activity_summary,
+        activity_date, activity_user, activity_state, activity_count, timing, is_primary, activity_origin
+      )
+      SELECT
+        'employee-activity-adhoc-001', 1, e.id, e.name, e.job_title, 'call', 'Confirm employee review',
+        DATE '2026-01-16', 'HR Manager', 'planned', 1, 'Planned', false, 'adhoc'
+      FROM employees e
+      WHERE e.id = 'employee-demo-001'
+        AND NOT EXISTS (SELECT 1 FROM employee_activities WHERE id = 'employee-activity-adhoc-001');
+    down: |
+      DELETE FROM employee_activities WHERE id = 'employee-activity-adhoc-001';
+      ALTER TABLE employee_activities DROP COLUMN IF EXISTS activity_origin;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
