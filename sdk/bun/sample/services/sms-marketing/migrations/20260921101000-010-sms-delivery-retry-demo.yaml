@@ -1,0 +1,18 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO sms_delivery_attempts
+        (id, campaign_id, company_name, recipient_name, sms_number, provider_uuid, status, failure_type, failure_reason, attempt_no, sent_datetime, links_click_datetime, row_version, created_at, updated_at)
+      VALUES
+        ('sms-trace-demo-001', 'sms-campaign-demo-003', 'Core3 Demo Company', 'Nguyen An', '+84901234001', '11111111111111111111111111111111', 'sent', NULL, NULL, 1, TIMESTAMP '2026-09-11 14:05:00', TIMESTAMP '2026-09-11 14:08:00', 1, TIMESTAMP '2026-09-11 14:00:00', TIMESTAMP '2026-09-11 14:08:00'),
+        ('sms-trace-demo-002', 'sms-campaign-demo-003', 'Core3 Demo Company', 'Tran Binh', '+84901234002', '22222222222222222222222222222222', 'sent', NULL, NULL, 1, TIMESTAMP '2026-09-11 14:05:00', NULL, 1, TIMESTAMP '2026-09-11 14:00:00', TIMESTAMP '2026-09-11 14:05:00'),
+        ('sms-trace-demo-003', 'sms-campaign-demo-003', 'Core3 Demo Company', 'Le Chi', '+84901234003', '33333333333333333333333333333333', 'error', 'sms_not_delivered', 'The provider did not deliver this SMS.', 1, NULL, NULL, 1, TIMESTAMP '2026-09-11 14:00:00', TIMESTAMP '2026-09-11 14:06:00'),
+        ('sms-trace-demo-004', 'sms-campaign-demo-001', 'Core3 Demo Company', 'Pham Dung', '+84901234004', '44444444444444444444444444444444', 'pending', NULL, NULL, 1, NULL, NULL, 1, TIMESTAMP '2026-09-12 09:00:00', TIMESTAMP '2026-09-12 09:00:00');
+    down: |
+      DELETE FROM sms_delivery_attempts WHERE id IN ('sms-trace-demo-001', 'sms-trace-demo-002', 'sms-trace-demo-003', 'sms-trace-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

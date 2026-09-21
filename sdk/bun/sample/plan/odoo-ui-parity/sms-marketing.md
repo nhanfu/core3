@@ -166,6 +166,39 @@ the menu/page/API contract, migration idempotence, deterministic rows, filters,
 empty state, and read-only permission boundary. No authenticated screenshots
 are claimed in this wave because no browser rendering was performed.
 
+## Bounded action: SMS delivery traces and retry failed
+
+Source-backed gap selected for this wave: the existing campaign form did not
+expose Odoo's `Retry` behavior for failed SMS recipients, and Core3 had no
+durable per-recipient trace list/form. Odoo 19 implements
+`mailing.mailing.action_retry_failed_sms` in
+`/home/nhanjs/projects/odoo/addons/mass_mailing_sms/models/mailing_mailing.py`:
+it removes failed `sms.sms` records and their traces, then calls
+`action_put_in_queue`. The SMS trace views in
+`mass_mailing_sms/views/mailing_trace_views.xml` are readonly list/form views
+with recipient number, sent/click dates, status, failure type, and mailing
+fields. This bounded Core3 mapping persists equivalent retry state instead of
+deleting audit rows: failed attempts become `pending`, their attempt number
+increments, and the mailing returns to `In Queue` under a row-version guard.
+
+Core3 paths are `pages/delivery-traces.yaml` + `api/delivery-traces.yaml`,
+`pages/delivery-trace-detail.yaml` + `api/delivery-trace-detail.yaml`, joined
+by `page.id`, with the campaign action in
+`api/campaign-detail.yaml` and the visible `Retry`/`View Traces` actions in
+`pages/sms-campaign-detail.yaml`. Durable state is
+`sms_delivery_attempts`, created by migrations
+`20260921100000-009-sms-delivery-retry.yaml` and
+`20260921101000-010-sms-delivery-retry-demo.yaml`. Reads require
+`sms_marketing.read`; retry requires `sms_marketing.write`; missing, forbidden,
+transport, wrong-company, invalid-state, and stale-row contracts are explicit.
+
+The focused test is `sms_marketing_delivery_retry.integration.test.ts`. It
+covers Odoo source mapping, page/API separation, trace filters and empty state,
+idempotent migration replay, failed-attempt retry, invalid/stale/state/company
+guards, and file-backed restart persistence. Provider callback ingestion and
+Temporal delivery execution remain a separate future bounded feature; this
+slice does not claim external-provider parity.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

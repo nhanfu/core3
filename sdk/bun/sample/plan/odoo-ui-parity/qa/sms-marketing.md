@@ -95,6 +95,31 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off; bounded evidence recorded, browser/Odoo gates remain open
+
+## Bounded wave 5 — delivery traces and failed retry (2026-09-21)
+
+- Source comparison: **PASS**. Odoo's `action_retry_failed_sms` and the
+  readonly SMS trace list/form were confirmed in local Odoo 19 source under
+  `addons/mass_mailing_sms`; the implementation is limited to this module.
+- Core3 contract: **PASS**. `sms_marketing_delivery_retry.integration.test.ts`
+  covers 4 tests / 33 assertions: page/API `page.id` joins, trace list/form,
+  migration replay, filtering/empty state, retry state transition, stale and
+  company/state guards, and file-backed restart persistence.
+- Odoo browser gate: **BLOCKED** for this feature. Authenticated
+  `core3_reference` at `http://localhost:8069` exposes `SMS Marketing` only in
+  Apps as an installable app; it is absent from the authenticated application
+  menu, so the SMS mailing form/trace action cannot be opened. Evidence:
+  `evidence/sms-marketing/2026-09-21/SMS-DELIVERY-RETRY-001/`.
+- Odoo desktop/mobile diagnostics are captured at
+  `/tmp/core3-odoo-parity/sms-wave5-odoo-apps-desktop.png` and
+  `/tmp/core3-odoo-parity/sms-wave5-odoo-apps-mobile.png`; these prove the
+  exact installation blocker only and are not claimed as SMS UI parity.
+- Provider callback/Temporal execution is explicitly **OPEN**, not silently
+  signed off; the bounded feature implements Odoo's retry state and durable
+  trace audit path only.
+
+| SMS-FUNC-008 | Delivery traces and failed retry | `sms_marketing_delivery_retry.integration.test.ts` | pass | Core3 contract; paired Odoo screen blocked |
+| SMS-BROWSER-002 | Authenticated Odoo SMS form/traces desktop/mobile | `evidence/sms-marketing/2026-09-21/SMS-DELIVERY-RETRY-001/verification.md` | blocked | `mass_mailing_sms` not installed in `core3_reference` |
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

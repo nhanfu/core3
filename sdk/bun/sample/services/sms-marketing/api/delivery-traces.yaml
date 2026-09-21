@@ -1,0 +1,29 @@
+page: { id: sms-delivery-traces }
+datasources:
+  - id: sms_delivery_traces
+    permission: sms_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: SMS_TRACES_UNAUTHORIZED, message: Sign in to view SMS Traces. }
+      forbidden: { status: 403, code: SMS_TRACES_FORBIDDEN, message: You do not have permission to view SMS Traces. }
+      transport_error: { status: 503, code: SMS_TRACES_UNAVAILABLE, message: SMS Traces are temporarily unavailable. }
+    query: |
+      SELECT t.id, t.row_version, t.campaign_id, c.title AS mass_mailing_name, t.recipient_name, t.sms_number,
+        CAST(sent_datetime AS VARCHAR) AS sent_datetime,
+        CAST(links_click_datetime AS VARCHAR) AS links_click_datetime,
+        t.status AS trace_status, t.failure_type, t.failure_reason, t.attempt_no,
+        CAST(t.updated_at AS VARCHAR) AS updated_at
+      FROM sms_delivery_attempts t
+      JOIN sms_campaigns c ON c.id = t.campaign_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:company_name IS NULL OR t.company_name = :company_name)
+        AND (:campaign_id IS NULL OR t.campaign_id = :campaign_id)
+        AND (:q IS NULL OR recipient_name ILIKE '%' || :q || '%' OR sms_number ILIKE '%' || :q || '%' OR c.title ILIKE '%' || :q || '%' OR COALESCE(failure_reason, '') ILIKE '%' || :q || '%')
+        AND (:trace_status IS NULL OR status = :trace_status)
+      ORDER BY updated_at DESC, id
+actions:
+  - id: view_sms_delivery_trace
+    type: navigate
+    permission: sms_marketing.read
+    navigate_to: /sms-delivery-traces/detail
+    params: { id: '{row.id}' }
+  - { id: open_sms_trace_recipient, type: server, permission: sms_marketing.read, action: sms_marketing.traces.open_recipient, handler: noop }

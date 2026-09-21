@@ -1,0 +1,31 @@
+title: SMS Trace
+page: { id: sms-delivery-trace-detail, route: /sms-delivery-traces/detail, breadcrumb: [Marketing, SMS Marketing, SMS Traces, SMS Trace], auth: { require: [sms_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: sms_delivery_trace_detail
+    title_field: sms_number
+    editable: false
+    labels: { save: Save, discard: Close, editDetails: Details, workflowStatus: Status }
+    header_actions:
+      - { id: open_sms_trace_recipient, label: Open Recipient, variant: secondary, permission: sms_marketing.read }
+    statusbar: { field: trace_status, visible: [outgoing, pending, process, sent, error, bounce, cancel] }
+    groups:
+      - title: Status
+        fields:
+          - { field: trace_status, label: Status, type: text }
+          - { field: failure_type, label: Failure Type, type: text }
+          - { field: failure_reason, label: Failure Reason, type: textarea }
+          - { field: sent_datetime, label: Sent Date, type: datetime }
+          - { field: links_click_datetime, label: Click Date, type: datetime }
+          - { field: attempt_no, label: Attempt, type: number }
+      - title: Mailing
+        fields:
+          - { field: sms_number, label: Number, type: text }
+          - { field: recipient_name, label: Recipient, type: text }
+          - { field: mass_mailing_name, label: Mailing, type: text }
+          - { field: provider_uuid, label: Provider UUID, type: text }
+      - title: Marketing
+        fields:
+          - { field: company_name, label: Company, type: text }
+          - { field: updated_at, label: Last State Update, type: datetime }

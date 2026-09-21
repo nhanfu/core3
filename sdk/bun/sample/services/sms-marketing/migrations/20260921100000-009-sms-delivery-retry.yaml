@@ -1,0 +1,30 @@
+version: 0.0.9
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_delivery_attempts (
+        id VARCHAR PRIMARY KEY,
+        campaign_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        recipient_name VARCHAR NOT NULL,
+        sms_number VARCHAR NOT NULL,
+        provider_uuid VARCHAR NOT NULL UNIQUE,
+        status VARCHAR NOT NULL,
+        failure_type VARCHAR,
+        failure_reason VARCHAR,
+        attempt_no INTEGER NOT NULL DEFAULT 1,
+        sent_datetime TIMESTAMP,
+        links_click_datetime TIMESTAMP,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS sms_delivery_attempts_campaign_idx ON sms_delivery_attempts(campaign_id, status);
+      CREATE INDEX IF NOT EXISTS sms_delivery_attempts_company_idx ON sms_delivery_attempts(company_name, updated_at);
+    down: |
+      DROP TABLE IF EXISTS sms_delivery_attempts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

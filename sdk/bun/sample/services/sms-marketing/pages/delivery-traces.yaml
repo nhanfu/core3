@@ -1,0 +1,35 @@
+title: SMS Traces
+page: { id: sms-delivery-traces, route: /sms-delivery-traces, breadcrumb: [Marketing, SMS Marketing, SMS Marketing, SMS Traces], auth: { require: [sms_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_delivery_traces
+    search: { label: SMS Traces, placeholder: 'Search recipient, mailing, or phone...' }
+    filters:
+      - { field: trace_status, label: State, options: [{ id: outgoing, label: Scheduled }, { id: pending, label: Pending }, { id: process, label: Processing }, { id: sent, label: Sent }, { id: bounce, label: Bounced }, { id: error, label: Failed }, { id: cancel, label: Cancelled }] }
+    group_by:
+      - { field: trace_status, label: State }
+      - { field: mass_mailing_name, label: Mailing }
+      - { field: sent_datetime, label: Sent Date }
+      - { field: updated_at, label: Last State Update }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: edit, mobile: true }
+    form_view: { page: apps/services/sms-marketing/pages/delivery-trace-detail.yaml, side_panel: false }
+    columns:
+      - { field: mass_mailing_name, label: Mailing, type: PrimaryEntityCell, mobile: true }
+      - { field: recipient_name, label: Recipient, mobile: true }
+      - { field: sms_number, label: Number, mobile: true }
+      - { field: sent_datetime, label: Sent Date, type: DateTime, mobile: true }
+      - { field: links_click_datetime, label: Click Date, type: DateTime, optional: true, mobile: false }
+      - { field: trace_status, label: Status, type: StatusChip, mobile: true }
+      - { field: failure_type, label: Failure Type, optional: true, mobile: false }
+      - { field: attempt_no, label: Attempt, align: right, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: view_sms_delivery_trace
+    row_double_click_action: view_sms_delivery_trace
+    row_actions: menu
+    empty_state: { title: No SMS traces yet!, description: 'SMS traces record delivery, clicks, bounces, and failures for SMS mailings.' }

@@ -36,6 +36,7 @@ IDs.
 | SMS-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass: focused suite |
 | SMS-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate campaigns, contacts or subscriptions | planned restart/migration gate |
 | SMS-FUNC-007 | Upload/import/export | Exercise recipient import, attachment/content upload, export and exposed print actions | planned browser interaction gate |
+| SMS-FUNC-008 | Delivery traces and retry | Open readonly SMS trace list/form from a mailing, filter failed traces, retry a sent mailing with failures, and verify attempt state persists after restart | pass: `sms_marketing_delivery_retry.integration.test.ts`; browser/Odoo visual gate blocked by reference addon not installed |
 
 ## Workflow and integration cases
 
@@ -45,7 +46,7 @@ IDs.
 | SMS-WF-002 | Cancel/retry | Cancel only permitted draft/queued campaigns; retry failure preserves audit state | pass at contract level |
 | SMS-WF-003 | Recipient eligibility | Opt-out, blacklist and invalid mobile values are excluded without corrupting subscriptions | pass: focused suite |
 | SMS-WF-004 | Email/SMS boundary | SMS campaigns never use email-only recipients or report rows | pass at contract level |
-| SMS-WF-005 | Durable/external boundary | SMS delivery, scheduling, retries, provider callbacks and notifications use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| SMS-WF-005 | Durable/external boundary | SMS delivery, scheduling, retries, provider callbacks and notifications use Temporal when durable; retry, replay, restart and compensation are tested | retry/replay/restart pass for SMS retry state; provider callback/Temporal boundary remains planned |
 
 ## Permission and security cases
 

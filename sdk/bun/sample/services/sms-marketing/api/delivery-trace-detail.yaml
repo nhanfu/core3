@@ -1,0 +1,24 @@
+page: { id: sms-delivery-trace-detail }
+datasources:
+  - id: sms_delivery_trace_detail
+    single: true
+    permission: sms_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: SMS_TRACE_DETAIL_UNAUTHORIZED, message: Sign in to view this SMS trace. }
+      forbidden: { status: 403, code: SMS_TRACE_DETAIL_FORBIDDEN, message: You do not have permission to view this SMS trace. }
+      missing_record: { status: 404, code: SMS_TRACE_DETAIL_NOT_FOUND, message: SMS trace not found. }
+      transport_error: { status: 503, code: SMS_TRACE_DETAIL_UNAVAILABLE, message: This SMS trace is temporarily unavailable. }
+    query: |
+      SELECT t.id, t.row_version, t.trace_status, t.failure_type, t.failure_reason,
+        CAST(t.sent_datetime AS VARCHAR) AS sent_datetime,
+        CAST(t.links_click_datetime AS VARCHAR) AS links_click_datetime,
+        t.recipient_name, t.sms_number, t.provider_uuid, t.attempt_no,
+        t.campaign_id, c.title AS mass_mailing_name, c.company_name,
+        CAST(t.updated_at AS VARCHAR) AS updated_at
+      FROM sms_delivery_attempts t
+      JOIN sms_campaigns c ON c.id = t.campaign_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:company_name IS NULL OR t.company_name = :company_name)
+        AND t.id = :id
+actions:
+  - { id: open_sms_trace_recipient, type: server, permission: sms_marketing.read, action: sms_marketing.traces.open_recipient, handler: noop }

@@ -34,6 +34,21 @@ actions:
       - { field: message, label: SMS Content, type: textarea, required: true }
       - { field: scheduled_at, label: Scheduled for, type: text }
       - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+  - { id: view_sms_delivery_traces, type: navigate, permission: sms_marketing.read, navigate_to: /sms-delivery-traces, params: { campaign_id: '{state.id}' } }
+  - id: retry_failed_sms_campaign
+    type: server
+    permission: sms_marketing.write
+    action: sms_marketing.mailings.retry_failed
+    handler: yaml_mutation
+    operation: retry_failed
+    refresh: [sms_marketing_mailing_detail, sms_marketing_mailings]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'Sent' AND failed_count > 0 AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_RETRY_STALE, message: Only a sent SMS mailing with failed recipients can be retried. Reload before retrying. }
+      steps:
+        - { query: "UPDATE sms_delivery_attempts SET status = 'pending', failure_type = NULL, failure_reason = NULL, attempt_no = attempt_no + 1, row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-21 10:00:00' WHERE campaign_id = :id AND status IN ('error', 'bounce')" }
+        - { query: "UPDATE sms_campaigns SET state = 'In Queue', failed_count = 0, scheduled_at = TIMESTAMP '2026-09-21 10:00:00', row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-21 10:00:00' WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'Sent' AND failed_count > 0 AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_RETRY_STALE, message: The SMS mailing changed before failed recipients could be retried. Reload before retrying. }
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
   - { id: send_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.send, handler: order_transition, workflow: sms_campaigns, operation: send, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
   - { id: schedule_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.schedule, handler: order_transition, workflow: sms_campaigns, operation: schedule, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
   - { id: cancel_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.cancel, handler: order_transition, workflow: sms_campaigns, operation: cancel, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }

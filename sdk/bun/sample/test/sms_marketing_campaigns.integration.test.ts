@@ -28,7 +28,7 @@ describe('SMS Marketing mailing action parity', () => {
     expect(detailPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['SMS Content', 'Settings']);
     expect(yaml('manifest.yaml').menu.groups[0].items[0]).toMatchObject({ path: '/sms-campaigns', label: 'SMS Marketing' });
     const workflowActions = detailPage.components[0].header_actions.map((button: any) => button.id).filter((id: string) => id.endsWith('_reload'));
-    expect(workflowActions).toEqual(['send_sms_campaign_reload', 'schedule_sms_campaign_reload', 'cancel_sms_campaign_reload', 'complete_sms_campaign_reload']);
+    expect(workflowActions).toEqual(['send_sms_campaign_reload', 'schedule_sms_campaign_reload', 'cancel_sms_campaign_reload', 'complete_sms_campaign_reload', 'retry_failed_sms_campaign_reload']);
     for (const id of workflowActions) {
       const workflowAction = detailPage.actions.find((candidate: any) => candidate.id === id);
       expect(workflowAction, id).toMatchObject({ type: 'client', permission: expect.stringMatching(/^sms_marketing\.(write|manage)$/) });
