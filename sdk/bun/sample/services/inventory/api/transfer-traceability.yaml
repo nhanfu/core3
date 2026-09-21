@@ -1,0 +1,79 @@
+page: { id: transfer-traceability }
+datasources:
+  - id: inventory_transfer_traceability_context
+    single: true
+    permission: inventory.tracking
+    error_states:
+      not_found: { status: 404, code: INVENTORY_TRANSFER_TRACEABILITY_NOT_FOUND, message: The transfer is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_TRACEABILITY_CONTEXT_UNAVAILABLE, message: Transfer traceability is temporarily unavailable. }
+    query: "SELECT p.id AS picking_id, p.row_version, p.name AS transfer_name, p.company_name, p.state, COUNT(DISTINCT m.id) AS line_count, 'Transfer Traceability Report' AS report_name FROM inventory_pickings p LEFT JOIN inventory_move_lines m ON m.picking_id = p.id AND m.state = 'Done' AND COALESCE(m.lot_serial_number, '') <> '' WHERE p.id = :picking_id AND p.state = 'Done' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) GROUP BY p.id, p.row_version, p.name, p.company_name, p.state"
+  - id: inventory_transfer_traceability_lines
+    single: false
+    permission: inventory.tracking
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_TRACEABILITY_LINES_UNAVAILABLE, message: Transfer traceability movements are temporarily unavailable. }
+    query: |
+      WITH transfer_lots AS (
+        SELECT DISTINCT lot_serial_number
+        FROM inventory_move_lines
+        WHERE picking_id = :picking_id AND state = 'Done' AND COALESCE(lot_serial_number, '') <> ''
+      )
+      SELECT m.id, m.row_version, m.reference, m.product_name, CAST(m.date AS VARCHAR) AS date,
+        m.lot_serial_number AS lot_name, COALESCE(src.name, m.source_location_id) AS source_location,
+        COALESCE(dest.name, m.destination_location_id) AS destination_location,
+        CAST(m.quantity_product_uom AS DOUBLE) AS quantity, m.unit_name, m.state, m.company_name,
+        CASE WHEN m.picking_id = :picking_id THEN TRUE ELSE FALSE END AS source_transfer,
+        m.movement_type
+      FROM inventory_move_lines m
+      LEFT JOIN inventory_locations src ON src.id = m.source_location_id
+      LEFT JOIN inventory_locations dest ON dest.id = m.destination_location_id
+      WHERE m.state = 'Done'
+        AND m.lot_serial_number IN (SELECT lot_serial_number FROM transfer_lots)
+        AND (COALESCE(:current_company_name, '') = '' OR m.company_name = :current_company_name)
+      ORDER BY m.date, m.id
+  - id: inventory_transfer_traceability_runs
+    single: false
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_TRACEABILITY_RUNS_UNAVAILABLE, message: Transfer traceability report history is temporarily unavailable. } }
+    query: "SELECT id, picking_id, transfer_name, report_name, requested_by, company_name, line_count, output_format, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM inventory_transfer_traceability_runs WHERE picking_id = :picking_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY generated_at DESC, id DESC"
+actions:
+  - id: back_to_inventory_transfer_from_traceability
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }
+  - id: print_inventory_transfer_traceability
+    type: client
+    permission: inventory.tracking
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_transfer_traceability_context;
+        if (!context?.picking_id) throw new Error('Transfer traceability context is unavailable');
+        await request('/api/actions/inventory.transfers.print_traceability', {
+          method: 'POST',
+          body: { picking_id: context.picking_id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.print();
+      }
+  - id: record_inventory_transfer_traceability
+    type: server
+    permission: inventory.tracking
+    action: inventory.transfers.print_traceability
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_transfer_traceability_context, inventory_transfer_traceability_lines, inventory_transfer_traceability_runs]
+    mutation:
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-traceability-' || :picking_id || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_transfer_traceability_runs WHERE picking_id = :picking_id) AS VARCHAR) AS id, p.name AS transfer_name, 'Transfer Traceability Report' AS report_name, COALESCE(NULLIF(:current_user_name, ''), 'Inventory User') AS requested_by, p.company_name, (SELECT COUNT(*) FROM inventory_move_lines tm WHERE tm.state = 'Done' AND tm.lot_serial_number IN (SELECT lot_serial_number FROM inventory_move_lines WHERE picking_id = :picking_id AND state = 'Done' AND COALESCE(lot_serial_number, '') <> '')) AS line_count, 'PDF' AS output_format FROM inventory_pickings p WHERE p.id = :picking_id GROUP BY p.id, p.name, p.company_name"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id", status: 404, code: INVENTORY_TRANSFER_TRACEABILITY_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 403, code: INVENTORY_TRANSFER_TRACEABILITY_COMPANY, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND state = 'Done' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_TRACEABILITY_NOT_ALLOWED, message: Only a current Done transfer can print traceability. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_move_lines WHERE picking_id = :picking_id AND state = 'Done' AND COALESCE(lot_serial_number, '') <> '')", status: 404, code: INVENTORY_TRANSFER_TRACEABILITY_EMPTY, message: This transfer has no completed tracked movements to report. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_TRANSFER_TRACEABILITY_ACTOR_REQUIRED, message: An authenticated inventory actor is required to print the report. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_TRANSFER_TRACEABILITY_COMPANY_MISMATCH, message: The report company must match the current company. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_traceability_runs(id, picking_id, transfer_name, report_name, requested_by, company_name, line_count, output_format, generated_at, row_version) VALUES (:id, :picking_id, :transfer_name, :report_name, :requested_by, :company_name, :line_count, :output_format, TIMESTAMP '2026-01-15 17:00:00', 1)", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_TRACEABILITY_FAILED, message: The transfer traceability report could not be prepared. }
+      result: { query: "SELECT id, picking_id, transfer_name, report_name, requested_by, company_name, line_count, output_format, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM inventory_transfer_traceability_runs WHERE id = :id" }

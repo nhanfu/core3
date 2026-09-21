@@ -1,0 +1,7 @@
+{
+  "target": "http://127.0.0.1:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "authenticated_comparison": false,
+  "disposition": "blocked_by_odoo_login_redirect"
+}

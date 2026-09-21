@@ -1,0 +1,25 @@
+{
+  "target": "http://127.0.0.1:4358/inventory/transfer/traceability?picking_id=delivery-transfer-traceability-0001",
+  "runtime": "Core3 module server",
+  "desktop": {
+    "viewport": "1440x900",
+    "final_url": "http://127.0.0.1:4358/auth/login?redirect=%2Finventory%2Ftransfer%2Ftraceability%3Fpicking_id%3Ddelivery-transfer-traceability-0001",
+    "title": "Sign in to your account",
+    "authenticated": false,
+    "horizontal_overflow": false,
+    "page_errors": [],
+    "failed_responses": [],
+    "screenshot": "desktop.png"
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "final_url": "http://127.0.0.1:4358/auth/login?redirect=%2Finventory%2Ftransfer%2Ftraceability%3Fpicking_id%3Ddelivery-transfer-traceability-0001",
+    "title": "Sign in to your account",
+    "authenticated": false,
+    "horizontal_overflow": false,
+    "page_errors": [],
+    "failed_responses": [],
+    "screenshot": "mobile.png"
+  },
+  "disposition": "blocked_before_authenticated_inventory_route"
+}

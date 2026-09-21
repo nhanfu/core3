@@ -854,6 +854,29 @@ Inventory sign-off remains open.
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
 Full Inventory sign-off remains open.
 
+## `INV-TRANSFER-TRACEABILITY-001` — Done transfer Traceability report (2026-09-21)
+
+- Selected the next uncovered transfer-detail behavior: Odoo's Done and
+  tracked Transfer form exposes the `action_stock_report` Traceability stat,
+  which follows completed lot/serial move history. This is distinct from the
+  existing lot-detail traceability slice.
+- Added separate `transfer-traceability` page/API contracts joined by
+  `page.id`, and linked the existing transfer-detail Traceability stat to the
+  new route. Migration `20260922230000-073-inventory-transfer-traceability.yaml`
+  adds a deterministic tracked Done delivery, incoming/outgoing move-line
+  history, and durable report-run history.
+- The report action is `inventory.tracking`-protected and enforces Done state,
+  current company, authenticated actor, company context, tracked lines, and
+  expected row-version guards. Report runs survive file-backed restart.
+- Focused verification passes 4 tests / 25 assertions for the feature and 12
+  tests / 92 assertions across traceability, lot traceability, and transfer
+  workflow regressions. YAML audit, focused ESLint, and diff-check pass.
+- Core3 desktop/mobile probes reached `/auth/login` before the route; exact
+  captures and no-error/no-overflow results are recorded under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-TRACEABILITY-001/`. Odoo returned
+  HTTP 303 to `/web/login`; no authenticated visual or Odoo action sign-off is
+  claimed. Full Inventory sign-off remains open.
+
 ## `INV-LOT-LOCATIONS-001` — Lot/Serial Number Locations (2026-09-21)
 
 - Selected the next uncovered source-backed lot workflow: Odoo's Lot/Serial

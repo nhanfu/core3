@@ -1,0 +1,78 @@
+version: 0.0.73
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_traceability_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        transfer_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        generated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_transfer_traceability_runs_picking
+        ON inventory_transfer_traceability_runs(picking_id, generated_at, id);
+      INSERT INTO inventory_lots(
+        id, name, product_id, product_name, ref, location_id, product_qty, unit_name,
+        tracking, company_name, partner_name, note, transfer_count, create_date
+      ) VALUES (
+        'lot-transfer-traceability-0001', 'TRACE-TRANSFER-0001', 'product-storage-box',
+        '[E-COM08] Storage Box', 'TRACE/TRANSFER/0001', 'location-stock', 5, 'Units',
+        'lot', 'Core3 Demo Company', 'Traceability Customer',
+        'Deterministic transfer traceability fixture.', 1, TIMESTAMP '2026-01-15 16:20:00'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(
+        id, operation_type_id, name, contact_name, scheduled_date, source_document,
+        company_name, source_location_id, destination_location_id, state
+      ) VALUES (
+        'delivery-transfer-traceability-0001', 'operation-deliveries',
+        'WH/OUT/TRACE/0001', 'Traceability Customer', DATE '2026-01-15',
+        'SO/TRACE/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Done'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-transfer-traceability-0001-move-001', 'delivery-transfer-traceability-0001', '[E-COM08] Storage Box', 5, 5)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_move_lines(
+        id, row_version, date, reference, product_id, product_name, product_category_name,
+        lot_serial_number, source_package, result_package, source_location_id,
+        destination_location_id, picking_partner_name, company_name, quantity,
+        quantity_product_uom, unit_name, state, done_by, origin, movement_type,
+        created_at, picking_id
+      ) VALUES
+        ('transfer-trace-in-0001', 1, TIMESTAMP '2026-01-14 16:20:00', 'WH/IN/TRACE/0001',
+         'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies',
+         'TRACE-TRANSFER-0001', NULL, NULL, 'location-supplier', 'location-stock',
+         'Traceability Supplier', 'Core3 Demo Company', 5, 5, 'Units', 'Done',
+         'Inventory Operator', 'PO/TRACE/0001', 'incoming', TIMESTAMP '2026-01-14 16:20:00', NULL),
+        ('transfer-trace-out-0001', 1, TIMESTAMP '2026-01-15 16:30:00', 'WH/OUT/TRACE/0001',
+         'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies',
+         'TRACE-TRANSFER-0001', NULL, 'PACK-TRACE-OUT-0001', 'location-stock', 'location-customer',
+         'Traceability Customer', 'Core3 Demo Company', 5, 5, 'Units', 'Done',
+         'Inventory Operator', 'SO/TRACE/0001', 'outgoing', TIMESTAMP '2026-01-15 16:30:00', 'delivery-transfer-traceability-0001')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_transfer_traceability_runs(
+        id, picking_id, transfer_name, report_name, requested_by, company_name,
+        line_count, output_format, generated_at
+      ) VALUES (
+        'transfer-traceability-delivery-transfer-traceability-0001-1',
+        'delivery-transfer-traceability-0001', 'WH/OUT/TRACE/0001',
+        'Transfer Traceability Report', 'Seeded Inventory', 'Core3 Demo Company',
+        2, 'PDF', TIMESTAMP '2026-01-15 16:45:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_traceability_runs WHERE id = 'transfer-traceability-delivery-transfer-traceability-0001-1';
+      DELETE FROM inventory_move_lines WHERE id IN ('transfer-trace-in-0001', 'transfer-trace-out-0001');
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-transfer-traceability-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-transfer-traceability-0001';
+      DELETE FROM inventory_lots WHERE id = 'lot-transfer-traceability-0001';
+      DROP INDEX IF EXISTS idx_inventory_transfer_traceability_runs_picking;
+      DROP TABLE IF EXISTS inventory_transfer_traceability_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

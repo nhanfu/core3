@@ -1,0 +1,17 @@
+{
+  "feature_id": "INV-TRANSFER-TRACEABILITY-001",
+  "odoo_sources": [
+    "addons/stock/views/stock_picking_views.xml:161-166",
+    "addons/stock/report/stock_traceability.py:get_lines",
+    "addons/stock/report/stock_traceability.py:_get_move_lines",
+    "addons/stock/report/stock_report_views.xml:action_stock_report"
+  ],
+  "source_behavior": "Done tracked transfer forms expose a Traceability stat action that opens the stock traceability report and follows completed lot/serial move history.",
+  "core3_contract": {
+    "page": "services/inventory/pages/transfer-traceability.yaml",
+    "api": "services/inventory/api/transfer-traceability.yaml",
+    "page_id": "transfer-traceability",
+    "entrypoint": "services/inventory/pages/transfer-detail.yaml + services/inventory/api/transfer-detail.yaml"
+  },
+  "comparison": "Core3 has the source-shaped transfer-scoped context, tracked move-line history, durable report-run record, and print action; live Odoo comparison is blocked by authentication."
+}

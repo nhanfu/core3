@@ -1775,6 +1775,30 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Transfer Traceability — `INV-TRANSFER-TRACEABILITY-001` (2026-09-21)
+
+Odoo source comparison: `addons/stock/views/stock_picking_views.xml:161-166`
+declares the Done/tracked transfer form's `action_stock_report` Traceability
+stat. `addons/stock/report/stock_traceability.py` handles `stock.picking`
+contexts and recursively follows completed lot/serial move history. The
+corresponding report action is declared in
+`addons/stock/report/stock_report_views.xml`.
+
+Core3 adds presentation-only
+`services/inventory/pages/transfer-traceability.yaml` and backend
+`services/inventory/api/transfer-traceability.yaml`, joined by
+`page.id: transfer-traceability`, plus the transfer-detail stat/navigation
+binding. The API exposes transfer context, tracked history lines, durable run
+history, and a guarded print/report action. Migration
+`20260922230000-073-inventory-transfer-traceability.yaml` provides deterministic
+Done delivery and lot-history fixtures. Permission, company, actor, Done-state,
+tracked-line, and stale-row guards are covered by focused restart/CRUD tests.
+
+Evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-TRACEABILITY-001/`. Core3 desktop
+and mobile reached the login shell; Odoo returned HTTP 303 to its login route.
+These are recorded blockers, not authenticated parity sign-off.
+
 ## Products > Lot/Serial Number Locations — `INV-LOT-LOCATIONS-001` (2026-09-21)
 
 This bounded Wave 28 slice closes the Lot/Serial Number form's `Location` stat

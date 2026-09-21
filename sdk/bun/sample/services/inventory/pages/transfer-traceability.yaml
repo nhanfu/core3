@@ -1,0 +1,45 @@
+title: Transfer Traceability
+page: { id: transfer-traceability, route: /inventory/transfer/traceability, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Traceability], auth: { require: [inventory.tracking] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_traceability_context
+    title: Traceability Report
+    stats:
+      - { label: Transfer, field: transfer_name }
+      - { label: Company, field: company_name }
+      - { label: Lines, field: line_count }
+      - { label: State, field: state }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_traceability_lines
+    header_actions:
+      - { id: print_inventory_transfer_traceability, label: Print, variant: secondary, permission: inventory.tracking }
+      - { id: back_to_inventory_transfer_from_traceability, label: Back to Transfer, variant: secondary, permission: inventory.read }
+    columns:
+      - { field: reference, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: product_name, label: Product }
+      - { field: date, label: Date, sortable: true }
+      - { field: lot_name, label: Lot/Serial Number }
+      - { field: source_location, label: From }
+      - { field: destination_location, label: To }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: source_transfer, label: Transfer Line }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No traceability movements, description: This transfer has no completed tracked movements to report. }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_traceability_runs
+    columns:
+      - { field: generated_at, label: Generated At, type: PrimaryEntityCell, sortable: true }
+      - { field: report_name, label: Report }
+      - { field: line_count, label: Lines, align: right }
+      - { field: output_format, label: Output }
+      - { field: requested_by, label: Requested By }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No report history, description: Printed transfer traceability reports will appear here. }
