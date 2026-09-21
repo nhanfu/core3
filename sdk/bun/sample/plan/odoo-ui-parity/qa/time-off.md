@@ -104,3 +104,10 @@ module sign-off or aggregate progress claim.
   Blocker captures are in the linked evidence README; no Odoo mutation was
   made.
 - Disposition: **conditional bounded PASS**; no full module sign-off.
+
+The full Time Off glob was also run after the focused pass: **52 passed, 9
+failed, 449 assertions across 61 tests**. The nine failures are existing
+discovery assertions reporting the shared page-schema error
+`components[1].tabs[3].fields is not allowed`; the new overview calendar test
+passes and no shared/schema or other module path was changed to mask this
+blocker.
