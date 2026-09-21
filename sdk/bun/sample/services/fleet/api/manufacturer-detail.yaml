@@ -65,7 +65,7 @@ actions:
         - { query: "SELECT id FROM fleet_vehicle_model_brands WHERE id = :id", status: 404, code: FLEET_MANUFACTURER_NOT_FOUND, message: Manufacturer was not found. }
         - { query: "SELECT 1 AS ok FROM fleet_vehicle_model_brands WHERE id = :id AND model_count = 0", status: 409, code: FLEET_MANUFACTURER_IN_USE, message: A manufacturer with models cannot be deleted; archive it instead. }
   - id: view_fleet_manufacturer_models
-    type: event
-    event: fleet:manufacturer-models
-    title: Models
-    message: The Fleet Models configuration view is the next bounded parity slice.
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/models
+    params: { brand_id: '{state.id}' }

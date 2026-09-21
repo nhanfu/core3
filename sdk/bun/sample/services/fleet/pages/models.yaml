@@ -8,6 +8,7 @@ components:
     create_label: New
     search: { label: Search models, placeholder: Search models... }
     filters:
+      - { field: brand_id, label: Manufacturer, options_source: fleet_model_manufacturers }
       - { field: vehicle_type, label: Vehicle Type, options: [{ id: car, label: Car }, { id: bike, label: Bike }] }
       - { field: category_id, label: Category, options_source: fleet_model_categories }
       - { field: contains_vehicle, label: Vehicles, options: [{ id: 'true', label: Contains Vehicle }] }

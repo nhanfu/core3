@@ -1154,3 +1154,31 @@ Authenticated visual verification is blocked honestly. BrowserSkill instance
 hashes are recorded under
 `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-tags-20260922/`; no
 Odoo or Core3 visual parity claim is made.
+
+## Manufacturer Models stat action bounded slice (2026-09-22)
+
+The next uncovered source-backed Fleet action was the `Models` stat button on a
+manufacturer form. Odoo source revision `65975996` defines
+`fleet.vehicle.model.brand.action_brand_model`, returning the
+`fleet.vehicle.model` action with `list,form` view order and context
+`search_default_brand_id=self.id` plus `default_brand_id=self.id`. Core3 had
+the stat button declared, but its API action was an explicit placeholder event
+(`fleet:manufacturer-models`) with no navigation or filtered query.
+
+Core3 now replaces that placeholder with the `fleet.read` navigation action to
+`/fleet/config/models`, passing `brand_id={state.id}`. The existing Models page
+adds the Manufacturer filter and the existing service-owned Models datasource
+filters by `fleet_vehicle_models.brand_id`; page and API remain separate and
+continue to join by `page.id`. No new migration was needed because the action
+uses the existing durable manufacturer/model tables and deterministic fixtures.
+
+Focused coverage is
+`test/fleet_manufacturer_models_action.integration.test.ts`: **2 tests / 17
+assertions**, including exact source mapping, permission and route params,
+page/API discovery, idempotent migration replay, and manufacturer-scoped Ford
+and Nissan rows. The browser gate is blocked: BrowserSkill instance `245ea108`
+was connected, but borrowing the existing signed-in Odoo tab timed out awaiting
+the required confirmation. The desktop/mobile blocker captures and exact
+cleanup record are under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-manufacturer-models-action-20260922/`.
+No live Odoo or Core3 visual parity claim is made.

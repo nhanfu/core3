@@ -43,7 +43,8 @@ describe('Fleet Manufacturers configuration parity', () => {
     expect(discovered.pageDatasources.get('fleet-manufacturer-detail')).toContain('fleet_manufacturer_detail');
     expect(discovered.pageDatasources.get('fleet-manufacturer-new')).toContain('fleet_manufacturer_new');
 
-    for (const entry of api.actions.filter((candidate: any) => candidate.id !== 'view_fleet_manufacturer' && candidate.id !== 'new_fleet_manufacturer')) {
+    expect(action(detailApi, 'view_fleet_manufacturer_models')).toMatchObject({ type: 'navigate', permission: 'fleet.read', navigate_to: '/fleet/config/models', params: { brand_id: '{state.id}' } });
+    for (const entry of api.actions.filter((candidate: any) => !['view_fleet_manufacturer', 'new_fleet_manufacturer', 'view_fleet_manufacturer_models'].includes(candidate.id))) {
       expect(entry.permission).toBe('fleet.manage');
     }
     expect(action(api, 'view_fleet_manufacturer')).toMatchObject({ permission: 'fleet.read', navigate_to: '/fleet/config/manufacturers/detail' });

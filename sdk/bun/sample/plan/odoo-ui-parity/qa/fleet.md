@@ -373,3 +373,27 @@ blocked**. Fleet remains unsigned-off.
 
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
+
+## 2026-09-22 — Manufacturer Models stat action
+
+- Feature `fleet-manufacturer-models-action-20260922` replaces the existing
+  placeholder event on the manufacturer detail `Models` stat with the Odoo
+  `action_brand_model` navigation contract. The existing Models page/API pair
+  now accepts `brand_id`, presents the Manufacturer filter, and returns only
+  models for the selected manufacturer.
+- Focused test: `bun test
+  test/fleet_manufacturer_models_action.integration.test.ts` — **2 passed / 17
+  assertions**. It verifies the local Odoo source mapping, page/API joins,
+  permissioned route params, migration replay, and Ford/Nissan scoped rows.
+- No schema/data migration was needed: this action reuses the durable Fleet
+  manufacturer/model tables and adds only a read filter/navigation contract.
+- Browser evidence is blocked honestly. BrowserSkill instance `245ea108` was
+  connected, but the required borrow of the existing signed-in Odoo tab timed
+  out awaiting browser confirmation. The desktop/mobile Agent Window captures
+  and exact details are in
+  `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-manufacturer-models-action-20260922/`;
+  they are blocker artifacts, not parity captures. The borrowed-tab session was
+  stopped and no credentials or independent login were used.
+
+QA state: **conditional bounded functional pass; live Odoo/Core3 visual gates
+blocked**. Fleet remains unsigned-off.
