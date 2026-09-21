@@ -10,6 +10,22 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001
+
+- ECOM-FUNC-050: trace Odoo zero-price setting, website fields,
+  `hide_add_to_cart_setting`, `_is_add_to_cart_allowed`, cart controller, and
+  Contact Us template; verify the Core3 page/API pairing.
+- ECOM-WF-061: replay the deterministic policy, mark a zero-priced product
+  contact-only, reject authenticated and anonymous add-to-cart, expose the
+  Contact Us URL, allow the product when disabled, and preserve state across
+  migration replay/restart.
+- ECOM-PERM-057: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, unsafe/invalid URL, and
+  stale-row writes without changing policy state.
+- ECOM-UI-043: render zero-price contact-only state and policy form at desktop
+  and mobile; Core3 browser and Odoo comparison remain blocked by runtime
+  availability and `/shop` HTTP 404.
+
 ## ECOM-CATALOG-SHOP-DEFAULT-SORT-001
 
 - ECOM-FUNC-049: trace Odoo `website.shop_default_sort`, Website Shop

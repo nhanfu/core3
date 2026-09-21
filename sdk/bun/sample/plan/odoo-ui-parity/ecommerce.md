@@ -1,6 +1,31 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded shop-default-sort slice; module sign-off remains open)
+Status: qa-in-progress (bounded zero-price sale-policy slice; module sign-off remains open)
+
+## Bounded feature — Zero-Price Sale Policy (`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`)
+
+Wave 21 selected the next uncovered Website Sale catalog behavior:
+`website.prevent_zero_price_sale` and its `contact_us_button_url`. Odoo exposes
+the setting through the `hide_add_to_cart_setting` configuration view; product
+availability calls `_is_add_to_cart_allowed`, and the product/cart templates
+replace Add to Cart with Contact Us when the contextual price is zero. The
+Website Sale cart controller enforces the same product-level boundary.
+
+Core3 migrations 106/107 add a durable company-scoped policy and deterministic
+fixture. Separate Zero-Price Sale Policy page/API YAML exposes the permissioned
+policy update, safe relative/HTTP(S) Contact Us URL validation, and optimistic
+row version. Shop projections expose contact-only state and URL; authenticated
+and anonymous add-to-cart guards reject zero-priced products while the policy
+is enabled and allow them when disabled. Migration replay and DuckDB restart
+preserve the policy.
+
+Focused source/contract, zero-price add-to-cart workflow, company permission,
+validation, optimistic concurrency, restart, scoped YAML audit, lint, and
+diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-zero-price-sale-policy-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Shop Default Sort (`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`)
 

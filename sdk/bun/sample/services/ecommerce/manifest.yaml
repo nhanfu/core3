@@ -109,3 +109,7 @@ menu:
           label: Shop Default Sort
           icon: sort
           permission: ecommerce.read
+        - path: /ecommerce/zero-price-sale-policy
+          label: Zero-Price Sale Policy
+          icon: phone
+          permission: ecommerce.read

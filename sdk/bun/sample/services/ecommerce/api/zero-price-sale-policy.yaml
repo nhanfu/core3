@@ -1,0 +1,34 @@
+page: { id: ecommerce-zero-price-sale-policy }
+datasources:
+  - id: ecommerce_zero_price_sale_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ZERO_PRICE_POLICY_UNAUTHENTICATED, message: Sign in to view zero-price sale policy. }
+      forbidden: { status: 403, code: ECOMMERCE_ZERO_PRICE_POLICY_FORBIDDEN, message: You do not have permission to view zero-price sale policy. }
+      missing_record: { status: 404, code: ECOMMERCE_ZERO_PRICE_POLICY_NOT_FOUND, message: Zero-price sale policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_ZERO_PRICE_POLICY_UNAVAILABLE, message: Zero-price sale policy is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, prevent_zero_price_sale, contact_us_button_url, CASE WHEN prevent_zero_price_sale THEN 'Contact us for zero-priced products' ELSE 'Allow zero-priced products in cart' END AS sale_behavior, updated_at FROM ecommerce_zero_price_sale_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - id: edit_ecommerce_zero_price_sale_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Zero-Price Sale Policy
+    action: ecommerce.shop.zero_price_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_zero_price_sale_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, prevent_zero_price_sale, contact_us_button_url]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_zero_price_sale_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_ZERO_PRICE_POLICY_STALE, message: This zero-price policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:contact_us_button_url AS VARCHAR))) BETWEEN 1 AND 2048 AND (CAST(:contact_us_button_url AS VARCHAR) LIKE '/%' OR LOWER(CAST(:contact_us_button_url AS VARCHAR)) LIKE 'http://%' OR LOWER(CAST(:contact_us_button_url AS VARCHAR)) LIKE 'https://%')", status: 422, code: ECOMMERCE_ZERO_PRICE_POLICY_INVALID, message: Contact Us URL must be a relative path or HTTP(S) URL up to 2048 characters. }
+      steps:
+        - { query: "UPDATE ecommerce_zero_price_sale_policies SET prevent_zero_price_sale = CAST(:prevent_zero_price_sale AS BOOLEAN), contact_us_button_url = TRIM(CAST(:contact_us_button_url AS VARCHAR)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_ZERO_PRICE_POLICY_STALE, message: This zero-price policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, prevent_zero_price_sale, contact_us_button_url, CASE WHEN prevent_zero_price_sale THEN 'Contact us for zero-priced products' ELSE 'Allow zero-priced products in cart' END AS sale_behavior FROM ecommerce_zero_price_sale_policies WHERE id = :id" }
+    fields:
+      - { field: prevent_zero_price_sale, label: Prevent Zero-Price Sale, type: checkbox }
+      - { field: contact_us_button_url, label: Contact Us URL, type: text, required: true }

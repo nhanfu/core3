@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Zero-Price Sale Policy (`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`, 2026-09-21)
+
+- Odoo source/settings: pass. `website.prevent_zero_price_sale` and
+  `contact_us_button_url` are exposed by `hide_add_to_cart_setting`;
+  `_is_add_to_cart_allowed`, the cart controller, and product templates enforce
+  Contact Us instead of Add to Cart for zero contextual prices.
+- Core3 lifecycle: pass for this bounded contract. Migrations 106/107 add a
+  durable company-scoped policy and deterministic fixture. Separate page/API
+  YAML provides safe relative/HTTP(S) URL validation and an
+  `ecommerce.write` optimistic update; Shop projections and authenticated/
+  anonymous add-to-cart guards enforce contact-only zero-price products.
+- Focused verification: `bun test
+  test/ecommerce_zero_price_sale_policy.integration.test.ts` — **3 passed,
+  32 assertions, 0 failures**. Shop regression plus focused suite — **6
+  passed, 57 assertions, 0 failures**.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` pass. Full `bun run audit` is blocked by unrelated
+  Inventory actions `print_inventory_transfer_operations` and
+  `print_inventory_transfer_delivery_slip` referenced without definitions.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-zero-price-sale-policy-001/`.
+
 ## Shop Default Sort (`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`, 2026-09-21)
 
 - Odoo source/menu/controller: pass. `website.shop_default_sort` defines five

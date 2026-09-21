@@ -1,0 +1,18 @@
+version: 0.0.107
+kind: data
+description: deterministic Website Sale zero-price policy fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_zero_price_sale_policies
+        (id, row_version, company_name, prevent_zero_price_sale, contact_us_button_url)
+      VALUES
+        ('ecommerce-zero-price-sale-my-company', 1, 'My Company', FALSE, '/contactus')
+      ON CONFLICT (company_name) DO UPDATE SET
+        prevent_zero_price_sale = EXCLUDED.prevent_zero_price_sale,
+        contact_us_button_url = EXCLUDED.contact_us_button_url;
+    down: DELETE FROM ecommerce_zero_price_sale_policies WHERE company_name = 'My Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

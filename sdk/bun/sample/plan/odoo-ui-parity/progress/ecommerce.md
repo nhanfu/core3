@@ -4,8 +4,29 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `50684fcd3b3486391f10ed58646514cd8cbbeb1a`
-(`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`, not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`
+
+Wave 21 selected Odoo Website Sale's zero-price sale policy, which is still
+absent from Core3. Odoo's `prevent_zero_price_sale` setting hides Add to Cart
+for zero-priced products and exposes a configurable Contact Us URL. Core3
+migrations 106/107 add the durable company-scoped policy and deterministic
+fixture. Separate page/API YAML provides permissioned optimistic updates and
+safe URL validation; Shop projections expose contact-only state, while
+authenticated and anonymous add-to-cart guards enforce the policy.
+
+Focused verification passed **3 tests, 32 assertions, 0 failures**; Shop
+regression plus the focused suite passed **6 tests, 57 assertions, 0
+failures**. Scoped Ecommerce YAML validation, scoped ESLint, and
+`git diff --check` are recorded with evidence. The full repository audit is
+blocked by unrelated Inventory actions `print_inventory_transfer_operations`
+and `print_inventory_transfer_delivery_slip` referenced without definitions.
+Core3 authenticated
+desktop/mobile capture is blocked by missing `js_repl` and unavailable ports
+3000/4312/4313; Odoo `/shop` is exact HTTP 404 on 8069/8073. Ecommerce module
+sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-SHOP-DEFAULT-SORT-001`
 
