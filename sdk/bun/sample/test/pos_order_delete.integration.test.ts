@@ -23,7 +23,7 @@ describe('POS Delete Order action', () => {
     }));
     expect(action).toMatchObject({ type: 'server', action: 'pos.orders.delete', permission: 'pos.write', operation: 'delete' });
     expect(action.mutation).toMatchObject({ operation: 'delete', table: 'pos_orders', concurrency: { required: true } });
-    expect(action.mutation.before_steps).toHaveLength(5);
+    expect(action.mutation.before_steps).toHaveLength(6);
   });
 
   test('deletes only new/cancelled same-company orders and remains absent after restart', async () => {

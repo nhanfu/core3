@@ -1,0 +1,37 @@
+version: 0.0.50
+kind: schema
+description: Durable POS order picking projection for the Odoo order smart button
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_order_pickings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        order_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        operation_type VARCHAR NOT NULL,
+        scheduled_date TIMESTAMP NOT NULL,
+        source_document VARCHAR,
+        contact_name VARCHAR,
+        state VARCHAR NOT NULL,
+        company VARCHAR NOT NULL,
+        move_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_order_pickings_order_company ON pos_order_pickings(order_id, company, state);
+      INSERT INTO pos_order_pickings(
+        id, row_version, order_id, name, operation_type, scheduled_date,
+        source_document, contact_name, state, company, move_count
+      )
+      SELECT
+        'pos-order-picking-demo-001', 1, 'pos-order-demo-001', 'WH/OUT/00001',
+        'Delivery Orders', TIMESTAMP '2026-01-15 10:30:00',
+        'POS/2026/08/17/0001', 'Acme Corporation', 'Ready', 'Core3 Demo Company', 2
+      WHERE EXISTS (SELECT 1 FROM pos_orders WHERE id = 'pos-order-demo-001' AND company = 'Core3 Demo Company')
+        AND NOT EXISTS (SELECT 1 FROM pos_order_pickings WHERE id = 'pos-order-picking-demo-001');
+    down: |
+      DROP TABLE IF EXISTS pos_order_pickings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

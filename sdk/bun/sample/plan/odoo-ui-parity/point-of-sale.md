@@ -1346,3 +1346,34 @@ recorded at
 The Core3 direct backend rendered successfully; the all-module runtime and
 Vite proxy remain blocked by the unrelated duplicate `time_off.requests.refuse`
 action / first-request 502, so no all-module startup claim is made.
+
+## Current bounded batch: Orders > Pickings smart button
+
+The local Odoo 19 source exposes `pos.order.action_stock_picking()` in
+`addons/point_of_sale/models/pos_order.py`. It opens the ready pickings action
+(`stock.action_picking_tree_ready`) with a domain limited to the selected
+order's `picking_ids`; the form smart button is hidden when `picking_count` is
+zero. Core3 previously had no picking projection or order-detail action.
+
+Core3 now adds the read-only `Pickings` action to the existing
+`pos-order-detail` page/API pair. The order datasource projects a
+company-scoped ready-picking count, the action navigates to the separate
+`pos-order-pickings` page/API pair, and the list navigates rows to the existing
+Inventory transfer detail. Migration `0.0.50` persists an idempotent POS-owned
+ready-picking projection and fixture. The list requires `pos.read`, filters by
+the selected order/company and Ready state, and exposes explicit unauthorized,
+forbidden, transport, and empty states. Order deletion removes dependent POS
+picking projections.
+
+Focused coverage is `test/pos_order_pickings.integration.test.ts`: source/action
+mapping, page/API joins, read permission, company and empty-state guards,
+durable seed persistence, migration replay, and file-backed restart persistence
+pass with 3 tests and 15 assertions.
+
+Authenticated Odoo desktop/mobile order-detail captures are recorded in
+`evidence/point_of_sale/2026-09-22/POS-ORDER-PICKINGS-001/browser-evidence.md`.
+The live demo order `Furniture Shop - 000004` has no pickings, so Odoo hides the
+smart button and cannot exercise the filtered picking list; this is recorded as
+an exact reference blocker. Core3 authenticated captures were not claimed
+because the all-module dev backend exited before `http://127.0.0.1:3001/api/modules`
+became available while Vite alone reached port 3002.

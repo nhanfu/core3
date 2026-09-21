@@ -1,0 +1,40 @@
+title: POS Order Pickings
+page: { id: pos-order-pickings, route: /point-of-sale/order-pickings, breadcrumb: [Sales, Point of Sale, Order, Pickings], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_order_pickings
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: state
+          fields:
+            - { field: operation_type, label: Operation Type }
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: move_count, label: Move Lines }
+    search: { label: Search pickings, placeholder: Search reference or source document... }
+    filters:
+      - { field: state, label: Status, options_source: pos_order_picking_states }
+    columns:
+      - { field: name, label: Picking, type: PrimaryEntityCell }
+      - { field: operation_type, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date }
+      - { field: source_document, label: Source Document }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: move_count, label: Move Lines, align: right }
+    row_key: id
+    row_open_action: view_pos_order_picking
+    row_double_click_action: view_pos_order_picking
+    empty_state: { title: No ready pickings, description: This POS order has no ready inventory pickings. }
+actions:
+  - id: back_to_pos_order_from_pickings
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/order-detail
+    params: { id: '{query.order_id}' }

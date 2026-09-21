@@ -1,0 +1,20 @@
+page: { id: pos-order-pickings }
+datasources:
+  - id: pos_order_picking_states
+    single: false
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES ('Ready', 'Ready')) states(value, label)"
+  - id: pos_order_pickings
+    single: false
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_ORDER_PICKINGS_UNAUTHORIZED, message: Sign in to view POS order pickings. }
+      forbidden: { status: 403, code: POS_ORDER_PICKINGS_FORBIDDEN, message: You do not have access to these POS order pickings. }
+      transport_error: { status: 503, code: POS_ORDER_PICKINGS_UNAVAILABLE, message: POS order pickings are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.order_id, o.name AS order_name, p.name, p.operation_type, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.state, p.contact_name, p.company, p.move_count FROM pos_order_pickings p JOIN pos_orders o ON o.id = p.order_id AND o.company = p.company WHERE p.order_id = :order_id AND p.company = :current_company_name AND p.state = 'Ready' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) ORDER BY p.scheduled_date, p.name, p.id"
+actions:
+  - id: view_pos_order_picking
+    type: navigate
+    permission: pos.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{row.id}' }
