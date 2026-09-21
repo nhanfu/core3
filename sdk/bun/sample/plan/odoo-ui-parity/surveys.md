@@ -2024,3 +2024,31 @@ reference comparison or parity sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-BACK-GUARD-001`
+
+Wave 23 selects the next uncovered Odoo public workflow setting after attempt
+limits: `users_can_go_back`. Odoo stores this boolean on `survey.survey` and
+computes `can_go_back` from it, the response state, layout, and current cursor
+(`survey_survey.py:98,647-664`; `controllers/main.py:359,363`).
+
+Core3 migration `0.0.43` adds the durable setting and a deterministic published
+two-question `No Back Customer Survey` with the option disabled. Existing
+fixtures retain their previous back-enabled behavior explicitly. The paired
+`pages/surveys.yaml` / `api/surveys.yaml` contract and survey detail fields
+expose the setting; the public renderer omits Back when disabled and the
+`surveys.public.previous_question` mutation rejects direct bypasses with
+`SURVEY_PUBLIC_PREVIOUS_DISABLED`. Concurrent allowed Previous requests retry
+and replay the durable navigation key after a transient DuckDB conflict.
+
+Focused verification is **6 passed / 41 assertions** and the public/catalog
+regression is **91 passed / 857 assertions** across 30 files. The full Surveys
+glob is **131 passed / 4 failed / 1,139 assertions** across 135 tests; the four
+failures are the existing DuckDB migration rollback/dependent-entry errors.
+Audit passes with **726 pages, 735 routes, and 1,409 datasources**; scoped lint
+and diff-check pass. Core3 ports 3000/3001/3002 refused; Odoo 8069 redirected
+to login and proxy 8072 refused. No authenticated visual or Odoo parity
+sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.

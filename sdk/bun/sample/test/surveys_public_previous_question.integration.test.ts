@@ -40,7 +40,7 @@ describe('Surveys public previous-question navigation', () => {
     const previous = api.actions.find((action: any) => action.id === 'public_survey_previous_question');
     const renderer = readFileSync(join(import.meta.dir, '../public/components/PublicSurvey.ts'), 'utf8');
     expect(previous).toMatchObject({ type: 'server_form', permission: 'surveys.public', action: 'surveys.public.previous_question', handler: 'yaml_mutation' });
-    expect(previous.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_PREVIOUS_STALE', 'SURVEY_PUBLIC_RESPONSE_EXPIRED', 'SURVEY_PUBLIC_TIME_LIMIT_EXPIRED', 'SURVEY_PUBLIC_PREVIOUS_INVALID']);
+    expect(previous.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_PREVIOUS_DISABLED', 'SURVEY_PUBLIC_PREVIOUS_STALE', 'SURVEY_PUBLIC_RESPONSE_EXPIRED', 'SURVEY_PUBLIC_TIME_LIMIT_EXPIRED', 'SURVEY_PUBLIC_PREVIOUS_INVALID']);
     expect(yaml('operations.yaml').operations['survey.public.previous_question'].query).toContain('previous_question.sequence');
     expect(renderer).toContain('/previous_question');
     expect(renderer).toContain('navigationKey = `public-previous:');

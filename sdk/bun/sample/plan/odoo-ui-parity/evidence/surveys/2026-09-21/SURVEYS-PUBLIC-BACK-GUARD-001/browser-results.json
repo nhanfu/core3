@@ -1,0 +1,42 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-BACK-GUARD-001",
+  "date": "2026-09-21",
+  "viewports": {
+    "desktop": "1440x900",
+    "mobile": "390x844"
+  },
+  "core3": {
+    "urls": [
+      "http://127.0.0.1:3000/survey/start/no-back-token-2026"
+    ],
+    "desktop": {
+      "result": "blocked",
+      "error": "ERR_CONNECTION_REFUSED",
+      "screenshot": "core3-desktop.png"
+    },
+    "mobile": {
+      "result": "blocked",
+      "error": "ERR_CONNECTION_REFUSED",
+      "screenshot": "core3-mobile.png"
+    },
+    "ports_checked": [3000, 3001, 3002]
+  },
+  "odoo": {
+    "url": "http://127.0.0.1:8069/odoo/surveys",
+    "desktop": {
+      "result": "unauthenticated_login_shell",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "screenshot": "odoo-desktop.png"
+    },
+    "mobile": {
+      "result": "unauthenticated_login_shell",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "screenshot": "odoo-mobile.png"
+    },
+    "proxy_8072": "connection_refused",
+    "installed_surveys_fixture": "not_authenticated_or_reachable"
+  },
+  "signoff": "not_claimed"
+}

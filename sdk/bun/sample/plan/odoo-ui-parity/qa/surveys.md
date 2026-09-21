@@ -1270,3 +1270,30 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPL
   authenticated desktop/mobile or Odoo parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.
+
+## `SURVEYS-PUBLIC-BACK-GUARD-001` — public Previous permission setting
+
+- Source comparison: Odoo `users_can_go_back` is durable at
+  `survey_survey.py:98`; `_can_go_back` at `647-664` also requires an active
+  response/layout/cursor, and the public controller emits `can_go_back` at
+  `controllers/main.py:359,363`.
+- YAML/UI contract: migration `0.0.43` adds the field and a deterministic
+  published two-question false fixture. `pages/surveys.yaml` and
+  `api/surveys.yaml` remain separate through `page.id: surveys`; list/detail
+  fields and the public operation expose the setting.
+- Persistence/workflow: the renderer omits Back when disabled; the public
+  mutation independently rejects direct bypass with
+  `SURVEY_PUBLIC_PREVIOUS_DISABLED`. Restart preserves false; enabling the
+  setting permits concurrent Previous requests to replay one durable key.
+- Focused verification: **6 passed / 41 assertions**; public/catalog
+  regression **91 passed / 857 assertions** across 30 files. Full Surveys:
+  **131 passed / 4 failed / 1,139 assertions** across 135 tests; the four
+  failures are the existing DuckDB migration rollback/dependent-entry errors.
+  Audit: **726 pages, 735 routes, 1,409 datasources**; scoped ESLint and
+  diff-check pass.
+- Runtime/reference: Core3 ports 3000/3001/3002 refused connections. Odoo
+  8069 returned 303 to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; proxy 8072
+  refused. Desktop/mobile captures and exact results are in
+  `browser-results.json`; no authenticated visual or Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.

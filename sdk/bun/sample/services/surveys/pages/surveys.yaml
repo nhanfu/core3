@@ -34,6 +34,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # Odoo attempt-limited surveys expose access_mode/users_login_required and
 # require a respondent email at the public start screen; the paired API owns
 # completed non-test attempt counting and start/retry/submit guards.
+# Odoo users_can_go_back is projected by the API and consumed by the public
+# renderer; the cursor mutation remains server-guarded for direct callers.
 components:
   - type: ListView
     variant: odoo

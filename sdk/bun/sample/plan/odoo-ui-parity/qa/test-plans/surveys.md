@@ -543,3 +543,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.
+
+## `SURVEYS-PUBLIC-BACK-GUARD-001` — public Previous permission setting
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-049 | public workflow | Durable `users_can_go_back` metadata | Return the source setting through the paired page/API contract and expose it in the survey detail settings | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-046 | restart/concurrency | Start → Next → blocked Previous → reopen → enable → concurrent Previous | Preserve the false setting and cursor across restart; reject disabled navigation without mutation; replay one allowed navigation key after enabling | `test-results.md`, focused test; full glob 4 known migration failures | pass |
+| SURVEYS-PERM-048 | token/state guard | Disabled direct Previous, stale cursor, wrong answer token | Keep `surveys.public`, reject direct setting bypass before stale/invalid cursor mutation, and disclose no foreign response | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-047 | responsive/reference | No-Back public question desktop/mobile + Odoo comparison | Capture exact Core3 refusal and Odoo login/proxy blockers; no sign-off until authenticated routes and installed reference are available | `core3-desktop.png`, `core3-mobile.png`, `odoo-desktop.png`, `odoo-mobile.png`, `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.

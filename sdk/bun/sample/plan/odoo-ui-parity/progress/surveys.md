@@ -419,6 +419,29 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-BACK-GUARD-001`
+
+Selected the next uncovered Odoo public setting after per-respondent attempt
+limits: `users_can_go_back`. Odoo stores the setting on the survey and exposes
+`can_go_back` only when the response/layout/cursor permit it. Core3 migration
+`0.0.43` persists the setting, seeds a deterministic published two-question
+no-back survey, exposes it through separate page/API YAML, hides the public
+Back control when disabled, and guards direct Previous mutations with
+`SURVEY_PUBLIC_PREVIOUS_DISABLED`.
+
+Focused coverage is **6 passed / 41 assertions**; the public/catalog regression
+is **91 passed / 857 assertions** across 30 files. The full Surveys glob is
+**131 passed / 4 failed / 1,139 assertions** across 135 tests; the four known
+failures are the existing DuckDB migration rollback/dependent-entry errors.
+Audit is **726 pages, 735 routes, 1,409 datasources**; scoped lint and diff-check pass. File-backed
+restart preserves the disabled setting; enabling it allows concurrent Previous
+requests to converge on one navigation key. Core3 ports 3000/3001/3002
+refused, Odoo 8069 redirected to login, and proxy 8072 refused. No visual or
+Odoo parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001`
 
 Selected the next uncovered Odoo-backed participant behavior: per-respondent

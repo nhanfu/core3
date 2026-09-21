@@ -300,6 +300,20 @@ export default class SurveysModule implements ModuleLifecycle {
         });
         return this.json({ survey: detail, answer: result, question: previous, replayed: false });
       } catch (error: any) {
+        for (let attempt = 0; attempt < 3 && navigationKey; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          const replay = (await service.call('survey.public.navigation_idempotency', {
+            access_token: answerToken,
+            survey_id: detail.id,
+            navigation_key: navigationKey,
+          }))?.response?.[0];
+          if (replay) {
+            const replayQuestion = replay.current_question_id
+              ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null
+              : null;
+            return this.json({ survey: detail, answer: replay, question: replayQuestion, replayed: true });
+          }
+        }
         return this.publicMutationError(error);
       }
     }

@@ -26,7 +26,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; is_time_limited?: boolean; time_limit?: number | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -141,7 +141,7 @@ function isIsoDatetime(value: string): boolean {
     && parsed.getUTCSeconds() === Number(value.slice(17, 19));
 }
 
-function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '', comment = '', surveyToken = '', answerToken = '') {
+function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '', comment = '', surveyToken = '', answerToken = '', usersCanGoBack = false) {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
   const matrixRows = String(question.matrix_rows || '').split('||').map((value) => value.trim()).filter(Boolean);
   const matrixColumns = String(question.matrix_columns || '').split('||').map((value) => value.trim()).filter(Boolean);
@@ -188,7 +188,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
     <div class="core3-public-survey__question">${escapeHtml(question.question_text)}${question.required ? '<span class="core3-public-survey__required">*</span>' : ''}</div>
     ${input}
     ${commentInput}
-    <div class="core3-public-survey__footer"><span class="core3-public-survey__progress">Question ${index + 1} of ${total}</span><div class="core3-public-survey__footer-actions">${index > 0 ? '<button class="core3-public-survey__button" data-back type="button">Back</button>' : ''}<button class="core3-public-survey__button" data-next type="button">${index === total - 1 ? 'Submit' : 'Next'}</button></div></div>
+    <div class="core3-public-survey__footer"><span class="core3-public-survey__progress">Question ${index + 1} of ${total}</span><div class="core3-public-survey__footer-actions">${index > 0 && usersCanGoBack ? '<button class="core3-public-survey__button" data-back type="button">Back</button>' : ''}<button class="core3-public-survey__button" data-next type="button">${index === total - 1 ? 'Submit' : 'Next'}</button></div></div>
   `;
 }
 
@@ -329,7 +329,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       return;
     }
     const currentQuestion = questions[questionIndex];
-    renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''), token, answerToken);
+    renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''), token, answerToken, survey.users_can_go_back !== false);
     startTimer();
     body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', async (event) => {
       const backButton = event.currentTarget as HTMLButtonElement;
