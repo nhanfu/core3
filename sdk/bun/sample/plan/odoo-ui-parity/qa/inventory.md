@@ -1235,3 +1235,31 @@ authenticated route is unavailable. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 reversal lifecycle and guards;
 PARTIAL/BLOCKED for unavailable live Odoo visual/mutation comparison. Full
 Inventory sign-off remains open.
+
+## Inventory Package Remove QA — `INV-PACKAGE-REMOVE-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_package_views.xml:98-105` and
+  `addons/stock/models/stock_package.py:369-406`. The editable transfer-pack
+  list action is `action_remove_package`; it removes package move-line links
+  from the active transfer/container tree.
+- Core3 contract: PASS. `pages/package-detail.yaml` owns the
+  Remove from Transfer action and removal history list; `api/package-detail.yaml`
+  owns the transfer selector, datasource, and `stock.package.action_remove_package`
+  mutation, joined by `page.id: package-detail`. Migration 0.0.55 persists the
+  same-company fixture and audit rows.
+- Focused test: `bun test
+  test/inventory_package_remove.integration.test.ts` — PASS, 4 tests / 24
+  assertions. Coverage includes contract separation, relation removal,
+  company/actor/open-transfer/link/stale guards, write permission, migration
+  replay, and file-backed restart persistence.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  package-detail captures, source responses, page-error and overflow checks
+  are under `evidence/inventory/2026-09-21/INV-PACKAGE-REMOVE-001/`.
+- Odoo comparison: source/menu/action comparison is PASS. The paired live
+  result records the exact authenticated route or login blocker; no Odoo
+  mutation is claimed when the route is unavailable.
+
+QA disposition: PASS for the bounded Core3 package removal lifecycle and
+guards; PARTIAL/BLOCKED for unavailable live Odoo visual/mutation comparison.
+Full Inventory sign-off remains open.

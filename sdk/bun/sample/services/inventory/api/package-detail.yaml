@@ -18,6 +18,15 @@ datasources:
     permission: inventory.tracking
     error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_RELOCATIONS_UNAVAILABLE, message: Package relocation history is temporarily unavailable. } }
     query: "SELECT id,row_version,package_id,from_location_name,to_location_name,moved_quantity,reason,COALESCE(company_name,'Visible to all companies') AS company_name,relocated_by,CAST(relocated_at AS VARCHAR) AS relocated_at FROM inventory_package_relocations WHERE package_id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY relocated_at DESC, id DESC"
+  - id: inventory_package_removal_transfers
+    single: false
+    permission: inventory.tracking
+    query: "SELECT DISTINCT p.id AS value, p.name AS label FROM inventory_package_move_lines l JOIN inventory_picking_moves m ON m.id = l.move_id JOIN inventory_pickings p ON p.id = m.picking_id WHERE l.package_id = :id AND p.state IN ('Draft', 'Waiting', 'Ready') AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) ORDER BY p.name"
+  - id: inventory_package_removal_runs
+    single: false
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_REMOVALS_UNAVAILABLE, message: Package removal history is temporarily unavailable. } }
+    query: "SELECT r.id, r.package_id, r.picking_id, r.company_name, r.package_name, r.removed_count, r.requested_by, COALESCE(r.reason, '') AS reason, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_package_removal_runs r JOIN inventory_packages p ON p.id = r.package_id WHERE r.package_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
 actions:
   - id: back_to_inventory_packages
     type: navigate
@@ -87,6 +96,36 @@ actions:
     fields:
       - { field: location_name, label: To Location, type: select, options_source: inventory_package_relocation_locations, required: true }
       - { field: reason, label: Reason for relocation, type: textarea, default: Package manually relocated, placeholder: 'e.g. Move to a replenishment shelf' }
+  - id: remove_inventory_package_from_transfer
+    type: server_form
+    permission: inventory.write
+    title: Remove package from transfer
+    action: stock.package.action_remove_package
+    handler: yaml_mutation
+    operation: remove_package
+    params: { id: '{state.inventory_package_detail.id}', expected_row_version: '{state.inventory_package_detail.row_version}' }
+    refresh: [inventory_package_detail, inventory_package_contents, inventory_package_transfers, inventory_package_removal_runs]
+    success_message: Package removed from transfer.
+    mutation:
+      generated: [removal_id, removed_count]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'inventory-package-removal-' || :id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM inventory_package_removal_runs WHERE package_id = :id), 0) + 1 AS VARCHAR) AS removal_id, (SELECT COUNT(*) FROM inventory_package_move_lines l JOIN inventory_picking_moves m ON m.id = l.move_id WHERE l.package_id = :id AND m.picking_id = :picking_id) AS removed_count"
+      guards:
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id", status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package not found. }
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: INVENTORY_PACKAGE_REMOVE_STALE, message: The package changed or is unavailable in the current company. Reload before removing it. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_PACKAGE_REMOVE_ACTOR_REQUIRED, message: A signed-in inventory operator is required to remove a package. }
+        - { query: "SELECT 1 AS ok FROM inventory_pickings p WHERE p.id = :picking_id AND p.state IN ('Draft', 'Waiting', 'Ready') AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: INVENTORY_PACKAGE_REMOVE_TRANSFER_INVALID, message: Choose an open transfer in the current company. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_package_move_lines l JOIN inventory_picking_moves m ON m.id = l.move_id WHERE l.package_id = :id AND m.picking_id = :picking_id)", status: 422, code: INVENTORY_PACKAGE_REMOVE_NOT_LINKED, message: This package is not linked to the selected transfer. }
+      steps:
+        - { query: "INSERT INTO inventory_package_removal_runs(id, package_id, picking_id, company_name, package_name, removed_count, requested_by, reason) SELECT :removal_id, p.id, :picking_id, p.company_name, p.name, :removed_count, :current_user_name, NULLIF(TRIM(CAST(COALESCE(:reason, '') AS VARCHAR)), '') FROM inventory_packages p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "DELETE FROM inventory_package_move_lines WHERE package_id = :id AND move_id IN (SELECT m.id FROM inventory_picking_moves m WHERE m.picking_id = :picking_id)" }
+        - { query: "UPDATE inventory_packages SET row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The package changed before it could be removed from the transfer. }
+      result: { query: "SELECT id, package_id, picking_id, company_name, package_name, removed_count, requested_by, reason, row_version FROM inventory_package_removal_runs WHERE id = :removal_id" }
+    fields:
+      - { field: picking_id, label: Transfer, type: select, options_source: inventory_package_removal_transfers, required: true }
+      - { field: reason, label: Reason, type: textarea, default: Removed from transfer }
   - id: unpack_inventory_package
     type: server
     permission: inventory.tracking

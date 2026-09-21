@@ -932,3 +932,21 @@ Inventory sign-off remains open.
   desktop/mobile evidence and the exact Odoo live blocker are under
   `evidence/inventory/2026-09-21/INV-MOVE-REVERT-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-PACKAGE-REMOVE-001` — Package Remove from Transfer (2026-09-21)
+
+- Selected the next uncovered source-backed package behavior after Move
+  Revert: Odoo's deferred editable transfer-pack `action_remove_package`,
+  implemented by `stock.package.action_remove_package`. This is distinct from
+  completed package relocation and package-detail Unpack.
+- Added migration `20260922050000-055-inventory-package-remove.yaml`, a
+  same-company open-transfer fixture, durable package-removal history, and
+  separate package-detail page/API contracts joined by `page.id`.
+- The manager/write action removes package move-line links for a selected open
+  transfer, records removed-count/actor/reason history, advances the package
+  row version, and enforces company, actor, transfer-state, relation, and
+  stale guards. Restart and permission boundaries are covered.
+- Focused verification: 4 tests / 24 assertions pass. Authenticated Core3
+  desktop/mobile evidence and the exact Odoo live blocker are under
+  `evidence/inventory/2026-09-21/INV-PACKAGE-REMOVE-001/`. Full Inventory
+  sign-off remains open.

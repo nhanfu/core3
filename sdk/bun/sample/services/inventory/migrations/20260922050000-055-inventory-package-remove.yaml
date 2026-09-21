@@ -1,0 +1,31 @@
+version: 0.0.55
+description: Inventory package removal from open transfer context
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_package_removal_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        package_id VARCHAR NOT NULL, picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, package_name VARCHAR NOT NULL,
+        removed_count INTEGER NOT NULL, requested_by VARCHAR NOT NULL,
+        reason VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 16:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_package_removals_package ON inventory_package_removal_runs(package_id, created_at);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-package-remove-0001', 'operation-deliveries', 'WH/OUT/PACKREMOVE/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/PACKREMOVE/0001', 'My Company (San Francisco)', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-package-remove-0001-move-001', 'delivery-package-remove-0001', '[FURN_8855] Drawer', 2, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_move_lines(id, package_id, move_id, relation_type)
+      VALUES ('package-remove-move-0001', 'package-main-0001', 'delivery-package-remove-0001-move-001', 'source')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_package_move_lines WHERE id = 'package-remove-move-0001';
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-package-remove-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-package-remove-0001';
+      DROP TABLE IF EXISTS inventory_package_removal_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

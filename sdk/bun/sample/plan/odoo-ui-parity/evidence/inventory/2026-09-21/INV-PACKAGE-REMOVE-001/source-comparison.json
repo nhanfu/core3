@@ -1,0 +1,21 @@
+{
+  "feature": "INV-PACKAGE-REMOVE-001",
+  "odoo": {
+    "source_view": "addons/stock/views/stock_package_views.xml:98-105",
+    "model_method": "addons/stock/models/stock_package.py:369-406",
+    "action": "action_remove_package",
+    "model": "stock.package",
+    "context": "Editable transfer-pack list; active picking/container context",
+    "semantics": "Remove package move lines from the active picking/container tree, clear destination-container links, and reapply putaway strategy."
+  },
+  "core3": {
+    "page": "services/inventory/pages/package-detail.yaml",
+    "api": "services/inventory/api/package-detail.yaml",
+    "page_id": "package-detail",
+    "action_id": "remove_inventory_package_from_transfer",
+    "migration": "services/inventory/migrations/20260922050000-055-inventory-package-remove.yaml",
+    "persistence": "inventory_package_removal_runs plus removal of selected transfer package-move relations",
+    "guards": ["inventory.write", "current company", "signed-in actor", "open transfer", "selected package relation", "expected package row version"]
+  },
+  "scope": "Bounded removal from one open transfer; package relocation and package-detail Unpack remain separate workflows."
+}

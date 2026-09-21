@@ -1799,6 +1799,31 @@ Focused verification, authenticated Core3 desktop/mobile detail evidence, and
 the paired Odoo source/login result are recorded under
 `evidence/inventory/2026-09-21/INV-MOVE-REVERT-001/`. Full Inventory sign-off
 remains open.
+
+## Products > Package transfer Remove — `INV-PACKAGE-REMOVE-001` (2026-09-21)
+
+This bounded Wave 18 slice covers the deferred transfer-pack Remove action,
+distinct from package relocation and the package-detail Unpack action. Odoo's
+editable transfer-pack list declares `action_remove_package` at
+`addons/stock/views/stock_package_views.xml:98-105`; the implementation is
+`addons/stock/models/stock_package.py:369-406`. It removes package move-line
+links from the active picking/container tree, clears destination-container
+links, and reapplies putaway strategy as needed.
+
+Core3 adds migration
+`20260922050000-055-inventory-package-remove.yaml` with a same-company open
+transfer fixture and durable `inventory_package_removal_runs` history. The
+paired `pages/package-detail.yaml` and `api/package-detail.yaml` contracts
+share `page.id: package-detail`; the API owns the transfer selector, guarded
+`stock.package.action_remove_package` mutation, package relation deletion,
+company/actor/open-transfer/row-version guards, and removal history. The page
+exposes the action and a history list while retaining existing relocation and
+Unpack semantics.
+
+Focused verification, authenticated Core3 desktop/mobile package-detail
+evidence, and the paired Odoo source/login result are recorded under
+`evidence/inventory/2026-09-21/INV-PACKAGE-REMOVE-001/`. Full Inventory
+sign-off remains open.
 ## Products > Products — `INV-PRODUCT-TEMPLATES-001` (2026-09-21)
 
 This bounded Wave 15 slice covers the previously uncovered root Products action.

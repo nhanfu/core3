@@ -1,0 +1,65 @@
+{
+  "feature": "INV-PACKAGE-REMOVE-001",
+  "generated_at": "2026-09-21T00:04:38.707Z",
+  "authenticated": true,
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:4333/inventory/packages/detail?id=package-main-0001",
+      "title": "Package",
+      "body_excerpt": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nProducts\n›\nPackages\n›\nPackage\nBack to Packages\nEdit\nRelocate\nRemove from Transfer\nUnpack\nPACK0000001\n\nPallet\n\nIn internal locations\n3\nPackage Transfers\nPackage Information\nPackage Reference\nPACK0000001\nPackage Type\nPallet\nOwner\n—\nLocation\nWH/Stock\nContainer\n—\nCompany\nMy Company (San Francisco)\nPack Date\n2026-01-15\nContent\nItems\n2\nProduct\n\tLot/Serial Number\n\tQuantity\n\tUnit\n\t\n[E-COM08] Storage Box\t—\t18\tUnits\t\n\n[FURN_8855] Drawer\t0000000000029\t80\tUnits\t\nFrom\n\tTo\n\tQuantity\n\tReason\n\tRelocated by\n\tRelocated at\n\t\nSupply Chain / Inventory / Products / Packages / Package\n0-0 / 0\n‹\n›\nTransfer\n\tPackage\n\tMove Lines\n\tReason\n\tRemoved by\n\tCreated at\n\n\nNo removal history\n\nPackage removals from open transfers will appear here.",
+      "has_action": true,
+      "has_history": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/package-detail?lc=en&id=package-main-0001",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:4333/inventory/packages/detail?id=package-main-0001",
+      "title": "Package",
+      "body_excerpt": "AU\nBack to Packages\nEdit\nRelocate\nRemove from Transfer\nUnpack\nPACK0000001\n\nPallet\n\nIn internal locations\n3\nPackage Transfers\nPackage Information\nPackage Reference\nPACK0000001\nPackage Type\nPallet\nOwner\n—\nLocation\nWH/Stock\nContainer\n—\nCompany\nMy Company (San Francisco)\nPack Date\n2026-01-15\nContent\nItems\n2\nProduct\n\tLot/Serial Number\n\tQuantity\n\tUnit\n\t\n[E-COM08] Storage Box\t—\t18\tUnits\t\n\n[FURN_8855] Drawer\t0000000000029\t80\tUnits\t\nFrom\n\tTo\n\tQuantity\n\tReason\n\tRelocated by\n\tRelocated at\n\t\nPackage\n0-0 / 0\n‹\n›\nTransfer\n\tPackage\n\tMove Lines\n\tReason\n\tRemoved by\n\tCreated at\n\n\nNo removal history\n\nPackage removals from open transfers will appear here.",
+      "has_action": true,
+      "has_history": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/package-detail?lc=en&id=package-main-0001",
+          "status": 200
+        }
+      ]
+    }
+  ]
+}
