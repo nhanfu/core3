@@ -4,10 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `fbf76f9e6885765975014597542451f2c902a922`
-(`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`, local and not pushed).
+Latest committed bounded slice: `39fbf376a1f9ce55df8ae776c6ffb82b9f536c7a`
+(`ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`, local and not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`
+
+Wave 26 selected Odoo Website Sale's abandoned-cart recovery workflow. Odoo's
+website policy controls the recovery template, delay, and enablement; the
+Abandoned Carts action can send a recovery email once, while the scheduler
+marks eligible carts as sent. Core3 migrations 116/117 add the durable
+company policy, recovery template fixture, abandoned-cart send ledger, and
+company scope. Separate policy page/API YAML provides permissioned optimistic
+updates; the Abandoned Carts page/API exposes recovery state and an
+idempotent Send Recovery Email action.
+
+The focused test covers Odoo source/menu/settings comparison, migration
+replay, company/delay/template validation, policy CRUD, send enablement,
+idempotency, stale concurrency, and DuckDB restart. Browser capture remains
+blocked by the unavailable Core3 ports and missing persistent browser runtime;
+Odoo `/shop` is an exact HTTP 404 on ports 8069 and 8073. Ecommerce module
+sign-off remains open.
 
 ## Current bounded task — `ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`
 
