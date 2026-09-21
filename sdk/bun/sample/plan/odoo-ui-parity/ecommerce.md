@@ -1,6 +1,35 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop product-card action style slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop product-card ratings visibility slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card Ratings Visibility (`ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`)
+
+Wave 47 selects the Website Sale Products Design Panel's Ratings checkbox.
+Odoo persists the selected `o_wsale_products_opt_has_rating` class inside
+`website.shop_opt_products_design_classes`; the product tile gates its rating
+widget on that class and supplies `rating_avg` and `rating_count`. The builder
+collects the `o_wsale_products_opt_*` class list and saves it through
+`/shop/config/website`. This is the Shop card display policy, distinct from
+the completed Product Reviews persistence and moderation slice.
+
+Core3 migrations 158/159 add a durable company-scoped boolean policy and
+deterministic My Company fixture defaulting to hidden ratings, matching the
+supplied Odoo model's default class list. Separate
+`api/shop-product-ratings-policy.yaml` and
+`pages/shop-product-ratings-policy.yaml` contracts join through
+`ecommerce-shop-product-ratings-policy`; updates require `ecommerce.write`,
+validate booleans, and use company and row-version guards. The Shop API
+projects the effective setting and published active review average/count onto
+each product card.
+
+Focused tests cover the supplied Odoo model, builder plugin/panel, product
+tile template, separate page/API contracts, permissioned optimistic update,
+missing/invalid/foreign-company/stale guards, migration replay, Shop
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-ratings-visibility-001/`.
+Authenticated `bsk` Odoo desktop/mobile captures both show the supplied
+authenticated `/shop` route as HTTP 404; no visual sign-off is claimed and
+Ecommerce module sign-off remains open.
 
 ## Bounded feature — Shop Product-Card Action Style (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`)
 

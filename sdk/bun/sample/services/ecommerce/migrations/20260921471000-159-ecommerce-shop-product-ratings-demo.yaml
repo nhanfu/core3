@@ -1,0 +1,14 @@
+version: 0.0.159
+kind: data
+description: deterministic Website Sale Shop product-card ratings fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_rating_policies (id, row_version, company_name, show_ratings)
+      VALUES ('ecommerce-shop-product-ratings-my-company', 1, 'My Company', FALSE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_rating_policies WHERE id = 'ecommerce-shop-product-ratings-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

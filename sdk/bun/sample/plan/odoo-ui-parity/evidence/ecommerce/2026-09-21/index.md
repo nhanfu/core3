@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Product-Card Ratings Visibility](ecom-catalog-shop-product-ratings-visibility-001/README.md)
+
 - [Shop Product-Card Action Style](ecom-catalog-shop-product-action-style-001/README.md)
 
 - [Shop Product-Card Action Placement](ecom-catalog-shop-product-action-placement-001/README.md)

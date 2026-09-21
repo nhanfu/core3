@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001
+
+- ECOM-FUNC-076: trace Website Sale
+  `website.shop_opt_products_design_classes`, the Products Design Panel
+  Ratings checkbox, `o_wsale_products_opt_has_rating`, the product-tile
+  rating widget, and `/shop/config/website`; verify separate Core3 Shop
+  policy and page/API contracts.
+- ECOM-WF-087: replay the deterministic hidden-ratings policy, show and hide
+  published active review average/count projection, reject invalid,
+  foreign-company, missing, and stale writes, and preserve it across
+  migration replay and DuckDB restart.
+- ECOM-PERM-083: require `ecommerce.read` for policy/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-069: render the configuration form and Shop projection at desktop
+  and mobile and compare the authenticated Odoo Products Design Panel Ratings
+  control; `bsk` captured the authenticated Odoo `/shop` 404 at both
+  viewports, so rendered UI sign-off remains blocked.
+
 ## ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001
 
 - ECOM-FUNC-075: trace Website Sale

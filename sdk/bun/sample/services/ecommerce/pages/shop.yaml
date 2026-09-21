@@ -6,7 +6,7 @@ components:
     responsive_card: true
     search: { label: Search products, placeholder: Search products or categories... }
     views:
-      - { id: kanban, label: Products, icon: grid, mobile: true, group_by: '', card: { title: name, subtitle: category, fields: [{ field: sales_price, label: Price }, { field: compare_at_price, label: Compare to Price }, { field: website_description, label: Description }, { field: product_type, label: Type }, { field: show_cta, label: Add to Cart CTA, type: Boolean }, { field: action_placement, label: Product Actions, type: StatusChip }, { field: action_style, label: Action Style, type: StatusChip }, { field: add_to_cart_allowed, label: Cart Available, type: Boolean }, { field: contact_us_button_url, label: Contact Us URL }] } }
+      - { id: kanban, label: Products, icon: grid, mobile: true, group_by: '', card: { title: name, subtitle: category, fields: [{ field: sales_price, label: Price }, { field: compare_at_price, label: Compare to Price }, { field: website_description, label: Description }, { field: product_type, label: Type }, { field: show_cta, label: Add to Cart CTA, type: Boolean }, { field: action_placement, label: Product Actions, type: StatusChip }, { field: action_style, label: Action Style, type: StatusChip }, { field: show_ratings, label: Show Ratings, type: Boolean }, { field: rating_average, label: Average Rating }, { field: rating_count, label: Rating Count }, { field: add_to_cart_allowed, label: Cart Available, type: Boolean }, { field: contact_us_button_url, label: Contact Us URL }] } }
       - { id: list, label: List, icon: table, mobile: false }
     columns:
       - { field: name, label: Product, type: PrimaryEntityCell }
@@ -20,6 +20,9 @@ components:
       - { field: show_cta, label: Add to Cart CTA, type: Boolean }
       - { field: action_placement, label: Product Actions, type: StatusChip }
       - { field: action_style, label: Action Style, type: StatusChip }
+      - { field: show_ratings, label: Show Ratings, type: Boolean }
+      - { field: rating_average, label: Average Rating, align: right }
+      - { field: rating_count, label: Rating Count, align: right }
       - { field: add_to_cart_allowed, label: Cart Available, type: Boolean }
       - { field: contact_us_button_url, label: Contact Us URL }
     row_actions: menu
@@ -75,3 +78,9 @@ components:
     title_field: company_name
     groups:
       - { title: Shop Product Cards, columns: 2, fields: [{ field: company_name, label: Company }, { field: action_style, label: Product Action Style, type: StatusChip }, { field: action_style_label, label: Current Style, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_shop_product_ratings
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Shop Product Cards, columns: 2, fields: [{ field: company_name, label: Company }, { field: show_ratings, label: Show Product Ratings, type: Boolean }, { field: rating_behavior, label: Current Behavior, type: StatusChip }] }

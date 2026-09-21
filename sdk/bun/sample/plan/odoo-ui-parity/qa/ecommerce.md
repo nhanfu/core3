@@ -1,5 +1,27 @@
 # ecommerce QA ledger
 
+## Shop Product-Card Ratings Visibility (`ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`, 2026-09-21)
+
+- Odoo source/builder/template: pass. `website.shop_opt_products_design_classes`
+  stores `o_wsale_products_opt_has_rating`; the Products Design Panel exposes
+  the Ratings checkbox, and the product tile renders the rating widget only
+  when that class is active with `rating_avg` and `rating_count`.
+- Core3 lifecycle: migrations 158/159 add the durable company policy and
+  deterministic hidden-ratings fixture. Separate page/API YAML exposes a
+  permissioned optimistic update; Shop projects the effective setting and
+  published active review average/count.
+- Focused verification: **2 tests, 35 assertions, 0 failures**.
+- Expanded Shop/reviews regression: **22 tests, 307 assertions, 0 failures**.
+- Scoped ESLint passes. Global `bun run audit` is blocked before Ecommerce
+  discovery by unrelated `services/livechat/pages/channel-detail.yaml`
+  action `fields` being empty; no other-owner file was changed.
+- Authenticated `bsk` comparison uses `http://localhost:8069`, database
+  `core3_reference`, and the supplied QA login. `/shop` is exact HTTP 404 in
+  desktop and iPhone-14 mobile evidence; no browser sign-off is claimed.
+- Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-ratings-visibility-001/`.
+  Ecommerce module sign-off remains open.
+
 ## Shop Product-Card Action Style (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`, 2026-09-21)
 
 - Odoo source/builder/styles: pass.

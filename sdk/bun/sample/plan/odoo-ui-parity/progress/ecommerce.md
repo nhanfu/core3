@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 47 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`
+(implementation and focused verification complete; local commit/push pending).
 Latest Wave 46 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`
 (implementation complete; local commit pending; not pushed).
 Latest Wave 45 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001`
@@ -75,6 +77,17 @@ the expanded Shop regression passes **17 tests, 243 assertions, 0 failures**.
 scoped ESLint and Ecommerce `git diff --check` pass. Playwright confirms the
 Core3 target is connection-refused on ports 3000/4312/4313, while the supplied
 Odoo `/shop` target returns HTTP 404 on 8069 and 8073. Ecommerce module
+sign-off remains open.
+
+Wave 47 verification: the focused ratings suite passes **2 tests and 35
+assertions, 0 failures**. The expanded Shop/reviews regression passes **22
+tests, 307 assertions, 0 failures**. Scoped ESLint passes. The global UI audit
+is blocked before Ecommerce discovery by the unrelated empty action-fields
+definition in `services/livechat/pages/channel-detail.yaml`; no non-Ecommerce
+file was changed. `git diff --check` is recorded after final owned-file
+staging. Authenticated `bsk` evidence against `http://localhost:8069` with
+the shared Odoo reference shows `/shop` as HTTP 404 at desktop and iPhone-14
+mobile viewports; Core3 rendered evidence is not claimed. Ecommerce module
 sign-off remains open.
 
 Wave 42 verification: the focused suite passes **2 tests and 30 assertions**;
