@@ -1,0 +1,46 @@
+title: Next Transfers
+page: { id: transfer-next, route: /inventory/transfer/next, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Next Transfers], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_next_context
+    title: Next Transfers
+    stats:
+      - { label: From Transfer, field: source_transfer_name }
+      - { label: Source State, field: source_state }
+      - { label: Next Transfers, field: next_transfer_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_next_transfers
+    header_actions:
+      - { id: back_to_inventory_transfer_from_next, label: Back to Transfer, variant: secondary, permission: inventory.read }
+    search: { label: Search next transfers, placeholder: 'Search references, contacts, or documents...' }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: operation_type_name
+          fields:
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: state, label: Status }
+            - { field: contact_name, label: Contact }
+    columns:
+      - { field: name, label: Transfer, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: operation_type_name, label: Operation Type, mobile: true }
+      - { field: scheduled_date, label: Scheduled Date, mobile: true, sortable: true }
+      - { field: contact_name, label: Contact, mobile: false }
+      - { field: source_document, label: Source Document, mobile: false }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_next_transfer
+    row_double_click_action: view_inventory_next_transfer
+    empty_state: { title: No next transfers, description: Transfers linked from this operation will appear here. }

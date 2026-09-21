@@ -1775,6 +1775,34 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Transfers > Next Transfers — `INV-TRANSFER-NEXT-001` (2026-09-21)
+
+This bounded Wave 23 slice covers the transfer-form `Next Transfer` contextual
+report, distinct from detailed operations, print, backorder, return, and email
+actions. Odoo declares the stat action in
+`addons/stock/views/stock_picking_views.xml:197-204`; `_get_next_transfers`
+and `action_next_transfer` are implemented in
+`addons/stock/models/stock_picking.py:1024-1030,1238-1258`. Odoo derives
+destination pickings from move links, excludes returns, and opens one record
+directly or a `Next Transfers` list for multiple records.
+
+Core3 adds durable `inventory_picking_next_transfers` data and deterministic
+source/target picking fixtures in migration
+`20260922100000-060-inventory-transfer-next.yaml`. The separate
+`pages/transfer-next.yaml` and `api/transfer-next.yaml` contracts share
+`page.id: transfer-next`; the transfer detail stat and navigate action pass the
+source picking context. The read contract enforces `inventory.read`, current
+company scope, stable search/order, return exclusion, explicit empty/503
+states, and restart-safe persistence.
+
+Focused verification is in
+`test/inventory_transfer_next.integration.test.ts`: 4 tests / 31 assertions
+cover source/action comparison, page/API separation, return exclusion,
+permission/company boundaries, migration replay, and file-backed restart.
+Authenticated Core3 desktop/mobile evidence and source/Odoo blocker records are
+under `evidence/inventory/2026-09-21/INV-TRANSFER-NEXT-001/`. Full Inventory
+sign-off remains open.
+
 ## Operations > Transfer Detailed Operations — `INV-TRANSFER-DETAILED-OPS-001` (2026-09-21)
 
 This Wave 22 slice covers the contextual transfer-form `Moves` stat action.

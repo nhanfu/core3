@@ -1,0 +1,40 @@
+version: 0.0.60
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_picking_next_transfers (
+        id VARCHAR PRIMARY KEY,
+        source_picking_id VARCHAR NOT NULL,
+        next_picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        move_id VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(source_picking_id, next_picking_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_picking_next_transfers_source_idx
+        ON inventory_picking_next_transfers(source_picking_id, next_picking_id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-next-source-0001', 'operation-deliveries', 'WH/OUT/NEXT/0001', 'Next Transfer Customer', DATE '2026-01-15', 'SO/NEXT/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Done')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-next-target-0001', 'operation-deliveries', 'WH/OUT/NEXT/0002', 'Next Transfer Customer', DATE '2026-01-16', 'SO/NEXT/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Waiting')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES
+        ('delivery-next-source-0001-move-001', 'delivery-next-source-0001', '[E-COM08] Storage Box', 3, 3),
+        ('delivery-next-target-0001-move-001', 'delivery-next-target-0001', '[E-COM08] Storage Box', 3, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_next_transfers(id, source_picking_id, next_picking_id, company_name, move_id)
+      VALUES ('delivery-next-link-0001', 'delivery-next-source-0001', 'delivery-next-target-0001', 'Core3 Demo Company', 'delivery-next-source-0001-move-001')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_picking_next_transfers WHERE id = 'delivery-next-link-0001';
+      DELETE FROM inventory_picking_moves WHERE id IN ('delivery-next-source-0001-move-001', 'delivery-next-target-0001-move-001');
+      DELETE FROM inventory_pickings WHERE id IN ('delivery-next-source-0001', 'delivery-next-target-0001');
+      DROP INDEX IF EXISTS inventory_picking_next_transfers_source_idx;
+      DROP TABLE IF EXISTS inventory_picking_next_transfers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

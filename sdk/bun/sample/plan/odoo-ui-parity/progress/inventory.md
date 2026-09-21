@@ -1038,3 +1038,24 @@ Inventory sign-off remains open.
 - Odoo source comparison is recorded; live Odoo returned HTTP 303 to
   `/web/login?redirect=%2Fweb%3F`, so paired authenticated Odoo visual/action
   evidence is blocked and not claimed. Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-NEXT-001` — Transfer Next Transfers (2026-09-21)
+
+- Selected the next uncovered transfer-context behavior after Detailed
+  Operations: Odoo's transfer-form `action_next_transfer` stat action. The
+  source view is `addons/stock/views/stock_picking_views.xml:197-204`; the
+  source model derives move-destination pickings, excludes returns, and opens
+  one form or a `Next Transfers` list at
+  `addons/stock/models/stock_picking.py:1024-1030,1238-1258`.
+- Added migration `20260922100000-060-inventory-transfer-next.yaml`, durable
+  source/next link data, deterministic same-company fixtures, and separate
+  `transfer-next` page/API YAML joined by `page.id`. Transfer detail now
+  exposes the permissioned contextual stat and source-picking navigation.
+- Focused verification passes 4 tests / 31 assertions, including source
+  comparison, API/page contract separation, return exclusion, read/company
+  boundaries, migration replay, and file-backed restart persistence.
+  Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-NEXT-001/`.
+- Odoo live comparison is blocked by HTTP 303 to `/web/login`; the exact
+  response is recorded in `odoo-blocker.json`. Full Inventory sign-off remains
+  open.

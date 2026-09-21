@@ -1,0 +1,63 @@
+{
+  "feature_id": "INV-TRANSFER-NEXT-001",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:4336/inventory/transfer/next?picking_id=delivery-next-source-0001",
+    "body_text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNext Transfers\n\nFrom Transfer\n\nWH/OUT/NEXT/0001\n\nSource State\n\nDone\n\nNext Transfers\n\n1\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nSupply Chain / Inventory / Operations / Transfers / Next Transfers\n1-1 / 1\n‹\n›\nTransfer\n\tOperation Type\n\tScheduled Date\n\tContact\n\tSource Document\n\tFrom\n\tTo\n\tStatus\n\tCompany\n\n\nWH/OUT/NEXT/0002\n\tDeliveries\t2026-01-16\tNext Transfer Customer\tSO/NEXT/0001\tStock\tCustomers\tWaiting\tCore3 Demo Company\nHello, Admin User",
+    "body_width": 1440,
+    "viewport_width": 1440,
+    "expected_text": [
+      {
+        "text": "Next Transfers",
+        "present": true
+      },
+      {
+        "text": "WH/OUT/NEXT/0001",
+        "present": true
+      },
+      {
+        "text": "WH/OUT/NEXT/0002",
+        "present": true
+      },
+      {
+        "text": "Waiting",
+        "present": true
+      }
+    ],
+    "bad_responses": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:4336/inventory/transfer/next?picking_id=delivery-next-source-0001",
+    "body_text": "AU\nNext Transfers\n\nFrom Transfer\n\nWH/OUT/NEXT/0001\n\nSource State\n\nDone\n\nNext Transfers\n\n1\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nNext Transfers\n1-1 / 1\n‹\n›\nWH/OUT/NEXT/0002\n\nDeliveries\n\nScheduled Date\n2026-01-16\nStatus\nWaiting\nContact\nNext Transfer Customer\nHello, Admin User",
+    "body_width": 390,
+    "viewport_width": 390,
+    "expected_text": [
+      {
+        "text": "Next Transfers",
+        "present": true
+      },
+      {
+        "text": "WH/OUT/NEXT/0001",
+        "present": true
+      },
+      {
+        "text": "WH/OUT/NEXT/0002",
+        "present": true
+      },
+      {
+        "text": "Waiting",
+        "present": true
+      }
+    ],
+    "bad_responses": [],
+    "page_errors": []
+  }
+}

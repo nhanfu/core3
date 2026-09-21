@@ -1,0 +1,26 @@
+{
+  "feature_id": "INV-TRANSFER-NEXT-001",
+  "odoo": {
+    "view": "odoo/addons/stock/views/stock_picking_views.xml:197-204",
+    "model": "odoo/addons/stock/models/stock_picking.py:1024-1030,1238-1258",
+    "action": "action_next_transfer",
+    "semantics": [
+      "Derive next transfers from move destination pickings.",
+      "Exclude return pickings.",
+      "Open one next transfer directly or show the Next Transfers list for multiple records."
+    ]
+  },
+  "core3": {
+    "page_id": "transfer-next",
+    "page_route": "/inventory/transfer/next",
+    "api_page_id": "transfer-next",
+    "migration": "services/inventory/migrations/20260922100000-060-inventory-transfer-next.yaml",
+    "implementation": [
+      "Durable source/next picking link table and deterministic fixtures.",
+      "Company-scoped read context and list datasources with return exclusion.",
+      "Separate page/API YAML contracts joined by page.id.",
+      "Contextual transfer-detail stat button and row navigation."
+    ]
+  },
+  "status": "matched_for_bounded_slice"
+}

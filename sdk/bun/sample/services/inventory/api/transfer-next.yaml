@@ -1,0 +1,43 @@
+page: { id: transfer-next }
+datasources:
+  - id: inventory_transfer_next_context
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_NEXT_TRANSFER_CONTEXT_UNAVAILABLE, message: Next transfer context is temporarily unavailable. } }
+    query: "SELECT p.id AS source_picking_id, p.name AS source_transfer_name, p.state AS source_state, p.company_name, p.row_version, CAST(COUNT(DISTINCT CASE WHEN r.id IS NULL THEN n.next_picking_id END) AS BIGINT) AS next_transfer_count FROM inventory_pickings p LEFT JOIN inventory_picking_next_transfers n ON n.source_picking_id = p.id LEFT JOIN inventory_transfer_returns r ON r.source_picking_id = n.source_picking_id AND r.return_picking_id = n.next_picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :picking_id AND (NULLIF(:current_company_name, '') IS NULL OR p.company_name = :current_company_name) GROUP BY p.id, p.name, p.state, p.company_name, p.row_version"
+  - id: inventory_transfer_next_transfers
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_NEXT_TRANSFERS_FORBIDDEN, message: You do not have permission to view next transfers. }
+      transport_error: { status: 503, code: INVENTORY_NEXT_TRANSFERS_UNAVAILABLE, message: Next transfers are temporarily unavailable. }
+    query: |
+      SELECT n.id AS link_id, p.id, p.row_version, p.name, p.contact_name,
+        CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document,
+        p.company_name, p.state, t.name AS operation_type_name,
+        COALESCE(sl.name, '') AS source_location, COALESCE(dl.name, '') AS destination_location,
+        n.source_picking_id, n.move_id
+      FROM inventory_picking_next_transfers n
+      JOIN inventory_pickings source_p ON source_p.id = n.source_picking_id
+      JOIN inventory_pickings p ON p.id = n.next_picking_id
+      JOIN inventory_operation_types t ON t.id = p.operation_type_id
+      LEFT JOIN inventory_locations sl ON sl.id = p.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = p.destination_location_id
+      LEFT JOIN inventory_transfer_returns r ON r.source_picking_id = n.source_picking_id AND r.return_picking_id = n.next_picking_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND n.source_picking_id = :picking_id
+        AND r.id IS NULL
+        AND (NULLIF(:current_company_name, '') IS NULL OR source_p.company_name = :current_company_name)
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%')
+      ORDER BY p.scheduled_date, p.name, n.id
+actions:
+  - id: back_to_inventory_transfer_from_next
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }
+  - id: view_inventory_next_transfer
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{row.id}' }

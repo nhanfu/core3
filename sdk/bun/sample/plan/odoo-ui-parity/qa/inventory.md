@@ -1382,3 +1382,31 @@ route generation and full Inventory sign-off remain open.
 QA disposition: PASS for the bounded Core3 durable transfer Print lifecycle;
 PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Transfer Next Transfers QA — `INV-TRANSFER-NEXT-001`
+
+- Odoo source/action: PASS from
+  `addons/stock/views/stock_picking_views.xml:197-204` and
+  `addons/stock/models/stock_picking.py:1024-1030,1238-1258`. The transfer
+  form exposes `action_next_transfer`; source move-destination links exclude
+  returns and choose direct form versus `Next Transfers` list behavior.
+- Core3 contract: PASS. `pages/transfer-next.yaml` owns the responsive
+  context/list UI and `api/transfer-next.yaml` owns company-scoped read
+  datasources/navigation; both use `page.id: transfer-next`. The transfer
+  detail page/API pair exposes the contextual stat. Migration 0.0.60 persists
+  the link and deterministic fixture.
+- Focused verification: PASS — `bun test
+  test/inventory_transfer_next.integration.test.ts`, 4 tests / 31 assertions.
+  Coverage includes source markers, schema separation, return exclusion,
+  permission/company boundaries, migration replay, and restart persistence.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. The source transfer, one next transfer, Waiting state, and company
+  render with no page errors or HTTP >=400 responses; captures and JSON are in
+  `evidence/inventory/2026-09-21/INV-TRANSFER-NEXT-001/`.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo visual
+  or action execution is claimed. Exact JSON is in the feature evidence.
+
+QA disposition: PASS for the bounded Core3 durable Next Transfers read/context
+slice; PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full
+Inventory sign-off remains open.

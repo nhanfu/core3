@@ -35,6 +35,7 @@ components:
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     stat_buttons:
       - { id: view_inventory_transfer_detailed_operations, label: Moves, icon: list, value_field: move_count, permission: inventory.read }
+      - { id: view_inventory_transfer_next, label: Next Transfer, icon: transfer, value_field: next_transfer_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.next_transfer_count > 0" }
     message_source: inventory_transfer_timeline
     chatter_label: Messages and activities
     message_label: Send message

@@ -1,0 +1,11 @@
+{
+  "feature_id": "INV-TRANSFER-NEXT-001",
+  "attempt": "GET http://127.0.0.1:8069/web",
+  "observed": {
+    "status": 303,
+    "location": "/web/login?redirect=%2Fweb%3F",
+    "authenticated_comparison": false
+  },
+  "blocker": "The local Odoo instance redirects unauthenticated requests to its login page; no authenticated Odoo session was available for a paired runtime screenshot.",
+  "source_comparison": "Completed against the checked-out Odoo stock view/model source in source-comparison.json."
+}
