@@ -275,3 +275,25 @@ or duplicate QA was created.
   674 routes / 1,177 datasources**; `git diff --check` passed.
 - Browser/Odoo paired captures were not run for this candidate; Fleet remains
   conditionally accepted rather than fully signed off.
+
+## 2026-09-21 — Contract Logs CRUD bounded slice
+
+- Candidate: current checkout Fleet contract API/page changes plus migration
+  `20260921100000-036-fleet-contract-crud.yaml`.
+- Focused `bun test test/fleet_contracts.integration.test.ts --timeout 20000`:
+  **6 passed / 69 assertions**. Full Fleet corpus:
+  **75 passed / 791 assertions** across 22 files.
+- File-backed DuckDB reload and migration replay passed for generated-ID create,
+  edit, stale rejection, archive/restore, cancellation guard, and delete.
+- `bun run css:build:fleet`, `bun run audit` (**772 pages / 781 routes /
+  1,582 datasources**), and `git diff --check` passed. The earlier CRM
+  discovery issue is resolved by the now-present CRM API fragments; CRM paths
+  were not staged.
+- Odoo browser blocker: authenticated instance `245ea108` has no Fleet app/menu;
+  direct `/odoo/fleet` falls back to Discuss. Core3 browser blocker: the
+  frontend reached `/vehicles`, then `/api/modules` returned 502 and the host
+  hit `EMFILE` descriptor exhaustion. Captures and omitted-artifact reasons are
+  in the linked feature evidence.
+
+QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
+Fleet remains unsigned-off.

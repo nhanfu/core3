@@ -7,7 +7,7 @@ datasources:
     single: true
     permission: fleet.read
     error_states: { transport_error: { status: 503, code: FLEET_CONTRACT_DETAIL_UNAVAILABLE, message: Fleet contract detail is temporarily unavailable } }
-    query: "SELECT c.id, c.row_version, c.name, c.vehicle_id, v.name AS vehicle_name, COALESCE(c.vendor, '—') AS vendor, COALESCE(c.driver_name, v.driver_name, 'Unassigned') AS driver_name, c.contract_type, CAST(c.start_date AS VARCHAR) AS start_date, CAST(c.expiration_date AS VARCHAR) AS expiration_date, c.recurring_cost, c.recurring_cost_frequency, c.cost_generated, c.status, c.renewal_status, COALESCE(c.notes, '') AS notes FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
+    query: "SELECT c.id, c.row_version, c.name, c.vehicle_id, v.name AS vehicle_name, COALESCE(c.vendor, '—') AS vendor, COALESCE(c.driver_name, v.driver_name, 'Unassigned') AS driver_name, c.contract_type, CAST(c.start_date AS VARCHAR) AS start_date, CAST(c.expiration_date AS VARCHAR) AS expiration_date, c.recurring_cost, c.recurring_cost_frequency, c.cost_generated, c.status, c.renewal_status, c.active, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, COALESCE(c.notes, '') AS notes FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
 actions:
   - id: edit_fleet_contract
     type: server_form
@@ -22,13 +22,14 @@ actions:
       operation: update
       table: fleet_vehicle_contracts
       key: id
-      concurrency: false
+      concurrency: { required: true }
       fields: [name, vehicle_id, vendor, driver_name, contract_type, start_date, expiration_date, recurring_cost, recurring_cost_frequency, status, renewal_status, notes]
       required: [name, vehicle_id, start_date, expiration_date]
       guards:
         - { query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id", status: 404, message: Contract was not found }
         - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, message: Vehicle was not found or is archived }
-        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:start_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND regexp_matches(CAST(:expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:expiration_date AS DATE) >= CAST(:start_date AS DATE) AND CAST(:recurring_cost AS DECIMAL(18,2)) >= 0", status: 422, message: Contract dates are invalid or the recurring cost is negative }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:start_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND regexp_matches(CAST(:expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:expiration_date AS DATE) >= CAST(:start_date AS DATE) AND CAST(:recurring_cost AS DECIMAL(18,2)) >= 0", status: 422, code: FLEET_CONTRACT_VALUES_INVALID, message: Contract dates are invalid or the recurring cost is negative }
+        - { query: "SELECT 1 AS ok WHERE :status IN ('New', 'Running', 'To Renew', 'Expired', 'Closed')", status: 422, code: FLEET_CONTRACT_STATUS_INVALID, message: Contract status is invalid. }
       result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" }
     fields:
       - { field: name, label: Contract, type: text, required: true }
@@ -57,9 +58,74 @@ actions:
       table: fleet_vehicle_contracts
       key: id
       fields: [expiration_date, status, renewal_status]
+      concurrency: { required: true }
       required: [expiration_date]
       guards:
         - { query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND status IN ('Expired', 'To Renew', 'Running')", status: 409, message: This contract cannot be renewed from its current status }
         - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:expiration_date AS DATE) >= DATE '2026-01-15'", status: 422, message: Renewal date must be on or after the Fleet reference date }
       result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" }
     fields: [{ field: expiration_date, label: New Expiration Date, type: text, required: true }]
+  - id: set_fleet_contract_new
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.set_new
+    handler: yaml_mutation
+    operation: update
+    params: { values: { status: New } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [status], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND status <> 'Closed'", status: 409, code: FLEET_CONTRACT_STATUS_TRANSITION_INVALID, message: A cancelled contract cannot be reopened. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: set_fleet_contract_running
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.set_running
+    handler: yaml_mutation
+    operation: update
+    params: { values: { status: Running } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [status], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND status <> 'Closed'", status: 409, code: FLEET_CONTRACT_STATUS_TRANSITION_INVALID, message: A cancelled contract cannot be reopened. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: expire_fleet_contract
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.expire
+    handler: yaml_mutation
+    operation: update
+    params: { values: { status: Expired } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [status], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND status <> 'Closed'", status: 409, code: FLEET_CONTRACT_STATUS_TRANSITION_INVALID, message: A cancelled contract cannot be expired. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: close_fleet_contract
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.close
+    handler: yaml_mutation
+    operation: update
+    params: { values: { status: Closed } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [status], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND status <> 'Closed'", status: 409, code: FLEET_CONTRACT_ALREADY_CLOSED, message: Contract is already cancelled. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: archive_fleet_contract
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND active = TRUE", status: 409, code: FLEET_CONTRACT_ALREADY_ARCHIVED, message: Contract is already archived. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: restore_fleet_contract
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [fleet_contract_detail, fleet_contracts]
+    mutation: { operation: update, table: fleet_vehicle_contracts, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id AND active = FALSE", status: 409, code: FLEET_CONTRACT_ALREADY_ACTIVE, message: Contract is already active. }], result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" } }
+  - id: delete_fleet_contract
+    type: delete
+    permission: fleet.write
+    table: fleet_vehicle_contracts
+    refresh: [fleet_contracts]
+    mutation:
+      operation: delete
+      table: fleet_vehicle_contracts
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id", status: 404, code: FLEET_CONTRACT_NOT_FOUND, message: Contract was not found. }]

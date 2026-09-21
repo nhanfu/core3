@@ -973,3 +973,39 @@ Fleet corpus passes 73 tests and 764 assertions; `bun run audit` passes with
 665 pages, 674 routes, and 1,177 datasources. Authenticated desktop/mobile
 visual comparison for this slice remains part of the broader Fleet QA gate and
 is not claimed here.
+
+## Contract Logs CRUD checkpoint (2026-09-21)
+
+The next genuinely uncovered source-backed Fleet feature after the vehicle-form
+stat actions and Odometer Logs CRUD checkpoint is the editable
+`fleet.vehicle.log.contract` surface. Odoo's `fleet_vehicle_log_contract_action`
+allows Fleet users to create, edit, archive, delete, and move contracts through
+the clickable New/Running/Expired/Cancelled statusbar. The model also validates
+the required vehicle relation and date/cost fields; the source form/list and
+access CSV are traced in the feature evidence.
+
+Core3 adds migration `20260921100000-036-fleet-contract-crud.yaml`, which
+idempotently adds the durable `active` archive column/index and backfills
+existing rows. `api/contracts.yaml` and `api/contract-detail.yaml` retain the
+page/API split and now provide generated-ID create, optimistic-concurrency edit
+and delete, archive/restore, guarded status transitions, archived filtering,
+and explicit relation/date/cost/status/missing-row errors. The detail page
+declares the Odoo form statusbar, lifecycle actions, archive/restore controls,
+and delete action menu.
+
+Focused coverage is `test/fleet_contracts.integration.test.ts`: **6 tests / 69
+assertions**, including a file-backed close/reopen migration replay and all
+CRUD/lifecycle guards. The complete Fleet corpus passes **75 tests / 791
+assertions**; `bun run css:build:fleet`, `bun run audit` (772 pages, 781
+routes, 1,582 datasources), and `git diff --check` pass. The previously
+observed CRM discovery issue is resolved by the now-present CRM API fragments;
+no CRM paths were touched.
+
+Authenticated browser verification is intentionally conditional. The requested
+shared Odoo browser instance `245ea108` had no Fleet entry in its authenticated
+app launcher and `/odoo/fleet` returned to Discuss. Core3 reached the
+frontend, but `/api/modules` returned 502 before the host hit `EMFILE` file
+descriptor exhaustion. Blocker captures and the exact omitted visual claims
+are recorded under
+`odoo-ui-parity/evidence/fleet/2026-09-21/fleet-contract-crud-20260921/`;
+this checkpoint does not claim desktop/mobile parity.

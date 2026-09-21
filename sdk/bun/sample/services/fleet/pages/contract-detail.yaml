@@ -6,16 +6,28 @@ components:
     title_field: name
     subtitle_field: vehicle_name
     status_field: status
-    status_colors: { Running: green, 'To Renew': amber, Expired: red, Closed: neutral }
-    status_badges: [{ value: Running, label: Running, tone: green }, { value: 'To Renew', label: To Renew, tone: amber }, { value: Expired, label: Expired, tone: red }, { value: Closed, label: Closed, tone: neutral }]
+    status_colors: { New: neutral, Running: green, 'To Renew': amber, Expired: red, Closed: neutral }
+    statusbar: [{ value: New, label: New }, { value: Running, label: Running }, { value: 'To Renew', label: To Renew }, { value: Expired, label: Expired }, { value: Closed, label: Cancelled }]
+    status_badges: [{ value: New, label: New, tone: neutral }, { value: Running, label: Running, tone: green }, { value: 'To Renew', label: To Renew, tone: amber }, { value: Expired, label: Expired, tone: red }, { value: Closed, label: Cancelled, tone: neutral }]
     editable: true
     group_columns: 2
     header_actions:
       - { id: edit_fleet_contract, label: Edit, variant: secondary, permission: fleet.write }
       - { id: renew_fleet_contract, label: Renew Contract, variant: primary, permission: fleet.write, show_if: "record.status !== 'Closed'" }
+      - { id: archive_fleet_contract, label: Archive, variant: danger, permission: fleet.write, show_if: "state.fleet_contract_detail.active === true" }
+      - { id: restore_fleet_contract, label: Restore, variant: secondary, permission: fleet.write, show_if: "state.fleet_contract_detail.active === false" }
+      - { id: set_fleet_contract_new, label: New, variant: secondary, permission: fleet.write, show_if: "record.status !== 'New' && record.status !== 'Closed'" }
+      - { id: set_fleet_contract_running, label: Set Running, variant: primary, permission: fleet.write, show_if: "record.status !== 'Running' && record.status !== 'Closed'" }
+      - { id: expire_fleet_contract, label: Expire, variant: secondary, permission: fleet.write, show_if: "record.status !== 'Expired' && record.status !== 'Closed'" }
+      - { id: close_fleet_contract, label: Cancel, variant: danger, permission: fleet.write, show_if: "record.status !== 'Closed'" }
+    action_menu:
+      label: Actions
+      aria_label: Contract actions
+      actions:
+        - { id: delete_fleet_contract, label: Delete, icon: trash, variant: danger, permission: fleet.write }
     groups:
       - title: Contract
-        fields: [{ field: vehicle_name, label: Vehicle }, { field: vendor, label: Vendor }, { field: driver_name, label: Driver }, { field: contract_type, label: Contract Type }, { field: status, label: Status }, { field: renewal_status, label: Renewal Alert }]
+        fields: [{ field: vehicle_name, label: Vehicle }, { field: vendor, label: Vendor }, { field: driver_name, label: Driver }, { field: contract_type, label: Contract Type }, { field: status, label: Status }, { field: renewal_status, label: Renewal Alert }, { field: active_label, label: Record }]
       - title: Dates and Costs
         fields: [{ field: start_date, label: Contract Start Date }, { field: expiration_date, label: Contract Expiration Date }, { field: recurring_cost, label: Recurring Cost, type: money }, { field: recurring_cost_frequency, label: Recurring Cost Frequency }, { field: cost_generated, label: Generated Costs, type: money }]
     notebook:

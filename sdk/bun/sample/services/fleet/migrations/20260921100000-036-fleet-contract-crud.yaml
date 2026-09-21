@@ -1,0 +1,15 @@
+version: 0.0.36
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicle_contracts ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE fleet_vehicle_contracts SET active = TRUE WHERE active IS NULL;
+      CREATE INDEX IF NOT EXISTS fleet_contracts_active_idx ON fleet_vehicle_contracts(active, expiration_date);
+    down: |
+      DROP INDEX IF EXISTS fleet_contracts_active_idx;
+      ALTER TABLE fleet_vehicle_contracts DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

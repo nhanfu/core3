@@ -8,9 +8,10 @@ components:
     create_label: New contract
     search: { label: Search contracts, placeholder: 'Search contract, vehicle, vendor, or driver...' }
     filters:
-      - { field: status, label: Status, options: [{ id: Running, label: In Progress }, { id: To Renew, label: To Renew }, { id: Expired, label: Expired }] }
+      - { field: status, label: Status, options: [{ id: Running, label: In Progress }, { id: New, label: New }, { id: To Renew, label: To Renew }, { id: Expired, label: Expired }, { id: Closed, label: Cancelled }] }
       - { field: vehicle_id, label: Vehicle, options_source: fleet_contract_vehicles }
       - { field: contract_type, label: Contract Type, options: [{ id: Leasing, label: Leasing }, { id: Insurance, label: Insurance }, { id: Services, label: Services }] }
+      - { field: include_archived, label: Archived, options: [{ id: 'true', label: Include archived }] }
     group_by:
       - { field: vehicle_name, label: Vehicle }
       - { field: vendor, label: Vendor }
