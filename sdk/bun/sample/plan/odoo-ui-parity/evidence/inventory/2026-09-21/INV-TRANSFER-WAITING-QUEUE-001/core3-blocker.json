@@ -1,0 +1,11 @@
+{
+  "feature_id": "INV-TRANSFER-WAITING-QUEUE-001",
+  "runtime": "Core3",
+  "route": "/inventory/transfer/waiting",
+  "status": "blocked-before-route-serving",
+  "command": "bun dev --db=ddb --memory",
+  "blocker": "Global page discovery fails before startup because livechat/pages/channel-detail.yaml contains an action with fields: []. The schema requires a non-empty action fields array.",
+  "scope": "unrelated to Inventory; no Livechat files changed",
+  "authenticated_core3_desktop": false,
+  "authenticated_core3_mobile": false
+}

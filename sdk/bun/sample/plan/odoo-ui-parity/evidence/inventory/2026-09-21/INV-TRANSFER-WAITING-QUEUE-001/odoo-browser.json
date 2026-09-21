@@ -1,0 +1,21 @@
+{
+  "feature_id": "INV-TRANSFER-WAITING-QUEUE-001",
+  "url": "http://localhost:8069/odoo/action-stock.action_picking_tree_waiting?action=stock.action_picking_tree_waiting",
+  "database": "core3_reference",
+  "authenticated_actor": "codex@core3.local",
+  "source_action": "stock.action_picking_tree_waiting",
+  "desktop": {
+    "viewport": "1916x833",
+    "screenshot": "odoo-desktop.png",
+    "visible_title": "Waiting Transfers",
+    "rows_visible": ["WH/OUT/00043", "Gemini Furniture", "Oscar Morgan", "S00024", "Waiting"],
+    "view_modes_visible": ["List View", "Kanban View", "Calendar View"]
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "screenshot": "odoo-mobile.png",
+    "visible_title": "Waiting Transfers",
+    "rows_visible": ["WH/OUT/00043", "Gemini Furniture", "Oscar Morgan", "S00024", "Waiting"]
+  },
+  "session": "bsk session stopped cleanly after captures"
+}

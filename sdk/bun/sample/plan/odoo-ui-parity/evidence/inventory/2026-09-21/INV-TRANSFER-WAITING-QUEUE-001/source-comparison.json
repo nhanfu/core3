@@ -1,0 +1,23 @@
+{
+  "feature_id": "INV-TRANSFER-WAITING-QUEUE-001",
+  "odoo": {
+    "source_file": "/home/nhanjs/projects/odoo/addons/stock/views/stock_picking_views.xml",
+    "action_id": "action_picking_tree_waiting",
+    "lines": "585-591",
+    "name": "Waiting Transfers",
+    "res_model": "stock.picking",
+    "view_mode": "list,kanban,form,calendar",
+    "domain": "",
+    "context": "{'contact_display': 'partner_address', 'search_default_waiting': 1}"
+  },
+  "core3": {
+    "page_file": "services/inventory/pages/transfer-waiting-queue.yaml",
+    "api_file": "services/inventory/api/transfer-waiting-queue.yaml",
+    "page_id": "transfer-waiting-queue",
+    "route": "/inventory/transfer/waiting",
+    "migration": "services/inventory/migrations/20260922340000-084-inventory-transfer-waiting-queue.yaml",
+    "permissions": ["inventory.read"],
+    "guards": ["current company", "authenticated actor", "expected queue row version", "missing/empty/transport states"]
+  },
+  "comparison": "Core3 contracts preserve the source action's Waiting state and list/kanban/form/calendar intent while adding durable company-scoped queue context, refresh history, and explicit permission/concurrency boundaries."
+}

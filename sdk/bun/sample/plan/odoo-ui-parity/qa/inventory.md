@@ -2014,3 +2014,29 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable To Do queue lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Waiting Transfers queue QA — `INV-TRANSFER-WAITING-QUEUE-001`
+
+- Odoo source/action: PASS. `stock.action_picking_tree_waiting` is mapped from
+  `stock_picking_views.xml:585-591`; it is the Waiting Transfers
+  list/kanban/form/calendar action with `search_default_waiting`.
+  Exact source references and contract assertions are in `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-waiting-queue.yaml`
+  and backend `api/transfer-waiting-queue.yaml` share
+  `page.id: transfer-waiting-queue`; the list is read-gated and Refresh writes
+  a durable queue-run ledger. Migration 0.0.84 persists the queue context and
+  deterministic Waiting transfer.
+- Focused verification: PASS — 3 tests / 28 assertions in
+  `test/inventory_transfer_waiting_queue.integration.test.ts`. Coverage
+  includes source/schema mapping, Waiting rows, search/type/company filters,
+  missing/empty/503 boundaries, refresh CRUD, actor/company/stale guards,
+  permission denial, and restart persistence.
+- Core3 browser evidence: BLOCKED before route serving by the unrelated global
+  `livechat/pages/channel-detail.yaml` schema error (`actions[7].fields` must
+  be non-empty). Odoo desktop and 390x844 mobile evidence is authenticated in
+  `core3_reference` and stored with the source comparison. No Core3
+  authenticated sign-off is claimed.
+
+QA disposition: PASS for the bounded Core3 durable Waiting Transfers queue
+lifecycle and authenticated Odoo comparison; PARTIAL/BLOCKED for Core3 visual
+evidence. Full Inventory sign-off remains open.

@@ -2663,3 +2663,28 @@ desktop/mobile captured the login shell only; Odoo returned HTTP 303 to
 `/web/login`. Exact evidence is under
 `evidence/inventory/2026-09-21/INV-TRANSFER-READY-QUEUE-001/`. Full Inventory
 sign-off remains open.
+
+## Operations > Waiting Transfers queue — `INV-TRANSFER-WAITING-QUEUE-001`
+
+This bounded Wave 47 slice covers Odoo's
+`stock.action_picking_tree_waiting` action at
+`addons/stock/views/stock_picking_views.xml:585-591`. Odoo names it Waiting
+Transfers, opens `stock.picking` in list/kanban/form/calendar views, and
+applies `search_default_waiting`.
+
+Core3 keeps `pages/transfer-waiting-queue.yaml` presentation-only and adds
+`api/transfer-waiting-queue.yaml`, joined by `page.id: transfer-waiting-queue`.
+Migration
+`services/inventory/migrations/20260922340000-084-inventory-transfer-waiting-queue.yaml`
+adds a durable company queue context, refresh ledger, and deterministic Waiting
+transfer. The API provides company-scoped Waiting rows, operation/search
+filters, missing/empty/503 states, transfer navigation, and a Refresh action
+guarded by actor, company, and queue row-version checks.
+
+Focused verification passes 3 tests / 28 assertions. Odoo desktop and
+390x844 mobile captures are authenticated against `core3_reference`; Core3
+startup is blocked before route serving by the unrelated global
+`livechat/pages/channel-detail.yaml` empty action-fields schema error. Exact
+captures, source comparison, and blockers are under
+`evidence/inventory/2026-09-21/INV-TRANSFER-WAITING-QUEUE-001/`. Full
+Inventory sign-off remains open.
