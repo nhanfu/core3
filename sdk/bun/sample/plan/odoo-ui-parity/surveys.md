@@ -1888,3 +1888,27 @@ Core3 desktop/mobile visual sign-off is conditional. Odoo redirects both
 viewports to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable.
 No Odoo fixture or parity sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-MULTIPLE-CHOICE-001`
+
+Selected the next uncovered source-backed public question behavior after the
+completed Text slice: Odoo `multiple_choice` multi-select answers. Odoo
+normalizes a scalar or list payload into choice lines and replaces the prior
+choice set; Core3 migration `0.0.39` seeds a separate published Product
+Preferences Survey with a required `Multiple Choice` question.
+
+The paired `page.id: surveys` API/page contract retains `surveys.public`; the
+existing renderer binds the question to checkbox controls, while token-scoped
+progress/submit reject foreign and duplicate options before mutation. Focused
+coverage proves required completion, durable multi-selection across restart,
+concurrent idempotent submit, response-count integrity, and wrong-token denial.
+
+Focused verification is **2 passed / 24 assertions**; the public/core Surveys
+regression is **83 passed / 780 assertions** across 27 files. Audit passes with
+**719 pages, 728 routes, and 1391 datasources**; scoped lint and diff-check
+pass. Core3 desktop/mobile
+browser probes were attempted but the isolated runtime returned connection
+refused before rendering. Odoo desktop/mobile reached only the login shell and
+port 8072 refused; no Core3 visual or paired Odoo sign-off is claimed. Evidence
+is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.

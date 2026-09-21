@@ -1,0 +1,20 @@
+{
+  "feature": "SURVEYS-PUBLIC-MULTIPLE-CHOICE-001",
+  "desktop": {
+    "viewport": [1440, 900],
+    "status": 200,
+    "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "blocker": "Odoo redirected to the unauthenticated login shell; no authenticated Surveys fixture was available."
+  },
+  "mobile": {
+    "viewport": [390, 844],
+    "status": 200,
+    "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "blocker": "Odoo redirected to the unauthenticated login shell; no authenticated Surveys fixture was available."
+  },
+  "proxy_8072": {
+    "status": "connection-refused",
+    "blocker": "Disposable paired-reference proxy at 127.0.0.1:8072 was unavailable."
+  },
+  "signoff": false
+}

@@ -483,3 +483,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.
+
+## 2026-09-21 public Multiple Choice additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-044 | public question | Multiple-choice metadata and controls | Return durable required option metadata through the paired page/API contract and bind the renderer to checkbox controls | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-041 | restart/idempotency | Invalid options → valid multi-select → reopen → concurrent submit | Reject duplicate/foreign options without mutation and converge on one durable submitted response after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-043 | token/input guard | Required empty submit and wrong token | Retain `surveys.public`, reject missing required selection, and return 404 for a wrong answer token | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-042 | responsive/reference | Multiple Choice desktop/mobile + Odoo comparison | Record exact Core3 runtime and Odoo login/proxy blockers; no sign-off until both are available | `core3-browser-results.json`, `odoo-blocker.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.

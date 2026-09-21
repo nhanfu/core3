@@ -756,3 +756,20 @@ unavailable` before visual rendering and anonymous public API access returns
 401. Odoo remains conditional because both viewports redirect to login and port
 8072 refuses connections. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-MULTIPLE-CHOICE-001`
+
+Selected the next uncovered source-backed public question behavior: Odoo
+`multiple_choice` multi-select answers. Migration `0.0.39` adds a deterministic
+published Product Preferences Survey and required checkbox question. The
+existing paired page/API contract remains separate and public progress/submit
+retain `surveys.public`; foreign and duplicate options are rejected before
+mutation, valid selections persist through file-backed restart, and concurrent
+submit replays one durable response/count.
+
+Focused coverage passes **2/2 with 24 assertions**; the public/core Surveys
+regression passes **83/83 with 780 assertions**. Audit passes with **719 pages,
+728 routes, and 1391 datasources**; scoped lint and diff-check pass. Browser evidence records
+Core3 desktop/mobile connection refusal before render and Odoo login redirects
+plus unavailable proxy 8072; no visual or paired Odoo sign-off is claimed.
+Surveys remains **qa-in-progress / conditional**.

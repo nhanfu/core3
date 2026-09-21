@@ -1133,3 +1133,26 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-Q
   authenticated Text fixture or paired Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.
+
+## Bounded QA run: Public Multiple Choice question — `SURVEYS-PUBLIC-MULTIPLE-CHOICE-001`
+
+- Source comparison: Odoo declares `multiple_choice`, accepts multiple listed
+  answers (and normalizes a scalar), then saves the selected choice lines as a
+  replacement set. Core3 maps this to durable `Multiple Choice` option arrays.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate through `page.id: surveys`; checkbox rendering uses the existing
+  public binding and progress/submit retain `surveys.public`.
+- Focused verification: **2 passed / 24 assertions**; public/core Surveys
+  regression: **83 passed / 780 assertions** across 27 files; audit **719
+  pages, 728 routes, 1391 datasources**; scoped ESLint and diff-check pass.
+- Persistence/guards: duplicate and foreign options return 422 without
+  mutation; empty required submit is rejected; valid selections survive a
+  file-backed reopen; concurrent same-key submit produces one response/count;
+  a wrong token returns 404.
+- Core3 desktop/mobile probes at 1440x900 and 390x844 recorded
+  `ERR_CONNECTION_REFUSED` before rendering; no visual sign-off is claimed.
+- Odoo desktop/mobile redirected to
+  `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; proxy 8072 was connection-refused.
+  No authenticated Odoo Multiple Choice fixture or parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.

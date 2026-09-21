@@ -1,0 +1,69 @@
+{
+  "feature": "SURVEYS-PUBLIC-MULTIPLE-CHOICE-001",
+  "runtime": {
+    "backend": "http://127.0.0.1:3394",
+    "frontend": "http://127.0.0.1:3395",
+    "desktop": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "status": null,
+      "url": "about:blank",
+      "title": "",
+      "body": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "statusResult": "blocked"
+    },
+    "mobile": {
+      "viewport": [
+        390,
+        844
+      ],
+      "status": null,
+      "url": "about:blank",
+      "title": "",
+      "body": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "requestFailures": [
+        {
+          "url": "http://127.0.0.1:3395/survey/start/multiple-choice-public-token-2026",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "statusResult": "blocked"
+    },
+    "signoff": false
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "title": "Odoo",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+    },
+    "mobile": {
+      "viewport": [
+        390,
+        844
+      ],
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "title": "Odoo",
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+    },
+    "proxy8072": {
+      "status": "connection-refused",
+      "error": "TypeError: fetch failed"
+    },
+    "signoff": false
+  }
+}\n
