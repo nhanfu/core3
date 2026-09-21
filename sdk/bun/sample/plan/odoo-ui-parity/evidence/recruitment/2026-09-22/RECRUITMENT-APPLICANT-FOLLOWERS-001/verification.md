@@ -19,10 +19,7 @@ paired visual-parity claim is made.
 
 ## Core3 gates
 
-Focused implementation tests, the 59-test Recruitment regression, targeted
-ESLint, YAML audit, Vite frontend build, and Recruitment-owned diff check are
-green. No authenticated Core3 browser capture is claimed for this batch: the
-user requested finalization after the source/runtime gate, and no independent
-Core3 runtime session was available for a truthful rendered capture. This is
-separate from the live Odoo blocker above; neither surface receives a paired
-visual-parity claim.
+Focused implementation tests are green. The final scoped regression and
+static checks are added below before commit. A Core3 authenticated browser
+capture is only recorded if the module runtime can start without unrelated
+startup failures; otherwise the exact runtime blocker is recorded here.
