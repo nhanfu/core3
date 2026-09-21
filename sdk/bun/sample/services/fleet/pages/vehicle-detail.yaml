@@ -14,6 +14,7 @@ components:
     attachment_download_action: download_fleet_vehicle_attachment
     attachment_actions:
       - { id: remove_fleet_vehicle_attachment, label: Remove, variant: danger, permission: fleet.write }
+    content_slot: vehicle-tags
     status_field: state
     statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]
     status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
@@ -35,3 +36,21 @@ components:
         fields: [{ field: name, label: Vehicle }, { field: state, label: Status }, { field: license_plate, label: License plate }, { field: vehicle_type, label: Type }, { field: model, label: Model }, { field: manufacturer, label: Manufacturer }]
       - title: Assignment and records
         fields: [{ field: driver_name, label: Driver }, { field: future_driver_name, label: Future Driver }, { field: next_assignation_date, label: Assignment Date }, { field: odometer, label: Odometer }, { field: fuel_type, label: Fuel }, { field: acquisition_date, label: Acquisition date }, { field: contract_end_date, label: Contract end date }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: fleet_vehicle_tag_assignments
+    parent_source: fleet_vehicle_detail
+    title: Tags
+    description: Assign the Odoo vehicle taxonomy tags used to classify this vehicle.
+    variant: odoo_x2many
+    page_size: 20
+    row_key: id
+    actions:
+      - { id: add_fleet_vehicle_tag, label: Add a tag, variant: primary, permission: fleet.write }
+    empty_state: { title: No tags, description: Add a tag to classify this vehicle. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Tag, readonly: true }
+      - { type: LineItemField, id: color, field: color, label: Color, type: ColorCell, palette: odoo, readonly: true }
+      - type: LineItemActions
+        id: fleet_vehicle_tag_actions
+        actions: [{ id: remove_fleet_vehicle_tag, label: Remove, icon: trash, variant: danger, permission: fleet.write }]

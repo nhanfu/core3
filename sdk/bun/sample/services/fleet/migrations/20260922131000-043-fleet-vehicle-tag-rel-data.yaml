@@ -1,0 +1,20 @@
+version: 0.0.43
+kind: data
+description: Deterministic Fleet vehicle tag assignments
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_tag_rel(vehicle_id, tag_id)
+      VALUES
+        ('fleet-demo-001', 'fleet-tag-003'),
+        ('fleet-demo-001', 'fleet-tag-004'),
+        ('fleet-demo-002', 'fleet-tag-003')
+      ON CONFLICT (vehicle_id, tag_id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicle_tag_rel
+      WHERE vehicle_id IN ('fleet-demo-001', 'fleet-demo-002')
+        AND tag_id IN ('fleet-tag-003', 'fleet-tag-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

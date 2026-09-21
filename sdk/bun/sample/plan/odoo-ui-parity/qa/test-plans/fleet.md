@@ -40,6 +40,7 @@ deterministic.
 | FLEET-FUNC-009 | Odometer Logs CRUD | Create, edit, delete, vehicle relation, related unit, invalid input, stale replay, and file-backed reload preserve the log contract | pass: `fleet_odometers.integration.test.ts` |
 | FLEET-FUNC-010 | Mail to Driver | Manager-only selected-vehicle composer validates driver emails/content, sends one durable message per driver, saves templates, and preserves records after restart | pass: `fleet_vehicle_mail.integration.test.ts`; live Odoo screen blocked |
 | FLEET-FUNC-011 | Vehicle attachments | Vehicle chatter attachments list, upload/download/remove, company scope, validation, stale guards, and restart persistence | pass: `fleet_vehicle_attachments.integration.test.ts`; browser upload blocked by file-URL permission |
+| FLEET-FUNC-012 | Vehicle tag assignment | Vehicle `tag_ids` options, add/remove, color projection, company/archive/duplicate/stale guards, and restart persistence | pass: `fleet_vehicle_tags.integration.test.ts`; visual gate blocked by missing Odoo Fleet |
 
 ## Workflow and integration cases
 
@@ -53,6 +54,7 @@ deterministic.
 | FLEET-WF-006 | Odometer log lifecycle | New → edit → stale rejection → delete preserves vehicle relation and rejects archived vehicles | pass: focused integration test; authenticated browser workflow planned |
 | FLEET-WF-007 | Mail composer lifecycle | Selected vehicles → content/template guard → one Sent message per driver; invalid selection has no partial writes; file-backed restart retains messages/templates | pass: `fleet_vehicle_mail.integration.test.ts` |
 | FLEET-WF-008 | Vehicle attachment lifecycle | Vehicle detail → attachment metadata upload → authenticated download/remove; invalid, duplicate, wrong-company, and stale attempts do not write | pass: `fleet_vehicle_attachments.integration.test.ts`; authenticated panel render captured |
+| FLEET-WF-009 | Vehicle tag lifecycle | Vehicle detail → select unassigned tag → add → reload → remove; parent row version and relation guards prevent stale writes | pass: `fleet_vehicle_tags.integration.test.ts`; browser visual gate blocked |
 
 ## Permission and security cases
 
@@ -66,6 +68,7 @@ deterministic.
 | FLEET-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current fleet row unchanged | pass at contract level |
 | FLEET-PERM-007 | Mail to Driver manager boundary | `fleet.manage` is required; actor, company, missing-driver-email, missing-template, and invalid content are rejected without writes | pass: `fleet_vehicle_mail.integration.test.ts`; browser actor gate pending |
 | FLEET-PERM-008 | Vehicle attachment boundary | Fleet read can list/download; Fleet write controls upload/remove; actor, company, active vehicle, and row-version guards are enforced | pass: `fleet_vehicle_attachments.integration.test.ts` |
+| FLEET-PERM-009 | Vehicle tag boundary | Fleet read can list; Fleet write controls add/remove; actor, company, active vehicle, duplicate, missing relation, and stale guards are enforced | pass: `fleet_vehicle_tags.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -76,6 +79,7 @@ deterministic.
 | FLEET-UI-003 | Reports/operations | both | Graph/pivot/list, histories, services and empty states match Odoo | planned paired capture |
 | FLEET-UI-004 | Current route regression | all 28 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 56-check matrix after isolated tag retest |
 | FLEET-UI-005 | Vehicle attachment panel | 1916x833, 390x844 | Vehicle detail renders seeded attachment cards, Add attachment, Download, Remove, and responsive chatter without horizontal overflow | pass: Core3 captures; Odoo blocked by missing Fleet app |
+| FLEET-UI-006 | Vehicle tag panel | 1440x900, 390x844 | Vehicle detail renders seeded colored tags, Add a tag, Remove, and responsive line-item state without overflow | blocked: no authenticated Core3 runtime and no Odoo Fleet app |
 
 ## Exit criteria
 

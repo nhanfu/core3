@@ -1,0 +1,24 @@
+version: 0.0.42
+kind: schema
+description: Durable Odoo fleet.vehicle tag assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_tag_rel (
+        vehicle_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        PRIMARY KEY (vehicle_id, tag_id)
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_tag_rel_vehicle_idx
+        ON fleet_vehicle_tag_rel(vehicle_id, tag_id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_tag_rel_tag_idx
+        ON fleet_vehicle_tag_rel(tag_id, vehicle_id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_tag_rel_tag_idx;
+      DROP INDEX IF EXISTS fleet_vehicle_tag_rel_vehicle_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_tag_rel;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1127,3 +1127,30 @@ focused authenticated API/persistence test. The Odoo reference on instance
 245ea108/database `core3_reference` has no Fleet app/menu at either viewport;
 the blocker captures are recorded under `/tmp` and no Odoo visual parity claim
 is made.
+
+## Vehicle tag assignment bounded slice (2026-09-22)
+
+The next distinct source-backed vehicle workflow after Mail to Driver, contract
+renewal activities, and vehicle attachments is the Odoo `fleet.vehicle.tag_ids`
+many-to-many assignment surface. Core3 adds durable relation storage in
+`20260922130000-042-fleet-vehicle-tag-rel.yaml` and deterministic assignments
+in `20260922131000-043-fleet-vehicle-tag-rel-data.yaml`. The existing
+`vehicle-detail` page/API pair now exposes company-scoped tag options and
+assignments, with YAML line-item Add/Remove actions guarded by actor,
+company, active vehicle, duplicate, missing relation, and optimistic row
+version checks. The grid is mounted through the form content slot and keeps
+the existing page/API split.
+
+Focused coverage is `test/fleet_vehicle_tags.integration.test.ts`: **4 tests /
+27 assertions**, including source mapping, deterministic reads, CRUD,
+atomic guards, migration replay, and file-backed restart. The affected Fleet
+regression set (attachments, tags, Mail to Driver, renewal activities) passes
+**13 tests / 112 assertions**; audit reports **807 pages / 816 routes / 1,671
+datasources**, Fleet Sass, targeted ESLint, and `git diff --check` pass.
+
+Authenticated visual verification is blocked honestly. BrowserSkill instance
+`245ea108` is authenticated, but `core3_reference` has no Fleet menu and
+`/odoo/fleet` resolves to Discuss/OdooBot. Desktop/mobile blocker captures and
+hashes are recorded under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-tags-20260922/`; no
+Odoo or Core3 visual parity claim is made.

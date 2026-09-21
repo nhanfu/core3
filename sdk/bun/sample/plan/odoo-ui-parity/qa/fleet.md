@@ -336,6 +336,23 @@ Fleet remains unsigned-off.
 QA state: **conditional bounded functional/UI pass; paired Odoo and browser
 file-upload gates blocked**. Fleet remains unsigned-off.
 
+## 2026-09-22 — Vehicle tag assignment bounded slice
+
+- Feature `fleet-vehicle-tags-20260922` adds durable vehicle/tag many-to-many
+  assignment to the existing vehicle detail page/API seam.
+- Focused test: **4 passed / 27 assertions**. Affected set covering the new
+  slice and the three preceding Fleet workflows: **13 passed / 112 assertions**.
+- Audit **807 / 816 / 1,671**, Fleet Sass, targeted ESLint, and diff-check pass.
+- Odoo blocker: authenticated BrowserSkill instance `245ea108` on
+  `core3_reference` has no Fleet menu; `/odoo/fleet` falls back to
+  Discuss/OdooBot. Desktop/mobile blocker captures are linked from the feature
+  evidence folder.
+- Core3 browser blocker: no authenticated Core3 runtime/tab was available in
+  this turn, so no desktop/mobile visual claim is made.
+
+QA state: **conditional bounded functional pass; Odoo/Core3 visual gates
+blocked**. Fleet remains unsigned-off.
+
 ## 2026-09-22 — Contract renewal activities bounded slice
 
 - Feature `fleet-contract-renewal-activities-20260922` adds durable
