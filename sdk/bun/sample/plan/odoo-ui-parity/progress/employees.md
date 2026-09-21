@@ -1197,3 +1197,23 @@ Candidate commit: current working tree
   Core3 could not start because shared discovery rejects an existing page with
   `components[1].title is not allowed`; Odoo rejected `admin/admin` and then
   rate-limited the mobile retry. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-EDUCATION-SCHOOL-001 (2026-09-21)
+
+- Selected Odoo's tracked `hr.employee.study_school` field as the smallest
+  uncovered sub-field after archive relation cleanup; prior Education coverage
+  only included certificate and study field.
+- Added migration `20260922280000-082` with deterministic School values for
+  the four demo employees. API and page YAML remain separate and join through
+  `page.id: employee-detail`; create/read/edit persistence is durable.
+- Added `edit_employee_study_school` with `employees.write`, actor,
+  active/current-company, missing, stale row-version, and length guards.
+- Focused verification: **8 tests / 42 assertions** across School and the
+  Education regression suite. Core3 authenticated desktop/mobile evidence has
+  no failed browser requests; Odoo desktop/mobile is blocked by rejected
+  `admin/admin` followed by rate limiting, and the fixture/company mismatch is
+  explicit. The checked-in Odoo Education view also omits `study_school` even
+  though the model defines it; this source-view discrepancy is explicit in the
+  evidence. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
+- No aggregate Employees sign-off is claimed.

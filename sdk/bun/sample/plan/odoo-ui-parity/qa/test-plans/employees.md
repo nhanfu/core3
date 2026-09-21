@@ -844,3 +844,18 @@ Focused test: `test/employees_bulk_create_users.integration.test.ts` (5 tests,
 Focused test: `test/employees_archive_relation_cleanup.integration.test.ts`
 (4 tests, 30 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001/`.
+
+## EMP-EMPLOYEE-EDUCATION-SCHOOL-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `study_school` maps to API detail/create/edit contracts and the Education page field through `page.id` | pass |
+| School CRUD | Create and dedicated guarded edit persist School and increment employee row version | pass |
+| Permission and scope | `employees.write`, actor, active/current company, missing, stale, and max-length boundaries reject atomically | pass |
+| Persistence | Deterministic fixtures, migration replay, and file-backed restart preserve School without duplicates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture-company mismatch is recorded, Odoo credentials/rate limit block authenticated comparison, and the checked-in Odoo Education view omits the model-backed School field |
+
+Focused tests: `test/employees_education_school.integration.test.ts` plus
+`test/employees_education.integration.test.ts` (**8 tests / 42 assertions**).
+Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.

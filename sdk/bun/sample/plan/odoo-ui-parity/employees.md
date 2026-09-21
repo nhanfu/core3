@@ -2434,3 +2434,29 @@ Evidence is under
 comparison is conditional where the authenticated runtime cannot align the
 deterministic Employees company or local Odoo credentials are unavailable. No
 aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-EDUCATION-SCHOOL-001: Employee Education School (2026-09-21)
+
+The next uncovered source-backed Education detail is Odoo's tracked
+`hr.employee.study_school = fields.Char("School")`. The existing Education
+slice covered Certificate Level and Field of Study but did not persist or
+render School.
+
+Core3 adds migration `20260922280000-082` with deterministic School fixtures,
+adds `study_school` to the employee detail datasource and create/edit API
+contracts, and exposes `edit_employee_study_school` as a separate guarded
+`employees.write` action. The page contract remains layout-only and joins the
+API through `page.id: employee-detail`; its Education group and header action
+render School. Actor, active/current-company, missing, stale row-version, and
+200-character validation guards are covered. Focused verification is **8
+tests / 42 assertions** across the new School test and the education
+regression test, including file-backed restart and migration replay.
+
+Authenticated Core3 desktop/mobile captures render School with no failed
+browser requests. The seeded `Core3 Vietnam` employee values are hidden by
+the authenticated `Core3 Demo Company` context. Odoo desktop/mobile login was
+blocked by rejected `admin/admin` credentials followed by Odoo rate limiting;
+the current Odoo Education XML also omits `study_school` even though the
+`hr.employee` model defines it. These exact blockers are recorded in
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
+No aggregate Employees sign-off is claimed.

@@ -1295,3 +1295,18 @@ plus `test/employees_related_contacts.integration.test.ts` (8 tests, 42
 assertions). UI audit passed at 753 pages, 762 routes, and 1,519 datasources;
 scoped ESLint and diff-check are recorded with the commit. No aggregate
 Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-EDUCATION-SCHOOL-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-058 | Odoo `study_school` model field to paired page/API contracts | pass; API reads and writes `study_school`, page renders School, and both contracts use `page.id: employee-detail` |
+| EMP-WF-058 | Create/edit School education value | pass; deterministic fixture and employee CRUD persist School and increment row version |
+| EMP-PERM-058 | `employees.write`, actor, company, missing, stale, and length guards | pass; invalid requests reject atomically without changing School or row version |
+| EMP-DATA-058 | Migration replay and file-backed restart | pass; seeded and edited School values survive replay/reopen without duplicate migration effects |
+| EMP-UI-054 | Authenticated Core3 desktop/mobile and Odoo comparison | conditional; Core3 renders School with zero failed requests but the authenticated Demo Company hides Vietnam fixture values; Odoo credentials were rejected and then rate-limited |
+
+Focused tests: `test/employees_education_school.integration.test.ts` and the
+Education regression test, **8 tests / 42 assertions**. Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
+No aggregate Employees sign-off is claimed.

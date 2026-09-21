@@ -1,0 +1,20 @@
+version: 0.0.82
+kind: data
+description: Persist Odoo employee School education field
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS study_school VARCHAR;
+      UPDATE employees
+      SET study_school = COALESCE(study_school, CASE id
+        WHEN 'employee-demo-001' THEN 'Vietnam National University'
+        WHEN 'employee-demo-002' THEN 'Hanoi University of Science'
+        WHEN 'employee-demo-003' THEN 'Da Nang University'
+        WHEN 'employee-demo-004' THEN 'Saigon Institute of Technology'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS study_school;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

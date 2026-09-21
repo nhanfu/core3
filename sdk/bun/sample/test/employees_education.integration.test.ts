@@ -26,17 +26,18 @@ describe('Employees education parity', () => {
 
     expect(sourceModel).toContain("certificate = fields.Selection(selection='_get_certificate_selection'");
     expect(sourceModel).toContain('study_field = fields.Char("Field of Study"');
+    expect(sourceModel).toContain('study_school = fields.Char("School"');
     expect(sourceViews).toContain('<group string="Education" name="hr_education_group">');
     expect(sourceViews).toContain('<field name="certificate"/>');
     expect(sourceViews).toContain('<field name="study_field"/>');
     expect(page.page.id).toBe('employee-detail');
     expect(api.page.id).toBe(page.page.id);
     expect(education).toMatchObject({ title: 'Education', permission: 'employees.read' });
-    expect(education.fields.map((field: any) => field.field)).toEqual(['certificate', 'study_field']);
-    expect(api.datasources.find((source: any) => source.id === 'employee_detail').query).toContain('certificate, study_field');
-    expect(edit.mutation.fields).toEqual(expect.arrayContaining(['certificate', 'study_field']));
+    expect(education.fields.map((field: any) => field.field)).toEqual(['certificate', 'study_field', 'study_school']);
+    expect(api.datasources.find((source: any) => source.id === 'employee_detail').query).toContain('certificate, study_field, study_school');
+    expect(edit.mutation.fields).toEqual(expect.arrayContaining(['certificate', 'study_field', 'study_school']));
     expect(edit.permission).toBe('employees.write');
-    expect(listApi.actions.find((entry: any) => entry.id === 'create_employee').mutation.fields).toEqual(expect.arrayContaining(['certificate', 'study_field']));
+    expect(listApi.actions.find((entry: any) => entry.id === 'create_employee').mutation.fields).toEqual(expect.arrayContaining(['certificate', 'study_field', 'study_school']));
   });
 
   test('creates and edits education through durable guarded employee CRUD', async () => {

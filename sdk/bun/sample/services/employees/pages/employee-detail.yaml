@@ -57,6 +57,7 @@ components:
       - { id: remove_employee_avatar, label: Remove Avatar, variant: ghost, permission: employees.write, show_if: "state.employee_detail.active === true && !!state.employee_detail.image_url" }
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: edit_employee_related_user, label: Set Related User, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_study_school, label: Edit School, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_contact, label: Set Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: create_employee_work_contact, label: Create Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.work_contact_id" }
       - { id: edit_employee_company, label: Change Company, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
@@ -199,7 +200,7 @@ components:
               fields: [{ field: marital, label: Marital Status }, { field: spouse_complete_name, label: Spouse Legal Name, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: spouse_birthdate, label: Spouse Birthdate, type: date, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: children, label: Dependent Children, type: number }]
             - title: Education
               permission: employees.read
-              fields: [{ field: certificate, label: Certificate Level }, { field: study_field, label: Field of Study }]
+              fields: [{ field: certificate, label: Certificate Level }, { field: study_field, label: Field of Study }, { field: study_school, label: School }]
             - title: Documents
               permission: employees.read
               fields: [{ field: id_card, label: ID Card Copy, type: checkbox }, { field: id_card_name, label: ID Card Filename, show_if: "!!state.employee_detail.id_card" }, { field: driving_license, label: Driving License, type: checkbox }, { field: driving_license_name, label: Driving License Filename, show_if: "!!state.employee_detail.driving_license" }]
