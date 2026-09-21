@@ -1721,3 +1721,33 @@ Evidence is under
 Core3 and authenticated Odoo captures were blocked by exact runtime failures
 recorded in the evidence files; no desktop/mobile screenshot or sign-off is
 claimed. Existing Odoo Print/PDF/report-action gaps remain open.
+
+## Wave 28 — `TIMESHEET-MY-FAVORITE-PROJECT-PREFILL-001`
+
+The smallest distinct open source-backed behavior after the prior All/My,
+filter, grouping, action, report, and import-template slices is Odoo's New
+Timesheet favorite-project prefill. In
+`addons/hr_timesheet/models/hr_timesheet.py`, `_get_favorite_project_id()`
+searches the current employee's recent five active timesheetable projects,
+chooses the mode, and `default_get()` assigns that project for the
+`is_timesheet` context.
+
+Core3 keeps `pages/entries.yaml` layout-only and
+`api/entries.yaml` data/action-only, joined by `page.id: timesheets`. The page
+adds a permissioned `New Timesheet` header action; the API adds the durable
+`timesheet_entry_defaults` single-row source and binds it to
+`create_timesheet_entry` with `prefill: source`. The source uses persisted
+`timesheet_entries`, current employee/company guards, active timesheetable
+projects, and deterministic empty behavior. Existing create relation guards
+remain the write boundary, so no duplicate migration was needed.
+
+Focused coverage is `test/timesheets_favorite_project_prefill.integration.test.ts`:
+3 tests / 17 expectations. Full Timesheets regression passes 215 tests / 1335
+expectations across 57 files. UI audit passes 735 pages / 744 routes / 1440
+datasources; scoped ESLint and Timesheets-owned diff-check pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-favorite-project-prefill/`.
+Core3 was not listening on port 3001 and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures are not claimed.
+Existing Odoo Print/PDF/action blockers remain open; no sign-off is claimed.

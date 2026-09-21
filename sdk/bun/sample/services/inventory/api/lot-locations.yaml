@@ -1,0 +1,60 @@
+page: { id: lot-locations }
+datasources:
+  - id: inventory_lot_locations_context
+    single: true
+    permission: inventory.multi_location
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_LOT_LOCATIONS_LOT_NOT_FOUND, message: The selected lot or serial number is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_LOT_LOCATIONS_CONTEXT_UNAVAILABLE, message: Lot location context is temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.name AS lot_name, l.product_id, l.product_name, COALESCE(l.company_name, 'Visible to all companies') AS company_name, CAST(COALESCE(SUM(CASE WHEN loc.id IS NOT NULL THEN q.quantity ELSE 0 END), 0) AS DOUBLE) AS total_quantity, COUNT(loc.id) AS location_count FROM inventory_lots l LEFT JOIN inventory_quants q ON q.lot_serial_number = l.name AND q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') LEFT JOIN inventory_locations loc ON loc.id = q.location_id AND loc.usage IN ('Internal', 'Transit') WHERE l.id = :id AND (l.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR l.company_name IS NULL) GROUP BY l.id, l.row_version, l.name, l.product_id, l.product_name, l.company_name"
+  - id: inventory_lot_locations_lines
+    single: false
+    permission: inventory.multi_location
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_LOT_LOCATIONS_LINES_UNAVAILABLE, message: Lot locations are temporarily unavailable. }
+    query: "SELECT q.id, q.row_version, l.name AS lot_name, q.product_id, q.product_name, loc.name AS location_name, w.name AS warehouse_name, CAST(q.quantity AS DOUBLE) AS quantity, CAST(q.reserved_quantity AS DOUBLE) AS reserved_quantity, CAST(q.quantity - q.reserved_quantity AS DOUBLE) AS available_quantity, COALESCE(q.unit_name, 'Units') AS unit_name, q.company_name FROM inventory_quants q JOIN inventory_lots l ON l.id = :id AND q.lot_serial_number = l.name JOIN inventory_locations loc ON loc.id = q.location_id AND loc.usage IN ('Internal', 'Transit') JOIN inventory_warehouses w ON w.id = loc.warehouse_id WHERE q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND (l.company_name = q.company_name OR l.company_name IS NULL) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR loc.name ILIKE '%' || :q || '%' OR w.name ILIKE '%' || :q || '%') ORDER BY w.name, loc.name, q.id"
+  - id: inventory_lot_locations_runs
+    single: false
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_LOT_LOCATIONS_RUNS_UNAVAILABLE, message: Lot location report history is temporarily unavailable. } }
+    query: "SELECT id, row_version, lot_id, lot_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_lot_location_runs WHERE lot_id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_lot_locations
+    type: client
+    permission: inventory.multi_location
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_lot_locations_context;
+        if (!context?.id) throw new Error('Lot location context is unavailable');
+        await request('/api/actions/inventory.lots.locations', {
+          method: 'POST',
+          body: { lot_id: context.id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_lot_locations
+    type: server
+    permission: inventory.multi_location
+    action: inventory.lots.locations
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_lot_locations_context, inventory_lot_locations_lines, inventory_lot_locations_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'lot-locations-' || CAST(:lot_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_lot_location_runs WHERE lot_id = :lot_id) AS VARCHAR) AS id, l.name AS lot_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), l.company_name, 'Core3 Demo Company') AS company_name, COUNT(q.id) AS line_count FROM inventory_lots l LEFT JOIN inventory_quants q ON q.lot_serial_number = l.name AND q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') LEFT JOIN inventory_locations loc ON loc.id = q.location_id AND loc.usage IN ('Internal', 'Transit') WHERE l.id = :lot_id GROUP BY l.id, l.name, l.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_lots WHERE id = :lot_id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name IS NULL)", status: 404, code: INVENTORY_LOT_LOCATIONS_LOT_NOT_FOUND, message: The selected lot or serial number is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_lots WHERE id = :lot_id AND row_version = :expected_row_version AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name IS NULL)", status: 409, code: INVENTORY_LOT_LOCATIONS_STALE, message: The lot changed before locations were requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_quants q JOIN inventory_lots l ON l.id = :lot_id AND q.lot_serial_number = l.name JOIN inventory_locations loc ON loc.id = q.location_id AND loc.usage IN ('Internal', 'Transit') WHERE q.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 404, code: INVENTORY_LOT_LOCATIONS_EMPTY, message: This lot or serial number has no on-hand quantity in internal or transit locations. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_LOT_LOCATIONS_ACTOR_REQUIRED, message: An authenticated inventory actor is required to refresh locations. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_LOT_LOCATIONS_COMPANY, message: The location report company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_lot_location_runs(id, lot_id, lot_name, requested_by, company_name, line_count, opened_at, row_version) VALUES(:id, :lot_id, :lot_name, :requested_by, :company_name, :line_count, TIMESTAMP '2026-01-15 08:35:00', 1)"
+      result: { query: "SELECT id, lot_id, lot_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_lot_location_runs WHERE id = :id" }
+  - id: back_to_inventory_lot_detail_from_locations
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /lots/detail
+    params: { id: '{route.id}' }

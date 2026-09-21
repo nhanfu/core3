@@ -1775,6 +1775,32 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Products > Lot/Serial Number Locations — `INV-LOT-LOCATIONS-001` (2026-09-21)
+
+This bounded Wave 28 slice closes the Lot/Serial Number form's `Location` stat
+button without duplicating lot traceability, product stock Locations, or On
+Hand quant move history. Odoo declares `action_lot_open_quants` in
+`addons/stock/views/stock_lot_views.xml:8-23`; the model implementation at
+`addons/stock/models/stock_lot.py:293-297` opens the quant action with
+`search_default_lot_id` and enables inventory mode for stock managers.
+
+Core3 adds durable migration
+`20260922150000-065-inventory-lot-locations.yaml` with a deterministic
+company-scoped lot quant and report-run history. Separate
+`pages/lot-locations.yaml` and `api/lot-locations.yaml` contracts share
+`page.id: lot-locations`; the lot detail page/API binds the permissioned
+Location action. The contextual report lists internal/transit quantities and
+records Refresh history with actor, company, and row-version guards.
+
+Focused verification is in
+`test/inventory_lot_locations.integration.test.ts`: 4 tests / 31 assertions
+cover source comparison, page/API separation, deterministic filters, replay,
+permission/company/actor/stale/empty guards, and file-backed restart
+persistence. Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-LOT-LOCATIONS-001/`. The supplied Odoo
+runtime returned HTTP 303 to `/web/login`; paired live Odoo evidence is
+blocked and not claimed. Full Inventory sign-off remains open.
+
 ## Operations > Done Transfer Package History — `INV-TRANSFER-PACKAGE-HISTORY-001` (2026-09-21)
 
 This bounded Wave 26 slice closes Odoo's Done-transfer Packages history action

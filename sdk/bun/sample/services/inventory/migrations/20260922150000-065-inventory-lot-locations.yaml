@@ -1,0 +1,43 @@
+version: 0.0.65
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_lot_location_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        lot_id VARCHAR NOT NULL, lot_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_lot_location_runs_lot
+        ON inventory_lot_location_runs(lot_id, opened_at, id);
+      UPDATE inventory_lots SET location_id = 'location-stock-shelf-2'
+      WHERE id = 'lot-traceable-0001' AND company_name = 'Core3 Demo Company';
+      INSERT INTO inventory_quants(
+        id, product_id, product_name, location_id, quantity, reserved_quantity,
+        unit_cost, inventory_date, inventory_user, counted_quantity,
+        inventory_quantity_set, unit_name, lot_serial_number, tracking,
+        company_name, is_outdated
+      ) VALUES (
+        'quant-trace-location-0001', 'product-storage-box', '[E-COM08] Storage Box',
+        'location-stock-shelf-2', 15, 2, 25, DATE '2026-01-15', NULL, NULL,
+        FALSE, 'Units', 'TRACE-LOT-0001', 'lot', 'Core3 Demo Company', FALSE
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_lot_location_runs(
+        id, lot_id, lot_name, requested_by, company_name, line_count, opened_at
+      ) VALUES (
+        'lot-locations-lot-traceable-0001-1', 'lot-traceable-0001',
+        'TRACE-LOT-0001', 'Seeded Inventory', 'Core3 Demo Company', 1,
+        TIMESTAMP '2026-01-15 08:35:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_lot_location_runs WHERE id = 'lot-locations-lot-traceable-0001-1';
+      DELETE FROM inventory_quants WHERE id = 'quant-trace-location-0001';
+      UPDATE inventory_lots SET location_id = 'location-stock'
+      WHERE id = 'lot-traceable-0001' AND company_name = 'Core3 Demo Company';
+      DROP TABLE IF EXISTS inventory_lot_location_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

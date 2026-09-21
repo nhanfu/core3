@@ -6,6 +6,11 @@ datasources:
   - id: timesheet_projects
     permission: timesheets.write
     query: "SELECT id AS value, name AS label FROM timesheet_projects WHERE active AND allow_timesheets AND has_analytic_account ORDER BY name, id"
+  - id: timesheet_entry_defaults
+    single: true
+    permission: timesheets.write
+    meta: { mock_data_justification: Favorite project is derived from the current employee's durable recent timesheets; no static default is used. }
+    query: "WITH last_five AS (SELECT t.project_id, p.name AS project_name, t.work_date, t.id, ROW_NUMBER() OVER (ORDER BY t.work_date DESC, t.id DESC) AS recent_rank FROM timesheet_entries t JOIN timesheet_projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND p.active AND p.allow_timesheets AND p.has_analytic_account AND t.project_id IS NOT NULL), project_modes AS (SELECT project_id, project_name, COUNT(*) AS usage_count, MAX(work_date) AS last_work_date FROM last_five WHERE recent_rank <= 5 GROUP BY project_id, project_name) SELECT project_id, project_name FROM project_modes ORDER BY usage_count DESC, last_work_date DESC, project_id LIMIT 1"
   - id: timesheet_tasks
     permission: timesheets.write
     query: "SELECT id AS value, name AS label FROM timesheet_tasks WHERE open ORDER BY name, id"
@@ -174,6 +179,8 @@ actions:
     type: server_form
     permission: timesheets.write
     title: New timesheet entry
+    prefill: source
+    prefill_source: timesheet_entry_defaults
     action: timesheets.entries.create
     handler: yaml_mutation
     operation: create

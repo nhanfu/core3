@@ -1,0 +1,44 @@
+title: Lot Locations
+page: { id: lot-locations, route: /lots/locations, breadcrumb: [Supply Chain, Inventory, Products, Lots / Serial Numbers, Location], auth: { require: [inventory.multi_location] } }
+components:
+  - type: StatRow
+    source: inventory_lot_locations_context
+    title: Location
+    stats:
+      - { label: Lot/Serial Number, field: lot_name }
+      - { label: Product, field: product_name }
+      - { label: Quantity, field: total_quantity }
+      - { label: Locations, field: location_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_lot_locations_lines
+    header_actions:
+      - { id: refresh_inventory_lot_locations, label: Refresh Locations, variant: primary, permission: inventory.multi_location }
+      - { id: back_to_inventory_lot_detail_from_locations, label: Back to Lot, variant: secondary, permission: inventory.multi_location }
+    search: { label: Search lot locations, placeholder: 'Search locations or warehouses...' }
+    columns:
+      - { field: location_name, label: Location, type: PrimaryEntityCell, sortable: true }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: quantity, label: On Hand, align: right, sortable: true }
+      - { field: reserved_quantity, label: Reserved, align: right }
+      - { field: available_quantity, label: Available, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No locations for this lot or serial number, description: This lot or serial number has no on-hand quantity in internal or transit locations. }
+  - type: ListView
+    variant: odoo
+    source: inventory_lot_locations_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: line_count, label: Locations, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No location reports, description: Refresh Locations records the report request for this lot or serial number. }

@@ -1522,3 +1522,29 @@ remains open.
 QA disposition: PASS for the bounded Core3 durable quant-history report;
 PARTIAL/BLOCKED for paired live Odoo comparison. Full Inventory sign-off
 remains open.
+
+## Inventory Lot Locations QA — `INV-LOT-LOCATIONS-001`
+
+- Odoo source/action: PASS. `stock.lot.action_lot_open_quants` is declared by
+  the Lot/Serial Number form Location stat button and scopes the quant action
+  with `search_default_lot_id`; exact references are in
+  `source-comparison.json`.
+- Core3 contract: PASS. `lot-locations` page/API YAML is separate and joined
+  by `page.id`; the lot detail pair exposes the multi-location Location
+  action. Migration 0.0.65 persists deterministic lot quantity and report
+  history. Queries enforce current-company and internal/transit scope; Refresh
+  enforces actor, company, lot row-version, and non-empty guards.
+- Focused verification: PASS — 4 tests / 31 assertions in
+  `inventory_lot_locations.integration.test.ts`. Adjacent Lots and
+  Traceability regressions pass with updated deterministic fixture expectations.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. The lot context, Shelf 2 quantity, report history, empty error
+  lists, and no horizontal overflow are recorded in the feature evidence
+  directory.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable Lot Locations lifecycle;
+PARTIAL/BLOCKED for paired live Odoo comparison. Full Inventory sign-off
+remains open.

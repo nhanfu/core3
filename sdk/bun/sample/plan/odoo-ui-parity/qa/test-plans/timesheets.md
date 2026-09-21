@@ -25,6 +25,21 @@ recorded in [`../timesheets.md`](../timesheets.md).
 This slice is bounded and not module sign-off. The source XLSX asset versus
 Core3 CSV output is retained as an explicit parity blocker.
 
+## Wave 28 — `TIMESHEET-MY-FAVORITE-PROJECT-PREFILL-001`
+
+| Gate | Coverage | Result |
+| --- | --- | --- |
+| Source/YAML | Odoo `_get_favorite_project_id` / `default_get`; page/API join through `page.id: timesheets`; source-prefilled New Timesheet | pass |
+| Persistence | Favorite derived from durable recent entries; migration replay and file-backed restart | pass |
+| Security/scope | `timesheets.write`; current employee/company; active timesheetable project; empty guard | pass |
+| Focused regression | `test/timesheets_favorite_project_prefill.integration.test.ts` — 3 tests / 17 expectations | pass |
+| Module regression | `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 215 tests / 1335 expectations across 57 files | pass |
+| Static checks | UI audit 735/744/1440; scoped ESLint; Timesheets-owned diff-check | pass |
+| Authenticated browser/Odoo pair | Core3 3001 unavailable; Odoo 8069/8073 redirected to `/web/login` | blocked; exact blocker recorded |
+
+This slice is bounded and not module sign-off. Existing Odoo Print/PDF/action
+parity blockers remain open.
+
 ## Coverage inventory
 
 | Menu/action family | Core3 route families | Scope |

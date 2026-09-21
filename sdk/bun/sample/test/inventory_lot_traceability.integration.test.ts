@@ -28,7 +28,7 @@ describe('Inventory lot traceability parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(page.page).toMatchObject({ id: 'lot-traceability', route: '/lots/traceability' });
-    expect(detail.components[0].header_actions[0]).toMatchObject({ id: 'view_inventory_lot_traceability', permission: 'inventory.tracking' });
+    expect(detail.components[0].header_actions).toContainEqual(expect.objectContaining({ id: 'view_inventory_lot_traceability', permission: 'inventory.tracking' }));
     expect(discovered.pages.get('lot-traceability')?.config.page.id).toBe('lot-traceability');
     expect(discovered.pageDatasources.get('lot-traceability')).toEqual(expect.arrayContaining(['inventory_lot_traceability_context', 'inventory_lot_traceability_lines', 'inventory_lot_traceability_runs']));
     expect(api.page.id).toBe('lot-traceability');

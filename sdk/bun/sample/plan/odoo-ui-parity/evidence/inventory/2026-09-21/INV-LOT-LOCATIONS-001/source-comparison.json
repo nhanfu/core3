@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-LOT-LOCATIONS-001",
+  "odoo": {
+    "entry": "Lot / Serial Number form Location stat button",
+    "action": "stock.lot.action_lot_open_quants",
+    "source": [
+      "addons/stock/views/stock_lot_views.xml:8-23",
+      "addons/stock/models/stock_lot.py:293-297"
+    ],
+    "semantics": [
+      "show the lot or serial number's stock.quant rows",
+      "scope the destination action with search_default_lot_id",
+      "enable inventory mode for stock managers and require multi-location access"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/lot-locations.yaml",
+    "api": "services/inventory/api/lot-locations.yaml",
+    "page_id": "lot-locations",
+    "entry_binding": "services/inventory/pages/lot-detail.yaml + services/inventory/api/lot-detail.yaml",
+    "migration": "services/inventory/migrations/20260922150000-065-inventory-lot-locations.yaml",
+    "guards": ["inventory.multi_location", "current company", "authenticated actor", "lot row version", "on-hand location exists"]
+  }
+}
