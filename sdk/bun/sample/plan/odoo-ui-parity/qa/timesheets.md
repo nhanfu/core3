@@ -929,3 +929,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
   `evidence/timesheets/2026-09-21/timesheet-my-favorite-project-prefill/`.
 - Blockers: authenticated desktop/mobile comparison and existing Odoo
   Print/PDF/action parity remain open; no sign-off is claimed.
+
+## Wave 29 — `TIMESHEET-MY-PROJECT-TASK-DEPENDENCY-001`
+
+- Source gate: `hr_timesheet` `_onchange_project_id` and timesheet form context `default_project_id`, `search_default_my_tasks`, and `search_default_open_tasks`.
+- Core3 gate: the `timesheets` page/API pair exposes company-scoped project and open-task selectors; the create action canonicalizes valid task names and rejects stale or mismatched task/project relations.
+- Focused gate: `test/timesheets_project_task_dependency.integration.test.ts` passes 4/4 tests / 20 expectations, including source mapping, company/empty option guards, valid/no-task creation, stale relation rejection, and file-backed restart.
+- Regression/static gates: full Timesheets passes 219/219 tests / 1,355 expectations across 58 files; UI audit passes 737 pages / 746 routes / 1,449 datasources; scoped ESLint and `git diff --check` pass.
+- Evidence: `evidence/timesheets/2026-09-21/timesheet-my-project-task-dependency-001/`. Core3 port 3001 is unavailable and Odoo 8069/8073 redirect to `/web/login`; authenticated desktop/mobile captures are blocked and no sign-off is claimed. Existing Odoo Print/PDF/action blockers remain open.

@@ -305,6 +305,19 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 29 — `TIMESHEET-MY-PROJECT-TASK-DEPENDENCY-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/context comparison | `_onchange_project_id`, `default_project_id`, open-task search context | pass in focused source test |
+| Paired YAML contract | `page.id: timesheets` plus API project/task datasources | pass |
+| Durable project/task dependency | persisted active project and open task relations; valid task name canonicalization | pass |
+| Permission/company/empty/stale guards | `timesheets.write`, current-company options, empty fixture, and cross-project/closed task rejection | pass |
+| Freshness/restart | file-backed option query and mutation behavior survives reopen | pass |
+| Focused regression | new test 4/4; full Timesheets 219/219 | pass |
+| Audit/lint/diff | UI audit 737/746/1449; ESLint; `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
+
 ## Wave 26 — `TIMESHEET-ALL-BILLING-TYPE-GROUP-001`
 
 | Check | Expected evidence | Result |

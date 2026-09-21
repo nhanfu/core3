@@ -6,6 +6,12 @@ datasources:
   - id: timesheet_projects
     permission: timesheets.write
     query: "SELECT id AS value, name AS label FROM timesheet_projects WHERE active AND allow_timesheets AND has_analytic_account ORDER BY name, id"
+  - id: timesheet_entry_projects
+    permission: timesheets.write
+    query: "SELECT id AS value, name AS label FROM timesheet_projects WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account ORDER BY name, id"
+  - id: timesheet_entry_tasks
+    permission: timesheets.write
+    query: "SELECT t.id AS value, t.name AS label, t.project_id FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account AND t.open AND (COALESCE(NULLIF(:project_id, ''), '') = '' OR t.project_id = :project_id) ORDER BY t.name, t.id"
   - id: timesheet_entry_defaults
     single: true
     permission: timesheets.write
@@ -129,6 +135,8 @@ actions:
       before_steps:
         - query: "SELECT (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AS project_id, (SELECT id FROM timesheet_tasks WHERE name = :task_name AND project_id = (SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account LIMIT 1) AND open LIMIT 1) AS task_id"
           assign: true
+        - query: "SELECT NULLIF(:task_id, '') AS task_id, CASE WHEN NULLIF(:task_id, '') IS NOT NULL AND EXISTS (SELECT 1 FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE t.id = :task_id AND t.project_id = :project_id AND t.open AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account) THEN (SELECT name FROM timesheet_tasks WHERE id = :task_id) ELSE NULLIF(:task_name, '') END AS task_name"
+          assign: true
       guards:
         - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEET_INLINE_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited inline. }
         - { query: "SELECT id FROM timesheet_projects WHERE name = :project_name AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_INLINE_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account. }
@@ -194,21 +202,25 @@ actions:
       before_steps:
         - query: "SELECT COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id"
           assign: true
+        - query: "SELECT NULLIF(:task_id, '') AS task_id, CASE WHEN NULLIF(:task_id, '') IS NOT NULL AND EXISTS (SELECT 1 FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE t.id = :task_id AND t.project_id = :project_id AND t.open AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account) THEN (SELECT name FROM timesheet_tasks WHERE id = :task_id) ELSE NULLIF(:task_name, '') END AS task_name"
+          assign: true
       steps:
         - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), employee_id = CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END WHERE id = :id"
       guards:
+        - query: "SELECT NULLIF(:task_id, '') AS task_id, CASE WHEN NULLIF(:task_id, '') IS NOT NULL AND EXISTS (SELECT 1 FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE t.id = :task_id AND t.project_id = :project_id AND t.open AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account) THEN (SELECT name FROM timesheet_tasks WHERE id = :task_id) ELSE NULLIF(:task_name, '') END AS task_name"
+          assign: true
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM timesheet_entries WHERE name = :name)", status: 409, code: TIMESHEETS_ENTRY_DUPLICATE, message: A timesheet with this entry number already exists. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEET_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
         - { query: "SELECT id FROM timesheet_employees WHERE id = :employee_id AND name = :employee_name AND active", status: 422, code: TIMESHEET_EMPLOYEE_INVALID, message: Select an active employee in this company }
         - { query: "SELECT id FROM timesheet_projects WHERE id = :project_id AND name = :project_name AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account }
-        - { query: "SELECT id FROM timesheet_tasks WHERE id = :task_id AND name = :task_name AND project_id = :project_id AND open", status: 422, code: TIMESHEET_TASK_INVALID, message: Select an open task belonging to the selected project }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:task_id AS VARCHAR)), ''), '') = '' OR EXISTS (SELECT 1 FROM timesheet_tasks WHERE id = :task_id AND name = :task_name AND project_id = :project_id AND open)", status: 422, code: TIMESHEET_TASK_INVALID, message: Select an open task belonging to the selected project }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     fields:
       - { field: name, label: Entry, type: text, required: true }
-      - { field: project_id, label: Project ID, type: text }
+      - { field: project_id, label: Project ID, type: select, options_source: timesheet_entry_projects }
       - { field: project_name, label: Project, type: text, required: true }
-      - { field: task_id, label: Task ID, type: text }
-      - { field: task_name, label: Task, type: text }
+      - { field: task_id, label: Task ID, type: select, options_source: timesheet_entry_tasks }
+      - { field: task_name, label: Task, type: hidden }
       - { field: work_date, label: Date, type: text, required: true }
       - { field: description, label: Description, type: text, required: true }
       - { field: hours, label: Hours, type: number, required: true }
@@ -232,15 +244,16 @@ actions:
       guards:
         - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:task_id AS VARCHAR)), ''), '') = '' OR EXISTS (SELECT 1 FROM timesheet_tasks WHERE id = :task_id AND name = :task_name AND project_id = :project_id AND open)", status: 422, code: TIMESHEET_TASK_INVALID, message: Select an open task belonging to the selected project }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
       steps:
         - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), employee_id = CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END WHERE id = :id"
     fields:
       - { field: work_date, label: Date, type: date, required: true }
-      - { field: project_id, label: Project ID, type: text }
+      - { field: project_id, label: Project ID, type: select, options_source: timesheet_entry_projects }
       - { field: project_name, label: Project, type: text, required: true }
-      - { field: task_id, label: Task ID, type: text }
-      - { field: task_name, label: Task, type: text }
+      - { field: task_id, label: Task ID, type: select, options_source: timesheet_entry_tasks }
+      - { field: task_name, label: Task, type: hidden }
       - { field: description, label: Description, type: textarea, required: true }
       - { field: hours, label: Time Spent, type: number, required: true }
       - { field: billable, label: Billable, type: checkbox }

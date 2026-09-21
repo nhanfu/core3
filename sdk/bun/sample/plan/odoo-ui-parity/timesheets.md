@@ -1751,3 +1751,32 @@ Evidence is under
 Core3 was not listening on port 3001 and Odoo 8069/8073 redirected to
 `/web/login`, so authenticated desktop/mobile captures are not claimed.
 Existing Odoo Print/PDF/action blockers remain open; no sign-off is claimed.
+
+## Wave 29 — `TIMESHEET-MY-PROJECT-TASK-DEPENDENCY-001`
+
+The next smallest uncovered behavior is the New Timesheet project/task
+dependency from Odoo's `hr_timesheet` form. Odoo supplies the selected project
+as task context, searches open tasks, and `_onchange_project_id` clears a task
+whose project no longer matches. Core3 keeps the layout in the existing
+`timesheets` page contract and adds project/task option datasources and
+fail-closed create guards to `api/entries.yaml`, joined by `page.id`.
+
+The project and task options are durable reads from `timesheet_projects` and
+`timesheet_tasks`, scoped to the current company and active timesheetable
+projects. A valid task is canonicalized to its persisted name, no task remains
+optional, and a stale, closed, cross-project, or cross-company task is rejected
+by the create boundary. No new migration is required because the existing
+durable relations are used.
+
+Focused coverage is
+`test/timesheets_project_task_dependency.integration.test.ts` — 4 tests / 20
+expectations. The full Timesheets regression passes 219 tests / 1355
+expectations across 58 files. UI audit passes 737 pages / 746 routes / 1449
+datasources; scoped ESLint and Timesheets-owned diff-check pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-project-task-dependency-001/`.
+Core3 was not listening on port 3001 and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures and Odoo comparison
+captures are blocked; no sign-off is claimed. Existing Odoo Print/PDF/action
+blockers remain open.

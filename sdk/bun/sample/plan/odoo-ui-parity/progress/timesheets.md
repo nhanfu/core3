@@ -696,6 +696,14 @@ viewports with no page errors or horizontal overflow. Only aborted background
 prefetches for unrelated All Timesheets surfaces are recorded. Existing Odoo
 Print/PDF/action blockers remain open; no sign-off is claimed.
 
+## Wave 29 — `TIMESHEET-MY-PROJECT-TASK-DEPENDENCY-001` (2026-09-21)
+
+- Selected the smallest distinct open source-backed behavior after the Wave 28 favorite-project prefill: Odoo's New Timesheet project-scoped open-task dependency and `_onchange_project_id` stale-task reset contract.
+- Added permissioned `timesheet_entry_projects` and `timesheet_entry_tasks` datasources, select fields, and durable create-boundary canonicalization/guards in `api/entries.yaml`; the existing `page.id: timesheets` pair remains the page/API join.
+- Valid task IDs resolve their persisted task name; no task remains optional; stale, closed, cross-project, or cross-company task selections fail closed. No migration was required because the existing project/task/entry tables are durable.
+- Focused coverage passed 4/4 tests with 20 expectations; full Timesheets regression passed 219/219 with 1,355 expectations across 58 files. ESLint, UI audit (737 pages / 746 routes / 1,449 datasources), and Timesheets-owned diff-check passed.
+- Evidence is under `evidence/timesheets/2026-09-21/timesheet-my-project-task-dependency-001/`. Core3 port 3001 was not listening and Odoo 8069/8073 redirected `/odoo/timesheets` to `/web/login`; authenticated desktop/mobile captures are not claimed. Odoo Print/PDF/action blockers remain open.
+
 ## 2026-09-21 `TIMESHEET-MY-INLINE-EDIT-001`
 
 The eighth-wave gap is Odoo's desktop My Timesheets inline lifecycle. The
