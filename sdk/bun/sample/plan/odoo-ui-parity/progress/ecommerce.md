@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 49 bounded slice: `ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001`
+(implementation and focused verification complete; commit/push pending).
 Latest Wave 47 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`
 (implementation and focused verification complete; local commit/push pending).
 Latest Wave 46 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`

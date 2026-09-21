@@ -1,0 +1,14 @@
+version: 0.0.163
+kind: data
+description: deterministic Website Sale Comparison Price visibility fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_compare_price_policies (id, row_version, company_name, show_compare_price)
+      VALUES ('ecommerce-product-compare-price-my-company', 1, 'My Company', FALSE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_compare_price_policies WHERE id = 'ecommerce-product-compare-price-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

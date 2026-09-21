@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001
+
+- ECOM-FUNC-078: trace Odoo `group_product_price_comparison`, the Comparison
+  Price settings checkbox, product-form group gate, combination-info gate,
+  and strikethrough template; verify separate Core3 policy page/API contracts
+  and the existing compare-at data slice.
+- ECOM-WF-089: replay the deterministic hidden-comparison-price policy, enable
+  and disable Product/Variant/Shop compare-at projections, preserve stored
+  values while hidden, reject invalid, foreign-company, missing, and stale
+  writes, and preserve the policy across migration replay and DuckDB restart.
+- ECOM-PERM-085: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; enforce current-company scope and optimistic
+  row-version guards.
+- ECOM-UI-071: render the configuration form and product catalog projections
+  at desktop and mobile and compare the authenticated Odoo Comparison Price
+  behavior. The supplied Odoo reference returns `/shop` HTTP 404 and Core3
+  ports 3000/4312/4313 refuse connections, so paired rendered UI sign-off is
+  blocked.
+
 ## ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001
 
 - ECOM-FUNC-077: trace Odoo `res.config.settings.group_show_uom_price`,

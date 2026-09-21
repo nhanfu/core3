@@ -1,5 +1,33 @@
 # ecommerce QA ledger
 
+## Product Comparison Price Visibility (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001`, 2026-09-22)
+
+- Odoo source: pass. `res.config.settings.group_product_price_comparison`
+  implies `website_sale.group_product_price_comparison`; the Comparison Price
+  setting is common to websites, the product form gates `compare_list_price`
+  on that group, and product-price rendering only exposes the comparison value
+  when the group is enabled.
+- Core3 lifecycle: migrations 162/163 add the durable company policy and
+  deterministic hidden fixture. Separate page/API YAML exposes a permissioned
+  optimistic update; Product/Variant/Shop queries preserve raw stored values
+  while nulling `compare_at_price` when the policy is disabled.
+- Focused verification: `bun test
+  ./test/ecommerce_product_compare_price_visibility.integration.test.ts
+  --timeout 30000` — **2 passed, 33 assertions, 0 failures**.
+- Adjacent verification: prior compare-at price **3 passed, 0 failures**;
+  Product Reference Price **2 passed, 0 failures**; Product Detail **5
+  passed, 0 failures**; Product Page Grid Columns **2 passed, 0 failures**;
+  Shop Action Style **2 passed, 0 failures**.
+- Audit: `bun run audit` passed at **786 pages, 795 routes, and 1620
+  datasources**. `git diff --check` and scoped Ecommerce lint passed.
+- Authenticated Odoo comparison uses `http://localhost:8069`, database
+  `core3_reference`, and the shared QA session. `/shop` is exact HTTP 404 in
+  desktop and iPhone-14 mobile evidence; no visual sign-off is claimed.
+  Core3 browser rendering is blocked by connection refusal on ports 3000,
+  4312, and 4313. Ecommerce module sign-off remains open.
+- Evidence:
+  `evidence/ecommerce/2026-09-22/ecom-catalog-product-compare-price-visibility-001/`.
+
 ## Product Reference Price Visibility (`ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001`, 2026-09-22)
 
 - Odoo source: pass. `res.config.settings.group_show_uom_price` defaults to

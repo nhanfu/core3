@@ -48,6 +48,10 @@ describe('eCommerce product compare-at price parity', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_compare_price_test', ['schema', 'data']);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_compare_price_test', ['schema', 'data']);
 
+    const comparePricePolicyApi = yaml('api/product-compare-price-policy.yaml');
+    await repository.executeMutation(action(comparePricePolicyApi, 'edit_ecommerce_product_compare_price_policy').mutation, {
+      current_company_name: 'My Company', id: 'ecommerce-product-compare-price-my-company', expected_row_version: 1, values: { show_compare_price: true },
+    });
     const productApi = yaml('api/product-detail.yaml');
     const productSource = productApi.datasources.find((candidate: any) => candidate.id === 'ecommerce_product_detail');
     const shopSource = yaml('api/shop.yaml').datasources.find((candidate: any) => candidate.id === 'ecommerce_shop_products');

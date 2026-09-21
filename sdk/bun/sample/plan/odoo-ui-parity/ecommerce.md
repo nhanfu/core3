@@ -1,6 +1,36 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Product Reference Price visibility slice; module sign-off remains open)
+Status: qa-in-progress (bounded Comparison Price visibility slice; module sign-off remains open)
+
+## Bounded feature — Product Comparison Price Visibility (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001`)
+
+Wave 49 selects the next uncovered Website Sale setting after Product Reference
+Price visibility: Odoo's `group_product_price_comparison` feature group and
+the Settings checkbox for Comparison Price. The supplied Odoo 19 source does
+not enable this group by default; the product form gates `compare_list_price`
+on the group, and the product-price combination only supplies
+`compare_list_price` when the group is enabled. This is distinct from the
+already-completed durable compare-at price value and CRUD slice.
+
+Core3 migrations 162/163 add a durable company-scoped visibility policy and an
+idempotent My Company fixture defaulting to hidden comparison prices. Separate
+`api/product-compare-price-policy.yaml` and
+`pages/product-compare-price-policy.yaml` contracts join through
+`ecommerce-product-compare-price-policy`; updates require `ecommerce.write`,
+validate a boolean, and use company and row-version guards. Product, Product
+Detail, Product Variant Detail, and Shop keep their stored comparison values
+but gate the exposed `compare_at_price` projection on the effective policy.
+
+Focused verification covers the supplied Odoo group/settings/form/template
+source, page/API separation, permissioned optimistic update, invalid,
+foreign-company, missing, and stale guards, migration replay, product and
+variant/Shop projections, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-catalog-product-compare-price-visibility-001/`.
+The authenticated Odoo reference does not have Website Sale installed:
+`/shop` is an exact Odoo 404 at desktop and iPhone-14 mobile viewports, so no
+paired Odoo feature-rendering sign-off is claimed. Core3 browser rendering is
+blocked by connection refusal on ports 3000, 4312, and 4313. Ecommerce module
+sign-off remains open.
 
 ## Bounded feature — Product Reference Price Visibility (`ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001`)
 

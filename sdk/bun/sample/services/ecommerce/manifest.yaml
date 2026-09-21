@@ -185,6 +185,10 @@ menu:
           label: Product Reference Price
           icon: tag
           permission: ecommerce.read
+        - path: /ecommerce/product-compare-price
+          label: Comparison Price
+          icon: tag
+          permission: ecommerce.read
         - path: /ecommerce/product-extra-fields
           label: Product Page Extra Fields
           icon: list
