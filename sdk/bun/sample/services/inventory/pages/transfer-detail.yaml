@@ -32,6 +32,7 @@ components:
       - { id: print_inventory_transfer_delivery_slip, label: Print, variant: secondary, permission: inventory.read, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: scrap_inventory_transfer, label: Scrap, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
+      - { id: return_all_inventory_transfer, label: Return All, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     stat_buttons:
       - { id: view_inventory_transfer_detailed_operations, label: Moves, icon: list, value_field: move_count, permission: inventory.read }
@@ -55,6 +56,7 @@ components:
       inventory.transfer.availability_checked: Availability checked
       inventory.transfer.unreserved: Unreserved
       inventory.transfer.return_created: Return created
+      inventory.transfer.return_all_created: Return All created
       inventory.transfer.backorder_created: Backorder created
       inventory.transfer.backorder_skipped: No backorder
       inventory.transfer.lock_toggled: Lock state changed

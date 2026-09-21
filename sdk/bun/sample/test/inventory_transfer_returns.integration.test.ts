@@ -86,7 +86,7 @@ describe('Inventory completed transfer return parity', () => {
       authProvider: { async getCurrentUser() { return user; }, hasPermission(candidate: any, permission: string) { return candidate.permissions.includes(permission); } },
       sources: new Map(api.datasources.map((candidate: any) => [candidate.id, candidate])), pageSources: new Map([['transfer-detail', api.datasources.map((candidate: any) => candidate.id)]]),
       pages: new Map([['transfer-detail', { ...page, actions: api.actions }]]), catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
-      permissions: { permissions: ['inventory.read', 'inventory.write'], tables: {}, endpoints: {} }, uploadRoot: '/tmp/core3-inventory-returns-test', eventStore: {}, topics: {},
+      permissions: { permissions: ['inventory.read', 'inventory.write', 'inventory.manage'], tables: {}, endpoints: {} }, uploadRoot: '/tmp/core3-inventory-returns-test', eventStore: {}, topics: {},
     });
     await expect(handler(new Request('http://inventory.test/api/actions/stock.picking.return', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ values: { id: 'delivery-return-0001', expected_row_version: 1, current_company_name: 'Core3 Demo Company', current_user_name: 'Reader', return_quantity: 1 } }) }), new URL('http://inventory.test/api/actions/stock.picking.return'))).rejects.toMatchObject({ status: 403, message: 'Requires permission: inventory.write' });
   });

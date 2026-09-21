@@ -1,0 +1,20 @@
+{
+  "feature": "INV-TRANSFER-RETURN-ALL-001",
+  "odoo": {
+    "action": "stock.act_stock_return_picking",
+    "wizard_view": "addons/stock/wizard/stock_picking_return_views.xml:17-30",
+    "method": "addons/stock/wizard/stock_picking_return.py:222-237",
+    "control": "action_create_returns_all",
+    "behavior": "fills each eligible return line to its remaining delivered quantity, then invokes the normal return creation"
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detail.yaml",
+    "api": "services/inventory/api/transfer-detail.yaml",
+    "page_id": "transfer-detail",
+    "action": "return_all_inventory_transfer",
+    "mutation": "stock.picking.return.all",
+    "persistence": "services/inventory/migrations/20260922210000-071-inventory-transfer-return-all.yaml",
+    "guards": ["inventory.write", "current company", "authenticated actor", "Done state", "transfer row_version", "at least two completed lines", "no prior return"]
+  },
+  "comparison": "Core3 adds the distinct Return All wizard action, creates one reverse transfer containing every completed source move, and records per-line durable return records while preserving the existing single-line Return action."
+}

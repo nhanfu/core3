@@ -222,6 +222,38 @@ actions:
     fields:
       - { field: return_quantity, label: Return Quantity, type: number, required: true, min: 0.001 }
       - { field: reason, label: Reason, type: textarea, placeholder: 'Optional return reason' }
+  - id: return_all_inventory_transfer
+    type: server_form
+    permission: inventory.write
+    title: Return all products
+    action: stock.picking.return.all
+    handler: yaml_mutation
+    operation: return_all
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline, inventory_transfer_returns]
+    mutation:
+      generated: [return_id, return_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'return-all-' || :id || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_transfer_returns WHERE source_picking_id = :id) AS VARCHAR) AS return_id, 'return-all-run-' || :id || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_transfer_returns WHERE source_picking_id = :id) AS VARCHAR) AS return_run_id, 'return-all-message-' || :id || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_transfer_returns WHERE source_picking_id = :id) AS VARCHAR) AS message_id, COALESCE(SUM(m.done_quantity), 0) AS return_quantity FROM inventory_picking_moves m WHERE m.picking_id = :id AND m.done_quantity > 0"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Done' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_RETURN_ALL_NOT_ALLOWED, message: Only a current completed transfer can return all products. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_ACTOR_REQUIRED, message: A signed-in inventory operator is required to return all products. }
+        - { query: "SELECT 1 AS ok FROM inventory_picking_moves WHERE picking_id = :id AND done_quantity > 0 GROUP BY picking_id HAVING COUNT(*) >= 2", status: 422, code: INVENTORY_TRANSFER_RETURN_ALL_LINES_REQUIRED, message: Return All requires at least two completed move lines. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_transfer_returns WHERE source_picking_id = :id)", status: 409, code: INVENTORY_TRANSFER_RETURN_ALL_ALREADY_RETURNED, message: This transfer already has a return. Use the remaining-line return workflow. }
+      steps:
+        - { query: "INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) SELECT :return_id, 'operation-receipts', 'RET/' || p.name || '/' || :return_id, p.contact_name, p.scheduled_date, 'Return of ' || p.name, p.company_name, p.destination_location_id, p.source_location_id, 'Waiting' FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) SELECT :return_id || '-move-' || m.id, :return_id, m.product_name, m.done_quantity, 0 FROM inventory_picking_moves m WHERE m.picking_id = :id AND m.done_quantity > 0" }
+        - { query: "INSERT INTO inventory_transfer_return_lines(id, return_run_id, source_picking_id, source_move_id, return_move_id, product_name, return_quantity, company_name) SELECT :return_run_id || '-' || m.id, :return_run_id, :id, m.id, :return_id || '-move-' || m.id, m.product_name, m.done_quantity, p.company_name FROM inventory_picking_moves m JOIN inventory_pickings p ON p.id = :id WHERE m.picking_id = :id AND m.done_quantity > 0" }
+        - { query: "INSERT INTO inventory_transfer_returns(id, source_picking_id, return_picking_id, company_name, return_quantity, returned_by, reason, state) SELECT :return_run_id, p.id, :return_id, p.company_name, :return_quantity, :current_user_name, COALESCE(:reason, ''), 'Waiting' FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND state = 'Done' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before Return All could be created. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.return_all_created', 'Return All created', 'Return All transfer ' || :return_id || ' created')" }
+      result: { query: "SELECT r.id, r.source_picking_id, r.return_picking_id, rp.name AS return_name, r.return_quantity, r.company_name, r.returned_by, r.reason, r.state, r.row_version FROM inventory_transfer_returns r JOIN inventory_pickings rp ON rp.id = r.return_picking_id WHERE r.id = :return_run_id" }
+    fields:
+      - { field: reason, label: Reason, type: textarea, placeholder: 'Optional return reason' }
   - id: create_inventory_backorder
     type: server_form
     permission: inventory.write

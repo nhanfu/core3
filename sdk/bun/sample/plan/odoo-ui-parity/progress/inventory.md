@@ -1257,3 +1257,26 @@ Full Inventory sign-off remains open.
   browser, and Odoo blocker evidence is under
   `evidence/inventory/2026-09-21/INV-PRODUCT-UPDATE-QUANTITY-001/`.
   Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-RETURN-ALL-001` — Return All completed transfer lines (2026-09-21)
+
+- Selected Odoo's distinct `action_create_returns_all` wizard control after
+  the prior bounded Return slice intentionally limited itself to one completed
+  move line. The source fills every eligible wizard line to its remaining
+  delivered quantity before creating the reverse picking.
+- Added migration `20260922210000-071-inventory-transfer-return-all.yaml`
+  with a deterministic Done delivery containing two completed moves and a
+  durable per-line return ledger. Extended the existing `transfer-detail`
+  page/API pair by `page.id` with a manager/write Return All form action.
+- The mutation creates one Waiting reverse transfer with every completed move,
+  records aggregate and per-line return state, and enforces write permission,
+  current company, actor, Done state, row version, multi-line eligibility, and
+  no-prior-return guards. The existing single-line Return action is unchanged.
+- Focused verification passes 12 tests / 100 assertions across the new Return
+  All suite and return/transfer regressions, including migration replay,
+  permission, company, actor, stale, duplicate, and restart checks.
+- Core3 desktop/mobile probes reached only `/auth/login`, so no authenticated
+  visual pass is claimed. Odoo returned HTTP 303 to `/web/login`; exact source,
+  browser, and Odoo blocker evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-RETURN-ALL-001/`.
+  Full Inventory sign-off remains open.

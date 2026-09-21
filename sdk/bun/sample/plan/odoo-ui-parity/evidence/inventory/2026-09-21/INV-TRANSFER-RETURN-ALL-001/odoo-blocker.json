@@ -1,0 +1,9 @@
+{
+  "feature": "INV-TRANSFER-RETURN-ALL-001",
+  "status": "blocked",
+  "request": "GET http://127.0.0.1:8069/web",
+  "http_status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "authenticated_comparison": false,
+  "reason": "The supplied Odoo runtime requires an authenticated session; no credentials/session were available for the paired Return All wizard execution."
+}

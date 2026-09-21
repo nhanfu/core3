@@ -2322,3 +2322,33 @@ Odoo returned HTTP 303 to `/web/login`; exact source, browser, and blocker
 evidence is under
 `evidence/inventory/2026-09-21/INV-PRODUCT-UPDATE-QUANTITY-001/`. Full
 Inventory sign-off remains open.
+
+## Operations > Transfer Return All — `INV-TRANSFER-RETURN-ALL-001` (2026-09-21)
+
+This bounded Wave 34 slice closes the next explicit gap in the completed
+transfer Return wizard. The prior Return slice intentionally supported one
+completed move line; Odoo's distinct `action_create_returns_all` control is
+declared in `addons/stock/wizard/stock_picking_return_views.xml:17-30`, and
+`stock_picking_return.py:222-237` fills each eligible line to its remaining
+delivered quantity before creating the reverse picking.
+
+Core3 adds migration
+`services/inventory/migrations/20260922210000-071-inventory-transfer-return-all.yaml`
+with a deterministic two-line Done delivery and per-line return ledger.
+The existing presentation-only `pages/transfer-detail.yaml` and backend
+`api/transfer-detail.yaml` remain joined by `page.id: transfer-detail`; the
+API adds a separate manager/write Return All action. The mutation creates one
+Waiting reverse transfer with every completed source move and guards current
+company, actor, Done state, transfer row version, multi-line eligibility, and
+duplicate returns.
+
+Focused verification passes 12 tests / 100 assertions across
+`test/inventory_transfer_return_all.integration.test.ts`,
+`test/inventory_transfer_returns.integration.test.ts`, and
+`test/inventory_transfer_workflow.integration.test.ts`, including source and
+discovery checks, migration replay, CRUD/permission boundaries, and restart
+persistence. Core3 desktop/mobile probing reached only the sign-in shell, and
+live Odoo returned HTTP 303 to `/web/login`; exact source, browser, and blocker
+evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-RETURN-ALL-001/`. Full Inventory
+sign-off remains open.

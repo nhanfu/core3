@@ -1691,3 +1691,33 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable product quantity lifecycle;
 PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Return All QA — `INV-TRANSFER-RETURN-ALL-001`
+
+- Odoo source/action: PASS from
+  `addons/stock/wizard/stock_picking_return_views.xml:17-30` and
+  `addons/stock/wizard/stock_picking_return.py:222-237`. The Return All
+  button fills each eligible return line to the remaining delivered quantity
+  and delegates to reverse-picking creation.
+- Core3 contract: PASS. The existing presentation-only
+  `pages/transfer-detail.yaml` and backend `api/transfer-detail.yaml` remain
+  joined by `page.id: transfer-detail`; the API adds a distinct
+  `return_all_inventory_transfer` action. Migration 0.0.71 seeds a two-line
+  Done transfer and persists aggregate/per-line Return All records.
+- Focused verification: PASS —
+  `bun test test/inventory_transfer_return_all.integration.test.ts
+  test/inventory_transfer_returns.integration.test.ts
+  test/inventory_transfer_workflow.integration.test.ts`, 12 tests / 100
+  assertions. Coverage includes source/schema/discovery, multi-line creation,
+  permission/company/actor/stale/duplicate guards, migration replay, and
+  restart persistence.
+- Core3 browser evidence: BLOCKED for this wave. Desktop and mobile probes
+  reached `/auth/login`; captures are explicitly not authenticated Return All
+  evidence and authenticated overflow was not assessed.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired wizard or
+  screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable Return All lifecycle;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.

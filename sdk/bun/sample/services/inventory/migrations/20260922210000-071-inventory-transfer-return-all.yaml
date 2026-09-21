@@ -1,0 +1,38 @@
+version: 0.0.71
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_return_lines (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        return_run_id VARCHAR NOT NULL, source_picking_id VARCHAR NOT NULL,
+        source_move_id VARCHAR NOT NULL, return_move_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL, return_quantity DECIMAL(18,3) NOT NULL,
+        company_name VARCHAR NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_return_lines_run_idx
+        ON inventory_transfer_return_lines(return_run_id, source_picking_id, id);
+      INSERT INTO inventory_pickings(
+        id, operation_type_id, name, contact_name, scheduled_date, source_document,
+        company_name, source_location_id, destination_location_id, state
+      ) VALUES (
+        'delivery-return-all-0001', 'operation-deliveries',
+        'WH/OUT/RETURN-ALL/0001', 'Core3 Demo Customer', DATE '2026-01-15',
+        'SO/RETURN-ALL/0001', 'Core3 Demo Company', 'location-stock',
+        'location-customer', 'Done'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES
+        ('delivery-return-all-0001-move-001', 'delivery-return-all-0001', '[E-COM08] Storage Box', 4, 4),
+        ('delivery-return-all-0001-move-002', 'delivery-return-all-0001', '[E-COM07] Large Cabinet', 2, 2)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_return_lines WHERE source_picking_id = 'delivery-return-all-0001';
+      DELETE FROM inventory_transfer_returns WHERE source_picking_id = 'delivery-return-all-0001';
+      DELETE FROM inventory_picking_moves WHERE picking_id = 'delivery-return-all-0001' OR picking_id LIKE 'return-all-delivery-return-all-0001-%';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-return-all-0001' OR id LIKE 'return-all-delivery-return-all-0001-%';
+      DROP TABLE IF EXISTS inventory_transfer_return_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

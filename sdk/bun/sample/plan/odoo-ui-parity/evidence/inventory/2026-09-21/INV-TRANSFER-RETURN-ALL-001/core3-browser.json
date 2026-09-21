@@ -1,0 +1,28 @@
+{
+  "feature": "INV-TRANSFER-RETURN-ALL-001",
+  "authenticated": false,
+  "results": [
+    {
+      "viewport": "desktop",
+      "requested": "http://127.0.0.1:4345/inventory/transfer/detail?id=delivery-return-all-0001",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:4345/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-return-all-0001",
+      "title": "Sign in to your account",
+      "body": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "errors": [],
+      "badResponses": [],
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "mobile",
+      "requested": "http://127.0.0.1:4345/inventory/transfer/detail?id=delivery-return-all-0001",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:4345/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-return-all-0001",
+      "title": "Sign in to your account",
+      "body": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "errors": [],
+      "badResponses": [],
+      "horizontalOverflow": false
+    }
+  ]
+}
