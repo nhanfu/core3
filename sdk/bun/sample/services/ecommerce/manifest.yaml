@@ -169,6 +169,10 @@ menu:
           label: Shop Add to Cart
           icon: cart
           permission: ecommerce.read
+        - path: /ecommerce/shop-product-action-placement
+          label: Shop Product Action Placement
+          icon: layout
+          permission: ecommerce.read
         - path: /ecommerce/product-extra-fields
           label: Product Page Extra Fields
           icon: list

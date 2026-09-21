@@ -1,0 +1,14 @@
+version: 0.0.155
+kind: data
+description: deterministic Website Sale Shop product-card action placement fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_action_placement_policies (id, row_version, company_name, action_placement)
+      VALUES ('ecommerce-shop-product-action-placement-my-company', 1, 'My Company', 'onhover')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_action_placement_policies WHERE id = 'ecommerce-shop-product-action-placement-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

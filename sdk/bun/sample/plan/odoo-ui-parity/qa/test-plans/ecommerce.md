@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001
+
+- ECOM-FUNC-074: trace Website Sale
+  `website.shop_opt_products_design_classes`, the Products Design Panel
+  inline/on-hover controls, the product-tile placement stylesheet boundary,
+  and `/shop/config/website`; verify separate Core3 Shop policy and page/API
+  contracts.
+- ECOM-WF-085: replay the deterministic On Hover policy, switch to Inline,
+  project the effective Shop placement, reject invalid, foreign-company,
+  missing, and stale writes, and preserve it across migration replay and
+  DuckDB restart.
+- ECOM-PERM-081: require `ecommerce.read` for policy/options/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-067: render the configuration form and Shop projection at desktop
+  and mobile and compare the authenticated Odoo Products Design Panel action
+  placement controls; Core3 runtime is unavailable and Odoo `/shop` is HTTP
+  404 in the supplied references.
+
 ## ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001
 
 - ECOM-FUNC-073: trace Website Sale

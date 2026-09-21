@@ -1,0 +1,36 @@
+page: { id: ecommerce-shop-product-action-placement-policy }
+datasources:
+  - id: ecommerce_shop_product_action_placement_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_UNAUTHENTICATED, message: Sign in to view Shop product action placement settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_FORBIDDEN, message: You do not have permission to view Shop product action placement settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_NOT_FOUND, message: Shop product action placement settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_UNAVAILABLE, message: Shop product action placement settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, action_placement, CASE action_placement WHEN 'inline' THEN 'Inline' ELSE 'On Hover' END AS action_placement_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_action_placement_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_shop_product_action_placement_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('inline', 'Inline'), ('onhover', 'On Hover')) placements(value, label)"
+actions:
+  - id: edit_ecommerce_shop_product_action_placement_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Product Action Placement
+    action: ecommerce.shop.product_action_placement.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_product_action_placement_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, action_placement]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_product_action_placement_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_STALE, message: These Shop product action placement settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :action_placement IN ('inline', 'onhover')", status: 422, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_INVALID, message: Choose Inline or On Hover for product actions. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_product_action_placement_policies SET action_placement = :action_placement, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_PRODUCT_ACTION_PLACEMENT_STALE, message: These Shop product action placement settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, action_placement, CASE action_placement WHEN 'inline' THEN 'Inline' ELSE 'On Hover' END AS action_placement_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_action_placement_policies WHERE id = :id" }
+    fields:
+      - { field: action_placement, label: Product Actions, type: select, options_source: ecommerce_shop_product_action_placement_options, required: true }

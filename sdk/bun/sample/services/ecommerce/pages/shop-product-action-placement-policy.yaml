@@ -1,0 +1,11 @@
+title: Shop Product Action Placement
+page: { id: ecommerce-shop-product-action-placement-policy, route: /ecommerce/shop-product-action-placement, breadcrumb: [eCommerce, Configuration, Shop Product Action Placement], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_shop_product_action_placement_policy
+    editable: true
+    title_field: company_name
+    header_actions:
+      - { id: edit_ecommerce_shop_product_action_placement_policy, label: Save Action Placement, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Shop Product Cards, columns: 2, fields: [{ field: company_name, label: Company }, { field: action_placement, label: Product Actions, type: select, options_source: ecommerce_shop_product_action_placement_options, required: true }, { field: action_placement_label, label: Current Placement, type: StatusChip }, { field: updated_at, label: Last Updated }] }

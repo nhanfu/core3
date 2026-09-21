@@ -1,5 +1,24 @@
 # ecommerce QA ledger
 
+## Shop Product-Card Action Placement (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001`, 2026-09-21)
+
+- Odoo source/builder/styles: pass.
+  `website.shop_opt_products_design_classes` stores the inline/on-hover
+  product action classes; the product-tile stylesheet applies the placement
+  and hover behavior.
+- Core3 lifecycle: migrations 154/155 add the durable company policy and
+  deterministic `onhover` fixture. Separate page/API YAML exposes supported
+  values, a permissioned optimistic update, and Shop projection.
+- Focused verification: **2 tests, 36 assertions, 0 failures**.
+- Adjacent Shop regression: **15 tests, 206 assertions, 0 failures**.
+- Audit: blocked before Ecommerce discovery by unrelated Timesheets page
+  references `portal_task_timesheet_detail` and
+  `back_to_portal_task_timesheets`; no non-Ecommerce file was changed.
+  Scoped ESLint and `git diff --check` pass. Core3 desktop/mobile capture is
+  unavailable; Odoo `/shop` is HTTP 404 on ports 8069 and 8073. Module
+  sign-off remains open.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-action-placement-001/`.
+
 ## Shop Product-Card CTA Visibility (`ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001`, 2026-09-21)
 
 - Odoo source/builder/template/styles: pass.

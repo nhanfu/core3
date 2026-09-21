@@ -1,6 +1,34 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop product-card CTA visibility slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop product-card action placement slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card Action Placement (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001`)
+
+Wave 45 selects the Website Sale Products Design Panel's product-card action
+placement control. Odoo's `shop_opt_products_design_classes` stores either
+`o_wsale_products_opt_actions_inline` or
+`o_wsale_products_opt_actions_onhover`; the product-tile stylesheet changes
+button placement, visibility, and hover behavior from those classes. The
+builder collects and saves the class list through `/shop/config/website`.
+This is distinct from the completed CTA visibility and add-to-cart redirect
+policies.
+
+Core3 migration 154 and deterministic data migration 155 add a durable,
+company-scoped enum defaulting to Odoo's `onhover` class. Separate
+`api/shop-product-action-placement-policy.yaml` and
+`pages/shop-product-action-placement-policy.yaml` contracts join by
+`ecommerce-shop-product-action-placement-policy`; the update requires
+`ecommerce.write`, validates the two source-backed values, and uses company
+and row-version guards. The Shop API projects the effective placement onto
+products and a read-only Shop projection exposes the same setting.
+
+Focused tests cover the supplied Odoo model, builder plugin/panel, product
+tile stylesheet, page/API separation, permissioned update,
+missing/invalid/foreign-company/stale guards, migration replay, Shop
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-action-placement-001/`.
+Authenticated Core3 desktop/mobile capture and paired Odoo rendering remain
+runtime-blocked; no Ecommerce module sign-off is claimed.
 
 ## Bounded feature — Shop Product-Card CTA Visibility (`ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001`)
 

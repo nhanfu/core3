@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Product-Card Action Placement](ecom-catalog-shop-product-action-placement-001/README.md)
+
 - [Shop Product-Card CTA Visibility](ecom-catalog-shop-product-cta-visibility-001/README.md)
 
 - [Shop Product-Card Descriptions](ecom-catalog-shop-product-descriptions-001/README.md)
