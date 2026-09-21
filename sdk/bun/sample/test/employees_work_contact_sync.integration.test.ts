@@ -34,6 +34,10 @@ describe('Employees work-contact synchronization parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(detail.query).toContain('work_contact_row_version');
     expect(sync).toMatchObject({ type: 'server_form', permission: 'employees.write', action: 'employees.records.work_contact.sync' });
+    expect(sync.fields).toEqual([
+      expect.objectContaining({ field: 'work_email', type: 'text' }),
+      expect.objectContaining({ field: 'work_phone', type: 'text' }),
+    ]);
     expect(sync.mutation.fields).toEqual(['work_email', 'work_phone']);
     expect(sync.mutation.guards).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'EMPLOYEES_ACTOR_REQUIRED' }),

@@ -9,7 +9,11 @@ components:
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     groups:
-      - { fields: [] }
+      - title: Channel
+        fields:
+          - { field: name, label: Channel Name }
+          - { field: website_name, label: Website }
+          - { field: active, label: Active }
     header_actions:
       - { id: back_to_livechat_channels, label: Channels, variant: secondary, permission: livechat.read }
       - { id: join_livechat_channel, label: Join Channel, variant: primary, permission: livechat.write, show_if: 'record.joined === false' }

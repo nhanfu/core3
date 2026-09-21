@@ -409,6 +409,9 @@ actions:
           code: STALE_RECORD
           message: The employee changed before the work contact was synchronized. Reload and try again.
       result: { query: "SELECT * FROM employee_work_contact_sync_events WHERE id = 'employee-work-contact-sync-' || CAST(:id AS VARCHAR) || '-' || CAST(:expected_row_version AS VARCHAR)" }
+    fields:
+      - { field: work_email, label: Work Email, type: text }
+      - { field: work_phone, label: Work Phone, type: text }
   - id: create_employee_work_contact
     type: server
     permission: employees.write
