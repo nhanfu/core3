@@ -811,6 +811,17 @@ Status: bounded implementation; browser parity conditional.
 - Core3 browser capture remains blocked by the shared page-discovery errors
   `upload_event_badge_background` and unregistered `FormSection` in Events.
 
+## 2026-09-22 — Lead detail Chatter message and note posting
+
+Status: bounded implementation; Odoo evidence captured, Core3 visual verification blocked by a missing dependency in the CRM-only runtime.
+
+- Stable ID: `CRM-LEAD-CHATTER-001`. This is distinct from follower subscription, Similar Leads, and team overdue opportunity slices.
+- Odoo source: `addons/crm/views/crm_lead_views.xml:324` renders the generic `<chatter reload_on_post="True"/>`; `addons/mail/models/mail_thread.py` provides durable message history and follower-backed thread behavior.
+- Live Odoo observation on browser instance `245ea108`: the authenticated CRM opportunity form exposes `Send message`, `Log note`, `Activity`, `Search Messages`, and `Attach files`; desktop and mobile captures are recorded under `evidence/crm/2026-09-22/CRM-LEAD-CHATTER-001/verification.md`.
+- Core3 uses the existing page/API join `page.id: lead-detail`, `crm_lead_timeline`, and separate `send_lead_message` / `log_lead_note` actions with `crm.write`, content length guards, CRM-owned durable `crm_activity_log` writes, timeline refresh, and migration replay.
+- Focused validation: `test/crm_lead_chatter.integration.test.ts` — **2 tests / 14 assertions**; message/note persistence, validation, missing-lead guard, timeline labels, and file-backed restart all pass.
+- Core3 authenticated route verification is blocked with exact server evidence: `/api/pages/lead-detail?lc=en&id=crm-demo-001` returns HTTP 500 because the CRM-only runner does not register `yaml.service.base`, required by the existing contact lookup datasource. No Core3 visual parity claim is made.
+
 ## 2026-09-22 — Lead detail Attachments
 
 Status: bounded implementation; browser parity conditional.

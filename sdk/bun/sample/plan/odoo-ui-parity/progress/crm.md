@@ -38,6 +38,12 @@
 - `services/ai/agent.yaml` now explicitly allowlists `crm.tags.delete` at `/api/actions/crm.tags.delete` with `crm.manage`; this matches both CRM tag API fragments and does not grant or alter Base permissions.
 - `bun test test/crm_tags_action.integration.test.ts` — 5 pass, 39 assertions. The new regression checks the static AI entry and CRM action binding. The lifecycle allowlist regression also passes.
 
+### 2026-09-22 — CRM-LEAD-CHATTER-001
+
+- Added focused contract, validation, persistence, timeline, and restart coverage for the existing YAML-first lead-detail Send message / Log note workflow.
+- Test: `crm_lead_chatter.integration.test.ts` — 2 pass / 14 assertions. Odoo authenticated desktop/mobile captures are recorded under the feature evidence folder.
+- Core3 browser blocker is exact and reproducible: CRM-only runner returns 500 because `yaml.service.base` is not registered while resolving the existing contact lookup datasource. No Core3 visual parity claim; overall CRM remains conditional.
+
 ## Current coverage
 
 ## Capacity-recycle CRM takeover authorization (2026-09-13)

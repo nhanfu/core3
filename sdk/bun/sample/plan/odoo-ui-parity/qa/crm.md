@@ -305,3 +305,15 @@ Conditional bounded result; not signed off.
 - Core3 target-route browser evidence remains blocked by unrelated Events page
   discovery errors (`upload_event_badge_background`, `FormSection`). Overall
   CRM remains conditional and unsigned-off.
+
+## QA checkpoint — Lead detail Chatter message and note posting (2026-09-22)
+
+Stable ID: `CRM-LEAD-CHATTER-001`.
+
+- Source comparison: Odoo CRM leads inherit the generic `mail.thread` chatter through `<chatter reload_on_post="True"/>`; the live authenticated form exposes Send message, Log note, Activity, Search Messages, and Attach files.
+- Core3 implementation uses the existing YAML page/API join `lead-detail`, CRM-owned `crm_activity_log`, `crm.write` permissions, timeline refresh, and bounded content/missing-record guards. No follower, duplicate, or overdue contracts were changed.
+- Focused test: `bun test test/crm_lead_chatter.integration.test.ts` — **2 pass / 14 assertions**. Migration replay and file-backed restart visibility pass.
+- Odoo captures: `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-CHATTER-001/verification.md`, with authenticated desktop and mobile hashes.
+- Core3 blocker: authenticated shell loads, but the target page returns HTTP 500 from `/api/pages/lead-detail?lc=en&id=crm-demo-001`; server stack reports `Module service is not registered: yaml.service.base` while resolving the existing contact lookup. No Core3 visual parity claim is made.
+
+Disposition: conditional bounded implementation; not CRM sign-off.

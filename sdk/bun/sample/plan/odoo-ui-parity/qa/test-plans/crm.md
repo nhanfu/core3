@@ -40,6 +40,7 @@ unauthenticated actors are required.
 | CRM-FUNC-011 | functional | Team opportunity restart | A created, edited, and assigned team opportunity remains visible after closing and reopening the file-backed CRM database | `crm_team_opportunities.integration.test.ts` restart assertion | pass |
 | CRM-FUNC-012 | functional | Similar Leads stat action | Lead detail exposes a source-backed duplicate count; read-only stat navigation returns matching email/phone/customer leads and opens each detail | `crm_lead_duplicates.integration.test.ts` | pass; browser comparison conditional |
 | CRM-FUNC-013 | functional | Lead detail Followers | Add/remove a valid follower from the Odoo chatter, ignore duplicate subscriptions, and preserve follower/audit rows after restart | `crm_lead_followers.integration.test.ts` | pass; browser comparison conditional |
+| CRM-FUNC-014 | functional | Lead detail Chatter | Send message and log note through the lead-detail composer; enforce content bounds, missing-lead guard, timeline labels, and restart persistence | `crm_lead_chatter.integration.test.ts` | pass; browser comparison conditional |
 | CRM-FUNC-014 | functional/data | Lead detail Attachments | Upload accepted files, list metadata, preview image attachments, download protected bytes, and preserve rows after restart | `crm_lead_attachments.integration.test.ts` | pass; browser comparison conditional |
 | CRM-FUNC-007 | functional | Reports/forecast | Pipeline, leads, activities and forecast reports return real scoped graph/pivot/list rows | reporting tests | pass |
 | CRM-FUNC-008 | data | Empty/error/not-found | Every list/detail/report handles empty, no-result, missing and transport failure without fabricated rows | contract tests | pass |
@@ -57,6 +58,7 @@ unauthenticated actors are required.
 | CRM-WF-006 | integration | Durable boundary | Long-running external campaign/mail or cross-module workflow is declared for Temporal | Replay/restart, retry, timeout and compensation required before activation | planned |
 | CRM-WF-007 | workflow | Team opportunity drill-down | Team stat → scoped opportunity board → create/edit/assign → reload preserves team and row-version state | Cross-team, closed-stage, stale-row and missing-record guards return bounded errors | pass |
 | CRM-WF-008 | workflow | Lead chatter follower subscription | Open lead → add follower → remove follower; duplicate add/remove is idempotent and actual changes are audited | Unknown lead or auth user returns a bounded 404 without local changes | pass; browser comparison conditional |
+| CRM-WF-009 | workflow/integration | Lead chatter message/note | Open lead → Send message or Log note → refresh timeline; message and note remain distinct and append-only | Blank/oversized content and unknown lead return bounded errors without writes; restart retains history | pass; browser comparison conditional |
 | CRM-WF-009 | workflow/integration | Lead chatter attachment lifecycle | Open lead → attach file → refresh attachment panel → download/preview; upload writes audit metadata and the protected route requires CRM read | Invalid name/size, unknown lead, forbidden datasource, missing record, and restart preserve bounded behavior | pass at contract/route level |
 
 ## Permission and security cases
@@ -86,6 +88,7 @@ unauthenticated actors are required.
 | CRM-UI-006 | Team opportunity drill-down | 1440x900, 390x844 | Authenticated team stat navigation and opportunity route render populated deterministic rows with zero page/request errors and no document overflow | pass; Odoo visual comparison open |
 | CRM-UI-007 | Similar Leads stat/drill-down | 1440x900, 390x844 | Lead detail shows the conditional duplicate count and the drill-down stays responsive with list/kanban rows | conditional; Core3 runtime blocked by unrelated Events discovery failure; Odoo CRM absent in `core3_reference` |
 | CRM-UI-008 | Lead detail follower panel | 1440x900, 390x844 | Odoo chatter follower list, Add Followers control, remove action, empty state, and mobile layout are captured before visual parity is claimed | planned; no capture in bounded implementation |
+| CRM-UI-009 | Lead detail chatter composer | 1440x900, 390x844 | Send message/Log note controls, timeline labels, mobile scroll state, and no overflow are compared against Odoo | conditional; Odoo captures pass, Core3 route blocked by missing `yaml.service.base` |
 | CRM-UI-009 | Lead detail attachment panel | 1440x900, 390x844 | Attach files control, count, metadata, image preview overlay, download action, empty/error states, and mobile layout are captured before visual parity is claimed | conditional; BrowserSkill borrow confirmation timed out |
 
 ## Exit criteria
