@@ -1,0 +1,14 @@
+version: 0.0.133
+kind: data
+description: deterministic eCommerce product page image roundness fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_image_roundness_policies (id, row_version, company_name, image_roundness)
+      VALUES ('ecommerce-product-page-image-roundness-my-company', 1, 'My Company', 'none')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_image_roundness_policies WHERE id = 'ecommerce-product-page-image-roundness-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

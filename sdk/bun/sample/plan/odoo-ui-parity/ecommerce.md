@@ -2,6 +2,33 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Image Roundness (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`)
+
+Wave 34 selected Odoo Website Sale's still-open product image roundness
+setting. The supplied `website` model defines `product_page_image_roundness`
+as None, Small, Medium, or Big; the product template applies the selected
+value to the product-page image radius class. This is distinct from the
+completed image spacing, layout, width, and desktop/mobile ratio policies.
+
+Core3 migrations 132/133 add a durable company-scoped roundness policy and
+deterministic None fixture. Separate
+`pages/product-page-image-roundness-policy.yaml` and
+`api/product-page-image-roundness-policy.yaml` contracts join by
+`ecommerce-product-page-image-roundness-policy`; the form requires
+`ecommerce.write`, validates the four source values, and uses row-version
+optimistic concurrency. Product Detail has a separate read projection for the
+effective company roundness and displays the current choice. Migration replay
+and DuckDB restart preserve the setting; invalid, foreign-company, and stale
+writes are rejected.
+
+Focused source/contract, CRUD, permission, validation, projection, replay, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-roundness-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Image Spacing (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`)
 
 Wave 33 selected Odoo Website Sale's still-open product image spacing setting.

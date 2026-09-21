@@ -133,6 +133,10 @@ menu:
           label: Product Page Image Spacing
           icon: image
           permission: ecommerce.read
+        - path: /ecommerce/product-page-image-roundness
+          label: Product Page Image Roundness
+          icon: image
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

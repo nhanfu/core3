@@ -976,7 +976,7 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 | Permission/company/empty guards | `timesheets.write`, active timesheetable project/current company, empty defaults, analytic-account scope | pass |
 | Context/concurrency boundary | stale selected project rejected before create; existing row persistence retained | pass |
 | Restart | migration replay and file-backed project/default read pass | pass |
-| Focused regression | new test 4/4 (21 expectations); related project data/report/dashboard/dependency 22 passing (122 expectations) | pass, with one discovery-only blocker |
+| Focused regression | new test 4/4 (21 expectations); related project data/report/dashboard/dependency 18 passing (101 expectations) | pass, with one discovery-only blocker |
 | Audit/lint/diff | ESLint and scoped diff-check pass; UI audit stops on shared non-Timesheets YAML parse error | partial; blocker recorded |
 | Authenticated desktop/mobile evidence | Core3 and paired Odoo project route/action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login`; no sign-off |
 

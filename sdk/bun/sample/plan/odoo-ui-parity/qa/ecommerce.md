@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Product Page Image Roundness (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines None, Small, Medium, and
+  Big; the product template applies the selected value to its image radius
+  class.
+- Core3 lifecycle: focused verification pass. Migrations 132/133 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit roundness validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_image_roundness.integration.test.ts --timeout
+  30000` — **2 passed, 26 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: roundness, spacing, width, layout, ratio, and Product Detail
+  suites — **15 passed, 155 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **747 pages, 756 routes, and 1490
+  datasources**; scoped ESLint and `git diff --check` passed.
+- QA decision: bounded slice verified; local implementation commit is
+  `2cc62edd` and has not been pushed;
+  Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-roundness-001/`.
+
 ## Product Page Image Spacing (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines None, Small, Medium, and

@@ -1864,8 +1864,8 @@ duplicate migration is needed.
 
 Focused coverage is
 `test/timesheets_project_context_default.integration.test.ts`: 4 tests / 21
-expectations. Related project report/dashboard/dependency data coverage is 22
-passing tests / 122 expectations; one discovery-only project contract test is
+expectations. Related project report/dashboard/dependency data coverage is 18
+passing tests / 101 expectations; one discovery-only project contract test is
 blocked by a concurrent non-Timesheets YAML parse error. Scoped ESLint and
 Timesheets-owned `git diff --check` pass. Full module regression and UI audit
 are blocked by that shared discovery boundary.

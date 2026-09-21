@@ -74,6 +74,12 @@ components:
     title_field: company_name
     groups:
       - { title: Product Page Image Spacing, columns: 2, fields: [{ field: company_name, label: Company }, { field: image_spacing_label, label: Current Spacing, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_product_page_image_roundness
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Product Page Image Roundness, columns: 2, fields: [{ field: company_name, label: Company }, { field: image_roundness_label, label: Current Roundness, type: StatusChip }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variants

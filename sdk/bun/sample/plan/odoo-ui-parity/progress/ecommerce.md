@@ -4,16 +4,18 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 34 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`
+(committed locally as `2cc62edd`; not pushed).
 Latest Wave 33 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`
-(committed locally as `cafc7605`; not pushed).
+(committed as `98aaaccc` in the current synchronized base).
 Latest Wave 32 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
 (committed locally as `726521e9`; pushed in the current synchronized base).
 Latest Wave 31 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
 (committed locally as `a79b02c9`; pushed in the current synchronized base).
 Latest Wave 30 bounded slice: `ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`
 (committed locally as `c4930038`; pushed in the current synchronized base).
-Latest committed bounded slice: `cafc7605`
-(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`, local and not pushed).
+Latest committed bounded slice: `2cc62edd`
+(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`, local and not pushed).
 Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
@@ -33,7 +35,16 @@ and 1478 datasources; scoped ESLint and diff checks pass. Core3
 desktop/mobile capture is blocked by unavailable ports 3000/4312/4313 and no
 persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and
 8073. This bounded slice is not module sign-off; the implementation commit
-implementation commit: `cafc7605` (local and not pushed).
+will be recorded here after local commit.
+
+Wave 34 verification: the focused suite passes 2 tests and 26 assertions; the
+roundness plus prior image policy and Product Detail regression passes 15 tests
+and 155 assertions. The UI audit passes at 747 pages, 756 routes, and 1490
+datasources; scoped ESLint and diff checks pass. Core3 desktop/mobile capture
+is blocked by unavailable ports 3000/4312/4313 and no persistent browser
+runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and 8073. This bounded
+slice is not module sign-off; implementation commit: `2cc62edd` (local and
+not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
 

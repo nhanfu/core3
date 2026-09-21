@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001
+
+- ECOM-FUNC-063: trace Website Sale `product_page_image_roundness`, its None,
+  Small, Medium, and Big values, and the product-template image-radius class;
+  verify separate Core3 policy and Product Detail page/API contracts.
+- ECOM-WF-074: replay the deterministic None policy, switch roundness values,
+  project the effective Product Detail roundness, reject invalid/foreign/stale
+  writes, and preserve the policy across migration replay and DuckDB restart.
+- ECOM-PERM-070: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards, with safe stale replay behavior.
+- ECOM-UI-056: render the roundness form and Product Detail projection at
+  desktop and mobile and compare the authenticated Odoo product-page radius
+  behavior; Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the
+  supplied references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001
 
 - ECOM-FUNC-062: trace Website Sale `product_page_image_spacing`, its None,
