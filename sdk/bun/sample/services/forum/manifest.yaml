@@ -18,6 +18,7 @@ menu:
         - { path: /forum-questions, label: Questions, icon: help, permission: forum.read }
         - { path: /forums, label: Forums, icon: forum, permission: forum.read }
         - { path: /forum-tags, label: Tags, icon: tag, permission: forum.read }
+        - { path: /forum-close-reasons, label: Close Reasons, icon: settings, permission: forum.read }
     - id: reporting
       label: Reporting
       items:

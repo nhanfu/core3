@@ -1,0 +1,18 @@
+version: 0.0.8
+kind: schema
+description: Durable Odoo forum.post.reason configuration records
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS forum_post_reasons (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, reason_type VARCHAR NOT NULL DEFAULT 'basic',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS forum_post_reasons_type_idx ON forum_post_reasons(reason_type);
+    down: |
+      DROP TABLE IF EXISTS forum_post_reasons;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

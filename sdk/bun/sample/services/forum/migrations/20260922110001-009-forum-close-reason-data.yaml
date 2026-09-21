@@ -1,0 +1,26 @@
+version: 0.0.9
+kind: data
+description: Deterministic Odoo forum.post.reason demo records
+type:
+  postgres:
+    up: |
+      INSERT INTO forum_post_reasons (id, name, reason_type) VALUES
+        ('forum-reason-001', 'Duplicate post', 'basic'),
+        ('forum-reason-002', 'Off-topic or not relevant', 'basic'),
+        ('forum-reason-003', 'Too subjective and argumentative', 'basic'),
+        ('forum-reason-004', 'Not a real post', 'basic'),
+        ('forum-reason-005', 'Not relevant or out dated', 'basic'),
+        ('forum-reason-006', 'Contains offensive or malicious remarks', 'basic'),
+        ('forum-reason-007', 'Spam or advertising', 'basic'),
+        ('forum-reason-008', 'Too localized', 'basic'),
+        ('forum-reason-009', 'Insulting and offensive language', 'offensive'),
+        ('forum-reason-010', 'Violent language', 'offensive'),
+        ('forum-reason-011', 'Inappropriate and unacceptable statements', 'offensive'),
+        ('forum-reason-012', 'Threatening language', 'offensive'),
+        ('forum-reason-013', 'Racist and hate speech', 'offensive')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM forum_post_reasons WHERE id LIKE 'forum-reason-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

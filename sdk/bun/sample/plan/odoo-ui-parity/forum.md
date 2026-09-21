@@ -1,8 +1,8 @@
-# Forum parity — bounded wave 6 slice
+# Forum parity — bounded wave 7 slice
 
-Status: in-progress. Wave 6 adds the authenticated Forum Tags list/form behind
-the existing Forum menu. It is not the anonymous `/forum` website route or the
-complete answer, rank, badge, and close-reason module.
+Status: in-progress. Wave 7 adds the authenticated Post Close Reasons editable
+list behind the existing Forum menu. It is not the anonymous `/forum` website
+route or the complete answer, rank, badge, and moderation module.
 
 ## Source-backed Odoo trace
 
@@ -19,6 +19,8 @@ Reference: Odoo 19 `addons/website_forum`.
 | Forums list | `forum_forum_view_tree` | List view | `forum.read` |
 | Website → Configuration → Forum → Tags | `menu_forum_tag_global` → `forum_tag_action` | `/forum-tags` | `forum.read` |
 | Forum Tags list/form | `forum_tag_view_list`, `forum_tag_view_form` | List with create/edit form | `forum.read` / `forum.write` |
+| Website → Configuration → Forum → Close Reasons | `menu_forum_post_reasons` → `forum_post_reason_action` | `/forum-close-reasons` | `forum.read` |
+| Post Close Reasons list | `forum_post_reason_view_list` | Editable List | `forum.manage` |
 | Forum Questions list | `forum_post_action` | `/forum-questions` | `forum.read` |
 | Question edit | `forum_post_view_form` | question detail edit form | `forum.write` |
 | Question archive | moderation action on `forum.post` | question row/detail action | `forum.manage` |
@@ -80,6 +82,16 @@ website object actions.
 - Migration `20260922100000-007-forum-tag-constraint.yaml` adds the durable
   database uniqueness index; the tag suite covers search, exact token counts,
   empty/transport-error behavior, stale updates, permissions, and restart.
+- `pages/close-reasons.yaml` is presentation-only and `api/close-reasons.yaml`
+  owns the matching `forum-close-reasons` datasource/actions. The list mirrors
+  Odoo's `editable="bottom"` surface with required `name` and the
+  `basic`/`offensive` `reason_type` selection. `forum.manage` gates create,
+  edit, and delete; mutations require valid types and current `row_version`.
+- Migrations `20260922110000-008-forum-close-reason-schema.yaml` and
+  `20260922110001-009-forum-close-reason-data.yaml` create the durable reason
+  table and idempotently seed Odoo's 13 demo reasons. The focused suite covers
+  search, empty/transport-error behavior, validation, stale writes,
+  permission enforcement, deletion, migration reapply, and restart.
 
 ## Acceptance/evidence
 
@@ -98,6 +110,10 @@ website object actions.
 - [x] Odoo Forum Tags list/form is implemented with page/API separation,
   durable uniqueness, create/edit persistence, post-tag rename refresh, stale
   and validation guards, restart coverage, and authenticated `forum.write`.
+- [x] Odoo Post Close Reasons editable list is implemented with page/API
+  separation, durable Odoo seed data, create/edit/delete actions, valid-type
+  and required-name guards, stale-row protection, `forum.manage`, and restart
+  coverage.
 - [ ] Odoo and Core3 authenticated desktop 1440×900 captures.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
@@ -137,6 +153,32 @@ Odoo Tags list/form exists to capture. Core3 browser capture is also blocked by
 the unrelated pre-existing `services/blog/pages/blog-workflow.yaml` discovery
 parse error; the backend exits before binding port 3001. No visual parity claim
 is made.
+
+## Wave 7 source-backed feature — Post Close Reasons — 2026-09-22
+
+Odoo 19 source comparison identified the next self-contained `website_forum`
+configuration action after the completed Tags slice. `views/forum_menus.xml`
+declares `menu_forum_post_reasons` at sequence 50 and
+`views/forum_post_reason_views.xml` exposes `forum_post_reason_action` at
+`/forum-close-reasons` with `view_mode=list`; its editable list contains
+`name` and `reason_type`. `models/forum_post_reason.py` requires `name` and
+defines the `basic`/`offensive` selection, ordered by name. Ranks and Badges
+remain separate `gamification` actions and are not approximated in this slice.
+
+Core3 implements the bounded list in `services/forum/pages/close-reasons.yaml`
+and `services/forum/api/close-reasons.yaml`, joined by `page.id:
+forum-close-reasons`. The new table and deterministic 13-row Odoo fixture are
+owned by migrations 008/009. `test/forum_close_reasons.integration.test.ts`
+covers the page/API contract, populated/search/empty/error states, CRUD,
+invalid type and blank name guards, stale update/delete, `forum.manage` at the
+authenticated action boundary, migration reapply, and file-backed restart.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
+The Odoo desktop/mobile launcher captures and `/forum` response show that
+`website_forum` is not installed in `core3_reference`; no Odoo Close Reasons
+screen exists to pair. Core3 browser capture remains blocked by the unrelated
+pre-existing Blog YAML discovery parse error before port 3001 binds. No visual
+parity or module sign-off is claimed.
 
 ## Runtime evidence and blockers — 2026-09-12
 

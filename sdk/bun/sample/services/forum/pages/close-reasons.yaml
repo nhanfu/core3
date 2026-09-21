@@ -1,0 +1,27 @@
+title: Post Close Reasons
+page: { id: forum-close-reasons, route: /forum-close-reasons, breadcrumb: [Website, Configuration, Forum, Close Reasons], auth: { require: [forum.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: forum_close_reasons
+    create_action: create_forum_close_reason
+    create_label: New close reason
+    search: { label: Search close reasons, placeholder: 'Search close reason...' }
+    inline_edit:
+      create_action: create_forum_close_reason
+      update_action: edit_forum_close_reason
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Closing Reason }
+        - { field: reason_type, type: select, required: true, options: [{ value: basic, label: Basic }, { value: offensive, label: Offensive }] }
+    columns:
+      - { field: name, label: Closing Reason, type: PrimaryEntityCell }
+      - { field: reason_type, label: Reason Type }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_forum_close_reason, label: Edit, icon: edit }, { id: delete_forum_close_reason, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_forum_close_reason
+    row_double_click_action: edit_forum_close_reason
+    row_actions: menu
+    empty_state: { title: No close reasons found, description: Create a reason to explain why a forum post was closed. }

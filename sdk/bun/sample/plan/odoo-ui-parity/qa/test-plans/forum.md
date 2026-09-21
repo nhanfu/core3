@@ -39,6 +39,7 @@ databases and deterministic IDs.
 | FORUM-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate posts, answers or tags | planned restart/migration gate |
 | FORUM-FUNC-008 | Assets/import/export/print | Exercise post images/assets, content import/export and exposed print/share actions | planned browser interaction gate |
 | FORUM-FUNC-009 | Forum Tags CRUD | List/search tags, create/edit name/color/forum, exact post counts, duplicate and required guards | pass: `forum_tags.integration.test.ts` |
+| FORUM-FUNC-010 | Post Close Reasons CRUD | List/search Odoo reasons, inline create/edit/delete name/type, required/invalid/stale guards, migration reapply and restart persistence | pass: `forum_close_reasons.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -50,6 +51,7 @@ databases and deterministic IDs.
 | FORUM-WF-004 | Website integration | Published content resolves through Website routes with correct site/company scope | planned integration gate |
 | FORUM-WF-005 | Durable/external boundary | Notifications, moderation jobs, asset processing and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | FORUM-WF-006 | Tag rename relation | Rename updates the denormalized comma-delimited post token atomically and preserves counts after reload/restart | pass: `forum_tags.integration.test.ts` |
+| FORUM-WF-007 | Close reason state contract | Only `basic`/`offensive` reason types persist; stale edits/deletes fail without changing the current row | pass: `forum_close_reasons.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -62,6 +64,7 @@ databases and deterministic IDs.
 | FORUM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected content | planned |
 | FORUM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current forum/post/tag unchanged | pass at contract level |
 | FORUM-PERM-007 | Tag manager boundary | `forum.write` can create/edit; `forum.read` only is denied; invalid/inactive forum and duplicate `(forum_id,name)` are rejected | pass: `forum_tags.integration.test.ts` |
+| FORUM-PERM-008 | Close reason manager boundary | `forum.read` can list; only `forum.manage` can create/edit/delete; direct action calls remain forbidden without it | pass: `forum_close_reasons.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -72,6 +75,7 @@ databases and deterministic IDs.
 | FORUM-UI-003 | Moderation/configuration | both | Forms, dialogs, flags, settings and empty states match Odoo | planned |
 | FORUM-UI-004 | Current route regression | all manifest-owned Forum routes | Authenticated/public desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 | FORUM-UI-005 | Tags list/form | 1440x900, 390x844 | Paired Odoo/Core3 captures for list and form; Odoo addon and Core3 runtime must be available | blocked: `FORUM-TAG-001` |
+| FORUM-UI-006 | Close Reasons editable list | 1440x900, 390x844 | Odoo list labels/columns and Core3 editable list must be paired when the addon and Core3 runtime are available | blocked: `FORUM-CLOSE-REASONS-001` |
 
 ## Exit criteria
 

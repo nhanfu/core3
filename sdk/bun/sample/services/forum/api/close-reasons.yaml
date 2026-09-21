@@ -1,0 +1,74 @@
+page: { id: forum-close-reasons }
+datasources:
+  - id: forum_close_reasons
+    permission: forum.read
+    error_states:
+      unauthorized: { status: 401, code: FORUM_CLOSE_REASONS_UNAUTHORIZED, message: Sign in to view Post Close Reasons. }
+      forbidden: { status: 403, code: FORUM_CLOSE_REASONS_FORBIDDEN, message: You do not have permission to view Post Close Reasons. }
+      transport_error: { status: 503, code: FORUM_CLOSE_REASONS_UNAVAILABLE, message: Post Close Reasons are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, reason_type
+      FROM forum_post_reasons
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR reason_type ILIKE '%' || :q || '%')
+      ORDER BY name, id
+actions:
+  - id: create_forum_close_reason
+    type: server_form
+    permission: forum.manage
+    title: New Post Close Reason
+    action: forum.close_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [forum_close_reasons]
+    mutation:
+      operation: insert
+      table: forum_post_reasons
+      generated: [id]
+      fields: [name, reason_type]
+      required: [name]
+      defaults: { reason_type: basic }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: FORUM_CLOSE_REASON_NAME_REQUIRED, message: A closing reason is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:reason_type AS VARCHAR) IN ('basic', 'offensive')", status: 422, code: FORUM_CLOSE_REASON_TYPE_INVALID, message: Choose a valid close reason type. }
+      result: { query: "SELECT * FROM forum_post_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Closing Reason, type: text, required: true }
+      - { field: reason_type, label: Reason Type, type: select, options: [{ value: basic, label: Basic }, { value: offensive, label: Offensive }], required: true, default: basic }
+  - id: edit_forum_close_reason
+    type: server_form
+    permission: forum.manage
+    title: Edit Post Close Reason
+    action: forum.close_reasons.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [forum_close_reasons]
+    mutation:
+      operation: update
+      table: forum_post_reasons
+      fields: [name, reason_type]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_post_reasons WHERE id = :id", status: 404, code: FORUM_CLOSE_REASON_NOT_FOUND, message: Post close reason was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: FORUM_CLOSE_REASON_NAME_REQUIRED, message: A closing reason is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:reason_type AS VARCHAR) IN ('basic', 'offensive')", status: 422, code: FORUM_CLOSE_REASON_TYPE_INVALID, message: Choose a valid close reason type. }
+      result: { query: "SELECT * FROM forum_post_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Closing Reason, type: text, required: true }
+      - { field: reason_type, label: Reason Type, type: select, options: [{ value: basic, label: Basic }, { value: offensive, label: Offensive }], required: true }
+  - id: delete_forum_close_reason
+    type: server
+    permission: forum.manage
+    action: forum.close_reasons.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [forum_close_reasons]
+    mutation:
+      operation: delete
+      table: forum_post_reasons
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_post_reasons WHERE id = :id", status: 404, code: FORUM_CLOSE_REASON_NOT_FOUND, message: Post close reason was not found. }

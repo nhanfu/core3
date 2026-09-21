@@ -50,6 +50,23 @@ Tags captures are blocked independently because `website_forum` is not
 installed in `core3_reference`; desktop/mobile launcher captures record both
 facts. No visual sign-off is claimed.
 
+## Wave 7 — Post Close Reasons (2026-09-22)
+
+Odoo 19's next self-contained `website_forum` configuration action is
+`menu_forum_post_reasons` → `forum_post_reason_action` (`/forum-close-reasons`),
+with the editable list from `forum_post_reason_view_list`. Core3 now keeps the
+page and API in separate YAML files joined by `page.id`, adds durable seeded
+`basic`/`offensive` reasons, manager-only CRUD, required/invalid/stale guards,
+and idempotent migration/restart coverage. Ranks and Badges are external
+`gamification` actions and remain explicitly deferred.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
+Focused test passed 4/4 tests and 25/25 assertions; the full Forum corpus
+passed 25/25 tests and 180/180 assertions. Odoo visual pairing is blocked by
+the missing `website_forum` addon in `core3_reference`; Core3 browser capture is
+blocked by the pre-existing Blog YAML discovery error. No visual sign-off is
+claimed.
+
 ## Next bounded task
 
 QA should verify the committed edit/archive candidate in authenticated desktop

@@ -95,3 +95,19 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## Wave 7 developer handoff — Post Close Reasons (2026-09-22)
+
+- Odoo source-backed Close Reasons list completed from
+  `addons/website_forum/views/forum_post_reason_views.xml`,
+  `views/forum_menus.xml`, and `models/forum_post_reason.py`.
+- Focused suite: `bun test ./test/forum_close_reasons.integration.test.ts` — 4
+  tests, 25 assertions, passed.
+- Full Forum corpus: `bun test ./test/forum*.integration.test.ts` — 25 tests,
+  180 assertions, passed.
+- Odoo desktop/mobile authenticated launcher captures and the authenticated
+  `/forum` 404 record the exact blocker: `website_forum` is not installed in
+  `core3_reference`, so Close Reasons is absent. Core3 desktop/mobile capture
+  is blocked by the unrelated Blog YAML discovery parse error before backend
+  bind. No visual parity claim is made.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
