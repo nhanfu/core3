@@ -108,3 +108,16 @@ The migration replay expectation was updated from 12 to 13 versions after the
 new Expenses migration. Paired Odoo screenshots and the Core3 browser result
 are recorded in the feature evidence; no module sign-off is claimed while the
 broader authenticated actor and paired visual gates remain open.
+
+## Batch 10 - My Expenses Activity view (2026-09-22)
+
+Implemented `EXPENSE-FUNC-013` in the module-owned Expenses page/API YAML.
+The shared ActivityView now has the six Odoo hr_expense activity columns on
+`/expenses`, and `expenses_my` reads durable scheduled activity metadata with
+explicit empty and transport-error states. Focused coverage is
+`test/expenses_activity_view.integration.test.ts`; evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-013/`.
+The Odoo reference was captured through BrowserSkill instance `245ea108` at
+1916x833 and 390x844. Core3 authenticated browser verification is recorded as
+blocked if the local listener/session is unavailable; this feature does not
+change the module's conditional sign-off status.

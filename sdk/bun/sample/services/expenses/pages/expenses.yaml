@@ -24,6 +24,19 @@ components:
         group_by: status
         groups_source: expense_statuses
         card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: employee_name
+        record_date_field: expense_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: expense_approval, label: Expense Approval, icon: $ }
+          - { id: document, label: Document, icon: ▣ }
     page_size: 25
     column_chooser: true
     selectable: true

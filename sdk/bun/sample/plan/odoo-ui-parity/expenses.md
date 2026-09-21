@@ -590,3 +590,26 @@ capture matches 390x844; the available Agent Window produced a 1916x833 desktop
 viewport, so no pixel-level 1440x900 category-detail comparison is claimed.
 Core3 authenticated browser interaction was not available because no local
 Core3 listener was running; this remains an explicit blocker.
+
+## My Expenses Activity view follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-013`.
+
+The next uncovered bounded surface is the installed Odoo My Expenses Activity
+view, distinct from `EXPENSE-FUNC-011`'s detail chatter scheduling/completion
+lifecycle and `EXPENSE-FUNC-012`'s category cost propagation. Local Odoo source
+backs this choice at `hr_expense/views/hr_expense_views.xml:467-487` (the
+employee/amount Activity card) and `:489-494` (My Expenses action view order).
+The activity columns are To-Do, Email, Call, Meeting, Expense Approval, and
+Document, with a Schedule activity footer. The live authenticated
+`core3_reference` reference at `http://localhost:8069` confirmed the Activity
+view at desktop `1916x833` and mobile `390x844`.
+
+Core3 adds the Activity tab to `/expenses` using the shared `ActivityView`.
+The presentation remains in `pages/expenses.yaml`; `api/expenses.yaml` joins
+the durable `expense_scheduled_activities` table into `expenses_my` using the
+existing `page.id: expenses` binding. Activity rows expose stable type,
+summary, deadline, assignee, state, and count metadata; normal list filters
+and search remain intact. Empty and transport-error datasource states are
+explicit. Detail scheduling and completion remain owned by `EXPENSE-FUNC-011`;
+this slice does not duplicate that mutation contract.

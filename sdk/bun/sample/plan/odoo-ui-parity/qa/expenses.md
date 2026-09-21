@@ -178,3 +178,18 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
   claimed.
 
 | EXPENSE-FUNC-012 | Expense category cost write | Draft linked expenses update with quantity, category rename relinks, non-draft amounts remain stable, sheet totals persist, and invalid/stale writes are rejected | pass: focused suite |
+
+## Batch 10 - My Expenses Activity view (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-013`, Odoo My Expenses Activity view only.
+- Source-backed change: the shared ActivityView is now declared on the Expenses
+  page with Odoo's six activity columns; the service datasource joins the
+  durable scheduled-activity row without page-local fixtures or new schema.
+- Focused evidence: `expenses_activity_view.integration.test.ts` covers the
+  page/API binding, source-defined labels, scheduled-row metadata, search,
+  empty state, and transport error.
+- Odoo captures are present under the feature evidence folder at the available
+  Agent Window desktop size `1916x833` and requested mobile size `390x844`.
+- Core3 authenticated browser verification remains conditional on the local
+  Core3 listener and authenticated session; no Core3 visual parity claim is
+  made if that runtime is unavailable.

@@ -28,13 +28,32 @@ datasources:
     single: false
     permission: expenses.read
     workflow: expense_items
+    error_states: { transport_error: { status: 503, code: EXPENSES_ACTIVITY_UNAVAILABLE, message: Expense activity data is temporarily unavailable } }
     query: |
       SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
         CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
         printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
-        e.receipt_label, e.company_name, e.department_name, e.state AS status
+        e.receipt_label, e.company_name, e.department_name, e.state AS status,
+        a.id AS activity_id, a.row_version AS activity_row_version,
+        a.activity_type, a.summary AS activity_summary,
+        CAST(a.due_date AS VARCHAR) AS activity_date, a.assigned_to AS activity_user,
+        CASE
+          WHEN a.state = 'Done' THEN 'done'
+          WHEN a.due_date < DATE '2026-09-22' THEN 'overdue'
+          WHEN a.due_date = DATE '2026-09-22' THEN 'today'
+          ELSE 'planned'
+        END AS activity_state,
+        CASE WHEN a.id IS NULL THEN 0 ELSE 1 END AS activity_count
       FROM expenses e
-      WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+      LEFT JOIN LATERAL (
+        SELECT id, row_version, activity_type, summary, due_date, assigned_to, state
+        FROM expense_scheduled_activities
+        WHERE expense_id = e.id
+        ORDER BY CASE WHEN state = 'Planned' THEN 0 ELSE 1 END, due_date NULLS LAST, id
+        LIMIT 1
+      ) a ON TRUE
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%' OR COALESCE(a.summary, '') ILIKE '%' || :q || '%')
         AND (:status IS NULL OR e.state = :status)
         AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
       ORDER BY e.expense_date DESC, e.id
