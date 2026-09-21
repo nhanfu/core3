@@ -1,0 +1,17 @@
+version: 0.0.21
+kind: schema
+description: Persist the quotation template selected on Sales orders
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS sale_order_template_id VARCHAR;
+      INSERT INTO sale_products(id, default_code, name, product_type, list_price, cost_price, uom, category, description)
+      VALUES ('product-demo-office-desks', 'OFFICE-DESK-01', 'Office Desks', 'Goods', 350, 200, 'Units', 'Office', 'Standard office desks')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_products WHERE id = 'product-demo-office-desks';
+      ALTER TABLE orders DROP COLUMN IF EXISTS sale_order_template_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

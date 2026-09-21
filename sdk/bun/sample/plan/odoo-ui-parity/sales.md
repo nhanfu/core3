@@ -162,3 +162,25 @@ boundaries, draft-to-sent transition, and file-backed reopen persistence.
 Authenticated desktop/mobile browser interaction and paired Odoo captures
 remain open for the next browser-capable QA run; no visual parity claim is
 made for this backend/form contract slice. Image artifacts remain outside Git.
+
+## Sales order quotation template field (2026-09-21)
+
+The next source-backed Sales order-form gap is the `sale_management` quotation
+template field visible on Odoo's authenticated New quotation form. Odoo's
+`sale_management/views/sale_order_views.xml` adds `sale_order_template_id` and
+its onchange seeds the quotation's order lines from the active template.
+Core3 now persists the same template reference on `orders`, exposes an active
+template selector on quotation creation/edit and a permissioned Apply Template
+form action, reseeds durable order lines and totals, and guards company,
+active-template, quotation-state, branch-scope, and stale-row boundaries.
+
+Focused coverage: `bun test test/sales_order_detail.integration.test.ts`
+covers template binding, line/total persistence, stale writes, and locked
+orders. Odoo's authenticated form evidence is captured at
+`/tmp/odoo-sales-template-form-desktop-20260921-final.png` and
+`/tmp/odoo-sales-template-form-mobile-20260921.png`; the live form exposed
+`Quotation Template`, `Office Furnitures`, and the line-editor surface.
+Core3 authenticated desktop/mobile capture and Apply Template browser smoke
+are blocked because the shared browser profile has no Core3 session and the
+available password was not supplied; repeated `/api/pages/dashboard` requests
+returned HTTP 401. No Core3 visual parity claim is made.

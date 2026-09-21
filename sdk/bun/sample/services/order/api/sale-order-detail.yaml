@@ -6,12 +6,13 @@ datasources:
     single: true
     permission: orders.read
     query: |
-      SELECT o.id, o.row_version, o.order_number,
+      SELECT o.id, o.row_version, o.order_number, o.sale_order_template_id,
         o.customer_name, o.customer_id, c.row_version AS customer_row_version, o.customer_legal_name, o.customer_legal_name AS shipping_address,
         o.customer_reference, CAST(o.order_date AS VARCHAR) AS order_date,
         CAST(o.validity_date AS VARCHAR) AS validity_date, CAST(o.commitment_date AS VARCHAR) AS commitment_date,
         o.pricelist_name, o.payment_term_name, COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
         COALESCE(c.company_name, 'My Company') AS company_name, o.require_signature, o.require_payment,
+        t.name AS sale_order_template_name,
         COALESCE(c.name, o.customer_name) AS recipient_name, COALESCE(c.email, '') AS recipient_email,
         'Quotation ' || o.order_number AS subject,
         '<p>Hello ' || COALESCE(c.name, o.customer_name) || ',</p><p>Please find quotation ' || o.order_number || ' attached.</p>' AS body_html,
@@ -28,6 +29,7 @@ datasources:
         CASE WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced' ELSE COALESCE(o.invoice_status, 'To invoice') END AS invoice_status,
         (SELECT COUNT(*) FROM sale_invoices i WHERE i.order_id = o.id) AS invoice_count
       FROM orders o LEFT JOIN customers c ON c.id = o.customer_id OR (o.customer_id IS NULL AND c.name = o.customer_name)
+        LEFT JOIN sale_quotation_templates t ON t.id = o.sale_order_template_id
       WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
   - id: sale_order_statuses
     single: false
@@ -64,6 +66,10 @@ datasources:
     single: false
     permission: orders.read
     query: "SELECT name AS value, name AS label FROM sale_payment_terms WHERE active = true ORDER BY due_days, name"
+  - id: sale_order_template_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT id AS value, name AS label FROM sale_quotation_templates WHERE active = true AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name) ORDER BY name"
   - id: sale_unit_lookup
     single: false
     permission: orders.read
@@ -96,7 +102,7 @@ actions:
     mutation:
       operation: update
       table: orders
-      fields: [order_number, customer_name, customer_legal_name, customer_reference, order_date, validity_date, commitment_date, pricelist_name, payment_term_name, require_signature, require_payment, notes]
+      fields: [order_number, customer_name, customer_legal_name, customer_reference, order_date, validity_date, commitment_date, pricelist_name, payment_term_name, sale_order_template_id, require_signature, require_payment, notes]
       required: [order_number, customer_name, order_date]
       timestamps: true
       concurrency: { required: true }
@@ -126,6 +132,10 @@ actions:
           status: 409
           code: SALE_ORDER_LOCKED
           message: Only quotations can be edited
+        - query: "SELECT 1 AS ok WHERE :sale_order_template_id IS NULL OR EXISTS (SELECT 1 FROM sale_quotation_templates WHERE id = :sale_order_template_id AND active = true AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name))"
+          status: 422
+          code: SALES_QUOTATION_TEMPLATE_INVALID
+          message: Select an active quotation template for this company.
       result: { query: "SELECT * FROM orders WHERE id = :id" }
       steps:
         - query: "UPDATE orders SET customer_id = (SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1), customer_row_version = (SELECT row_version FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1) WHERE id = :id"
@@ -140,6 +150,7 @@ actions:
       - { field: commitment_date, label: Delivery Date, type: date }
       - { field: pricelist_name, label: Pricelist, type: select, options_source: sale_order_pricelist_lookup }
       - { field: payment_term_name, label: Payment Terms, type: select, options_source: sale_order_payment_terms_lookup }
+      - { field: sale_order_template_id, label: Quotation Template, type: select, options_source: sale_order_template_lookup }
       - { field: require_signature, label: Online Signature, type: checkbox }
       - { field: require_payment, label: Online Payment, type: checkbox }
       - { field: notes, label: Terms and Conditions, type: textarea }
@@ -303,6 +314,47 @@ actions:
           code: SALE_ORDER_LINE_STALE
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, concat('Added product: ', :description))"
       result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: apply_sale_quotation_template
+    type: server_form
+    permission: orders.write
+    title: Apply quotation template
+    submit_label: Apply
+    action: sales.quotation_template.apply
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    mutation:
+      operation: update
+      table: orders
+      fields: [sale_order_template_id]
+      concurrency: { required: true }
+      scope: { field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Sales order changed before the template was applied. Reload and try again.
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')"
+          status: 409
+          code: SALE_ORDER_LOCKED
+          message: Only quotations can use a quotation template.
+        - query: "SELECT id FROM sale_quotation_templates WHERE id = :sale_order_template_id AND active = true AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name)"
+          status: 422
+          code: SALES_QUOTATION_TEMPLATE_INVALID
+          message: Select an active quotation template for this company.
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_quotation_template_lines l WHERE l.template_id = :sale_order_template_id AND (COALESCE(l.quantity, 0) <= 0 OR NOT EXISTS (SELECT 1 FROM sale_products p WHERE p.active = true AND p.sale_ok = true AND (LOWER(p.name) = LOWER(l.product_name) OR LOWER(regexp_replace(p.name, 's$', '')) = LOWER(regexp_replace(l.product_name, 's$', ''))))))"
+          status: 422
+          code: SALES_QUOTATION_TEMPLATE_LINE_INVALID
+          message: Every quotation template line must use an active product with a positive quantity.
+      steps:
+        - query: "DELETE FROM order_lines WHERE order_id = :id"
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) SELECT 'sale-template-line-' || :id || '-' || CAST(l.sequence AS VARCHAR), :id, l.sequence, COALESCE(NULLIF(l.description, ''), l.product_name), p.id, l.quantity, COALESCE(l.uom, p.uom), p.list_price, 0, 0, 0, 0, l.quantity, ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2), 0, ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2), ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2) FROM sale_quotation_template_lines l JOIN sale_products p ON p.id = (SELECT p2.id FROM sale_products p2 WHERE p2.active = true AND p2.sale_ok = true AND (LOWER(p2.name) = LOWER(l.product_name) OR LOWER(regexp_replace(p2.name, 's$', '')) = LOWER(regexp_replace(l.product_name, 's$', ''))) ORDER BY p2.id LIMIT 1) WHERE l.template_id = :sale_order_template_id ORDER BY l.sequence, l.id"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sales.quotation_template.apply', 'orders', :id, 'Applied quotation template ' || :sale_order_template_id)"
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: sale_order_template_id, label: Quotation Template, type: select, options_source: sale_order_template_lookup, required: true }
   - id: send_sale_order_message
     type: server_form
     permission: orders.write
