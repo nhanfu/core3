@@ -843,3 +843,12 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_all_billed_on_timesheets_filter.integration.test.ts` passes 4/4 tests / 21 expectations, including relation-update freshness and file-backed restart.
 - Odoo browser gate: authenticated desktop selects Billed on Timesheets and renders `1-80 / 92`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-on-timesheets-filter/`.
 - Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
+
+## `TIMESHEET-ALL-BILLED-FIXED-PRICE-FILTER-001` — All Timesheets Billed at a Fixed Price filter (2026-09-21)
+
+- Source gate: `sale_timesheet` inserts `<filter name="billable_fixed" string="Billed at a Fixed Price" domain="[('timesheet_invoice_type', '=', 'billable_fixed')]"/>` into the inherited All Timesheets search view.
+- Core3 gate: the paired `all-timesheets` page/API search contract adds a manager-scoped Billed at a Fixed Price option, records the durable `billing_type` filter contract, exposes pivot billing type, and applies current-company and empty-fixture guards.
+- Focused gate: `test/timesheets_all_billed_fixed_price_filter.integration.test.ts` passes 4/4 tests / 21 expectations, including relation-update freshness and file-backed restart.
+- Odoo browser gate: authenticated desktop selects Billed at a Fixed Price and renders `1-23 / 23`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-fixed-price-filter/`.
+- Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
+- Repository audit blocker: unrelated page discovery rejects `actions[5].result`; exact output is in `audit-blocker.txt`.

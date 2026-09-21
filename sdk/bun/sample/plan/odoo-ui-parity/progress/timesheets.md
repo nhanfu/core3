@@ -782,6 +782,15 @@ sign-off is claimed.
 - Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billed-on-timesheets-filter/`: desktop applies Billed on Timesheets; mobile captures responsive Kanban; `odoo-results.json` records no page/request errors.
 - Core3 desktop/mobile evidence is blocked before authentication because backend `127.0.0.1:3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/report-action blockers remain open and this slice is not sign-off.
 
+## 2026-09-21 — `TIMESHEET-ALL-BILLED-FIXED-PRICE-FILTER-001`
+
+- Selected the next uncovered source-backed All Timesheets interaction: Odoo `sale_timesheet` adds the `Billed at a Fixed Price` search filter over `timesheet_invoice_type = billable_fixed`, distinct from the completed billing filters.
+- Kept `pages/all-timesheets.yaml` and `api/all-timesheets.yaml` separate and joined by `page.id: all-timesheets`; the page adds the filter and the API records its explicit durable `billing_type` contract, exposes pivot billing type, and retains manager permission plus company/empty guards.
+- Focused verification: `test/timesheets_all_billed_fixed_price_filter.integration.test.ts` passed 4/4 tests with 21 expectations, including source mapping, durable filter reads, relation-update freshness, permission/company/empty guards, and file-backed restart.
+- Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billed-fixed-price-filter/`: desktop applies Billed at a Fixed Price; mobile captures responsive Kanban; `odoo-results.json` records no page/request errors.
+- Core3 desktop/mobile evidence is blocked before authentication because backend `127.0.0.1:3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/report-action blockers remain open and this slice is not sign-off.
+- Repository audit is blocked by the unrelated shared page-schema error `actions[5].result is not allowed`; exact output is in `audit-blocker.txt`.
+
 
 ## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
 

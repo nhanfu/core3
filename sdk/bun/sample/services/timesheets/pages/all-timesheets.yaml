@@ -12,6 +12,7 @@ components:
       - { field: mine, label: My Timesheets, options: [{ id: mine, label: My Timesheets }] }
       - { field: billing_type, label: Non-Billable, options: [{ id: non_billable, label: Non-Billable }] }
       - { field: billing_type, label: Billed on Timesheets, options: [{ id: billable_time, label: Billed on Timesheets }] }
+      - { field: billing_type, label: Billed at a Fixed Price, options: [{ id: billable_fixed, label: Billed at a Fixed Price }] }
       - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
       - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
     group_by:

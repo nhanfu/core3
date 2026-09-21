@@ -195,3 +195,27 @@ evidence is blocked because the bounded backend startup did not expose
 `127.0.0.1:3001/api/modules`; exact output is preserved in
 `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain a known blocker
 and no module sign-off is claimed.
+
+## Wave 22 execution — `TIMESHEET-ALL-BILLED-FIXED-PRICE-FILTER-001`
+
+The All Timesheets Billed at a Fixed Price filter source comparison and
+durable contract are covered by
+`test/timesheets_all_billed_fixed_price_filter.integration.test.ts`
+(4 tests / 21 expectations). The test exercises the Odoo
+`timesheet_invoice_type` filter, page/API separation, explicit durable
+`billing_type` contract and pivot exposure, manager permission,
+current-company and empty guards, relation-update freshness, and file-backed
+restart persistence.
+
+Authenticated Odoo captures are in
+`../evidence/timesheets/2026-09-21/timesheet-all-billed-fixed-price-filter/`:
+desktop applies Billed at a Fixed Price and mobile captures responsive Kanban;
+`odoo-results.json` records no page/request errors. Core3 desktop/mobile
+evidence is blocked because the bounded backend startup did not expose
+`127.0.0.1:3001/api/modules`; exact output is preserved in
+`core3-readiness.txt`. Odoo Print/PDF/action surfaces remain a known blocker
+and no module sign-off is claimed.
+
+The repository UI audit is blocked by the unrelated shared page-schema error
+`actions[5].result is not allowed`; exact output is preserved in
+`audit-blocker.txt`.
