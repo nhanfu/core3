@@ -195,3 +195,26 @@ discovery of datasource contracts outside Order ownership.
   Active product equivalent: `cd553ac4`; candidate `61422c4e` was not merged
   separately. Mobile/restricted-actor, restart, and paired Odoo evidence remain
   open.
+
+## 2026-09-22 Sales order display lines slice
+
+- Source contract: Odoo `sale/views/sale_order_views.xml` defines `Add a
+  section` and `Add a note` controls with `default_display_type` values
+  `line_section` and `line_note`; `sale/models/sale_order_line.py` forces those
+  rows to zero quantity and rejects accountable product/price values.
+- Core3 implementation is limited to Order paths: migration
+  `20260922100000-022-sales-order-display-lines.yaml`, the existing paired
+  `sale-order-detail` API/page fragments, and
+  `test/sales_order_display_lines.integration.test.ts`.
+- Focused suite: **4 passed, 24 assertions, 0 failures**. It covers page/API
+  binding, create/edit/delete, zero-total preservation, audit entries,
+  invalid/stale/locked/out-of-scope writes, idempotent migration replay, and
+  file-backed restart persistence. `git diff --check` passed.
+- Authenticated Odoo desktop/mobile evidence is under
+  `/tmp/core3-odoo-parity/sales-next-20260922/`. Core3 visual evidence is
+  blocked: `ss -ltnp` showed only `0.0.0.0:8069` and `[::]:8069`; `127.0.0.1:3001`
+  and `127.0.0.1:3002` were not listening. No Core3 visual parity claim is made.
+- Browser instance `245ea108` was used. The owned `bsk` session was stopped by
+  request after capture; the extension did not acknowledge stop within the CLI
+  timeout and the daemon reported the stop already in progress. No credentials,
+  cookies, or tokens were extracted.

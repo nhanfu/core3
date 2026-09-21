@@ -76,20 +76,28 @@ components:
     column_chooser: true
     actions:
       - { id: add_sale_order_line, label: Add a product, variant: primary, permission: orders.write, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
+      - { id: add_sale_order_section, label: Add a section, variant: secondary, permission: orders.write, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
+      - { id: add_sale_order_note, label: Add a note, variant: secondary, permission: orders.write, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
     empty_state: { title: No order lines, description: Add a product to calculate the order total. }
     footer:
       source: sale_order_detail
       stats:
         - { label: Total, field: total_amount_display }
     children:
-      - { type: LineItemField, id: product_id, field: product_id, display_field: product_name, label: Product, input_type: select, options_source: sale_order_product_lookup }
+      - { type: LineItemField, id: product_id, field: product_id, display_field: product_name, label: Product, input_type: select, options_source: sale_order_product_lookup, readonly: true }
       - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
-      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number }
-      - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: sale_unit_lookup }
-      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit Price, input_type: money }
-      - { type: LineItemField, id: discount, field: discount, display_field: discount_display, label: Discount, input_type: number, decimals: 2 }
-      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Taxes, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number, readonly: true }
+      - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: sale_unit_lookup, readonly: true }
+      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit Price, input_type: money, readonly: true }
+      - { type: LineItemField, id: discount, field: discount, display_field: discount_display, label: Discount, input_type: number, decimals: 2, readonly: true }
+      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Taxes, input_type: money, decimals: 2, readonly: true }
       - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
+      - type: LineItemActions
+        id: sale_order_display_line_actions
+        edit_action: edit_sale_order_display_line
+        actions:
+          - { id: edit_sale_order_display_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.display_type === 'line_section' || row.display_type === 'line_note'" }
+          - { id: delete_sale_order_display_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.display_type === 'line_section' || row.display_type === 'line_note'" }
     columns:
       - { field: product_name, label: Product, width: 230 }
       - { field: description, label: Description, width: 260 }

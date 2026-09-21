@@ -1,0 +1,13 @@
+version: 0.0.22
+type:
+  postgres:
+    up: |
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS display_type VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_order_lines_display_type ON order_lines(display_type);
+    down: |
+      DROP INDEX IF EXISTS idx_order_lines_display_type;
+      ALTER TABLE order_lines DROP COLUMN IF EXISTS display_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

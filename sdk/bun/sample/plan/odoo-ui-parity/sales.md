@@ -184,3 +184,31 @@ Core3 authenticated desktop/mobile capture and Apply Template browser smoke
 are blocked because the shared browser profile has no Core3 session and the
 available password was not supplied; repeated `/api/pages/dashboard` requests
 returned HTTP 401. No Core3 visual parity claim is made.
+
+## Sales order display lines bounded slice (2026-09-22)
+
+The next uncovered order-form capability is Odoo's `sale.order.line`
+presentation rows. `sale/views/sale_order_views.xml` exposes `Add a section`
+and `Add a note` controls in the order-line one-to-many, and
+`sale/models/sale_order_line.py` stores `line_section` / `line_note` rows with
+zero quantity, product, unit price, and totals. The live authenticated Odoo
+New quotation form exposed the same controls, inline `Enter a description`
+editor, and row overflow action on desktop and mobile.
+
+Core3 adds durable `order_lines.display_type` storage, separate page/API
+ownership through `page.id: sale-order-detail`, Add a section/Add a note
+actions, guarded display-line edit/delete actions, timeline entries, and
+unchanged monetary totals. All mutations require `orders.write`, the current
+branch scope, a Draft/Pending Approval order, current parent and line row
+versions, and a non-empty description. The migration is idempotent and the
+focused suite covers migration replay and file-backed restart.
+
+Focused verification: `bun test test/sales_order_display_lines.integration.test.ts`
+passes (4 tests, 24 assertions); `git diff --check` passes. Authenticated Odoo
+captures are `/tmp/core3-odoo-parity/sales-next-20260922/odoo-display-section-desktop.png`
+and `odoo-display-section-mobile.png`; the blank-form controls are also recorded
+in `odoo-display-lines-desktop.png`. Core3 desktop/mobile browser evidence is
+blocked because neither the expected frontend `127.0.0.1:3002` nor backend
+`127.0.0.1:3001` listener was present during the run, so no Core3 visual parity
+claim is made. Detailed source, behavior, and blocker records are under
+`evidence/order/2026-09-22/sales-order-display-lines-001/`.

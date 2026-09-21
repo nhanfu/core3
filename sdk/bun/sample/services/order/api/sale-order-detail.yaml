@@ -39,7 +39,7 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT l.id, l.row_version, l.order_id AS document_id, l.product_id, p.name AS product_name,
+      SELECT l.id, l.row_version, l.order_id AS document_id, COALESCE(l.display_type, 'product') AS display_type, l.product_id, p.name AS product_name,
         l.description, CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', l.quantity) AS quantity_display,
         l.unit, CAST(l.unit_price AS DOUBLE) AS unit_price, printf('$%,.2f', l.unit_price) AS unit_price_display,
         CAST(COALESCE(l.discount, 0) AS DOUBLE) AS discount, printf('%.2f%%', COALESCE(l.discount, 0)) AS discount_display,
@@ -314,6 +314,109 @@ actions:
           code: SALE_ORDER_LINE_STALE
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, concat('Added product: ', :description))"
       result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: add_sale_order_section
+    type: server_form
+    permission: orders.write
+    title: Add a section
+    submit_label: Add
+    action: orders.lines.section.create
+    handler: line_item
+    operation: create
+    domain: order
+    params: { id: '{state.id}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    fields:
+      - { field: description, label: Section, type: text, required: true }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed or is no longer editable; reload before adding a section. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: SALE_ORDER_DISPLAY_LINE_INVALID, message: Section description must be between 1 and 500 characters. }
+      steps:
+        - { query: "INSERT INTO order_lines(id, order_id, sequence, display_type, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) VALUES(:line_id, :id, :next_sequence, 'line_section', TRIM(CAST(:description AS VARCHAR)), NULL, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)" }
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed while adding the section; reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.section.create', 'orders', :id, 'Added section: ' || TRIM(CAST(:description AS VARCHAR)))" }
+      result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: add_sale_order_note
+    type: server_form
+    permission: orders.write
+    title: Add a note
+    submit_label: Add
+    action: orders.lines.note.create
+    handler: line_item
+    operation: create
+    domain: order
+    params: { id: '{state.id}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    fields:
+      - { field: description, label: Note, type: text, required: true }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed or is no longer editable; reload before adding a note. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: SALE_ORDER_DISPLAY_LINE_INVALID, message: Note description must be between 1 and 500 characters. }
+      steps:
+        - { query: "INSERT INTO order_lines(id, order_id, sequence, display_type, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) VALUES(:line_id, :id, :next_sequence, 'line_note', TRIM(CAST(:description AS VARCHAR)), NULL, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)" }
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed while adding the note; reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.note.create', 'orders', :id, 'Added note: ' || TRIM(CAST(:description AS VARCHAR)))" }
+      result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: edit_sale_order_display_line
+    type: server_form
+    permission: orders.write
+    title: Edit section or note
+    submit_label: Save
+    action: orders.lines.display.update
+    handler: line_item
+    operation: update
+    domain: order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    fields:
+      - { field: description, label: Description, type: text, required: true }
+    mutation:
+      concurrency: { required: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed or is no longer editable; reload before saving the line. }
+        - { query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND display_type IN ('line_section', 'line_note') AND row_version = :expected_row_version", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: This section or note changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: SALE_ORDER_DISPLAY_LINE_INVALID, message: Description must be between 1 and 500 characters. }
+      steps:
+        - { query: "UPDATE order_lines SET description = TRIM(CAST(:description AS VARCHAR)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id AND display_type IN ('line_section', 'line_note') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: This section or note changed while saving. }
+        - { query: "UPDATE orders SET updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed while saving the line; reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.display.update', 'orders', :id, 'Updated display line: ' || TRIM(CAST(:description AS VARCHAR)))" }
+      result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: delete_sale_order_display_line
+    type: server
+    permission: orders.write
+    action: orders.lines.display.delete
+    handler: line_item
+    operation: delete
+    domain: order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete line {{row.description}}?'
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    mutation:
+      concurrency: { required: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed or is no longer editable; reload before deleting the line. }
+        - { query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND display_type IN ('line_section', 'line_note') AND row_version = :expected_row_version", status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: This section or note changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id AND display_type IN ('line_section', 'line_note') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: This section or note changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed while deleting the line; reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.display.delete', 'orders', :id, 'Deleted display line')" }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: apply_sale_quotation_template
     type: server_form
     permission: orders.write
