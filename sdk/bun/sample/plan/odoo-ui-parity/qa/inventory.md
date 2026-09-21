@@ -426,6 +426,26 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Location Barcode QA — `INV-LOCATION-BARCODE-001`
+
+- Odoo source/action: PASS. `action_report_location_barcode` is bound to
+  `stock.location` as the `Location Barcode` QWeb PDF report, and the template
+  renders the location name and barcode.
+- Core3 contract: PASS. `pages/location-detail.yaml` remains presentation-only
+  and `api/location-detail.yaml` owns the `stock.action_report_location_barcode`
+  mutation; both share `page.id: location-detail`. Migration 0.0.75 persists
+  report runs and deterministic fixture history.
+- Focused verification: PASS — 4 tests / 29 assertions. Coverage includes
+  page/API separation, source comparison, report creation, idempotent migration,
+  permission denial, company/actor/missing/stale guards, and file-backed restart.
+- Core3 desktop/mobile and live Odoo comparison are recorded in the feature
+  evidence directory. Any unauthenticated login-shell or Odoo redirect is an
+  explicit blocker, not a visual sign-off.
+
+QA disposition: PASS for the bounded Core3 durable report lifecycle; full
+authenticated visual/Odoo parity remains conditional on available sessions.
+Full Inventory sign-off remains open.
+
 ## Inventory Transfer Reception Report QA — `INV-TRANSFER-RECEPTION-REPORT-001`
 
 - Odoo source/action: PASS. Incoming/internal transfer forms expose Allocation

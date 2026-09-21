@@ -6,6 +6,8 @@ components:
     title_field: complete_name
     editable: false
     group_columns: 2
+    header_actions:
+      - { id: print_inventory_location_barcode, label: Print Barcode, variant: secondary, permission: inventory.read }
     groups:
       - title: Stock Location
         wide: true
@@ -26,3 +28,16 @@ components:
         fields:
           - { field: removal_strategy, label: Removal Strategy, type: radio }
     stat_buttons: [{ id: view_inventory_location_products, label: Products, icon: list, value_field: product_count }]
+  - type: ListView
+    variant: odoo
+    source: inventory_location_barcode_runs
+    columns:
+      - { field: location_name, label: Location }
+      - { field: report_name, label: Report }
+      - { field: output_format, label: Format }
+      - { field: printed_by, label: Printed by }
+      - { field: printed_at, label: Printed at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No barcode reports, description: Location barcode reports will appear here. }

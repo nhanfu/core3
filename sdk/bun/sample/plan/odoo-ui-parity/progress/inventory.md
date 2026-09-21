@@ -1281,6 +1281,23 @@ Full Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-PRODUCT-UPDATE-QUANTITY-001/`.
   Full Inventory sign-off remains open.
 
+## `INV-LOCATION-BARCODE-001` — Location Barcode report (2026-09-21)
+
+- Selected Odoo's `stock.action_report_location_barcode` report binding from
+  `addons/stock/report/stock_report_views.xml:81-89`; its QWeb template emits
+  location names and barcodes from `stock.location` records.
+- Extended the existing presentation-only `location-detail` page and backend
+  API, joined by `page.id`, with a read-permission Print Barcode action and a
+  durable PDF report-history list. Migration `0.0.75` seeds a deterministic
+  `location-stock` report and makes replay idempotent.
+- The action enforces missing-location, company, actor, and stale row guards;
+  report history is persisted without mutating the location row and survives
+  file-backed restart.
+- Focused verification passes 4 tests / 29 assertions in
+  `inventory_location_barcode.integration.test.ts`, including source/schema,
+  CRUD/report preparation, permission, guard, migration replay, and restart
+  coverage. Full Inventory sign-off remains open.
+
 ## `INV-TRANSFER-RETURN-ALL-001` — Return All completed transfer lines (2026-09-21)
 
 - Selected Odoo's distinct `action_create_returns_all` wizard control after

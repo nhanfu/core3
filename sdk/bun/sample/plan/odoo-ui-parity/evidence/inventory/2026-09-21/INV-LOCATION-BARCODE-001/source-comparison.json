@@ -1,0 +1,25 @@
+{
+  "feature_id": "INV-LOCATION-BARCODE-001",
+  "odoo": {
+    "action_id": "stock.action_report_location_barcode",
+    "model": "stock.location",
+    "report_name": "stock.report_location_barcode",
+    "report_type": "qweb-pdf",
+    "binding_type": "report",
+    "source_files": [
+      "addons/stock/report/stock_report_views.xml:81-89",
+      "addons/stock/report/report_location_barcode.xml:37-40",
+      "addons/stock/views/stock_location_views.xml:171-172"
+    ]
+  },
+  "core3": {
+    "page_id": "location-detail",
+    "page_yaml": "services/inventory/pages/location-detail.yaml",
+    "api_yaml": "services/inventory/api/location-detail.yaml",
+    "action_id": "print_inventory_location_barcode",
+    "action": "stock.action_report_location_barcode",
+    "persistence": "inventory_location_barcode_runs",
+    "migration": "services/inventory/migrations/20260922250000-075-inventory-location-barcode.yaml"
+  },
+  "parity": "Core3 records a durable PDF report run and presents report history; authenticated browser/Odoo comparison is blocked by login redirects."
+}

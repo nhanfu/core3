@@ -1775,6 +1775,28 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Configuration > Locations > Location Barcode — `INV-LOCATION-BARCODE-001`
+
+Odoo's stock report source declares `stock.action_report_location_barcode`
+(`addons/stock/report/stock_report_views.xml:81-89`) as a `stock.location` QWeb
+PDF report named `Location Barcode`; `report_location_barcode.xml` delegates to
+the generic barcode label template, rendering each location's name and barcode.
+
+Core3 extends the existing `location-detail` presentation/API pair, joined by
+`page.id: location-detail`, with a read-only Print Barcode action and a report
+history ListView. Migration
+`services/inventory/migrations/20260922250000-075-inventory-location-barcode.yaml`
+adds the durable `inventory_location_barcode_runs` ledger and a replay-safe
+`location-stock` fixture. The API action enforces location existence, company
+scope, company-matching context, authenticated actor, and expected location
+row-version guards before recording a deterministic PDF run.
+
+Focused integration coverage is in
+`test/inventory_location_barcode.integration.test.ts`. Core3 desktop/mobile
+and Odoo comparison evidence is stored under
+`evidence/inventory/2026-09-21/INV-LOCATION-BARCODE-001/`; authenticated
+visual/Odoo sign-off is not claimed when the runtime only exposes login.
+
 ## Operations > Transfer Reception Report / Allocation — `INV-TRANSFER-RECEPTION-REPORT-001` (2026-09-21)
 
 Odoo source comparison: `addons/stock/views/stock_picking_views.xml:166-173`

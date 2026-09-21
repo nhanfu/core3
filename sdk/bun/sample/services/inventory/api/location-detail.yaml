@@ -5,6 +5,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_LOCATION_DETAIL_UNAVAILABLE, message: Location details are temporarily unavailable. } }
     query: "WITH RECURSIVE location_tree AS (SELECT l.id, l.parent_location_id, l.name, l.name AS location_path FROM inventory_locations l WHERE l.parent_location_id IS NULL UNION ALL SELECT child.id, child.parent_location_id, child.name, parent.location_path || '/' || child.name FROM inventory_locations child JOIN location_tree parent ON parent.id = child.parent_location_id) SELECT l.id, l.row_version, l.warehouse_id, l.parent_location_id, l.name, l.code, w.code || '/' || tree.location_path AS complete_name, COALESCE(w.code || '/' || parent_tree.location_path, '') AS parent_location_name, w.name AS warehouse_name, l.usage, l.state, l.active, COALESCE(l.company_name, 'My Company (San Francisco)') AS company_name, l.replenish_location, l.cyclic_inventory_frequency, CAST(l.last_inventory_date AS VARCHAR) AS last_inventory_date, CAST(l.next_inventory_date AS VARCHAR) AS next_inventory_date, COALESCE(l.removal_strategy, '') AS removal_strategy, COALESCE(q.product_count, 0) AS product_count FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id JOIN location_tree tree ON tree.id = l.id LEFT JOIN location_tree parent_tree ON parent_tree.id = l.parent_location_id LEFT JOIN (SELECT location_id, COUNT(DISTINCT product_id) AS product_count FROM inventory_quants GROUP BY location_id) q ON q.location_id = l.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.id = :id"
+  - id: inventory_location_barcode_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_LOCATION_BARCODES_UNAVAILABLE, message: Location barcode report history is temporarily unavailable. } }
+    query: "SELECT r.id, r.location_id, r.location_name, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM inventory_location_barcode_runs r JOIN inventory_locations l ON l.id = r.location_id WHERE r.location_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.printed_at DESC, r.id DESC"
 actions:
   - id: save_inventory_location
     type: server_form
@@ -39,3 +44,30 @@ actions:
     type: navigate
     permission: inventory.read
     navigate_to: /stock
+  - id: print_inventory_location_barcode
+    type: server
+    permission: inventory.read
+    action: stock.action_report_location_barcode
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.inventory_location_detail.id}', expected_row_version: '{state.inventory_location_detail.row_version}', company_name: '{state.inventory_location_detail.company_name}' }
+    refresh: [inventory_location_detail, inventory_location_barcode_runs]
+    mutation:
+      generated: [barcode_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'location-barcode-' || CAST(:id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS barcode_run_id, l.name AS location_name, COALESCE(l.company_name, 'My Company (San Francisco)') AS location_company, COALESCE(NULLIF(:current_user_name, ''), 'Inventory User') AS printed_by FROM inventory_locations l LEFT JOIN inventory_location_barcode_runs r ON r.location_id = l.id WHERE l.id = :id GROUP BY l.id, l.name, l.company_name"
+      guards:
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id", status: 404, code: INVENTORY_LOCATION_BARCODE_NOT_FOUND, message: Location not found. }
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR COALESCE(company_name, 'My Company (San Francisco)') = :current_company_name)", status: 403, code: INVENTORY_LOCATION_BARCODE_COMPANY, message: Location is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id AND row_version = :expected_row_version", status: 409, code: INVENTORY_LOCATION_BARCODE_STALE, message: The location changed before its barcode report was prepared. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: INVENTORY_LOCATION_BARCODE_ACTOR_REQUIRED, message: A signed-in inventory operator is required to print a location barcode. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:company_name, '')), '') IS NULL OR COALESCE(:company_name, '') = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)')", status: 403, code: INVENTORY_LOCATION_BARCODE_COMPANY_MISMATCH, message: The report company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_location_barcode_runs(id, location_id, location_name, company_name, report_name, report_action, output_format, printed_by, printed_at, row_version) VALUES(:barcode_run_id, :id, :location_name, :location_company, 'Location Barcode', 'stock.action_report_location_barcode', 'PDF', :printed_by, TIMESTAMP '2026-01-15 09:30:00', 1)"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_LOCATION_BARCODE_FAILED
+          message: The location barcode report could not be prepared.
+      result: { query: "SELECT r.id, r.location_id, r.location_name, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM inventory_location_barcode_runs r WHERE r.id = :barcode_run_id" }

@@ -1,0 +1,31 @@
+version: 0.0.75
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_location_barcode_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        location_id VARCHAR NOT NULL,
+        location_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        report_action VARCHAR NOT NULL,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        printed_by VARCHAR NOT NULL,
+        printed_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00',
+        UNIQUE(location_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_location_barcode_runs_location_idx
+        ON inventory_location_barcode_runs(location_id, printed_at, id);
+      INSERT INTO inventory_location_barcode_runs(id, location_id, location_name, company_name, report_name, report_action, output_format, printed_by, printed_at, row_version)
+      SELECT 'location-barcode-location-stock-1', l.id, l.name, COALESCE(l.company_name, 'My Company (San Francisco)'), 'Location Barcode', 'stock.action_report_location_barcode', 'PDF', 'Inventory Fixture', TIMESTAMP '2026-01-15 09:30:00', 1
+      FROM inventory_locations l
+      WHERE l.id = 'location-stock'
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_location_barcode_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
