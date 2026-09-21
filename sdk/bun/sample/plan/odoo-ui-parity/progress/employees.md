@@ -1123,3 +1123,25 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-MESSAGE-001/`; fixture/company
   alignment and local Odoo credential limitations remain explicit. No aggregate
   Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-COMPLETION-001 (2026-09-21)
+
+- Selected Odoo's `mail.activity.mixin` / `activity_ids` Mark done transition
+  after the existing ad-hoc Schedule activity slice; this is a completion
+  workflow, not duplicate activity scheduling.
+- Migration `20260922240000-078` adds durable message row-version, activity
+  linkage, and state columns plus the deterministic planned activity-message
+  fixture.
+- Added the separate API `complete_employee_activity` action and page
+  `OdooChatter` Mark done binding. Completion updates activity timing/state,
+  linked message state, employee version, and an audit message atomically.
+- Guards cover `employees.write`, actor, current company, planned state,
+  linked message, and optimistic message row-version concurrency. Focused
+  verification is **4 tests / 21 assertions**; the adjacent chatter/activity
+  suite is **20 tests / 112 assertions**.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-COMPLETE-001/`.
+  Core3 authentication succeeded but the seeded employee/message company did
+  not match the authenticated company, so Mark done was not rendered; local
+  Odoo rejected `admin/admin` and then rate-limited the login. No aggregate
+  Employees sign-off is claimed.

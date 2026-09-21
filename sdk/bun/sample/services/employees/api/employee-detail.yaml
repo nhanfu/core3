@@ -22,7 +22,7 @@ datasources:
     single: false
     permission: employees.read
     error_states: { transport_error: { status: 503, code: EMPLOYEES_MESSAGES_UNAVAILABLE, message: Employee messages are temporarily unavailable. } }
-    query: "SELECT m.id, m.employee_id, m.actor_name, m.action, m.action_label, m.detail, CAST(m.created_at AS VARCHAR) AS created_at FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.employee_id = :id AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY m.created_at DESC, m.id DESC"
+    query: "SELECT m.id, COALESCE(m.row_version, 1) AS row_version, m.activity_id, m.state, m.employee_id, m.actor_name, m.action, m.action_label, m.detail, CAST(m.created_at AS VARCHAR) AS created_at FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.employee_id = :id AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY m.created_at DESC, m.id DESC"
   - id: employee_detail_activities
     single: false
     permission: employees.read
@@ -415,7 +415,7 @@ actions:
         - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the note was logged. Reload and try again. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EMPLOYEES_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }
       steps:
-        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(:note_id, :id, :current_user_id, :current_user_name, 'employees.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)))"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, state) VALUES(:note_id, :id, :current_user_id, :current_user_name, 'employees.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)), 1, 'done')"
         - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
           expect_changed: true
           status: 409
@@ -443,7 +443,7 @@ actions:
         - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the message was sent. Reload and try again. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EMPLOYEES_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
       steps:
-        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.message', 'Message', TRIM(CAST(:content AS VARCHAR)))"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, state) VALUES(:message_id, :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.message', 'Message', TRIM(CAST(:content AS VARCHAR)), 1, 'done')"
         - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
           expect_changed: true
           status: 409
@@ -490,7 +490,7 @@ actions:
             FROM employees e
             WHERE e.id = :id AND e.active = true
               AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
-        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.activity.schedule', 'Scheduled activity', TRIM(CAST(:content AS VARCHAR)))"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, activity_id, state) VALUES(gen_random_uuid(), :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.activity.schedule', 'Scheduled activity', TRIM(CAST(:content AS VARCHAR)), 1, :activity_id, 'planned')"
         - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
           expect_changed: true
           status: 409
@@ -502,6 +502,39 @@ actions:
       - { field: activity_type, label: Activity type, type: select, options: [{ value: todo, label: To-Do }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: email, label: Email }, { value: document, label: Document }], default: todo }
       - { field: activity_date, label: Due date, type: text, placeholder: YYYY-MM-DD, default: '2026-01-15' }
       - { field: activity_user, label: Assigned to, type: text }
+  - id: complete_employee_activity
+    type: server
+    permission: employees.write
+    action: employees.records.activity.complete
+    handler: yaml_mutation
+    operation: complete_activity
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [employee_detail, employee_detail_activities, employee_messages]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT m.activity_id FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.id = :id AND m.action = 'employees.activity.schedule' AND m.activity_id IS NOT NULL AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)", status: 404, code: EMPLOYEES_ACTIVITY_MESSAGE_NOT_FOUND, message: Planned activity message not found in the current company. }
+        - { query: "SELECT a.id FROM employee_activities a JOIN employee_messages m ON m.activity_id = a.id WHERE m.id = :id AND a.activity_state = 'planned'", status: 409, code: EMPLOYEES_ACTIVITY_ALREADY_DONE, message: This activity is already completed or unavailable. }
+        - { query: "SELECT m.id FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.id = :id AND m.action = 'employees.activity.schedule' AND m.state = 'planned' AND m.activity_id IS NOT NULL AND m.row_version = :expected_row_version AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The activity changed before it was completed. Reload and try again. }
+      steps:
+        - query: "UPDATE employee_activities SET activity_state = 'done', timing = 'Done', row_version = row_version + 1 WHERE id = (SELECT activity_id FROM employee_messages WHERE id = :id) AND activity_state = 'planned'"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_ACTIVITY_ALREADY_DONE
+          message: This activity is already completed or unavailable.
+        - query: "UPDATE employee_messages SET state = 'done', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state = 'planned'"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The activity message changed before it was completed. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT employee_id FROM employee_messages WHERE id = :id) AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_ACTIVITY_MESSAGE_NOT_FOUND
+          message: The activity employee changed before completion was saved. Reload and try again.
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, state) SELECT gen_random_uuid(), employee_id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.activity.complete', 'Completed activity', detail, 1, 'done' FROM employee_messages WHERE id = :id"
+      result: { query: "SELECT a.* FROM employee_activities a JOIN employee_messages m ON m.activity_id = a.id WHERE m.id = :id" }
   - id: add_employee_follower
     type: server
     permission: employees.write
@@ -519,7 +552,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_followers WHERE employee_id = :id AND user_id = :user_id)", status: 409, code: EMPLOYEES_FOLLOWER_EXISTS, message: This user already follows the employee. }
       steps:
         - query: "INSERT INTO employee_followers(employee_id, user_id, added_by) VALUES(:id, :user_id, :current_user_id)"
-        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.add', 'Added follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' now follows ' || (SELECT name FROM employees WHERE id = :id))"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, state) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.add', 'Added follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' now follows ' || (SELECT name FROM employees WHERE id = :id), 1, 'done')"
         - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
           expect_changed: true
           status: 409
@@ -541,7 +574,7 @@ actions:
         - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the follower was removed. Reload and try again. }
         - { query: "SELECT user_id FROM employee_followers WHERE employee_id = :id AND user_id = :user_id", status: 404, code: EMPLOYEES_FOLLOWER_NOT_FOUND, message: Follower not found for this employee. }
       steps:
-        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.remove', 'Removed follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' no longer follows ' || (SELECT name FROM employees WHERE id = :id))"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, row_version, state) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.remove', 'Removed follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' no longer follows ' || (SELECT name FROM employees WHERE id = :id), 1, 'done')"
         - query: "DELETE FROM employee_followers WHERE employee_id = :id AND user_id = :user_id"
         - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
           expect_changed: true

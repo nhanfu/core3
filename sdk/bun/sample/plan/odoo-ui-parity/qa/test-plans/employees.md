@@ -787,3 +787,17 @@ assertions). Evidence:
 Focused test: `test/employees_chatter_message.integration.test.ts` (4 tests,
 21 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-MESSAGE-001/`.
+
+## EMP-EMPLOYEE-ACTIVITY-COMPLETION-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `mail.activity.mixin`, `activity_ids`, and chatter Mark done map to paired API/page contracts | pass |
+| Completion workflow | A planned activity transitions to done, updates its linked message and employee version, and records an audit event | pass |
+| Permission and scope | `employees.write`, actor, current-company, planned-state, message identity, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the planned fixture and completion state | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture-company mismatch and rejected/rate-limited Odoo credentials are documented |
+
+Focused test: `test/employees_activity_completion.integration.test.ts` (4
+tests, 21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-COMPLETE-001/`.

@@ -1,0 +1,32 @@
+version: 0.0.78
+kind: data
+description: Add durable Employee activity completion state and deterministic fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_messages ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE employee_messages ADD COLUMN IF NOT EXISTS activity_id VARCHAR;
+      ALTER TABLE employee_messages ADD COLUMN IF NOT EXISTS state VARCHAR;
+      UPDATE employee_messages SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE employee_messages SET state = 'done' WHERE state IS NULL;
+      CREATE INDEX IF NOT EXISTS employee_messages_activity_idx ON employee_messages(activity_id, state);
+      INSERT INTO employee_messages(
+        id, employee_id, actor_id, actor_name, action, action_label, detail,
+        row_version, activity_id, state, created_at
+      )
+      VALUES (
+        'employee-activity-message-adhoc-001', 'employee-demo-001', 'user-hr-manager', 'HR Manager',
+        'employees.activity.schedule', 'Scheduled activity', 'Confirm employee review',
+        1, 'employee-activity-adhoc-001', 'planned', TIMESTAMP '2026-01-14 11:25:00'
+      )
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM employee_messages WHERE id = 'employee-activity-message-adhoc-001';
+      DROP INDEX IF EXISTS employee_messages_activity_idx;
+      ALTER TABLE employee_messages DROP COLUMN IF EXISTS state;
+      ALTER TABLE employee_messages DROP COLUMN IF EXISTS activity_id;
+      ALTER TABLE employee_messages DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

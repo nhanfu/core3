@@ -1238,3 +1238,18 @@ Focused test: `test/employees_chatter_message.integration.test.ts` (4 tests,
 21 assertions). Merged API/page validation, scoped lint, UI audit, and staged
 diff-check are recorded with the commit. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-COMPLETION-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-054 | Planned Employee activity Mark done workflow | pass; activity timing/state, linked message state, employee version, and completion audit update atomically |
+| EMP-PERM-054 | `employees.write`, actor, company, planned state, message identity, and row version | pass; actor, stale, wrong-company, missing, and already-completed requests reject atomically |
+| EMP-DATA-054 | Migration replay and file-backed restart | pass; deterministic planned message and completed state remain durable without duplicate seed rows |
+| EMP-UI-050 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 authentication succeeded but fixture company did not match the session, so Mark done was not rendered; Odoo credentials were rejected/rate-limited |
+
+Focused test: `test/employees_activity_completion.integration.test.ts` (4
+tests, 21 assertions). Adjacent chatter/activity focused run: 20 tests, 112
+assertions. Merged API/page validation, scoped ESLint, UI audit, and staged
+diff-check are recorded with the commit. No aggregate Employees sign-off is
+claimed.

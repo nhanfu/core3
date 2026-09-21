@@ -61,7 +61,7 @@ describe('Employees ad-hoc activity parity', () => {
     expect(String(created.activity_date)).toContain('2026-01-20');
     expect(await repository.query("SELECT row_version FROM employees WHERE id = 'employee-demo-001'")).toEqual([{ row_version: 2 }]);
     expect(await repository.query("SELECT action, action_label, detail FROM employee_messages WHERE employee_id = 'employee-demo-001' AND action = 'employees.activity.schedule'"))
-      .toEqual([{ action: 'employees.activity.schedule', action_label: 'Scheduled activity', detail: 'Schedule a benefits review' }]);
+      .toEqual(expect.arrayContaining([{ action: 'employees.activity.schedule', action_label: 'Scheduled activity', detail: 'Schedule a benefits review' }]));
     await database.close();
   });
 

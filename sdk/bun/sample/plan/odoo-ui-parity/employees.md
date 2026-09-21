@@ -2319,3 +2319,31 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-MESSAGE-001/`; Core3
 fixture/company alignment and the rejected local Odoo credential remain explicit
 blockers. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-COMPLETION-001: Employee chatter Mark done (2026-09-21)
+
+Odoo's `hr.employee` inherits `mail.activity.mixin`; the supplied Employee
+view exposes `activity_ids` through the shared chatter. The prior activity
+slice implemented the source-backed Schedule activity composer, but did not
+complete a planned activity.
+
+Migration `20260922240000-078` extends the durable employee message stream
+with activity linkage, state, and row-version fields and seeds one planned
+activity message for deterministic verification. The API YAML owns the
+company-scoped message/activity transition and `complete_employee_activity`
+server action. The page YAML owns only the `OdooChatter` Mark done binding
+through `page.id`.
+
+Completion requires `employees.write`, an authenticated actor, a current-
+company employee, a linked planned activity/message, and the expected message
+row version. The activity, message, employee version, and completion audit are
+updated atomically; replay, stale, wrong-company, missing, and already-done
+requests are guarded.
+
+Focused verification is **4 tests / 21 assertions**, with **20 tests / 112
+assertions** across the adjacent chatter/activity suite. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-COMPLETE-001/`. Core3
+authenticated capture is conditional because its seeded employee belongs to a
+different company than the login session; local Odoo comparison is blocked by
+the rejected/rate-limited credentials. No aggregate Employees sign-off is
+claimed.

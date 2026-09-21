@@ -36,6 +36,8 @@ components:
     activity_label: Schedule activity
     schedule_label: Schedule
     activity_placeholder: Describe the activity…
+    activity_complete_action: complete_employee_activity
+    activity_complete_label: Mark done
     message_action_field: action_label
     message_action_labels: { employees.note: Internal note, employees.message: Message, employees.activity.schedule: Scheduled activity, employees.followers.add: Added follower, employees.followers.remove: Removed follower }
     chatter_label: Messages and activities
