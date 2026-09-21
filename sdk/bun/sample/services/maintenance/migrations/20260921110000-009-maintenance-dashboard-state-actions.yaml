@@ -1,0 +1,22 @@
+version: 0.0.9
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE maintenance_requests
+      SET scheduled_date = NULL,
+          updated_at = TIMESTAMP '2026-01-15 09:00:00'
+      WHERE id = 'maintenance-demo-002'
+        AND state = 'In Progress'
+        AND scheduled_date IS NOT NULL;
+    down: |
+      UPDATE maintenance_requests
+      SET scheduled_date = DATE '2026-01-22',
+          updated_at = TIMESTAMP '2026-01-15 09:00:00'
+      WHERE id = 'maintenance-demo-002'
+        AND state = 'In Progress'
+        AND scheduled_date IS NULL;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

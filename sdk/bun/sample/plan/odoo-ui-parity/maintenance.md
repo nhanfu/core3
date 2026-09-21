@@ -634,3 +634,38 @@ Focused verification:
 - The new recurrence suite alone — **3 passed, 0 failed, 22 assertions**.
 - Audit, lint, and diff checks are run before commit; no authenticated browser
   or paired Odoo screenshot is claimed for this API-bound slice.
+
+## Bounded batch: Maintenance dashboard Blocked and Unscheduled actions (2026-09-21)
+
+The Odoo 19 source dashboard card (`addons/maintenance/views/maintenance_views.xml`,
+`maintenance_team_kanban`) exposes team-scoped drill-downs for blocked and
+unscheduled active requests. The previous Core3 card already displayed both
+counts but had no corresponding actions or request predicates. This slice adds
+those two read-only actions and keeps the action/page/API boundary intact.
+
+Implementation files:
+
+- `services/maintenance/pages/dashboard.yaml` adds visible Blocked and
+  Unscheduled card actions, gated by their persisted counts; `pages/requests.yaml`
+  adds the matching Kanban state and Scheduling facets.
+- `services/maintenance/api/dashboard.yaml` owns the two `maintenance.read`
+  navigation contracts; `api/requests.yaml` applies team, To Do, blocked, and
+  unscheduled predicates to the service-owned request query.
+- `services/maintenance/migrations/20260921110000-009-maintenance-dashboard-state-actions.yaml`
+  makes the stable In Progress fixture unscheduled, idempotently, so the
+  action has a durable non-empty reference result.
+- `test/maintenance_team_dashboard_state_actions.integration.test.ts` covers
+  page/API joins, read permission binding, blocked/unscheduled results, empty
+  results, transport-error metadata, migration replay, and file-backed restart.
+
+Focused verification:
+
+- `bun test test/maintenance_team_dashboard_state_actions.integration.test.ts`
+  — **3 passed, 0 failed, 17 assertions**.
+- Authenticated Odoo source evidence was captured at the requested shared
+  browser instance `245ea108` for `core3_reference`, at 1440x900 and 390x844.
+  Core3 desktop dashboard evidence rendered the new persisted counts/actions;
+  the action click was attempted, but the isolated runner had already exited
+  on an unrelated global discovery error in dirty Order paths (duplicate
+  `sale_quotation_templates` datasource), so no Core3 filtered-route success
+  is claimed. See `maintenance-dashboard-state-evidence-20260921.md`.

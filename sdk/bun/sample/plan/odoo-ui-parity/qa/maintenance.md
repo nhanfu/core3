@@ -294,3 +294,20 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   and rerun full active Maintenance QA before retest. No product merge was made.
 - Preserve unrelated Website lint errors, file-backed mutation restart, and
   authenticated Odoo comparison blockers.
+
+## 2026-09-21 bounded QA: dashboard state drill-down actions
+
+- Focused test `maintenance_team_dashboard_state_actions.integration.test.ts`:
+  **3 passed, 17 assertions**. It verifies the page/API joins, `maintenance.read`
+  permissions, blocked and unscheduled predicates, empty/transport contracts,
+  migration replay, and file-backed DuckDB restart durability.
+- Odoo reference desktop/mobile dashboard captures are recorded in
+  `maintenance-dashboard-state-evidence-20260921.md`.
+- Core3 authenticated desktop dashboard rendered the new Subcontractor
+  `1 Blocked` and `1 Unscheduled` actions. The isolated runner then exited on
+  unrelated global Order YAML discovery (`sale_quotation_templates` duplicate),
+  so filtered-route click completion and Core3 mobile visual evidence are not
+  claimed. Existing dirty Order/Blog/Forum paths were not modified.
+- QA disposition: **bounded slice pass; module remains conditional** pending a
+  clean global discovery/runtime for full Core3 desktop/mobile action-click and
+  broader Maintenance actor/company gates.

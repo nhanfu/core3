@@ -23,6 +23,8 @@ describe('Maintenance team dashboard To Do action parity', () => {
       { id: 'open_maintenance_team_todo_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { team_id: '{row.id}', todo: true } },
       { id: 'open_maintenance_team_scheduled_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-calendar', params: { team_id: '{row.id}', todo: true } },
       { id: 'open_maintenance_team_high_priority_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { team_id: '{row.id}', todo: true, priority: 'High' } },
+      { id: 'open_maintenance_team_blocked_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { team_id: '{row.id}', todo: true, kanban_state: 'blocked' } },
+      { id: 'open_maintenance_team_unscheduled_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { team_id: '{row.id}', todo: true, unscheduled: true } },
     ]);
     expect(requests.datasources.find((source: any) => source.id === 'maintenance_requests').permission).toBe('maintenance.read');
     expect(requests.datasources.find((source: any) => source.id === 'maintenance_requests').query).toContain(':team_id');
