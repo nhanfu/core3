@@ -4,9 +4,11 @@ components:
   - type: ListView
     variant: odoo
     source: forum_forums
+    create_action: create_forum
+    create_label: New forum
     search: { label: Forum, placeholder: 'Search...' }
     filters:
-      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+      - { field: active, label: Status, options: [{ id: 'active', label: Active }, { id: 'archived', label: Archived }] }
     columns:
       - { field: sequence, label: '', type: Handle, mobile: false }
       - { field: name, label: Forum, type: PrimaryEntityCell, mobile: true }
@@ -15,4 +17,7 @@ components:
       - { field: total_views, label: Total Views, align: right, mobile: true }
     page_size: 50
     row_key: id
+    row_open_action: view_forum
+    row_double_click_action: view_forum
+    row_actions: menu
     empty_state: { title: No forums found, description: Create a forum or adjust your search and filters. }

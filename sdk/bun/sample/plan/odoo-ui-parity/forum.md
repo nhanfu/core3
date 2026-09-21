@@ -1,8 +1,8 @@
-# Forum parity — bounded wave 4 slice
+# Forum parity — bounded wave 5 slice
 
-Status: in-progress. This slice adds authenticated question moderation to the
-existing Forum Questions surface; it is not the anonymous `/forum` website
-route or the complete answer/taxonomy module.
+Status: in-progress. This slice adds the authenticated Forum configuration
+create/edit form behind the existing Forums list; it is not the anonymous
+`/forum` website route or the complete answer/taxonomy module.
 
 ## Source-backed Odoo trace
 
@@ -20,14 +20,22 @@ Reference: Odoo 19 `addons/website_forum`.
 | Forum Questions list | `forum_post_action` | `/forum-questions` | `forum.read` |
 | Question edit | `forum_post_view_form` | question detail edit form | `forum.write` |
 | Question archive | moderation action on `forum.post` | question row/detail action | `forum.manage` |
+| Forum create | `forum_forum_view_form_add` → `forum_forum_action_add` | create modal on `/forums` | `forum.manage` |
+| Forum detail/edit | `forum_forum_view_form` | `/forum-detail?id=...` | `forum.manage` |
+| Forum duplicate-name guard | `forum.forum.name` required/unique model field | create/edit mutation | `forum.manage` |
 
 This is the next uncovered source action after Forum Posts, by the source menu
 sequence. Odoo orders Forums before Ranks, Tags, Badges, and Close Reasons.
 The bounded view reproduces the sequence handle, Forum, Website, Total Posts,
 and Total Views columns; optional Total Answers and Total Favorites remain
 available in the datasource but hidden by default. Archived is a search filter.
-This wave adds permissioned title/content/tag editing with optimistic row
-version checks and a manager-only terminal archive transition.
+This wave adds the next uncovered write surface: manager-only forum creation
+and configuration editing for name, mode, privacy, website, description,
+default sort, and sequence. Updates use optimistic row versions and refresh
+the denormalized post forum name in the same transaction. Forum archive/restore
+and its source-level active cascade remain a follow-up because Core3 currently
+models archived questions as a terminal moderation state rather than Odoo's
+separate `active` flag on `forum.post`.
 
 Odoo declares `view_mode=list,kanban,graph`, a Posts-default search context,
 no create button, and list fields Content, Website URL, Forum, # Views,
@@ -44,7 +52,9 @@ website object actions.
 - `api/forum-post-pages.yaml` owns datasources/actions and joins by
   `page.id: forum-post-pages`.
 - `pages/forums.yaml` is presentation-only; `api/forums.yaml` owns the Forums
-  datasource and joins by `page.id: forum-forums`.
+  datasource/actions and joins by `page.id: forum-forums`.
+- `pages/forum-detail.yaml` is presentation-only; `api/forum-detail.yaml` owns
+  the detail datasource/actions and joins by `page.id: forum-detail`.
 - Existing deterministic Forum migration fixtures provide two top-level posts,
   one answered and one unanswered, so Posts and Answered Posts are testable.
 - `forum.read` gates the list, state lookup, and row navigation. `forum.write`
@@ -56,6 +66,10 @@ website object actions.
   content-scope paths are covered by the focused test.
 - Forums active/archived, search, empty, and transport-error paths are covered
   by the focused test; `forum.read` gates the action.
+- `forum.manage` gates Forum create/edit; create and edit require a non-empty
+  unique name, and edit requires the current `row_version`.
+- The configuration migration adds durable sequence, website, and default-sort
+  fields with backfilled values for existing fixtures.
 
 ## Acceptance/evidence
 
@@ -68,18 +82,22 @@ website object actions.
   update rejection, and archived-record guard tested.
 - [x] Manager-only archive transition and forbidden writer attempt tested with
   persisted state and row-version assertions.
+- [x] Forum configuration create/edit persistence, duplicate-name/required-name
+  guards, stale update rejection, post relation refresh, and authenticated
+  `forum.manage` boundary tested.
 - [ ] Odoo and Core3 authenticated desktop 1440×900 captures.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
 
-## Wave 4 developer evidence — 2026-09-13
+## Wave 5 developer evidence — 2026-09-21
 
-- Focused Forum corpus: `bun test ./test/forum*.integration.test.ts` — 8
-  passed, 56 assertions, 0 failures.
-- `git diff --check` passed in the isolated developer worktree.
-- Browser mutation, restart/migration reapply, complete actor/company matrix,
-  answer moderation, attachment/import/export, Temporal, and paired Odoo
-  comparison remain QA/main-agent gates.
+- Focused Forum corpus: `bun test ./test/forum*.integration.test.ts` — 17
+  passed, 133 assertions, 0 failures.
+- New configuration test: `bun test ./test/forum_forum_configuration.integration.test.ts` — 4
+  passed, 25 assertions, 0 failures.
+- `git diff --check` and the module UI audit are required before commit.
+- Authenticated browser captures and durable file-backed restart/reapply remain
+  evidence gates for this wave.
 
 ## Runtime evidence and blockers — 2026-09-12
 
@@ -101,3 +119,9 @@ website object actions.
   Core3 runner found port 3001 occupied by an existing process (401 on `/forums`)
   and then failed its frontend watcher with `EMFILE: too many open files`; no
   authenticated browser session or desktop/mobile screenshot could be produced.
+- Wave 5 live-menu check: authenticated Odoo at `/odoo` opened the app launcher,
+  but `core3_reference` exposes Discuss and other installed apps, not Website or
+  Forum. The local Odoo 19 source still confirms `menu_forum_global`,
+  `forum_forum_action`, `forum_forum_view_form_add`, and
+  `forum_forum_view_form`; paired Odoo Forum screenshots are therefore blocked
+  by the reference database not having `website_forum` installed.

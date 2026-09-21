@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
+import { discoverForumPages } from './forum_test_support';
 
 const root = join(import.meta.dir, '../services/forum');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -16,7 +16,7 @@ describe('Forum answer creation and moderation', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, root + '/migrations', undefined, 'forum_answer_http_contract', ['schema', 'data']);
-    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const discovered = discoverForumPages();
     const user = { sub: 'forum-browser-user', email: 'browser@workspace.example', name: 'Forum Browser User', permissions: ['forum.read', 'forum.write'] };
     const api = createYamlApi({
       repository,
@@ -178,7 +178,7 @@ describe('Forum answer creation and moderation', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, root + '/migrations', undefined, 'forum_answer_moderation_http', ['schema', 'data']);
-    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const discovered = discoverForumPages();
     const user = { sub: 'forum-live-moderator', email: 'live-moderator@workspace.example', name: 'Live Forum Moderator', permissions: ['forum.read', 'forum.write', 'forum.manage'] };
     const api = createYamlApi({
       repository,

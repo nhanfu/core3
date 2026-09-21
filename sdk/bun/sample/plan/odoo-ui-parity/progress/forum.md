@@ -35,3 +35,22 @@ module-completion claim is made here.
 
 QA should verify the committed edit/archive candidate in authenticated desktop
 and mobile browsers, then run the remaining Forum actor and persistence gates.
+
+## Wave 5 — Forum configuration form (2026-09-21)
+
+The next source-backed gap after question/answer moderation is now implemented:
+the Forums list has manager-only create and row navigation to a durable
+configuration form. `api/forums.yaml` and `api/forum-detail.yaml` own the
+datasources/actions; the matching `pages/*.yaml` files remain presentation
+fragments joined by `page.id`. The migration persists sequence, website, and
+default sort fields and backfills existing fixtures. Create/edit guards cover
+required and duplicate names, edits require `row_version`, and renames update
+the denormalized post forum name atomically.
+
+Focused evidence: `forum_forum_configuration.integration.test.ts` passed 4/4
+tests and 25 assertions, including file-backed restart; the full Forum corpus passed 17/17 tests and 133
+assertions. `forum.manage` is exercised at the authenticated action boundary.
+Odoo's local source confirms the list/form action, but the live `core3_reference`
+app launcher has no Website/Forum menu because `website_forum` is not installed;
+paired Odoo captures remain blocked. Forum archive/restore is intentionally
+deferred until the Core3 post `active` model can mirror Odoo's cascade safely.

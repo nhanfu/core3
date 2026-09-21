@@ -1,0 +1,30 @@
+title: Forum
+page: { id: forum-detail, route: /forum-detail, breadcrumb: [Website, Configuration, Forum, Detail], auth: { require: [forum.read] } }
+components:
+  - type: OdooFormView
+    source: forum_detail
+    title_field: name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    header_actions:
+      - { id: back_to_forums, label: Forums, variant: secondary, permission: forum.read }
+      - { id: edit_forum, label: Edit, variant: primary, permission: forum.manage }
+    group_columns: 2
+    groups:
+      - title: Forum
+        fields:
+          - { field: name, label: Forum Name }
+          - { field: mode, label: Forum Mode }
+          - { field: privacy, label: Privacy }
+          - { field: website_name, label: Website }
+          - { field: default_order, label: Default Sort }
+          - { field: sequence, label: Sequence }
+          - { field: active, label: Active }
+          - { field: description, label: Description }
+      - title: Statistics
+        fields:
+          - { field: total_posts, label: Posts }
+          - { field: total_views, label: Views }
+          - { field: total_answers, label: Answers }
+          - { field: total_favorites, label: Favorites }

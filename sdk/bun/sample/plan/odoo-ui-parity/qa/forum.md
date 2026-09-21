@@ -30,6 +30,20 @@ Module owner: forum module owner
 Verification trigger: feature-complete
 Candidate commit: 6f4d67f7 (question edit/archive slice)
 
+## Wave 5 developer handoff — Forum configuration (2026-09-21)
+
+- Added the source-backed Forums create/edit form on the existing `/forums`
+  action, with a `/forum-detail` form route and manager-only `forum.manage`
+  mutations.
+- Focused configuration test: `forum_forum_configuration.integration.test.ts`
+  — 4 tests, 25 assertions, passed, including file-backed restart.
+- Full Forum corpus: `bun test ./test/forum*.integration.test.ts` — 17 tests,
+  133 assertions, passed.
+- Odoo Forum UI pairing remains blocked: live authenticated `core3_reference`
+  has no Website/Forum app menu because `website_forum` is not installed.
+- Core3 desktop/mobile authenticated browser proof and file-backed restart proof
+  are still open gates until the candidate runtime is available.
+
 Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is the module-level source for forums, posts, moderation, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Test-case inventory

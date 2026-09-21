@@ -1,17 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { discoverForumPages } from './forum_test_support';
 
 const root = join(import.meta.dir, '../services/forum');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Forum Forums list action', () => {
   test('joins the presentation page to the API and records the Odoo list contract', () => {
-    const discovered = discoverPages(join(root, '..'));
+    const discovered = discoverForumPages();
     const page = yaml('pages/forums.yaml');
     const api = yaml('api/forums.yaml');
     const list = page.components[0];

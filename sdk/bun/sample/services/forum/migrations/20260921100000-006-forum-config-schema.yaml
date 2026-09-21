@@ -1,0 +1,18 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE forum_forums ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE forum_forums ADD COLUMN IF NOT EXISTS website_name VARCHAR;
+      ALTER TABLE forum_forums ADD COLUMN IF NOT EXISTS default_order VARCHAR;
+      UPDATE forum_forums SET sequence = 1 WHERE sequence IS NULL;
+      UPDATE forum_forums SET default_order = 'last_activity_date desc' WHERE default_order IS NULL;
+    down: |
+      ALTER TABLE forum_forums DROP COLUMN IF EXISTS default_order;
+      ALTER TABLE forum_forums DROP COLUMN IF EXISTS website_name;
+      ALTER TABLE forum_forums DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

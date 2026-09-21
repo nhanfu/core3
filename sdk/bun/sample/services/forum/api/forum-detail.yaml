@@ -1,0 +1,53 @@
+page: { id: forum-detail }
+datasources:
+  - id: forum_detail
+    single: true
+    permission: forum.read
+    error_states:
+      not_found: { status: 404, code: FORUM_NOT_FOUND, message: Forum was not found. }
+      transport_error: { status: 503, code: FORUM_DETAIL_UNAVAILABLE, message: Forum details are temporarily unavailable. }
+    query: |
+      SELECT f.id, f.row_version, f.name, f.sequence, f.website_name, f.description,
+        f.mode, f.privacy, f.default_order, f.active,
+        (SELECT COUNT(*) FROM forum_posts p WHERE p.forum_id = f.id) AS total_posts,
+        COALESCE((SELECT SUM(p.views) FROM forum_posts p WHERE p.forum_id = f.id), 0) AS total_views,
+        COALESCE((SELECT SUM(p.answer_count) FROM forum_posts p WHERE p.forum_id = f.id), 0) AS total_answers,
+        0 AS total_favorites
+      FROM forum_forums f
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND f.id = :id
+actions:
+  - id: back_to_forums
+    type: navigate
+    permission: forum.read
+    navigate_to: /forums
+  - id: edit_forum
+    type: server_form
+    permission: forum.manage
+    title: Edit Forum
+    action: forum.forums.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.forum_detail
+    refresh: [forum_detail, forum_forums]
+    mutation:
+      operation: update
+      table: forum_forums
+      fields: [name, sequence, website_name, description, mode, privacy, default_order]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_forums WHERE id = :id", status: 404, code: FORUM_NOT_FOUND, message: Forum was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: FORUM_NAME_REQUIRED, message: A forum name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM forum_forums WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FORUM_NAME_EXISTS, message: A forum with this name already exists. }
+      steps:
+        - { query: "UPDATE forum_posts SET forum_name = TRIM(:name), updated_at = CURRENT_TIMESTAMP WHERE forum_id = :id AND forum_name <> TRIM(:name)" }
+      result: { query: "SELECT * FROM forum_forums WHERE id = :id" }
+    fields:
+      - { field: name, label: Forum Name, type: text, required: true }
+      - { field: mode, label: Forum Mode, type: select, options: [{ value: Questions, label: 'Questions (1 answer)' }, { value: Discussions, label: 'Discussions (multiple answers)' }] }
+      - { field: privacy, label: Privacy, type: select, options: [{ value: Public, label: Public }, { value: 'Signed In', label: 'Signed In' }, { value: 'Some users', label: 'Some users' }] }
+      - { field: website_name, label: Website, type: text }
+      - { field: description, label: Description, type: textarea }
+      - { field: default_order, label: Default Sort, type: select, options: [{ value: 'create_date desc', label: Newest }, { value: 'last_activity_date desc', label: 'Last Updated' }, { value: 'vote_count desc', label: 'Most Voted' }, { value: 'child_count desc', label: Answered }] }
+      - { field: sequence, label: Sequence, type: number }

@@ -1,18 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
+import { discoverForumPages } from './forum_test_support';
 
 const root = join(import.meta.dir, '../services/forum');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Forum Posts website-content slice', () => {
   test('keeps the Odoo Forum Posts action trace and page/API separation', () => {
-    const discovered = discoverPages(join(root, '..'));
+    const discovered = discoverForumPages();
     const page = yaml('pages/forum-post-pages.yaml');
     const api = yaml('api/forum-post-pages.yaml');
     const list = page.components[0];
@@ -124,7 +124,7 @@ describe('Forum Posts website-content slice', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'forum_post_lifecycle_test', ['schema', 'data']);
-    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const discovered = discoverForumPages();
     const user = { sub: 'forum-moderator', email: 'moderator@workspace.example', name: 'Forum Moderator', permissions: ['forum.read', 'forum.write'] };
     const api = createYamlApi({
       repository,
