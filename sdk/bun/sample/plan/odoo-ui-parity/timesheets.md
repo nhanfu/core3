@@ -1904,6 +1904,38 @@ Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
 visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
 open.
 
+## Wave 46 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
+
+The next uncovered portal task behavior is Odoo's
+`project.task._get_portal_total_hours_dict`, used by the portal task list to
+show allocated versus effective time without double-counting descendant task
+rows. This is distinct from the completed portal action view substitution,
+portal list filters/sorting, and task action scope slices.
+
+Core3 extends the existing `portal-task-timesheets` page/API pair, joined by
+`page.id: portal-task-timesheets`, with a guarded `StatRow` summary. The
+summary reads durable task allocation and direct task entries, so a parent
+task's child entry remains in the list but is not counted a second time in the
+parent total. Migration
+`20260921200000-029-timesheets-portal-task-hours-summary.yaml` persists the
+task `allow_timesheets` flag and adds a replay-safe portal-hours index.
+Permission, actor, company, missing, empty, and stale task-version guards are
+explicit; file-backed relation refresh and restart are covered.
+
+Focused coverage is
+`test/timesheets_portal_task_hours_summary.integration.test.ts`: 4 tests / 24
+expectations. Related portal/task regression is 22 tests / 157 expectations.
+Scoped ESLint and UI audit pass at 766 pages / 775 routes / 1,562
+datasources; the exact-path staged `git diff --check` is recorded with the
+commit evidence.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-portal-task-hours-summary-001/`.
+Playwright reached Core3's login page and Odoo's login page but no authenticated
+session was available, so authenticated desktop/mobile captures and visual
+sign-off are blocked. Odoo Print/PDF/action-surface blockers remain open; no
+module sign-off is claimed.
+
 ## Wave 42 — `TIMESHEET-TASK-ACTION-CALENDAR-VIEW-001`
 
 Odoo's `timesheet_action_all` declares a Calendar view, and

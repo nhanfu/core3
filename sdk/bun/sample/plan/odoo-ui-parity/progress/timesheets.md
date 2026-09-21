@@ -1082,6 +1082,28 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-21 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
+
+- Selected Odoo's `project.task._get_portal_total_hours_dict`, which exposes
+  allocated and effective portal task hours while excluding descendant rows
+  from the parent total. This does not repeat portal action view substitution,
+  portal list filtering/sorting, or earlier task-action slices.
+- Added `portal_task_timesheet_hours` to the separate
+  `api/portal-task-timesheets.yaml` contract and a matching StatRow to
+  `pages/portal-task-timesheets.yaml`, joined by `page.id:
+  portal-task-timesheets`. Migration
+  `20260921200000-029-timesheets-portal-task-hours-summary.yaml` persists
+  `allow_timesheets` and a portal-hours lookup index.
+- Focused coverage passed 4/4 tests with 24 expectations. Related portal/task
+  coverage passed 22/22 tests with 157 expectations. Scoped ESLint and UI
+  audit passed at 766 pages / 775 routes / 1,562 datasources.
+- Playwright reached Core3 `/auth/login` and Odoo `/web/login`, but no
+  authenticated session was available. Authenticated desktop/mobile evidence
+  is blocked and no sign-off is claimed; Odoo Print/PDF/action blockers remain
+  open.
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-portal-task-hours-summary-001/`.
+
 ## 2026-09-21 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
 
 - Selected the non-internal/project-sharing branch of Odoo

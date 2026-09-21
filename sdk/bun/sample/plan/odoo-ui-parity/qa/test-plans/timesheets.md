@@ -534,6 +534,30 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 46 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
+
+- Source behavior: Odoo `project.task._get_portal_total_hours_dict` returns
+  allocated and effective hours for portal task groups while removing
+  descendant tasks from the parent total.
+- Page contract: `pages/portal-task-timesheets.yaml` remains layout-only and
+  adds a `StatRow` for allocated, effective, remaining, and progress values.
+- API contract: `api/portal-task-timesheets.yaml` remains separate and joined
+  by `page.id: portal-task-timesheets`; `portal_task_timesheet_hours` reads
+  durable task/entry relations with actor/company/task-version guards.
+- Migration: `20260921200000-029-timesheets-portal-task-hours-summary.yaml`
+  persists the task `allow_timesheets` flag and a portal-hours lookup index.
+- Focused test:
+  `test/timesheets_portal_task_hours_summary.integration.test.ts` — 4 tests /
+  24 expectations, including source mapping, de-duplication, guards,
+  relation refresh, and file-backed restart.
+- Related regression: portal/task suites — 22 tests / 157 expectations.
+  Scoped ESLint and UI audit pass at 766 pages / 775 routes / 1,562
+  datasources.
+- Browser gate: Playwright reached Core3 `/auth/login` and Odoo `/web/login`
+  but no authenticated session was available. Authenticated desktop/mobile
+  evidence is blocked; exact browser notes are in the feature evidence
+  directory.
+
 ## Wave 45 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
 
 - Source/action: the non-internal or project-sharing branch of

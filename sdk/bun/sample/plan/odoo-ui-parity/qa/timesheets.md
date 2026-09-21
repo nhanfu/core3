@@ -1035,6 +1035,23 @@ Evidence: `evidence/timesheets/2026-09-21/timesheet-project-action-display-name-
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
 
+## Wave 46 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `_get_portal_total_hours_dict` allocation/effective totals and descendant de-duplication | pass in focused source test |
+| Paired YAML contract | Existing portal task page/API pair joined by `page.id` with a summary datasource | pass |
+| Durable persistence | Replay-safe `allow_timesheets` task flag, hours index, relation refresh, and restart | pass |
+| Permission/actor/company guards | `project.portal`, portal actor, current company, and task grant | pass |
+| Missing/empty/stale guards | Missing task, empty fixture, foreign actor/company, and stale task version fail closed | pass |
+| Focused regression | New test 4/4 (24 expectations); related portal/task 22/22 (157 expectations) | pass |
+| Audit/lint/diff | UI audit 766/775/1562; scoped ESLint; exact-path staged `git diff --check` | pass after staging |
+| Authenticated desktop/mobile evidence | Core3 portal task summary and paired Odoo task comparison | blocked; Core3 reached `/auth/login` and Odoo `/web/login` without an authenticated session |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-portal-task-hours-summary-001/`.
+Odoo Print/PDF/action surfaces remain blockers; no visual or module sign-off
+is claimed.
+
 ## Wave 44 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
 
 | Check | Expected evidence | Result |

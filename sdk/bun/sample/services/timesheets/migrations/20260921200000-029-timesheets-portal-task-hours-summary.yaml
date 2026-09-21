@@ -1,0 +1,17 @@
+version: 0.0.29
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS allow_timesheets BOOLEAN;
+      UPDATE timesheet_tasks
+      SET allow_timesheets = CASE WHEN id = 'task-demo-closed' THEN FALSE ELSE TRUE END
+      WHERE allow_timesheets IS NULL;
+      CREATE INDEX IF NOT EXISTS timesheet_task_portal_hours_idx ON timesheet_tasks(id, company_name, allow_timesheets, parent_task_id, row_version);
+    down: |
+      DROP INDEX IF EXISTS timesheet_task_portal_hours_idx;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS allow_timesheets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

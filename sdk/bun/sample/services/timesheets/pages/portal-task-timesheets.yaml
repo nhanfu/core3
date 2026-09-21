@@ -1,6 +1,10 @@
 title: Shared Task Timesheets
 page: { id: portal-task-timesheets, route: /my/projects/task/timesheets, breadcrumb: [Project, Portal, Task, Timesheets], auth: { require: [project.portal] } }
 components:
+  - type: StatRow
+    source: portal_task_timesheet_hours
+    title: Task time progress
+    stats: [{ label: Allocated, field: allocated_hours }, { label: Time spent, field: effective_time_spent }, { label: Remaining, field: remaining_hours }, { label: Progress, field: progress_percent }]
   - type: ListView
     variant: odoo
     source: portal_task_timesheet_entries
