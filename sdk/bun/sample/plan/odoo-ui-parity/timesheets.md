@@ -1642,3 +1642,13 @@ Focused coverage is `test/timesheets_all_billed_fixed_price_filter.integration.t
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billed-fixed-price-filter/`: desktop selects Billed at a Fixed Price and renders `1-23 / 23`; mobile captures responsive All Timesheets Kanban; both report no page/request errors. Core3 desktop/mobile capture is blocked before authentication because the bounded backend startup did not expose `127.0.0.1:3001/api/modules` within 18 seconds, recorded in `core3-readiness.txt`. Odoo Print/PDF/report-action surfaces remain open; no module sign-off is claimed.
 The repository UI audit is blocked by the unrelated shared page-schema error `actions[5].result is not allowed`; exact output is in `audit-blocker.txt`.
+
+## Wave 23 All Timesheets Billed on Milestones filter — `TIMESHEET-ALL-BILLED-ON-MILESTONES-FILTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is Odoo's `sale_timesheet` Billed on Milestones filter. `addons/sale_timesheet/views/hr_timesheet_views.xml` inserts `billable_milestones` with domain `timesheet_invoice_type = billable_milestones` into the authenticated All Timesheets search view. This is distinct from the completed fixed-price, Billed-on-Timesheets, and Non-Billable filters.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` data/action-only, joined by `page.id: all-timesheets`. The page adds one manager-scoped Billed on Milestones option; the API records the explicit durable `billing_type` filter contract, exposes billing type in the pivot, and applies the existing billing predicate. Current-company and empty-fixture guards remain enforced; no duplicate migration was needed. A durable relation-update test verifies a concurrent billing-type change is visible immediately, and file-backed restart retains the filter.
+
+Focused coverage is `test/timesheets_all_billed_on_milestones_filter.integration.test.ts`: 4 tests / 21 expectations for Odoo source comparison, paired contracts, durable filtering, permission/company/empty guards, relation-update freshness, and file-backed restart.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billed-on-milestones-filter/`: desktop selects Billed on Milestones and renders `1-13 / 13`; mobile captures responsive All Timesheets Kanban; both report no page/request errors. Core3 desktop/mobile capture is blocked before authentication because the bounded backend startup did not expose `127.0.0.1:3001/api/modules` within 18 seconds, recorded in `core3-readiness.txt`. Odoo Print/PDF/report-action surfaces remain open; no module sign-off is claimed.
