@@ -783,3 +783,30 @@ Status: bounded implementation; not CRM sign-off.
   and its action metadata was access-restricted; no target-action visual claim
   is made. Core3 target-route capture is blocked by unrelated Events discovery
   failures (`upload_event_badge_background`, `FormSection`).
+
+## 2026-09-22 — Lead detail Followers
+
+Status: bounded implementation; browser parity conditional.
+
+- Odoo 19 source: `addons/crm/views/crm_lead_views.xml` renders the generic
+  `<chatter reload_on_post="True"/>` on `crm.lead`; the inherited `mail.thread`
+  contract exposes `message_follower_ids`, while `mail.followers` enforces one
+  subscription per record/partner and the follower edit action is a modal form.
+- Core3 already had the YAML-first follower panel and CRM-owned durable
+  `crm_lead_followers` table. The uncovered defect was that the auth validation
+  guard used `assign: true`, overwriting the lead `id` with the follower user
+  id; it also logged after insertion, making successful adds invisible in the
+  audit trail. `api/lead-detail.yaml` now preserves the lead id, logs before
+  its idempotent insert, and refreshes the follower/timeline datasources.
+- Stable ID: `CRM-LEAD-FOLLOWERS-001`. Focused coverage verifies page/API
+  binding, auth-user validation, lead-not-found handling, duplicate add/remove
+  idempotency, follower datasource enrichment, migration replay, and
+  file-backed restart visibility.
+- The authenticated Odoo reference on browser instance `245ea108` rendered
+  CRM Pipeline at `http://localhost:8069/odoo/crm` with the supplied QA
+  session. A lead-detail chatter capture was not obtained in this bounded run;
+  therefore no visual parity claim is made. The target detail navigation did
+  not open from the current List/Kanban row interaction, despite the parent
+  Pipeline route returning HTTP content.
+- Core3 browser capture remains blocked by the shared page-discovery errors
+  `upload_event_badge_background` and unregistered `FormSection` in Events.

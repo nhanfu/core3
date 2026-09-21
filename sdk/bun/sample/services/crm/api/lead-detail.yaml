@@ -450,13 +450,12 @@ actions:
           service: auth
           operation: users.validate
           request: { user_id: user_id, limit: 100 }
-          assign: true
           status: 404
           message: Follower not found
       steps:
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.followers.add', 'crm_leads', :id, :user_id WHERE NOT EXISTS (SELECT 1 FROM crm_lead_followers WHERE lead_id = :id AND user_id = :user_id)"
         - query: "INSERT INTO crm_lead_followers(lead_id, user_id, added_by) SELECT :id, :user_id, :current_user_id WHERE NOT EXISTS (SELECT 1 FROM crm_lead_followers WHERE lead_id = :id AND user_id = :user_id)"
-        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.followers.add', 'crm_leads', :id, :name WHERE NOT EXISTS (SELECT 1 FROM crm_lead_followers WHERE lead_id = :id AND user_id = :user_id)"
-      result: { query: "SELECT :user_id AS user_id, :name AS name, :email AS email, :avatar_url AS avatar_url, false AS removed" }
+      result: { query: "SELECT :user_id AS user_id, false AS removed" }
   - id: remove_lead_follower
     type: server
     permission: crm.write
@@ -474,13 +473,12 @@ actions:
           service: auth
           operation: users.validate
           request: { user_id: user_id, limit: 100 }
-          assign: true
           status: 404
           message: Follower not found
       steps:
-        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.followers.remove', 'crm_leads', :id, :name FROM crm_lead_followers f WHERE f.user_id = :user_id AND f.lead_id = :id"
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.followers.remove', 'crm_leads', :id, :user_id FROM crm_lead_followers f WHERE f.user_id = :user_id AND f.lead_id = :id"
         - query: "DELETE FROM crm_lead_followers WHERE lead_id = :id AND user_id = :user_id"
-      result: { query: "SELECT :user_id AS user_id, :name AS name, :email AS email, :avatar_url AS avatar_url, true AS removed" }
+      result: { query: "SELECT :user_id AS user_id, true AS removed" }
   - id: upload_lead_attachment
     type: upload
     action: crm.attachments.upload
