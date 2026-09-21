@@ -1,0 +1,14 @@
+version: 0.0.165
+kind: data
+description: deterministic Website Sale Shop product-card wishlist fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_wishlist_policies (id, row_version, company_name, show_wishlist)
+      VALUES ('ecommerce-shop-product-wishlist-my-company', 1, 'My Company', TRUE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_wishlist_policies WHERE id = 'ecommerce-shop-product-wishlist-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

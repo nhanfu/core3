@@ -1,0 +1,33 @@
+page: { id: ecommerce-shop-product-wishlist-policy }
+datasources:
+  - id: ecommerce_shop_product_wishlist_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_UNAUTHENTICATED, message: Sign in to view Shop wishlist settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_FORBIDDEN, message: You do not have permission to view Shop wishlist settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_NOT_FOUND, message: Shop wishlist settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_UNAVAILABLE, message: Shop wishlist settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, show_wishlist, CASE WHEN show_wishlist THEN 'Show wishlist' ELSE 'Hide wishlist' END AS wishlist_behavior, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_wishlist_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - id: edit_ecommerce_shop_product_wishlist_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Wishlist
+    action: ecommerce.shop.product_wishlist.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_product_wishlist_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, show_wishlist]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_product_wishlist_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_STALE, message: These Shop wishlist settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(CAST(:show_wishlist AS VARCHAR)) IN ('true', 'false')", status: 422, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_INVALID, message: Choose whether wishlist buttons are shown on Shop cards. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_product_wishlist_policies SET show_wishlist = CAST(:show_wishlist AS BOOLEAN), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_PRODUCT_WISHLIST_STALE, message: These Shop wishlist settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, show_wishlist, CASE WHEN show_wishlist THEN 'Show wishlist' ELSE 'Hide wishlist' END AS wishlist_behavior, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_wishlist_policies WHERE id = :id" }
+    fields:
+      - { field: show_wishlist, label: Show Product Wishlist, type: checkbox, required: true }

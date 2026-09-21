@@ -181,6 +181,10 @@ menu:
           label: Shop Product Ratings
           icon: star
           permission: ecommerce.read
+        - path: /ecommerce/shop-product-wishlist
+          label: Shop Product Wishlist
+          icon: heart
+          permission: ecommerce.read
         - path: /ecommerce/product-reference-price
           label: Product Reference Price
           icon: tag

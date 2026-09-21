@@ -1,6 +1,37 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Comparison Price visibility slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop Product-Card Wishlist visibility slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card Wishlist Visibility (`ECOM-CATALOG-SHOP-PRODUCT-WISHLIST-VISIBILITY-001`)
+
+Wave 50 selects the next genuinely uncovered Website Sale wishlist design
+control. Odoo's `website_sale_wishlist` addon stores the selected
+`o_wsale_products_opt_has_wishlist` class in
+`website.shop_opt_products_design_classes`; its Products Design Panel exposes
+the Wishlist toggle, the product tile gates the wishlist button on that class,
+and the wishlist stylesheet defaults the button hidden until the class is
+active. This is distinct from the completed durable wishlist lifecycle and
+session-merge slices.
+
+Core3 migrations 164/165 add a durable company-scoped visibility policy and an
+idempotent My Company fixture defaulting to visible, matching Odoo's supplied
+website default. Separate `api/shop-product-wishlist-policy.yaml` and
+`pages/shop-product-wishlist-policy.yaml` contracts join through
+`ecommerce-shop-product-wishlist-policy`; updates require `ecommerce.write`,
+validate a boolean, and use company and row-version guards. The Shop API and
+Shop page project the effective setting while existing wishlist persistence and
+public wishlist operations remain unchanged.
+
+Focused verification covers the Odoo website model, wishlist builder/template/
+stylesheet, page/API separation, permissioned optimistic update, invalid,
+foreign-company, missing, and stale guards, migration replay, Shop projection,
+and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-catalog-shop-product-wishlist-visibility-001/`.
+The authenticated Odoo reference does not have Website Sale installed:
+`/shop` is an exact Odoo 404 at desktop and iPhone-14 mobile viewports, so no
+paired Odoo feature-rendering sign-off is claimed. Core3 browser rendering is
+blocked by connection refusal on ports 3000, 4312, and 4313. Ecommerce module
+sign-off remains open.
 
 ## Bounded feature — Product Comparison Price Visibility (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001`)
 

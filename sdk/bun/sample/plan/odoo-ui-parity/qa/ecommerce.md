@@ -1,5 +1,33 @@
 # ecommerce QA ledger
 
+## Shop Product-Card Wishlist Visibility (`ECOM-CATALOG-SHOP-PRODUCT-WISHLIST-VISIBILITY-001`, 2026-09-22)
+
+- Odoo source/builder/template/styles: pass. The supplied
+  `website_sale_wishlist` addon keeps `o_wsale_products_opt_has_wishlist` in
+  the Shop design class field, exposes the Wishlist builder toggle, gates the
+  product-card wishlist button on that class, and defaults the button hidden
+  unless it is active. The Website model's default class list includes it.
+- Core3 lifecycle: migrations 164/165 add the durable company policy and
+  deterministic visible fixture. Separate page/API YAML exposes a permissioned
+  optimistic update; Shop projects the effective setting.
+- Focused verification: `bun test
+  ./test/ecommerce_shop_product_wishlist.integration.test.ts
+  --timeout 30000` — **2 passed, 31 assertions, 0 failures**.
+- Shop regression: `bun test ./test/ecommerce_shop*.integration.test.ts
+  --timeout 30000` — **26 passed, 362 assertions, 0 failures** across 12
+  files.
+- Wishlist regression: `bun test ./test/ecommerce_wishlist*.integration.test.ts
+  --timeout 30000` — **7 passed, 50 assertions, 0 failures** across 2 files.
+- Audit: `bun run audit` passed at **793 pages, 802 routes, and 1633
+  datasources**. Owned `git diff --check` passed.
+- Authenticated Odoo comparison uses `http://localhost:8069`, database
+  `core3_reference`, and the shared QA session. `/shop` is exact HTTP 404 in
+  desktop and iPhone-14 mobile evidence; no visual sign-off is claimed.
+  Core3 browser rendering is blocked by connection refusal on ports 3000,
+  4312, and 4313. Ecommerce module sign-off remains open.
+- Evidence:
+  `evidence/ecommerce/2026-09-22/ecom-catalog-shop-product-wishlist-visibility-001/`.
+
 ## Product Comparison Price Visibility (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001`, 2026-09-22)
 
 - Odoo source: pass. `res.config.settings.group_product_price_comparison`
