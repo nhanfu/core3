@@ -1,0 +1,15 @@
+version: 0.0.61
+description: Deterministic Survey follower fixture
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_followers(id, survey_id, user_id, user_name, user_email, row_version)
+      VALUES ('survey-follower-demo-001', 'survey-demo-001', 'user-admin', 'Admin User', 'admin@core3.local', 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_followers WHERE id = 'survey-follower-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

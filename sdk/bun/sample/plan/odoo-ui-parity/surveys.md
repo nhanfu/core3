@@ -2408,3 +2408,35 @@ Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and 8072 were
 unavailable. No authenticated visual or paired Odoo sign-off is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/`.
+
+## Wave 38 — `SURVEYS-FOLLOWERS-001`
+
+The next uncovered source-backed Survey action is the authenticated follower
+surface inherited from Odoo `mail.thread`. `survey.survey` inherits
+`mail.thread` (`addons/survey/models/survey_survey.py:23`) and its form renders
+the `<chatter/>` widget (`addons/survey/views/survey_survey_views.xml:199`).
+
+Core3 adds a durable `survey_followers` relation and deterministic fixture,
+then joins follower listing, candidate filtering, and add/remove actions to
+the existing `survey-detail` API/page pair. The API and page contracts remain
+separate and join through `page.id: survey-detail`. Writes require
+`surveys.write`, an authenticated actor, a non-archived current survey, and
+optimistic parent/relation versions; missing, duplicate, and stale requests
+are rejected before mutation. Follower rows and candidate filtering survive
+file-backed restart.
+
+The Odoo Survey model has no `company_id` field in the inspected model, view,
+or security source, so a company boundary is not applicable to this source
+feature; actor, permission, missing, archived, duplicate, and stale guards
+are explicit instead. Focused verification is **3 passed / 20 assertions**;
+the adjacent Surveys compatibility run is **32 passed / 270 assertions**.
+The UI audit reports **753 pages, 762 routes, and 1,519 datasources**;
+scoped ESLint and `git diff --check` pass. The Surveys-wide glob reached the
+known migration replay blocker (`Cannot alter entry "surveys" because there
+are entries that depend on it`) and was terminated after the bounded run;
+full-repository regression was not run.
+
+Core3 ports 3000, 3001, 3390, 3391, and Odoo port 8072 were closed during
+the probe, so authenticated desktop/mobile capture and paired Odoo evidence
+are unavailable. No visual or paired Odoo sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/`.

@@ -1593,3 +1593,31 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/.
+
+## Bounded QA run: `SURVEYS-FOLLOWERS-001` — 2026-09-21
+
+- Source/UI: Odoo `survey.survey` inherits `mail.thread`; its form's
+  `<chatter/>` is the source for the authenticated follower surface.
+- Persistence/contracts: migrations `0.0.60`/`0.0.61` add and seed the durable
+  relation. Follower listing, candidate filtering, add, and remove are joined
+  through the existing separate API/page YAML by `page.id: survey-detail`.
+- Guards: reads use `surveys.read`; writes use `surveys.write`, require an
+  authenticated actor, reject missing/duplicate followers, reject archived or
+  parent-stale surveys, and reject stale or mismatched relation rows. Odoo
+  Surveys has no `company_id` in the inspected source, so company scoping is
+  not applicable to this feature.
+- Verification: **3 focused tests / 20 assertions**; adjacent catalog,
+  chatter, activity, and follower regression **32 passed / 270 assertions**.
+  Audit reports **753 pages, 762 routes, and 1,519 datasources**; scoped
+  ESLint and diff-check pass.
+- Regression blocker: the broad Surveys run reproduced DuckDB's existing
+  dependency error while replaying migration rollback:
+  `Cannot alter entry "surveys" because there are entries that depend on it`.
+  It was terminated after the bounded checks; no full repository regression
+  was run.
+- Runtime/reference: ports 3000, 3001, 3390, 3391, and 8072 were closed.
+  Authenticated Core3 desktop/mobile and paired Odoo captures are therefore
+  unavailable; no visual or Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/.

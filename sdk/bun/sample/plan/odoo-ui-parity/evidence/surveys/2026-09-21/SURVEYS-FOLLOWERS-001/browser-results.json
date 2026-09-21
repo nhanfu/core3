@@ -1,0 +1,38 @@
+{
+  "feature_id": "SURVEYS-FOLLOWERS-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "status": "blocked",
+      "probes": [
+        { "port": 3000, "result": "closed" },
+        { "port": 3001, "result": "closed" },
+        { "port": 3390, "result": "closed" },
+        { "port": 3391, "result": "closed" }
+      ],
+      "result": "No authenticated desktop render was available."
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "probes": [
+        { "port": 3000, "result": "closed" },
+        { "port": 3001, "result": "closed" },
+        { "port": 3390, "result": "closed" },
+        { "port": 3391, "result": "closed" }
+      ],
+      "result": "No authenticated mobile render was available."
+    }
+  },
+  "odoo": {
+    "desktop": { "status": "blocked", "result": "Port 8072 closed; no authenticated comparison." },
+    "mobile": { "status": "blocked", "result": "Port 8072 closed; no authenticated comparison." }
+  },
+  "signoff": "conditional",
+  "blockers": [
+    "Core3 runtime ports were closed.",
+    "Odoo reference port 8072 was closed.",
+    "No authenticated desktop/mobile or paired Odoo visual evidence can be claimed."
+  ]
+}

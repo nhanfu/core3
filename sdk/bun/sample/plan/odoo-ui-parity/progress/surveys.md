@@ -465,6 +465,29 @@ Focused verification: **3 passed / 12 assertions**; compatibility regression:
 desktop/mobile or paired Odoo sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/`.
 
+## 2026-09-21 — `SURVEYS-FOLLOWERS-001`
+
+Selected the next Odoo-backed `mail.thread` behavior after internal chatter
+notes: follower subscription on the authenticated Survey form. Odoo's
+`survey.survey` inherits `mail.thread` (`addons/survey/models/survey_survey.py:23`)
+and the form includes `<chatter/>` (`survey_survey_views.xml:199`). Core3
+adds migrations `0.0.60`/`0.0.61`, a deterministic follower fixture, and
+separate `survey-detail` API/page bindings for listing candidates and adding
+or removing followers. `surveys.write`, actor, active/current parent,
+duplicate, missing, and relation-stale guards are enforced; durable rows and
+candidate filtering survive restart. The Odoo source has no Survey
+`company_id`, so no company predicate was invented for this slice.
+
+Verification: **3 focused tests / 20 assertions** and **32 adjacent Surveys
+tests / 270 assertions** pass. Audit: **753 pages, 762 routes, 1,519
+datasources**. Scoped ESLint and diff-check pass. The broad Surveys run
+reproduced the existing DuckDB migration dependency failure before it was
+terminated; no full-repository regression was run. Core3/Odoo ports were
+closed, blocking authenticated desktop/mobile and paired Odoo captures.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/`.
+
 ## 2026-09-21 — `SURVEYS-INVITE-ATTACHMENT-001`
 
 Selected the next smallest open source-backed invite behavior: Odoo's

@@ -22,7 +22,58 @@ datasources:
     permission: surveys.read
     error_states: { transport_error: { status: 503, code: SURVEY_ACTIVITIES_UNAVAILABLE, message: Survey activities are temporarily unavailable. } }
     query: "SELECT id, row_version, survey_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user_id, assigned_user_name, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_activities WHERE survey_id = :id UNION ALL SELECT id, row_version, survey_id, 'note' AS activity_type, 'Internal note' AS summary, NULL AS due_date, NULL AS assigned_user_id, NULL AS assigned_user_name, 'done' AS state, NULL AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_messages WHERE survey_id = :id ORDER BY due_date NULLS LAST, created_at DESC, id"
+  - id: survey_followers
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_FOLLOWERS_UNAVAILABLE, message: Survey followers are temporarily unavailable. } }
+    query: "SELECT id, survey_id, user_id, user_name, user_email, row_version, CAST(created_at AS VARCHAR) AS created_at FROM survey_followers WHERE survey_id = :id ORDER BY user_name, user_id"
+  - id: survey_follower_candidates
+    permission: surveys.write
+    query: "SELECT candidate.user_id AS value, candidate.user_name || ' · ' || candidate.user_email AS label FROM (VALUES ('user-demo', 'Demo Survey Officer', 'demo@core3.local'), ('user-manager', 'Survey Manager', 'manager@core3.local'), ('user-outsider', 'Outside User', 'outside@core3.local')) candidate(user_id, user_name, user_email) WHERE NOT EXISTS (SELECT 1 FROM survey_followers f WHERE f.survey_id = :id AND f.user_id = candidate.user_id) ORDER BY candidate.user_name, candidate.user_id"
 actions:
+  - id: add_survey_follower
+    type: server_form
+    permission: surveys.write
+    title: Add follower
+    action: surveys.followers.add
+    handler: line_item
+    operation: create
+    domain: survey_detail
+    params: { id: '{state.survey_detail.id}' }
+    refresh: [survey_detail, survey_followers, survey_follower_candidates]
+    fields:
+      - { field: user_id, label: Follower, type: select, options_source: survey_follower_candidates, required: true }
+    mutation:
+      generated: [relation_id]
+      before_steps:
+        - query: "SELECT :id || '-follower-' || candidate.user_id AS relation_id, candidate.user_name, candidate.user_email FROM (VALUES ('user-demo', 'Demo Survey Officer', 'demo@core3.local'), ('user-manager', 'Survey Manager', 'manager@core3.local'), ('user-outsider', 'Outside User', 'outside@core3.local')) candidate(user_id, user_name, user_email) WHERE candidate.user_id = :user_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :parent_expected_row_version", status: 409, code: SURVEY_FOLLOWER_PARENT_CHANGED, message: This survey changed or is archived. Reload before changing followers. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_FOLLOWER_ACTOR_REQUIRED, message: An authenticated survey actor is required to change followers. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:user_id, '')), '') IS NOT NULL", status: 422, code: SURVEY_FOLLOWER_REQUIRED, message: Select a follower. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_followers WHERE survey_id = :id AND user_id = :user_id)", status: 409, code: SURVEY_FOLLOWER_ALREADY_EXISTS, message: This user already follows the survey. }
+      steps:
+        - { query: "INSERT INTO survey_followers(id, survey_id, user_id, user_name, user_email, row_version) VALUES(:relation_id, :id, :user_id, :user_name, :user_email, 1)", expect_changed: true, status: 409, code: SURVEY_FOLLOWER_CREATE_FAILED, message: The follower could not be added. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SURVEY_FOLLOWER_PARENT_CHANGED, message: This survey changed while the follower was being added. }
+      result: { query: "SELECT id, survey_id, user_id, user_name, user_email, row_version FROM survey_followers WHERE id = :relation_id" }
+  - id: remove_survey_follower
+    type: server
+    permission: surveys.write
+    action: surveys.followers.remove
+    handler: line_item
+    operation: delete
+    domain: survey_detail
+    params: { id: '{state.survey_detail.id}', line_id: '{row.id}' }
+    refresh: [survey_detail, survey_followers, survey_follower_candidates]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :parent_expected_row_version", status: 409, code: SURVEY_FOLLOWER_PARENT_CHANGED, message: This survey changed or is archived. Reload before changing followers. }
+        - { query: "SELECT id FROM survey_followers WHERE id = :line_id AND survey_id = :id AND row_version = :expected_row_version", status: 409, code: SURVEY_FOLLOWER_STALE, message: This follower changed or was removed. Reload before deleting it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_FOLLOWER_ACTOR_REQUIRED, message: An authenticated survey actor is required to change followers. }
+      steps:
+        - { query: "DELETE FROM survey_followers WHERE id = :line_id AND survey_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_FOLLOWER_STALE, message: This follower changed or was removed. Reload before deleting it. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SURVEY_FOLLOWER_PARENT_CHANGED, message: This survey changed while the follower was being removed. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: log_survey_note
     type: server_form
     permission: surveys.write
