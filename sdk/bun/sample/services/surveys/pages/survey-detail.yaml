@@ -78,6 +78,7 @@ components:
     actions:
       - { id: add_survey_question, label: Add a question, variant: primary, permission: surveys.write }
       - { id: add_survey_section, label: Add a section, variant: secondary, permission: surveys.write }
+      - { id: reorder_survey_question, label: Reorder, variant: secondary, permission: surveys.write }
     children:
       - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
       - { type: LineItemField, id: question_text, field: question_text, label: Question or section, input_type: text, required: true }

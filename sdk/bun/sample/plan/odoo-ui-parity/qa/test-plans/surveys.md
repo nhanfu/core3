@@ -744,3 +744,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.
+
+## `SURVEYS-QUESTION-REORDER-001` — Questions-tab order persistence
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-065 | authenticated configuration | Survey detail → Questions → Reorder | Separate API/page YAML exposes Odoo's ordered question/page action joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-064 | permission/actor/validation | Missing survey/line/actor, invalid position, archived or stale parent | Reject before changing the ordered graph with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-062 | persistence/concurrency/restart | Move question → stale replay → file-backed reopen | Affected rows are renumbered atomically, parent version advances, and order survives restart | test-results.md, focused test | pass |
+| SURVEYS-UI-063 | authenticated responsive/reference | Reorder form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.

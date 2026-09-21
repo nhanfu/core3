@@ -1645,3 +1645,29 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/.
+
+## Bounded QA run: `SURVEYS-QUESTION-REORDER-001` — 2026-09-21
+
+- Source/UI: Odoo's Questions tab uses the `question_page_one2many` widget and
+  `sequence` handle to reorder `question_and_page_ids`; the model's stable
+  order is `sequence,id`.
+- Persistence/contracts: migration `0.0.64` adds the deterministic ordering
+  index. The separate `survey-detail` API/page pair exposes the reorder form
+  through matching `page.id` and persists the renumbered question/section graph.
+- Guards: `surveys.write`, authenticated actor, missing survey/line, archived
+  or stale parent row version, and 1-based position bounds reject before
+  mutation. Odoo Surveys has no `company_id`, so company scope is not
+  applicable.
+- Verification: **3 focused tests / 20 assertions**; bounded adjacent
+  question create/duplicate, speed-rating, and follower regression **15
+  passed / 101 assertions**. Scoped ESLint and diff-check pass.
+- Audit/discovery blocker: global audit and the broader discovery-based test
+  stop on the unrelated concurrent Inventory API YAML parse error at
+  `services/inventory/api/physical-inventory.yaml`. No full repository
+  regression was run.
+- Runtime/reference: ports 3000, 3001, 3390, 3391, and 8072 were closed;
+  authenticated Core3 desktop/mobile and paired Odoo captures are unavailable.
+  No visual or Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/.

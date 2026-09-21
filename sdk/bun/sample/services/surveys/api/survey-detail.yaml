@@ -298,6 +298,57 @@ actions:
       result: { query: "SELECT * FROM survey_questions WHERE id = :line_id" }
     fields:
       - { field: question_text, label: Section title, type: text, required: true, placeholder: 'e.g. About you' }
+  - id: reorder_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Reorder question or section
+    action: surveys.questions.reorder
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.survey_detail.row_version}' }
+    refresh: [survey_detail, survey_questions]
+    fields:
+      - { field: question_id, label: Question or section ID, type: text, required: true }
+      - { field: new_sequence, label: New position, type: number, required: true, min: 1 }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id", status: 404, code: SURVEY_QUESTION_REORDER_NOT_FOUND, message: Survey not found. }
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :expected_row_version", status: 409, code: SURVEY_QUESTION_REORDER_PARENT_CHANGED, message: This survey changed or is archived. Reload before reordering questions. }
+        - { query: "SELECT id FROM survey_questions WHERE id = :question_id AND survey_id = :id", status: 404, code: SURVEY_QUESTION_REORDER_LINE_NOT_FOUND, message: Question or section not found in this survey. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_QUESTION_REORDER_ACTOR_REQUIRED, message: An authenticated survey actor is required to reorder questions. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:new_sequence AS INTEGER) BETWEEN 1 AND (SELECT COUNT(*) FROM survey_questions WHERE survey_id = :id)", status: 422, code: SURVEY_QUESTION_REORDER_SEQUENCE_INVALID, message: Choose a position within the survey question order. }
+      steps:
+        - query: |
+            UPDATE survey_questions AS question
+            SET sequence = ordered.new_sequence
+            FROM (
+              SELECT id,
+                ROW_NUMBER() OVER (
+                  ORDER BY CASE
+                    WHEN id = :question_id THEN CAST(:new_sequence AS INTEGER)
+                    WHEN CAST(:new_sequence AS INTEGER) < (SELECT sequence FROM survey_questions WHERE id = :question_id)
+                      AND sequence >= CAST(:new_sequence AS INTEGER)
+                      AND sequence < (SELECT sequence FROM survey_questions WHERE id = :question_id) THEN sequence + 1
+                    WHEN CAST(:new_sequence AS INTEGER) > (SELECT sequence FROM survey_questions WHERE id = :question_id)
+                      AND sequence > (SELECT sequence FROM survey_questions WHERE id = :question_id)
+                      AND sequence <= CAST(:new_sequence AS INTEGER) THEN sequence - 1
+                    ELSE sequence
+                  END, id
+                ) AS new_sequence
+              FROM survey_questions
+              WHERE survey_id = :id
+            ) AS ordered
+            WHERE question.id = ordered.id AND question.survey_id = :id
+          expect_changed: true
+          status: 409
+          code: SURVEY_QUESTION_REORDER_FAILED
+          message: The question order could not be saved.
+        - query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: SURVEY_QUESTION_REORDER_PARENT_CHANGED
+          message: This survey changed while its questions were being reordered. Reload and try again.
+      result: { query: "SELECT id, survey_id, question_text, question_type, sequence, is_page FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id" }
   - id: duplicate_survey
     type: server
     permission: surveys.write

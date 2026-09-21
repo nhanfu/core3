@@ -1229,3 +1229,25 @@ desktop/mobile and paired Odoo evidence.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.
+
+## 2026-09-21 — `SURVEYS-QUESTION-REORDER-001`
+
+Selected Odoo's still-open Questions-tab reorder behavior: the
+`question_page_one2many` widget persists the `sequence` of the ordered
+question/page graph. Core3 adds `reorder_survey_question` to the existing
+`page.id: survey-detail` API/page pair. The guarded transaction renumbers the
+affected rows, advances the parent survey row version, and persists the order
+through migration `0.0.64`'s ordering index.
+
+`surveys.write` plus actor, missing survey/line, archived/stale parent, and
+position bounds are enforced server-side. Odoo's Survey source has no
+`company_id`, so company scope is not applicable. Focused verification passes
+**3 tests / 20 assertions**; bounded adjacent question create/duplicate,
+speed-rating, and follower regression passes **15 tests / 101 assertions**.
+The global audit and discovery-based broader test are blocked by concurrent
+Inventory `services/inventory/api/physical-inventory.yaml` YAML parse drift.
+Core3 and Odoo ports are closed, blocking authenticated desktop/mobile and
+paired reference evidence.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.

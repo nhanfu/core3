@@ -1,0 +1,13 @@
+version: 0.0.64
+description: Durable deterministic ordering index for Odoo Survey questions and sections
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS survey_questions_order_idx ON survey_questions(survey_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS survey_questions_order_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

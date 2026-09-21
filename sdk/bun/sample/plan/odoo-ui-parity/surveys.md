@@ -2473,3 +2473,33 @@ Core3 ports 3000, 3001, 3390, 3391, and Odoo port 8072 were closed, so
 authenticated desktop/mobile browser capture and paired Odoo comparison were
 unavailable. No visual or module sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.
+
+## Wave 40 — `SURVEYS-QUESTION-REORDER-001`
+
+The next open source-backed Questions-tab behavior is Odoo's
+`question_page_one2many` reorder control. Odoo renders the ordered
+`question_and_page_ids` graph with a draggable `sequence` handle in
+`addons/survey/views/survey_survey_views.xml:75-80`; the model orders these
+rows by `sequence,id` (`addons/survey/models/survey_question.py:48,71`).
+
+Core3 adds a guarded `reorder_survey_question` server form to the existing
+separate `survey-detail` API/page pair. It moves one question or section to a
+requested 1-based position, renumbers the affected graph atomically, and
+increments the parent survey row version. The operation requires
+`surveys.write`, rejects missing surveys/lines, missing actors, archived or
+stale parents, and positions outside the current graph. Migration `0.0.64`
+adds the durable `(survey_id, sequence, id)` ordering index; sequence values
+survive file-backed restart and stale replay cannot apply twice.
+
+The inspected Odoo Survey sources have no `company_id`, so company scoping is
+not applicable and no synthetic company predicate was added. Focused
+verification is **3 passed / 20 assertions**; the bounded reorder/create/
+duplicate/speed/follower regression is **15 passed / 101 assertions**.
+Scoped ESLint and `git diff --check` pass. The global audit and the broader
+discovery-based Surveys test are blocked by an unrelated concurrent Inventory
+API YAML parse error in `services/inventory/api/physical-inventory.yaml`.
+
+Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. No visual or module sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.
