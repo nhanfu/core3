@@ -1,0 +1,15 @@
+{
+  "name": "desktop",
+  "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-001",
+  "title": "Employee",
+  "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet.",
+  "contains_hr_presence": false,
+  "contains_refresh": false,
+  "failed_requests": [],
+  "console_errors": [],
+  "overflow": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440
+  },
+  "authenticated": true
+}

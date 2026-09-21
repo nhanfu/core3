@@ -1218,6 +1218,26 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-HR-PRESENCE-001 (2026-09-21)
+
+- Selected Odoo's computed `hr_presence_state` and `hr_icon_display` fields
+  after the completed related-user active status; this adds exact HR Presence
+  semantics rather than duplicating the generic Core3 `presence` field.
+- Added migration `20260922320000-086` with replay-safe durable state and
+  deterministic demo projections. Separate detail/list API YAML and page YAML
+  expose the state, icon, Settings field, list column, and
+  `refresh_employee_presence` action through their matching page IDs.
+- Guards cover `employees.write`, authenticated actor, active/current-company
+  employee, missing employee, and optimistic row-version concurrency. Focused
+  verification is **4 tests / 26 assertions**, including migration replay and
+  file-backed restart.
+- Core3 authenticated desktop/mobile captures have zero failed requests,
+  console errors, and overflow; the Vietnam fixture is hidden by the Demo
+  Company session. Odoo desktop/mobile is blocked by rejected `admin/admin`
+  credentials followed by login rate limiting. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.
+- No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 (2026-09-21)
 
 - Selected Odoo's restricted `hr.employee.is_user_active` related field after

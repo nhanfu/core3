@@ -99,6 +99,7 @@ components:
       - { field: work_email, label: Work Email }
       - { field: work_phone, label: Work Phone }
       - { field: state, label: Status, type: StatusChip }
+      - { field: hr_presence_state, label: Presence, type: StatusChip, optional: hide }
     page_size: 50
     row_key: id
     selectable: true

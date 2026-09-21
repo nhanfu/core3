@@ -1,0 +1,13 @@
+{
+  "name": "mobile",
+  "url": "http://127.0.0.1:8069/web/login",
+  "title": "Odoo",
+  "body_excerpt": "Skip to Content\nEmail\nPassword\nReset Password\n\nToo many login failures, please wait a bit before trying again.\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+  "failed_requests": [],
+  "console_errors": [],
+  "overflow": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "authenticated": false
+}

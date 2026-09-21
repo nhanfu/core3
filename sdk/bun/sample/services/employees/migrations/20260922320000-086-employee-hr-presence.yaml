@@ -1,0 +1,25 @@
+version: 0.0.86
+kind: data
+description: Persist deterministic Odoo employee HR presence state projections
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS hr_presence_state VARCHAR;
+      UPDATE employees
+      SET hr_presence_state = CASE
+        WHEN id = 'employee-demo-001' THEN 'present'
+        WHEN id = 'employee-demo-002' THEN 'absent'
+        WHEN id = 'employee-demo-003' THEN 'out_of_working_hour'
+        WHEN id = 'employee-demo-004' THEN 'archive'
+        WHEN COALESCE(active, true) = false THEN 'archive'
+        WHEN presence = 'online' THEN 'present'
+        WHEN presence = 'offline' THEN 'absent'
+        ELSE 'out_of_working_hour'
+      END
+      WHERE hr_presence_state IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS hr_presence_state;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

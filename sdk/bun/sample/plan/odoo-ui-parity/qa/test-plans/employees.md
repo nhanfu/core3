@@ -901,3 +901,17 @@ tests, 20 assertions). Evidence:
 Focused test: `test/employees_related_user_active.integration.test.ts` (4
 tests, 21 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-USER-ACTIVE-001/`.
+
+## EMP-EMPLOYEE-HR-PRESENCE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `hr_presence_state` and `hr_icon_display` map to separate detail/list API and page contracts through matching page IDs | pass |
+| Presence workflow | Deterministic HR Presence reads and a guarded refresh persist the derived state and increment employee row version | pass |
+| Permission and scope | `employees.write`, actor, active/current company, missing, and stale boundaries reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve seeded and refreshed HR Presence without duplicates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture/company alignment hides the seeded employee, while Odoo credentials are rejected and the mobile retry is rate-limited |
+
+Focused test: `test/employees_hr_presence.integration.test.ts` (4 tests, 26
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.

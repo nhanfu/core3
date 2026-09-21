@@ -1942,6 +1942,35 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-HR-PRESENCE-001: Employee HR presence state projection (2026-09-21)
+
+The next uncovered source-backed Employee behavior is Odoo's computed
+`hr.employee.hr_presence_state` and its `hr_icon_display` presence widget.
+The supplied model defines Present, Absent, Archived, and Off-Hours states;
+the employee form renders the icon in the header and the list view exposes the
+Presence column. This is distinct from Core3's existing generic `presence`
+status and from the completed related-user active slice.
+
+Core3 adds migration `20260922320000-086-employee-hr-presence.yaml` with
+deterministic durable state fixtures and a guarded `refresh_employee_presence`
+action. Separate employee detail/list API YAML projects the state and icon;
+the paired page YAML renders HR Presence in Settings, adds the refresh action,
+and exposes the list Presence column through matching page IDs.
+
+The refresh workflow requires `employees.write`, an authenticated actor, an
+active employee in the current company, and the expected employee row version.
+It derives the persisted state from the employee's current presence and
+increments the employee version atomically. Focused verification is **4 tests
+/ 26 assertions**, covering source mapping, read/update, actor/company/
+missing/stale guards, migration replay, and file-backed restart.
+
+Authenticated Core3 desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`; both sessions
+had zero failed requests and no overflow, but the Vietnam fixture was hidden by
+the authenticated Demo Company context. Odoo desktop/mobile comparison is
+blocked by rejected `admin/admin` credentials followed by rate limiting. No
+aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001: Related user active status (2026-09-21)
 
 The next uncovered source-backed Employee behavior is Odoo's restricted

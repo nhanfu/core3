@@ -26,6 +26,21 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-HR-PRESENCE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-061 | Odoo `hr_presence_state`/`hr_icon_display` model and list/form view to paired contracts | pass; source selections, list Presence field, form widget, and `page.id` bindings are asserted |
+| EMP-WF-061 | Durable HR Presence read and refresh workflow | pass; deterministic state projects and refresh derives the state from current employee presence while incrementing row version |
+| EMP-PERM-061 | `employees.write`, actor, current company, missing employee, and stale row version | pass; invalid requests reject atomically |
+| EMP-DATA-061 | Migration replay and file-backed restart | pass; state fixtures and refreshed values survive reopen without duplicate effects |
+| EMP-UI-061 | Authenticated Core3/Odoo desktop/mobile comparison | conditional; Core3 1440x1000 and 390x844 sessions had zero failed requests but the fixture was hidden by the Demo Company context; Odoo rejected `admin/admin` and rate-limited the mobile retry |
+
+Focused test: `test/employees_hr_presence.integration.test.ts` (4 tests,
+26 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

@@ -65,6 +65,7 @@ components:
       - { id: edit_employee_company, label: Change Company, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_timezone, label: Edit Timezone, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_language, label: Edit Language, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: refresh_employee_presence, label: Refresh Presence, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: launch_employee_plan, label: Launch Plan, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
@@ -263,7 +264,7 @@ components:
           label: Settings
           groups:
             - title: User and attendance
-              fields: [{ field: user_name, label: Related User }, { field: is_user_active, label: User is Active, type: checkbox, show_if: "!!state.employee_detail.auth_user_id" }, { field: timezone, label: Timezone }, { field: lang, label: Language }, { field: barcode, label: Badge ID }, { field: presence, label: Presence, type: StatusChip }]
+              fields: [{ field: user_name, label: Related User }, { field: is_user_active, label: User is Active, type: checkbox, show_if: "!!state.employee_detail.auth_user_id" }, { field: timezone, label: Timezone }, { field: lang, label: Language }, { field: barcode, label: Badge ID }, { field: presence, label: Presence, type: StatusChip }, { field: hr_presence_state, label: HR Presence, type: StatusChip }]
             - title: Approvers
               permission: employees.write
               fields: [{ field: hr_responsible_name, label: HR Responsible, readonly: true }]
