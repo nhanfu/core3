@@ -26,4 +26,4 @@ menu:
     - id: reporting
       label: Reporting
       items:
-        - { path: /website-analysis, label: Website Analysis, icon: chart, permission: website.read }
+        - { path: /website-analysis, label: Analytics, icon: chart, permission: website.read }

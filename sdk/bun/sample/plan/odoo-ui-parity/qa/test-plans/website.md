@@ -17,6 +17,7 @@ recorded in [`../website.md`](../website.md).
 | Site/Homepage | `/website`, homepage client-action route | Published site rendering, site ordering, empty/error and public navigation |
 | Page Manager | `/website/pages`, page detail/edit routes | Published/draft pages, search, route metadata, CRUD and visibility |
 | YAML-driven presentation | page-owned API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, responsive layout and safe content binding |
+| Site/Reporting/Analytics | `/website-analysis`, `api/analysis.yaml`, `website_analytics_daily` | Odoo `backend_dashboard` route/menu identity, multi-site aggregates, daily traffic, durable migration replay, read permission and empty/error states |
 
 Actors are Website Manager, Website Editor, public visitor, wrong-company user
 and unauthenticated user. Fixtures use stable sites, published/draft pages,
@@ -35,6 +36,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate sites/pages or moving content dates | planned restart/migration gate |
 | WEBSITE-FUNC-007 | Assets/import/export | Exercise image/asset binding, page import/export and exposed preview/print actions | planned browser interaction gate |
 | WEBSITE-FUNC-008 | Menu Editor CRUD | Create/edit menu labels, URL, parent, target, sequence, per-site duplicate URL guards, invalid-site rejection, stale-write protection, and persisted ordering | pass: `website_menus.integration.test.ts`; canonical site naming, restart replay, and authenticated desktop/mobile browser edit/reload pass; paired Odoo comparison remains planned |
+| WEBSITE-FUNC-009 | Website Analytics | Odoo `Website > Reporting > Analytics` maps to `/website-analysis`; Website API owns totals, site lookup and daily traffic; deterministic two-site metrics and empty branch survive idempotent migration replay | pass: `website_analytics.integration.test.ts` (2 tests, 17 assertions); browser route blocked by unrelated startup error |
 
 ## Workflow and integration cases
 
@@ -56,6 +58,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-PERM-003 | Wrong company/site | Other-site pages, drafts and settings are not leaked or mutable | planned |
 | WEBSITE-PERM-004 | Unauthenticated/expired | Private routes redirect/401/403 without draft content in the response | planned |
 | WEBSITE-PERM-005 | Stale/missing/invalid | 409/404/422 leaves the current page/site unchanged | pass at contract level |
+| WEBSITE-PERM-006 | Analytics reader/forbidden/transport failure | `website.read` is required; 403 and 503 contracts are explicit and do not expose metrics | pass for YAML contract; live actor proof blocked by Core3 startup |
 
 ## Visual, responsive, and regression cases
 
@@ -65,6 +68,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-UI-002 | Page Manager/edit | both | Manager list/detail/edit states, actions and permission messages match Odoo | Menu Editor row-action/form state passes Core3 desktop/mobile browser checks; paired Odoo capture remains planned |
 | WEBSITE-UI-003 | Empty/draft/error states | both | Visibility and error states do not expose content or overflow | planned |
 | WEBSITE-UI-004 | Current route regression | all manifest-owned Website routes | Authenticated/public desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
+| WEBSITE-UI-005 | Analytics dashboard | 1440x900, 390x844 | Website selector/analytics totals and traffic chart render responsively; compare Odoo dashboard labels and empty Plausible state | blocked: Odoo Website absent in authenticated browser; Core3 startup returns HTTP 502 from unrelated CRM discovery error |
 
 ## Exit criteria
 

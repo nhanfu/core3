@@ -1,0 +1,32 @@
+version: 0.0.12
+kind: data
+description: Deterministic Website Analytics data for dashboard and empty-state verification
+type:
+  postgres:
+    up: |
+      INSERT INTO website_analytics_daily(id, website_id, report_date, visitors, visits, pageviews)
+      SELECT 'website-analytics-demo-001', 'website-demo-001', DATE '2026-01-12', 82, 109, 246
+      WHERE EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-001')
+        AND NOT EXISTS (SELECT 1 FROM website_analytics_daily WHERE id = 'website-analytics-demo-001');
+      INSERT INTO website_analytics_daily(id, website_id, report_date, visitors, visits, pageviews)
+      SELECT 'website-analytics-demo-002', 'website-demo-001', DATE '2026-01-13', 96, 128, 301
+      WHERE EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-001')
+        AND NOT EXISTS (SELECT 1 FROM website_analytics_daily WHERE id = 'website-analytics-demo-002');
+      INSERT INTO website_analytics_daily(id, website_id, report_date, visitors, visits, pageviews)
+      SELECT 'website-analytics-demo-003', 'website-demo-001', DATE '2026-01-14', 104, 141, 338
+      WHERE EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-001')
+        AND NOT EXISTS (SELECT 1 FROM website_analytics_daily WHERE id = 'website-analytics-demo-003');
+      INSERT INTO website_analytics_daily(id, website_id, report_date, visitors, visits, pageviews)
+      SELECT 'website-analytics-demo-004', 'website-demo-002', DATE '2026-01-12', 34, 45, 112
+      WHERE EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-002')
+        AND NOT EXISTS (SELECT 1 FROM website_analytics_daily WHERE id = 'website-analytics-demo-004');
+      INSERT INTO website_analytics_daily(id, website_id, report_date, visitors, visits, pageviews)
+      SELECT 'website-analytics-demo-005', 'website-demo-002', DATE '2026-01-13', 41, 57, 139
+      WHERE EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-002')
+        AND NOT EXISTS (SELECT 1 FROM website_analytics_daily WHERE id = 'website-analytics-demo-005');
+    down: |
+      DELETE FROM website_analytics_daily WHERE id IN ('website-analytics-demo-001', 'website-analytics-demo-002', 'website-analytics-demo-003', 'website-analytics-demo-004', 'website-analytics-demo-005');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

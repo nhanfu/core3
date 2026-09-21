@@ -67,3 +67,20 @@ process restart, and Odoo comparison remain open.
   diff-check evidence were reviewed.
 - Paired authenticated Odoo visual comparison and broader Website gates remain
   open; this is not module sign-off.
+
+## 2026-09-21 owner checkpoint — Website Analytics
+
+- Bounded source-backed Analytics slice implemented in `services/website`:
+  Odoo `website-analytics` route/menu identity, page/API separation, durable
+  daily telemetry table, deterministic two-site fixtures, read permission and
+  error contracts, and focused persistence/discovery tests.
+- Focused result: `bun test ./test/website_analytics.integration.test.ts
+  --timeout 20000` — 2 tests, 17 assertions passed; `git diff --check` passed.
+- Browser evidence attempted with the authenticated shared browser on instance
+  `245ea108`. Odoo has no Website app in the exposed session and direct
+  Analytics navigation returns Discuss. Core3 startup is blocked by unrelated
+  CRM YAML discovery errors, yielding HTTP 502. Desktop/mobile diagnostic
+  captures are recorded in the evidence folder; no visual parity claim.
+- Module status remains active/conditional. Open work includes Odoo Website
+  availability, Core3 startup repair outside Website scope, paired comparison,
+  and the previously listed Website follow-ups.

@@ -90,6 +90,51 @@ visual-parity claim is made and no screenshot files were added.
 
 ## Follow-up
 
-Website preview/Homepage, Analytics, themes, SEO filters, tracked pages,
+Website preview/Homepage, themes, SEO filters, tracked pages,
 page publish/unpublish browser workflow, import/export, and public/portal page
 rendering remain separate slices. No Odoo frontend code is copied.
+
+## Wave 4 execution evidence — 2026-09-21 — Website Analytics
+
+The next uncovered source entry after Page Manager and Homepage/Menu Editor is
+`Website > Reporting > Analytics` (`website.menu_reporting` sequence 30 →
+`website.menu_website_analytics` sequence 10). Odoo binds that entry to the
+`backend_dashboard` client action at path `website-analytics`; the dashboard
+fetches the current website, permitted website choices, designer/system group
+state, and an optional Plausible share URL through
+`/website/fetch_dashboard_data`. When no Plausible share URL is configured, the
+Odoo template renders `Easily track your visitor with Plausible`,
+`How to connect Plausible ?`, and a `Go to Website` control.
+
+Core3 now provides the same source-backed route/menu identity through a
+presentation-only `pages/analysis.yaml` and a joined `api/analysis.yaml`.
+Analytics are backed by the Website-owned `website_analytics_daily` table with
+idempotent deterministic fixtures for Core3 Storefront and Core3 Docs. The
+dashboard exposes Websites, Visitors, Visits, Page views, and Visits by date;
+all read sources require `website.read`, and explicit forbidden/transport error
+contracts are declared. This is a first-party durable read model for the
+YAML-driven product and does not store Plausible credentials or copy Odoo
+frontend code.
+
+Focused coverage passes in
+`test/website_analytics.integration.test.ts` (2 tests, 17 assertions),
+including page/API separation and discovery, route/menu identity, idempotent
+migrations, multi-site totals, daily traffic, empty state, and persisted rows.
+The feature evidence is under
+`odoo-ui-parity/evidence/website/2026-09-21/website-analytics-001/`.
+
+Authenticated browser comparison is blocked. On browser instance `245ea108`,
+the authenticated Odoo launcher exposed Discuss through Expenses but no Website
+application; `/odoo/website-analytics` returned to Discuss. Core3 memory-mode
+startup was also blocked by the unrelated pre-existing CRM discovery error
+referencing `crm_lead_mining_request_detail` and four missing CRM actions, so
+the Core3 route returned HTTP 502. Desktop/mobile diagnostic captures are
+retained under `/tmp/core3-odoo-parity/`; they are not Website visual-parity
+captures and no paired visual sign-off is claimed.
+
+### Updated next slice
+
+Themes, SEO filters, tracked pages, page publish/unpublish browser workflow,
+import/export, and public/portal rendering remain open. Analytics is complete
+for the bounded contract/runtime slice but not for module sign-off until the
+Odoo Website installation/session and Core3 startup blockers are resolved.

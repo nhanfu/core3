@@ -1,0 +1,19 @@
+page: { id: website-analysis }
+
+datasources:
+  - id: website_analysis_websites
+    permission: website.read
+    query: "SELECT id AS value, name AS label FROM website_websites ORDER BY name, id"
+  - id: website_analysis_totals
+    single: true
+    permission: website.read
+    error_states:
+      forbidden: { status: 403, code: WEBSITE_ANALYTICS_FORBIDDEN, message: You do not have permission to view Website Analytics. }
+      transport_error: { status: 503, code: WEBSITE_ANALYTICS_UNAVAILABLE, message: Website Analytics is temporarily unavailable. }
+    query: "SELECT COUNT(DISTINCT w.id) AS website_count, COALESCE(SUM(a.visitors), 0) AS visitor_count, COALESCE(SUM(a.visits), 0) AS visit_count, COALESCE(SUM(a.pageviews), 0) AS pageview_count FROM website_websites w LEFT JOIN website_analytics_daily a ON a.website_id = w.id WHERE (COALESCE(CAST(:website_id AS VARCHAR), '') = '' OR w.id = CAST(:website_id AS VARCHAR)) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: website_analysis_traffic
+    permission: website.read
+    error_states:
+      forbidden: { status: 403, code: WEBSITE_ANALYTICS_FORBIDDEN, message: You do not have permission to view Website Analytics. }
+      transport_error: { status: 503, code: WEBSITE_ANALYTICS_UNAVAILABLE, message: Website Analytics is temporarily unavailable. }
+    query: "SELECT CAST(a.report_date AS VARCHAR) AS report_date, SUM(a.visitors) AS visitors, SUM(a.visits) AS visits, SUM(a.pageviews) AS pageviews FROM website_analytics_daily a WHERE (COALESCE(CAST(:website_id AS VARCHAR), '') = '' OR a.website_id = CAST(:website_id AS VARCHAR)) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END GROUP BY a.report_date ORDER BY a.report_date"

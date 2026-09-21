@@ -41,6 +41,10 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 | WEBSITE-UI-011 | Menu Editor row actions and responsive edit form | Single-module server `:4316` + authenticated headless browser; Odoo source `website_pages_tree_view` uses an object row action, while Core3 `row_actions: menu` requires a declared column action. After adding the permissioned `edit_website_menu` column action, desktop and mobile rows expose `More actions` → `Edit`; the second-site row opens with its canonical Website selection, Save persists changed label/URL, reload preserves it, and no page/console errors occurred | pass for Core3 browser interaction and Fluent contract; paired Odoo visual comparison pending; artifacts `/tmp/core3-odoo-parity/website-menu-editor-admin-desktop.png`, `/tmp/core3-odoo-parity/website-menu-editor-mobile.png`, `/tmp/core3-odoo-parity/website-menu-editor-saved-desktop.png` |
 | WEBSITE-FUNC-001 | Website Homepage/Page Manager/public/menu/assets boundary suite | `bun test ./test/website*.integration.test.ts --timeout 20000` — 18 tests, 90 assertions | pass for focused scope |
 | WEBSITE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current Website slices cover publication, content, public visibility, assets, asset visibility, and Menu Editor CRUD; full module candidate is not submitted | pending; Menu Editor service actor/site-scope and replay slice advanced in DEV-2 follow-up |
+| WEBSITE-FUNC-009 | Analytics dashboard source/API contract and durable daily telemetry | `test/website_analytics.integration.test.ts`; Odoo `backend_dashboard` route/menu mapped to Core3 `website-analysis`, daily metrics persist across migration replay and aggregate by site | pass for bounded contract/data slice; browser route blocked by unrelated Core3 startup error |
+| WEBSITE-PERM-006 | Analytics read permission and failure states | `api/analysis.yaml`; every analytics datasource requires `website.read`, with explicit 403/503 contracts | pass for declared contract; authenticated actor/browser proof blocked with Core3 startup |
+| WEBSITE-DATA-005 | Multi-site analytics scope and deterministic empty state | `website_analytics.integration.test.ts`; Core3 Storefront/Core3 Docs totals, site-scoped daily rows, empty totals/series, idempotent migration replay | pass |
+| WEBSITE-UI-012 | Analytics desktop/mobile authenticated comparison | `/tmp/core3-odoo-parity/website-analytics-odoo-no-website-desktop.png`, `website-analytics-odoo-no-website-mobile.png`, `website-analytics-core3-blocked-desktop.png`, `website-analytics-core3-blocked-mobile.png` | blocked; Odoo Website is not exposed and Core3 starts with HTTP 502 from unrelated CRM YAML |
 
 ## Bugs and retests
 
@@ -69,6 +73,15 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
   403, and publish → unpublish → publish HTTP 200 lifecycle refreshes.
 - Paired authenticated Odoo visual comparison remains blocked. Website is
   **conditional / not signed off**; broader module gates remain open.
+
+## 2026-09-21 Analytics checkpoint
+
+The bounded Analytics contract/data slice passes its focused tests and diff
+check. It is not a module sign-off: Odoo Website is unavailable in the shared
+authenticated session, and Core3 browser verification is blocked by unrelated
+CRM YAML discovery failures. Diagnostic desktop/mobile captures are retained
+outside Git under `/tmp/core3-odoo-parity/` and referenced in the feature
+evidence folder.
 
 ## 2026-09-13 coordinator dispatch: next bounded wave
 
