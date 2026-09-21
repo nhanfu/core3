@@ -2245,3 +2245,27 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`; Core3 fixture/company
 alignment and the rejected local Odoo credential remain explicit blockers. No
 aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-FOLLOWERS-001: Employee chatter followers (2026-09-21)
+
+Odoo's `hr.employee` mail-thread mixin exposes `message_follower_ids` and
+`message_partner_ids`, and the Employee form renders a follower-aware chatter.
+Core3's completed internal-note slice did not include follower management.
+
+Migration `20260922210000-075` adds replay-safe `employee_followers` storage
+and a deterministic Dispatcher relation. The API YAML owns the company-scoped
+follower and candidate datasources plus guarded `add_employee_follower` and
+`remove_employee_follower` actions; the page YAML owns only the follower
+manager binding by `page.id`. Add/remove operations also append audit events to
+the existing employee message stream.
+
+The workflow requires `employees.write`, an authenticated actor, an active
+employee in the current company, an enabled candidate, duplicate/missing
+relation checks, and optimistic employee row-version concurrency. Focused
+verification is **4 tests / 26 assertions**, including CRUD, guard atomicity,
+audit events, migration replay, and restart persistence.
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`; Core3 runtime and
+local Odoo credential limitations remain explicit. No aggregate Employees
+sign-off is claimed.

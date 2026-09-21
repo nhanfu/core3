@@ -1196,3 +1196,17 @@ Focused test: `test/employees_chatter_note.integration.test.ts` (4 tests, 19
 assertions). Merged API/page validation, scoped lint, UI audit, and staged
 diff-check are recorded with the commit. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-FOLLOWERS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-051 | Employee chatter follower add/remove CRUD and audit events | pass; follower relation and employee message stream update together |
+| EMP-PERM-051 | `employees.write`, actor, current company, candidate, relation, and row version | pass; actor, stale, wrong-company, invalid, duplicate, and missing relation requests reject atomically |
+| EMP-DATA-051 | Migration replay and file-backed restart | pass; deterministic and newly-added follower relations survive restart without duplicate seeds |
+| EMP-UI-047 | Authenticated Core3/Odoo desktop and mobile | conditional; exact Core3 runtime and local Odoo credential blockers are recorded |
+
+Focused test: `test/employees_followers.integration.test.ts` (4 tests, 26
+assertions). Merged API/page validation, scoped lint, UI audit, and staged
+diff-check are recorded with the commit. No aggregate Employees sign-off is
+claimed.

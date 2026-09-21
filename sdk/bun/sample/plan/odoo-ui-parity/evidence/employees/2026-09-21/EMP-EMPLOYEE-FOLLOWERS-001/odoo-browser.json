@@ -1,0 +1,42 @@
+{
+  "name": "odoo",
+  "login_url": "http://127.0.0.1:8069/web/login",
+  "target_url": "http://127.0.0.1:8069/web",
+  "login_attempted": true,
+  "login_succeeded": false,
+  "authenticated": false,
+  "request_failures": [],
+  "page_errors": [],
+  "console_errors": [],
+  "viewport_checks": [
+    {
+      "width": 1440,
+      "height": 900,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "bodyWidth": 1440,
+      "hasFollowers": false,
+      "hasAddFollowers": false,
+      "hasEmployeeNote": false,
+      "hasSignIn": true,
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "bodyWidth": 390,
+      "hasFollowers": false,
+      "hasAddFollowers": false,
+      "hasEmployeeNote": false,
+      "hasSignIn": true,
+      "no_horizontal_overflow": true
+    }
+  ],
+  "after_login_url": "http://127.0.0.1:8069/web/login",
+  "after_login_text": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+  "view_url": "http://127.0.0.1:8069/web/login?redirect=%2Fweb%3F",
+  "view_title": "Odoo",
+  "body_text": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+}

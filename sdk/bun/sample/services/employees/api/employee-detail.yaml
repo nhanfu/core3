@@ -23,6 +23,14 @@ datasources:
     permission: employees.read
     error_states: { transport_error: { status: 503, code: EMPLOYEES_MESSAGES_UNAVAILABLE, message: Employee messages are temporarily unavailable. } }
     query: "SELECT m.id, m.employee_id, m.actor_name, m.action, m.action_label, m.detail, CAST(m.created_at AS VARCHAR) AS created_at FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.employee_id = :id AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY m.created_at DESC, m.id DESC"
+  - id: employee_followers
+    single: false
+    permission: employees.read
+    query: "SELECT f.user_id, u.name, u.email, CAST(f.created_at AS VARCHAR) AS followed_at FROM employee_followers f JOIN employee_related_user_catalog u ON u.id = f.user_id JOIN employees e ON e.id = f.employee_id WHERE f.employee_id = :id AND u.enabled = true AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY f.created_at, f.user_id"
+  - id: employee_follower_candidates
+    single: false
+    permission: employees.write
+    query: "SELECT u.id AS value, u.name || ' · ' || u.email AS label FROM employee_related_user_catalog u JOIN employees e ON e.id = :id WHERE u.enabled = true AND NOT EXISTS (SELECT 1 FROM employee_followers f WHERE f.employee_id = :id AND f.user_id = u.id) AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY u.name, u.id"
   - id: employee_work_contact_options
     single: false
     permission: employees.write
@@ -409,6 +417,53 @@ actions:
           code: STALE_RECORD
           message: The employee changed before the note was logged. Reload and try again.
       result: { query: "SELECT id, employee_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM employee_messages WHERE id = :note_id" }
+  - id: add_employee_follower
+    type: server
+    permission: employees.write
+    action: employees.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_followers, employee_follower_candidates, employee_messages]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_FOLLOWER_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the follower was added. Reload and try again. }
+        - { query: "SELECT id FROM employee_related_user_catalog WHERE id = :user_id AND enabled = true", status: 404, code: EMPLOYEES_FOLLOWER_USER_NOT_FOUND, message: Select an enabled follower. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_followers WHERE employee_id = :id AND user_id = :user_id)", status: 409, code: EMPLOYEES_FOLLOWER_EXISTS, message: This user already follows the employee. }
+      steps:
+        - query: "INSERT INTO employee_followers(employee_id, user_id, added_by) VALUES(:id, :user_id, :current_user_id)"
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.add', 'Added follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' now follows ' || (SELECT name FROM employees WHERE id = :id))"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the follower was added. Reload and try again.
+      result: { query: "SELECT :user_id AS user_id, u.name, u.email, false AS removed FROM employee_related_user_catalog u WHERE u.id = :user_id" }
+  - id: remove_employee_follower
+    type: server
+    permission: employees.write
+    action: employees.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_followers, employee_follower_candidates, employee_messages]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_FOLLOWER_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the follower was removed. Reload and try again. }
+        - { query: "SELECT user_id FROM employee_followers WHERE employee_id = :id AND user_id = :user_id", status: 404, code: EMPLOYEES_FOLLOWER_NOT_FOUND, message: Follower not found for this employee. }
+      steps:
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'employees.followers.remove', 'Removed follower', (SELECT name FROM employee_related_user_catalog WHERE id = :user_id) || ' no longer follows ' || (SELECT name FROM employees WHERE id = :id))"
+        - query: "DELETE FROM employee_followers WHERE employee_id = :id AND user_id = :user_id"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the follower was removed. Reload and try again.
+      result: { query: "SELECT :user_id AS user_id, u.name, u.email, true AS removed FROM employee_related_user_catalog u WHERE u.id = :user_id" }
   - id: open_employee_timesheets
     type: navigate
     permission: timesheets.read

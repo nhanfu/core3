@@ -1063,3 +1063,21 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`. Fixture/company
   and local Odoo credential blockers remain explicit; no aggregate sign-off is
   claimed.
+
+## EMP-EMPLOYEE-FOLLOWERS-001 (2026-09-21)
+
+- Selected Odoo's source-visible `message_follower_ids` /
+  `message_partner_ids` Employee relationships as the smallest uncovered
+  chatter behavior after the internal-note slice.
+- Added migration `20260922210000-075` with durable `employee_followers`
+  relation storage, a replay-safe index, and a deterministic Dispatcher
+  follower for `employee-demo-001`.
+- Added separate API follower/candidate datasources and guarded add/remove
+  actions; the page binds only the shared follower manager through `page.id`.
+- Guards cover `employees.write`, authenticated actor, active/current-company
+  employee, enabled candidate, duplicate/missing relation, and optimistic
+  employee row-version concurrency. Focused verification is **4 tests / 26
+  assertions**, including audit events, replay, and file-backed restart.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`; runtime and local
+  credential blockers remain explicit and no aggregate sign-off is claimed.

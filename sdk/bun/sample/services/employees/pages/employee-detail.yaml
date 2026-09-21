@@ -15,10 +15,21 @@ components:
     attachment_upload_action: upload_employee_attachment
     attachment_download_action: download_employee_attachment
     message_source: employee_messages
+    follower_source: employee_followers
+    follower_candidates_source: employee_follower_candidates
+    follower_candidates_page_size: 100
+    follower_add_action: add_employee_follower
+    follower_remove_action: remove_employee_follower
+    follower_label: Followers
+    add_follower_label: Add Followers
+    remove_follower_label: Remove follower
+    no_followers_label: No followers
+    follower_search_placeholder: Select a follower
+    add_label: Add
     note_action: log_employee_note
     note_label: Log note
     message_action_field: action_label
-    message_action_labels: { employees.note: Internal note }
+    message_action_labels: { employees.note: Internal note, employees.followers.add: Added follower, employees.followers.remove: Removed follower }
     chatter_label: Messages and activities
     chatter_empty: No messages or activities yet.
     status_field: state

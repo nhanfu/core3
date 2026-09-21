@@ -745,3 +745,17 @@ tests, 22 assertions). Evidence:
 Focused test: `test/employees_chatter_note.integration.test.ts` (4 tests, 19
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`.
+
+## EMP-EMPLOYEE-FOLLOWERS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Employee follower relationships map to paired API/page contracts | pass |
+| Follower CRUD | Add/remove updates the durable relation, candidate list, row version, and audit stream | pass |
+| Permission and scope | `employees.write`, actor, current-company, candidate, relation, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve follower relations and events | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile follower manager plus Odoo comparison | conditional; exact runtime and rejected-credential blockers are recorded |
+
+Focused test: `test/employees_followers.integration.test.ts` (4 tests, 26
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-FOLLOWERS-001/`.
