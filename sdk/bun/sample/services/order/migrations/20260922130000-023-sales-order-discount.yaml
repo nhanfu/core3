@@ -1,0 +1,14 @@
+version: 0.0.23
+kind: data
+description: Provide the Sales discount product used by quotation discount workflows
+type:
+  postgres:
+    up: |
+      INSERT INTO sale_products(id, default_code, name, product_type, list_price, cost_price, uom, category, description, active, sale_ok)
+      VALUES ('product-demo-discount', 'DISCOUNT-01', 'Discount', 'Service', 0, 0, 'Units', 'Services', 'Quotation discount', true, false)
+      ON CONFLICT(id) DO NOTHING;
+    down: "DELETE FROM sale_products WHERE id = 'product-demo-discount';"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

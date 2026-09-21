@@ -40,6 +40,7 @@ databases and generated IDs.
 | ORDER-FUNC-009 | Orders to Invoice bulk action | Select eligible approved orders, create draft invoices atomically, refresh queue state, reject empty/duplicate/mixed-scope/already-invoiced selections, and preserve rows on failure | pass: focused suite |
 | ORDER-FUNC-010 | Quotation email composer | Compose and send a quotation email with recipient, subject, body, attachment, durable mail history, draft-to-sent transition, and stale/scope/content guards | pass: focused suite |
 | ORDER-FUNC-011 | Order-line presentation rows | Add section and note rows with Odoo `line_section`/`line_note` semantics, edit/delete descriptions, preserve totals, and survive migration replay/restart | pass: `sales_order_display_lines.integration.test.ts`, 4 tests / 24 assertions |
+| ORDER-FUNC-012 | Discount wizard | Apply percentage, global, and fixed discounts with durable totals, audit history, replay, and invalid/stale/scope/duplicate guards | pass: `sales_order_discount.integration.test.ts`, 3 tests / 18 assertions |
 
 ## Workflow and integration cases
 
@@ -52,6 +53,7 @@ databases and generated IDs.
 | ORDER-WF-005 | Durable/external boundary | Mail, payment, delivery callbacks and cross-module workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | ORDER-WF-006 | Quotation email send | Odoo `action_quotation_send` inputs persist atomically, record the actor/timeline event, and survive file-backed reopen and migration replay | pass: focused suite; browser delivery gate planned |
 | ORDER-WF-007 | Section/note line guards | Display-line mutations are limited to quotations, current branch scope, current parent/line versions, and valid descriptions; each write is audited | pass: focused suite |
+| ORDER-WF-008 | Discount application guards | Discount mutations are limited to editable quotations, current branch/version, valid modes and amounts; global/fixed lines are atomic and audited | pass: `sales_order_discount.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -73,6 +75,7 @@ databases and generated IDs.
 | ORDER-UI-003 | Upsell/reporting/configuration | both | Empty states, graph/pivot/list controls, templates and Sales Teams match Odoo | planned paired capture |
 | ORDER-UI-004 | Current route regression | all manifest-owned Order routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned fresh matrix |
 | ORDER-UI-005 | Order-line presentation rows | 1440x900, 390x844 | Odoo Add a section/Add a note controls, inline description row, zero total, and row overflow action match; Core3 capture pending runtime | Odoo pass; Core3 blocked by 3001/3002 unavailable |
+| ORDER-UI-006 | Discount wizard | 1440x900, 390x844 | Odoo Discount action and modal labels/options are mapped to the order page/API contract; Core3 capture pending runtime | Odoo reference captured; Core3 blocked by 3001/3002 unavailable |
 
 ## Exit criteria
 

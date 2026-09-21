@@ -218,3 +218,24 @@ discovery of datasource contracts outside Order ownership.
   request after capture; the extension did not acknowledge stop within the CLI
   timeout and the daemon reported the stop already in progress. No credentials,
   cookies, or tokens were extracted.
+
+## 2026-09-22 Sales order discount wizard slice
+
+- Source contract: Odoo `sale/wizard/sale_order_discount.py` exposes percentage
+  discounts on all order lines plus global and fixed discount-line modes;
+  `sale/wizard/sale_order_discount_views.xml` defines the Discount/Apply/Discard
+  modal, and `sale/views/sale_order_views.xml` exposes the Discount action.
+- Core3 implementation is limited to Order paths: the paired
+  `sale-order-detail` page/API fragments, migration
+  `20260922130000-023-sales-order-discount.yaml`, and
+  `test/sales_order_discount.integration.test.ts`.
+- Focused discount suite: **3 passed, 18 assertions, 0 failures**. It covers
+  wizard declarations, percentage/global/fixed persistence and recomputation,
+  audit/replay, invalid/stale/scope/duplicate guards, and atomic writes.
+- Regression suite after updating the existing line-action assertion: **17
+  passed, 0 failures, 128 assertions** across the Order detail, display-lines,
+  quotation-template, quotation-email, and discount slices.
+- Authenticated Odoo reference desktop/mobile captures are under
+  `/tmp/core3-odoo-parity/sales-discount-20260922/`. Core3 visual capture is
+  blocked because the required local UI listeners on `127.0.0.1:3001` and
+  `127.0.0.1:3002` were unavailable; no visual-parity claim is made.

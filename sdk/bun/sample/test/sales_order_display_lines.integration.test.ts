@@ -38,7 +38,7 @@ describe('Sales order section and note line parity', () => {
     expect(api.page).toEqual({ id: 'sale-order-detail' });
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('sale-order-detail'))
       .toEqual(expect.arrayContaining(['sale_order_detail', 'sale_order_lines']));
-    expect(grid.actions.map((item: any) => item.label)).toEqual(['Add a product', 'Add a section', 'Add a note']);
+    expect(grid.actions.map((item: any) => item.label)).toEqual(['Add a product', 'Add a section', 'Add a note', 'Discount']);
     expect(action('add_sale_order_section')).toMatchObject({ permission: 'orders.write', handler: 'line_item', operation: 'create' });
     expect(action('add_sale_order_note')).toMatchObject({ permission: 'orders.write', handler: 'line_item', operation: 'create' });
     expect(lineActions.actions.map((item: any) => item.id)).toEqual(['edit_sale_order_display_line', 'delete_sale_order_display_line']);

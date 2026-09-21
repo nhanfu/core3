@@ -368,6 +368,42 @@ actions:
         - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISPLAY_LINE_STALE, message: Sales order changed while adding the note; reload before saving. }
         - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.note.create', 'orders', :id, 'Added note: ' || TRIM(CAST(:description AS VARCHAR)))" }
       result: { query: "SELECT * FROM order_lines WHERE id = :line_id" }
+  - id: apply_sale_order_discount
+    type: server_form
+    permission: orders.write
+    title: Discount
+    submit_label: Apply
+    cancel_label: Discard
+    action: sales.orders.discount.apply
+    handler: yaml_mutation
+    operation: apply
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    fields:
+      - { field: discount_percentage, label: Discount, type: number, default: 10, min: 0, max: 100, show_if: "values.discount_type !== 'amount'" }
+      - { field: discount_amount, label: Discount, type: money, currency: USD, default: 0, min: 0, show_if: "values.discount_type === 'amount'" }
+      - field: discount_type
+        label: Discount Type
+        type: radio
+        options:
+          - { value: sol_discount, label: On All Order Lines }
+          - { value: so_discount, label: Global Discount }
+          - { value: amount, label: Fixed Amount }
+        default: sol_discount
+    mutation:
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_DISCOUNT_STALE, message: Sales order changed or is no longer editable; reload before applying a discount. }
+        - { query: "SELECT 1 AS ok WHERE :discount_type IN ('sol_discount', 'so_discount', 'amount')", status: 422, code: SALE_ORDER_DISCOUNT_TYPE_INVALID, message: Select a valid discount type. }
+        - { query: "SELECT 1 AS ok WHERE (:discount_type = 'amount' AND COALESCE(:discount_amount, 0) BETWEEN 0 AND 1000000000) OR (:discount_type IN ('sol_discount', 'so_discount') AND COALESCE(:discount_percentage, -1) BETWEEN 0 AND 100)", status: 422, code: SALE_ORDER_DISCOUNT_INVALID, message: Enter a discount percentage from 0 to 100 or a non-negative fixed amount. }
+        - { query: "SELECT 1 AS ok WHERE :discount_type = 'sol_discount' OR NOT EXISTS (SELECT 1 FROM order_lines WHERE order_id = :id AND product_id = 'product-demo-discount')", status: 409, code: SALE_ORDER_DISCOUNT_ALREADY_APPLIED, message: A global discount is already applied to this quotation. }
+      steps:
+        - { query: "UPDATE order_lines SET discount = CAST(:discount_percentage AS DECIMAL(9,4)), price_subtotal = ROUND(CAST(quantity AS DECIMAL(18,4)) * CAST(unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount_percentage AS DECIMAL(9,4)) / 100), 2), price_tax = ROUND(CAST(quantity AS DECIMAL(18,4)) * CAST(unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount_percentage AS DECIMAL(9,4)) / 100) * CAST(tax_rate AS DECIMAL(9,4)) / 100, 2), price_total = ROUND(CAST(quantity AS DECIMAL(18,4)) * CAST(unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount_percentage AS DECIMAL(9,4)) / 100) * (1 + CAST(tax_rate AS DECIMAL(9,4)) / 100), 2), line_total = ROUND(CAST(quantity AS DECIMAL(18,4)) * CAST(unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount_percentage AS DECIMAL(9,4)) / 100) * (1 + CAST(tax_rate AS DECIMAL(9,4)) / 100), 2), updated_at = CURRENT_TIMESTAMP WHERE order_id = :id AND display_type IS NULL AND :discount_type = 'sol_discount'" }
+        - { query: "INSERT INTO order_lines(id, order_id, sequence, display_type, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) SELECT 'sale-discount-' || :id, :id, 999, NULL, CASE WHEN :discount_type = 'so_discount' THEN 'Discount ' || CAST(:discount_percentage AS VARCHAR) || '%' ELSE 'Discount' END, 'product-demo-discount', 1, 'Units', CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE(SUM(CASE WHEN display_type IS NULL AND product_id <> 'product-demo-discount' THEN COALESCE(price_total, line_total) ELSE 0 END), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, 0, 0, 0, 0, 0, CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE(SUM(CASE WHEN display_type IS NULL AND product_id <> 'product-demo-discount' THEN COALESCE(price_total, line_total) ELSE 0 END), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, 0, CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE(SUM(CASE WHEN display_type IS NULL AND product_id <> 'product-demo-discount' THEN COALESCE(price_total, line_total) ELSE 0 END), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE(SUM(CASE WHEN display_type IS NULL AND product_id <> 'product-demo-discount' THEN COALESCE(price_total, line_total) ELSE 0 END), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END FROM order_lines WHERE order_id = :id AND :discount_type IN ('so_discount', 'amount')" }
+        - { query: "UPDATE order_lines SET unit_price = CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE((SELECT total_amount FROM orders WHERE id = :id), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, price_subtotal = CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE((SELECT total_amount FROM orders WHERE id = :id), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, price_total = CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE((SELECT total_amount FROM orders WHERE id = :id), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END, line_total = CASE WHEN :discount_type = 'so_discount' THEN -ROUND(COALESCE((SELECT total_amount FROM orders WHERE id = :id), 0) * CAST(:discount_percentage AS DECIMAL(9,4)) / 100, 2) ELSE -CAST(:discount_amount AS DECIMAL(18,2)) END WHERE id = 'sale-discount-' || :id" }
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_DISCOUNT_STALE, message: Sales order changed while applying the discount; reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sales.orders.discount.apply', 'orders', :id, CASE WHEN :discount_type = 'amount' THEN 'Applied fixed discount: ' || CAST(:discount_amount AS VARCHAR) ELSE 'Applied discount: ' || CAST(:discount_percentage AS VARCHAR) || '%' END)" }
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
   - id: edit_sale_order_display_line
     type: server_form
     permission: orders.write
