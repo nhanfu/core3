@@ -4,10 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `9b328e27f2e313abc796e8af66bee90e51130e5b`
-(`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`, local and not pushed).
+Latest committed bounded slice: `fbf76f9e6885765975014597542451f2c902a922`
+(`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`, local and not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`
+
+Wave 25 selected Odoo Website Sale's `confirmation_email_template_id`, which
+was not represented in Core3. Odoo restricts the website setting to active
+`sale.order` mail templates and Website Sale's order override uses the selected
+template for confirmation. Core3 migrations 114/115 add the durable template
+catalog, company policy, order snapshot columns, and deterministic fixtures.
+Separate page/API YAML provides the permissioned configuration form and
+optimistic update; authenticated and guest checkout snapshot the selected
+template onto created orders, and order list/detail projections expose it.
+
+The focused test covers Odoo source comparison, page/API pairing, migration
+replay, template options, company and invalid-template rejection, optimistic
+concurrency, checkout persistence, and DuckDB restart. Browser capture remains
+blocked by the unavailable Core3 ports and missing persistent browser runtime;
+Odoo `/shop` is an exact HTTP 404 on ports 8069 and 8073. Ecommerce module
+sign-off remains open.
 
 ## Current bounded task — `ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`
 
