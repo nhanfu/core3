@@ -29,6 +29,16 @@ components:
       - { title: SEO Metadata, columns: 2, fields: [{ field: website_meta_title, label: Website Meta Title }, { field: website_meta_description, label: Website Meta Description, wide: true }, { field: website_meta_keywords, label: Website Meta Keywords }, { field: website_meta_og_img, label: Website OpenGraph Image }, { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }] }
   - type: ListView
     variant: odoo
+    source: ecommerce_product_extra_field_values
+    page_size: 20
+    row_key: id
+    empty_state: { title: No extra product information, description: This product has no configured extra page fields. }
+    columns:
+      - { field: field_label, label: Product Page Information, type: PrimaryEntityCell }
+      - { field: value, label: Value }
+      - { field: field_type, label: Type }
+  - type: ListView
+    variant: odoo
     source: ecommerce_product_categories
     create_action: create_ecommerce_product_category
     create_label: Add Category

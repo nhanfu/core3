@@ -1,5 +1,24 @@
 # ecommerce QA ledger
 
+## Product Page Extra Fields (`ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`, 2026-09-21)
+
+- Odoo source: pass. `website.shop_extra_field_ids` points to
+  `website.sale.extra.field`; the Website Settings form exposes an ordered
+  `field_id` handle restricted to product-template `char`/`binary` fields,
+  and the product template renders configured non-empty values.
+- Core3 lifecycle: migrations 146/147 provide durable company-scoped ordered
+  fields and deterministic fixtures. Separate page/API YAML joins through
+  `ecommerce-product-extra-fields`; Product Detail projects active values.
+- Focused verification: **2 tests, 35 assertions, 0 failures**.
+- Regression: Product Detail/Products/Shop — **12 tests, 110 assertions, 0
+  failures**.
+- Audit: **756 pages, 765 routes, 1534 datasources**, passed.
+- Scoped ESLint and `git diff --check`: passed.
+- Browser/Odoo: Core3 desktop/mobile runtime unavailable; supplied Odoo
+  `/shop` route remains HTTP 404. No visual sign-off is claimed.
+- Local commit: pending final handoff; not pushed.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-extra-fields-001/`.
+
 ## Shop Grid Gap (`ECOM-CATALOG-SHOP-GRID-GAP-001`, 2026-09-21)
 
 - Odoo source/builder: pass. `website.py` defines `shop_gap`; `setGap` applies

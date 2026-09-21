@@ -1,0 +1,83 @@
+page: { id: ecommerce-product-extra-fields }
+datasources:
+  - id: ecommerce_product_extra_fields
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_UNAUTHENTICATED, message: Sign in to view product page extra fields. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_FORBIDDEN, message: You do not have permission to view product page extra fields. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_UNAVAILABLE, message: Product page extra fields are temporarily unavailable. }
+    query: "SELECT f.id, f.row_version, f.company_name, f.field_name, CASE f.field_name WHEN 'name' THEN 'Product Name' WHEN 'internal_reference' THEN 'Internal Reference' ELSE 'eCommerce Category' END AS field_label, 'char' AS field_type, f.sequence, f.active, CAST(f.updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_extra_fields f WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND f.company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND (:active IS NULL OR f.active = :active) ORDER BY f.sequence, f.id"
+  - id: ecommerce_product_extra_field_options
+    permission: ecommerce.read
+    query: "SELECT value, label, field_type FROM (VALUES ('name', 'Product Name', 'char'), ('internal_reference', 'Internal Reference', 'char'), ('category', 'eCommerce Category', 'char')) fields(value, label, field_type)"
+actions:
+  - id: create_ecommerce_product_extra_field
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Page Extra Field
+    action: ecommerce.product_extra_fields.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_product_extra_fields]
+    mutation:
+      operation: insert
+      table: ecommerce_product_extra_fields
+      generated: [id]
+      fields: [field_name, sequence, active, company_name]
+      required: [field_name]
+      boolean_fields: [active]
+      defaults: { sequence: 10, active: true, company_name: My Company }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :field_name IN ('name', 'internal_reference', 'category')", status: 422, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_INVALID, message: Choose a supported product-template character field. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 10) AS INTEGER) BETWEEN 0 AND 999", status: 422, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_SEQUENCE_INVALID, message: Sequence must be between 0 and 999. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_COMPANY_SCOPE_REQUIRED, message: Product page extra fields must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_extra_fields WHERE company_name = COALESCE(:company_name, :current_company_name, 'My Company') AND field_name = :field_name)", status: 409, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_EXISTS, message: This product page extra field is already configured for the company. }
+      result: { query: "SELECT id, row_version, company_name, field_name, CASE field_name WHEN 'name' THEN 'Product Name' WHEN 'internal_reference' THEN 'Internal Reference' ELSE 'eCommerce Category' END AS field_label, 'char' AS field_type, sequence, active, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_extra_fields WHERE id = :id" }
+    fields:
+      - { field: field_name, label: Product Template Field, type: select, options_source: ecommerce_product_extra_field_options, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0, max: 999, default: 10 }
+      - { field: active, label: Active, type: checkbox, default: true }
+      - { field: company_name, label: Company, type: text, default: My Company }
+  - id: edit_ecommerce_product_extra_field
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Page Extra Field
+    action: ecommerce.product_extra_fields.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_extra_fields, ecommerce_product_extra_field_values]
+    mutation:
+      operation: update
+      table: ecommerce_product_extra_fields
+      fields: [field_name, sequence, active]
+      required: [field_name]
+      boolean_fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_extra_fields WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_STALE, message: This product page extra field changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :field_name IN ('name', 'internal_reference', 'category')", status: 422, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_INVALID, message: Choose a supported product-template character field. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 10) AS INTEGER) BETWEEN 0 AND 999", status: 422, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_SEQUENCE_INVALID, message: Sequence must be between 0 and 999. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_extra_fields current_field WHERE current_field.company_name = (SELECT company_name FROM ecommerce_product_extra_fields WHERE id = :id) AND current_field.field_name = :field_name AND current_field.id <> :id)", status: 409, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_EXISTS, message: This product page extra field is already configured for the company. }
+      result: { query: "SELECT id, row_version, company_name, field_name, CASE field_name WHEN 'name' THEN 'Product Name' WHEN 'internal_reference' THEN 'Internal Reference' ELSE 'eCommerce Category' END AS field_label, 'char' AS field_type, sequence, active, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_extra_fields WHERE id = :id" }
+    fields:
+      - { field: field_name, label: Product Template Field, type: select, options_source: ecommerce_product_extra_field_options, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0, max: 999 }
+      - { field: active, label: Active, type: checkbox }
+  - id: delete_ecommerce_product_extra_field
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_extra_fields.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Remove {{row.field_label}} from the product page?'
+    refresh: [ecommerce_product_extra_fields, ecommerce_product_extra_field_values]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: ecommerce_product_extra_fields
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_extra_fields WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 404, code: ECOMMERCE_PRODUCT_EXTRA_FIELD_NOT_FOUND, message: Product page extra field not found for this company. }
+      result: { query: "SELECT TRUE AS deleted" }

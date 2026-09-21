@@ -12,6 +12,13 @@ datasources:
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_extra_field_values
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_UNAUTHENTICATED, message: Sign in to view product page extra information. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_FORBIDDEN, message: You do not have permission to view product page extra information. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_EXTRA_FIELDS_UNAVAILABLE, message: Product page extra information is temporarily unavailable. }
+    query: "SELECT f.id, f.row_version, f.field_name, CASE f.field_name WHEN 'name' THEN 'Product Name' WHEN 'internal_reference' THEN 'Internal Reference' ELSE 'eCommerce Category' END AS field_label, 'char' AS field_type, f.sequence, CASE f.field_name WHEN 'name' THEN p.name WHEN 'internal_reference' THEN p.internal_reference WHEN 'category' THEN p.category ELSE NULL END AS value FROM ecommerce_product_extra_fields f JOIN ecommerce_products p ON p.id = :id AND p.company_name = f.company_name WHERE f.company_name = COALESCE(NULLIF(:company_name, ''), p.company_name) AND f.active = TRUE ORDER BY f.sequence, f.id"
   - id: ecommerce_product_page_image_ratio
     permission: ecommerce.read
     error_states:

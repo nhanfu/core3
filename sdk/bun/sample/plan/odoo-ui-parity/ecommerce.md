@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
+Status: qa-in-progress (bounded product page extra-fields slice; module sign-off remains open)
+
+## Bounded feature — Product Page Extra Fields (`ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`)
+
+Wave 41 selects the next uncovered Website Sale settings surface after the
+Shop grid-gap policy: `website.shop_extra_field_ids` and the
+`website.sale.extra.field` model. Odoo exposes this as the Website Settings
+“Product Page Extra Fields” one-to-many list, ordered by a handle; its
+`field_id` is restricted to product-template `char` or `binary` fields, and
+the product template renders configured non-empty values as extra product-page
+information.
+
+Core3 migrations 146/147 add a durable company-scoped ordered configuration
+with deterministic My Company fixtures for the available Core3 character
+fields `internal_reference` and `category`. Separate
+`api/product-extra-fields.yaml` and `pages/product-extra-fields.yaml`
+contracts join by `page.id: ecommerce-product-extra-fields`; CRUD requires
+`ecommerce.write`, reads require `ecommerce.read`, and company, supported
+field, duplicate, sequence, missing, and optimistic row-version guards are
+enforced. Product Detail projects active configured values through a separate
+`ecommerce_product_extra_field_values` datasource.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-extra-fields-001/`.
+The focused and adjacent catalog regression suites pass and the UI audit
+passes. Authenticated Core3 desktop/mobile capture and paired Odoo rendering
+remain runtime-blocked; no Ecommerce module sign-off is claimed.
 
 ## Bounded feature — Shop Grid Gap (`ECOM-CATALOG-SHOP-GRID-GAP-001`)
 

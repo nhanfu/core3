@@ -1,0 +1,18 @@
+version: 0.0.147
+kind: data
+description: deterministic eCommerce product page extra field fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_extra_fields (id, row_version, company_name, field_name, sequence, active)
+      VALUES
+        ('ecommerce-product-extra-field-reference', 1, 'My Company', 'internal_reference', 10, TRUE),
+        ('ecommerce-product-extra-field-category', 1, 'My Company', 'category', 20, TRUE)
+      ON CONFLICT (company_name, field_name) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_extra_fields
+      WHERE id IN ('ecommerce-product-extra-field-reference', 'ecommerce-product-extra-field-category');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

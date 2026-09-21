@@ -7,6 +7,24 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001
+
+- ECOM-FUNC-070: trace Website Sale `shop_extra_field_ids`, model
+  `website.sale.extra.field`, the Website Settings ordered handle, the
+  product-template `char`/`binary` domain, and product-page rendering; verify
+  the separate Core3 configuration and Product Detail page/API contracts.
+- ECOM-WF-081: replay deterministic ordered fields, create/edit/remove and
+  archive selections, project active product values, reject unsupported,
+  duplicate, missing, foreign-company, invalid-sequence, and stale writes,
+  and preserve the configuration across migration replay and DuckDB restart.
+- ECOM-PERM-077: require `ecommerce.read` for configuration/options/detail
+  reads and `ecommerce.write` for CRUD; enforce current-company scope and
+  optimistic row-version guards.
+- ECOM-UI-063: render the extra-field configuration list and Product Detail
+  projection at desktop and mobile and compare the authenticated Odoo Website
+  Settings/product-page behavior; runtime is unavailable and Odoo `/shop` is
+  HTTP 404 in the supplied references.
+
 ## ECOM-CATALOG-SHOP-GRID-GAP-001
 
 - ECOM-FUNC-069: trace Website Sale `shop_gap`, its `setGap` builder action,

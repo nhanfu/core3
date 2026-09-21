@@ -161,6 +161,10 @@ menu:
           label: Shop Grid Gap
           icon: grid
           permission: ecommerce.read
+        - path: /ecommerce/product-extra-fields
+          label: Product Page Extra Fields
+          icon: list
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

@@ -1,0 +1,28 @@
+version: 0.0.146
+kind: schema
+description: durable eCommerce product page extra field configuration
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_extra_fields (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        field_name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name, field_name),
+        CHECK (field_name IN ('name', 'internal_reference', 'category')),
+        CHECK (sequence BETWEEN 0 AND 999)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_extra_fields_company_idx
+        ON ecommerce_product_extra_fields(company_name, active, sequence);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_extra_fields_company_idx;
+      DROP TABLE IF EXISTS ecommerce_product_extra_fields;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

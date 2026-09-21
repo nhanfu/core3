@@ -1,0 +1,24 @@
+title: Product Page Extra Fields
+page: { id: ecommerce-product-extra-fields, route: /ecommerce/product-extra-fields, breadcrumb: [eCommerce, Configuration, Product Page Extra Fields], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_extra_fields
+    responsive_card: true
+    create_action: create_ecommerce_product_extra_field
+    create_label: New
+    filters: [{ field: active, label: Status, options: [{ id: 'active', label: Active }, { id: 'archived', label: Archived }] }]
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: field_label, label: Product Page Field, type: PrimaryEntityCell }
+      - { field: field_name, label: Technical Field }
+      - { field: field_type, label: Type }
+      - { field: active, label: Active, type: StatusChip }
+      - { field: company_name, label: Company }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_product_extra_field, label: Edit, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_extra_field, label: Remove, permission: ecommerce.write, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No product page extra fields, description: Choose product-template character fields to show as extra information on product pages. }
