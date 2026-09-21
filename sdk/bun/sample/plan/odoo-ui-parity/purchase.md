@@ -1160,3 +1160,47 @@ one draft Accounting Vendor Bill per selected Purchase Order and records the
 order-level total; Odoo's company/vendor/currency grouping and line-level
 quantity reconciliation remain follow-up parity work. No new browser capture
 is claimed in this backend-focused change.
+
+## Purchase Order Print report bounded follow-up — 2026-09-21
+
+The next genuinely uncovered source-backed order-form feature was Odoo's
+state-specific `Print` action. In `addons/purchase/views/purchase_views.xml`,
+`print_quotation` is visible for every non-confirmed state and calls the
+quotation PDF report; `purchase.action_report_purchase_order` is visible for
+confirmed orders and calls the Purchase Order PDF report. The source method
+`purchase_order.print_quotation` changes Draft to Sent before rendering, while
+confirmed printing leaves the order state unchanged. Both actions are gated by
+`base.group_user`. The report definitions are in
+`addons/purchase/report/purchase_reports.xml` and use QWeb PDF output.
+
+The authenticated `core3_reference` browser audit at `http://localhost:8069`
+opened `P00012` at desktop and mobile. The live form showed `Print` alongside
+`Receive`, `Send PO`, `Acknowledge`, and `Cancel`; clicking `Print` displayed
+the report loading overlay and returned to the same form because the browser
+surface does not expose the completed download as DOM state. Exact local
+captures and this limitation are recorded in
+`evidence/purchase/2026-09-21/PURCHASE-PRINT-001/README.md`.
+
+Core3 adds two same-label actions to the existing layout-only
+`pages/purchase-detail.yaml` and its page-id-matched
+`api/purchase-detail.yaml`: `print_purchase_quotation_detail` handles Draft,
+Sent, To Approve, and Cancelled states, and `print_purchase_order_detail`
+handles Confirmed and Received. Both require `purchase.read`, a current row
+version, and a signed-in actor. The quotation action persists a
+`Request for Quotation` PDF run and changes Draft to Sent; the confirmed action
+persists a `Purchase Order` PDF run without changing state. The new
+`purchase_order_print_runs` datasource is read-only and remains available for
+durable history without inventing a new Odoo menu or chatter entry.
+
+Migration `20260921100000-029-purchase-order-print.yaml` creates the indexed,
+idempotent print-run table. `test/purchase_order_print.integration.test.ts`
+covers source/report mappings, page/API separation, both state behaviors,
+missing/stale/invalid-state/actor guards, no-partial-write behavior, and
+file-backed restart plus migration replay. Focused validation passed 4 tests
+and 27 assertions. Browser evidence used an isolated runtime composed from
+the clean branch plus only this Purchase patch because the shared working
+tree's unrelated Email/SMS changes currently fail global discovery; those
+other-module changes were preserved and not committed by this Purchase slice.
+The remaining report-download/PDF byte capture is a follow-up because the
+current Core3 print operation prepares and durably records the report contract
+but does not yet render a binary PDF.

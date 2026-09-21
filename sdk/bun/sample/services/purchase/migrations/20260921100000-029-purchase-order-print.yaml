@@ -1,0 +1,24 @@
+version: 0.0.29
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_order_print_runs (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        report_action VARCHAR NOT NULL,
+        report_template VARCHAR NOT NULL,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        printed_by VARCHAR NOT NULL,
+        printed_at TIMESTAMP NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_print_runs_order_idx ON purchase_order_print_runs(purchase_order_id, printed_at DESC, id DESC);
+    down: |
+      DROP INDEX IF EXISTS purchase_order_print_runs_order_idx;
+      DROP TABLE IF EXISTS purchase_order_print_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

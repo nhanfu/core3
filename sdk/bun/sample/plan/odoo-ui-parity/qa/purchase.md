@@ -174,3 +174,38 @@ resolved or explicitly waived.
   desktop/mobile evidence are accepted for this bounded slice.
 - Conditional status remains because authenticated Odoo comparison is
   unavailable. Unrelated Website lint findings remain outside this slice.
+
+## 2026-09-21 candidate QA — Purchase Order Print report
+
+- Scope: Odoo Purchase Order form `Print` report actions only; no full Purchase
+  parity sign-off.
+- Source/live gate: local Odoo 19 source under
+  `/home/nhanjs/projects/odoo/addons/purchase`; authenticated `core3_reference`
+  session at `http://localhost:8069`, confirmed order `P00012`, desktop and
+  mobile captures.
+- Focused validation: `bun test ./test/purchase_order_print.integration.test.ts
+  --timeout 30000` — **PASS**, 4 tests, 27 assertions, 0 failures.
+- Contract coverage: page/API `purchase-detail` join, Odoo source/report IDs,
+  quotation Draft -> Sent transition, confirmed state preservation, read
+  permission declaration, actor/stale/missing/invalid-state guards, no partial
+  rows, migration replay, and file-backed restart persistence.
+- Browser Core3: isolated clean-branch runtime plus only the Purchase patch at
+  `http://localhost:4412`; authenticated Admin User reached
+  `/purchase/detail?id=po-demo-005`, clicked `Print`, and produced HTTP 200
+  `POST /api/mutate` plus HTTP 200 refresh queries. Desktop body/document
+  widths were `1916/1916`; mobile widths were `390/390`.
+- Evidence: `/tmp/core3-odoo-parity/purchase-order-print-20260921/` and the
+  committed evidence manifest at
+  `evidence/purchase/2026-09-21/PURCHASE-PRINT-001/README.md`.
+
+### Open gates
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-PRINT-QA-001 | Odoo's report click completes as a browser download, so no post-download DOM success state or PDF byte was extracted | open, accurately bounded in evidence |
+| PURCHASE-PRINT-QA-002 | Shared working-tree runtime cannot start because unrelated Email/SMS changes fail global YAML discovery; Purchase evidence was captured from a clean temporary runtime with only this Purchase patch | blocker outside Purchase scope; unrelated files preserved |
+| PURCHASE-PRINT-QA-003 | Core3 currently prepares and persists report metadata but does not render/download a binary PDF | follow-up implementation gap |
+
+Disposition: **conditional bounded pass** for the declarative action contract,
+workflow guard, persistence, restart, and authenticated button interaction;
+not a full PDF-rendering or module sign-off.

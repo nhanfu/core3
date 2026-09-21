@@ -9,6 +9,10 @@ datasources:
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_LINES_UNAVAILABLE, message: Purchase order lines are temporarily unavailable. } }
     query: "SELECT l.id, l.row_version, l.order_id AS document_id, l.sequence, l.display_type, l.product_name, l.description, CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', CAST(l.quantity AS DOUBLE)) AS quantity_display, l.qty_received, l.qty_billed, l.uom, CAST(l.unit_price AS DOUBLE) AS unit_price, printf('%s %,.2f', p.currency, CAST(l.unit_price AS DOUBLE)) AS unit_price_display, CAST(l.tax_rate AS DOUBLE) AS tax_rate, printf('%.2f%%', CAST(l.tax_rate AS DOUBLE)) AS tax_rate_display, CAST(l.line_total AS DOUBLE) AS line_total, printf('%s %,.2f', p.currency, CAST(l.line_total AS DOUBLE)) AS line_total_display, p.state AS parent_state, p.row_version AS parent_row_version FROM purchase_order_lines l JOIN purchase_orders p ON p.id = l.order_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.order_id = :id ORDER BY l.sequence, l.id"
+  - id: purchase_order_print_runs
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_PRINTS_UNAVAILABLE, message: Purchase order print history is temporarily unavailable. } }
+    query: "SELECT r.id, r.purchase_order_id, p.name AS purchase_order_name, r.report_name, r.report_action, r.report_template, r.output_format, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM purchase_order_print_runs r JOIN purchase_orders p ON p.id = r.purchase_order_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.purchase_order_id = :id ORDER BY r.printed_at DESC, r.id DESC"
 actions:
   - { id: open_purchase_bill_matching, type: navigate, permission: accounting.write, navigate_to: /purchase/bill-matching, params: { id: '{row.id}' } }
   - { id: open_purchase_price_comparison, type: navigate, permission: purchase.read, navigate_to: /purchase/price-comparison, params: { id: '{row.id}' } }
@@ -31,6 +35,49 @@ actions:
         - { query: "UPDATE purchase_orders SET state = 'Confirmed', approval_status = 'approved', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'To Approve' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_APPROVE_STALE, message: This purchase order changed or is no longer waiting for approval. Reload before approving. }
       result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
   - { id: receive_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.receive, handler: order_transition, workflow: purchase_orders, operation: receive, refresh: [purchase_order_detail] }
+  - id: print_purchase_quotation_detail
+    type: server
+    permission: purchase.read
+    action: purchase.report_purchase_quotation
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.purchase_order_detail.id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_print_runs]
+    mutation:
+      generated: [print_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'purchase-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id FROM purchase_order_print_runs WHERE purchase_order_id = :id"
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_PRINT_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent', 'To Approve', 'Cancelled') AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_QUOTATION_PRINT_NOT_ALLOWED, message: Only an unchanged RFQ or cancelled quotation can be printed as a quotation. Reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: PURCHASE_ORDER_PRINT_ACTOR_REQUIRED, message: A signed-in Purchase user is required to print the report. }
+      steps:
+        - { query: "INSERT INTO purchase_order_print_runs(id, purchase_order_id, report_name, report_action, report_template, output_format, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Request for Quotation', 'purchase.report_purchase_quotation', 'purchase.report_purchasequotation', 'PDF', :current_user_name, TIMESTAMP '2026-09-21 09:00:00', 1 FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_PRINT_FAILED, message: The Request for Quotation report could not be prepared. }
+        - { query: "UPDATE purchase_orders SET state = CASE WHEN state = 'Draft' THEN 'Sent' ELSE state END, row_version = row_version + CASE WHEN state = 'Draft' THEN 1 ELSE 0 END, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND state IN ('Draft', 'Sent', 'To Approve', 'Cancelled') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_QUOTATION_PRINT_STALE, message: This purchase order changed before the quotation report could be prepared. Reload before printing. }
+      result: { query: "SELECT r.id, r.purchase_order_id, r.report_name, r.report_action, r.report_template, r.output_format, r.printed_by, r.row_version FROM purchase_order_print_runs r WHERE r.id = :print_run_id" }
+  - id: print_purchase_order_detail
+    type: server
+    permission: purchase.read
+    action: purchase.action_report_purchase_order
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.purchase_order_detail.id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_print_runs]
+    mutation:
+      generated: [print_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'purchase-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id FROM purchase_order_print_runs WHERE purchase_order_id = :id"
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_PRINT_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Confirmed', 'Received') AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_PRINT_NOT_ALLOWED, message: Only an unchanged confirmed purchase order can be printed as a Purchase Order report. Reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: PURCHASE_ORDER_PRINT_ACTOR_REQUIRED, message: A signed-in Purchase user is required to print the report. }
+      steps:
+        - { query: "INSERT INTO purchase_order_print_runs(id, purchase_order_id, report_name, report_action, report_template, output_format, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Purchase Order', 'purchase.action_report_purchase_order', 'purchase.report_purchaseorder', 'PDF', :current_user_name, TIMESTAMP '2026-09-21 09:00:00', 1 FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_PRINT_FAILED, message: The Purchase Order report could not be prepared. }
+      result: { query: "SELECT r.id, r.purchase_order_id, r.report_name, r.report_action, r.report_template, r.output_format, r.printed_by, r.row_version FROM purchase_order_print_runs r WHERE r.id = :print_run_id" }
   - id: acknowledge_purchase_order_detail
     type: server
     permission: purchase.write

@@ -98,3 +98,11 @@ and the seeded receipt and supplier-information rows.
   report, empty, error, and permission states before final module sign-off.
 - No case is promoted to full parity pass from YAML parsing or unit coverage
   alone; browser and database evidence are required for the relevant claim.
+
+## 2026-09-21 bounded addendum — Purchase Order Print
+
+| Case ID | Class | Setup/actor | Exact action | Expected persistence/evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| PURCHASE-FUNC-014 | functional/data | Admin Purchase user; `po-demo-001` Draft and `po-demo-005` Confirmed | Click the state-specific `Print` action on `/purchase/detail` | Quotation and Purchase Order PDF contracts are recorded with source report IDs; Draft becomes Sent, Confirmed remains Confirmed; history survives reload/restart | pass: `purchase_order_print.integration.test.ts` |
+| PURCHASE-WF-009 | workflow/security | Purchase reader; stale, missing, invalid-state, and blank-actor inputs | Invoke `purchase.report_purchase_quotation` / `purchase.action_report_purchase_order` | 404/409/403 guards reject invalid requests and leave no print run; current row version is required | pass: focused test |
+| PURCHASE-UI-007 | visual/responsive/interaction | Authenticated QA actor; live `core3_reference` and Core3 Purchase runtime | Compare confirmed Purchase Order detail at desktop/mobile and click `Print` | Odoo/Core3 show the Print control; Core3 action returns HTTP 200 and refreshes detail; no page overflow; Odoo download completion is not DOM-observable | conditional: paired captures and blocker recorded in Purchase QA ledger |

@@ -58,3 +58,17 @@ bounded verification passed receipt 7/56 and analysis 3/24; audit, Purchase
 CSS, and diff-check passed. Owner QA reports 61/576 with live cancel/reload,
 restart, guards, timeline, and desktop/mobile evidence. Authenticated Odoo
 comparison and unrelated Website lint remain open.
+
+## 2026-09-21 bounded slice: Purchase Order Print
+
+The current Purchase owner added Odoo's state-specific Purchase Order form
+Print action as a page/API-bound pair. Quotation printing persists a PDF report
+run and moves Draft to Sent; confirmed printing persists the Purchase Order
+report run without changing state. Focused validation passed 4 tests / 27
+assertions, including restart and migration replay. Authenticated desktop/mobile
+Core3 evidence passed the button interaction and HTTP mutation/refresh checks.
+
+The slice is conditional: Odoo's download completion is not DOM-observable,
+Core3 prepares report metadata rather than binary PDF bytes, and the active
+working tree has unrelated Email/SMS discovery failures. See the QA ledger and
+the Purchase-only evidence manifest for exact blockers and paths.
