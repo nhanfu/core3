@@ -1,0 +1,33 @@
+page: { id: ecommerce-shop-page-size-policy }
+datasources:
+  - id: ecommerce_shop_page_size_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_PAGE_SIZE_UNAUTHENTICATED, message: Sign in to view Shop page size settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_PAGE_SIZE_FORBIDDEN, message: You do not have permission to view Shop page size settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_PAGE_SIZE_NOT_FOUND, message: Shop page size settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_PAGE_SIZE_UNAVAILABLE, message: Shop page size settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, page_size, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_page_size_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - id: edit_ecommerce_shop_page_size_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Page Size
+    action: ecommerce.shop.page_size.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_page_size_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, page_size]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_page_size_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_PAGE_SIZE_STALE, message: These Shop page size settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:page_size AS INTEGER) BETWEEN 1 AND 10000", status: 422, code: ECOMMERCE_SHOP_PAGE_SIZE_INVALID, message: Shop page size must be between 1 and 10000 products. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_page_size_policies SET page_size = CAST(:page_size AS INTEGER), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_PAGE_SIZE_STALE, message: These Shop page size settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, page_size, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_page_size_policies WHERE id = :id" }
+    fields:
+      - { field: page_size, label: Products Per Shop Page, type: number, min: 1, max: 10000, required: true }

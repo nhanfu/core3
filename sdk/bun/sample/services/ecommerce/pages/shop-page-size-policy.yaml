@@ -1,0 +1,11 @@
+title: Shop Page Size
+page: { id: ecommerce-shop-page-size-policy, route: /ecommerce/shop-page-size, breadcrumb: [eCommerce, Configuration, Shop Page Size], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_shop_page_size_policy
+    editable: true
+    title_field: company_name
+    header_actions:
+      - { id: edit_ecommerce_shop_page_size_policy, label: Save Page Size, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Shop Paging, columns: 2, fields: [{ field: company_name, label: Company }, { field: page_size, label: Products Per Shop Page, type: number, min: 1, max: 10000, required: true }, { field: updated_at, label: Last Updated }] }

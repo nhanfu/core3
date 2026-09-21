@@ -36,3 +36,9 @@ components:
     title_field: company_name
     groups:
       - { title: Shop Grid, columns: 2, fields: [{ field: company_name, label: Company }, { field: grid_columns, label: Grid Columns, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_shop_page_size
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Shop Paging, columns: 2, fields: [{ field: company_name, label: Company }, { field: page_size, label: Products Per Shop Page, type: StatusChip }] }

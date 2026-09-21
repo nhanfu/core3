@@ -2,6 +2,30 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Shop Page Size (`ECOM-CATALOG-SHOP-PAGE-SIZE-001`)
+
+Wave 39 selects Website Sale's `website.shop_ppg` setting. Odoo defines the
+number of products in the Shop grid, defaults it to 21, and its Website Builder
+`SetPpgAction` rejects values below 1 and clamps the persisted value to 10,000.
+This is distinct from the completed Shop grid-column, page-container,
+visibility, and default-sort slices.
+
+Core3 migrations 142/143 add a durable company-scoped page-size policy and
+deterministic My Company fixture. Separate
+`api/shop-page-size-policy.yaml` and `pages/shop-page-size-policy.yaml`
+contracts join by `ecommerce-shop-page-size-policy`; the update requires
+`ecommerce.write`, validates 1–10,000, and uses company and row-version
+guards. The Shop API/page expose the effective company setting and the
+configuration route is manifest-owned. Focused integration tests cover missing
+fixture reads, permission declarations, invalid/foreign/stale writes,
+idempotent migration/fixture replay, and DuckDB restart persistence.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-page-size-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313; Odoo `/shop` is an exact HTTP 404 on 8069/8073. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Shop Grid Columns (`ECOM-CATALOG-SHOP-GRID-COLUMNS-001`)
 
 Wave 38 selects Website Sale's `website.shop_ppr` setting. Odoo defines the

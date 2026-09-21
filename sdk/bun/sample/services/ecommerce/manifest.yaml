@@ -153,6 +153,10 @@ menu:
           label: Shop Grid Columns
           icon: grid
           permission: ecommerce.read
+        - path: /ecommerce/shop-page-size
+          label: Shop Page Size
+          icon: list
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

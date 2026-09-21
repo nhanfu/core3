@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PAGE-SIZE-001
+
+- ECOM-FUNC-068: trace Website Sale `shop_ppg`, its default 21 and
+  `SetPpgAction` 1–10,000 behavior; verify separate Core3 Shop page-size
+  policy page/API contracts.
+- ECOM-WF-079: replay the deterministic 21-product policy, change page sizes,
+  project the effective Shop setting, reject invalid, foreign, and stale
+  writes, and preserve it across migration replay and DuckDB restart.
+- ECOM-PERM-075: require `ecommerce.read` for policy/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards with safe missing-record and fixture replay behavior.
+- ECOM-UI-061: render the page-size form and Shop projection at desktop and
+  mobile and compare the authenticated Odoo Shop builder behavior; Core3
+  runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-SHOP-GRID-COLUMNS-001
 
 - ECOM-FUNC-067: trace Website Sale `shop_ppr`, its default 3 and builder

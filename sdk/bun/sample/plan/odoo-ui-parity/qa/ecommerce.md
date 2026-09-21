@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Shop Page Size (`ECOM-CATALOG-SHOP-PAGE-SIZE-001`, 2026-09-21)
+
+- Odoo source/builder: pass. `website.py` defines `shop_ppg` with default 21;
+  `SetPpgAction` rejects values below 1, clamps to 10,000, and writes
+  `shop_ppg` through `/shop/config/website`.
+- Core3 lifecycle: focused verification pass. Migrations 142/143 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with exact source-range
+  validation; Shop projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_shop_page_size.integration.test.ts --timeout 30000` —
+  **2 passed, 26 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: the bounded Shop suite passes **12 tests, 130 assertions, 0
+  failures**.
+- Audit: `bun run audit` passes at **754 pages, 763 routes, and 1522
+  datasources**.
+- Scoped ESLint and `git diff --check`: pass. Ecommerce module sign-off
+  remains open.
+- Local commit: recorded in the final handoff (not pushed).
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-page-size-001/`.
+
 ## Shop Grid Columns (`ECOM-CATALOG-SHOP-GRID-COLUMNS-001`, 2026-09-21)
 
 - Odoo source/builder: pass. `website.py` defines `shop_ppr` with default 3;
