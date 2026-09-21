@@ -1285,3 +1285,37 @@ Browser evidence is recorded at
 The authenticated Odoo desktop reference menu was captured, but Core3 backend
 startup failed before the final composer interaction; no desktop completion or
 mobile parity claim is made.
+
+## Current bounded batch: Orders > Create Invoices bulk action
+
+Local Odoo 19 exposes `view_pos_order_tree` in
+`addons/point_of_sale/views/pos_order_view.xml`. Its list header calls
+`action_create_invoices`, which opens the transient `pos.make.invoice` form
+defined in `addons/point_of_sale/wizard/pos_make_invoice.xml`. The live
+authenticated Orders list showed four orders; selecting one displayed the
+`Create Invoices` bulk action and opened a `Create Invoice(s)` dialog with
+`Order Count: 1`, `Create`, and `Cancel`. Odoo's mobile Orders cards did not
+expose list selection or the bulk action at 390x844.
+
+Core3 implements the bounded list action on the existing `pos-orders` page/API
+pair. The page adds `selectable: true` and a `Create Invoices` bulk action;
+`api/pos-orders.yaml` owns the `server_form` and joins through the matching
+`page.id: pos-orders`. Migration `20260921150000-048-pos-bulk-invoice.yaml`
+adds durable invoice-run and selected-order-link tables. The mutation requires
+`pos.write`, current-company scope, paid/to-invoice/non-invoiced orders, and
+rejects missing, cross-company, stale/read-only, and consolidated no-customer
+selections atomically. It supports consolidated grouping and separate invoices,
+updates order state and actor, and leaves durable rows for restart recovery.
+
+Focused coverage is `test/pos_order_bulk_invoice.integration.test.ts`: the
+Odoo source/action contract, page/API separation, permission contract,
+consolidated and separate invoice creation, atomic selection guards, and
+migration replay/restart persistence pass with 4 tests and 22 assertions.
+
+Authenticated Odoo desktop/mobile evidence and the exact Core3 runtime blocker
+are recorded at
+`evidence/point_of_sale/2026-09-21/POS-ORDER-BULK-INVOICE-001/`. The Odoo
+reference exists and was captured. Core3 browser completion is not claimed:
+the isolated runtime repeatedly returned 502 during backend startup/migration,
+and the later authenticated probe had no reusable QA session and returned
+401 before the POS page could render. Screenshots remain outside Git.

@@ -84,6 +84,9 @@ components:
       - { field: date_order, label: Order date }
     page_size: 50
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: create_pos_invoices, label: Create Invoices, permission: pos.write }
     row_open_action: view_pos_order
     row_double_click_action: view_pos_order
     form_view: { page: apps/services/point_of_sale/pages/pos-order-detail.yaml, side_panel: true }

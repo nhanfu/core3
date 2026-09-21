@@ -23,6 +23,78 @@ datasources:
         AND o.company = :current_company_name AND s.company = :current_company_name
       ORDER BY o.date_order DESC
 actions:
+  - id: create_pos_invoices
+    type: server_form
+    permission: pos.write
+    title: Create Invoice(s)
+    action: pos.orders.create_invoices
+    handler: yaml_mutation
+    operation: bulk_create_invoices
+    submit_label: Create
+    refresh: [pos_orders]
+    success_message: POS invoices created.
+    mutation:
+      generated: [invoice_run_id]
+      before_steps:
+        - assign: true
+          query: "SELECT 'pos-invoice-run-' || CAST(gen_random_uuid() AS VARCHAR) AS invoice_run_id"
+        - query: "DROP TABLE IF EXISTS pos_invoice_selected"
+        - query: "CREATE TEMP TABLE pos_invoice_selected(order_id VARCHAR)"
+        - for_each:
+            input: selectedIds
+            as: selected_order_id
+            steps:
+              - query: "INSERT INTO pos_invoice_selected(order_id) VALUES (:selected_order_id)"
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: POS_INVOICE_SELECTION_REQUIRED, message: Select at least one POS order. }
+      steps:
+        - query: "INSERT INTO pos_invoice_runs(id, row_version, company, consolidated_billing, selected_count, invoice_count, state, created_by, created_at) SELECT :invoice_run_id, 1, :current_company_name, COALESCE(CAST(:consolidated_billing AS BOOLEAN), true), COUNT(*), 0, 'Creating', COALESCE(NULLIF(:current_user_name, ''), 'POS Operator'), TIMESTAMP '2026-01-15 08:00:00' FROM pos_orders o WHERE o.id IN (SELECT order_id FROM pos_invoice_selected) HAVING COUNT(*) = (SELECT COUNT(*) FROM pos_invoice_selected) AND SUM(CASE WHEN o.company <> :current_company_name THEN 1 ELSE 0 END) = 0 AND SUM(CASE WHEN o.state <> 'Paid' OR COALESCE(o.to_invoice, false) = false OR o.invoice_id IS NOT NULL THEN 1 ELSE 0 END) = 0 AND (COALESCE(CAST(:consolidated_billing AS BOOLEAN), true) = false OR COUNT(*) = 1 OR SUM(CASE WHEN NULLIF(TRIM(COALESCE(o.partner_name, '')), '') IS NULL THEN 1 ELSE 0 END) = 0)"
+          expect_changed: true
+          status: 409
+          code: POS_INVOICE_SELECTION_INVALID
+          message: Selected POS orders are missing, outside the current company, already invoiced, or not ready for invoicing.
+        - query: |
+            WITH grouped AS (
+              SELECT CASE WHEN COALESCE(CAST(:consolidated_billing AS BOOLEAN), true)
+                THEN COALESCE(config_id, '') || '|' || COALESCE(partner_name, '') || '|' || COALESCE(cashier_id, '')
+                ELSE id END AS group_key,
+                MIN(id) AS order_id, SUM(amount_total) AS amount
+              FROM pos_orders
+              WHERE id IN (SELECT order_id FROM pos_invoice_selected) AND company = :current_company_name
+              GROUP BY group_key
+            ), ranked AS (
+              SELECT group_key, order_id, amount, ROW_NUMBER() OVER (ORDER BY group_key) AS group_number
+              FROM grouped
+            )
+            INSERT INTO pos_invoices(id, order_id, invoice_number, state, amount, invoice_date)
+            SELECT :invoice_run_id || '-invoice-' || CAST(group_number AS VARCHAR), order_id,
+              'POS-BULK-' || :invoice_run_id || '-' || CAST(group_number AS VARCHAR), 'Posted', amount, DATE '2026-01-15'
+            FROM ranked
+        - query: |
+            WITH grouped AS (
+              SELECT CASE WHEN COALESCE(CAST(:consolidated_billing AS BOOLEAN), true)
+                THEN COALESCE(config_id, '') || '|' || COALESCE(partner_name, '') || '|' || COALESCE(cashier_id, '')
+                ELSE id END AS group_key
+              FROM pos_orders
+              WHERE id IN (SELECT order_id FROM pos_invoice_selected) AND company = :current_company_name
+              GROUP BY group_key
+            ), ranked AS (
+              SELECT group_key, ROW_NUMBER() OVER (ORDER BY group_key) AS group_number
+              FROM grouped
+            )
+            INSERT INTO pos_invoice_run_orders(run_id, order_id, invoice_id)
+            SELECT :invoice_run_id, o.id, :invoice_run_id || '-invoice-' || CAST(r.group_number AS VARCHAR)
+            FROM pos_orders o
+            JOIN ranked r ON r.group_key = CASE WHEN COALESCE(CAST(:consolidated_billing AS BOOLEAN), true)
+              THEN COALESCE(o.config_id, '') || '|' || COALESCE(o.partner_name, '') || '|' || COALESCE(o.cashier_id, '')
+              ELSE o.id END
+            WHERE o.id IN (SELECT order_id FROM pos_invoice_selected) AND o.company = :current_company_name
+        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = (SELECT invoice_id FROM pos_invoice_run_orders WHERE run_id = :invoice_run_id AND order_id = pos_orders.id), actor_id = :current_user_id, row_version = row_version + 1 WHERE id IN (SELECT order_id FROM pos_invoice_run_orders WHERE run_id = :invoice_run_id) AND company = :current_company_name"
+        - query: "UPDATE pos_invoice_runs SET invoice_count = (SELECT COUNT(DISTINCT invoice_id) FROM pos_invoice_run_orders WHERE run_id = :invoice_run_id), state = 'Created' WHERE id = :invoice_run_id"
+        - query: "DROP TABLE IF EXISTS pos_invoice_selected"
+      result: { query: "SELECT id, row_version, company, consolidated_billing, selected_count, invoice_count, state, created_by, CAST(created_at AS VARCHAR) AS created_at FROM pos_invoice_runs WHERE id = :invoice_run_id" }
+    fields:
+      - { field: consolidated_billing, label: Consolidated Billing, type: checkbox, default: true }
   - id: view_pos_order
     type: navigate
     permission: pos.read

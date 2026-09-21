@@ -1,0 +1,34 @@
+version: 0.0.48
+kind: schema
+description: Durable POS bulk invoice wizard runs and selected-order links
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_invoice_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company VARCHAR NOT NULL,
+        consolidated_billing BOOLEAN NOT NULL DEFAULT TRUE,
+        selected_count INTEGER NOT NULL DEFAULT 0,
+        invoice_count INTEGER NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Creating',
+        created_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS pos_invoice_run_orders (
+        run_id VARCHAR NOT NULL,
+        order_id VARCHAR NOT NULL,
+        invoice_id VARCHAR NOT NULL,
+        PRIMARY KEY (run_id, order_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_invoice_runs_company ON pos_invoice_runs(company, created_at, id);
+      CREATE INDEX IF NOT EXISTS idx_pos_invoice_run_orders_invoice ON pos_invoice_run_orders(invoice_id, order_id);
+      UPDATE pos_orders SET to_invoice = TRUE
+      WHERE id = 'pos-order-demo-001' AND invoice_id IS NULL;
+    down: |
+      DROP TABLE IF EXISTS pos_invoice_run_orders;
+      DROP TABLE IF EXISTS pos_invoice_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

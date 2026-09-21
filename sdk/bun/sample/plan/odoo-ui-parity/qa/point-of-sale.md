@@ -67,6 +67,7 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 | POINT_OF_SALE-004A | POS Orders row interaction | Candidate contract resolves `view_pos_order` to `/point-of-sale/order-detail` and preserves the row ID; 13/13, 69 assertions | PASS (contract) |
 | POINT_OF_SALE-004B | Authenticated route matrix | 72/72 POS routes loaded on desktop; 0 console/page errors, failed requests, HTTP >=400 responses, or horizontal overflow | PASS (route smoke) |
 | POINT_OF_SALE-005 | Complete route interaction and fresh paired Odoo comparison | Existing module captures are recorded, but current-wave full route interaction and paired adjudication are incomplete | pending |
+| POINT_OF_SALE-006 | Orders bulk Create Invoices | 4 focused tests / 22 assertions cover page/API separation, consolidated and separate durable invoices, selection/company/state guards, and restart replay; authenticated Odoo desktop/mobile reference captured | PASS for source-backed contract/persistence; Core3 browser completion blocked |
 
 ## R2 dispatch
 
@@ -88,6 +89,17 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 - Persistence/data integrity: pass for the tested session/order/payment flow
 - Desktop/mobile visual parity: **fail/open** for `POINT_OF_SALE-VISUAL-001`; module parity pending
 - Tester decision: conditional; broader route and paired Odoo gates remain open
+
+## Current-wave QA note: Orders bulk Create Invoices (2026-09-21)
+
+The bounded implementation is functionally covered and remains conditional for
+browser parity. The Odoo reference showed the desktop bulk action and
+`Create Invoice(s)` wizard; mobile hid list selection and the bulk action.
+Core3's page/API pair, `pos.write` declaration, durable migration, invoice
+grouping, actor/company/state guards, and restart replay pass in the focused
+suite. The Core3 authenticated browser pass is blocked by the isolated
+runtime's backend startup/migration 502 and then 401 before POS rendering.
+This is recorded as a blocker, not a visual sign-off.
 
 ## DEV follow-up: launcher bounds and Orders navigation (2026-09-13)
 

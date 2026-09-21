@@ -24,6 +24,21 @@ found an oversized global launcher/icon rendering defect, while broader route
 interaction, empty/error states, actor/restart coverage, and fresh paired Odoo
 adjudication remain open.
 
+## Current bounded task: Orders bulk Create Invoices (2026-09-21)
+
+- Implemented the next uncovered source-backed Orders list action: Odoo's
+  `action_create_invoices` / `pos.make.invoice` bulk wizard.
+- POS-only paths: `services/point_of_sale/pages/pos-orders.yaml`,
+  `services/point_of_sale/api/pos-orders.yaml`, migration
+  `20260921150000-048-pos-bulk-invoice.yaml`, focused test, and evidence.
+- Contract and behavior verification: 4 tests, 22 assertions passed; this
+  includes consolidated/separate invoice modes, company/state/readiness guards,
+  permission declaration, and restart/migration replay durability.
+- Authenticated Odoo desktop/mobile captures exist. Core3 browser completion is
+  blocked by backend startup/migration 502s followed by an unauthenticated
+  isolated runtime; no Core3 visual or successful browser mutation claim is
+  made. See the bounded evidence directory for exact requests and captures.
+
 ## QA-2 verification of `cdbc38ee` (2026-09-13)
 
 - POS corpus: 84 passed, 700 assertions, 0 failures across 24 files in 104.67s.
