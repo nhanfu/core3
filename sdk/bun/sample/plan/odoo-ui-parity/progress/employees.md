@@ -4,6 +4,21 @@ Module owner: employees module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 
+## EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001 (2026-09-22)
+
+- Selected Odoo's ordinary read-side `My Team` and `My Department` employee
+  search filters as a distinct list slice after the existing New Contract and
+  Newly Hired work.
+- Added both filter bindings to the Employees page/API pair, authenticated
+  same-company team/department projections, and migration `0.0.91` with an
+  idempotent scope lookup index. Existing CRUD and Newly Hired behavior is
+  unchanged.
+- Focused verification: **3 tests / 19 assertions**; source mapping, empty
+  actor/company boundary, migration replay, and file-backed restart pass.
+- Browser comparison is blocked because the authenticated Odoo tab was already
+  borrowed by bsk session `ojpy`; no desktop/mobile visual pass is claimed.
+  Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
+
 ## EMP-LAUNCH-PLAN-001 (2026-09-20)
 
 - Selected gap: Odoo employee-form `plan_wizard_action` / Launch Plan.

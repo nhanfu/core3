@@ -943,3 +943,17 @@ tests, 24 assertions). Evidence:
 Focused test: `test/employees_work_location_type.integration.test.ts` (4
 tests, 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`.
+
+## EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001 test plan (2026-09-22)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `My Team` and `My Department` search filters map to the Employees page/API pair with matching `page.id` | pass |
+| Filter behavior | The current user's same-company direct team and department rows are returned with deterministic booleans | pass |
+| Permission and scope | Current-user identity and company scope prevent foreign-company or unknown-actor leakage | pass |
+| Persistence | Scope index migration replay and file-backed restart preserve query behavior without fixture duplication | pass |
+| Browser comparison | Authenticated Odoo/Core3 desktop/mobile filter/result states | blocked; Odoo tab was borrowed by another bsk session and no screenshot is claimed |
+
+Focused test: `test/employees_team_department_filters.integration.test.ts`
+(3 tests, 19 assertions). Evidence:
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.

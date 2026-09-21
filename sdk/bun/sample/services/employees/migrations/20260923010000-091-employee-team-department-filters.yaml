@@ -1,0 +1,13 @@
+version: 0.0.91
+kind: data
+description: Add lookup coverage for authenticated Employees team and department filters
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employees_scope_filter_idx ON employees(company_name, active, department_id, manager_id, auth_user_id);
+    down: |
+      DROP INDEX IF EXISTS employees_scope_filter_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

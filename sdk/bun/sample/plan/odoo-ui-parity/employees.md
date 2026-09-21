@@ -2673,3 +2673,36 @@ zero failed requests. Odoo desktop/mobile authentication is blocked by
 rejected `admin/admin` credentials followed by rate limiting. Evidence is
 under `evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001: Employees My Team and My Department filters (2026-09-22)
+
+The next distinct uncovered Employees list behavior after the existing New
+Contract workflow and Newly Hired filter is Odoo's ordinary read-side
+`My Team` and `My Department` search filters. The local Odoo 19 source defines
+`My Team` as employees whose `parent_id.user_id` is the current user and
+`My Department` through the computed/searchable `member_of_department` field,
+which includes the current employee's department and its child departments.
+Both filters are visible in `addons/hr/views/hr_employee_views.xml` and are
+not manager-only.
+
+Core3 adds both filters to the existing `employees` page/API pair. The API
+projects booleans derived from the authenticated employee in the same company:
+team membership follows the durable `manager_id` relation and the existing
+organization-parent/name projection for legacy fixtures; department
+membership follows the employee's department relation/name. The page remains
+layout-only and joins the API through `page.id: employees`. Migration
+`20260923010000-091-employee-team-department-filters.yaml` adds an idempotent
+scope lookup index without changing employee data or CRUD behavior.
+
+Focused verification is `test/employees_team_department_filters.integration.test.ts`:
+3 tests / 19 assertions. It covers Odoo source mapping, page/API separation,
+current-user team and department results, same-company enforcement, an actor
+with no employee projection, index replay, and file-backed restart.
+
+Authenticated browser comparison is blocked for this run: the existing
+authenticated Odoo user tab `1770662590` was already borrowed by bsk session
+`ojpy`, so the task-owned session could not observe or borrow it. No Odoo or
+Core3 desktop/mobile screenshot is claimed for this slice; the exact blocker
+and the required recapture states are recorded in
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
+No aggregate Employees sign-off is claimed.

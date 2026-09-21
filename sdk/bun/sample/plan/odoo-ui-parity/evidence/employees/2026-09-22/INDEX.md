@@ -3,3 +3,6 @@
 - `EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001/`: Odoo 19 `Newly Hired` search filter
   source mapping, focused persistence/permission tests, and authenticated
   desktop/mobile captures.
+- `EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`: Odoo 19 `My Team` and `My
+  Department` source mapping, focused current-user/company filter tests, and
+  an explicit bsk tab-ownership blocker for authenticated visual evidence.

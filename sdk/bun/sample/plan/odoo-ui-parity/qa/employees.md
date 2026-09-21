@@ -41,6 +41,20 @@ Focused test: `test/employees_newly_hired.integration.test.ts` (**4 tests /
 Unrelated module changes remain unstaged. No aggregate Employees sign-off is
 claimed.
 
+## EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-064 | Odoo `my_team`, `my_department`, and `member_of_department` source mapping | pass; local Odoo 19 XML/Python source and paired page/API bindings are asserted |
+| EMP-DATA-064 | Durable scope index and deterministic query projection | pass; migration is idempotent and the derived booleans survive file-backed restart |
+| EMP-PERM-064 | Authenticated employee/company boundary | pass; same-company current-user scope is enforced and an actor without an employee returns no rows |
+| EMP-UI-064 | Authenticated Odoo/Core3 desktop and mobile | blocked; the authenticated Odoo tab was already borrowed by bsk session `ojpy`, so no screenshot or visual-parity claim is made |
+
+Focused test: `test/employees_team_department_filters.integration.test.ts`
+(3 tests / 19 assertions). Evidence:
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-HR-PRESENCE-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |
