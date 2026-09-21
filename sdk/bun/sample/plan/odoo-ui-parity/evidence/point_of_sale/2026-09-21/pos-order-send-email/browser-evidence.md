@@ -7,7 +7,7 @@ Date: 2026-09-21
 - Odoo 19 source: `/home/nhanjs/projects/odoo/addons/point_of_sale/views/pos_order_view.xml`, `model_pos_order_send_mail`.
 - Authenticated Odoo reference: `http://localhost:8069/odoo`, database `core3_reference`.
 - Browser instance: `245ea108`; the agent-owned bsk session was stopped after the capture attempt.
-- The authenticated Odoo desktop capture showed the application switcher with the Point of Sale menu. Capture: `/tmp/core3-odoo-parity/pos-order-send-email-20260921/odoo-authenticated-desktop.png`.
+- The authenticated Odoo desktop capture shows the logged-in Odoo shell. A subsequent semantic observation of the application switcher showed the Point of Sale menu and its existing Orders family. Capture: `/tmp/core3-odoo-parity/pos-order-send-email-20260921/odoo-authenticated-desktop.png`.
 
 ## Core3 status
 
