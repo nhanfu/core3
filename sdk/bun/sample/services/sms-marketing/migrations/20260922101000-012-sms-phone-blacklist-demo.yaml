@@ -1,0 +1,17 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO sms_phone_blacklist
+        (id, row_version, number, active, last_action_reason, created_at, updated_at)
+      VALUES
+        ('sms-phone-blacklist-84901234009', 1, '+84901234009', true, 'Requested STOP SMS through support.', TIMESTAMP '2026-09-22 09:00:00', TIMESTAMP '2026-09-22 09:00:00'),
+        ('sms-phone-blacklist-14155550199', 1, '+14155550199', true, 'Invalid destination reported by provider.', TIMESTAMP '2026-09-22 09:01:00', TIMESTAMP '2026-09-22 09:01:00'),
+        ('sms-phone-blacklist-33698765432', 1, '+33698765432', false, 'Customer requested reactivation.', TIMESTAMP '2026-09-22 09:02:00', TIMESTAMP '2026-09-22 09:02:00');
+    down: |
+      DELETE FROM sms_phone_blacklist WHERE id IN ('sms-phone-blacklist-84901234009', 'sms-phone-blacklist-14155550199', 'sms-phone-blacklist-33698765432');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

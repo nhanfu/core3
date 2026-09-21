@@ -37,6 +37,7 @@ IDs.
 | SMS-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate campaigns, contacts or subscriptions | planned restart/migration gate |
 | SMS-FUNC-007 | Upload/import/export | Exercise recipient import, attachment/content upload, export and exposed print actions | planned browser interaction gate |
 | SMS-FUNC-008 | Delivery traces and retry | Open readonly SMS trace list/form from a mailing, filter failed traces, retry a sent mailing with failures, and verify attempt state persists after restart | pass: `sms_marketing_delivery_retry.integration.test.ts`; browser/Odoo visual gate blocked by reference addon not installed |
+| SMS-FUNC-009 | Blacklisted phone numbers | Open the configuration list/form, filter archived numbers, normalize and persist a phone number, blacklist/unblacklist it with a reason, and reject stale or invalid mutations | pass: `sms_marketing_phone_blacklist.integration.test.ts`; paired Odoo screen blocked by reference addon not installed |
 
 ## Workflow and integration cases
 
@@ -67,6 +68,7 @@ IDs.
 | SMS-UI-002 | Lists/contacts | both | List/contact filters, subscription states and forms match Odoo | planned paired capture |
 | SMS-UI-003 | Analysis/settings/errors | both | Graph/pivot/list, settings, empty and denied states match Odoo | planned |
 | SMS-UI-004 | Current route regression | all manifest-owned SMS routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned fresh matrix |
+| SMS-UI-005 | Blacklisted phone numbers | 1440x900, 390x844 | Configuration menu, list/form, archived filter, empty state, and responsive layout match Odoo | Core3 capture when runtime available; Odoo capture blocked by addon not installed |
 
 ## Exit criteria
 

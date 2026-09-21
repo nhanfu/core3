@@ -1,0 +1,71 @@
+page: { id: sms-phone-blacklist-detail }
+datasources:
+  - id: sms_phone_blacklist_detail
+    single: true
+    permission: sms_marketing.manage
+    error_states: { transport_error: { status: 503, code: SMS_PHONE_BLACKLIST_DETAIL_UNAVAILABLE, message: This blacklisted phone number is temporarily unavailable. } }
+    query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, number, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label, last_action_reason FROM sms_phone_blacklist WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_sms_phone_blacklist_detail
+    type: server_form
+    permission: sms_marketing.manage
+    title: Edit Phone Blacklist
+    action: sms_marketing.phone_blacklist.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.sms_phone_blacklist_detail
+    refresh: [sms_phone_blacklist_detail, sms_phone_blacklist_records]
+    mutation:
+      operation: update
+      table: sms_phone_blacklist
+      fields: [number]
+      required: [number]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_phone_blacklist WHERE id = :id", status: 404, code: SMS_PHONE_BLACKLIST_NOT_FOUND, message: Blacklisted phone number not found. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g'), '^\\+[1-9][0-9]{7,14}$')", status: 422, code: SMS_PHONE_BLACKLIST_NUMBER_INVALID, message: Enter a valid phone number with country code. }
+        - { query: "SELECT regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g') AS number", assign: true }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_phone_blacklist WHERE number = regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g') AND id <> :id)", status: 409, code: SMS_PHONE_BLACKLIST_EXISTS, message: This phone number is already blacklisted. }
+      result: { query: "SELECT * FROM sms_phone_blacklist WHERE id = :id" }
+    fields: [{ field: number, label: Phone Number, type: text, required: true }]
+  - id: blacklist_sms_phone_detail
+    type: server
+    permission: sms_marketing.manage
+    action: sms_marketing.phone_blacklist.activate
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true, last_action_reason: 'Blacklisted from SMS Marketing configuration.' } }
+    refresh: [sms_phone_blacklist_detail, sms_phone_blacklist_records]
+    mutation:
+      operation: update
+      table: sms_phone_blacklist
+      fields: [active, last_action_reason]
+      defaults: { active: true, last_action_reason: 'Blacklisted from SMS Marketing configuration.' }
+      boolean_fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_phone_blacklist WHERE id = :id", status: 404, code: SMS_PHONE_BLACKLIST_NOT_FOUND, message: Blacklisted phone number not found. }
+        - { query: "SELECT 1 AS ok FROM sms_phone_blacklist WHERE id = :id AND active = false AND row_version = :expected_row_version", status: 409, code: SMS_PHONE_BLACKLIST_STATE_CHANGED, message: This phone number is already active or has changed. Reload before blacklisting. }
+      result: { query: "SELECT * FROM sms_phone_blacklist WHERE id = :id" }
+  - id: unblacklist_sms_phone_detail
+    type: server_form
+    permission: sms_marketing.manage
+    title: Remove Phone From Blacklist
+    action: sms_marketing.phone_blacklist.remove
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    prefill: state.sms_phone_blacklist_detail
+    refresh: [sms_phone_blacklist_detail, sms_phone_blacklist_records]
+    mutation:
+      operation: update
+      table: sms_phone_blacklist
+      fields: [active, last_action_reason]
+      defaults: { active: false }
+      boolean_fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_phone_blacklist WHERE id = :id", status: 404, code: SMS_PHONE_BLACKLIST_NOT_FOUND, message: Blacklisted phone number not found. }
+        - { query: "SELECT 1 AS ok FROM sms_phone_blacklist WHERE id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: SMS_PHONE_BLACKLIST_STATE_CHANGED, message: This phone number is already archived or has changed. Reload before unblacklisting. }
+      result: { query: "SELECT * FROM sms_phone_blacklist WHERE id = :id" }
+    fields: [{ field: last_action_reason, label: Reason, type: text, placeholder: 'e.g. Asked to receive our next newsletters' }]

@@ -1,0 +1,50 @@
+page: { id: sms-phone-blacklist }
+datasources:
+  - id: sms_phone_blacklist_records
+    permission: sms_marketing.manage
+    error_states: { transport_error: { status: 503, code: SMS_PHONE_BLACKLIST_UNAVAILABLE, message: Blacklisted phone numbers are temporarily unavailable. } }
+    query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, number, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM sms_phone_blacklist WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') = '') OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR number ILIKE '%' || :q || '%') ORDER BY created_at DESC, id"
+actions:
+  - id: create_sms_phone_blacklist
+    type: server_form
+    permission: sms_marketing.manage
+    title: Add Phone Blacklist
+    action: sms_marketing.phone_blacklist.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_phone_blacklist_records]
+    mutation:
+      operation: insert
+      table: sms_phone_blacklist
+      fields: [number, active, last_action_reason]
+      required: [number]
+      defaults: { active: true, row_version: 1, last_action_reason: null, created_at: '2026-09-22 09:00:00', updated_at: '2026-09-22 09:00:00' }
+      before_steps: [{ query: "SELECT 'sms-phone-blacklist-' || regexp_replace(:number, '[^0-9]', '', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g'), '^\\+[1-9][0-9]{7,14}$')", status: 422, code: SMS_PHONE_BLACKLIST_NUMBER_INVALID, message: Enter a valid phone number with country code. }
+        - { query: "SELECT regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g') AS number", assign: true }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_phone_blacklist WHERE number = :number)", status: 409, code: SMS_PHONE_BLACKLIST_EXISTS, message: This phone number is already blacklisted. }
+      result: { query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, number, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label, last_action_reason FROM sms_phone_blacklist WHERE id = :id" }
+    fields: [{ field: number, label: Phone Number, type: text, required: true }]
+  - id: edit_sms_phone_blacklist
+    type: server_form
+    permission: sms_marketing.manage
+    title: Edit Phone Blacklist
+    action: sms_marketing.phone_blacklist.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [sms_phone_blacklist_records, sms_phone_blacklist_detail]
+    mutation:
+      operation: update
+      table: sms_phone_blacklist
+      fields: [number]
+      required: [number]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_phone_blacklist WHERE id = :id", status: 404, code: SMS_PHONE_BLACKLIST_NOT_FOUND, message: Blacklisted phone number not found. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g'), '^\\+[1-9][0-9]{7,14}$')", status: 422, code: SMS_PHONE_BLACKLIST_NUMBER_INVALID, message: Enter a valid phone number with country code. }
+        - { query: "SELECT regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g') AS number", assign: true }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_phone_blacklist WHERE number = regexp_replace(trim(CAST(:number AS VARCHAR)), '[^0-9+]', '', 'g') AND id <> :id)", status: 409, code: SMS_PHONE_BLACKLIST_EXISTS, message: This phone number is already blacklisted. }
+      result: { query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, number, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label, last_action_reason FROM sms_phone_blacklist WHERE id = :id" }
+    fields: [{ field: number, label: Phone Number, type: text, required: true }]

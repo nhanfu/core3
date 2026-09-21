@@ -120,6 +120,24 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 
 | SMS-FUNC-008 | Delivery traces and failed retry | `sms_marketing_delivery_retry.integration.test.ts` | pass | Core3 contract; paired Odoo screen blocked |
 | SMS-BROWSER-002 | Authenticated Odoo SMS form/traces desktop/mobile | `evidence/sms-marketing/2026-09-21/SMS-DELIVERY-RETRY-001/verification.md` | blocked | `mass_mailing_sms` not installed in `core3_reference` |
+
+## Bounded wave 6 - blacklisted phone numbers (2026-09-22)
+
+- Source comparison: **PASS**. The SMS configuration menu/action is declared by
+  `mass_mailing_sms`; Odoo's phone blacklist list/form/search and archive
+  behavior are defined by the local `phone_validation` addon.
+- Core3 contract: **PASS**. `sms_marketing_phone_blacklist.integration.test.ts`
+  covers 3 tests / 40 expectations: source/menu mapping, page/API joins,
+  active/archive reads, input normalization, guarded create/edit/archive/
+  restore, duplicate/invalid/missing/stale/state failures, and migration replay.
+- Odoo browser gate: **BLOCKED**. In authenticated `core3_reference`, Apps
+  lists “SMS Marketing” as installable and the launcher contains no SMS
+  Marketing menu because `mass_mailing_sms` is not installed. The exact live
+  observation was captured during this run with browser instance `245ea108`;
+  no Odoo SMS configuration capture or visual-parity claim is made.
+- Core3 browser gate: pending runtime probe; if the scoped runtime is unavailable
+  the exact listener/readiness error and unauthenticated diagnostic will be
+  recorded in the feature evidence.
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

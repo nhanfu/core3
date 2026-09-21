@@ -199,6 +199,41 @@ guards, and file-backed restart persistence. Provider callback ingestion and
 Temporal delivery execution remain a separate future bounded feature; this
 slice does not claim external-provider parity.
 
+## Bounded action: SMS Marketing / Configuration / Blacklisted Phone Numbers
+
+The next uncovered configuration action is `SMS Marketing` → `Configuration` →
+`Blacklisted Phone Numbers` (`mass_mailing_sms_menu_configuration` →
+`phone_blacklist_menu` → `phone_validation.phone_blacklist_action`). The menu
+is declared in `/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/mailing_sms_menus.xml`;
+the action and list/form/search contract come from
+`/home/nhanjs/projects/odoo/addons/phone_validation/views/phone_blacklist_views.xml`.
+Odoo exposes `Blacklist` and `Unblacklist` form actions, an `Archived` search
+filter, a `Blacklist Date` column, and the empty-state copy “Add a phone number
+in the blacklist” / “Blacklisted phone numbers won't receive SMS Mailings
+anymore.” The unblacklist action is a confirmation wizard with an optional
+reason, and the model sanitizes numbers, preserves inactive records, and
+reactivates an existing number when added again.
+
+Core3 maps this contract to `pages/phone-blacklist.yaml` +
+`api/phone-blacklist.yaml`, and `pages/phone-blacklist-detail.yaml` +
+`api/phone-blacklist-detail.yaml`, joined by matching `page.id`. Durable state
+is `sms_phone_blacklist`, created by migrations
+`20260922100000-011-sms-phone-blacklist.yaml` and
+`20260922101000-012-sms-phone-blacklist-demo.yaml`. The bounded mapping stores
+the optional unblacklist reason as an audit field, normalizes E.164-style input,
+and preserves inactive rows instead of deleting them. Reads and configuration
+mutations require `sms_marketing.manage`; invalid numbers, duplicate numbers,
+missing rows, stale versions, state changes, empty results, and transport
+failures have explicit contracts.
+
+Focused coverage is `sms_marketing_phone_blacklist.integration.test.ts`; it
+verifies Odoo menu/source mapping, page/API separation, deterministic active and
+archived reads, normalization, CRUD, state guards, migration replay, and the
+manager-only permission boundary. The authenticated Odoo reference currently
+exposes SMS Marketing only as an installable Apps entry; `mass_mailing_sms` is
+not installed in `core3_reference`, so its SMS configuration menu/action cannot
+be opened and no paired Odoo screen claim is made.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

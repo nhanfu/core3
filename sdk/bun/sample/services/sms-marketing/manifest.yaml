@@ -21,3 +21,7 @@ menu:
       label: Reporting
       items:
         - { path: /sms-analysis, label: SMS Marketing Analysis, icon: chart, permission: sms_marketing.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /sms-phone-blacklist, label: Blacklisted Phone Numbers, icon: phone, permission: sms_marketing.manage }

@@ -1,0 +1,20 @@
+title: Phone Blacklist
+page: { id: sms-phone-blacklist-detail, route: /sms-phone-blacklist/detail, breadcrumb: [Marketing, SMS Marketing, Configuration, Blacklisted Phone Numbers, Phone Number], auth: { require: [sms_marketing.manage] } }
+
+components:
+  - type: OdooFormView
+    source: sms_phone_blacklist_detail
+    title_field: number
+    group_columns: 1
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
+    header_actions:
+      - { id: blacklist_sms_phone_detail, label: Blacklist, variant: primary, permission: sms_marketing.manage, show_if: "state.sms_phone_blacklist_detail.active === false" }
+      - { id: unblacklist_sms_phone_detail, label: Unblacklist, variant: primary, permission: sms_marketing.manage, show_if: "state.sms_phone_blacklist_detail.active === true" }
+    groups:
+      - title: Phone Number
+        fields:
+          - { field: number, label: Phone Number, type: text, required: true }
+          - { field: active_label, label: Status, type: text }
+          - { field: created_at, label: Blacklist Date, type: datetime }
+          - { field: last_action_reason, label: Reason, type: textarea }

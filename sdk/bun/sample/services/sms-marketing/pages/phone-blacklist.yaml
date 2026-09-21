@@ -1,0 +1,25 @@
+title: Blacklisted Phone Numbers
+page: { id: sms-phone-blacklist, route: /sms-phone-blacklist, breadcrumb: [Marketing, SMS Marketing, Configuration, Blacklisted Phone Numbers], auth: { require: [sms_marketing.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_phone_blacklist_records
+    create_action: create_sms_phone_blacklist
+    create_label: New
+    search: { label: Search blacklisted phone numbers, placeholder: Search phone number... }
+    filters: [{ field: active, label: Archived, options: [{ id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/sms-marketing/pages/phone-blacklist-detail.yaml, side_panel: false }
+    columns:
+      - { field: created_at, label: Blacklist Date, type: Date }
+      - { field: number, label: Number, type: PrimaryEntityCell, mobile: true }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_sms_phone_blacklist, label: Edit, icon: edit }] }
+    row_key: id
+    row_open_action: edit_sms_phone_blacklist
+    row_double_click_action: edit_sms_phone_blacklist
+    row_actions: menu
+    empty_state: { title: Add a phone number in the blacklist, description: Blacklisted phone numbers won't receive SMS Mailings anymore. }

@@ -1,0 +1,21 @@
+version: 0.0.11
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_phone_blacklist (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        number VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        last_action_reason VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-09-22 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-09-22 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS sms_phone_blacklist_active_idx ON sms_phone_blacklist(active, created_at);
+    down: |
+      DROP TABLE IF EXISTS sms_phone_blacklist;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
