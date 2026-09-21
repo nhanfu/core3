@@ -1,0 +1,28 @@
+version: 0.0.76
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_exchanges (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        source_picking_id VARCHAR NOT NULL,
+        return_picking_id VARCHAR NOT NULL,
+        exchange_picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        exchange_quantity DECIMAL(18,3) NOT NULL,
+        exchanged_by VARCHAR NOT NULL,
+        exchanged_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00',
+        reason VARCHAR NOT NULL DEFAULT '',
+        state VARCHAR NOT NULL DEFAULT 'Waiting',
+        UNIQUE(source_picking_id, exchange_picking_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_exchanges_source_idx
+        ON inventory_transfer_exchanges(source_picking_id, exchanged_at, id);
+    down: |
+      DROP TABLE IF EXISTS inventory_transfer_exchanges;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

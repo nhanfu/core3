@@ -33,6 +33,7 @@ components:
       - { id: scrap_inventory_transfer, label: Scrap, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: return_all_inventory_transfer, label: Return All, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
+      - { id: exchange_inventory_transfer, label: Return for Exchange, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     stat_buttons:
       - { id: view_inventory_transfer_detailed_operations, label: Moves, icon: list, value_field: move_count, permission: inventory.read }
@@ -59,6 +60,7 @@ components:
       inventory.transfer.unreserved: Unreserved
       inventory.transfer.return_created: Return created
       inventory.transfer.return_all_created: Return All created
+      inventory.transfer.exchange_created: Exchange created
       inventory.transfer.backorder_created: Backorder created
       inventory.transfer.backorder_skipped: No backorder
       inventory.transfer.lock_toggled: Lock state changed
@@ -154,3 +156,17 @@ components:
     row_key: id
     selectable: false
     empty_state: { title: No print history, description: Printed transfer reports will appear here. }
+  - type: ListView
+    source: inventory_transfer_exchanges
+    variant: odoo
+    columns:
+      - { field: product_name, label: Product }
+      - { field: exchange_quantity, label: Quantity, align: right }
+      - { field: return_name, label: Return Transfer }
+      - { field: exchange_name, label: Exchange Transfer }
+      - { field: exchanged_by, label: Exchanged by }
+      - { field: exchanged_at, label: Exchanged at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No exchanges, description: Return-for-exchange workflows will appear here. }

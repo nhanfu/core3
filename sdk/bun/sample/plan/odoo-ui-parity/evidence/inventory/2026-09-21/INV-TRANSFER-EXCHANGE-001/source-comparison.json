@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-TRANSFER-EXCHANGE-001",
+  "odoo": {
+    "wizard_action": "act_stock_return_picking",
+    "button_method": "action_create_exchanges",
+    "behavior": "Create the return for the selected completed move, then create an independent exchange transfer/procurement.",
+    "source_files": [
+      "addons/stock/wizard/stock_picking_return_views.xml:27-30",
+      "addons/stock/wizard/stock_picking_return.py:239-264",
+      "addons/stock/views/stock_picking_views.xml:129-132"
+    ]
+  },
+  "core3": {
+    "page_id": "transfer-detail",
+    "page_yaml": "services/inventory/pages/transfer-detail.yaml",
+    "api_yaml": "services/inventory/api/transfer-detail.yaml",
+    "action_id": "exchange_inventory_transfer",
+    "action": "stock.picking.return.exchange",
+    "persistence": "inventory_transfer_exchanges",
+    "migration": "services/inventory/migrations/20260922260000-076-inventory-transfer-exchanges.yaml",
+    "bounded_scope": "One completed source move creates paired Waiting return and replacement transfers."
+  },
+  "parity": "Core3 preserves the source workflow shape and durable paired-transfer state; authenticated browser/Odoo comparison is blocked by login redirects."
+}

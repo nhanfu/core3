@@ -1,0 +1,8 @@
+{
+  "feature_id": "INV-TRANSFER-EXCHANGE-001",
+  "request": "GET http://127.0.0.1:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "authenticated_comparison": false,
+  "blocker": "Odoo redirected to its login route; no authenticated Odoo session was available for the paired Return for Exchange wizard comparison."
+}

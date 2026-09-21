@@ -1775,6 +1775,30 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Transfer Return for Exchange — `INV-TRANSFER-EXCHANGE-001`
+
+Odoo's Return wizard declares a distinct `Return for Exchange` button in
+`addons/stock/wizard/stock_picking_return_views.xml:27-30`, invoking
+`action_create_exchanges` in `stock_picking_return.py:239-264`. The method
+creates the normal return first, then creates an independent replacement
+transfer for the same selected product quantity; incoming receipts link the
+replacement directly while outgoing deliveries procure the replacement.
+
+Core3 extends the existing presentation-only `transfer-detail` page and
+backend API, joined by `page.id: transfer-detail`, with a manager/write
+`exchange_inventory_transfer` form action and read-only paired-transfer
+history. Migration
+`services/inventory/migrations/20260922260000-076-inventory-transfer-exchanges.yaml`
+adds the durable exchange ledger. The bounded implementation supports one
+completed source move and records Waiting return/replacement transfers with
+company, actor, stale-row, quantity, line-shape, and duplicate guards.
+
+Focused coverage is in
+`test/inventory_transfer_exchanges.integration.test.ts`. Core3 desktop/mobile
+and Odoo comparison evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-EXCHANGE-001/`; authenticated
+visual/Odoo sign-off is not claimed when the runtime only exposes login.
+
 ## Configuration > Locations > Location Barcode — `INV-LOCATION-BARCODE-001`
 
 Odoo's stock report source declares `stock.action_report_location_barcode`

@@ -1372,3 +1372,19 @@ Full Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-TRANSFER-RECEPTION-REPORT-001/`. Odoo
   returned HTTP 303 to `/web/login`; no authenticated paired sign-off is
   claimed. Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-EXCHANGE-001` — Return for Exchange lifecycle (2026-09-21)
+
+- Selected Odoo's distinct `action_create_exchanges` method from the Return
+  wizard. Odoo first creates the return picking and then creates an independent
+  replacement transfer, unlike the existing Return and Return All actions.
+- Extended the presentation-only `transfer-detail` page and backend API,
+  joined by `page.id`, with a manager/write Return for Exchange action and a
+  durable exchange history list. Migration `0.0.76` adds the replay-safe
+  `inventory_transfer_exchanges` ledger.
+- The bounded lifecycle creates paired Waiting return and replacement
+  transfers for one completed move line, and enforces missing, company, actor,
+  stale, quantity, line-shape, duplicate, and permission guards.
+- Focused verification and authenticated Core3/Odoo evidence are recorded
+  under `evidence/inventory/2026-09-21/INV-TRANSFER-EXCHANGE-001/`. Full
+  Inventory sign-off remains open.

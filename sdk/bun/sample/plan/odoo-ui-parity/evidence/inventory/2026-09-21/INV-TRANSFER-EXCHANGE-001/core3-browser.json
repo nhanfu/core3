@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-TRANSFER-EXCHANGE-001",
+  "target": "http://127.0.0.1:3001/inventory/transfer/detail?id=delivery-return-0001",
+  "desktop": {
+    "viewport": "1440x900",
+    "url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-return-0001",
+    "title": "Sign in to your account",
+    "authenticated": false,
+    "request_errors": [],
+    "horizontal_overflow": false,
+    "capture": "core3-desktop-login.png"
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-return-0001",
+    "title": "Sign in to your account",
+    "authenticated": false,
+    "request_errors": [],
+    "horizontal_overflow": false,
+    "capture": "core3-mobile-login.png"
+  },
+  "status": "BLOCKED_AUTHENTICATION",
+  "note": "The local Inventory module server served the shared sign-in shell; no authenticated transfer session was available, so no authenticated exchange-action sign-off is claimed."
+}

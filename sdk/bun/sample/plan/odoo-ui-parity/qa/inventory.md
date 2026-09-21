@@ -1808,3 +1808,24 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable edit lifecycle;
 PARTIAL/BLOCKED for any unavailable authenticated visual/Odoo comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Transfer Return for Exchange QA — `INV-TRANSFER-EXCHANGE-001`
+
+- Odoo source/action: PASS. The Return wizard exposes `action_create_exchanges`
+  at `addons/stock/wizard/stock_picking_return_views.xml:27-30`; its
+  implementation at `stock_picking_return.py:239-264` creates a return and an
+  independent exchange transfer/procurement.
+- Core3 contract: PASS. `pages/transfer-detail.yaml` remains presentation-only
+  and `api/transfer-detail.yaml` owns the `stock.picking.return.exchange`
+  mutation; both share `page.id: transfer-detail`. Migration 0.0.76 persists
+  the paired transfer IDs and exchange history.
+- Focused verification: PASS — 4 tests / 29 assertions. Coverage includes
+  source/schema, durable paired transfer creation, permission, company,
+  missing, actor, stale, quantity, duplicate, migration, and restart guards.
+- Core3 desktop/mobile and Odoo comparison are recorded in the feature
+  evidence directory. Login redirects remain explicit blockers when no
+  authenticated session is available.
+
+QA disposition: PASS for the bounded Core3 durable exchange lifecycle;
+PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
+sign-off remains open.

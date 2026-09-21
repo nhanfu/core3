@@ -25,6 +25,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_RETURNS_UNAVAILABLE, message: Transfer returns are temporarily unavailable. } }
     query: "SELECT r.id, r.source_picking_id, r.return_picking_id, rp.name AS return_name, CAST(r.return_quantity AS DOUBLE) AS return_quantity, r.company_name, r.returned_by, CAST(r.returned_at AS VARCHAR) AS returned_at, r.reason, r.state, r.row_version FROM inventory_transfer_returns r JOIN inventory_pickings p ON p.id = r.source_picking_id JOIN inventory_pickings rp ON rp.id = r.return_picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.source_picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.returned_at DESC, r.id"
+  - id: inventory_transfer_exchanges
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_EXCHANGES_UNAVAILABLE, message: Transfer exchange history is temporarily unavailable. } }
+    query: "SELECT e.id, e.source_picking_id, e.return_picking_id, rp.name AS return_name, e.exchange_picking_id, ep.name AS exchange_name, e.product_name, CAST(e.exchange_quantity AS DOUBLE) AS exchange_quantity, e.company_name, e.exchanged_by, CAST(e.exchanged_at AS VARCHAR) AS exchanged_at, e.reason, e.state, e.row_version FROM inventory_transfer_exchanges e JOIN inventory_pickings p ON p.id = e.source_picking_id JOIN inventory_pickings rp ON rp.id = e.return_picking_id JOIN inventory_pickings ep ON ep.id = e.exchange_picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.source_picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY e.exchanged_at DESC, e.id"
   - id: inventory_transfer_backorders
     single: false
     permission: inventory.read
@@ -264,6 +269,41 @@ actions:
       result: { query: "SELECT r.id, r.source_picking_id, r.return_picking_id, rp.name AS return_name, r.return_quantity, r.company_name, r.returned_by, r.reason, r.state, r.row_version FROM inventory_transfer_returns r JOIN inventory_pickings rp ON rp.id = r.return_picking_id WHERE r.id = :return_run_id" }
     fields:
       - { field: reason, label: Reason, type: textarea, placeholder: 'Optional return reason' }
+  - id: exchange_inventory_transfer
+    type: server_form
+    permission: inventory.write
+    title: Return for Exchange
+    action: stock.picking.return.exchange
+    handler: yaml_mutation
+    operation: exchange
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline, inventory_transfer_returns, inventory_transfer_exchanges]
+    mutation:
+      generated: [return_id, return_move_id, exchange_id, exchange_move_id, exchange_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'exchange-return-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS return_id, 'exchange-return-move-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS return_move_id, 'exchange-picking-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS exchange_id, 'exchange-move-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS exchange_move_id, 'exchange-run-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS exchange_run_id, 'exchange-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_exchanges WHERE source_picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_EXCHANGE_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_EXCHANGE_COMPANY, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Done' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_EXCHANGE_STALE, message: Only a current completed transfer can be exchanged. Reload and try again. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_EXCHANGE_ACTOR_REQUIRED, message: A signed-in inventory operator is required to create an exchange. }
+        - { query: "SELECT p.id FROM inventory_pickings p JOIN inventory_picking_moves m ON m.picking_id = p.id WHERE p.id = :id AND m.done_quantity > 0 GROUP BY p.id HAVING COUNT(*) = 1", status: 422, code: INVENTORY_TRANSFER_EXCHANGE_LINES_UNSUPPORTED, message: This bounded exchange flow requires exactly one completed move line. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:exchange_quantity AS DECIMAL(18,3)) > 0 AND CAST(:exchange_quantity AS DECIMAL(18,3)) <= (SELECT m.done_quantity FROM inventory_picking_moves m WHERE m.picking_id = :id AND m.done_quantity > 0)", status: 422, code: INVENTORY_TRANSFER_EXCHANGE_QUANTITY_INVALID, message: Exchange quantity must be greater than zero and no greater than the delivered quantity. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_transfer_exchanges WHERE source_picking_id = :id)", status: 409, code: INVENTORY_TRANSFER_EXCHANGE_ALREADY_CREATED, message: This transfer already has an exchange. }
+      steps:
+        - { query: "INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) SELECT :return_id, 'operation-receipts', 'EXR/' || p.name || '/' || :return_id, p.contact_name, p.scheduled_date, 'Exchange return of ' || p.name, p.company_name, p.destination_location_id, p.source_location_id, 'Waiting' FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) SELECT :return_move_id, :return_id, m.product_name, CAST(:exchange_quantity AS DECIMAL(18,3)), 0 FROM inventory_picking_moves m WHERE m.picking_id = :id AND m.done_quantity > 0" }
+        - { query: "INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) SELECT :exchange_id, 'operation-deliveries', 'EXC/' || p.name || '/' || :exchange_id, p.contact_name, p.scheduled_date, 'Exchange for ' || p.name, p.company_name, p.source_location_id, p.destination_location_id, 'Waiting' FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) SELECT :exchange_move_id, :exchange_id, m.product_name, CAST(:exchange_quantity AS DECIMAL(18,3)), 0 FROM inventory_picking_moves m WHERE m.picking_id = :id AND m.done_quantity > 0" }
+        - { query: "INSERT INTO inventory_transfer_exchanges(id, source_picking_id, return_picking_id, exchange_picking_id, company_name, product_name, exchange_quantity, exchanged_by, exchanged_at, reason, state) SELECT :exchange_run_id, p.id, :return_id, :exchange_id, p.company_name, m.product_name, CAST(:exchange_quantity AS DECIMAL(18,3)), :current_user_name, TIMESTAMP '2026-01-15 10:00:00', COALESCE(:reason, ''), 'Waiting' FROM inventory_pickings p JOIN inventory_picking_moves m ON m.picking_id = p.id AND m.done_quantity > 0 WHERE p.id = :id AND p.row_version = :expected_row_version" }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND state = 'Done' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before its exchange could be created. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.exchange_created', 'Exchange created', 'Return and replacement transfer ' || :exchange_id || ' created')" }
+      result: { query: "SELECT e.id, e.source_picking_id, e.return_picking_id, rp.name AS return_name, e.exchange_picking_id, ep.name AS exchange_name, e.product_name, e.exchange_quantity, e.company_name, e.exchanged_by, e.reason, e.state, e.row_version FROM inventory_transfer_exchanges e JOIN inventory_pickings rp ON rp.id = e.return_picking_id JOIN inventory_pickings ep ON ep.id = e.exchange_picking_id WHERE e.id = :exchange_run_id" }
+    fields:
+      - { field: exchange_quantity, label: Exchange Quantity, type: number, required: true, min: 0.001 }
+      - { field: reason, label: Reason, type: textarea, placeholder: 'Optional exchange reason' }
   - id: create_inventory_backorder
     type: server_form
     permission: inventory.write
