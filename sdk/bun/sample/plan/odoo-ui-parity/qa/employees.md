@@ -26,6 +26,18 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-RELATED-CONTACTS-001 execution (2026-09-21)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-017 | Related Contacts count/stat, contact read/navigation, and work-contact set/clear | pass; 4 focused tests / 23 assertions |
+| EMP-PERM-017 | Actor, `employees.read`/`employees.write`, active/current-company, person/company eligibility, and stale row-version guards | pass; rejected writes were atomic |
+| EMP-DATA-017 | Deterministic contact fixture, migration replay, and file-backed restart | pass |
+| EMP-UI-013 | Authenticated Core3/Odoo desktop/mobile comparison | conditional; Core3 blocked by unrelated Surveys page discovery and Odoo credential rejected |
+
+Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-CONTACTS-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-ATTACHMENTS-001 execution (2026-09-21)
 
 | Case | Scope | Result |

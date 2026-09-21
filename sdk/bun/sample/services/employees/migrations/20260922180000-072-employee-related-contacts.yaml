@@ -1,0 +1,45 @@
+version: 0.0.72
+kind: data
+description: Add durable Employee work-contact relation and deterministic related contact
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_contact_id VARCHAR;
+      CREATE TABLE IF NOT EXISTS base_contacts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        company_type VARCHAR NOT NULL DEFAULT 'person',
+        email VARCHAR,
+        phone VARCHAR,
+        street VARCHAR,
+        street2 VARCHAR,
+        city VARCHAR,
+        state_name VARCHAR,
+        zip VARCHAR,
+        country_name VARCHAR,
+        currency_code VARCHAR,
+        is_company BOOLEAN NOT NULL DEFAULT false,
+        active BOOLEAN NOT NULL DEFAULT true,
+        notes VARCHAR,
+        parent_company_id VARCHAR,
+        website VARCHAR,
+        language_code VARCHAR,
+        company_id VARCHAR,
+        livechat_channel_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO base_contacts(id, row_version, name, company_type, email, phone, city, country_name, is_company, active, company_id)
+      VALUES ('employee-contact-demo-001', 1, 'Admin User Work Contact', 'person', 'admin.work@core3.local', '+84 901 555 101', 'Ho Chi Minh City', 'Vietnam', false, true, 'company-vietnam')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, active = EXCLUDED.active, company_id = EXCLUDED.company_id;
+      UPDATE employees SET work_contact_id = 'employee-contact-demo-001'
+      WHERE id = 'employee-demo-001' AND (work_contact_id IS NULL OR work_contact_id = '');
+    down: |
+      UPDATE employees SET work_contact_id = NULL WHERE work_contact_id = 'employee-contact-demo-001';
+      DELETE FROM base_contacts WHERE id = 'employee-contact-demo-001';
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_contact_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

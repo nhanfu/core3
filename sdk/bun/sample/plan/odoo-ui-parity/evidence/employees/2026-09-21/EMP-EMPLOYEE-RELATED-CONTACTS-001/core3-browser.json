@@ -1,0 +1,40 @@
+{
+  "capturedAt": "2026-09-21T05:41:24.262Z",
+  "baseUrl": "http://127.0.0.1:3002",
+  "results": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "authenticated": true,
+      "hasContacts": false,
+      "hasWorkContact": true,
+      "hasWorkContactValue": false,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "body": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\nMessages and activities\n\nNo messages or activities yet",
+      "requestFailures": [],
+      "pageErrors": []
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "authenticated": true,
+      "hasContacts": false,
+      "hasWorkContact": true,
+      "hasWorkContactValue": false,
+      "scrollWidth": 390,
+      "viewportWidth": 390,
+      "body": "AU\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\nMessages and activities\n\nNo messages or activities yet",
+      "requestFailures": [],
+      "pageErrors": []
+    }
+  ]
+}

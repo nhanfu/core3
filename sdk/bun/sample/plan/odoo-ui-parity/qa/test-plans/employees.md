@@ -703,3 +703,17 @@ assertions). Evidence:
 Focused test: `test/employees_attachments.integration.test.ts` (4 tests, 26
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-ATTACHMENTS-001/`.
+
+## EMP-EMPLOYEE-RELATED-CONTACTS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `action_related_contacts`, `related_partners_count`, and `work_contact_id` map to paired Core3 contracts | pass |
+| Related-contact CRUD | Deterministic work contact reads, navigates, assigns, and clears durably | pass |
+| Permission and scope | Actor, read/write permission, active/current company, person/company eligibility, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the relation and fixture | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; unrelated Surveys discovery blocker and rejected Odoo credential are documented |
+
+Focused test: `test/employees_related_contacts.integration.test.ts` (4 tests,
+23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-CONTACTS-001/`.

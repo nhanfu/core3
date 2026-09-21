@@ -1001,3 +1001,25 @@ Candidate commit: current working tree
   available local credential being rejected; the deterministic Core3 fixture
   company also differs from the authenticated demo company, so no aggregate
   Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-RELATED-CONTACTS-001 (2026-09-21)
+
+- Selected Odoo's source-visible `action_related_contacts` smart button and
+  `related_partners_count` projection as the next uncovered employee action;
+  it maps `work_contact_id | user_id.partner_id` to `res.partner` contacts.
+- Added migration `20260922180000-072` with a durable `employees.work_contact_id`
+  relation and deterministic `employee-contact-demo-001` contact fixture.
+- Added separate API datasource/options, guarded work-contact assignment/clear,
+  and read-only navigation to the existing Contacts detail route. Guards cover
+  `employees.read`/`employees.write`, actor, active/current-company employee,
+  contact company/person eligibility, and stale row version.
+- Focused verification is **4 tests / 23 assertions**, including relation CRUD,
+  atomic actor/company/stale/invalid rejection, migration replay, and
+  file-backed restart.
+- Odoo desktop/mobile login captures are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-CONTACTS-001/` and show
+  the available local credential rejected. Core3 desktop/mobile evidence is an
+  exact unrelated runtime blocker: committed Surveys page discovery rejects
+  `services/surveys/api/certification-report.yaml` because
+  `actions[1].fields` is not allowed. Employees contracts validate independently;
+  no aggregate Employees sign-off is claimed.

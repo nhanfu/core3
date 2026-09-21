@@ -2175,3 +2175,26 @@ or page errors and no horizontal overflow, but its authenticated company is
 The available local Odoo credential was rejected at both viewports, so the
 Odoo comparison remains an explicit blocker and no aggregate sign-off is
 claimed.
+
+## EMP-EMPLOYEE-RELATED-CONTACTS-001: Employee related contacts workflow (2026-09-21)
+
+Odoo's `hr.employee` source defines `action_related_contacts` and computes the
+related partner set as `work_contact_id | user_id.partner_id` in
+`/home/nhanjs/projects/odoo/addons/hr/models/hr_employee.py:952-976`. The
+inherited Employee form adds the `Contacts` smart button and
+`related_partners_count` at
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml:619-630`.
+
+Core3 adds migration `20260922180000-072`, a durable `employees.work_contact_id`
+relation, and a deterministic `base_contacts` person fixture. The API YAML
+owns the scoped related-contact datasource, contact options, guarded set/clear
+mutation, and navigation action. The page YAML owns only the Contacts stat
+button, Work Contact projection, and action binding by `page.id`.
+
+The write workflow requires `employees.write`, an authenticated actor, an
+active employee in the current company, an active person contact mapped to the
+employee company, and optimistic row-version concurrency. Focused verification
+is **4 tests / 23 assertions**, including migration replay and file-backed
+restart. Odoo credentials were rejected at both viewports. Core3 browser
+discovery is blocked by the unrelated committed Surveys schema error; no
+aggregate Employees sign-off is claimed.

@@ -1,0 +1,32 @@
+{
+  "capturedAt": "2026-09-21T05:27:36.202Z",
+  "baseUrl": "http://127.0.0.1:8069",
+  "results": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/web/login",
+      "authenticated": false,
+      "loginError": true,
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "requestFailures": [],
+      "pageErrors": []
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/web/login",
+      "authenticated": false,
+      "loginError": true,
+      "body": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "requestFailures": [],
+      "pageErrors": []
+    }
+  ]
+}
