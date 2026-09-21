@@ -1,0 +1,12 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS leave_requests_overview_calendar_idx ON leave_requests(date_from, date_to, state, employee_id);
+    down: |
+      DROP INDEX IF EXISTS leave_requests_overview_calendar_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

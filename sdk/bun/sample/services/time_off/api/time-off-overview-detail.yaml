@@ -1,0 +1,10 @@
+page: { id: time-off-overview-detail }
+datasources:
+  - id: time_off_overview_detail
+    single: true
+    permission: time_off.read
+    error_states: { transport_error: { status: 503, code: TIME_OFF_OVERVIEW_DETAIL_UNAVAILABLE, message: Time Off calendar details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, state FROM leave_requests WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id AND state IN ('Submitted', 'Approved', 'Refused', 'Cancelled')"
+actions:
+  - { id: approve_time_off_overview_detail, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, params: { id: '{state.id}' }, refresh: [time_off_overview_detail, time_off_overview_requests] }
+  - { id: refuse_time_off_overview_detail, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [time_off_overview_detail, time_off_overview_requests] }

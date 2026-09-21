@@ -3,3 +3,9 @@ datasources:
   - id: time_off_overview_requests
     permission: time_off.read
     query: "SELECT r.id, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state FROM leave_requests r WHERE r.state IN ('Submitted', 'Approved') ORDER BY r.date_from"
+actions:
+  - id: open_time_off_overview_detail
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off-overview/detail
+    params: { id: '{row.id}' }

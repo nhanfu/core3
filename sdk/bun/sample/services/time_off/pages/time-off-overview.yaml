@@ -24,3 +24,4 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: open_time_off_overview_detail

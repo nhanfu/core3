@@ -1,0 +1,18 @@
+title: Time Off
+page: { id: time-off-overview-detail, route: /time-off-overview/detail, breadcrumb: [Human Resources, Time Off, Overview, Time Off], auth: { require: [time_off.read] } }
+components:
+  - type: OdooFormView
+    source: time_off_overview_detail
+    title_field: name
+    status_field: state
+    status_colors: { Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    header_actions:
+      - { id: approve_time_off_overview_detail, label: Approve, variant: primary, permission: time_off.manage, show_if: "row.state === 'Submitted'" }
+      - { id: refuse_time_off_overview_detail, label: Refuse, variant: secondary, permission: time_off.manage, show_if: "row.state === 'Submitted'" }
+    group_columns: 2
+    labels: { save: Save, discard: Discard, editDetails: Details, workflowStatus: Status }
+    groups:
+      - title: Time Off
+        fields: [{ field: employee_name, label: Employee }, { field: leave_type_name, label: Time Off Type }, { field: state, label: Status }]
+      - title: Dates
+        fields: [{ field: date_from, label: Dates }, { field: days, label: Duration }, { field: reason, label: Description }]

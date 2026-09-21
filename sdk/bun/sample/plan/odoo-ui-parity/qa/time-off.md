@@ -88,3 +88,19 @@ module sign-off or aggregate progress claim.
   external workflow boundary is configured.
 - Disposition: **conditional bounded PASS; integrated**. Fresh authenticated
   paired Odoo comparison remains open. No full Time Off sign-off.
+
+## 2026-09-22 bounded candidate: overview calendar event detail
+
+- Focused test: **PASS**, 3 tests / 22 assertions in
+  `test/time_off_overview_calendar_detail.integration.test.ts`.
+- Persistence: **PASS**; migration/index replay is idempotent and approval
+  remains persisted after DuckDB close/reopen.
+- Contract: **PASS**; matching page/API ids, Overview row-open navigation,
+  calendar-visible state filtering, and `time_off.manage` workflow guards.
+- Source comparison: **PASS** against
+  `/home/nhanjs/projects/odoo/addons/hr_holidays/report/hr_leave_report_calendar.xml`.
+- Odoo browser gate: **BLOCKED**; `core3_reference` has no Time Off menu or
+  `hr_holidays` action, and direct `/odoo/time-off` resolves to Discuss.
+  Blocker captures are in the linked evidence README; no Odoo mutation was
+  made.
+- Disposition: **conditional bounded PASS**; no full module sign-off.

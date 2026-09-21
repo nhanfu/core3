@@ -876,3 +876,33 @@ Paired Odoo visual evidence remains blocked. The same authenticated browser
 session reached Discuss in `core3_reference`, but its app menu and direct
 `/odoo` navigation did not expose `hr_holidays`/Time Off. No Odoo mutation or
 credential access was made, so this slice is not claimed as full visual parity.
+
+## Overview calendar event detail (2026-09-22)
+
+The next uncovered source feature is Odoo's `hr.leave.report.calendar` event
+popup from `addons/hr_holidays/report/hr_leave_report_calendar.xml`. Its
+`hr_leave_report_calendar_view_form` shows Employee, Time Off Type, Dates,
+duration, Description, and manager-only Approve/Refuse actions. Core3's
+Overview previously exposed calendar/list records but no event-open detail.
+
+Core3 adds `/time-off-overview/detail` with page id
+`time-off-overview-detail` and a matching API fragment. The Overview row-open
+action carries the durable leave-request id into the Odoo-shaped form. Approve
+and Refuse reuse the declared `leave_requests` workflow with
+`time_off.manage`, row-version guards, balance validation, and refreshed
+Overview/detail sources. Migration `0.0.21` adds the idempotent calendar query
+index; no duplicate fixture data is introduced.
+
+Focused coverage is `test/time_off_overview_calendar_detail.integration.test.ts`:
+3 tests and 22 assertions pass for source mapping, page/API separation,
+state filtering, migration/index idempotency, permissioned actions, and
+file-backed restart persistence.
+
+Authenticated Odoo evidence was attempted in browser instance `245ea108`
+against `http://localhost:8069`, database `core3_reference`, without reading
+credentials or changing Odoo data. The authenticated desktop app menu has no
+Time Off entry; mobile emulation has no Time Off action, and direct
+`/odoo/time-off` resolves to the Discuss shell. This exact blocker and capture
+hashes are recorded at
+`odoo-ui-parity/evidence/time-off/2026-09-22/TIMEOFF-OVERVIEW-CALENDAR-DETAIL-001/README.md`.
+No paired Odoo popup claim is made.
