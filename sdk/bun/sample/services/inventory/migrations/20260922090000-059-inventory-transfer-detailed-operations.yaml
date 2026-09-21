@@ -1,0 +1,31 @@
+version: 0.0.59
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_move_lines ADD COLUMN IF NOT EXISTS picking_id VARCHAR;
+      UPDATE inventory_move_lines
+      SET picking_id = (SELECT p.id FROM inventory_pickings p WHERE p.name = inventory_move_lines.reference LIMIT 1)
+      WHERE picking_id IS NULL
+        AND EXISTS (SELECT 1 FROM inventory_pickings p WHERE p.name = inventory_move_lines.reference);
+      CREATE INDEX IF NOT EXISTS idx_inventory_move_lines_picking ON inventory_move_lines(picking_id, date, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-detailed-0001', 'operation-deliveries', 'WH/OUT/DETAIL/0001', 'Detailed Operations Customer', DATE '2026-01-15', 'SO/DETAIL/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-detailed-0001-move-001', 'delivery-detailed-0001', '[E-COM08] Storage Box', 2, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_move_lines(id, row_version, date, reference, product_id, product_name, product_category_name, lot_serial_number, source_package, result_package, source_location_id, destination_location_id, picking_partner_name, company_name, quantity, quantity_product_uom, unit_name, state, done_by, origin, movement_type, created_at, picking_id)
+      VALUES
+        ('delivery-detailed-0001-line-001', 1, TIMESTAMP '2026-01-15 08:00:00', 'WH/OUT/DETAIL/0001', 'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-stock', 'location-customer', 'Detailed Operations Customer', 'Core3 Demo Company', 2, 2, 'Units', 'Assigned', NULL, 'SO/DETAIL/0001', 'outgoing', TIMESTAMP '2026-01-15 08:00:00', 'delivery-detailed-0001')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_move_lines WHERE id = 'delivery-detailed-0001-line-001';
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-detailed-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-detailed-0001';
+      DROP INDEX IF EXISTS idx_inventory_move_lines_picking;
+      ALTER TABLE inventory_move_lines DROP COLUMN IF EXISTS picking_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

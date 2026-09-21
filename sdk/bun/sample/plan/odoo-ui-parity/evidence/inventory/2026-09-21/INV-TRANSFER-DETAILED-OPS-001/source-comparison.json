@@ -1,0 +1,29 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-001",
+  "odoo": {
+    "menu": "Contextual transfer-form stat button; no standalone menu entry",
+    "view": "/home/nhanjs/projects/odoo/addons/stock/views/stock_picking_views.xml:176-194",
+    "action_method": "stock.picking.action_detailed_operations",
+    "model_source": "/home/nhanjs/projects/odoo/addons/stock/models/stock_picking.py:1217-1238",
+    "domain": "[('picking_id', '=', self.id)]",
+    "view_mode": "list",
+    "view_source": "/home/nhanjs/projects/odoo/addons/stock/views/stock_move_line_views.xml:40-61",
+    "context": ["sml_specific_default", "default_picking_id", "default_location_id", "default_location_dest_id", "default_company_id", "picking_code", "create"],
+    "create_behavior": "create is allowed unless the picking is done or cancelled"
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detailed-operations.yaml",
+    "api": "services/inventory/api/transfer-detailed-operations.yaml",
+    "page_id": "transfer-detailed-operations",
+    "route": "/inventory/transfer/detailed-operations?picking_id=<transfer>",
+    "source": "inventory_transfer_detailed_operations",
+    "context_source": "inventory_transfer_detailed_operations_context",
+    "permission": "inventory.read",
+    "company_scope": "picking company must equal current_company_name",
+    "persistence": "migration 0.0.59 adds inventory_move_lines.picking_id and deterministic detailed-operation fixture"
+  },
+  "parity_notes": [
+    "Core3 models the source read-only contextual list; mutation/editing of move lines remains outside this bounded report slice.",
+    "The existing global Moves History report remains separate; this route filters by the transfer action's picking_id context."
+  ]
+}

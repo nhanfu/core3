@@ -1,0 +1,48 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-001",
+  "generated_at": "2026-09-21T01:51:00.633Z",
+  "base": "http://127.0.0.1:4335",
+  "authenticated": true,
+  "desktop": {
+    "url": "http://127.0.0.1:4335/inventory/transfer/detailed-operations?picking_id=delivery-detailed-0001",
+    "status": 200,
+    "title": "Detailed Operations",
+    "hasTransfer": true,
+    "hasProduct": true,
+    "hasDetailedOperations": true,
+    "backVisible": true,
+    "bodyExcerpt": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nDetailed Operations\n\nTransfer\n\nWH/OUT/DETAIL/0001\n\nOperation Type\n\nDeliveries\n\nState\n\nReady\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nSupply Chain / Inventory / Operations / Transfers / Detailed Operations\n1-1 / 1\n‹\n›\nScheduled Date\n\tReference\n\tProduct\n\tLot/Serial Number\n\tFrom\n\tTo\n\tSource Package\n\tDestination Package\n\tQuantity\n\tUnit\n\tStatus\n\tDone By\n\n2026-01-15\t\nWH/OUT/DETAIL/0001\n\t[E-COM08] Storage Box\t—\tStock\tCustomers\t—\t—\t2\tUnits\tAssigned\t—",
+    "metrics": {
+      "innerWidth": 1440,
+      "innerHeight": 900,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "bodyWidth": 1440
+    },
+    "failed": [],
+    "badResponses": [],
+    "errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4335/inventory/transfer/detailed-operations?picking_id=delivery-detailed-0001",
+    "status": 200,
+    "title": "Detailed Operations",
+    "hasTransfer": true,
+    "hasProduct": true,
+    "hasDetailedOperations": true,
+    "backVisible": true,
+    "bodyExcerpt": "AU\nDetailed Operations\n\nTransfer\n\nWH/OUT/DETAIL/0001\n\nOperation Type\n\nDeliveries\n\nState\n\nReady\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nDetailed Operations\n1-1 / 1\n‹\n›\n[E-COM08] Storage Box\n\nWH/OUT/DETAIL/0001\n\nQuantity\n2\nFrom\nStock\nTo\nCustomers\nStatus\nAssigned",
+    "metrics": {
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390
+    },
+    "failed": [],
+    "badResponses": [],
+    "errors": []
+  },
+  "failures": [],
+  "errors": []
+}

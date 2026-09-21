@@ -1775,6 +1775,38 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Transfer Detailed Operations — `INV-TRANSFER-DETAILED-OPS-001` (2026-09-21)
+
+This Wave 22 slice covers the contextual transfer-form `Moves` stat action.
+Odoo declares `action_detailed_operations` on the transfer form at
+`addons/stock/views/stock_picking_views.xml:176-194`; the implementation at
+`addons/stock/models/stock_picking.py:1217-1238` opens a list-only
+`stock.move.line` action scoped to `picking_id = self.id`, with contextual
+defaults for picking, locations, company, picking code, and create behavior.
+The detailed list columns are defined by
+`addons/stock/views/stock_move_line_views.xml:40-61`.
+
+Core3 keeps `pages/transfer-detailed-operations.yaml` presentation-only and
+joins it to `api/transfer-detailed-operations.yaml` by
+`page.id: transfer-detailed-operations`. The existing transfer detail page
+adds the source-shaped `Moves` stat button, whose API navigate action supplies
+the picking context. Migration
+`20260922090000-059-inventory-transfer-detailed-operations.yaml` adds durable
+`inventory_move_lines.picking_id` linkage, idempotently maps matching seeded
+references, and provides a deterministic Core3 Demo Company transfer and
+assigned detailed operation row.
+
+The read contract enforces `inventory.read`, current-company scope, transfer
+context, deterministic search/order, empty and transport-error states, and
+row navigation to the existing move-line detail. Focused verification covers
+the source action/domain/context, YAML separation and route discovery,
+contextual filtering, permission boundary, migration replay, and file-backed
+restart persistence. Authenticated Core3 desktop/mobile evidence and the
+exact Odoo login blocker are under
+`evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-001/`.
+This bounded slice models Odoo's contextual read/list action; move-line
+editing remains outside this slice and full Inventory sign-off remains open.
+
 ## Operations > Transfer Print reports — `INV-TRANSFER-PRINT-001` (2026-09-21)
 
 This bounded Wave 21 slice covers the transfer-form Print workflow that remained

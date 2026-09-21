@@ -1,0 +1,50 @@
+title: Detailed Operations
+page: { id: transfer-detailed-operations, route: /inventory/transfer/detailed-operations, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Detailed Operations], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_detailed_operations_context
+    title: Detailed Operations
+    stats:
+      - { label: Transfer, field: transfer_name }
+      - { label: Operation Type, field: operation_type_name }
+      - { label: State, field: state }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_detailed_operations
+    header_actions:
+      - { id: back_to_inventory_transfer_from_detailed_operations, label: Back to Transfer, variant: secondary, permission: inventory.read }
+    search: { label: Search detailed operations, placeholder: 'Search products, lots, packages, or locations...' }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: product_name
+          subtitle: reference
+          fields:
+            - { field: quantity, label: Quantity }
+            - { field: source_location, label: From }
+            - { field: destination_location, label: To }
+            - { field: state, label: Status }
+    columns:
+      - { field: date, label: Scheduled Date, mobile: true, sortable: true }
+      - { field: reference, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, sortable: true }
+      - { field: lot_serial_number, label: Lot/Serial Number, mobile: false }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: source_package, label: Source Package, mobile: false }
+      - { field: result_package, label: Destination Package, mobile: false }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: unit_name, label: Unit, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: done_by, label: Done By, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_detailed_operation
+    row_double_click_action: view_inventory_detailed_operation
+    empty_state: { title: No detailed operations, description: This transfer has no move lines in its detailed operations view. }

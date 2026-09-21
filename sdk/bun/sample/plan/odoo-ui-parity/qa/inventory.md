@@ -426,6 +426,41 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Transfer Detailed Operations QA — `INV-TRANSFER-DETAILED-OPS-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_views.xml:176-194`,
+  `addons/stock/models/stock_picking.py:1217-1238`, and
+  `addons/stock/views/stock_move_line_views.xml:40-61`. The contextual Moves
+  action is `stock.picking.action_detailed_operations` with domain
+  `picking_id = self.id`, list-only detailed move-line view, and contextual
+  create/default fields.
+- Core3 contract: PASS. The transfer detail `Moves` stat button remains
+  presentation-owned in `pages/transfer-detail.yaml`; its navigate action is
+  backend-owned in `api/transfer-detail.yaml`. The new
+  `transfer-detailed-operations` page/API pair shares `page.id` and exposes
+  the transfer-scoped list, context summary, search, back navigation, and
+  existing move-line detail navigation. Migration 0.0.59 persists the
+  picking linkage and deterministic fixture.
+- Focused verification: PASS — 4 tests / 28 assertions for source markers,
+  schema/route contract, deterministic filtering, company/permission and
+  empty/transport states, migration replay, and restart persistence. Existing
+  transfer Print/workflow regression: 8 tests / 85 assertions.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. Both show the contextual transfer, detailed operation row, Back to
+  Transfer control, HTTP 200, no page errors, no HTTP >=400 responses, and
+  equal viewport/body widths. Evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-001/`.
+- Odoo comparison: BLOCKED. `GET http://localhost:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; paired authenticated Odoo evidence
+  is not claimed.
+- Audit: PASS — 725 pages / 734 routes / 1,407 datasources. Scoped lint and
+  final diff-check are recorded at commit time.
+
+QA disposition: PASS for the bounded Core3 contextual read/list contract and
+persistence; PARTIAL/BLOCKED for paired live Odoo visual/action comparison.
+Full Inventory sign-off remains open.
+
 ## Inventory Product Variants QA — `INV-PRODUCT-VARIANTS-001` (2026-09-21)
 
 - Odoo source/menu/action: PASS from

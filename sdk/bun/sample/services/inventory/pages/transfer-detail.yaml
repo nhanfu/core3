@@ -33,6 +33,8 @@ components:
       - { id: scrap_inventory_transfer, label: Scrap, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
+    stat_buttons:
+      - { id: view_inventory_transfer_detailed_operations, label: Moves, icon: list, value_field: move_count, permission: inventory.read }
     message_source: inventory_transfer_timeline
     chatter_label: Messages and activities
     message_label: Send message

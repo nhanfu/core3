@@ -1013,3 +1013,28 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-TRANSFER-PRINT-001/`. Odoo paired visual
   and action evidence is blocked by HTTP 303 to `/web/login`; no Odoo parity or
   module sign-off is claimed.
+
+## `INV-TRANSFER-DETAILED-OPS-001` — Transfer Detailed Operations (2026-09-21)
+
+- Selected the smallest uncovered transfer-context behavior after Transfer
+  Print: Odoo's transfer-form `Moves` stat action, `action_detailed_operations`,
+  which opens a picking-scoped `stock.move.line` list rather than the global
+  Moves History action.
+- Added migration `20260922090000-059-inventory-transfer-detailed-operations.yaml`
+  with durable `inventory_move_lines.picking_id` linkage, idempotent matching
+  updates, and a deterministic Core3 Demo Company detailed-operation fixture.
+  Added separate `transfer-detailed-operations` page/API contracts joined by
+  `page.id`; the transfer detail's `Moves` stat passes `picking_id` context.
+- The read contract enforces inventory.read, current-company scope, stable
+  picking filtering/search/order, explicit empty/503 states, and navigation to
+  the existing move-line detail. No page-local SQL or management action was
+  added.
+- Focused verification passes 4 tests / 28 assertions. Transfer print plus
+  workflow regression passes 8 tests / 85 assertions. `bun run audit` passes
+  at 725 pages / 734 routes / 1,407 datasources. Core3 authenticated desktop
+  and mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-001/` with no page
+  errors, HTTP >=400 responses, or horizontal overflow.
+- Odoo source comparison is recorded; live Odoo returned HTTP 303 to
+  `/web/login?redirect=%2Fweb%3F`, so paired authenticated Odoo visual/action
+  evidence is blocked and not claimed. Full Inventory sign-off remains open.

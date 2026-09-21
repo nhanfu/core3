@@ -1,0 +1,8 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-001",
+  "probe": "GET http://localhost:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "The local Odoo instance redirected to the login page, so authenticated paired Odoo desktop/mobile visual and contextual action evidence was unavailable.",
+  "claimed": false
+}

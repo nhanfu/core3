@@ -1,0 +1,45 @@
+page: { id: transfer-detailed-operations }
+datasources:
+  - id: inventory_transfer_detailed_operations_context
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_DETAILED_OPERATIONS_CONTEXT_UNAVAILABLE, message: Detailed operation context is temporarily unavailable. } }
+    query: "SELECT p.id AS picking_id, p.name AS transfer_name, t.name AS operation_type_name, p.state, p.company_name, p.row_version, CAST((SELECT COUNT(*) FROM inventory_move_lines m WHERE m.picking_id = p.id) AS BIGINT) AS operation_count FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :picking_id AND (NULLIF(:current_company_name, '') IS NULL OR p.company_name = :current_company_name)"
+  - id: inventory_transfer_detailed_operations
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_DETAILED_OPERATIONS_FORBIDDEN, message: You do not have permission to view detailed operations. }
+      transport_error: { status: 503, code: INVENTORY_DETAILED_OPERATIONS_UNAVAILABLE, message: Detailed operations are temporarily unavailable. }
+    query: |
+      SELECT m.id, m.row_version, CAST(p.scheduled_date AS VARCHAR) AS date,
+        p.name AS reference, m.picking_id, m.product_name, m.lot_serial_number,
+        m.source_package, m.result_package, COALESCE(sl.name, '') AS source_location,
+        COALESCE(dl.name, '') AS destination_location, m.company_name,
+        CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state, m.done_by,
+        p.contact_name AS picking_partner_name, m.origin
+      FROM inventory_move_lines m
+      JOIN inventory_pickings p ON p.id = m.picking_id
+      LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND m.picking_id = :picking_id
+        AND (NULLIF(:current_company_name, '') IS NULL OR p.company_name = :current_company_name)
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(m.lot_serial_number, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.source_package, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.result_package, '') ILIKE '%' || :q || '%'
+          OR COALESCE(sl.name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(dl.name, '') ILIKE '%' || :q || '%')
+      ORDER BY p.scheduled_date, p.name, m.id
+actions:
+  - id: back_to_inventory_transfer_from_detailed_operations
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }
+  - id: view_inventory_detailed_operation
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves/detail
+    params: { id: '{row.id}' }

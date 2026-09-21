@@ -52,6 +52,11 @@ datasources:
     query: "SELECT r.id, r.picking_id, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM inventory_transfer_print_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.printed_at DESC, r.id DESC"
 
 actions:
+  - id: view_inventory_transfer_detailed_operations
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detailed-operations
+    params: { picking_id: '{state.inventory_transfer_detail.id}' }
   - id: upload_inventory_transfer_attachment
     type: upload
     action: inventory.transfers.attachments.upload
