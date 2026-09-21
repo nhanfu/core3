@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-TRANSFER-ACTIVITY-001",
+  "odoo": {
+    "model": "stock.picking",
+    "behavior": "Stock pickings inherit mail.activity.mixin; the transfer view renders activity_ids and the shared activity form offers Schedule and Mark Done.",
+    "source_files": [
+      "addons/stock/models/stock_picking.py:538-542",
+      "addons/stock/views/stock_picking_views.xml:44-57",
+      "addons/mail/views/mail_activity_views.xml:165-176",
+      "addons/mail/models/mail_activity.py:451-454"
+    ]
+  },
+  "core3": {
+    "page_id": "transfer-detail",
+    "page_yaml": "services/inventory/pages/transfer-detail.yaml",
+    "api_yaml": "services/inventory/api/transfer-detail.yaml",
+    "actions": ["schedule_inventory_transfer_activity", "complete_inventory_transfer_activity"],
+    "datasource": "inventory_transfer_activities",
+    "persistence": "inventory_transfer_activities",
+    "migration": "services/inventory/migrations/20260922280000-078-inventory-transfer-activities.yaml",
+    "bounded_scope": "Schedule one typed transfer activity, then mark it done with durable actor/company/state history and optimistic row guards."
+  },
+  "parity": "Core3 preserves the source Schedule and Mark Done lifecycle with a durable transfer-scoped activity list; authenticated browser and Odoo comparison are blocked by login redirects."
+}

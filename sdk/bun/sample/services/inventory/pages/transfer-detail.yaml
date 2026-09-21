@@ -42,6 +42,7 @@ components:
       - { id: view_inventory_transfer_reception_report, label: Allocation, icon: assignment, value_field: reception_report_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.reception_report_count > 0 && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: view_inventory_transfer_next, label: Next Transfer, icon: transfer, value_field: next_transfer_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.next_transfer_count > 0" }
     message_source: inventory_transfer_timeline
+    activity_action: schedule_inventory_transfer_activity
     chatter_label: Messages and activities
     message_label: Send message
     note_label: Log note
@@ -170,3 +171,21 @@ components:
     row_key: id
     selectable: false
     empty_state: { title: No exchanges, description: Return-for-exchange workflows will appear here. }
+  - type: ListView
+    source: inventory_transfer_activities
+    variant: odoo
+    create_action: schedule_inventory_transfer_activity
+    create_label: Schedule activity
+    actions:
+      - { id: complete_inventory_transfer_activity, label: Mark done, permission: inventory.write, variant: primary }
+    columns:
+      - { field: activity_type, label: Activity }
+      - { field: summary, label: Summary }
+      - { field: due_date, label: Deadline }
+      - { field: assigned_user, label: Assigned to }
+      - { field: state, label: Status }
+      - { field: completed_by, label: Completed by }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No scheduled activities, description: Schedule an activity to keep this transfer moving. }

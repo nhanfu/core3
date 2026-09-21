@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-TRANSFER-ACTIVITY-001",
+  "target": "http://127.0.0.1:3001/inventory/transfer/detail?id=delivery-00008",
+  "desktop": {
+    "viewport": "1440x900",
+    "url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-00008",
+    "title": "TMS — Transport Management System",
+    "authenticated": false,
+    "request_errors": [],
+    "horizontal_overflow": false,
+    "capture": "core3-desktop-login.png"
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "url": "http://127.0.0.1:3001/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetail%3Fid%3Ddelivery-00008",
+    "title": "TMS — Transport Management System",
+    "authenticated": false,
+    "request_errors": [],
+    "horizontal_overflow": false,
+    "capture": "core3-mobile-login.png"
+  },
+  "status": "BLOCKED_AUTHENTICATION",
+  "note": "The local Inventory module server served the shared sign-in shell; no authenticated transfer activity session was available, so no authenticated Schedule or Mark Done UI sign-off is claimed."
+}

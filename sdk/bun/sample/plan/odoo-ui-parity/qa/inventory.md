@@ -1858,3 +1858,26 @@ sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable conflict lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Transfer Activity QA — `INV-TRANSFER-ACTIVITY-001`
+
+- Odoo source/action: PASS. `stock.picking` inherits `mail.activity.mixin`;
+  the transfer kanban renders `activity_ids`, and the shared activity form
+  exposes Schedule and Mark Done. Exact source references are in
+  `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-detail.yaml` and
+  backend `api/transfer-detail.yaml` share `page.id: transfer-detail`; the
+  activity datasource is read-only and scheduling/completion require
+  `inventory.write`. Migration 0.0.78 is durable and replay-safe.
+- Focused verification: PASS — 4 tests / 31 assertions. Coverage includes
+  typed schedule, durable completion, missing/company/actor/field/stale guards,
+  restart persistence, permission denial, and source/schema mapping.
+- Core3 browser evidence: BLOCKED for authenticated desktop/mobile workflow;
+  probes reached `/auth/login` only. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact captures,
+  source comparison, and blocker details are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-ACTIVITY-001/`.
+
+QA disposition: PASS for the bounded Core3 durable transfer activity lifecycle;
+PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
+sign-off remains open.

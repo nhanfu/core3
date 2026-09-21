@@ -1,0 +1,38 @@
+version: 0.0.78
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_activities (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        activity_type VARCHAR NOT NULL,
+        summary VARCHAR NOT NULL,
+        due_date DATE NOT NULL,
+        assigned_user VARCHAR NOT NULL,
+        note VARCHAR NOT NULL DEFAULT '',
+        state VARCHAR NOT NULL DEFAULT 'Planned',
+        created_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        completed_by VARCHAR,
+        completed_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_activities_picking_idx
+        ON inventory_transfer_activities(picking_id, state, due_date, id);
+      INSERT INTO inventory_transfer_activities(
+        id, picking_id, company_name, activity_type, summary, due_date,
+        assigned_user, note, state, created_by, created_at
+      ) VALUES (
+        'inventory-transfer-activity-delivery-00008-0001',
+        'delivery-00008', 'My Company', 'todo', 'Confirm delivery contact',
+        DATE '2026-01-16', 'Mitchell Admin', 'Call before dispatch.', 'Planned',
+        'Inventory Manager', TIMESTAMP '2026-01-15 09:00:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_transfer_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

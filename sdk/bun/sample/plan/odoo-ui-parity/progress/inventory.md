@@ -1410,3 +1410,24 @@ Full Inventory sign-off remains open.
   and live Odoo comparison remain blocked at login; exact evidence is under
   `evidence/inventory/2026-09-21/INV-PHYSICAL-CONFLICT-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-TRANSFER-ACTIVITY-001` — Transfer activity lifecycle (2026-09-21)
+
+- Selected the next uncovered transfer behavior: Odoo `stock.picking` inherits
+  `mail.activity.mixin` and renders scheduled activities in the transfer view.
+  The shared activity form exposes Schedule and Mark Done at
+  `addons/mail/views/mail_activity_views.xml:165-176`; completion delegates to
+  `mail.activity.action_done` at `addons/mail/models/mail_activity.py:451-454`.
+- Extended the presentation-only `transfer-detail` page and backend API,
+  joined by `page.id`, with a transfer-scoped activity datasource, Schedule
+  Activity form, and Mark Done row action. Migration
+  `20260922280000-078-inventory-transfer-activities.yaml` adds a deterministic,
+  replay-safe activity ledger and Planned fixture.
+- Scheduling supports To-do, Call, Meeting, and Email types; completion keeps
+  durable Done history. Both actions enforce current company, transfer/activity
+  existence, authenticated actor, typed/dated fields, and transfer/activity
+  row-version guards.
+- Focused verification passes 4 tests / 31 assertions. Core3 desktop/mobile
+  and Odoo comparison are blocked at login; exact evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-ACTIVITY-001/`. Full Inventory
+  sign-off remains open.

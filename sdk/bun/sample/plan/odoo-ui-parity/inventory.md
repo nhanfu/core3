@@ -2505,3 +2505,32 @@ mobile evidence reaches only the login shell, and Odoo returns the login
 redirect; exact blockers and source comparison are recorded under
 `evidence/inventory/2026-09-21/INV-PHYSICAL-CONFLICT-001/`. Full Inventory
 sign-off remains open.
+
+## Operations > Transfer activities — `INV-TRANSFER-ACTIVITY-001` (2026-09-21)
+
+This bounded Wave 41 slice closes the transfer activity behavior left outside
+the existing message/note chatter. Odoo's `stock.picking` model inherits
+`mail.activity.mixin` at `addons/stock/models/stock_picking.py:538-542`; the
+stock picking view renders `activity_ids` at
+`addons/stock/views/stock_picking_views.xml:44-57`, while the shared activity
+form provides Schedule and Mark Done at
+`addons/mail/views/mail_activity_views.xml:165-176`.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and extends
+`api/transfer-detail.yaml`, joined by `page.id: transfer-detail`, with the
+read-only `inventory_transfer_activities` datasource,
+`schedule_inventory_transfer_activity`, and
+`complete_inventory_transfer_activity`. Migration
+`services/inventory/migrations/20260922280000-078-inventory-transfer-activities.yaml`
+adds durable transfer activity state and a deterministic Planned fixture. The
+workflow supports typed scheduling and durable Mark Done history with
+company/actor/missing/stale guards.
+
+Focused verification passes 4 tests / 31 assertions in
+`test/inventory_transfer_activities.integration.test.ts`; adjacent transfer
+CRUD, workflow, and exchange tests pass. The attachment regression has one
+unrelated global discovery failure from a pre-existing page filter schema
+boundary. Core3 desktop/mobile and paired Odoo evidence are recorded under
+`evidence/inventory/2026-09-21/INV-TRANSFER-ACTIVITY-001/`; both authenticated
+comparisons remain blocked by login redirects. Full Inventory sign-off remains
+open.

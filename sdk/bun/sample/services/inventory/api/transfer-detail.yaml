@@ -15,6 +15,26 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer history is temporarily unavailable. } }
     query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM inventory_transfer_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND picking_id = :id UNION ALL SELECT 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', CAST(p.scheduled_date AS VARCHAR) FROM inventory_pickings p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_transfer_messages m WHERE m.picking_id = p.id) ORDER BY created_at DESC"
+  - id: inventory_transfer_activities
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_ACTIVITIES_UNAVAILABLE, message: Transfer activities are temporarily unavailable. } }
+    query: |
+      SELECT a.id, a.row_version, a.picking_id, a.activity_type, a.summary,
+        CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_user, a.note,
+        a.state, a.created_by, CAST(a.created_at AS VARCHAR) AS created_at,
+        COALESCE(a.completed_by, '') AS completed_by,
+        CAST(a.completed_at AS VARCHAR) AS completed_at
+      FROM inventory_transfer_activities a
+      JOIN inventory_pickings p ON p.id = a.picking_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND a.picking_id = :id
+        AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)
+      ORDER BY CASE WHEN a.state = 'Planned' THEN 0 ELSE 1 END, a.due_date, a.id
+  - id: inventory_transfer_activity_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('todo', 'To-do'), ('call', 'Call'), ('meeting', 'Meeting'), ('email', 'Email')) AS activity_types(value, label)"
   - id: inventory_transfer_attachments
     single: false
     permission: inventory.read
@@ -564,3 +584,76 @@ actions:
         - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, message: Transfer not found }
       steps:
         - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.note', 'Note', :content)" }
+  - id: schedule_inventory_transfer_activity
+    type: server_form
+    permission: inventory.write
+    title: Schedule activity
+    action: stock.picking.activity.schedule
+    handler: yaml_mutation
+    operation: schedule_activity
+    params: { picking_id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_activities]
+    mutation:
+      generated: [activity_id]
+      before_steps:
+        - assign: true
+          query: |
+            SELECT 'inventory-transfer-activity-' || p.id || '-' || CAST(COUNT(a.id) + 1 AS VARCHAR) AS activity_id,
+              p.company_name AS company_name
+            FROM inventory_pickings p
+            LEFT JOIN inventory_transfer_activities a ON a.picking_id = p.id
+            WHERE p.id = :picking_id
+            GROUP BY p.id, p.company_name
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id", status: 404, code: INVENTORY_TRANSFER_ACTIVITY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: INVENTORY_TRANSFER_ACTIVITY_COMPANY, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_ACTIVITY_STALE_TRANSFER, message: The transfer changed before the activity could be scheduled. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), '') IS NOT NULL", status: 403, code: INVENTORY_TRANSFER_ACTIVITY_ACTOR_REQUIRED, message: A signed-in inventory operator is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:activity_type AS VARCHAR) IN ('todo', 'call', 'meeting', 'email')", status: 422, code: INVENTORY_TRANSFER_ACTIVITY_TYPE_INVALID, message: Choose a supported activity type. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: INVENTORY_TRANSFER_ACTIVITY_SUMMARY_INVALID, message: Activity summary must be between 1 and 255 characters. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:due_date AS DATE) IS NOT NULL", status: 422, code: INVENTORY_TRANSFER_ACTIVITY_DATE_INVALID, message: Choose a valid activity deadline. }
+      steps:
+        - query: |
+            INSERT INTO inventory_transfer_activities(
+              id, picking_id, company_name, activity_type, summary, due_date,
+              assigned_user, note, state, created_by, created_at
+            ) VALUES(
+              :activity_id, :picking_id, :company_name, :activity_type,
+              TRIM(CAST(:summary AS VARCHAR)), CAST(:due_date AS DATE),
+              COALESCE(NULLIF(TRIM(CAST(:assigned_user AS VARCHAR)), ''), :current_user_name),
+              COALESCE(CAST(:note AS VARCHAR), ''), 'Planned', :current_user_name,
+              TIMESTAMP '2026-01-15 09:30:00'
+            )
+          expect_changed: true
+          status: 409
+          code: INVENTORY_TRANSFER_ACTIVITY_CREATE_FAILED
+          message: The transfer activity could not be scheduled.
+      result: { query: "SELECT id, row_version, picking_id, company_name, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user, note, state, created_by, CAST(created_at AS VARCHAR) AS created_at, COALESCE(completed_by, '') AS completed_by, CAST(completed_at AS VARCHAR) AS completed_at FROM inventory_transfer_activities WHERE id = :activity_id" }
+    fields:
+      - { field: activity_type, label: Activity Type, type: select, options_source: inventory_transfer_activity_types, required: true, default: todo }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Deadline, type: date, required: true, default: '2026-01-16' }
+      - { field: assigned_user, label: Assigned to, type: text }
+      - { field: note, label: Note, type: textarea }
+  - id: complete_inventory_transfer_activity
+    type: server
+    permission: inventory.write
+    action: stock.picking.activity.done
+    handler: yaml_mutation
+    operation: complete_activity
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [inventory_transfer_activities]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_transfer_activities WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT a.id FROM inventory_transfer_activities a WHERE a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)", status: 403, code: INVENTORY_TRANSFER_ACTIVITY_COMPANY, message: Activity is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_transfer_activities WHERE id = :id AND state = 'Planned' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_ACTIVITY_STALE, message: The activity is already completed or changed. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), '') IS NOT NULL", status: 403, code: INVENTORY_TRANSFER_ACTIVITY_ACTOR_REQUIRED, message: A signed-in inventory operator is required. }
+      steps:
+        - query: "UPDATE inventory_transfer_activities SET state = 'Done', completed_by = :current_user_name, completed_at = TIMESTAMP '2026-01-15 10:00:00', row_version = row_version + 1 WHERE id = :id AND state = 'Planned' AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_TRANSFER_ACTIVITY_STALE
+          message: The activity changed before it could be completed.
+      result: { query: "SELECT id, row_version, picking_id, company_name, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user, note, state, created_by, CAST(created_at AS VARCHAR) AS created_at, COALESCE(completed_by, '') AS completed_by, CAST(completed_at AS VARCHAR) AS completed_at FROM inventory_transfer_activities WHERE id = :id" }
