@@ -4,8 +4,26 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `4cd53d7b3473bf734c9cca5b292cd1b611563c89`
-(`ECOM-CATALOG-PRODUCT-FEED-001`, not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CHECKOUT-ACCOUNT-POLICY-001`, not pushed).
+
+## Current bounded task — `ECOM-CHECKOUT-ACCOUNT-POLICY-001`
+
+Wave 19 selected Odoo Website Sale's `account_on_checkout` configuration,
+backed by `website.account_on_checkout` and the checkout registration settings
+view. Core3 migrations 102/103 add a company-scoped durable policy and
+deterministic fixture. Separate page/API YAML exposes Optional, Disabled, and
+Mandatory modes with `ecommerce.write` optimistic updates; the update keeps
+Odoo's `auth_signup_uninvited` b2c/b2b mapping. Anonymous checkout is blocked
+when Mandatory while authenticated customer checkout remains available.
+
+Focused verification passed **3 tests, 27 assertions, 0 failures**; checkout,
+shop, and product-detail regression passed **20 tests, 119 assertions, 0
+failures**. Audit passed at **721 pages, 730 routes, 1396 datasources**;
+scoped ESLint and `git diff --check` passed. Core3 authenticated desktop/mobile
+capture is blocked by missing `js_repl` and unavailable ports 3000/4312/4313;
+Odoo `/shop` is exact HTTP 404 on 8069/8073. Ecommerce module sign-off
+remains open.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-FEED-001`
 

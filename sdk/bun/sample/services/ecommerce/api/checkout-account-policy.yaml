@@ -1,0 +1,36 @@
+page: { id: ecommerce-checkout-account-policy }
+datasources:
+  - id: ecommerce_checkout_account_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_CHECKOUT_POLICY_UNAUTHENTICATED, message: Sign in to view checkout account policy. }
+      forbidden: { status: 403, code: ECOMMERCE_CHECKOUT_POLICY_FORBIDDEN, message: You do not have permission to view checkout account policy. }
+      missing_record: { status: 404, code: ECOMMERCE_CHECKOUT_POLICY_NOT_FOUND, message: Checkout account policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_CHECKOUT_POLICY_UNAVAILABLE, message: Checkout account policy is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, account_on_checkout, auth_signup_uninvited, CASE account_on_checkout WHEN 'disabled' THEN 'Guest checkout' WHEN 'mandatory' THEN 'Sign in required' ELSE 'Guest or account' END AS checkout_behavior, updated_at FROM ecommerce_checkout_account_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_checkout_account_policy_modes
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('optional', 'Optional - guest or account'), ('disabled', 'Disabled - buy as guest'), ('mandatory', 'Mandatory - no guest checkout')) modes(value, label)"
+actions:
+  - id: edit_ecommerce_checkout_account_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Checkout Account Policy
+    action: ecommerce.checkout.account_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_checkout_account_policy]
+    mutation:
+      required: [id, expected_row_version, account_on_checkout]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_checkout_account_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_CHECKOUT_POLICY_STALE, message: This checkout policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :account_on_checkout IN ('optional', 'disabled', 'mandatory')", status: 422, code: ECOMMERCE_CHECKOUT_POLICY_INVALID, message: Choose Optional, Disabled, or Mandatory checkout accounts. }
+      steps:
+        - { query: "UPDATE ecommerce_checkout_account_policies SET account_on_checkout = :account_on_checkout, auth_signup_uninvited = CASE WHEN :account_on_checkout IN ('optional', 'mandatory') THEN 'b2c' ELSE 'b2b' END, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_CHECKOUT_POLICY_STALE, message: This checkout policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, account_on_checkout, auth_signup_uninvited, CASE account_on_checkout WHEN 'disabled' THEN 'Guest checkout' WHEN 'mandatory' THEN 'Sign in required' ELSE 'Guest or account' END AS checkout_behavior FROM ecommerce_checkout_account_policies WHERE id = :id" }
+    fields:
+      - { field: account_on_checkout, label: Customer Accounts, type: select, options_source: ecommerce_checkout_account_policy_modes, required: true }

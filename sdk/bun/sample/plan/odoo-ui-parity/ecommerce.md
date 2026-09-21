@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product feed slice; module sign-off remains open)
+Status: qa-in-progress (bounded checkout account-policy slice; module sign-off remains open)
+
+## Bounded feature — Checkout Account Policy (`ECOM-CHECKOUT-ACCOUNT-POLICY-001`)
+
+Wave 19 selected the next uncovered Website Sale configuration behavior after
+the completed catalog slices: Odoo's `res.config.settings.account_on_checkout`
+setting, backed by `website.account_on_checkout`. The Odoo settings view binds
+the `checkout_registration_setting` action to Optional, Disabled (buy as
+guest), and Mandatory (no guest checkout) choices. Its inverse also maps
+optional/mandatory to `auth_signup_uninvited = b2c` and disabled to `b2b`;
+checkout templates branch on the same website field for anonymous checkout and
+sign-in affordances.
+
+Core3 migrations 102/103 add a durable company-scoped policy and deterministic
+fixture. Separate Checkout Account Policy page/API YAML exposes the setting
+through the Configuration menu, read datasource, supported mode options, and a
+permissioned optimistic update action. Checkout guards enforce mandatory mode
+for anonymous carts, preserve authenticated customer checkout, and retain the
+Odoo signup-mode mapping. Migration replay and DuckDB restart coverage preserve
+both values.
+
+Focused source/contract, validation, company permission, optimistic
+concurrency, checkout workflow, migration replay, restart, audit, lint, and
+diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-account-policy-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Product Feed Configuration and Generation (`ECOM-CATALOG-PRODUCT-FEED-001`)
 

@@ -101,3 +101,7 @@ menu:
           label: Product Feeds
           icon: download
           permission: ecommerce.read
+        - path: /ecommerce/checkout-account-policy
+          label: Checkout Account Policy
+          icon: users
+          permission: ecommerce.read

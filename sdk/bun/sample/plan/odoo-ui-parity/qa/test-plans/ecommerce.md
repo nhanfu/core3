@@ -10,6 +10,21 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CHECKOUT-ACCOUNT-POLICY-001
+
+- ECOM-FUNC-048: trace Odoo `res.config.settings.account_on_checkout`, the
+  website backing field, checkout registration setting, and template branches;
+  pair the Core3 configuration page/API contracts.
+- ECOM-WF-059: replay the deterministic company policy, switch Optional to
+  Mandatory and Disabled, map signup mode, block anonymous mandatory checkout,
+  allow optional guest checkout, and preserve the setting across restart.
+- ECOM-PERM-055: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, unsupported-mode, and
+  stale-row writes without changing policy state.
+- ECOM-UI-041: render the Checkout Account Policy form and mode selector at
+  desktop and mobile; Core3 browser and Odoo comparison remain blocked by
+  runtime availability and `/shop` HTTP 404.
+
 ## ECOM-CATALOG-PRODUCT-FEED-001
 
 - ECOM-FUNC-047: trace Odoo `product.feed`, the GMC controller, list/form

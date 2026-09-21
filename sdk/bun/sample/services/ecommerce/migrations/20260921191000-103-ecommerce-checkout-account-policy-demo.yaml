@@ -1,0 +1,18 @@
+version: 0.0.103
+kind: data
+description: deterministic Website Sale checkout customer-account policy fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_checkout_account_policies
+        (id, row_version, company_name, account_on_checkout, auth_signup_uninvited)
+      VALUES
+        ('ecommerce-checkout-account-policy-my-company', 1, 'My Company', 'optional', 'b2c')
+      ON CONFLICT (company_name) DO UPDATE SET
+        account_on_checkout = EXCLUDED.account_on_checkout,
+        auth_signup_uninvited = EXCLUDED.auth_signup_uninvited;
+    down: DELETE FROM ecommerce_checkout_account_policies WHERE company_name = 'My Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

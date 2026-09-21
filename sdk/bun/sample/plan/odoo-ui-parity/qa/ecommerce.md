@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Checkout Account Policy (`ECOM-CHECKOUT-ACCOUNT-POLICY-001`, 2026-09-21)
+
+- Odoo source/page: pass. `res.config.settings.account_on_checkout` is the
+  `checkout_registration_setting` radio setting backed by
+  `website.account_on_checkout`; Odoo's inverse maps account-required modes to
+  B2C signup and disabled guest checkout to B2B signup. Checkout templates
+  branch on the field for mandatory anonymous checkout and sign-in affordances.
+- Core3 lifecycle: pass for this bounded contract. Migrations 102/103 add a
+  durable company-scoped policy and deterministic fixture. Separate page/API
+  YAML provides supported mode options, read access, an `ecommerce.write`
+  optimistic update, signup-mode mapping, and mandatory guest-checkout guard.
+- Focused verification: `bun test
+  test/ecommerce_checkout_account_policy.integration.test.ts` — **3 passed,
+  27 assertions, 0 failures**. Checkout/shop/product-detail regression — **20
+  passed, 119 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **721 pages, 730 routes, 1396
+  datasources**; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-account-policy-001/`.
+
 ## Product Feed Configuration and Generation (`ECOM-CATALOG-PRODUCT-FEED-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product.feed` owns target, language, pricelist,
