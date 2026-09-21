@@ -26,7 +26,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; is_time_limited?: boolean; time_limit?: number | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -273,6 +273,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
     const value = answers[question.id];
     return value === undefined || (Array.isArray(value) ? value.length === 0 : !String(value).trim());
   });
+  const requiresRespondentEmail = Boolean(survey.users_login_required)
+    || (Boolean(survey.is_attempts_limited) && String(survey.access_mode || 'public') !== 'public');
 
   if (payload.answer?.state === 'Submitted') {
     renderDone();
@@ -283,15 +285,26 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       : Math.max(0, firstUnanswered() === -1 ? questions.length - 1 : firstUnanswered());
     renderCurrentQuestion();
   } else {
-    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
+    const emailInput = requiresRespondentEmail
+      ? `<label class="core3-public-survey__comment"><span>Email address</span><input class="core3-public-survey__input" data-respondent-email type="email" autocomplete="email" required placeholder="you@example.com"></label>`
+      : '';
+    const attemptHint = survey.is_attempts_limited && survey.attempts_limit
+      ? `<p class="core3-public-survey__description">You have ${escapeHtml(survey.attempts_limit)} attempt${Number(survey.attempts_limit) === 1 ? '' : 's'} for this survey.</p>`
+      : '';
+    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p>${attemptHint}${emailInput}<div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
   }
 
   body.querySelector<HTMLButtonElement>('[data-start]')?.addEventListener('click', async (event) => {
     const button = event.currentTarget as HTMLButtonElement;
     button.disabled = true;
     try {
-      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answerToken ? { answer_token: answerToken } : {}) });
-      if (!response.ok) throw new Error(`Survey could not be started (${response.status}).`);
+      const email = body.querySelector<HTMLInputElement>('[data-respondent-email]')?.value.trim().toLowerCase() || '';
+      if (requiresRespondentEmail && !email) throw new Error('Enter an email address before starting this survey.');
+      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answerToken ? { answer_token: answerToken } : (email ? { respondent_email: email } : {})) });
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(errorPayload.error || `Survey could not be started (${response.status}).`);
+      }
       const started = await response.json();
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');

@@ -7,7 +7,7 @@ datasources:
   - id: surveys
     permission: surveys.read
     workflow: surveys
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, s.access_token, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, s.access_token, COALESCE(s.access_mode, 'public') AS access_mode, COALESCE(s.users_login_required, false) AS users_login_required, COALESCE(s.is_attempts_limited, false) AS is_attempts_limited, COALESCE(s.attempts_limit, 1) AS attempts_limit, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
 actions:
   - id: share_survey
     type: server_form
@@ -77,6 +77,9 @@ actions:
   # Module validation runs before progress or submit mutates rows. Odoo's
   # survey-level timer is separate from an externally assigned answer
   # deadline and starts when the attempt enters progress.
+  # Odoo counts only completed non-test attempts for the respondent identity
+  # when login is required or the survey uses invited access. Anonymous public
+  # surveys keep their source behavior and do not consume a global attempt.
   - id: public_survey_start
     type: server_form
     permission: surveys.public
@@ -86,14 +89,18 @@ actions:
     mutation:
       operation: insert
       table: survey_responses
-      fields: [survey_id, survey_name, answer_data, access_token, current_question_id, idempotency_key, start_datetime]
+      fields: [survey_id, survey_name, respondent_email, answer_data, access_token, current_question_id, idempotency_key, start_datetime]
       required: [survey_id, survey_name, answer_data]
       defaults: { state: In Progress }
       generated: [access_token]
+      guards:
+        - { query: "SELECT 1 AS ok FROM surveys WHERE id = :survey_id AND (COALESCE(users_login_required, false) = false OR LENGTH(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), ''))) > 0)", status: 401, code: SURVEY_PUBLIC_LOGIN_REQUIRED, message: Enter an email address before starting this survey. }
+        - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.is_attempts_limited, false) = false OR (s.access_mode = 'public' AND COALESCE(s.users_login_required, false) = false) OR (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id AND r.state = 'Submitted' AND COALESCE(r.test_entry, false) = false AND LOWER(TRIM(COALESCE(r.respondent_email, ''))) = LOWER(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), '')))) < COALESCE(s.attempts_limit, 1))", status: 409, code: SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED, message: You have no attempts left for this survey. }
       result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
     fields:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
+      - { field: respondent_email, label: Email, type: email }
       - { field: answer_data, label: 'Answers (Date/Datetime: ISO)', type: text, required: true }
       - { field: answer_token, label: Existing response token, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
@@ -151,6 +158,7 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
+        - { query: "SELECT 1 AS ok FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id AND r.survey_id = :survey_id AND r.access_token = :access_token AND (COALESCE(s.is_attempts_limited, false) = false OR (s.access_mode = 'public' AND COALESCE(s.users_login_required, false) = false) OR (SELECT COUNT(*) FROM survey_responses completed WHERE completed.survey_id = r.survey_id AND completed.state = 'Submitted' AND COALESCE(completed.test_entry, false) = false AND completed.id <> r.id AND LOWER(TRIM(COALESCE(completed.respondent_email, ''))) = LOWER(TRIM(COALESCE(r.respondent_email, '')))) < COALESCE(s.attempts_limit, 1))", status: 409, code: SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED, message: You have no attempts left for this survey. }
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT 1 AS ok FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id AND r.survey_id = :survey_id AND r.access_token = :access_token AND (COALESCE(s.is_time_limited, false) = false OR r.start_datetime IS NULL OR CURRENT_TIMESTAMP < r.start_datetime + s.time_limit * INTERVAL '1 minute')", status: 410, code: SURVEY_PUBLIC_TIME_LIMIT_EXPIRED, message: "This survey's time limit has expired." }
       steps:
@@ -244,6 +252,7 @@ actions:
       guards:
         - { query: "SELECT id FROM surveys WHERE id = :survey_id AND access_token = :survey_token AND state = 'Published'", status: 404, code: SURVEY_PUBLIC_RETRY_UNAVAILABLE, message: This survey is no longer available for another attempt. }
         - { query: "SELECT id FROM survey_responses WHERE id = :source_id AND survey_id = :survey_id AND access_token = :source_access_token AND state = 'Submitted'", status: 409, code: SURVEY_PUBLIC_RETRY_SOURCE_STATE, message: Only a submitted survey response can be retried. }
+        - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.is_attempts_limited, false) = false OR (s.access_mode = 'public' AND COALESCE(s.users_login_required, false) = false) OR (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id AND r.state = 'Submitted' AND COALESCE(r.test_entry, false) = false AND LOWER(TRIM(COALESCE(r.respondent_email, ''))) = LOWER(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), '')))) < COALESCE(s.attempts_limit, 1))", status: 409, code: SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED, message: You have no attempts left for this survey. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_responses WHERE access_token = :access_token)", status: 409, code: SURVEY_PUBLIC_RETRY_TOKEN_EXISTS, message: This retry attempt already exists. }
       result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry, idempotency_key, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
     fields:

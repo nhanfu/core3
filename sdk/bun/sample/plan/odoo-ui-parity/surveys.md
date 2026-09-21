@@ -1995,3 +1995,32 @@ so no reference form or parity sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001`
+
+Wave 22 selects one genuinely uncovered source-backed public behavior after
+question duplication: Odoo's per-respondent attempt limit. Odoo stores
+`users_login_required`, `is_attempts_limited`, and `attempts_limit`; it counts
+completed non-test attempts by respondent identity when creating an answer and
+rechecks the limit at submit (`survey_survey.py:117-119,535-619,667-693` and
+`controllers/main.py:541-543`). Anonymous public surveys remain unlimited
+unless login is required.
+
+Core3 migration `0.0.42` adds the durable access/limit fields and a deterministic
+published one-attempt fixture. The paired public API/page contract exposes the
+metadata, the renderer collects respondent email, and authoritative start,
+retry, and submit guards enforce normalized email-scoped completed-attempt
+counts. File-backed restart and concurrent idempotent start are covered.
+
+Focused verification is **3 passed / 30 assertions**; the related public
+attempt/retry suite is **6 passed / 54 assertions**. The full Surveys glob is
+**128 passed / 4 failed / 1,116 assertions** across 132 tests; the four known
+failures are DuckDB migration rollback/dependent-entry failures. Audit passes
+with **725 pages, 734 routes, and 1,407 datasources**; scoped lint and
+diff-check pass. Core3 ports 3000/3001/3002 refused before authenticated
+desktop/mobile render. Odoo redirected both viewports to
+`/web/login?redirect=%2Fodoo%2Fsurveys%3F`, and proxy 8072 refused, so no
+reference comparison or parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.

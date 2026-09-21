@@ -31,6 +31,9 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # Survey-level time limits consume the paired API's is_time_limited/time_limit
 # and response start_datetime; the public renderer owns only the visible
 # countdown while the API remains authoritative for expiry and mutation guards.
+# Odoo attempt-limited surveys expose access_mode/users_login_required and
+# require a respondent email at the public start screen; the paired API owns
+# completed non-test attempt counting and start/retry/submit guards.
 components:
   - type: ListView
     variant: odoo

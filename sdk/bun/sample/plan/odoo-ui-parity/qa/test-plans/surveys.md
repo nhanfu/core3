@@ -531,3 +531,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.
+
+## `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001` — per-respondent attempt limit
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-048 | participant identity | Limited survey metadata and respondent count | Return durable access/login/limit metadata through the paired page/API contract and count submitted non-test attempts by normalized identity | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-045 | restart/idempotency | Start → submit → reopen → exhausted start/retry; concurrent keyed starts | Preserve one durable response, block a second completed attempt, and converge concurrent idempotent starts on one row | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-047 | token/permission | Missing email, exhausted identity, submit/retry guard ordering | Retain `surveys.public`, require identity for the limited fixture, and reject exhausted attempts without mutation | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-046 | authenticated responsive/reference | Limited public entry desktop/mobile + Odoo comparison | Capture exact Core3 connection and Odoo login/proxy blockers; no sign-off until authenticated routes and installed reference are available | `core3-desktop.png`, `core3-mobile.png`, `odoo-desktop.png`, `odoo-mobile.png`, `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.

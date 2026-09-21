@@ -57,6 +57,7 @@ describe('Surveys public retry workflow', () => {
     expect(retry.mutation.guards.map((guard: any) => guard.code)).toEqual([
       'SURVEY_PUBLIC_RETRY_UNAVAILABLE',
       'SURVEY_PUBLIC_RETRY_SOURCE_STATE',
+      'SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED',
       'SURVEY_PUBLIC_RETRY_TOKEN_EXISTS',
     ]);
     expect(yaml('operations.yaml').operations['survey.public.retry.source'].query).toContain('state');

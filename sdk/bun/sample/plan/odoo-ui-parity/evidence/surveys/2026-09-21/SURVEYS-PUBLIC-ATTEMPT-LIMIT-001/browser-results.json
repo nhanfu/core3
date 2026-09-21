@@ -1,0 +1,34 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-ATTEMPT-LIMIT-001",
+  "date": "2026-09-21",
+  "core3": {
+    "authenticated": false,
+    "desktop": {
+      "url": "http://127.0.0.1:3001/survey/attempt-limit-token-2026",
+      "result": "ERR_CONNECTION_REFUSED",
+      "screenshot": "core3-desktop.png"
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:3001/survey/attempt-limit-token-2026",
+      "result": "ERR_CONNECTION_REFUSED",
+      "screenshot": "core3-mobile.png"
+    },
+    "listener_check": "ports 3000, 3001, and 3002 refused connections"
+  },
+  "odoo": {
+    "authenticated": false,
+    "desktop": {
+      "url": "http://127.0.0.1:8069/odoo/surveys",
+      "result": "303 -> /web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "screenshot": "odoo-desktop.png"
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/odoo/surveys",
+      "result": "303 -> /web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "screenshot": "odoo-mobile.png"
+    },
+    "proxy_8072": "connection refused",
+    "blocker": "No authenticated Odoo user/database was available; no installed Surveys attempt-limit form or public fixture could be compared."
+  },
+  "signoff": "conditional; no visual or Odoo parity sign-off claimed"
+}

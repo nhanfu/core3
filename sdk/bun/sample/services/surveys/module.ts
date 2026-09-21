@@ -162,6 +162,9 @@ export default class SurveysModule implements ModuleLifecycle {
         }))?.response?.[0];
         if (existing) return this.publicAttemptExpired(detail, existing) ? this.expiredResponse(detail, existing) : this.withSurveyCookie(this.json({ survey: detail, answer: existing }), token, String(existing.access_token || ''));
       }
+      const respondentEmail = typeof body.respondent_email === 'string' ? body.respondent_email.trim().toLowerCase() : '';
+      const attemptError = await this.publicAttemptError(detail, respondentEmail, service);
+      if (attemptError) return attemptError;
       let result;
       try {
         const question = await firstQuestion();
@@ -169,6 +172,7 @@ export default class SurveysModule implements ModuleLifecycle {
           values: {
             survey_id: detail.id,
             survey_name: detail.name,
+            respondent_email: respondentEmail || null,
             answer_data: '{}',
             current_question_id: question?.id || null,
             access_token: crypto.randomUUID(),
@@ -599,6 +603,21 @@ export default class SurveysModule implements ModuleLifecycle {
 
   private publicAttemptExpired(detail: any, response: any): boolean {
     return this.publicResponseExpired(response) || this.publicSurveyTimeExpired(detail, response);
+  }
+
+  private async publicAttemptError(detail: any, respondentEmail: string, service: PublicService): Promise<Response | null> {
+    const limited = Boolean(detail?.is_attempts_limited)
+      && (String(detail?.access_mode || 'public') !== 'public' || Boolean(detail?.users_login_required));
+    if (!limited) return null;
+    if (!respondentEmail) return this.json({ error: 'Enter an email address before starting this survey.', code: 'SURVEY_PUBLIC_LOGIN_REQUIRED' }, 401);
+    const attempts = Number((await service.call('survey.public.attempts', {
+      survey_id: detail.id,
+      respondent_email: respondentEmail,
+    }))?.attempts?.[0]?.count || 0);
+    if (attempts >= Number(detail.attempts_limit || 1)) {
+      return this.json({ error: 'You have no attempts left for this survey.', code: 'SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED' }, 409);
+    }
+    return null;
   }
 
   private publicSurveyTimeExpired(detail: any, response: any): boolean {

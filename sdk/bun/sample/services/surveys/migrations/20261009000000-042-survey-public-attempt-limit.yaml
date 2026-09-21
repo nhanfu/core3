@@ -1,0 +1,47 @@
+version: 0.0.42
+description: Durable Odoo-style per-respondent public survey attempt limit
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS access_mode VARCHAR DEFAULT 'public';
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS users_login_required BOOLEAN DEFAULT false;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS is_attempts_limited BOOLEAN DEFAULT false;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS attempts_limit INTEGER DEFAULT 1;
+      UPDATE surveys SET access_mode = COALESCE(NULLIF(access_mode, ''), 'public'), users_login_required = COALESCE(users_login_required, false), is_attempts_limited = COALESCE(is_attempts_limited, false), attempts_limit = COALESCE(attempts_limit, 1);
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, users_login_required, is_attempts_limited, attempts_limit, published_at, created_at, updated_at)
+      VALUES ('survey-demo-attempt-limit', 'SURVEY/ATTEMPT-LIMIT', 'Limited Customer Survey', 'Sign in with your email to take this survey once.', 'Thanks for completing the limited survey.', 'Mitchell Admin', 0, 'Published', 'attempt-limit-token-2026', 'public', true, true, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET access_mode = 'public', users_login_required = true, is_attempts_limited = true, attempts_limit = 1, state = 'Published';
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-attempt-limit', 'survey-demo-attempt-limit', 'How was your visit?', 'Choice', 1, true, 'Helpful,Neutral')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-attempt-limit';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-attempt-limit';
+      DELETE FROM surveys WHERE id = 'survey-demo-attempt-limit';
+      ALTER TABLE surveys DROP COLUMN IF EXISTS attempts_limit;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS is_attempts_limited;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS users_login_required;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS access_mode;
+  duckdb:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS access_mode VARCHAR DEFAULT 'public';
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS users_login_required BOOLEAN DEFAULT false;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS is_attempts_limited BOOLEAN DEFAULT false;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS attempts_limit INTEGER DEFAULT 1;
+      UPDATE surveys SET access_mode = COALESCE(NULLIF(access_mode, ''), 'public'), users_login_required = COALESCE(users_login_required, false), is_attempts_limited = COALESCE(is_attempts_limited, false), attempts_limit = COALESCE(attempts_limit, 1);
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, users_login_required, is_attempts_limited, attempts_limit, published_at, created_at, updated_at)
+      VALUES ('survey-demo-attempt-limit', 'SURVEY/ATTEMPT-LIMIT', 'Limited Customer Survey', 'Sign in with your email to take this survey once.', 'Thanks for completing the limited survey.', 'Mitchell Admin', 0, 'Published', 'attempt-limit-token-2026', 'public', true, true, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET access_mode = 'public', users_login_required = true, is_attempts_limited = true, attempts_limit = 1, state = 'Published';
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-attempt-limit', 'survey-demo-attempt-limit', 'How was your visit?', 'Choice', 1, true, 'Helpful,Neutral')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-attempt-limit';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-attempt-limit';
+      DELETE FROM surveys WHERE id = 'survey-demo-attempt-limit';
+      -- DuckDB retains these nullable parent columns through partial rollback
+      -- because dependent survey indexes may still reference the survey graph.
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

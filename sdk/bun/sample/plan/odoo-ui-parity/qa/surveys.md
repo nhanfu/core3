@@ -1243,3 +1243,30 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY
   or Odoo parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.
+
+## `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001` — per-respondent attempt limit
+
+- Source comparison: Odoo `survey_survey.py` stores access mode, login
+  requirement, and attempt-limit/count fields; `_has_attempts_left` counts
+  submitted non-test answers by respondent identity and the public controller
+  rechecks the boundary at submission.
+- YAML/UI contract: migration `0.0.42` adds durable metadata and a deterministic
+  limited public fixture. `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate and joined by `page.id: surveys`; list/detail projections and the
+  public renderer expose the metadata and email entry control.
+- Persistence/workflow: start normalizes respondent email, requires it for the
+  limited fixture, counts submitted non-test attempts, and returns
+  `SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED` without creating a second row. Submit and
+  retry enforce the same boundary; file-backed reopen and concurrent idempotent
+  starts are covered.
+- Focused verification: **3 passed / 30 assertions**; related retry coverage
+  **6 passed / 54 assertions**. Full Surveys: **128 passed / 4 failed / 1,116
+  assertions** across 132 tests; the four failures are the known DuckDB
+  migration rollback/dependent-entry blocker. Audit: **725 pages, 734 routes,
+  1,407 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000/3001/3002 refused connections. Odoo
+  8069 redirected desktop/mobile probes to the login shell and proxy 8072
+  refused. These exact blockers are recorded in `browser-results.json`; no
+  authenticated desktop/mobile or Odoo parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.

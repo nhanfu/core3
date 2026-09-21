@@ -1,7 +1,7 @@
 operations:
   survey.public.detail:
     result_key: survey
-    query: "SELECT id, access_token, name, title, description, description_done, background_image_url, state, COALESCE(is_time_limited, false) AS is_time_limited, time_limit FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
+    query: "SELECT id, access_token, name, title, description, description_done, background_image_url, state, COALESCE(access_mode, 'public') AS access_mode, COALESCE(users_login_required, false) AS users_login_required, COALESCE(is_attempts_limited, false) AS is_attempts_limited, COALESCE(attempts_limit, 1) AS attempts_limit, COALESCE(is_time_limited, false) AS is_time_limited, time_limit FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
   survey.public.background:
     result_key: background
     query: "SELECT id, access_token, background_image_url, background_image_content FROM surveys WHERE access_token = :access_token AND state = 'Published' AND background_image_url IS NOT NULL AND LENGTH(TRIM(background_image_url)) > 0 AND background_image_content IS NOT NULL LIMIT 1"
@@ -47,6 +47,9 @@ operations:
   survey.public.retry.count:
     result_key: attempts
     query: "SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = :survey_id AND id LIKE 'retry-response-' || :source_id || '-%'"
+  survey.public.attempts:
+    result_key: attempts
+    query: "SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = :survey_id AND state = 'Submitted' AND COALESCE(test_entry, false) = false AND LOWER(TRIM(COALESCE(respondent_email, ''))) = LOWER(TRIM(COALESCE(:respondent_email, '')))"
   survey.public.retry.idempotency:
     result_key: response
     query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, respondent_name, respondent_email, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"

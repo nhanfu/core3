@@ -419,6 +419,50 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001`
+
+Selected the next uncovered Odoo-backed participant behavior: per-respondent
+attempt limits. Odoo stores `access_mode`, `users_login_required`,
+`is_attempts_limited`, and `attempts_limit`, counts submitted non-test attempts
+by respondent identity, and rejects exhausted starts/submits. Core3 now stores
+the same metadata durably, exposes it through separate page/API YAML contracts,
+requires a normalized email for the limited public fixture, and guards start,
+submit, and retry with `surveys.public` and attempt-exhaustion boundaries.
+
+Focused coverage is **3 passed / 30 assertions**; related public retry coverage
+is **6 passed / 54 assertions**. The full Surveys glob is **128 passed / 4
+failed / 1,116 assertions** across 132 tests; the four failures are the
+existing DuckDB migration rollback/dependent-entry failures. Audit passes with
+**725 pages, 734 routes, and 1,407 datasources**; scoped lint and
+`git diff --check` pass. File-backed restart and concurrent idempotent starts
+converge on one durable response. Core3 ports 3000/3001/3002 refused
+connections, while Odoo 8069 redirected to `/web/login` and proxy 8072 refused;
+no authenticated visual or installed-reference sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001`
+
+Selected the next uncovered source-backed public behavior: Odoo's
+per-respondent attempt limit. Core3 migration `0.0.42` persists access mode,
+login-required state, limit enablement, and attempt count, with a deterministic
+published one-attempt fixture. The paired API/page contract exposes the
+metadata; public start collects normalized respondent email, and start/retry/
+submit reject exhausted completed non-test attempts while unrestricted public
+surveys remain anonymous.
+
+Focused coverage is **3 passed / 30 assertions**; the related attempt/retry
+suite is **6 passed / 54 assertions**. Full Surveys verification is **128
+passed / 4 failed / 1,116 assertions** across 132 tests; the four failures are
+the existing DuckDB migration rollback/dependent-entry blocker. Audit is **725
+pages, 734 routes, 1,407 datasources**. Core3 desktop/mobile probes were
+blocked by connection refusal on 3000/3001/3002. Odoo redirected to its login
+shell and 8072 was unavailable; no authenticated reference comparison or
+sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMPT-LIMIT-001/`.
+
 ## 2026-09-21 — `SURVEYS-QUESTION-DUPLICATE-001`
 
 Selected the next uncovered source-backed question behavior: Odoo's
