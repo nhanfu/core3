@@ -1,0 +1,23 @@
+version: 0.0.28
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_task_portal_access (
+        id VARCHAR PRIMARY KEY,
+        task_id VARCHAR NOT NULL,
+        portal_user_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_task_portal_access_idx ON timesheet_task_portal_access(task_id, portal_user_name, company_name, active, row_version);
+      INSERT OR IGNORE INTO timesheet_task_portal_access(id, task_id, portal_user_name, company_name, active, row_version) VALUES
+        ('timesheet-portal-task-access-001', 'task-demo-001', 'Portal User', 'Core3 Demo Company', TRUE, 1);
+    down: |
+      DROP TABLE IF EXISTS timesheet_task_portal_access;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

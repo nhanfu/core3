@@ -534,6 +534,31 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 45 — `TIMESHEET-TASK-ACTION-PORTAL-VIEWS-001`
+
+- Source/action: the non-internal or project-sharing branch of
+  `project.task.action_view_subtask_timesheet` substitutes the portal tree,
+  read-only Form, and Kanban views.
+- Page contracts: `pages/portal-task-timesheets.yaml` supplies list and
+  mobile Kanban, while `pages/portal-task-timesheet-detail.yaml` supplies the
+  read-only Form; the contracts are layout-only and each has a matching API
+  `page.id`.
+- API contracts: `api/portal-task-timesheets.yaml` supplies the guarded list
+  datasource and row navigation; `api/portal-task-timesheet-detail.yaml`
+  supplies the guarded detail datasource and back action.
+- Migration: `20260921194000-028-timesheets-task-action-portal-views.yaml`
+  persists the portal task grant and lookup index.
+- Focused test:
+  `test/timesheets_task_action_portal_views.integration.test.ts` — 3 tests /
+  24 expectations, including source mapping, actor/company/missing/empty/
+  stale guards, and file-backed restart.
+- Related regression: task/action/report suites — 49 tests / 279
+  expectations. Scoped ESLint and UI audit pass at 764 pages / 773 routes /
+  1,555 datasources.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  redirects to `/web/login`. Authenticated desktop/mobile evidence is blocked;
+  exact probes and blocker notes are in the feature evidence directory.
+
 ## Wave 44 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
 
 - Source/action: `timesheet_action_all` registers the Form view
