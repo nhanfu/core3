@@ -916,3 +916,48 @@ and transport-error declarations pass. No migration was needed; the existing
 fixed Timesheets fixtures are reused. Authenticated browser evidence was not
 run in this bounded contract slice, so desktop/mobile visual parity and full
 actor CRUD smoke remain open.
+
+## Bounded slice: Project Task Dependencies / Blocked By (2026-09-21)
+
+The next genuinely uncovered Project surface after the completed milestones,
+portal, settings, and dashboard-timesheets slices is Odoo's task dependency
+notebook page `task_dependencies`, backed by `project.task.depend_on_ids` and
+the `task_dependencies_rel` relation. Odoo 19 source evidence is
+`/home/nhanjs/projects/odoo/addons/project/views/project_task_views.xml`
+(the `Blocked By` list has Title and Assignees, an add-line action, and delete
+row action) and
+`/home/nhanjs/projects/odoo/addons/project/models/project_task.py` (the
+`depend_on_ids` and `dependent_ids` relation fields). The live authenticated
+reference at `http://localhost:8069`, database `core3_reference`, showed the
+same relation list on the `Chair Cabinet` task and an `Add: Blocked By`
+selection modal.
+
+Core3 now persists `project_task_dependencies` with stable IDs, fixed
+`2026-01-15` timestamps, indexes, an idempotent seeded relation, and
+denormalized task-summary refreshes. `api/task-detail.yaml` owns the
+dependency collection, candidate lookup, add, and remove operations; the
+presentation-only task page owns the responsive `LineItemGrid`. The contract
+enforces `project.read`/`project.write`, current-company active-task scope,
+self/duplicate/cycle rejection, parent and relation row-version conflicts,
+stable empty and 503 states, and removal persistence. Focused coverage is
+`test/project_task_dependencies.integration.test.ts` (3 tests, 26
+assertions); the page/API schema and migration replay pass.
+
+Authenticated browser evidence was captured with the browser-skill `bsk`
+session against the shared Odoo service and is not committed:
+
+- `/tmp/core3-odoo-parity/project-task-dependencies-20260921/odoo-blocked-by-1440x900.png`
+- `/tmp/core3-odoo-parity/project-task-dependencies-20260921/odoo-blocked-by-390x844.png`
+- `/tmp/core3-odoo-parity/project-task-dependencies-20260921/odoo-blocked-by-390x844-scrolled.png`
+- `/tmp/core3-odoo-parity/project-task-dependencies-20260921/odoo-blocked-by-add-modal-1440x900.png`
+- `/tmp/core3-odoo-parity/project-task-dependencies-20260921/odoo-blocked-by-add-modal-390x844.png`
+
+The live Odoo captures are exact 1440x900 and 390x844 states with fresh
+observations; the mobile scrolled capture keeps the Blocked By row and Add a
+line visible without horizontal overflow. Core3 authenticated comparison was
+not claimed: `bun dev --db=ddb --memory` cannot finish discovery while the
+concurrent Employees owner has an unrelated malformed
+`services/employees/api/employee-detail.yaml` (`actions[7].fields must be a
+non-empty array`). The Project-focused test remains green, and the Core3
+desktop/mobile browser gate is an explicit follow-up after that shared
+worktree blocker is repaired.

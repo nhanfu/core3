@@ -47,6 +47,37 @@ components:
           content_slot: true
   - type: LineItemGrid
     mount_in: previous-panel
+    source: project_task_dependencies
+    parent_source: project_task_detail
+    title: Blocked By
+    description: Tasks that must be completed before this task can proceed.
+    variant: odoo_x2many
+    page_size: 50
+    actions:
+      - { id: add_project_task_dependency, label: Add a dependency, variant: primary, permission: project.write }
+    empty_state: { title: No blocked-by tasks, description: Add a task that must be completed before this task can proceed. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Title, readonly: true }
+      - { type: LineItemField, id: assignee, field: assignee, label: Assignees, readonly: true }
+      - { type: LineItemField, id: project_name, field: project_name, label: Project, readonly: true }
+      - { type: LineItemField, id: state, field: state, label: Stage, readonly: true }
+      - type: LineItemActions
+        id: project_task_dependency_actions
+        actions:
+          - { id: remove_project_task_dependency, label: Remove, icon: trash, variant: danger, permission: project.write }
+    columns:
+      - { field: name, label: Title, type: PrimaryEntityCell, mobile: true }
+      - { field: assignee, label: Assignees, mobile: true }
+      - { field: project_name, label: Project, mobile: false }
+      - { field: state, label: Stage, type: StatusChip, mobile: true }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_project_task_dependency, label: Remove, icon: trash, variant: danger, permission: project.write }
+  - type: LineItemGrid
+    mount_in: previous-panel
     source: project_task_timesheets
     parent_source: project_task_detail
     variant: odoo_x2many

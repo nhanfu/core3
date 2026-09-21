@@ -1,0 +1,32 @@
+version: 0.0.17
+kind: schema
+description: Persist Odoo Project task dependency relations with deterministic fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_task_dependencies (
+        id VARCHAR PRIMARY KEY,
+        task_id VARCHAR NOT NULL,
+        depends_on_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(task_id, depends_on_id)
+      );
+      CREATE INDEX IF NOT EXISTS project_task_dependencies_task_idx ON project_task_dependencies(task_id);
+      CREATE INDEX IF NOT EXISTS project_task_dependencies_depends_on_idx ON project_task_dependencies(depends_on_id);
+      INSERT INTO project_task_dependencies(id, task_id, depends_on_id, row_version, created_at)
+      SELECT 'project-task-dependency-001', 'task-demo-001', 'task-demo-002', 1, TIMESTAMP '2026-01-15 00:00:00'
+      WHERE EXISTS (SELECT 1 FROM project_tasks WHERE id = 'task-demo-001')
+        AND EXISTS (SELECT 1 FROM project_tasks WHERE id = 'task-demo-002')
+        AND NOT EXISTS (SELECT 1 FROM project_task_dependencies WHERE id = 'project-task-dependency-001');
+      UPDATE project_tasks
+      SET blocked_by_summary = CAST((SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = project_tasks.id) AS VARCHAR) || ' task(s)',
+          blocked_by_names = (SELECT STRING_AGG(t.name, ', ' ORDER BY t.name, t.id) FROM project_task_dependencies d JOIN project_tasks t ON t.id = d.depends_on_id WHERE d.task_id = project_tasks.id)
+      WHERE id = 'task-demo-001';
+    down: |
+      DELETE FROM project_task_dependencies WHERE id = 'project-task-dependency-001';
+      DROP TABLE IF EXISTS project_task_dependencies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

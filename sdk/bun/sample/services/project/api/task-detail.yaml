@@ -15,6 +15,13 @@ datasources:
   - id: project_task_attachments
     permission: project.read
     query: "SELECT a.id, a.task_id, a.company_name, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM project_task_attachments a JOIN project_tasks t ON t.id = a.task_id WHERE t.id = :id AND t.company_name = :current_company_name ORDER BY a.created_at DESC, a.id"
+  - id: project_task_dependencies
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_DEPENDENCIES_UNAVAILABLE, message: Task dependencies are temporarily unavailable. } }
+    query: "SELECT d.id, d.row_version, d.task_id, d.depends_on_id, t.name, COALESCE(t.assignee, 'Unassigned') AS assignee, t.project_name, COALESCE(t.stage, 'Planning') AS stage, t.state, t.priority, CAST(t.due_date AS VARCHAR) AS due_date FROM project_task_dependencies d JOIN project_tasks owner ON owner.id = d.task_id JOIN project_tasks t ON t.id = d.depends_on_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND d.task_id = :id AND COALESCE(owner.active, TRUE) = TRUE AND COALESCE(t.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(owner.company_name, :current_company_name) = :current_company_name) AND (COALESCE(:current_company_name, '') = '' OR COALESCE(t.company_name, :current_company_name) = :current_company_name) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.assignee ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.state ILIKE '%' || :q || '%') ORDER BY t.name, t.id"
+  - id: project_task_dependency_lookup
+    permission: project.read
+    query: "SELECT t.id AS value, t.name || ' · ' || t.project_name AS label FROM project_tasks t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id <> :id AND COALESCE(t.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(t.company_name, :current_company_name) = :current_company_name) AND NOT EXISTS (SELECT 1 FROM project_task_dependencies d WHERE d.task_id = :id AND d.depends_on_id = t.id) ORDER BY t.name, t.id"
 actions:
   - id: open_task_timesheets
     type: navigate
@@ -71,6 +78,50 @@ actions:
     type: download
     permission: project.read
     kind: project_task_attachment
+  - id: add_project_task_dependency
+    type: server_form
+    permission: project.write
+    title: Add Blocked By Task
+    action: project.tasks.dependencies.add
+    handler: line_item
+    operation: create
+    domain: project_task
+    params: { id: '{state.project_task_detail.id}' }
+    refresh: [project_task_detail, project_task_dependencies, project_task_dependency_lookup]
+    fields:
+      - { field: depends_on_id, label: Blocked By, type: select, options_source: project_task_dependency_lookup, required: true }
+    mutation:
+      generated: [relation_id]
+      before_steps:
+        - { query: "SELECT 'project-task-dependency-' || CAST(:id AS VARCHAR) || '-' || CAST(:depends_on_id AS VARCHAR) AS relation_id", assign: true }
+      guards:
+        - { query: "SELECT id FROM project_tasks WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE(active, TRUE) = TRUE", status: 409, code: STALE_RECORD, message: The task changed; reload before adding a dependency. }
+        - { query: "SELECT id FROM project_tasks WHERE id = :depends_on_id AND COALESCE(active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(company_name, :current_company_name) = :current_company_name)", status: 422, code: PROJECT_TASK_DEPENDENCY_INVALID, message: Select an active task in the current company. }
+        - { query: "SELECT 1 AS ok WHERE :id <> :depends_on_id", status: 422, code: PROJECT_TASK_DEPENDENCY_SELF, message: A task cannot depend on itself. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_task_dependencies WHERE task_id = :id AND depends_on_id = :depends_on_id)", status: 409, code: PROJECT_TASK_DEPENDENCY_EXISTS, message: This blocked-by task is already assigned. }
+        - { query: "WITH RECURSIVE dependency_chain(task_id, depends_on_id) AS (SELECT task_id, depends_on_id FROM project_task_dependencies WHERE task_id = :depends_on_id UNION ALL SELECT d.task_id, d.depends_on_id FROM project_task_dependencies d JOIN dependency_chain c ON d.task_id = c.depends_on_id) SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM dependency_chain WHERE depends_on_id = :id)", status: 422, code: PROJECT_TASK_DEPENDENCY_CYCLE, message: This dependency would create a cycle. }
+      steps:
+        - { query: "INSERT INTO project_task_dependencies(id, task_id, depends_on_id, row_version, created_at) VALUES(:relation_id, :id, :depends_on_id, 1, TIMESTAMP '2026-01-15 00:00:00')" }
+        - { query: "UPDATE project_tasks SET blocked_by_summary = CASE WHEN (SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) = 0 THEN 'None' ELSE CAST((SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) AS VARCHAR) || ' task(s)' END, blocked_by_names = COALESCE((SELECT STRING_AGG(t.name, ', ' ORDER BY t.name, t.id) FROM project_task_dependencies d JOIN project_tasks t ON t.id = d.depends_on_id WHERE d.task_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The task changed while adding the dependency. Reload before continuing. }
+      result: { query: "SELECT d.id, d.row_version, d.task_id, d.depends_on_id, t.name, COALESCE(t.assignee, 'Unassigned') AS assignee, t.project_name, COALESCE(t.stage, 'Planning') AS stage, t.state, t.priority, CAST(t.due_date AS VARCHAR) AS due_date FROM project_task_dependencies d JOIN project_tasks t ON t.id = d.depends_on_id WHERE d.id = :relation_id" }
+  - id: remove_project_task_dependency
+    type: server
+    permission: project.write
+    action: project.tasks.dependencies.remove
+    handler: line_item
+    operation: delete
+    domain: project_task
+    params: { id: '{state.project_task_detail.id}', line_id: '{row.id}' }
+    confirm: Remove this blocked-by task?
+    refresh: [project_task_detail, project_task_dependencies, project_task_dependency_lookup]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM project_tasks WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE(active, TRUE) = TRUE", status: 409, code: STALE_RECORD, message: The task changed; reload before removing a dependency. }
+        - { query: "SELECT id FROM project_task_dependencies WHERE id = :line_id AND task_id = :id AND row_version = :expected_row_version", status: 409, code: PROJECT_TASK_DEPENDENCY_STALE, message: This dependency changed or was removed; reload before deleting. }
+      steps:
+        - { query: "DELETE FROM project_task_dependencies WHERE id = :line_id AND task_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PROJECT_TASK_DEPENDENCY_STALE, message: This dependency changed or was removed; reload before deleting. }
+        - { query: "UPDATE project_tasks SET blocked_by_summary = CASE WHEN (SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) = 0 THEN 'None' ELSE CAST((SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) AS VARCHAR) || ' task(s)' END, blocked_by_names = COALESCE((SELECT STRING_AGG(t.name, ', ' ORDER BY t.name, t.id) FROM project_task_dependencies d JOIN project_tasks t ON t.id = d.depends_on_id WHERE d.task_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The task changed while removing the dependency. Reload before continuing. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: start_task
     type: server
     permission: project.write
