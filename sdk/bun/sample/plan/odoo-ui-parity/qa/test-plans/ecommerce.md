@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001
+
+- ECOM-FUNC-060: trace Website Sale `product_page_image_layout`, its
+  Carousel/Grid values, and the product-template `data-image_layout` and
+  shop-product template boundary; verify separate Core3 policy and Product
+  Detail page/API contracts.
+- ECOM-WF-071: replay the deterministic Carousel policy, switch to Grid,
+  project the effective Product Detail layout, reject invalid/foreign/stale
+  writes, and preserve the policy through migration replay and DuckDB restart.
+- ECOM-PERM-067: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-053: render the layout form and Product Detail projection at desktop
+  and mobile and compare the authenticated Odoo layout behavior; Core3 runtime
+  is unavailable and Odoo `/shop` is HTTP 404 in the supplied references.
+
 ## ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001
 
 - ECOM-FUNC-059: trace Odoo `product.document` attachment inheritance, the

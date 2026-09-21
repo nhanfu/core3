@@ -121,6 +121,10 @@ menu:
           label: Product Page Image Ratios
           icon: image
           permission: ecommerce.read
+        - path: /ecommerce/product-page-image-layout
+          label: Product Page Image Layout
+          icon: image
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

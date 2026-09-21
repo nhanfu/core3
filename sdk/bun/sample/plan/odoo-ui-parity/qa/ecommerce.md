@@ -1,5 +1,29 @@
 # ecommerce QA ledger
 
+## Product Page Image Layout (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines Carousel and Grid; the
+  product template emits `data-image_layout` and selects the matching
+  shop-product image template.
+- Core3 lifecycle: pass for this bounded contract. Migrations 126/127 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit layout validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_image_layout.integration.test.ts --timeout
+  30000` — **2 passed, 25 assertions, 0 failures**.
+- Regression: image-layout, image-ratio, and Product Detail suites — **9
+  passed, 78 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **739 pages, 748 routes, and 1458
+  datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-layout-001/`.
+
 ## URL Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`, 2026-09-21)
 
 - Odoo source/controller/template: pass. `product.document` inherits

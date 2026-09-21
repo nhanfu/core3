@@ -1,0 +1,14 @@
+version: 0.0.127
+kind: data
+description: deterministic eCommerce product page image layout fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_image_layout_policies (id, row_version, company_name, image_layout)
+      VALUES ('ecommerce-product-page-image-layout-my-company', 1, 'My Company', 'carousel')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_image_layout_policies WHERE id = 'ecommerce-product-page-image-layout-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

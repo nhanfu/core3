@@ -2,6 +2,33 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Image Layout (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`)
+
+Wave 31 selected Odoo Website Sale's still-open product image layout setting.
+The supplied `website` model defines `product_page_image_layout` as Carousel
+or Grid; the product template emits the selected value as `data-image_layout`
+and chooses the matching shop-product image template. This is distinct from
+the completed desktop/mobile image-ratio policy.
+
+Core3 migrations 126/127 add a durable company-scoped layout policy and
+deterministic Carousel fixture. Separate
+`pages/product-page-image-layout-policy.yaml` and
+`api/product-page-image-layout-policy.yaml` contracts join by
+`ecommerce-product-page-image-layout-policy`; the form requires
+`ecommerce.write`, validates Carousel/Grid, and uses row-version optimistic
+concurrency. Product Detail has a separate read projection for the effective
+company layout and displays the current choice. Migration replay and DuckDB
+restart preserve the setting; invalid, foreign-company, and stale writes are
+rejected.
+
+Focused source/contract, CRUD, permission, validation, projection, replay, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-layout-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — URL Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`)
 
 Wave 30 selected the explicit remaining Website Sale document gap: URL-backed
