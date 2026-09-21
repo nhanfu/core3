@@ -997,3 +997,19 @@ Focused test: `test/employees_pay_category.integration.test.ts` (4 tests, 21
 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`. No aggregate Employees
 sign-off is claimed.
+
+## EMP-EMPLOYEE-TYPE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-040 | Payroll Employee Type create/read/update projection | pass; the six-value source selection persists on the employee and active Payroll version and synchronizes the legacy display projection |
+| EMP-PERM-040 | `employees.write`, actor, active/current company, supported value, active Payroll version, row version | pass; actor, stale, wrong-company, invalid, and missing-version requests reject atomically |
+| EMP-DATA-040 | Migration replay and file-backed restart | pass; deterministic Employee Type fixtures survive replay and restart without duplicates |
+| EMP-UI-036 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo desktop/mobile show Employee Type, while Core3 discovery failed on an unrelated page-schema error before backend port 3001 bound |
+
+Focused test: `test/employees_employee_type.integration.test.ts` (4 tests,
+25 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TYPE-001/`. Scoped audit/lint/diff-check
+was green for lint/diff-check; the global UI audit was blocked by the unrelated
+`components[1].title is not allowed` page-schema error. No aggregate Employees
+sign-off is claimed.

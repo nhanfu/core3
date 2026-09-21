@@ -18,7 +18,7 @@ components:
       - { field: manager_name, label: Manager }
       - { field: department_name, label: Department }
       - { field: job_title, label: Job Position }
-      - { field: employment_type, label: Employee Type }
+      - { field: employee_type, label: Employee Type }
       - { field: state, label: Status }
     view_navigation: tabs
     views:

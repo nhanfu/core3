@@ -20,6 +20,7 @@ components:
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_pay_category, label: Edit Pay Category, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_type, label: Edit Employee Type, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_working_hours, label: Edit Working Hours, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_location, label: Edit Work Location, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_address, label: Edit Work Address, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
@@ -170,6 +171,9 @@ components:
             - title: Working Hours
               permission: employees.manage
               fields: [{ field: working_schedule, label: Working Hours, readonly: true }]
+            - title: Employee Type
+              permission: employees.write
+              fields: [{ field: employee_type, label: Employee Type, readonly: true }]
             - title: Contract
               fields: [{ field: employment_type, label: Employment Type }, { field: contract_start, label: Contract Start }, { field: contract_end, label: Contract End }, { field: wage, label: Wage }, { field: contract_template_name, label: Contract Template }]
         - id: settings

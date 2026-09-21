@@ -796,3 +796,22 @@ Candidate commit: current working tree
   startup reached Vite but backend 3001 did not bind after DuckDB reported
   `Adding columns with constraints not yet supported`; the exact output is in
   `verification.md`. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-TYPE-001 (2026-09-21)
+
+- Selected Odoo's uncovered `hr.version.employee_type` Payroll selection.
+  Existing Core3 `employment_type` is narrower and was not a durable
+  source-backed Employee Type projection.
+- Added migration `20260922070000-061` with deterministic six-value
+  `employee_type` backfill on employees and employee versions. The paired
+  API/page contracts add the Payroll Employee Type group and guarded update
+  action, synchronizing the legacy display projection.
+- Guards cover actor, active/current company, supported value, active Payroll
+  version, and stale row version. Create, update, migration replay, and
+  file-backed restart are covered by **4 tests / 25 assertions**.
+- Authenticated Odoo desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-TYPE-001/` and show Employee
+  Type. Core3 browser evidence is conditionally blocked by the unrelated
+  `components[1].title is not allowed` page-schema error before backend 3001
+  bound; the exact blocker is in `verification.md`. No aggregate Employees
+  sign-off is claimed.

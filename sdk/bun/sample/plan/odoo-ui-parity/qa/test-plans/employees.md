@@ -542,3 +542,19 @@ tests, 22 assertions). Evidence:
 Focused test: `test/employees_manager_assignment.integration.test.ts` (4
 tests, 24 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-MANAGER-001/`.
+
+## EMP-EMPLOYEE-TYPE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.employee_type` Payroll selection maps to paired employee-detail page/API contracts | pass |
+| Employee Type CRUD | Create/read, six-value update, active Payroll-version persistence, and legacy display projection persist durably | pass |
+| Permission and scope | Employees write, actor, active/current company, supported value, active Payroll version, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Employee Type values | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Payroll desktop/mobile captures | conditional; Odoo Employee Type visible at both viewports, Core3 discovery blocked by unrelated `components[1].title is not allowed` schema error |
+
+Focused test: `test/employees_employee_type.integration.test.ts` (4 tests,
+25 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TYPE-001/`. Scoped lint and
+diff-check pass; global audit is blocked by the unrelated page-schema error
+`components[1].title is not allowed`.

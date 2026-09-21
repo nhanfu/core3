@@ -1919,3 +1919,26 @@ startup reached Vite but did not bind backend port 3001 because the bounded
 runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-TYPE-001: Employee Payroll Employee Type (2026-09-21)
+
+Odoo's `hr.version.employee_type` is a required HR-user Payroll selection with
+Employee, Worker, Student, Trainee, Contractor, and Freelancer values. Core3
+previously had only the narrower legacy `employment_type` field, so it did not
+provide the source-backed Payroll selection or its active-version persistence.
+
+Migration `20260922070000-061` adds durable `employee_type` columns to
+employees and employee versions and deterministically backfills the existing
+fixtures. The paired employee-detail API/page contracts add the Payroll
+Employee Type group and guarded `edit_employee_type` action. The action
+updates the employee and active Payroll version together, synchronizes the
+legacy display projection, and enforces actor, active/current-company,
+supported-value, active-version, and optimistic row-version guards.
+
+Focused verification is **4 tests / 25 assertions**. Authenticated Odoo
+desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TYPE-001/`; both show Employee
+Type. Core3 discovery reached Vite but failed before backend port 3001 bound
+on the unrelated `components[1].title is not allowed` page-schema error; the
+exact conditional blocker is recorded in the evidence. No aggregate Employees
+sign-off is claimed.

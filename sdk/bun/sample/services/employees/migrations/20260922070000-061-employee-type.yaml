@@ -1,0 +1,29 @@
+version: 0.0.61
+kind: data
+description: Persist the Odoo Payroll employee type selection
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS employee_type VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS employee_type VARCHAR;
+      UPDATE employees
+      SET employee_type = CASE LOWER(TRIM(COALESCE(employment_type, '')))
+        WHEN 'worker' THEN 'worker'
+        WHEN 'student' THEN 'student'
+        WHEN 'trainee' THEN 'trainee'
+        WHEN 'intern' THEN 'trainee'
+        WHEN 'contractor' THEN 'contractor'
+        WHEN 'freelancer' THEN 'freelance'
+        ELSE 'employee'
+      END
+      WHERE employee_type IS NULL;
+      UPDATE employee_versions v
+      SET employee_type = (SELECT e.employee_type FROM employees e WHERE e.id = v.employee_id)
+      WHERE v.employee_type IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS employee_type;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS employee_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
