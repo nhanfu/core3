@@ -1,0 +1,20 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-EDIT-001",
+  "odoo": {
+    "view": "addons/stock/views/stock_move_line_views.xml",
+    "detailed_list": "view_move_line_tree_detailed",
+    "form": "view_move_line_form",
+    "mobile_edit_override": "view_move_line_mobile_form",
+    "behavior": "The detailed move-line form exposes quantity; the mobile inherited form enables edit while the detailed desktop list is read-only.",
+    "model_guard": "addons/stock/models/stock_move_line.py validates non-negative quantity and synchronizes quantity changes."
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detailed-operations.yaml",
+    "api": "services/inventory/api/transfer-detailed-operations.yaml",
+    "page_id": "transfer-detailed-operations",
+    "migration": "services/inventory/migrations/20260922220000-072-inventory-detailed-operation-edit.yaml",
+    "action": "update_inventory_detailed_operation",
+    "history_datasource": "inventory_transfer_detailed_operation_updates"
+  },
+  "comparison": "Core3 models the source quantity-edit lifecycle as an explicit inventory.write row action with durable history and current-company/open-state/actor/row-version guards."
+}

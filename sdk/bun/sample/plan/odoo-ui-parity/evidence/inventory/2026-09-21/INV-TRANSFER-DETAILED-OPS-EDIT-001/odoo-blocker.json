@@ -1,0 +1,6 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-EDIT-001",
+  "url": "http://127.0.0.1:8069/web",
+  "result": "HTTP 303 login redirect; authenticated Odoo evidence unavailable",
+  "headers": "HTTP/1.1 303 SEE OTHER\r\nServer: Werkzeug/3.0.1 Python/3.12.3\r\nDate: Mon, 21 Sep 2026 07:07:18 GMT\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 245\r\nLocation: /web/login?redirect=%2Fweb%3F\r\nSet-Cookie: session_id=pRFYeIrhH3c7ph3zsEjW3sJgLPew3YA0Y2E-Rgm5YPHBkI34ez0xIhFlIguj6FJLrdmWEuypw8K8z7QBh5tC; Expires=Tue, 21 Sep 2027 07:07:18 GMT; Max-Age=604800; HttpOnly; Path=/\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n"
+}

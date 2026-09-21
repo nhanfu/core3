@@ -1721,3 +1721,24 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Return All lifecycle;
 PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Detailed Operations Edit QA — `INV-TRANSFER-DETAILED-OPS-EDIT-001`
+
+- Odoo source/action: PASS. The detailed move-line form exposes editable
+  `quantity`; the mobile inherited form enables editing, while the desktop
+  detailed list is read-only.
+- Core3 contract: PASS. The presentation-only detailed-operations page and
+  backend API share `page.id: transfer-detailed-operations`; Update Quantity is
+  `inventory.write` and history is read-only. Migration 0.0.72 is durable and
+  replay-safe.
+- Focused verification: PASS — 12 tests / 98 assertions across the edit,
+  detailed-operations, and transfer-workflow suites. This includes CRUD,
+  actor/company/state/stale/quantity guards, permission denial, and restart.
+- Core3 desktop/mobile evidence: recorded in the feature evidence directory;
+  authenticated visual status is stated in `core3-browser.json`.
+- Odoo comparison: exact HTTP/login result is recorded in `odoo-blocker.json`;
+  no authenticated Odoo mutation is claimed.
+
+QA disposition: PASS for the bounded Core3 durable edit lifecycle;
+PARTIAL/BLOCKED for any unavailable authenticated visual/Odoo comparison.
+Full Inventory sign-off remains open.

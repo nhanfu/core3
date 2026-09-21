@@ -1,0 +1,36 @@
+version: 0.0.72
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_detailed_operation_updates (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        move_line_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        previous_quantity DECIMAL(18,3) NOT NULL,
+        new_quantity DECIMAL(18,3) NOT NULL,
+        unit_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        updated_by VARCHAR NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_detailed_operation_updates_line
+        ON inventory_detailed_operation_updates(move_line_id, updated_at, id);
+      INSERT INTO inventory_detailed_operation_updates(
+        id, move_line_id, product_name, previous_quantity, new_quantity, unit_name,
+        company_name, updated_by, updated_at, row_version
+      ) VALUES (
+        'detailed-operation-update-seed-0001', 'delivery-detailed-0001-line-001',
+        '[E-COM08] Storage Box', 2, 2, 'Units', 'Core3 Demo Company',
+        'Seeded Inventory', TIMESTAMP '2026-01-15 15:30:00', 1
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_detailed_operation_updates
+      WHERE id = 'detailed-operation-update-seed-0001';
+      DROP INDEX IF EXISTS idx_inventory_detailed_operation_updates_line;
+      DROP TABLE IF EXISTS inventory_detailed_operation_updates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

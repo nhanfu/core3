@@ -1,0 +1,45 @@
+{
+  "feature_id": "INV-TRANSFER-DETAILED-OPS-EDIT-001",
+  "target": "http://127.0.0.1:4357/inventory/transfer/detailed-operations?picking_id=delivery-detailed-0001",
+  "captured_at": "2026-09-21",
+  "surfaces": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "mobile": false,
+      "final_url": "http://127.0.0.1:4357/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetailed-operations%3Fpicking_id%3Ddelivery-detailed-0001",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "authenticated": false,
+      "errors": [],
+      "failed_responses": [],
+      "metrics": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "path": "/auth/login",
+        "title": "Sign in to your account"
+      },
+      "horizontal_overflow": false
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "final_url": "http://127.0.0.1:4357/auth/login?redirect=%2Finventory%2Ftransfer%2Fdetailed-operations%3Fpicking_id%3Ddelivery-detailed-0001",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "authenticated": false,
+      "errors": [],
+      "failed_responses": [],
+      "metrics": {
+        "width": 390,
+        "scrollWidth": 390,
+        "path": "/auth/login",
+        "title": "Sign in to your account"
+      },
+      "horizontal_overflow": false
+    }
+  ]
+}

@@ -32,6 +32,21 @@ datasources:
           OR COALESCE(sl.name, '') ILIKE '%' || :q || '%'
           OR COALESCE(dl.name, '') ILIKE '%' || :q || '%')
       ORDER BY p.scheduled_date, p.name, m.id
+  - id: inventory_transfer_detailed_operation_updates
+    single: false
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_DETAILED_OPERATION_UPDATES_UNAVAILABLE, message: Detailed operation update history is temporarily unavailable. }
+    query: |
+      SELECT u.id, u.move_line_id, u.product_name, CAST(u.previous_quantity AS DOUBLE) AS previous_quantity,
+        CAST(u.new_quantity AS DOUBLE) AS new_quantity, u.unit_name, u.company_name,
+        u.updated_by, CAST(u.updated_at AS VARCHAR) AS updated_at, u.row_version
+      FROM inventory_detailed_operation_updates u
+      JOIN inventory_move_lines m ON m.id = u.move_line_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND m.picking_id = :picking_id
+        AND (NULLIF(:current_company_name, '') IS NULL OR u.company_name = :current_company_name)
+      ORDER BY u.updated_at DESC, u.id DESC
 actions:
   - id: back_to_inventory_transfer_from_detailed_operations
     type: navigate
@@ -43,3 +58,36 @@ actions:
     permission: inventory.read
     navigate_to: /moves/detail
     params: { id: '{row.id}' }
+  - id: update_inventory_detailed_operation
+    type: server_form
+    permission: inventory.write
+    title: Update Detailed Quantity
+    action: stock.move.line.update_quantity
+    handler: yaml_mutation
+    operation: update_quantity
+    prefill: { picking_id: '{query.picking_id}', move_line_id: '{row.id}', expected_row_version: '{row.row_version}', company_name: '{row.company_name}', quantity: '{row.quantity}' }
+    refresh: [inventory_transfer_detailed_operations_context, inventory_transfer_detailed_operations, inventory_transfer_detailed_operation_updates]
+    success_message: Detailed operation quantity updated.
+    mutation:
+      generated: [update_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'detailed-operation-update-' || :move_line_id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS update_id, m.product_name, m.quantity AS previous_quantity, m.unit_name, m.company_name FROM inventory_move_lines m WHERE m.id = :move_line_id GROUP BY m.id, m.product_name, m.quantity, m.unit_name, m.company_name"
+      guards:
+        - { query: "SELECT m.id FROM inventory_move_lines m JOIN inventory_pickings p ON p.id = m.picking_id WHERE m.id = :move_line_id AND p.id = :picking_id", status: 404, code: INVENTORY_DETAILED_OPERATION_NOT_FOUND, message: Detailed operation not found. }
+        - { query: "SELECT m.id FROM inventory_move_lines m JOIN inventory_pickings p ON p.id = m.picking_id WHERE m.id = :move_line_id AND p.company_name = :current_company_name AND m.company_name = :current_company_name", status: 403, code: INVENTORY_DETAILED_OPERATION_COMPANY, message: Detailed operation is outside the current company scope. }
+        - { query: "SELECT m.id FROM inventory_move_lines m JOIN inventory_pickings p ON p.id = m.picking_id WHERE m.id = :move_line_id AND p.state IN ('Draft', 'Waiting', 'Ready') AND m.state IN ('Draft', 'Waiting', 'Assigned') AND m.row_version = :expected_row_version", status: 409, code: INVENTORY_DETAILED_OPERATION_NOT_EDITABLE, message: Only a current open detailed operation can be updated. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_DETAILED_OPERATION_ACTOR_REQUIRED, message: An authenticated inventory user is required to update a detailed operation. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) >= 0 AND CAST(:quantity AS DECIMAL(18,3)) <= 1000000000", status: 422, code: INVENTORY_DETAILED_OPERATION_QUANTITY_INVALID, message: Detailed operation quantity must be non-negative. }
+      steps:
+        - { query: "UPDATE inventory_move_lines SET quantity = CAST(:quantity AS DECIMAL(18,3)), quantity_product_uom = CAST(:quantity AS DECIMAL(18,3)), done_by = COALESCE(NULLIF(:current_user_name, ''), done_by), row_version = row_version + 1 WHERE id = :move_line_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_DETAILED_OPERATION_STALE, message: The detailed operation changed before it could be updated. }
+        - { query: "UPDATE inventory_picking_moves SET done_quantity = CAST(:quantity AS DECIMAL(18,3)) WHERE picking_id = :picking_id AND product_name = (SELECT product_name FROM inventory_move_lines WHERE id = :move_line_id)", expect_changed: false }
+        - { query: "INSERT INTO inventory_detailed_operation_updates(id, move_line_id, product_name, previous_quantity, new_quantity, unit_name, company_name, updated_by, updated_at, row_version) VALUES (:update_id, :move_line_id, :product_name, :previous_quantity, CAST(:quantity AS DECIMAL(18,3)), :unit_name, :company_name, COALESCE(NULLIF(:current_user_name, ''), 'Inventory User'), TIMESTAMP '2026-01-15 16:00:00', 1)", expect_changed: true, status: 409, code: INVENTORY_DETAILED_OPERATION_UPDATE_FAILED, message: The detailed operation update could not be recorded. }
+      result: { query: "SELECT id, move_line_id, product_name, previous_quantity, new_quantity, unit_name, company_name, updated_by, updated_at, row_version FROM inventory_detailed_operation_updates WHERE id = :update_id" }
+    fields:
+      - { field: picking_id, label: Transfer ID, type: hidden }
+      - { field: move_line_id, label: Move Line ID, type: hidden }
+      - { field: expected_row_version, label: Move Line Row Version, type: hidden }
+      - { field: company_name, label: Company, type: hidden }
+      - { field: quantity, label: Quantity, type: number, min: 0, required: true }

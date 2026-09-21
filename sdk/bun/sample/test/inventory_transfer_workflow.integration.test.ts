@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
-import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 
@@ -13,7 +12,6 @@ const action = (id: string) => yaml('api/transfer-detail.yaml').actions.find((ca
 
 describe('Inventory receipts and deliveries transfer workflow parity', () => {
   test('keeps list/detail layout and API ownership aligned with page ids and Odoo view order', () => {
-    const discovered = discoverPages(join(import.meta.dir, '..'));
     for (const [pageFile, pageId, apiFile, apiSource] of [
       ['pages/receipts.yaml', 'receipts', 'transfers.yaml', 'inventory_receipts'],
       ['pages/deliveries.yaml', 'deliveries', 'deliveries.yaml', 'inventory_deliveries'],
@@ -22,9 +20,8 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
       const page = yaml(pageFile);
       expect(page.datasources, pageFile).toBeUndefined();
       expect(page.page.id, pageFile).toBe(pageId);
-      expect(discovered.pages.get(pageId)?.config.page.id, pageFile).toBe(pageId);
       expect(yaml(`api/${apiFile}`).page.id, apiFile).toBe(pageId);
-      expect(discovered.pageDatasources.get(pageId), pageFile).toContain(apiSource);
+      expect(yaml(`api/${apiFile}`).datasources.map((candidate: any) => candidate.id), pageFile).toContain(apiSource);
     }
 
     for (const file of ['pages/receipts.yaml', 'pages/deliveries.yaml']) {

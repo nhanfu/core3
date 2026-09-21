@@ -39,6 +39,11 @@ components:
       - { field: source_package, label: Source Package, mobile: false }
       - { field: result_package, label: Destination Package, mobile: false }
       - { field: quantity, label: Quantity, align: right, mobile: true }
+      - field: actions
+        label: Actions
+        sortable: false
+        actions:
+          - { id: update_inventory_detailed_operation, label: Update Quantity, icon: edit, permission: inventory.write, show_if: "row.state !== 'Done' && row.state !== 'Cancelled'" }
       - { field: unit_name, label: Unit, mobile: false }
       - { field: state, label: Status, type: StatusChip, mobile: true }
       - { field: done_by, label: Done By, mobile: false }
@@ -48,3 +53,18 @@ components:
     row_open_action: view_inventory_detailed_operation
     row_double_click_action: view_inventory_detailed_operation
     empty_state: { title: No detailed operations, description: This transfer has no move lines in its detailed operations view. }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_detailed_operation_updates
+    columns:
+      - { field: updated_at, label: Updated At, type: PrimaryEntityCell, sortable: true }
+      - { field: product_name, label: Product }
+      - { field: previous_quantity, label: Previous, align: right }
+      - { field: new_quantity, label: New, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: updated_by, label: Updated By }
+      - { field: company_name, label: Company }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No quantity updates, description: Changes made from this transfer will appear here. }

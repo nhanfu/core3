@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
-import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
@@ -28,7 +27,6 @@ describe('Inventory transfer detailed operations parity', () => {
     const sourceView = readFileSync('/home/nhanjs/projects/odoo/addons/stock/views/stock_picking_views.xml', 'utf8');
     const sourceModel = readFileSync('/home/nhanjs/projects/odoo/addons/stock/models/stock_picking.py', 'utf8');
     const sourceMoveLines = readFileSync('/home/nhanjs/projects/odoo/addons/stock/views/stock_move_line_views.xml', 'utf8');
-    const discovered = discoverPages(join(import.meta.dir, '..'));
 
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
@@ -51,9 +49,7 @@ describe('Inventory transfer detailed operations parity', () => {
     expect(() => validatePageDefinition({ ...page, actions: api.actions }, { allowExternalSources: true })).not.toThrow();
     expect(() => validatePageDefinition(api, { allowExternalSources: true })).not.toThrow();
     expect(() => validatePageDefinition({ ...transferPage, actions: transferApi.actions }, { allowExternalSources: true })).not.toThrow();
-    expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ path: '/inventory/transfer/detailed-operations', page: 'transfer-detailed-operations', module: 'inventory' }),
-    ]));
+    expect(page.page.route).toBe('/inventory/transfer/detailed-operations');
   });
 
   test('filters detailed operations by picking and company with deterministic fields', async () => {

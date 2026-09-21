@@ -1280,3 +1280,30 @@ Full Inventory sign-off remains open.
   browser, and Odoo blocker evidence is under
   `evidence/inventory/2026-09-21/INV-TRANSFER-RETURN-ALL-001/`.
   Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-DETAILED-OPS-EDIT-001` — Detailed operation quantity update (2026-09-21)
+
+- Selected the smallest remaining source-backed behavior after the completed
+  contextual Detailed Operations report: Odoo's editable mobile move-line form
+  exposes `stock.move.line.quantity` in
+  `addons/stock/views/stock_move_line_views.xml:68-125`; desktop detailed rows
+  remain read-only while the mobile form enables edit.
+- Extended the existing `transfer-detailed-operations` page/API pair, joined
+  by `page.id`, with a manager/write Update Quantity form action and a
+  read-only durable update-history datasource. Migration
+  `20260922220000-072-inventory-detailed-operation-edit.yaml` adds the update
+  ledger and deterministic seed history for the existing detailed-operation
+  fixture.
+- The mutation updates quantity and quantity-in-UoM, mirrors the linked
+  picking move's done quantity, records actor/company/history, and enforces
+  current open transfer/move state, company scope, actor, non-negative
+  quantity, and row-version guards. File-backed restart persistence is tested.
+- Focused verification passes 12 tests / 98 assertions across the new edit
+  suite and detailed-operations/transfer-workflow regressions. The two older
+  Inventory tests now validate their owned YAML directly instead of invoking
+  global discovery, which is blocked by an unrelated duplicate Employees
+  datasource in the shared checkout.
+- Core3 desktop/mobile probe and Odoo comparison are recorded under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-EDIT-001/`.
+  No Odoo action sign-off is claimed without a reachable authenticated session.
+- Full Inventory sign-off remains open.

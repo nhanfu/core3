@@ -2352,3 +2352,33 @@ live Odoo returned HTTP 303 to `/web/login`; exact source, browser, and blocker
 evidence is under
 `evidence/inventory/2026-09-21/INV-TRANSFER-RETURN-ALL-001/`. Full Inventory
 sign-off remains open.
+
+## Operations > Transfer Detailed Operations quantity update — `INV-TRANSFER-DETAILED-OPS-EDIT-001` (2026-09-21)
+
+This bounded Wave 35 slice covers the remaining edit behavior explicitly left
+outside `INV-TRANSFER-DETAILED-OPS-001`. Odoo's detailed move-line list is
+defined by `addons/stock/views/stock_move_line_views.xml:40-65`; its move-line
+form exposes editable `quantity` at lines 68-109, and the mobile inherited
+form explicitly enables editing at lines 114-123. The source model validates
+non-negative quantities and synchronizes the move-line quantity at
+`addons/stock/models/stock_move_line.py:37-40,182-184,455-520`.
+
+Core3 keeps `pages/transfer-detailed-operations.yaml` presentation-only and
+extends `api/transfer-detailed-operations.yaml`, joined by
+`page.id: transfer-detailed-operations`, with a manager/write Update Quantity
+server form and a read-only quantity-update history list. Migration
+`20260922220000-072-inventory-detailed-operation-edit.yaml` adds durable
+history plus a deterministic seed row for the existing detailed-operation
+fixture. The mutation updates the move line and linked picking move,
+increments row versions, and enforces open-state, current-company, actor,
+non-negative quantity, and stale-row guards.
+
+Focused verification passes 12 tests / 98 assertions in
+`test/inventory_transfer_detailed_operations_edit.integration.test.ts`,
+`test/inventory_transfer_detailed_operations.integration.test.ts`, and
+`test/inventory_transfer_workflow.integration.test.ts`; the adjacent Inventory
+tests were repaired to avoid the unrelated global Employees discovery
+collision without changing Employees files. Desktop/mobile Core3 evidence and
+the paired Odoo result are under
+`evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-EDIT-001/`.
+Full Inventory sign-off remains open.
