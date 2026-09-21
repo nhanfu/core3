@@ -1059,3 +1059,17 @@ Focused test: `test/employees_wage.integration.test.ts` (4 tests, 20
 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-WAGE-001/`. The exact Core3 blocker is
 `actions[1].title is not allowed`; no aggregate Employees sign-off is claimed.
+
+## EMP-JOB-POSITION-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-044 | Employee Job Position assign/read/clear | pass; relation and display projections update on employee and active Payroll records |
+| EMP-PERM-044 | `employees.write`, actor, current company, active job/version, row version | pass; actor, stale, wrong-company, unsupported-job, and missing-version requests reject atomically |
+| EMP-DATA-044 | Migration replay and file-backed restart | pass; deterministic job fixtures and assignment survive replay/restart |
+| EMP-UI-040 | Authenticated Core3/Odoo desktop and mobile | conditional; authenticated Odoo desktop/mobile show Job Position, Core3 route attempt is recorded as connection-refused after bounded runtime exit |
+
+Focused test: `test/employees_job_position_assignment.integration.test.ts` (4
+tests, 23 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`. No aggregate Employees
+sign-off is claimed.

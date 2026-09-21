@@ -51,14 +51,14 @@ describe('Employees Job Positions parity', () => {
     expect(discovered.pageDatasources.get('employee-job-position-detail')).toContain('employee_job_position_detail');
   });
 
-  test('seeds the nine live Odoo positions and supports default/search/empty/error states idempotently', async () => {
+  test('seeds live Odoo positions plus employee assignment options idempotently', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_job_positions_acceptance', ['schema', 'data']);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_job_positions_acceptance', ['schema', 'data']);
     const source = yaml('api/jobs.yaml').datasources[0];
     const populated = await repository.querySource(source, { q: null, active: null, company_name: null, department_name: null, employment_type: null, fixture_state: null }, 0, 50);
-    expect(populated.data.map((row: any) => row.name)).toEqual(['Chief Technical Officer', 'Consultant', 'Experienced Developer', 'Human Resources Manager', 'Marketing and Community Manager', 'Trainee', 'Interior Designer', 'Site Manager', 'Handyman']);
+    expect(populated.data.map((row: any) => row.name)).toEqual(['Chief Technical Officer', 'Consultant', 'Experienced Developer', 'Human Resources Manager', 'Marketing and Community Manager', 'Trainee', 'Interior Designer', 'Site Manager', 'Handyman', 'Operations Lead', 'Frontend Engineer', 'QA Specialist', 'Product Designer', 'Engineering Manager']);
     expect(populated.data[0]).toMatchObject({ department_name: 'Management / Research & Development', open_application_count: 5, no_of_recruitment: 1, company_name: 'Visible to all', active_label: 'Current' });
     expect((await repository.querySource(source, { q: 'developer', active: null, company_name: null, department_name: null, employment_type: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Experienced Developer']);
     expect((await repository.querySource(source, { q: null, active: null, company_name: 'My Company (San Francisco)', department_name: null, employment_type: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Interior Designer', 'Site Manager', 'Handyman']);

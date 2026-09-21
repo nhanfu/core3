@@ -2007,3 +2007,25 @@ Authenticated Odoo desktop/mobile Payroll captures are under
 evidence is conditional because global discovery stops on the unrelated
 `actions[1].title is not allowed` page-schema error before backend bind. No
 aggregate Employees sign-off is claimed.
+
+## EMP-JOB-POSITION-001: Employee Job Position relation (2026-09-21)
+
+Odoo renders the company-checked `hr.version.job_id` relation as Job Position
+in the employee Work tab. Core3 previously exposed only the free-text
+`job_position_name` projection and a standalone Job Positions catalog. This
+slice adds the missing employee-to-position assignment lifecycle.
+
+Migration `20260922110000-065` adds durable `job_id` columns to employees and
+employee versions, seeds deterministic Core3 Vietnam positions, and
+replay-safely backfills existing display names. The paired employee-detail
+API/page contracts add company-scoped Job Position options and guarded
+`edit_employee_job_position`; assignment updates both employee and active
+Payroll-version projections and clearing remains supported.
+
+Focused verification is **4 tests / 23 assertions**, covering Odoo source
+mapping, assign/clear CRUD, actor/company/invalid/stale guards, migration
+replay, and file-backed restart. Authenticated Odoo desktop/mobile captures
+are under `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/` and show Job
+Position. Core3 browser evidence is conditional: the bounded runtime exited
+before the route completed and the exact connection-refused blocker is in
+`verification.md`. No aggregate Employees sign-off is claimed.

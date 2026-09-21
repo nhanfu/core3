@@ -866,3 +866,21 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-WAGE-001/`. Authenticated Odoo desktop
   and mobile captures show Wage. Core3 startup is blocked by unrelated
   `actions[1].title is not allowed` page-schema discovery; no sign-off claimed.
+
+## EMP-JOB-POSITION-001 (2026-09-21)
+
+- Selected Odoo's source-visible `hr.version.job_id` Job Position relation as
+  the smallest uncovered Work-tab behavior; this is distinct from the
+  completed Job Positions catalog and legacy free-text projection.
+- Added migration `20260922110000-065` with company-scoped deterministic job
+  fixtures, employee/version `job_id` persistence, and replay-safe backfill.
+- Added separate API options/action YAML and the employee-detail page action;
+  assignment and clearing synchronize the employee, active Payroll version,
+  and display projection.
+- Guards cover actor, active/current company, supported active job, active
+  Payroll version, and stale row version. Focused verification is **4 tests /
+  23 assertions**, including restart.
+- Authenticated Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`. Core3 route evidence
+  is conditional because the bounded runtime exited before port 3002 could
+  complete the route; no aggregate sign-off is claimed.

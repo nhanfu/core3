@@ -602,3 +602,17 @@ auth-user search/company normalization remains a documented blocker.
 Focused test: `test/employees_wage.integration.test.ts` (4 tests, 20
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-WAGE-001/`.
+
+## EMP-JOB-POSITION-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.job_id` and Work > Job Position map to paired employee page/API contracts | pass |
+| Job Position CRUD | Same-company assignment, read projection, active Payroll synchronization, and clearing persist durably | pass |
+| Permission and scope | Employees write, actor, current company, active job/version, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Job Position relations | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Work desktop/mobile captures | conditional; Odoo Job Position visible at both viewports, Core3 process exited before route completion |
+
+Focused test: `test/employees_job_position_assignment.integration.test.ts` (4
+tests, 23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`.

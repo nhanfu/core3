@@ -1,0 +1,27 @@
+{
+  "url": "http://127.0.0.1:8069/odoo/employees/1",
+  "login": "codex@core3.local",
+  "view": "Work / Job Position",
+  "captures": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "authenticated": true,
+      "hasJobPosition": true,
+      "body_excerpt": "Employees Employees Departments Learning Reporting Configuration 7 40 My Company (San Francisco) New Employees Mitchell Admin Timesheets 0 Equipment History 1 1 / 1 Launch Plan Jan 1, 2020 Trainer Employee Off-Hours Work Resume Certifications Personal Payroll Badges Settings WORK Company Department Job Position Job Title Manager LOCATION Work Address 8000 Marina Blvd, Suite 300 Brisbane CA 94005 United States Work Location USUAL WORK LOCATION Monday Tuesday Wednesday Thursday Friday Saturday Sunday NOTE ORGANIZATION CHART FULL CHART Mitchell Admin Chief Technical Officer 22 Jeffrey Kelly Marketing and Community Manager 4 Marc Demo Experienced Developer 12 Tina Williamson Human Resources Mana"
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": true,
+      "hasJobPosition": true,
+      "body_excerpt": "Mitchell Admin 7 40 New Launch Plan Jan 1, 2020 Trainer Employee Off-Hours Work Resume Certifications Personal Payroll Badges Settings WORK Company Department Job Position Job Title Manager LOCATION Work Address 8000 Marina Blvd, Suite 300 Brisbane CA 94005 United States Work Location USUAL WORK LOCATION Monday Tuesday Wednesday Thursday Friday Saturday Sunday NOTE ORGANIZATION CHART FULL CHART Mitchell Admin Chief Technical Officer 22 Jeffrey Kelly Marketing and Community Manager 4 Marc Demo Experienced Developer 12 Tina Williamson Human Resources Manager 3 Send message Log note Activity 1 Planned Activities 11 days overdue:“Scrum Master: Certified”for Mitchell Admin Certification missing o"
+    }
+  ]
+}

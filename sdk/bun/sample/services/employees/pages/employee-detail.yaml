@@ -27,6 +27,7 @@ components:
       - { id: edit_employee_working_hours, label: Edit Working Hours, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_location, label: Edit Work Location, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_address, label: Edit Work Address, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_job_position, label: Edit Job Position, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_manager, label: Edit Manager, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_hr_responsible, label: Edit HR Responsible, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_coach, label: Edit Coach, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }

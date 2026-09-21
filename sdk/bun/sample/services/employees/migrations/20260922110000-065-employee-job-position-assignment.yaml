@@ -1,0 +1,37 @@
+version: 0.0.65
+kind: data
+description: Persist the Odoo employee Job Position relation
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS job_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS job_id VARCHAR;
+      INSERT OR IGNORE INTO employee_job_positions
+        (id, row_version, sequence, name, department_name, company_name, employment_type, recruiter_name, active)
+      VALUES
+        ('job-operations-lead-vietnam', 1, 30, 'Operations Lead', 'Engineering', 'Core3 Vietnam', 'Permanent', 'HR Manager', true),
+        ('job-frontend-engineer-vietnam', 1, 31, 'Frontend Engineer', 'Engineering', 'Core3 Vietnam', 'Permanent', 'HR Manager', true),
+        ('job-qa-specialist-vietnam', 1, 32, 'QA Specialist', 'Engineering', 'Core3 Vietnam', 'Contractor', 'HR Manager', true),
+        ('job-product-designer-vietnam', 1, 33, 'Product Designer', 'Engineering', 'Core3 Vietnam', 'Employee', 'HR Manager', true),
+        ('job-engineering-manager-vietnam', 1, 34, 'Engineering Manager', 'Engineering', 'Core3 Vietnam', 'Employee', 'HR Manager', true);
+      UPDATE employees e
+      SET job_id = (
+        SELECT j.id FROM employee_job_positions j
+        WHERE j.active = true AND LOWER(j.name) = LOWER(e.job_position_name)
+          AND (j.company_name IS NULL OR j.company_name = e.company_name)
+        ORDER BY CASE WHEN j.company_name = e.company_name THEN 0 ELSE 1 END, j.id
+        LIMIT 1
+      )
+      WHERE e.job_id IS NULL AND NULLIF(TRIM(COALESCE(e.job_position_name, '')), '') IS NOT NULL;
+      UPDATE employee_versions v
+      SET job_id = e.job_id,
+          job_name = e.job_position_name
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.job_id IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS job_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS job_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
