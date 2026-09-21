@@ -149,6 +149,10 @@ menu:
           label: Shop Page Container
           icon: layout
           permission: ecommerce.read
+        - path: /ecommerce/shop-grid-columns
+          label: Shop Grid Columns
+          icon: grid
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

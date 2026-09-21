@@ -15,6 +15,14 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_SHOP_PAGE_CONTAINER_FORBIDDEN, message: You do not have permission to view shop page container. }
       transport_error: { status: 503, code: ECOMMERCE_SHOP_PAGE_CONTAINER_UNAVAILABLE, message: Shop page container is temporarily unavailable. }
     query: "SELECT id, row_version, company_name, page_container, CASE page_container WHEN 'fluid' THEN 'Full-width' ELSE 'Regular' END AS page_container_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_page_container_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company')"
+  - id: ecommerce_shop_grid_columns
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_GRID_COLUMNS_UNAUTHENTICATED, message: Sign in to view shop grid settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_GRID_COLUMNS_FORBIDDEN, message: You do not have permission to view shop grid settings. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_GRID_COLUMNS_UNAVAILABLE, message: Shop grid settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, grid_columns, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_columns_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company')"
 actions:
   - id: shop_add_to_cart
     type: server

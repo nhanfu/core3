@@ -1,0 +1,36 @@
+page: { id: ecommerce-shop-grid-columns-policy }
+datasources:
+  - id: ecommerce_shop_grid_columns_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_GRID_COLUMNS_UNAUTHENTICATED, message: Sign in to view shop grid settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_GRID_COLUMNS_FORBIDDEN, message: You do not have permission to view shop grid settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_GRID_COLUMNS_NOT_FOUND, message: Shop grid settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_GRID_COLUMNS_UNAVAILABLE, message: Shop grid settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, grid_columns, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_columns_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_shop_grid_columns_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (2, '2 columns'), (3, '3 columns'), (4, '4 columns'), (5, '5 columns')) columns(value, label)"
+actions:
+  - id: edit_ecommerce_shop_grid_columns_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Grid Columns
+    action: ecommerce.shop.grid_columns.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_grid_columns_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, grid_columns]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_grid_columns_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_GRID_COLUMNS_STALE, message: These shop grid settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:grid_columns AS INTEGER) IN (2, 3, 4, 5)", status: 422, code: ECOMMERCE_SHOP_GRID_COLUMNS_INVALID, message: Choose between 2 and 5 shop grid columns. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_grid_columns_policies SET grid_columns = CAST(:grid_columns AS INTEGER), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_GRID_COLUMNS_STALE, message: These shop grid settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, grid_columns, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_columns_policies WHERE id = :id" }
+    fields:
+      - { field: grid_columns, label: Shop Grid Columns, type: select, options_source: ecommerce_shop_grid_columns_options, required: true }

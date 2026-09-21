@@ -2,6 +2,30 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Shop Grid Columns (`ECOM-CATALOG-SHOP-GRID-COLUMNS-001`)
+
+Wave 38 selects Website Sale's `website.shop_ppr` setting. Odoo defines the
+number of grid columns on the Shop and its website-builder option exposes the
+source-backed choices 2, 3, 4, and 5; the Website model defaults to 3. This
+is distinct from the completed Shop page container, visibility, and default
+sort slices.
+
+Core3 migrations 140/141 add a durable company-scoped grid-column policy and
+deterministic My Company fixture. Separate
+`api/shop-grid-columns-policy.yaml` and `pages/shop-grid-columns-policy.yaml`
+contracts join by `ecommerce-shop-grid-columns-policy`; the update requires
+`ecommerce.write`, validates the source-backed values, and uses company and
+row-version guards. The Shop API/page expose the effective company setting and
+the configuration route is manifest-owned. Focused integration tests cover
+missing fixture reads, permission declarations, invalid/foreign/stale writes,
+idempotent migration/fixture replay, and DuckDB restart persistence.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-grid-columns-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313; Odoo `/shop` is an exact HTTP 404 on 8069/8073. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Shop Page Container (`ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`)
 
 Wave 37 selects Website Sale's `shop_page_container` setting. The supplied

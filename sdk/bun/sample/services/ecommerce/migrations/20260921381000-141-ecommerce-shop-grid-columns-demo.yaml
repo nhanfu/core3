@@ -1,0 +1,14 @@
+version: 0.0.141
+kind: data
+description: deterministic eCommerce shop grid columns fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_grid_columns_policies (id, row_version, company_name, grid_columns)
+      VALUES ('ecommerce-shop-grid-columns-my-company', 1, 'My Company', 3)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_grid_columns_policies WHERE id = 'ecommerce-shop-grid-columns-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

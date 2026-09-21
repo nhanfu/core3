@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Shop Grid Columns (`ECOM-CATALOG-SHOP-GRID-COLUMNS-001`, 2026-09-21)
+
+- Odoo source/builder: pass. `website.py` defines `shop_ppr` with default 3;
+  the Website Sale builder writes `shop_ppr` and exposes choices 2, 3, 4, and
+  5.
+- Core3 lifecycle: focused verification pass. Migrations 140/141 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with exact source-value
+  validation; Shop projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_shop_grid_columns.integration.test.ts --timeout 30000` —
+  **2 passed, 26 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: Shop-focused suites pass **10 tests, 104 assertions, 0
+  failures**.
+- Audit: `bun run audit` passes at **753 pages, 762 routes, and 1519
+  datasources**.
+- Scoped ESLint and `git diff --check`: pass. Ecommerce module sign-off
+  remains open.
+- Local commit: recorded in the final handoff (not pushed).
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-grid-columns-001/`.
+
 ## Shop Page Container (`ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines Regular and Full-width;

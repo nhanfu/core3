@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Grid Columns](ecom-catalog-shop-grid-columns-001/README.md)
+
 - [Shop Page Container](ecom-catalog-shop-page-container-001/README.md)
 
 - [Product Page Container](ecom-catalog-product-page-container-001/README.md)

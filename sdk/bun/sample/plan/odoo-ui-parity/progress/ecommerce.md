@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 38 bounded slice: `ECOM-CATALOG-SHOP-GRID-COLUMNS-001`
+(committed locally; not pushed).
 Latest Wave 37 bounded slice: `ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`
 (committed locally; not pushed).
 Latest Wave 36 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`
@@ -26,6 +28,18 @@ Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+Wave 38 verification: the focused suite passes 2 tests and 26 assertions; the
+Shop-focused regression passes 10 tests and 104 assertions. The UI audit
+passes at 753 pages, 762 routes, and 1519 datasources; scoped ESLint and
+`git diff --check` pass. The focused suite covers Odoo source/plugin/template comparison, separate page/API
+the suite covers Odoo source/plugin/template comparison, separate page/API
+YAML, deterministic options and fixture, missing-record read behavior,
+permissioned CRUD, company/invalid/stale guards, Shop projection, replay
+safety, and DuckDB restart persistence. Core3 desktop/mobile capture is
+blocked by unavailable ports 3000/4312/4313 and no persistent browser
+runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and 8073. Ecommerce
+module sign-off remains open.
 
 Wave 37 verification: the focused suite passes 2 tests and 24 assertions; the
 bounded regression passes 24 tests and 253 assertions. Scoped ESLint and
