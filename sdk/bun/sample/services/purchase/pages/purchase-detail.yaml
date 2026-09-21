@@ -14,7 +14,7 @@ components:
       - { id: open_purchase_receipt, label: Receipt, value_field: receipt_count, permission: purchase.read, show_if: "(state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received') && state.purchase_order_detail.receipt_count > 0" }
       - { id: open_purchase_vendor_bill, label: Vendor Bills, value_field: vendor_bill_count, permission: purchase.read, show_if: "(state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received') && state.purchase_order_detail.vendor_bill_count > 0" }
     header_actions:
-      - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft'" }
+      - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
       - { id: approve_purchase_order_detail, label: Approve Order, variant: primary, permission: purchase.manage, show_if: "state.purchase_order_detail.state === 'To Approve'" }
       - { id: receive_purchase_order_detail, label: Receive, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed'" }
@@ -41,6 +41,11 @@ components:
           groups:
             - title: Other Information
               fields: [{ field: notes, label: Notes, type: textarea, wide: true }, { field: locked, label: Locked }, { field: acknowledged, label: Acknowledged }]
+    message_source: purchase_order_email_history
+    chatter_label: Chatter
+    chatter_empty: No purchase order emails yet.
+    message_label: Send message
+    note_label: Log note
   - type: LineItemGrid
     mount_in: previous-panel
     source: purchase_order_lines

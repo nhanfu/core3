@@ -209,3 +209,36 @@ resolved or explicitly waived.
 Disposition: **conditional bounded pass** for the declarative action contract,
 workflow guard, persistence, restart, and authenticated button interaction;
 not a full PDF-rendering or module sign-off.
+
+## 2026-09-22 candidate QA — RFQ email composer
+
+- Scope: Draft/Sent Purchase RFQ `Send RFQ` composer only. Confirmed-order
+  `Send PO` is not included.
+- Source/live gate: local Odoo 19 source at
+  `/home/nhanjs/projects/odoo/addons/purchase` and authenticated
+  `core3_reference` at `http://localhost:8069`; P00011 was checked at desktop
+  and an emulated iPhone 14 viewport. Odoo showed the full Compose Email
+  modal with recipient, subject, body, RFQ PDF attachment, Send, and Discard.
+- Focused validation: `bun test ./test/purchase_order_email.integration.test.ts
+  --timeout 30000` — **PASS**, 4 tests, 28 assertions, 0 failures.
+- Purchase regression validation: focused Purchase suite — **PASS**, 28 tests,
+  238 assertions, 0 failures. `bun run audit` — **PASS**, 789 pages, 798
+  routes, 1626 datasources. `bun run frontend:build` — **PASS**.
+- Contract coverage: matching page/API id, `purchase.write` composer action,
+  Draft/Sent workflow guard, row-version guard, vendor/content/actor guards,
+  durable email history, migration replay, and file-backed restart.
+- Evidence: committed manifest and source comparison at
+  `evidence/purchase/2026-09-22/PURCHASE-SEND-RFQ-001/`, with Odoo desktop and
+  mobile composer screenshots.
+
+### Open gates
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-RFQ-QA-001 | Core3 authenticated `/purchase/detail?id=po-demo-001` rendered `Send RFQ`, but clicking it produced no `/api/mutate` request, modal, or console error in the shared browser runtime | open UI-dispatch blocker; no Core3 visual pass claimed |
+| PURCHASE-RFQ-QA-002 | `bun run audit:yaml` is not a repository script | tooling limitation; audit and focused tests passed |
+
+Disposition: **conditional bounded pass** for source-backed YAML contract,
+workflow/permission guards, durable persistence, restart coverage, and Odoo
+desktop/mobile evidence; Core3 composer browser integration remains blocked by
+the exact UI dispatch finding above.

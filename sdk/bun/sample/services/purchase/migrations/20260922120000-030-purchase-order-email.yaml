@@ -1,0 +1,29 @@
+version: 0.0.30
+kind: schema
+description: Persist Purchase RFQ composer sends and deterministic email history
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_order_emails (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        recipient_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL,
+        attachment_name VARCHAR NOT NULL,
+        template_label VARCHAR NOT NULL DEFAULT 'Request for Quotation',
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_by VARCHAR,
+        sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_emails_order_idx ON purchase_order_emails(purchase_order_id, sent_at DESC, id DESC);
+    down: |
+      DROP INDEX IF EXISTS purchase_order_emails_order_idx;
+      DROP TABLE IF EXISTS purchase_order_emails;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1204,3 +1204,33 @@ other-module changes were preserved and not committed by this Purchase slice.
 The remaining report-download/PDF byte capture is a follow-up because the
 current Core3 print operation prepares and durably records the report contract
 but does not yet render a binary PDF.
+
+## 2026-09-22 bounded addendum — RFQ email composer
+
+The next uncovered Purchase slice is the Draft/Sent RFQ `Send RFQ` composer,
+not the already-covered state transition. Odoo 19 source
+`addons/purchase/models/purchase_order.py:545-600` implements `action_rfq_send`
+by opening `mail.compose.message` with the purchase RFQ template; the form
+view at `addons/purchase/views/purchase_views.xml:134-147` exposes the action
+for Draft/Sent orders. The authenticated live reference at
+`http://localhost:8069/odoo/purchase/11?db=core3_reference` showed the same
+Compose Email modal on desktop and an emulated iPhone 14 viewport, including
+recipient, subject, body, RFQ PDF attachment, Send, and Discard.
+
+Core3 keeps the page/API split through the matching `purchase-detail` page id.
+The `send_purchase_order_detail` action is now a `server_form` mail composer
+for Draft/Sent records. It validates the vendor address and editable content,
+requires `purchase.write`, checks the current row version, writes an indexed
+`purchase_order_emails` row, transitions Draft to Sent, increments the order
+version, and exposes durable sent-message history through the detail chatter.
+Migration `20260922120000-030-purchase-order-email.yaml` and
+`test/purchase_order_email.integration.test.ts` cover replay, restart,
+atomic guards, and permissions. Confirmed-order `Send PO` remains an explicit
+follow-up and is not claimed by this bounded slice.
+
+Evidence is under
+`evidence/purchase/2026-09-22/PURCHASE-SEND-RFQ-001/`. Odoo composer captures
+are complete for desktop and mobile. Core3 authenticated navigation reached
+the Purchase detail and rendered `Send RFQ`, but the click produced no modal
+or network request in the shared browser runtime; this is recorded as an open
+UI-dispatch blocker rather than a visual pass.
