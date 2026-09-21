@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 36 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`
+(committed locally as `8514fadf`; not pushed).
 Latest Wave 35 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`
 (committed locally as `f88b6af4`; not pushed).
 Latest Wave 34 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`
@@ -16,12 +18,20 @@ Latest Wave 31 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
 (committed locally as `a79b02c9`; pushed in the current synchronized base).
 Latest Wave 30 bounded slice: `ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`
 (committed locally as `c4930038`; pushed in the current synchronized base).
-Latest committed bounded slice: `f88b6af4`
-(`ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`, local and not pushed).
+Latest committed bounded slice: `8514fadf`
+(`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`, local and not pushed).
 Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+Wave 36 verification: the focused suite passes 2 tests and 25 assertions; the
+container plus prior columns-order, image policy, and Product Detail
+regression passes 19 tests and 204 assertions. The UI audit passes at 749
+pages, 758 routes, and 1499 datasources; scoped ESLint and diff checks pass.
+Core3 desktop/mobile capture is blocked by unavailable ports 3000/4312/4313
+and no persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports
+8069 and 8073. This bounded slice is not module sign-off.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`
 

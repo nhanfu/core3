@@ -2,6 +2,34 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Container (`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`)
+
+Wave 36 selected Odoo Website Sale's still-open product-page container
+setting. The supplied `website` model defines `product_page_container` as
+Unset, Regular, or Full-width; the product template uses
+`_get_product_page_container()` to apply the corresponding product-detail
+container class. This is distinct from the completed product-page columns
+order and image policies.
+
+Core3 migrations 136/137 add a durable company-scoped page-container policy
+and deterministic Unset fixture. Separate
+`pages/product-page-container-policy.yaml` and
+`api/product-page-container-policy.yaml` contracts join by
+`ecommerce-product-page-container-policy`; the form requires
+`ecommerce.write`, validates the three source values, and uses row-version
+optimistic concurrency. Product Detail has a separate read projection for the
+effective company container and displays the current choice. Migration replay
+and DuckDB restart preserve the setting; invalid, foreign-company, and stale
+writes are rejected.
+
+Focused source/contract, CRUD, permission, validation, projection, replay, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-container-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Columns Order (`ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`)
 
 Wave 35 selected Odoo Website Sale's still-open product-page main columns

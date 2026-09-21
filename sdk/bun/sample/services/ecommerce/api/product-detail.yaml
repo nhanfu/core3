@@ -54,6 +54,13 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_FORBIDDEN, message: You do not have permission to view product page columns order. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_UNAVAILABLE, message: Product page columns order is temporarily unavailable. }
     query: "SELECT c.id, c.row_version, c.company_name, c.columns_order, CASE c.columns_order WHEN 'inverse' THEN 'Inverse order' ELSE 'Regular order' END AS columns_order_label FROM ecommerce_product_page_columns_order_policies c JOIN ecommerce_products p ON p.company_name = c.company_name WHERE p.id = :id AND (:company_name IS NULL OR c.company_name = :company_name)"
+  - id: ecommerce_product_page_container
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_UNAUTHENTICATED, message: Sign in to view product page container. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_FORBIDDEN, message: You do not have permission to view product page container. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_UNAVAILABLE, message: Product page container is temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.company_name, c.page_container, CASE c.page_container WHEN 'regular' THEN 'Regular' WHEN 'fluid' THEN 'Full-width' ELSE 'Unset' END AS page_container_label FROM ecommerce_product_page_container_policies c JOIN ecommerce_products p ON p.company_name = c.company_name WHERE p.id = :id AND (:company_name IS NULL OR c.company_name = :company_name)"
   - id: ecommerce_product_categories
     permission: ecommerce.read
     error_states:
