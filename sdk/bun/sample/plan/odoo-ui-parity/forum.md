@@ -1,8 +1,8 @@
-# Forum parity — bounded wave 5 slice
+# Forum parity — bounded wave 6 slice
 
-Status: in-progress. This slice adds the authenticated Forum configuration
-create/edit form behind the existing Forums list; it is not the anonymous
-`/forum` website route or the complete answer/taxonomy module.
+Status: in-progress. Wave 6 adds the authenticated Forum Tags list/form behind
+the existing Forum menu. It is not the anonymous `/forum` website route or the
+complete answer, rank, badge, and close-reason module.
 
 ## Source-backed Odoo trace
 
@@ -17,6 +17,8 @@ Reference: Odoo 19 `addons/website_forum`.
 | Row website action | `go_to_website` | existing Core3 question detail alias | `forum.read` |
 | Website → Configuration → Forum → Forums | `menu_forum_global` → `forum_forum_action` | `/forums` (action path alias) | `forum.read` |
 | Forums list | `forum_forum_view_tree` | List view | `forum.read` |
+| Website → Configuration → Forum → Tags | `menu_forum_tag_global` → `forum_tag_action` | `/forum-tags` | `forum.read` |
+| Forum Tags list/form | `forum_tag_view_list`, `forum_tag_view_form` | List with create/edit form | `forum.read` / `forum.write` |
 | Forum Questions list | `forum_post_action` | `/forum-questions` | `forum.read` |
 | Question edit | `forum_post_view_form` | question detail edit form | `forum.write` |
 | Question archive | moderation action on `forum.post` | question row/detail action | `forum.manage` |
@@ -70,6 +72,14 @@ website object actions.
   unique name, and edit requires the current `row_version`.
 - The configuration migration adds durable sequence, website, and default-sort
   fields with backfilled values for existing fixtures.
+- `pages/tags.yaml` is presentation-only and `api/tags.yaml` owns the matching
+  `forum-tags` datasource/actions. Tag create/edit uses `forum.write`, derives
+  the forum display name from the selected forum, enforces active-forum and
+  `(forum_id, name)` uniqueness, and refreshes the denormalized post tag token
+  when a tag is renamed.
+- Migration `20260922100000-007-forum-tag-constraint.yaml` adds the durable
+  database uniqueness index; the tag suite covers search, exact token counts,
+  empty/transport-error behavior, stale updates, permissions, and restart.
 
 ## Acceptance/evidence
 
@@ -85,6 +95,9 @@ website object actions.
 - [x] Forum configuration create/edit persistence, duplicate-name/required-name
   guards, stale update rejection, post relation refresh, and authenticated
   `forum.manage` boundary tested.
+- [x] Odoo Forum Tags list/form is implemented with page/API separation,
+  durable uniqueness, create/edit persistence, post-tag rename refresh, stale
+  and validation guards, restart coverage, and authenticated `forum.write`.
 - [ ] Odoo and Core3 authenticated desktop 1440×900 captures.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
@@ -98,6 +111,32 @@ website object actions.
 - `git diff --check` and the module UI audit are required before commit.
 - Authenticated browser captures and durable file-backed restart/reapply remain
   evidence gates for this wave.
+
+## Wave 6 source-backed feature — Forum Tags — 2026-09-22
+
+Odoo 19 source comparison identified the next bounded gap in
+`addons/website_forum/views/forum_tag_views.xml`: `forum_tag_action` exposes
+`view_mode=list,form` at `/forum-tags`, the editable list contains `name`,
+`color`, and `forum_id`, and `forum_tag_view_form` exposes the same fields.
+`addons/website_forum/models/forum_tag.py` requires `name` and `forum_id` and
+declares a unique `(name, forum_id)` constraint. Core3 previously had a
+partial Tags page with its datasource/actions embedded in the page YAML and no
+edit action or durable DB uniqueness.
+
+The new bounded implementation is in `services/forum/pages/tags.yaml`,
+`services/forum/api/tags.yaml`, migration
+`20260922100000-007-forum-tag-constraint.yaml`, and
+`test/forum_tags.integration.test.ts`. It covers page/API discovery, search,
+exact post-token counts, create/edit/rename, duplicate/required/invalid/stale
+guards, `forum.write`, and file-backed restart persistence.
+
+Focused tag evidence: `evidence/forum/2026-09-22/FORUM-TAG-001/verification.md`.
+The authenticated Odoo desktop/mobile captures show the app launcher without
+Website or Forum; `website_forum` is not installed in `core3_reference`, so no
+Odoo Tags list/form exists to capture. Core3 browser capture is also blocked by
+the unrelated pre-existing `services/blog/pages/blog-workflow.yaml` discovery
+parse error; the backend exits before binding port 3001. No visual parity claim
+is made.
 
 ## Runtime evidence and blockers — 2026-09-12
 

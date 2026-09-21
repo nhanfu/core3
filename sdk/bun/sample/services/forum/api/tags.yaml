@@ -1,0 +1,74 @@
+page: { id: forum-tags }
+datasources:
+  - id: forum_tag_lookup
+    permission: forum.read
+    query: "SELECT id AS value, name AS label FROM forum_forums WHERE COALESCE(active, TRUE) = TRUE ORDER BY name, id"
+  - id: forum_tags
+    permission: forum.read
+    error_states:
+      unauthorized: { status: 401, code: FORUM_TAGS_UNAUTHORIZED, message: Sign in to view Forum Tags. }
+      forbidden: { status: 403, code: FORUM_TAGS_FORBIDDEN, message: You do not have permission to view Forum Tags. }
+      transport_error: { status: 503, code: FORUM_TAGS_UNAVAILABLE, message: Forum Tags are temporarily unavailable. }
+    query: |
+      SELECT t.id, t.row_version, t.forum_id, t.forum_name, t.name, t.color,
+        (SELECT COUNT(*) FROM forum_posts p
+          WHERE p.forum_id = t.forum_id
+            AND (',' || COALESCE(p.tags, '') || ',') LIKE '%,' || t.name || ',%') AS post_count
+      FROM forum_tags t
+      WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.forum_name ILIKE '%' || :q || '%')
+      ORDER BY t.name, t.id
+actions:
+  - id: create_forum_tag
+    type: server_form
+    permission: forum.write
+    title: New tag
+    action: forum.tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [forum_tags]
+    mutation:
+      operation: insert
+      table: forum_tags
+      generated: [id]
+      fields: [forum_id, forum_name, name, color]
+      required: [forum_id, name]
+      defaults: { color: 0 }
+      guards:
+        - { query: "SELECT name AS forum_name FROM forum_forums WHERE id = :forum_id AND COALESCE(active, TRUE) = TRUE", assign: true, status: 422, code: FORUM_TAG_FORUM_REQUIRED, message: A valid active forum is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: FORUM_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM forum_tags WHERE forum_id = :forum_id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FORUM_TAG_EXISTS, message: A tag with this name already exists in this forum. }
+      result: { query: "SELECT * FROM forum_tags WHERE id = :id" }
+    fields:
+      - { field: forum_id, label: Forum, type: select, options_source: forum_tag_lookup, required: true }
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: color, label: Color, type: number }
+  - id: edit_forum_tag
+    type: server_form
+    permission: forum.write
+    title: Edit tag
+    action: forum.tags.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [forum_tags]
+    mutation:
+      operation: update
+      table: forum_tags
+      fields: [forum_id, forum_name, name, color]
+      required: [forum_id, name]
+      concurrency: { required: true }
+      before_steps:
+        - { query: "SELECT t.name AS old_name, f.name AS forum_name FROM forum_tags t JOIN forum_forums f ON f.id = :forum_id WHERE t.id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM forum_tags WHERE id = :id", status: 404, code: FORUM_TAG_NOT_FOUND, message: Forum tag was not found. }
+        - { query: "SELECT name AS forum_name FROM forum_forums WHERE id = :forum_id AND COALESCE(active, TRUE) = TRUE", assign: true, status: 422, code: FORUM_TAG_FORUM_REQUIRED, message: A valid active forum is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: FORUM_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM forum_tags WHERE forum_id = :forum_id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FORUM_TAG_EXISTS, message: A tag with this name already exists in this forum. }
+      steps:
+        - { query: "UPDATE forum_posts SET tags = TRIM(',' FROM REPLACE(',' || COALESCE(tags, '') || ',', ',' || :old_name || ',', ',' || TRIM(:name) || ',')), updated_at = CURRENT_TIMESTAMP WHERE forum_id = :forum_id AND (',' || COALESCE(tags, '') || ',') LIKE '%,' || :old_name || ',%'" }
+      result: { query: "SELECT * FROM forum_tags WHERE id = :id" }
+    fields:
+      - { field: forum_id, label: Forum, type: select, options_source: forum_tag_lookup, required: true }
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: color, label: Color, type: number }

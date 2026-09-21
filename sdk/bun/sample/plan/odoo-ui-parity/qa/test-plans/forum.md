@@ -5,7 +5,7 @@ QA owner: forum-qa
 Developer owner: forum module owner  
 Reference addon/version: website_forum, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This plan follows [`forum.md`](../../forum.md); executed evidence is recorded
 in [`../forum.md`](../forum.md).
@@ -15,6 +15,7 @@ in [`../forum.md`](../forum.md).
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
 | Forums | forum list/detail routes | Forum configuration, active/archived state, ordering and search |
+| Forum Tags | forum tag list/form route | Tag list/search, create/edit name/color/forum, uniqueness and post-token refresh |
 | Posts/questions | post list/detail/public routes | Questions, answers, tags, author, moderation state and content rendering |
 | Moderation/configuration | moderation, tags, badges and settings routes when enabled | Edit/close/flag/archive, permissions and validation |
 | YAML-driven presentation | page/API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, assets and responsive layout |
@@ -37,6 +38,7 @@ databases and deterministic IDs.
 | FORUM-FUNC-006 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
 | FORUM-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate posts, answers or tags | planned restart/migration gate |
 | FORUM-FUNC-008 | Assets/import/export/print | Exercise post images/assets, content import/export and exposed print/share actions | planned browser interaction gate |
+| FORUM-FUNC-009 | Forum Tags CRUD | List/search tags, create/edit name/color/forum, exact post counts, duplicate and required guards | pass: `forum_tags.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -47,6 +49,7 @@ databases and deterministic IDs.
 | FORUM-WF-003 | Forum taxonomy | Tags/badges remain linked to posts and cannot be deleted while referenced | planned |
 | FORUM-WF-004 | Website integration | Published content resolves through Website routes with correct site/company scope | planned integration gate |
 | FORUM-WF-005 | Durable/external boundary | Notifications, moderation jobs, asset processing and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| FORUM-WF-006 | Tag rename relation | Rename updates the denormalized comma-delimited post token atomically and preserves counts after reload/restart | pass: `forum_tags.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -58,6 +61,7 @@ databases and deterministic IDs.
 | FORUM-PERM-004 | Wrong company/site | Other-site forums, drafts and moderation events are not leaked or mutable | planned |
 | FORUM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected content | planned |
 | FORUM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current forum/post/tag unchanged | pass at contract level |
+| FORUM-PERM-007 | Tag manager boundary | `forum.write` can create/edit; `forum.read` only is denied; invalid/inactive forum and duplicate `(forum_id,name)` are rejected | pass: `forum_tags.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -67,6 +71,7 @@ databases and deterministic IDs.
 | FORUM-UI-002 | Public question/answers | both | Typography, answer thread, accepted state and public/private visibility match Odoo | planned paired capture |
 | FORUM-UI-003 | Moderation/configuration | both | Forms, dialogs, flags, settings and empty states match Odoo | planned |
 | FORUM-UI-004 | Current route regression | all manifest-owned Forum routes | Authenticated/public desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
+| FORUM-UI-005 | Tags list/form | 1440x900, 390x844 | Paired Odoo/Core3 captures for list and form; Odoo addon and Core3 runtime must be available | blocked: `FORUM-TAG-001` |
 
 ## Exit criteria
 

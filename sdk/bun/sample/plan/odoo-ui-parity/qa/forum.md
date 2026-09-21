@@ -55,6 +55,7 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 | FORUM-PUBLIC-001 | Unauthenticated public question list/detail boundary | Public Active question renders at desktop/mobile with 200 response, no browser errors or overflow; missing and flagged IDs return 404; SQL contract includes Closed visibility and Flagged exclusion; captures `/tmp/core3-odoo-parity/forum-public-desktop.png` and `forum-public-mobile.png` | pass |
 | FORUM-WORKFLOW-001 | Post close/reopen lifecycle | Focused test executes close and reopen, persists moderator reason and versions 1 → 3, and rejects invalid repeated transitions with 409 | pass |
 | FORUM-FUNC-002 | Permissioned question edit and manager archive | `forum_post_pages.integration.test.ts`; edit persistence/stale/title guards and manager-only terminal archive pass in isolated repository tests | pass for service contract; browser, restart, full actor matrix, and paired Odoo gates remain open |
+| FORUM-FUNC-009 | Forum Tags CRUD | Tags list/search/count, create/edit name/color/forum, exact post-token rename, duplicate/required/invalid/stale guards | pass: `forum_tags.integration.test.ts` |
 
 ## R2 dispatch
 
@@ -67,6 +68,25 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | — | No current-wave QA run | — | — | pending |
+
+## Wave 6 developer handoff — Forum Tags (2026-09-22)
+
+- Odoo source-backed Tags list/form completed from
+  `addons/website_forum/views/forum_tag_views.xml` and
+  `addons/website_forum/models/forum_tag.py`.
+- Focused tag suite: `bun test ./test/forum_tags.integration.test.ts` — 4
+  tests, 22 assertions, passed.
+- Full Forum corpus: `bun test ./test/forum*.integration.test.ts` — 21 tests,
+  155 assertions, passed.
+- `git diff --check` passed. The repository UI audit is blocked by the
+  unrelated pre-existing YAML parse error in
+  `services/blog/pages/blog-workflow.yaml`; no non-Forum path was changed.
+- Authenticated Odoo desktop/mobile launcher evidence confirms the exact live
+  blocker: `website_forum` is not installed in `core3_reference`, so Website →
+  Configuration → Forum → Tags is unavailable. Core3 desktop/mobile route
+  evidence is blocked because the same discovery error prevents port 3001 from
+  binding.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-TAG-001/verification.md`.
 
 ## Sign-off
 

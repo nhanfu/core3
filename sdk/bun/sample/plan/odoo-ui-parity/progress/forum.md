@@ -31,6 +31,25 @@ module-completion claim is made here.
   import/export/print, Temporal, and paired Odoo gates remain open; this is not
   module sign-off.
 
+## Wave 6 — Forum Tags (2026-09-22)
+
+Odoo 19's next source-backed configuration surface is `menu_forum_tag_global` →
+`forum_tag_action` (`/forum-tags`), with list/form views from
+`forum_tag_view_list` and `forum_tag_view_form`. Core3 now separates the Tags
+page and API by matching `page.id`, adds manager create/edit with `forum.write`,
+derives the selected forum name, enforces required/active/duplicate/stale
+guards, refreshes renamed post tag tokens atomically, and adds a durable unique
+index migration.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-TAG-001/verification.md`.
+Focused tag test passed 4/4 tests and 22/22 assertions; the full Forum corpus
+passed 21/21 tests and 155/155 assertions. `git diff --check` passed.
+The repository-wide UI audit and Core3 browser capture are blocked by the
+unrelated pre-existing Blog YAML parse error before backend bind. Paired Odoo
+Tags captures are blocked independently because `website_forum` is not
+installed in `core3_reference`; desktop/mobile launcher captures record both
+facts. No visual sign-off is claimed.
+
 ## Next bounded task
 
 QA should verify the committed edit/archive candidate in authenticated desktop

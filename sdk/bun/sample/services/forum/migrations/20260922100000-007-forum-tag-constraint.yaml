@@ -1,0 +1,11 @@
+version: 0.0.7
+kind: schema
+description: Durable Odoo forum.tag uniqueness by forum and name
+type:
+  postgres:
+    up: CREATE UNIQUE INDEX IF NOT EXISTS forum_tags_forum_name_unique ON forum_tags (forum_id, name);
+    down: DROP INDEX IF EXISTS forum_tags_forum_name_unique;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
