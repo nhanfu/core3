@@ -57,6 +57,21 @@ assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`. No
 aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-063 | Odoo `_inverse_work_contact_details` source and Work Email/Phone form controls | pass; source and paired API/page bindings are asserted |
+| EMP-WF-063 | Existing linked contact email/phone synchronization | pass; employee projection, contact row, audit event, and row versions update durably |
+| EMP-PERM-063 | Actor, current company, missing contact, employee stale, and contact stale guards | pass; invalid requests reject atomically |
+| EMP-DATA-063 | Migration replay and file-backed restart | pass; synchronized contact details and one audit event survive reopen |
+| EMP-UI-063 | Authenticated Odoo/Core3 desktop and mobile | conditional; Odoo captures pass through `bsk`; Core3 is blocked by shared `actions[7].fields must be a non-empty array` discovery failure |
+
+Focused test: `test/employees_work_contact_sync.integration.test.ts` (4
+tests, 24 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-SYNC-001/`. No
+aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

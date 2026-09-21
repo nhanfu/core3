@@ -916,6 +916,20 @@ Focused test: `test/employees_hr_presence.integration.test.ts` (4 tests, 26
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.
 
+## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `_inverse_work_contact_details` maps Work Email/Phone to the API action and page header through `page.id` | pass |
+| Synchronization CRUD | Existing linked contact and employee Work Email/Phone update atomically and create an audit event | pass |
+| Permission and scope | Actor, current company, missing contact, employee stale, and contact stale boundaries reject without partial writes | pass |
+| Persistence | Migration replay and file-backed restart preserve contact details, row versions, and audit history | pass |
+| Browser comparison | Authenticated Odoo desktop/mobile plus Core3 desktop/mobile | conditional; Odoo captures pass through `bsk`; Core3 discovery is blocked by the shared page-schema error |
+
+Focused test: `test/employees_work_contact_sync.integration.test.ts` (4
+tests, 24 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-SYNC-001/`.
+
 ## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001 test plan (2026-09-21)
 
 | Test | Expected evidence | Result |

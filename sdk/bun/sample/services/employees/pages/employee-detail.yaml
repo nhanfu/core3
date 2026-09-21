@@ -62,6 +62,7 @@ components:
       - { id: edit_employee_work_permit_activity, label: Work Permit Activity, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_contact, label: Set Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: create_employee_work_contact, label: Create Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.work_contact_id" }
+      - { id: sync_employee_work_contact, label: Sync Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !!state.employee_detail.work_contact_id" }
       - { id: edit_employee_company, label: Change Company, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_timezone, label: Edit Timezone, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_language, label: Edit Language, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }

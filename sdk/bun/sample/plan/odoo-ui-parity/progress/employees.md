@@ -1218,6 +1218,24 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001 (2026-09-21)
+
+- Selected Odoo's `_inverse_work_contact_details` as the next uncovered
+  behavior after Work Location Type. It synchronizes an existing linked work
+  contact's email and phone when employee work details change; provisioning
+  and relation assignment remain separate completed slices.
+- Added migration `20260922340000-088` and the guarded
+  `sync_employee_work_contact` API action. Page/API YAML remain separate and
+  join through `page.id: employee-detail`; successful writes record a durable
+  synchronization event and advance both row versions.
+- Guards cover actor, active/current-company employee, linked person contact,
+  employee stale version, and contact stale version. Focused verification is
+  **4 tests / 24 assertions**, including restart and migration replay.
+- Authenticated Odoo desktop/mobile evidence is captured through `bsk` under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-SYNC-001/`. Core3
+  discovery is blocked by the shared `actions[7].fields must be a non-empty
+  array` page-schema error. No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001 (2026-09-21)
 
 - Selected Odoo's computed `hr.employee.work_location_type` after the HR

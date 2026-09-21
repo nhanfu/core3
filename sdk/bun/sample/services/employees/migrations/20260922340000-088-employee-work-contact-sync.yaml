@@ -1,0 +1,27 @@
+version: 0.0.88
+kind: data
+description: Persist deterministic Employee work-contact detail synchronization events
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_work_contact_sync_events (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        contact_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        previous_email VARCHAR,
+        previous_phone VARCHAR,
+        email VARCHAR,
+        phone VARCHAR,
+        actor_id VARCHAR,
+        actor_name VARCHAR,
+        employee_row_version BIGINT NOT NULL,
+        contact_row_version BIGINT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    down: |
+      DROP TABLE IF EXISTS employee_work_contact_sync_events;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

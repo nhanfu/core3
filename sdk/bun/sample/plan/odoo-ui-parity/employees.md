@@ -1942,6 +1942,29 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001: Work Contact detail synchronization (2026-09-21)
+
+Odoo's `hr.employee._inverse_work_contact_details` synchronizes Work Email and
+Work Phone to the existing linked `res.partner` when that contact is uniquely
+linked to the employee. The prior Work Contact slices covered relation CRUD
+and provisioning, but not this inverse synchronization behavior.
+
+Core3 adds migration `20260922340000-088` for durable synchronization audit
+events. The API contract owns `sync_employee_work_contact`, which updates the
+company-scoped person contact and employee projection atomically; the page
+contract owns the Sync Work Contact header action. Both remain joined by
+`page.id: employee-detail`. Guards cover `employees.write`, authenticated
+actor, active/current-company employee, linked contact presence and company,
+employee row version, and contact row version.
+
+Focused verification is **4 tests / 24 assertions**, including source mapping,
+CRUD, atomic guard boundaries, migration replay, and file-backed restart.
+Authenticated Odoo `core3_reference` desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-SYNC-001/`. Core3
+browser capture is blocked by the unrelated shared discovery error
+`actions[7].fields must be a non-empty array`; this is recorded explicitly.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001: Employee Work Location Type (2026-09-21)
 
 Odoo's `hr.employee.work_location_type` is a tracked computed selection with
