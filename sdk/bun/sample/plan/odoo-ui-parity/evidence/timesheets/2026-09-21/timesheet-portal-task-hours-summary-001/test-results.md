@@ -9,6 +9,8 @@
   tests — exit 0.
 - UI audit: `bun scripts/audit-order-ui.ts` — 766 pages, 775 routes, 1,562
   datasources; audit passed.
-- Staged exact-path diff check: `git diff --cached --check` — pass after
-  staging only Timesheets files.
-- Post-commit diff check: pending until the local feature commit is created.
+- Timesheets-path diff check for implementation commit `dbcc4b7a`: `git diff
+  dbcc4b7a^ dbcc4b7a --check` — pass for the Timesheets paths; the commit
+  also contains a concurrent Inventory owner scope.
+- Post-commit diff check: pass immediately after the Timesheets-only evidence
+  correction commit was created.
