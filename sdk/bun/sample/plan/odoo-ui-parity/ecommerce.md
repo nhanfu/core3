@@ -2,6 +2,32 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Image Width (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`)
+
+Wave 32 selected Odoo Website Sale's still-open product image width setting.
+The supplied `website` model defines `product_page_image_width` as Hidden,
+33%, 50%, 66%, or 100%; the product template applies the selected value to
+the product-image column class. This is distinct from the completed image
+layout and desktop/mobile ratio policies.
+
+Core3 migrations 128/129 add a durable company-scoped width policy and
+deterministic 50% fixture. Separate `pages/product-page-image-width-policy.yaml`
+and `api/product-page-image-width-policy.yaml` contracts join by
+`ecommerce-product-page-image-width-policy`; the form requires
+`ecommerce.write`, validates the five source values, and uses row-version
+optimistic concurrency. Product Detail has a separate read projection for the
+effective company width and displays the current choice. Migration replay and
+DuckDB restart preserve the setting; invalid, foreign-company, and stale
+writes are rejected.
+
+Focused source/contract, CRUD, permission, validation, projection, replay, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-width-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Image Layout (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`)
 
 Wave 31 selected Odoo Website Sale's still-open product image layout setting.

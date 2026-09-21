@@ -62,6 +62,12 @@ components:
     title_field: company_name
     groups:
       - { title: Product Page Image Layout, columns: 2, fields: [{ field: company_name, label: Company }, { field: image_layout_label, label: Current Layout, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_product_page_image_width
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Product Page Image Width, columns: 2, fields: [{ field: company_name, label: Company }, { field: image_width_label, label: Current Width, type: StatusChip }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variants

@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001
+
+- ECOM-FUNC-061: trace Website Sale `product_page_image_width`, its five
+  values, and the product-template image-column class; verify separate Core3
+  policy and Product Detail page/API contracts.
+- ECOM-WF-072: replay the deterministic 50% policy, switch width values,
+  project the effective Product Detail width, reject invalid/foreign/stale
+  writes, and preserve the policy through migration replay and DuckDB restart.
+- ECOM-PERM-068: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-054: render the width form and Product Detail projection at desktop
+  and mobile and compare the authenticated Odoo image-column behavior; Core3
+  runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001
 
 - ECOM-FUNC-060: trace Website Sale `product_page_image_layout`, its

@@ -1,5 +1,29 @@
 # ecommerce QA ledger
 
+## Product Page Image Width (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines Hidden, 33%, 50%, 66%,
+  and 100%; the product template applies the selected width to the image
+  column class.
+- Core3 lifecycle: pass for this bounded contract. Migrations 128/129 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit width validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_image_width.integration.test.ts --timeout
+  30000` — **2 passed, 25 assertions, 0 failures**.
+- Regression: image-width, image-layout, image-ratio, and Product Detail
+  suites — **11 passed, 103 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **743 pages, 752 routes, and 1472
+  datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-width-001/`.
+
 ## Product Page Image Layout (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines Carousel and Grid; the

@@ -1,5 +1,6 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Product Page Image Width](ecom-catalog-product-page-image-width-001/README.md)
 - [Product Page Image Layout](ecom-catalog-product-page-image-layout-001/README.md)
 - [URL Product Documents](ecom-catalog-product-document-url-001/README.md)
 - [Product Page Image Ratios](ecom-catalog-product-page-image-ratio-001/README.md)

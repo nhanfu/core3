@@ -4,16 +4,30 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 32 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
+(committed locally as `98e78675`; not pushed).
 Latest Wave 31 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
 (committed locally as `d2eebcfc`; not pushed).
 Latest Wave 30 bounded slice: `ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`
 (committed locally as `2115b857`; not pushed).
-Latest committed bounded slice: `2115b857`
-(`ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`, local and not pushed).
+Latest committed bounded slice: `98e78675`
+(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`, local and not pushed).
 Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
+
+Wave 32 selected Odoo Website Sale's five-value product image width setting.
+Migrations 128/129 add the durable company policy and fixture; separate
+policy page/API YAML provides the supported options, permissioned optimistic
+update, validation, and company isolation. Product Detail reads the effective
+company width and displays it. Focused source, contract, CRUD,
+invalid/foreign/stale, projection, replay, and restart tests pass. Core3
+desktop/mobile capture is blocked by unavailable ports 3000/4312/4313 and no
+persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and
+8073. This bounded slice is not module sign-off.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
 

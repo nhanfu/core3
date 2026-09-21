@@ -1,0 +1,14 @@
+version: 0.0.129
+kind: data
+description: deterministic eCommerce product page image width fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_image_width_policies (id, row_version, company_name, image_width)
+      VALUES ('ecommerce-product-page-image-width-my-company', 1, 'My Company', '50_pc')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_image_width_policies WHERE id = 'ecommerce-product-page-image-width-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
