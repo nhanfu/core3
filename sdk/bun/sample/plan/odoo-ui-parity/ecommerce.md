@@ -1,6 +1,31 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded checkout account-policy slice; module sign-off remains open)
+Status: qa-in-progress (bounded shop-default-sort slice; module sign-off remains open)
+
+## Bounded feature — Shop Default Sort (`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`)
+
+Wave 20 selected the next uncovered Website Sale catalog behavior:
+`website.shop_default_sort`. Odoo defines five source-backed choices —
+Featured (`website_sequence asc`), Newest Arrivals (`publish_date desc`), Name
+(A-Z), Price - Low to High, and Price - High to Low. The Website shop menu and
+`action_open_website` lead to `/shop`; `WebsiteSale._get_search_order` uses the
+website default when no explicit order is supplied, and the Website Builder
+updates it through `/shop/config/website`.
+
+Core3 migrations 104/105 add a durable company-scoped default-sort policy and
+deterministic Featured fixture. Separate Shop Default Sort page/API YAML
+exposes the five options and an `ecommerce.write` optimistic update action.
+Authenticated Shop queries and the public `ecommerce.public.shop` operation use
+the policy for deterministic ordering, with company, validation, migration
+replay, and DuckDB restart coverage.
+
+Focused source/contract, ordering workflow, company permission, optimistic
+concurrency, restart, scoped YAML audit, lint, and diff-check evidence is
+recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-default-sort-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Checkout Account Policy (`ECOM-CHECKOUT-ACCOUNT-POLICY-001`)
 

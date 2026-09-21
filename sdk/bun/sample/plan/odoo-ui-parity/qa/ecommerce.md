@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Shop Default Sort (`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`, 2026-09-21)
+
+- Odoo source/menu/controller: pass. `website.shop_default_sort` defines five
+  choices; Website Sale's Shop menu/action opens `/shop`, `_get_search_order`
+  applies the website default when no order is requested, and the Website
+  Builder writes the value through `/shop/config/website`.
+- Core3 lifecycle: pass for this bounded contract. Migrations 104/105 add the
+  durable company-scoped policy and deterministic fixture. Separate page/API
+  YAML provides all five modes and an `ecommerce.write` optimistic update;
+  authenticated and public Shop ordering use the selected policy.
+- Focused verification: `bun test
+  test/ecommerce_shop_default_sort.integration.test.ts` — **3 passed, 29
+  assertions, 0 failures**. Shop regression — **3 passed, 25 assertions, 0
+  failures**.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` passed. Full `bun run audit` is blocked by the unrelated
+  existing `pages/products.yaml` error `components[1].title is not allowed`.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-default-sort-001/`.
+
 ## Checkout Account Policy (`ECOM-CHECKOUT-ACCOUNT-POLICY-001`, 2026-09-21)
 
 - Odoo source/page: pass. `res.config.settings.account_on_checkout` is the

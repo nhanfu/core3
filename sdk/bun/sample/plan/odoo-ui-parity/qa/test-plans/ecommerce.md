@@ -10,6 +10,21 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CATALOG-SHOP-DEFAULT-SORT-001
+
+- ECOM-FUNC-049: trace Odoo `website.shop_default_sort`, Website Shop
+  menu/action, `_get_search_order`, template default-sort state, and Website
+  Builder update route; verify the Core3 page/API pairing.
+- ECOM-WF-060: replay the Featured fixture, update each supported sort mode,
+  order the authenticated/public catalog deterministically, and preserve the
+  selected mode across migration replay and restart.
+- ECOM-PERM-056: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, unsupported-mode, and
+  stale-row updates without changing the current order policy.
+- ECOM-UI-042: render the Shop Default Sort form and selected ordering at
+  desktop and mobile; Core3 browser and Odoo comparison remain blocked by
+  runtime availability and `/shop` HTTP 404.
+
 ## ECOM-CHECKOUT-ACCOUNT-POLICY-001
 
 - ECOM-FUNC-048: trace Odoo `res.config.settings.account_on_checkout`, the

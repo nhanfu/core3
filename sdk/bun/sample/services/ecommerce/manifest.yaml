@@ -105,3 +105,7 @@ menu:
           label: Checkout Account Policy
           icon: users
           permission: ecommerce.read
+        - path: /ecommerce/shop-default-sort
+          label: Shop Default Sort
+          icon: sort
+          permission: ecommerce.read

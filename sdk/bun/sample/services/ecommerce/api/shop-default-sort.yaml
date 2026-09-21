@@ -1,0 +1,36 @@
+page: { id: ecommerce-shop-default-sort }
+datasources:
+  - id: ecommerce_shop_default_sort
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_SORT_UNAUTHENTICATED, message: Sign in to view shop sorting. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_SORT_FORBIDDEN, message: You do not have permission to view shop sorting. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_SORT_NOT_FOUND, message: Shop sort policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_SORT_UNAVAILABLE, message: Shop sorting is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, default_sort, CASE default_sort WHEN 'website_sequence asc' THEN 'Featured' WHEN 'publish_date desc' THEN 'Newest Arrivals' WHEN 'name asc' THEN 'Name (A-Z)' WHEN 'list_price asc' THEN 'Price - Low to High' WHEN 'list_price desc' THEN 'Price - High to Low' END AS sort_label, updated_at FROM ecommerce_shop_default_sort_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_shop_default_sort_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('website_sequence asc', 'Featured'), ('publish_date desc', 'Newest Arrivals'), ('name asc', 'Name (A-Z)'), ('list_price asc', 'Price - Low to High'), ('list_price desc', 'Price - High to Low')) sorts(value, label)"
+actions:
+  - id: edit_ecommerce_shop_default_sort
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Default Sort
+    action: ecommerce.shop.default_sort.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_default_sort, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, default_sort]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_default_sort_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_SORT_STALE, message: This shop sort policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :default_sort IN ('website_sequence asc', 'publish_date desc', 'name asc', 'list_price asc', 'list_price desc')", status: 422, code: ECOMMERCE_SHOP_SORT_INVALID, message: Choose one of the supported shop sort orders. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_default_sort_policies SET default_sort = :default_sort, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_SORT_STALE, message: This shop sort policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, default_sort, CASE default_sort WHEN 'website_sequence asc' THEN 'Featured' WHEN 'publish_date desc' THEN 'Newest Arrivals' WHEN 'name asc' THEN 'Name (A-Z)' WHEN 'list_price asc' THEN 'Price - Low to High' WHEN 'list_price desc' THEN 'Price - High to Low' END AS sort_label FROM ecommerce_shop_default_sort_policies WHERE id = :id" }
+    fields:
+      - { field: default_sort, label: Default Shop Sort, type: select, options_source: ecommerce_shop_default_sort_options, required: true }

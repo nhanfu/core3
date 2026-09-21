@@ -1,0 +1,11 @@
+title: Shop Default Sort
+page: { id: ecommerce-shop-default-sort, route: /ecommerce/shop-default-sort, breadcrumb: [eCommerce, Configuration, Shop Default Sort], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_shop_default_sort
+    editable: true
+    title_field: company_name
+    header_actions:
+      - { id: edit_ecommerce_shop_default_sort, label: Save Sort, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Shop Listing, columns: 2, fields: [{ field: company_name, label: Company }, { field: sort_label, label: Current Sort, type: StatusChip }, { field: default_sort, label: Default Shop Sort, type: select, options_source: ecommerce_shop_default_sort_options }] }

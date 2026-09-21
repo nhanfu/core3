@@ -1,0 +1,17 @@
+version: 0.0.105
+kind: data
+description: deterministic Website Sale shop default sort fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_default_sort_policies
+        (id, row_version, company_name, default_sort)
+      VALUES
+        ('ecommerce-shop-default-sort-my-company', 1, 'My Company', 'website_sequence asc')
+      ON CONFLICT (company_name) DO UPDATE SET
+        default_sort = EXCLUDED.default_sort;
+    down: DELETE FROM ecommerce_shop_default_sort_policies WHERE company_name = 'My Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

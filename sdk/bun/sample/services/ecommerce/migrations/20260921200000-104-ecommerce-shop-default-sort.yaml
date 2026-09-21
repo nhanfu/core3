@@ -1,0 +1,23 @@
+version: 0.0.104
+kind: schema
+description: durable Website Sale shop default sort policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_shop_default_sort_policies (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        default_sort VARCHAR NOT NULL DEFAULT 'website_sequence asc',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (company_name),
+        CHECK (default_sort IN ('website_sequence asc', 'publish_date desc', 'name asc', 'list_price asc', 'list_price desc'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_shop_default_sort_policies_scope_idx
+        ON ecommerce_shop_default_sort_policies(company_name, default_sort);
+    down: DROP TABLE IF EXISTS ecommerce_shop_default_sort_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

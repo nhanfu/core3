@@ -4,8 +4,30 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `76627d8b0e30ec48f4d10be0fc838db73b879c1d`
-(`ECOM-CHECKOUT-ACCOUNT-POLICY-001`, not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-SHOP-DEFAULT-SORT-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-SHOP-DEFAULT-SORT-001`
+
+Wave 20 selected Odoo Website Sale's `website.shop_default_sort`, which is
+still absent from Core3's hard-coded Featured shop ordering. Odoo's Website
+Builder supports Featured, Newest Arrivals, Name (A-Z), Price - Low to High,
+and Price - High to Low; Core3 migrations 104/105 add the durable
+company-scoped policy and deterministic fixture. Separate page/API YAML
+provides the mode catalog and `ecommerce.write` optimistic update; both the
+authenticated Shop datasource and public shop operation honor the selected
+order.
+
+Focused verification passed **3 tests, 29 assertions, 0 failures**; the Shop
+regression passed **3 tests, 25 assertions, 0 failures**. The adjacent full
+Products test is blocked by an unrelated existing `pages/products.yaml`
+schema error (`components[1].title is not allowed`); no other-owner file was
+changed. Scoped Ecommerce YAML validation, scoped ESLint, and
+`git diff --check` are recorded with evidence. Full `bun run audit` remains
+blocked by that unrelated repository-wide schema error. Core3 authenticated
+desktop/mobile capture is blocked by missing `js_repl` and unavailable ports
+3000/4312/4313; Odoo `/shop` is exact HTTP 404 on 8069/8073.
+Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CHECKOUT-ACCOUNT-POLICY-001`
 
