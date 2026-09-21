@@ -132,3 +132,10 @@ Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-
 The All Timesheets Task search-field source comparison and durable contract are covered by `test/timesheets_all_task_filter.integration.test.ts` (3 tests / 21 expectations). The test exercises page/API separation, persisted task filtering, active task options, manager permission, current-company and empty-fixture guards, and file-backed restart.
 
 Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-task-filter/`: desktop applies Task = Create new components and renders `1-25 / 25` with `38:00`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile evidence is blocked before authentication because shared page discovery rejects `actions[1].title is not allowed`, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
+
+## Wave 18 execution — `TIMESHEET-ALL-MY-FILTER-001`
+
+The All Timesheets actor-filter source comparison and durable contract are covered by `test/timesheets_all_my_filter.integration.test.ts` (3 tests / 18 expectations). The test exercises page/API separation, persisted actor filtering, current-company and empty-fixture guards, manager permission, and file-backed restart.
+
+Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-my-filter/`: desktop applies My Timesheets and renders `1-42 / 42` for Mitchell Admin; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile evidence is blocked before authentication because backend `3001/api/modules` did not expose `/api/modules` during the bounded startup probe, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
+- The repository audit is also blocked before completion by an unrelated page-schema options error; exact output is preserved in `audit-blocker.txt`. No other-owner page was edited.

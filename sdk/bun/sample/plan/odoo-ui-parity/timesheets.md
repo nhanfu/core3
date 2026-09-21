@@ -1590,3 +1590,14 @@ Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml
 Focused coverage is `test/timesheets_all_task_filter.integration.test.ts`: 3 tests / 21 expectations for source mapping, paired contracts, task options, task/company/empty guards, manager permission, and file-backed restart. The existing All Timesheets focused regression is rerun with this slice.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-task-filter/`: desktop applies Task = Create new components and renders `1-25 / 25` with `38:00`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile capture is blocked before authentication because shared page discovery rejects `actions[1].title is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
+
+## Wave 18 All Timesheets My filter — `TIMESHEET-ALL-MY-FILTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is Odoo's actor-scoped `mine` search filter labelled `My Timesheets` in `hr_timesheet_line_search`, used by the `timesheet_action_all` All Timesheets action. This is distinct from the completed Employee, Project, and Task record filters and from the separate personal Timesheets route.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` data/action-only, joined by `page.id: all-timesheets`. The page adds the My Timesheets filter, and the API applies the actor predicate against `current_user_name` while retaining manager permission, company, and empty-fixture guards. Existing persisted `timesheet_entries.employee_name` ownership supplies durable state, so no duplicate migration was added.
+
+Focused coverage is `test/timesheets_all_my_filter.integration.test.ts`: 3 tests / 18 expectations for source mapping, paired contracts, actor/company/empty guards, manager permission, and file-backed restart. The existing All Timesheets focused regression is rerun with this slice.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-my-filter/`: desktop applies My Timesheets and renders `1-42 / 42` for Mitchell Admin; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile capture is blocked before authentication because the bounded startup probe never exposed backend `3001/api/modules`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
+- The repository audit is blocked before completion by an unrelated page-schema options error; exact output is under `evidence/timesheets/2026-09-21/timesheet-all-my-filter/audit-blocker.txt`. No other-owner page was edited.

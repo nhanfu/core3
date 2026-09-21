@@ -1,0 +1,2 @@
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit=124. Core3 printed backend 3001, frontend 3002, Event mediator, and Vite ready on 3002, but the bounded probe never received an HTTP response from `/api/modules` (3001=000 and 3002=000 after timeout). The runtime children were terminated after the probe. No authenticated Core3 desktop/mobile capture or sign-off is claimed.

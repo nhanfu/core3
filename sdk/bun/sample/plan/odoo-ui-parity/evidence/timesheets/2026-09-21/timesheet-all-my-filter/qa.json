@@ -1,0 +1,17 @@
+{
+  "feature_id": "TIMESHEET-ALL-MY-FILTER-001",
+  "source": "hr_timesheet_line_search.mine and timesheet_action_all",
+  "page_id": "all-timesheets",
+  "tests": "3 passed / 18 expectations",
+  "odoo": {
+    "desktop": "authenticated My Timesheets filter applied for Mitchell Admin; 1-42 / 42; no browser errors",
+    "mobile": "authenticated responsive Kanban; no browser errors",
+    "artifacts": ["odoo-desktop.png", "odoo-mobile.png", "odoo-results.json"]
+  },
+  "core3": {
+    "desktop": "blocked before authentication: backend 3001 did not expose /api/modules during bounded startup probe",
+    "mobile": "blocked before authentication: backend 3001 did not expose /api/modules during bounded startup probe",
+    "artifact": "core3-readiness.txt"
+  },
+  "signoff": false
+}

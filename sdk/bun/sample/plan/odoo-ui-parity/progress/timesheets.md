@@ -749,6 +749,15 @@ sign-off is claimed.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-task-filter/`; desktop filters Create new components to `1-25 / 25`, and mobile renders responsive Kanban without browser errors.
 - Core3 browser capture is blocked before authentication by the shared page-discovery error `actions[1].title is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
 
+## 2026-09-21 — `TIMESHEET-ALL-MY-FILTER-001`
+
+- Selected Odoo's actor-scoped `mine` / My Timesheets search filter on the All Timesheets action, distinct from the completed record filters and personal route.
+- Added the separate page/API contract through `page.id: all-timesheets`; the page declares the actor filter and the API enforces the persisted employee-owner predicate with current-company and empty-fixture guards.
+- Focused feature coverage passed 3/3 tests with 18 expectations, including actor/company/empty guards, manager permission, and file-backed restart.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-my-filter/`; desktop applies My Timesheets and renders `1-42 / 42`, and mobile renders responsive Kanban without browser errors.
+- Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+- Repository audit is blocked before completion by an unrelated page-schema options error; exact output is in `audit-blocker.txt`. No other-owner page was edited.
+
 ## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
 
 - Selected the structured Project filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from the completed Employee filter and existing Project grouping metadata.

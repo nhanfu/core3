@@ -1,0 +1,2 @@
+Command: bun run audit
+Result: exit=1 before the UI audit completed. Shared page discovery rejected an unrelated page with `PageSchemaError: Invalid page definition: components[0].filters[0].options[0].value is not allowed; components[0].filters[0].options[0].id must be a non-empty string; components[0].filters[0].options[1].value is not allowed; components[0].filters[0].options[1].id must be a non-empty string`. No other-owner page was edited for this Timesheets slice.
