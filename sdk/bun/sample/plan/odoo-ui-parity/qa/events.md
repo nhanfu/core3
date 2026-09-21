@@ -20,7 +20,10 @@
   evidence folder.
 - Core3 visual evidence: **NOT CLAIMED**. No new Core3 screenshot was needed
   for the requested Odoo reference capture; broader Events visual and actor
-  permission gates remain open.
+  permission gates remain open. The direct badge download endpoint passes the
+  restart test, but browser-click download remains open because the shared
+  client attachment URL resolver has no Events-kind mapping; that shared path
+  is outside this Events-only change.
 
 Evidence: `odoo-ui-parity/evidence/events/2026-09-22/event-notes-documents/`.
 
