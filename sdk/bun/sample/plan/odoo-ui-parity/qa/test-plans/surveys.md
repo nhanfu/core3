@@ -756,3 +756,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.
+
+## `SURVEYS-QUESTION-EDIT-001` — Survey Question metadata edit
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-066 | authenticated form | Question detail → Edit | Separate API/page YAML exposes Odoo question metadata editing joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-065 | permission/actor/state/validation | Missing actor/question, archived or stale parent/question, invalid title/type/sequence | Reject before mutation with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-063 | persistence/concurrency/restart | Edit → stale replay → file-backed reopen | Question and parent versions advance atomically; edit survives restart and replay cannot mutate twice | test-results.md, focused test | pass |
+| SURVEYS-UI-064 | authenticated responsive/reference | Question form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.

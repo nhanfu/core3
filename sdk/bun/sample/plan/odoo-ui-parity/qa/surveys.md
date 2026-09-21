@@ -1671,3 +1671,27 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/.
+
+## Bounded QA run: `SURVEYS-QUESTION-EDIT-001` — 2026-09-21
+
+- Source/UI: Odoo's `survey_question_form` edits `survey.question` title,
+  question type, and ordered question metadata; the model persists `title`,
+  `question_type`, and `sequence` and orders by `sequence,id`.
+- Persistence/contracts: migration `0.0.65` adds question `row_version` and
+  `updated_at`. `api/question-detail.yaml` owns the server form and
+  `pages/question-detail.yaml` retains only the rendered header reference;
+  both join at `page.id: survey-question-detail`.
+- Guards: `surveys.write`, authenticated actor, missing question, archived or
+  stale parent, stale question, title/type/sequence validation, and atomic
+  parent/question version advancement are enforced. The Odoo source has no
+  Survey `company_id`, so company scoping is not applicable.
+- Verification: **3 focused tests / 24 assertions**, **12 adjacent question
+  CRUD/reorder tests / 82 assertions**, and **23 broader Surveys integration
+  tests / 220 assertions** pass. Audit reports **756 pages, 765 routes, and
+  1,534 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072
+  were closed. Authenticated Core3 desktop/mobile and paired Odoo captures are
+  unavailable; no visual or Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.

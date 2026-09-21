@@ -48,14 +48,3 @@ actions:
         const app = await import('/app.ts');
         await app.navigate('/surveys/question-detail', { id: String(result.id) });
       }
-  - id: edit_survey_question
-    type: server_form
-    permission: surveys.write
-    title: Edit Question
-    action: surveys.questions.update
-    handler: yaml_mutation
-    operation: update
-    prefill: state.survey_question_detail
-    refresh: [survey_question_detail, question_suggested_values]
-    mutation: { operation: update, table: survey_questions, key_field: id, fields: [question_text, question_type, sequence, required, answer_options], required: [question_text], result: { query: "SELECT * FROM survey_questions WHERE id = :id" } }
-    fields: [{ field: question_text, label: Question, type: text, required: true }, { field: question_type, label: Type, type: select, options: [{ value: Text, label: Text }, { value: Choice, label: Choice }, { value: Multiple Choice, label: Multiple Choice }, { value: Rating, label: Rating }, { value: Numerical, label: Numerical }] }, { field: sequence, label: Sequence, type: number }, { field: required, label: Required, type: checkbox }, { field: answer_options, label: Suggested Answers, type: text }]

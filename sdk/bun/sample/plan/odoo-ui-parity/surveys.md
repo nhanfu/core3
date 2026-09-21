@@ -2503,3 +2503,34 @@ Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
 authenticated desktop/mobile browser capture and paired Odoo comparison were
 unavailable. No visual or module sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.
+
+## Wave 41 — `SURVEYS-QUESTION-EDIT-001`
+
+The next uncovered source-backed Survey action is editing a `survey.question`.
+Odoo's `survey_question_form` is an editable `survey.question` form with a
+required `title`, selectable `question_type`, and persisted question metadata;
+the model also orders questions by `sequence,id` (`addons/survey/views/survey_question_views.xml:5-37`,
+`addons/survey/models/survey_question.py:45-97`).
+
+Core3 moves `edit_survey_question` into the `survey-question-detail` API
+fragment while retaining the page's header action reference, joined by the
+same `page.id`. Migration `0.0.65` adds durable question `row_version` and
+`updated_at` fields. The transaction edits question text/type/sequence/
+required/suggested-answer metadata, advances both question and parent survey
+versions, and guards permission, actor, missing, archived/stale parent, stale
+question, type, title, and sequence boundaries. The inspected Odoo Survey
+source has no `company_id`, so company scoping is not applicable to this
+slice.
+
+Focused verification is **3 passed / 24 assertions**; the adjacent question
+create/edit/duplicate/reorder regression is **12 passed / 82 assertions**, and
+the broader Surveys integration file is **23 passed / 220 assertions**. The UI
+audit passes with **756 pages, 765 routes, and 1,534 datasources**; scoped
+ESLint and `git diff --check` pass.
+
+Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. The primary Odoo Surveys app is also recorded as uninstalled in
+the live limitation above. No visual or paired Odoo sign-off is claimed.
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.

@@ -1,0 +1,16 @@
+version: 0.0.65
+description: Durable question version and write timestamp for Odoo Survey question edits
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      UPDATE survey_questions SET row_version = COALESCE(row_version, 1), updated_at = COALESCE(updated_at, TIMESTAMP '2026-01-15 09:00:00');
+    down: |
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS updated_at;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

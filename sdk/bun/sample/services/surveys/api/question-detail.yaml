@@ -3,11 +3,47 @@ datasources:
   - id: survey_question_detail
     single: true
     permission: surveys.read
-    query: "SELECT q.id, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name, s.row_version AS survey_row_version FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
+    query: "SELECT q.id, q.row_version, q.updated_at, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name, s.row_version AS survey_row_version FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
   - id: question_suggested_values
     permission: surveys.read
     query: "SELECT id, question_text, value, sequence, score, matrix_row, matrix_column FROM survey_suggested_values WHERE question_id = :id ORDER BY sequence, id"
 actions:
+  - id: edit_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Edit Question
+    action: surveys.questions.update
+    handler: yaml_mutation
+    operation: update
+    params:
+      id: '{state.survey_question_detail.id}'
+      expected_question_row_version: '{state.survey_question_detail.row_version}'
+      expected_survey_row_version: '{state.survey_question_detail.survey_row_version}'
+    prefill: state.survey_question_detail
+    refresh: [survey_question_detail, question_suggested_values]
+    fields:
+      - { field: question_text, label: Question, type: text, required: true }
+      - { field: question_type, label: Type, type: select, options: [{ value: Text, label: Text }, { value: Char, label: Single Line Text }, { value: Choice, label: Choice }, { value: Multiple Choice, label: Multiple Choice }, { value: Rating, label: Rating }, { value: Numerical, label: Numerical }, { value: Date, label: Date }, { value: Datetime, label: Datetime }, { value: Scale, label: Scale }, { value: Matrix, label: Matrix }] }
+      - { field: sequence, label: Sequence, type: number, required: true }
+      - { field: required, label: Required, type: checkbox }
+      - { field: answer_options, label: Suggested Answers, type: text }
+    mutation:
+      before_steps:
+        - query: "SELECT q.survey_id AS survey_id FROM survey_questions q WHERE q.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT q.id FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id", status: 404, code: SURVEY_QUESTION_EDIT_NOT_FOUND, message: Question not found. }
+        - { query: "SELECT s.id FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id AND s.state <> 'Archived' AND s.row_version = :expected_survey_row_version", status: 409, code: SURVEY_QUESTION_EDIT_PARENT_CHANGED, message: This survey changed or is archived. Reload before editing the question. }
+        - { query: "SELECT q.id FROM survey_questions q WHERE q.id = :id AND q.row_version = :expected_question_row_version", status: 409, code: SURVEY_QUESTION_EDIT_STALE, message: This question changed before it was saved. Reload it and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_QUESTION_EDIT_ACTOR_REQUIRED, message: An authenticated survey actor is required to edit a question. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:question_text AS VARCHAR), ''))) BETWEEN 1 AND 4000", status: 422, code: SURVEY_QUESTION_EDIT_TITLE_REQUIRED, message: Question text must be between 1 and 4000 characters. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:question_type AS VARCHAR)), ''), '') IN ('Text', 'Char', 'Choice', 'Multiple Choice', 'Rating', 'Numerical', 'Date', 'Datetime', 'Scale', 'Matrix')", status: 422, code: SURVEY_QUESTION_EDIT_TYPE_INVALID, message: Select a supported question type. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:sequence AS INTEGER) BETWEEN 1 AND 100000", status: 422, code: SURVEY_QUESTION_EDIT_SEQUENCE_INVALID, message: Sequence must be a positive integer. }
+      steps:
+        - { query: "UPDATE survey_questions SET question_text = TRIM(CAST(:question_text AS VARCHAR)), question_type = TRIM(CAST(:question_type AS VARCHAR)), sequence = CAST(:sequence AS INTEGER), required = COALESCE(CAST(:required AS BOOLEAN), false), answer_options = COALESCE(CAST(:answer_options AS VARCHAR), ''), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_question_row_version", expect_changed: true, status: 409, code: SURVEY_QUESTION_EDIT_STALE, message: This question changed before it was saved. Reload it and try again. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_QUESTION_EDIT_PARENT_CHANGED, message: This survey changed while the question was being edited. }
+      result:
+        query: "SELECT q.id, q.row_version, q.updated_at, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name, s.row_version AS survey_row_version FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
   - id: duplicate_question
     type: server
     permission: surveys.write

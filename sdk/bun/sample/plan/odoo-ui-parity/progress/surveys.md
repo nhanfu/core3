@@ -1251,3 +1251,27 @@ paired reference evidence.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/`.
+
+## 2026-09-21 — `SURVEYS-QUESTION-EDIT-001`
+
+Selected the next uncovered Odoo `survey.question` form behavior: edit the
+question title/type/sequence/required/suggested-answer metadata. The action is
+now API-owned in `api/question-detail.yaml` and referenced by the existing
+`pages/question-detail.yaml` header through matching `page.id`.
+
+Migration `0.0.65` adds durable question `row_version` and `updated_at` audit
+fields. The transaction requires `surveys.write` and an actor, rejects missing
+questions, archived or stale survey parents, stale question versions, invalid
+titles/types/sequences, advances both versions, and survives file-backed
+restart. Odoo Surveys has no `company_id` in the inspected model/view/security
+source, so company scope is not applicable.
+
+Verification: **3 focused tests / 24 assertions**, **12 adjacent question
+CRUD/reorder tests / 82 assertions**, and **23 broader Surveys integration
+tests / 220 assertions** pass. UI audit passes with **756 pages, 765 routes,
+and 1,534 datasources**; scoped ESLint and diff-check pass. Core3 ports
+3000/3001/3390/3391 and Odoo port 8072 are closed, blocking authenticated
+desktop/mobile and paired Odoo evidence; no visual sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.
