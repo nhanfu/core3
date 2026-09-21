@@ -990,3 +990,26 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-WAREHOUSE-RESUPPLY-001/`.
 - Automatic Odoo route generation is intentionally outside this bounded
   setting slice; full Inventory sign-off remains open.
+
+## `INV-TRANSFER-PRINT-001` — Transfer Print reports (2026-09-21)
+
+- Selected the smallest uncovered transfer/report behavior after warehouse
+  Resupply From: Odoo's state-specific transfer-form Print actions. Ready uses
+  `stock.picking.do_print_picking` and `stock.action_report_picking`; Done uses
+  the bound `stock.action_report_delivery` Delivery Slip report.
+- Added migration `20260922080000-058-inventory-transfer-print.yaml` with a
+  DuckDB-compatible `printed` column, durable print-run ledger, and deterministic
+  Ready/Done fixtures. Existing transfer-detail page/API YAML remains separated
+  and joined by `page.id: transfer-detail`.
+- Core3 exposes state-specific Print actions and print history. Ready persists
+  `printed = TRUE`; both paths record report name/action, PDF output, actor,
+  timeline, company, and row-version guards. Focused tests cover source
+  mapping, durable lifecycle, state/company/actor/move-line/stale guards,
+  permission, migration replay, and file-backed restart.
+- Verification: feature suite 4 tests / 35 assertions; full transfer regression
+  suite 4 tests / 50 assertions; audit PASS at 723 pages / 732 routes /
+  1,402 datasources; scoped ESLint and diff-check PASS.
+- Authenticated Core3 desktop/mobile Ready and Done evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-PRINT-001/`. Odoo paired visual
+  and action evidence is blocked by HTTP 303 to `/web/login`; no Odoo parity or
+  module sign-off is claimed.

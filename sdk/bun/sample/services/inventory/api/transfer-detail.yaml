@@ -45,6 +45,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_SCRAP_UNAVAILABLE, message: Transfer scrap history is temporarily unavailable. } }
     query: "SELECT r.id, r.picking_id, r.scrap_id, r.company_name, r.product_name, CAST(r.scrap_qty AS DOUBLE) AS scrap_qty, r.product_uom, r.source_location, r.scrap_location, r.should_replenish, r.requested_by, r.note, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_transfer_scrap_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
+  - id: inventory_transfer_print_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_PRINTS_UNAVAILABLE, message: Transfer print history is temporarily unavailable. } }
+    query: "SELECT r.id, r.picking_id, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM inventory_transfer_print_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.printed_at DESC, r.id DESC"
 
 actions:
   - id: upload_inventory_transfer_attachment
@@ -281,6 +286,54 @@ actions:
     fields:
       - { field: label_type, label: Labels to print, type: select, options: [{ value: products, label: Product Labels }], default: products, required: true }
       - { field: output_format, label: Output, type: select, options: [{ value: PDF, label: PDF }], default: PDF, required: true }
+  - id: print_inventory_transfer_operations
+    type: server
+    permission: inventory.write
+    action: stock.picking.do_print_picking
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_timeline, inventory_transfer_print_runs]
+    mutation:
+      generated: [print_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id, 'print-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_print_runs WHERE picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_PRINT_COMPANY, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_PRINT_NOT_ALLOWED, message: Only a current Ready transfer can print Picking Operations. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_PRINT_ACTOR_REQUIRED, message: A signed-in inventory operator is required to print the transfer. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_picking_moves WHERE picking_id = :id AND quantity > 0)", status: 422, code: INVENTORY_TRANSFER_PRINT_NO_LINES, message: Add a move line before printing this transfer. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_print_runs(id, picking_id, company_name, report_name, report_action, output_format, printed_by, printed_at, row_version) SELECT :print_run_id, p.id, p.company_name, 'Picking Operations', 'stock.action_report_picking', 'PDF', :current_user_name, TIMESTAMP '2026-01-15 08:00:00', 1 FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_PRINT_FAILED, message: Picking Operations could not be prepared. }
+        - { query: "UPDATE inventory_pickings SET printed = TRUE, row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND state = 'Ready' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before Picking Operations could be prepared. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.printed', 'Print prepared', 'Picking Operations report prepared as PDF')" }
+      result: { query: "SELECT r.id, r.picking_id, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, r.row_version FROM inventory_transfer_print_runs r WHERE r.id = :print_run_id" }
+  - id: print_inventory_transfer_delivery_slip
+    type: server
+    permission: inventory.read
+    action: stock.action_report_delivery
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_timeline, inventory_transfer_print_runs]
+    mutation:
+      generated: [print_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id, 'print-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_print_runs WHERE picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_PRINT_COMPANY, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Done' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_PRINT_NOT_ALLOWED, message: Only a current Done transfer can print a Delivery Slip. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_PRINT_ACTOR_REQUIRED, message: A signed-in inventory user is required to print the transfer. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_print_runs(id, picking_id, company_name, report_name, report_action, output_format, printed_by, printed_at, row_version) SELECT :print_run_id, p.id, p.company_name, 'Delivery Slip', 'stock.action_report_delivery', 'PDF', :current_user_name, TIMESTAMP '2026-01-15 08:00:00', 1 FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_PRINT_FAILED, message: Delivery Slip could not be prepared. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.printed', 'Print prepared', 'Delivery Slip report prepared as PDF')" }
+      result: { query: "SELECT r.id, r.picking_id, r.company_name, r.report_name, r.report_action, r.output_format, r.printed_by, r.row_version FROM inventory_transfer_print_runs r WHERE r.id = :print_run_id" }
   - id: mark_inventory_transfer_todo
     type: server
     permission: inventory.write

@@ -37,14 +37,14 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
 
     const detail = yaml('pages/transfer-detail.yaml').components.find((component: any) => component.type === 'OdooFormView');
     expect(detail.statusbar.map((state: any) => state.value)).toEqual(['Draft', 'Waiting', 'Ready', 'Done', 'Cancelled']);
-    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Edit details', 'Delete', 'Mark as Todo', 'Check Availability', 'Put in Pack', 'Unreserve', 'Validate', 'Create Backorder', 'Lock / Unlock', 'Labels', 'Return', 'Cancel']);
+    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Edit details', 'Delete', 'Mark as Todo', 'Check Availability', 'Put in Pack', 'Unreserve', 'Validate', 'Create Backorder', 'Lock / Unlock', 'Labels', 'Print', 'Print', 'Scrap', 'Return', 'Cancel']);
     expect(action('edit_inventory_transfer')).toMatchObject({ type: 'server_form', action: 'inventory.pickings.update', handler: 'yaml_mutation', operation: 'update' });
     expect(action('edit_inventory_transfer').mutation).toMatchObject({ table: 'inventory_pickings', fields: ['contact_name', 'scheduled_date', 'source_document'], concurrency: { required: true } });
     expect(action('unreserve_inventory_transfer')).toMatchObject({ action: 'inventory.pickings.unreserve', permission: 'inventory.write', operation: 'unreserve' });
     expect(action('unreserve_inventory_transfer').mutation).toMatchObject({ generated: ['message_id'] });
     expect(action('unreserve_inventory_transfer')).toMatchObject({ permission: 'inventory.write' });
     expect(detail.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Operations', 'Additional Info', 'Note']);
-    expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Transfers', 'Adjustments', 'Procurement', 'Reporting', 'Products', 'Configuration']);
+    expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Overview', 'Transfers', 'Adjustments', 'Procurement', 'Reporting', 'Products', 'Configuration']);
   });
 
   test('unreserves a ready transfer with current-row and permission guards', async () => {

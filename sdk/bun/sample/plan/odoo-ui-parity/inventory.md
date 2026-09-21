@@ -1775,6 +1775,38 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Transfer Print reports — `INV-TRANSFER-PRINT-001` (2026-09-21)
+
+This bounded Wave 21 slice covers the transfer-form Print workflow that remained
+outside the completed labels and email slices. Odoo's authenticated transfer
+form declares `do_print_picking` as Print for assigned transfers at
+`addons/stock/views/stock_picking_views.xml:127`; its implementation at
+`addons/stock/models/stock_picking.py:1175-1177` marks the picking printed and
+prepares `stock.action_report_picking`. Done transfers use the second Print
+button at `stock_picking_views.xml:128`, bound to the
+`stock.action_report_delivery` Delivery Slip report defined at
+`addons/stock/report/stock_report_views.xml:14-25`.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and joins it to
+`api/transfer-detail.yaml` by `page.id: transfer-detail`. The page exposes the
+state-specific Print buttons and a responsive print-history list. The API
+exposes manager/write `stock.picking.do_print_picking` for Ready transfers and
+read `stock.action_report_delivery` for Done transfers. Migration
+`20260922080000-058-inventory-transfer-print.yaml` adds the nullable-compatible
+`printed` field, durable `inventory_transfer_print_runs` ledger, and deterministic
+Ready/Done fixtures. Both actions enforce company, authenticated actor, state,
+and row-version guards; Ready additionally requires a positive move line and
+persists `printed = TRUE` to mirror Odoo.
+
+Focused verification is recorded in
+`test/inventory_transfer_print.integration.test.ts`: 4 tests / 35 assertions,
+plus the full transfer regression suite: 4 tests / 50 assertions. Evidence under
+`evidence/inventory/2026-09-21/INV-TRANSFER-PRINT-001/` contains authenticated
+Core3 desktop/mobile Ready and Done captures, browser results, source
+comparison, and the exact Odoo HTTP 303 login blocker. The Core3 audit, lint,
+and diff-check passed. Full Inventory sign-off remains open; no paired
+authenticated Odoo Print/report comparison is claimed.
+
 ## Configuration > Warehouses > Resupply From — `INV-WAREHOUSE-RESUPPLY-001` (2026-09-21)
 
 This bounded Wave 20 slice covers Odoo's warehouse `Resupply From` setting,

@@ -1,0 +1,44 @@
+version: 0.0.58
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_pickings ADD COLUMN IF NOT EXISTS printed BOOLEAN;
+      UPDATE inventory_pickings SET printed = FALSE WHERE printed IS NULL;
+      CREATE TABLE IF NOT EXISTS inventory_transfer_print_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        report_action VARCHAR NOT NULL,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        printed_by VARCHAR NOT NULL,
+        printed_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(picking_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_print_runs_picking_idx
+        ON inventory_transfer_print_runs(picking_id, printed_at, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-print-0001', 'operation-deliveries', 'WH/OUT/PRINT/0001', 'Print QA Customer', DATE '2026-01-15', 'SO/PRINT/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-print-0001-move-001', 'delivery-print-0001', '[E-COM08] Storage Box', 2, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-print-0002', 'operation-deliveries', 'WH/OUT/PRINT/0002', 'Print QA Customer', DATE '2026-01-15', 'SO/PRINT/0002', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Done')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-print-0002-move-001', 'delivery-print-0002', '[E-COM08] Storage Box', 2, 2)
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE inventory_pickings SET printed = FALSE WHERE printed IS NULL;
+    down: |
+      DELETE FROM inventory_transfer_print_runs WHERE picking_id IN ('delivery-print-0001', 'delivery-print-0002');
+      DELETE FROM inventory_picking_moves WHERE picking_id IN ('delivery-print-0001', 'delivery-print-0002');
+      DELETE FROM inventory_pickings WHERE id IN ('delivery-print-0001', 'delivery-print-0002');
+      DROP TABLE IF EXISTS inventory_transfer_print_runs;
+      ALTER TABLE inventory_pickings DROP COLUMN IF EXISTS printed;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

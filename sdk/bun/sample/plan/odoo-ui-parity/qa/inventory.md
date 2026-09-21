@@ -1317,3 +1317,33 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Resupply From setting;
 PARTIAL/BLOCKED for paired live Odoo visual/mutation comparison. Automatic
 route generation and full Inventory sign-off remain open.
+
+## Inventory Transfer Print QA — `INV-TRANSFER-PRINT-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_views.xml:127-128`,
+  `addons/stock/models/stock_picking.py:1175-1177`, and
+  `addons/stock/report/stock_report_views.xml:14-25`. Ready transfers use
+  `stock.picking.do_print_picking` / `stock.action_report_picking`; Done
+  transfers use `stock.action_report_delivery` / Delivery Slip.
+- Core3 contract: PASS. `pages/transfer-detail.yaml` owns the two state-specific
+  Print buttons and responsive history list; `api/transfer-detail.yaml` owns
+  the paired report actions and datasource. Migration 0.0.58 adds the durable
+  ledger, printed flag, and Ready/Done fixtures.
+- Focused verification: PASS — 4 feature tests / 35 assertions plus the full
+  transfer regression suite, 4 tests / 50 assertions. Coverage includes report selection,
+  printed-state semantics, migration replay, restart persistence, company,
+  actor, state, move-line, stale-row, and read/write permission boundaries.
+- Core3 browser evidence: PASS for authenticated Ready and Done transfer
+  details on desktop 1440x900 and mobile 390x844. Print clicks rendered the
+  expected Picking Operations or Delivery Slip history; request/page errors
+  were empty and viewport/body widths matched.
+- Odoo comparison: BLOCKED. `GET http://localhost:8069/web` returned HTTP 303
+  to `/web/login?redirect=%2Fweb%3F`; paired authenticated report screenshots
+  and action execution are not claimed. Exact JSON is in the feature evidence.
+- Audit/lint/diff: PASS — 723 pages / 732 routes / 1,402 datasources; scoped
+  TypeScript ESLint passed; `git diff --check` passed.
+
+QA disposition: PASS for the bounded Core3 durable transfer Print lifecycle;
+PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full Inventory
+sign-off remains open.

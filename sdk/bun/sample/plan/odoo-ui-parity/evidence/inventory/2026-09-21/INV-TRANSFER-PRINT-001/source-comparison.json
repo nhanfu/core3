@@ -1,0 +1,34 @@
+{
+  "feature_id": "INV-TRANSFER-PRINT-001",
+  "odoo": {
+    "addon": "stock",
+    "menu": "Inventory > Operations > Transfers > transfer form",
+    "ready_action": {
+      "xml_id": "stock.picking.do_print_picking",
+      "source": "addons/stock/views/stock_picking_views.xml:127",
+      "implementation": "addons/stock/models/stock_picking.py:1175-1177",
+      "report": "stock.action_report_picking",
+      "state": "assigned"
+    },
+    "done_action": {
+      "xml_id": "stock.action_report_delivery",
+      "source": "addons/stock/views/stock_picking_views.xml:128",
+      "report": "stock.action_report_delivery",
+      "state": "done"
+    },
+    "report_source": "addons/stock/report/stock_report_views.xml:4-25"
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detail.yaml",
+    "api": "services/inventory/api/transfer-detail.yaml",
+    "migration": "services/inventory/migrations/20260922080000-058-inventory-transfer-print.yaml",
+    "page_id": "transfer-detail",
+    "behavior": "State-specific Print actions prepare Picking Operations or Delivery Slip PDF runs; Ready also persists printed=true, while both states record actor/timeline/history rows."
+  },
+  "comparison": {
+    "source_menu_action": "PASS",
+    "page_api_separation": "PASS",
+    "durable_report_ledger": "PASS",
+    "paired_odoo_visual_action": "BLOCKED by unauthenticated Odoo redirect; see odoo-blocker.json"
+  }
+}
