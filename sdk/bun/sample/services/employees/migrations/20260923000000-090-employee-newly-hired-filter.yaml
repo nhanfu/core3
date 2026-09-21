@@ -1,0 +1,23 @@
+version: 0.0.90
+kind: data
+description: Add deterministic creation-time projection for the Employees Newly Hired filter
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employees_newly_hired_created_at_idx ON employees(created_at);
+      UPDATE employees
+      SET created_at = CASE id
+        WHEN 'employee-demo-001' THEN TIMESTAMP '2025-01-15 09:00:00'
+        WHEN 'employee-demo-002' THEN TIMESTAMP '2025-06-10 09:00:00'
+        WHEN 'employee-demo-003' THEN TIMESTAMP '2026-01-05 09:00:00'
+        WHEN 'employee-demo-004' THEN TIMESTAMP '2024-03-18 09:00:00'
+        WHEN 'employee-demo-005' THEN TIMESTAMP '2025-08-20 09:00:00'
+        ELSE created_at
+      END
+      WHERE id IN ('employee-demo-001', 'employee-demo-002', 'employee-demo-003', 'employee-demo-004', 'employee-demo-005');
+    down: |
+      DROP INDEX IF EXISTS employees_newly_hired_created_at_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1942,6 +1942,33 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001: Employees Newly Hired filter (2026-09-22)
+
+The next genuinely uncovered bounded source behavior is Odoo's `newly_hired`
+search filter. Odoo defines it as a computed/searchable `hr.employee` field
+based on `create_date > now - 90 days`, and exposes it in the Employees search
+view as `Newly Hired`. The live authenticated `core3_reference` Employees
+action showed the filter and returned 8 records when selected.
+
+Core3 adds the filter to the existing `employees` page/API pair. The API
+projects `newly_hired` from durable `employees.created_at` using the shared
+deterministic reference date `2026-01-15` (cutoff `2025-10-17`); the page owns
+only the Hiring filter binding and continues to join the API by
+`page.id: employees`. Migration `20260923000000-090` normalizes known demo
+creation timestamps and adds a read index. It does not change employee CRUD
+or another module's contract.
+
+Focused verification is **4 tests / 15 assertions** in
+`test/employees_newly_hired.integration.test.ts`, covering Odoo source
+mapping, current-company filtering, `employees.read`, empty results, replay,
+and file-backed restart. Odoo desktop/mobile filtered captures are under
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001/`.
+Core3 desktop/mobile route captures are honest empty states: the authenticated
+local QA session is scoped to `Core3 Demo Company`, while the deterministic
+newly-hired fixture is in `Core3 Vietnam`; the API/database test proves the
+feature with the correct company scope. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-NEW-CONTRACT-001: Employee Payroll New Contract (2026-09-21)
 
 The next genuinely uncovered bounded Employees feature is Odoo HR's Payroll

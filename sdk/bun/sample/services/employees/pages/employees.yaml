@@ -13,6 +13,7 @@ components:
       - { field: state, label: Status, options_source: employee_states }
       - { field: department_name, label: Department, options_source: employee_departments }
       - { field: coach_name, label: Coach, options_source: employee_coaches }
+      - { field: newly_hired, label: Hiring, options: [{ id: 'true', label: Newly Hired }] }
       - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
     group_by:
       - { field: manager_name, label: Manager }

@@ -26,6 +26,21 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-059 | Odoo `newly_hired` computed/search field and Employees search view | pass; local Odoo 19 source and authenticated live Employees filter both expose `Newly Hired` |
+| EMP-DATA-059 | Deterministic projection and migration replay | pass; known demo creation timestamps and the `newly_hired` projection survive replay and file-backed restart |
+| EMP-PERM-059 | Employees read/company boundary | pass; datasource declares `employees.read`, foreign company returns an empty result, and no mutation path is introduced |
+| EMP-UI-055 | Authenticated Odoo/Core3 desktop and mobile | conditional; Odoo filtered desktop/mobile captures pass; Core3 renders the authenticated empty state because the QA session is in `Core3 Demo Company` while the fixture is `Core3 Vietnam` |
+
+Focused test: `test/employees_newly_hired.integration.test.ts` (**4 tests /
+15 assertions**). Evidence:
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001/`.
+Unrelated module changes remain unstaged. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-EMPLOYEE-HR-PRESENCE-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |
