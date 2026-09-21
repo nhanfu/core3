@@ -1942,6 +1942,37 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-NEW-CONTRACT-001: Employee Payroll New Contract (2026-09-21)
+
+The next genuinely uncovered bounded Employees feature is Odoo HR's Payroll
+`New Contract` workflow. The local Odoo 19 source in
+`addons/hr/static/src/components/button_new_contract/` saves the current
+record, rejects an unfinished contract, opens a date picker, rejects a date
+already covered by a contract, and calls `hr.employee.create_contract` to copy
+the selected `hr.version` into a durable version timeline. A later contract
+ends the prior version the day before its start; the source also permits
+filling an uncontracted version on the same date.
+
+Core3 adds migration `20260922350000-089-employee-new-contract.yaml` with a
+unique `(employee_id, date_version)` invariant. The API contract adds the
+manager-only `create_employee_new_contract` action; it copies the active
+Payroll version, supports the source's same-date uncontracted update, and
+increments the employee row version. Actor, current-company, stale row
+version, ISO/valid date, unfinished current contract, overlap, duplicate
+date, and missing Payroll version guards run before writes. The page remains
+presentation-only and binds to the API through matching `page.id:
+employee-detail`; its permission is `employees.manage`.
+
+Focused verification is **3 tests / 26 assertions**, including source
+mapping, durable CRUD, migration replay/file-backed restart, and atomic
+permission/workflow/concurrency/date guards. Authenticated Odoo desktop and
+mobile captures are under
+`evidence/employees/2026-09-21/EMP-NEW-CONTRACT-001/` and show Payroll plus
+the opened New Contract date picker. Core3 authenticated browser evidence is
+blocked by the unrelated persisted `coredb/accounting.duckdb.wal` DuckDB WAL
+replay failure before `/api/auth/me`; the exact error is recorded in the
+feature evidence. No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001: Work Contact detail synchronization (2026-09-21)
 
 Odoo's `hr.employee._inverse_work_contact_details` synchronizes Work Email and

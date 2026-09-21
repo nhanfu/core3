@@ -72,6 +72,7 @@ components:
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_period, label: Edit Contract Dates, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
+      - { id: create_employee_new_contract, label: New Contract, variant: primary, permission: employees.manage, show_if: "state.employee_detail.active === true && !!state.employee_detail.contract_start" }
       - { id: edit_employee_trial_period, label: Edit Trial Period, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_wage, label: Edit Wage, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_pay_category, label: Edit Pay Category, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }

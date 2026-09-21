@@ -1,0 +1,14 @@
+version: 0.0.89
+kind: data
+description: Enforce one durable Payroll version per Employee contract start date
+type:
+  postgres:
+    up: |
+      CREATE UNIQUE INDEX IF NOT EXISTS employee_versions_employee_date_version_uq
+        ON employee_versions(employee_id, date_version);
+    down: |
+      DROP INDEX IF EXISTS employee_versions_employee_date_version_uq;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

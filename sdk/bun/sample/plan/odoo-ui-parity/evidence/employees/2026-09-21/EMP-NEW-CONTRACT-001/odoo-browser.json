@@ -1,0 +1,19 @@
+{
+  "reference": "http://localhost:8069/odoo/employees",
+  "database": "core3_reference",
+  "feature": "EMP-NEW-CONTRACT-001",
+  "authenticated": true,
+  "mutated_reference_data": false,
+  "desktop": {
+    "payroll": "odoo-desktop-payroll.png",
+    "new_contract_picker": "odoo-desktop-new-contract-picker.png",
+    "payroll_capture": "1440x900",
+    "picker_capture": "1916x833"
+  },
+  "mobile": {
+    "payroll": "odoo-mobile-payroll.png",
+    "new_contract_picker": "odoo-mobile-new-contract-picker.png",
+    "capture": "390x844"
+  },
+  "secrets_recorded": false
+}

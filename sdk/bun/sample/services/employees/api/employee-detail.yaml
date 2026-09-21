@@ -1016,6 +1016,43 @@ actions:
     fields:
       - { field: contract_start, label: Contract Start Date, type: date }
       - { field: contract_end, label: Contract End Date, type: date }
+  - id: create_employee_new_contract
+    type: server_form
+    permission: employees.manage
+    title: New Contract
+    description: Create a durable Payroll version from the employee's closed active contract.
+    action: employees.records.contract.new
+    handler: yaml_mutation
+    operation: create
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_versions]
+    mutation:
+      fields: [new_contract_date]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_NEW_CONTRACT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the new Contract was created. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:new_contract_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_NEW_CONTRACT_DATE_INVALID, message: Contract Start Date must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:new_contract_date AS DATE) IS NOT NULL", status: 422, code: EMPLOYEES_NEW_CONTRACT_DATE_INVALID, message: Contract Start Date must be a valid date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(current_v.date_version) FROM employee_versions current_v WHERE current_v.employee_id = :id AND current_v.active = true AND current_v.contract_date_start <= DATE '2026-01-15') AND contract_date_start IS NOT NULL AND contract_date_end IS NULL)", status: 409, code: EMPLOYEES_NEW_CONTRACT_CURRENT_OPEN, message: Before creating a new contract, close the current one by setting an end date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = CAST(:new_contract_date AS DATE) AND contract_date_start IS NOT NULL)", status: 409, code: EMPLOYEES_NEW_CONTRACT_DATE_EXISTS, message: A Payroll version already exists for that Contract Start Date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_versions v WHERE v.employee_id = :id AND v.active = true AND v.contract_date_start IS NOT NULL AND v.contract_date_start <= CAST(:new_contract_date AS DATE) AND (v.contract_date_end IS NULL OR v.contract_date_end >= CAST(:new_contract_date AS DATE)) AND NOT (v.date_version = CAST(:new_contract_date AS DATE) AND v.contract_date_start IS NULL))", status: 409, code: EMPLOYEES_NEW_CONTRACT_OVERLAP, message: The new Contract Start Date overlaps an existing contract. }
+        - { query: "SELECT 1 AS ok FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(current_v.date_version) FROM employee_versions current_v WHERE current_v.employee_id = :id AND current_v.active = true AND current_v.contract_date_start <= DATE '2026-01-15')", status: 409, code: EMPLOYEES_NEW_CONTRACT_VERSION_NOT_FOUND, message: The employee has no active Payroll record to copy. }
+      steps:
+        - query: "UPDATE employee_versions SET contract_date_start = CAST(:new_contract_date AS DATE), contract_date_end = (SELECT MIN(next_v.contract_date_start) - INTERVAL 1 DAY FROM employee_versions next_v WHERE next_v.employee_id = :id AND next_v.active = true AND next_v.contract_date_start > CAST(:new_contract_date AS DATE)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :id AND active = true AND date_version = CAST(:new_contract_date AS DATE) AND contract_date_start IS NULL"
+          expect_changed: false
+        - query: "INSERT INTO employee_versions (id, row_version, employee_id, date_version, contract_date_start, contract_date_end, additional_note, wage, contract_type_name, job_name, department_name, schedule_name, company_name, contract_template_id, contract_template_name, active, hr_responsible_name, pay_category_name, trial_date_end, working_schedule_id, work_location_id, work_location_name, work_address_id, work_address_name, manager_id, manager_name, employee_type, job_id, department_id, company_id, created_at, updated_at) SELECT 'employee-contract-' || CAST(:id AS VARCHAR) || '-' || CAST(:new_contract_date AS VARCHAR), 1, current_v.employee_id, CAST(:new_contract_date AS DATE), CAST(:new_contract_date AS DATE), (SELECT MIN(next_v.contract_date_start) - INTERVAL 1 DAY FROM employee_versions next_v WHERE next_v.employee_id = :id AND next_v.active = true AND next_v.contract_date_start > CAST(:new_contract_date AS DATE)), current_v.additional_note, current_v.wage, current_v.contract_type_name, current_v.job_name, current_v.department_name, current_v.schedule_name, current_v.company_name, current_v.contract_template_id, current_v.contract_template_name, true, current_v.hr_responsible_name, current_v.pay_category_name, current_v.trial_date_end, current_v.working_schedule_id, current_v.work_location_id, current_v.work_location_name, current_v.work_address_id, current_v.work_address_name, current_v.manager_id, current_v.manager_name, current_v.employee_type, current_v.job_id, current_v.department_id, current_v.company_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM employee_versions current_v WHERE current_v.employee_id = :id AND current_v.active = true AND current_v.date_version = (SELECT MAX(active_v.date_version) FROM employee_versions active_v WHERE active_v.employee_id = :id AND active_v.active = true AND active_v.contract_date_start <= DATE '2026-01-15') AND NOT EXISTS (SELECT 1 FROM employee_versions existing_v WHERE existing_v.employee_id = :id AND existing_v.active = true AND existing_v.date_version = CAST(:new_contract_date AS DATE))"
+          expect_changed: false
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the new Contract was saved.
+      result: { query: "SELECT * FROM employee_versions WHERE employee_id = :id AND date_version = CAST(:new_contract_date AS DATE)" }
+    fields:
+      - { field: new_contract_date, label: Contract Start Date, type: date, required: true }
   - id: edit_employee_trial_period
     type: server_form
     permission: employees.manage
