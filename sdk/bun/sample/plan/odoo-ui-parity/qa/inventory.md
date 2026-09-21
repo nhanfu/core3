@@ -1906,3 +1906,30 @@ sign-off remains open.
 
 QA disposition: PASS for the bounded Core3 durable add-entire-package lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-off remains open.
+
+## Inventory Transfer Split QA — `INV-TRANSFER-SPLIT-001`
+
+- Odoo source/action: PASS. `stock_split_picking` is a form-bound server
+  action at `stock_picking_views.xml:701-707` calling
+  `action_split_transfer`; source validation and backorder creation are at
+  `stock_picking.py:1461-1472`. Exact references are in
+  `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-detail.yaml` and
+  backend `api/transfer-detail.yaml` share `page.id: transfer-detail`; Split
+  Transfer requires `inventory.write` and exposes read-only split history.
+  Migration 0.0.80 persists the source/split relation, remaining quantities,
+  actor, company, and status.
+- Focused verification: PASS — 4 tests / 30 assertions in
+  `test/inventory_transfer_split.integration.test.ts`; the split, transfer
+  workflow, backorder, and Add Entire Package regression subset passes 16 tests
+  / 132 assertions. Coverage includes CRUD, missing/company/actor/state/partial/
+  overfulfilled/duplicate/stale guards, restart, permission denial, and the
+  existing Inventory manager-permission fixture boundary.
+- Core3 browser evidence: BLOCKED for authenticated desktop/mobile workflow;
+  probes reach `/auth/login` only. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact captures,
+  source comparison, and blockers are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-SPLIT-001/`.
+
+QA disposition: PASS for the bounded Core3 durable transfer split lifecycle;
+PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-off remains open.

@@ -1454,3 +1454,27 @@ Full Inventory sign-off remains open.
   comparison remain login-blocked; exact evidence is under
   `evidence/inventory/2026-09-21/INV-TRANSFER-ADD-PACKS-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-TRANSFER-SPLIT-001` — Split partially fulfilled transfer lifecycle (2026-09-21)
+
+- Selected Odoo's form-bound `stock_split_picking` server action from
+  `addons/stock/views/stock_picking_views.xml:701-707`, which calls
+  `stock.picking.action_split_transfer()`. The source validates non-zero,
+  partially fulfilled, and non-overfulfilled moves before creating a backorder
+  for remaining quantities at `addons/stock/models/stock_picking.py:1461-1472`.
+- Extended presentation-only `pages/transfer-detail.yaml` and backend
+  `api/transfer-detail.yaml`, joined by `page.id: transfer-detail`, with a
+  guarded Split Transfer action and split-history list. Migration
+  `20260922300000-080-inventory-transfer-split.yaml` adds a durable split
+  ledger, `split_of_id`, and deterministic partial Ready fixture.
+- The bounded Core3 action creates a Waiting split transfer for remaining move
+  quantities, closes the fulfilled source transfer, records actor/company and
+  split totals, and enforces missing, company, actor, Ready-state, partial,
+  overfulfilled, duplicate, and stale guards. Focused coverage includes
+  restart persistence and `inventory.write` denial.
+- Focused tests pass 4 tests / 30 assertions; the split, transfer workflow,
+  backorder, and Add Entire Package regression subset passes 16 tests / 132
+  assertions. Core3 desktop/mobile and Odoo comparison remain login-blocked;
+  exact evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-SPLIT-001/`. Full Inventory
+  sign-off remains open.

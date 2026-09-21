@@ -27,6 +27,7 @@ components:
       - { id: unreserve_inventory_transfer, label: Unreserve, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: create_inventory_backorder, label: Create Backorder, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
+      - { id: split_inventory_transfer, label: Split Transfer, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
       - { id: toggle_inventory_transfer_lock, label: Lock / Unlock, variant: secondary, permission: inventory.manage, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: print_inventory_transfer_labels, label: Labels, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: print_inventory_transfer_operations, label: Print, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
@@ -65,6 +66,7 @@ components:
       inventory.transfer.exchange_created: Exchange created
       inventory.transfer.backorder_created: Backorder created
       inventory.transfer.backorder_skipped: No backorder
+      inventory.transfer.split_created: Transfer split
       inventory.transfer.lock_toggled: Lock state changed
       inventory.transfer.labels_printed: Labels prepared
       inventory.transfer.email_queued: Email queued
@@ -85,7 +87,7 @@ components:
           label: Additional Info
           groups:
             - title: Additional information
-              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }, { field: return_count, label: Returns }, { field: backorder_count, label: Backorders }, { field: is_locked, label: Locked }]
+              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }, { field: return_count, label: Returns }, { field: backorder_count, label: Backorders }, { field: split_count, label: Splits }, { field: is_locked, label: Locked }]
         - id: note
           label: Note
           groups:
@@ -106,6 +108,20 @@ components:
       - { field: reserved_quantity, label: Reserved, align: right, width: 120 }
       - { field: uom, label: Unit of Measure, width: 140 }
       - { field: availability, label: Availability, width: 150 }
+  - type: ListView
+    source: inventory_transfer_splits
+    variant: odoo
+    columns:
+      - { field: split_name, label: Split Transfer }
+      - { field: line_count, label: Lines, align: right }
+      - { field: split_quantity, label: Remaining Quantity, align: right }
+      - { field: split_by, label: Split by }
+      - { field: state, label: Status }
+      - { field: created_at, label: Created at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No split transfers, description: Split history for this transfer will appear here. }
   - type: ListView
     source: inventory_transfer_package_additions
     variant: odoo

@@ -1,0 +1,27 @@
+{
+  "feature": "INV-TRANSFER-SPLIT-001",
+  "odoo": {
+    "server_action_view": "../../../../../odoo/addons/stock/views/stock_picking_views.xml",
+    "server_action_lines": "701-707",
+    "server_action": "stock_split_picking",
+    "method": "stock.picking.action_split_transfer()",
+    "method_source": "../../../../../odoo/addons/stock/models/stock_picking.py",
+    "method_lines": "1461-1472",
+    "behavior": [
+      "rejects empty done quantities",
+      "rejects fully fulfilled demand",
+      "rejects done quantities above demand",
+      "creates a backorder for remaining quantities",
+      "keeps zero-quantity move lines in the backorder"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-detail.yaml",
+    "api": "services/inventory/api/transfer-detail.yaml",
+    "page_id": "transfer-detail",
+    "action": "split_inventory_transfer",
+    "migration": "services/inventory/migrations/20260922300000-080-inventory-transfer-split.yaml",
+    "mapping": "A partial Ready transfer creates one durable Waiting split transfer with remaining quantities, sets split_of_id, closes the source transfer, records actor/company/quantity history, and increments the source row version."
+  },
+  "comparison_scope": "Core3 implements the bounded partial-transfer split lifecycle; authenticated visual parity and Odoo execution could not be reached without credentials."
+}
