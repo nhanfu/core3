@@ -766,6 +766,14 @@ sign-off is claimed.
 - Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`: desktop applies Sales Order `S00035`; mobile captures responsive Kanban; `odoo-results.json` records no page/request errors.
 - Core3 desktop/mobile evidence is blocked before authentication by the unrelated shared `discoverPages` error `components[0].help is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/report-action blockers remain open and this slice is not sign-off.
 
+## 2026-09-21 — `TIMESHEET-ALL-NON-BILLABLE-FILTER-001`
+
+- Selected the next uncovered source-backed All Timesheets interaction: Odoo `sale_timesheet` adds the `Non-Billable` search filter over `timesheet_invoice_type = non_billable`, distinct from Sales Order search and billing report drilldown.
+- Kept `pages/all-timesheets.yaml` and `api/all-timesheets.yaml` separate and joined by `page.id: all-timesheets`; the API projects and filters the existing durable `timesheet_entries.billing_type` relation with the billable fallback and retains manager permission plus company/empty guards.
+- Focused verification: `test/timesheets_all_non_billable_filter.integration.test.ts` passed 4/4 tests with 20 expectations, including source mapping, durable filter reads, relation-update freshness, permission/company/empty guards, and file-backed restart.
+- Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-non-billable-filter/`: desktop applies Non-Billable; mobile captures responsive Kanban; `odoo-results.json` records no page/request errors.
+- Core3 desktop/mobile evidence is blocked before authentication by the unrelated shared `discoverPages` error `components[0].header_actions[6].id references unknown action "edit_employee_type"`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/report-action blockers remain open and this slice is not sign-off.
+
 
 ## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
 

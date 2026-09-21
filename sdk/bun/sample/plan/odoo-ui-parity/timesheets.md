@@ -1611,3 +1611,13 @@ Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml
 Focused coverage is `test/timesheets_all_sales_order_search.integration.test.ts`: 4 tests / 19 expectations for Odoo source comparison, paired contracts, durable Sales Order search, permission/company/empty guards, relation-update freshness, and file-backed restart.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`: desktop fills the Sales Order search with `S00035` and renders `1-80 / 113`; mobile captures responsive All Timesheets Kanban; both report no page/request errors. Core3 desktop/mobile capture is blocked before authentication by the unrelated shared `discoverPages` error `components[0].help is not allowed`, recorded in `core3-readiness.txt`. Odoo Print/PDF/report-action surfaces remain open; no module sign-off is claimed.
+
+## Wave 20 All Timesheets Non-Billable filter — `TIMESHEET-ALL-NON-BILLABLE-FILTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is Odoo's `sale_timesheet` Non-Billable filter. `addons/sale_timesheet/views/hr_timesheet_views.xml` inserts `non_billable` with domain `timesheet_invoice_type = non_billable` into the authenticated All Timesheets search view. This is distinct from the completed Sales Order search and billing report drilldown.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` data/action-only, joined by `page.id: all-timesheets`. The page adds one manager-scoped Non-Billable option; the API projects and filters the existing durable `timesheet_entries.billing_type`, falling back to its persisted billable flag. Current-company and empty-fixture guards remain enforced; no duplicate migration was needed. A durable relation-update test verifies a concurrent billing-type change is visible immediately, and file-backed restart retains the filter.
+
+Focused coverage is `test/timesheets_all_non_billable_filter.integration.test.ts`: 4 tests / 20 expectations for Odoo source comparison, paired contracts, durable filtering, permission/company/empty guards, relation-update freshness, and file-backed restart.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-non-billable-filter/`: desktop selects Non-Billable and renders `1-80 / 387`; mobile captures responsive All Timesheets Kanban; both report no page/request errors. Core3 desktop/mobile capture is blocked before authentication by the unrelated shared `discoverPages` error `components[0].header_actions[6].id references unknown action "edit_employee_type"`, recorded in `core3-readiness.txt`. Odoo Print/PDF/report-action surfaces remain open; no module sign-off is claimed.

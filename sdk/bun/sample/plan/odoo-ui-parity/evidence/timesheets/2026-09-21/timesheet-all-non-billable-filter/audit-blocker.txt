@@ -1,0 +1,7 @@
+Scoped audit blocker (2026-09-21)
+
+Command: bun run audit
+Result: exit 1 before audit completion.
+Error: PageSchemaError: Invalid page definition:
+- components[1].title is not allowed
+Location: shared page discovery in an unrelated page; no non-Timesheets file was changed to bypass this boundary.

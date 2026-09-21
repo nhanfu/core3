@@ -827,3 +827,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_all_sales_order_search.integration.test.ts` passes 4/4 tests / 19 expectations, including relation-update freshness and file-backed restart.
 - Odoo browser gate: authenticated desktop searches `S00035` and renders `1-80 / 113`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`.
 - Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects unrelated `components[0].help`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
+
+## `TIMESHEET-ALL-NON-BILLABLE-FILTER-001` — All Timesheets Non-Billable filter (2026-09-21)
+
+- Source gate: `sale_timesheet` inserts `<filter name="non_billable" string="Non-Billable" domain="[('timesheet_invoice_type', '=', 'non_billable')]"/>` into the inherited All Timesheets search view.
+- Core3 gate: the paired `all-timesheets` page/API search contract adds a manager-scoped Non-Billable option and filters the durable `billing_type` relation with the persisted billable fallback; current-company and empty-fixture guards remain active.
+- Focused gate: `test/timesheets_all_non_billable_filter.integration.test.ts` passes 4/4 tests / 20 expectations, including relation-update freshness and file-backed restart.
+- Odoo browser gate: authenticated desktop selects Non-Billable and renders `1-80 / 387`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-non-billable-filter/`.
+- Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects unrelated `components[0].header_actions[6].id references unknown action "edit_employee_type"`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.

@@ -1,0 +1,8 @@
+Core3 authenticated desktop/mobile capture blocker (2026-09-21)
+
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit 1 before backend readiness/authentication.
+Error: PageSchemaError: Invalid page definition:
+- components[0].header_actions[6].id references unknown action "edit_employee_type"
+Location: shared page discovery; this is an unrelated Employees page boundary and was not changed.
+Endpoint probe: http://127.0.0.1:3001/api/modules was unavailable after the failed startup.

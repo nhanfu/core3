@@ -157,3 +157,22 @@ evidence is blocked by the unrelated shared page-schema error
 `components[0].help is not allowed`, with exact output preserved in
 `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain a known blocker
 and no module sign-off is claimed.
+
+## Wave 20 execution — `TIMESHEET-ALL-NON-BILLABLE-FILTER-001`
+
+The All Timesheets Non-Billable filter source comparison and durable contract
+are covered by `test/timesheets_all_non_billable_filter.integration.test.ts`
+(4 tests / 20 expectations). The test exercises the Odoo
+`timesheet_invoice_type` filter, page/API separation, durable `billing_type`
+filtering, manager permission, current-company and empty guards,
+relation-update freshness, and file-backed restart persistence.
+
+Authenticated Odoo captures are in
+`../evidence/timesheets/2026-09-21/timesheet-all-non-billable-filter/`:
+desktop applies Non-Billable and mobile captures responsive Kanban;
+`odoo-results.json` records no page/request errors. Core3 desktop/mobile
+evidence is blocked by the unrelated shared page-schema error
+`components[0].header_actions[6].id references unknown action
+"edit_employee_type"`, with exact output preserved in `core3-readiness.txt`.
+Odoo Print/PDF/action surfaces remain a known blocker and no module sign-off
+is claimed.
