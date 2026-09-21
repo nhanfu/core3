@@ -1,0 +1,19 @@
+version: 0.0.124
+kind: schema
+description: durable URL-backed Website Sale product documents
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_product_documents ADD COLUMN IF NOT EXISTS document_type VARCHAR DEFAULT 'file';
+      ALTER TABLE ecommerce_product_documents ADD COLUMN IF NOT EXISTS external_url VARCHAR;
+      UPDATE ecommerce_product_documents SET document_type = COALESCE(document_type, 'file') WHERE document_type IS NULL;
+      CREATE INDEX IF NOT EXISTS ecommerce_product_documents_url_idx
+        ON ecommerce_product_documents(product_id, document_type, shown_on_product_page, active);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_documents_url_idx;
+      ALTER TABLE ecommerce_product_documents DROP COLUMN IF EXISTS external_url;
+      ALTER TABLE ecommerce_product_documents DROP COLUMN IF EXISTS document_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -45,11 +45,13 @@ export default class EcommerceModule implements ModuleLifecycle {
 
   async handlePublicRoute(request: Request, url: URL, service: EcommerceService): Promise<Response | null> {
     let publicAuthenticated: boolean | undefined;
+    const productDocumentMatch = url.pathname.match(/^\/api\/public\/ecommerce\/products\/([^/]+)\/documents\/([^/]+)$/);
     const accessProtected = url.pathname === '/api/public/ecommerce/shop'
       || url.pathname === '/api/public/ecommerce/cart'
       || url.pathname === '/api/public/ecommerce/checkout'
       || url.pathname === '/api/public/ecommerce/wishlist'
-      || url.pathname.startsWith('/api/public/ecommerce/wishlist/');
+      || url.pathname.startsWith('/api/public/ecommerce/wishlist/')
+      || Boolean(productDocumentMatch);
     if (accessProtected && this.authAdapter) {
       publicAuthenticated = false;
       try {
@@ -67,6 +69,13 @@ export default class EcommerceModule implements ModuleLifecycle {
       const q = url.searchParams.get('q')?.trim() || null;
       const result = await service.call('ecommerce.public.shop', publicAuthenticated === undefined ? { q } : { q, authenticated: publicAuthenticated });
       return this.json({ products: result?.products || [] });
+    }
+    if (productDocumentMatch) {
+      if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
+      const result = await service.call('ecommerce.public.product_document', { product_id: decodeURIComponent(productDocumentMatch[1]), document_id: decodeURIComponent(productDocumentMatch[2]) });
+      const document = (result?.document || result?.data || [])[0];
+      if (!document?.external_url) return this.json({ error: 'Product document not found', code: 'ECOMMERCE_PUBLIC_PRODUCT_DOCUMENT_NOT_FOUND' }, 404);
+      return new Response(null, { status: 302, headers: { Location: document.external_url } });
     }
     if (url.pathname === '/api/public/ecommerce/checkout') return this.handlePublicCheckout(request, service);
     if (url.pathname === '/api/public/ecommerce/wishlist') return this.handlePublicWishlist(request, service);

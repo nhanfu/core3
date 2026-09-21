@@ -49,7 +49,10 @@ describe('eCommerce product document parity', () => {
     const documentApi = yaml('api/product-document-detail.yaml');
     const documents = productApi.datasources.find((source: any) => source.id === 'ecommerce_product_documents');
     expect((await repository.querySource(documents, { id: 'ecommerce-product-mug', company_name: 'My Company' }, 0, 20)).data)
-      .toMatchObject([{ id: 'ecommerce-product-document-mug-care', name: 'Mug Care Guide', shown_on_product_page: true }]);
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'ecommerce-product-document-mug-care', name: 'Mug Care Guide', document_type: 'file', shown_on_product_page: true }),
+        expect.objectContaining({ id: 'ecommerce-product-document-mug-assembly', name: 'Mug Assembly Instructions', document_type: 'url', external_url: 'https://docs.core3.local/products/mug-assembly', shown_on_product_page: true }),
+      ]));
 
     const create = action(productApi, 'create_ecommerce_product_document');
     const created = await repository.executeMutation(create.mutation, {

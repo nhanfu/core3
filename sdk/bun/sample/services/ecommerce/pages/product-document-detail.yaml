@@ -21,6 +21,7 @@ components:
     header_actions:
       - { id: back_to_ecommerce_product_detail_from_document, label: Back to Product, variant: secondary }
       - { id: edit_ecommerce_product_document, label: Edit, variant: secondary, permission: ecommerce.write }
+      - { id: set_ecommerce_product_document_url, label: Set External URL, variant: secondary, permission: ecommerce.write }
       - { id: delete_ecommerce_product_document, label: Delete, variant: danger, permission: ecommerce.write }
     groups:
       - title: Product Document
@@ -33,5 +34,7 @@ components:
           - { field: size_bytes, label: Size }
           - { field: sequence, label: Sequence }
           - { field: shown_on_product_page, label: Publish on Product Page, type: StatusChip }
+          - { field: document_type, label: Source Type }
+          - { field: external_url, label: External URL }
           - { field: active, label: Active, type: StatusChip }
           - { field: company_name, label: Company }

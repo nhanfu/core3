@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## URL Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`, 2026-09-21)
+
+- Odoo source/controller/template: pass. `product.document` inherits
+  `ir.attachment`; Website Sale adds `shown_on_product_page`, renders URL
+  documents as new-tab links, and validates the active published
+  product-template relation at `/shop/<product>/document/<id>`.
+- Core3 lifecycle: pass for this bounded contract. Migrations 124/125 add
+  durable URL state and a deterministic fixture. The existing separate
+  document page/API exposes permissioned optimistic URL assignment; file
+  upload clears URL state. Product Detail projects both document kinds and
+  the public route redirects only valid published URL documents.
+- Focused verification: `bun test
+  test/ecommerce_product_document_url.integration.test.ts --timeout 30000`
+  — **2 passed, 29 assertions, 0 failures**.
+- Regression: URL-document plus existing document suites — **5 passed, 62
+  assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **738 pages, 747 routes, and 1454
+  datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-document-url-001/`.
+
 ## Product Page Image Ratios (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines desktop and mobile ratio

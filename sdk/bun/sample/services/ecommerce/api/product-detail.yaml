@@ -42,7 +42,7 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_DOCUMENTS_UNAUTHENTICATED, message: Sign in to view product documents. }
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_DOCUMENTS_FORBIDDEN, message: You do not have permission to view product documents. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_DOCUMENTS_UNAVAILABLE, message: Product documents are temporarily unavailable. }
-    query: "SELECT d.id, d.row_version, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.sequence, d.active, d.shown_on_product_page, d.company_name, d.uploaded_by, CAST(d.created_at AS VARCHAR) AS created_at FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.product_id = :id AND p.active = TRUE AND d.active = TRUE AND (:company_name IS NULL OR d.company_name = :company_name OR d.company_name IS NULL) ORDER BY d.sequence, d.id"
+    query: "SELECT d.id, d.row_version, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.sequence, d.active, d.shown_on_product_page, d.company_name, d.uploaded_by, COALESCE(d.document_type, 'file') AS document_type, d.external_url, CAST(d.created_at AS VARCHAR) AS created_at FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.product_id = :id AND p.active = TRUE AND d.active = TRUE AND (:company_name IS NULL OR d.company_name = :company_name OR d.company_name IS NULL) ORDER BY d.sequence, d.id"
   - id: ecommerce_product_variants
     permission: ecommerce.read
     error_states:
@@ -159,7 +159,7 @@ actions:
         - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_DOCUMENT_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: ECOMMERCE_PRODUCT_DOCUMENT_NAME_INVALID, message: Document name must be between 1 and 255 characters. }
       steps:
-        - { query: "INSERT INTO ecommerce_product_documents(id, row_version, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, active, shown_on_product_page, company_name) SELECT :id, 1, :product_id, :name, 'pending-upload', 'application/octet-stream', 0, 'pending/' || :id, COALESCE(:sequence, 10), FALSE, FALSE, company_name FROM ecommerce_products WHERE id = :product_id" }
+        - { query: "INSERT INTO ecommerce_product_documents(id, row_version, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, active, shown_on_product_page, company_name, document_type, external_url) SELECT :id, 1, :product_id, :name, 'pending-upload', 'application/octet-stream', 0, 'pending/' || :id, COALESCE(:sequence, 10), FALSE, FALSE, company_name, 'file', NULL FROM ecommerce_products WHERE id = :product_id" }
       result: { query: "SELECT * FROM ecommerce_product_documents WHERE id = :id" }
     fields:
       - { field: name, label: Document Name, type: text, required: true }

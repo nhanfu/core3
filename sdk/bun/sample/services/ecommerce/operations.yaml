@@ -14,6 +14,9 @@ operations:
   ecommerce.public.product_feed:
     result_key: feed
     query: "SELECT id, name, target, cache_xml, CAST(cache_expiry AS VARCHAR) AS cache_expiry FROM ecommerce_product_feeds WHERE id = :feed_id AND access_token = :access_token AND active = TRUE AND cache_xml IS NOT NULL AND (cache_expiry IS NULL OR cache_expiry > CURRENT_TIMESTAMP) LIMIT 1"
+  ecommerce.public.product_document:
+    result_key: document
+    query: "SELECT d.id, d.product_id, d.name, COALESCE(d.document_type, 'file') AS document_type, d.external_url, d.company_name FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :document_id AND d.product_id = :product_id AND d.active = TRUE AND d.shown_on_product_page = TRUE AND COALESCE(d.document_type, 'file') = 'url' AND d.external_url IS NOT NULL AND p.active = TRUE AND p.is_published = TRUE AND p.company_name = 'My Company'"
   ecommerce.sales.handoffs.pending:
     result_key: handoffs
     query: "SELECT id, ecommerce_order_id, order_number, customer_name, customer_email, amount_total, currency, company_name, state, sales_order_id, attempt_count, last_error, row_version, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_sales_handoffs WHERE state IN ('Pending', 'Failed') AND attempt_count < 5 ORDER BY created_at, id"

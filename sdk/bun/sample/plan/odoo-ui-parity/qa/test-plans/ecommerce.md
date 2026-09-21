@@ -7,6 +7,23 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001
+
+- ECOM-FUNC-059: trace Odoo `product.document` attachment inheritance, the
+  Website Sale `shown_on_product_page` field, URL-link rendering, and the
+  public product-document controller; verify the existing separate Core3
+  document page/API plus public operation/route.
+- ECOM-WF-070: replay the URL fixture, set and replace an external URL, keep
+  file uploads byte-backed, reject invalid/foreign/stale writes, redirect only
+  active published product URLs, and preserve state across migration replay
+  and DuckDB restart.
+- ECOM-PERM-066: require `ecommerce.read` for document/detail/public reads and
+  `ecommerce.write` for URL assignment; enforce product/company scope and
+  optimistic row-version guards.
+- ECOM-UI-052: render file and URL document states at desktop and mobile and
+  compare the authenticated Odoo document link behavior; Core3 runtime is
+  unavailable and Odoo `/shop` is HTTP 404 in the supplied references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001
 
 - ECOM-FUNC-058: trace Website Sale `website.product_page_image_ratio` and

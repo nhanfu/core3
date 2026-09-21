@@ -1,0 +1,23 @@
+version: 0.0.125
+kind: data
+description: deterministic URL-backed product document fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_documents
+        (id, row_version, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, active, shown_on_product_page, company_name, uploaded_by, document_type, external_url)
+      VALUES
+        ('ecommerce-product-document-mug-assembly', 1, 'ecommerce-product-mug', 'Mug Assembly Instructions', 'external-link', 'text/uri-list', 0, 'external', 20, TRUE, TRUE, 'My Company', 'system-fixture', 'url', 'https://docs.core3.local/products/mug-assembly')
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        sequence = EXCLUDED.sequence,
+        active = EXCLUDED.active,
+        shown_on_product_page = EXCLUDED.shown_on_product_page,
+        company_name = EXCLUDED.company_name,
+        document_type = EXCLUDED.document_type,
+        external_url = EXCLUDED.external_url;
+    down: DELETE FROM ecommerce_product_documents WHERE id = 'ecommerce-product-document-mug-assembly';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -2,6 +2,33 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — URL Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`)
+
+Wave 30 selected the explicit remaining Website Sale document gap: URL-backed
+product documents. Odoo's `product.document` inherits `ir.attachment`, whose
+URL attachment type is rendered as a link opening in a new tab; Website Sale
+adds `shown_on_product_page`, the product-page link/icon behavior, and the
+public `/shop/<product>/document/<id>` controller that only serves active,
+published documents belonging to the product template.
+
+Core3 migrations 124/125 add durable `document_type` and `external_url`
+columns plus a deterministic URL-document fixture. The existing separate
+product-document page/API contracts now expose a permissioned, optimistic
+`Set External URL` action with absolute HTTP/HTTPS validation; file uploads
+clear URL state and remain byte-backed. Product Detail lists both file and URL
+documents, while the public Ecommerce operation and route validate the
+published product-document relation and redirect URL documents idempotently.
+Migration replay, invalid/foreign/stale writes, public redirect, and DuckDB
+restart persistence are covered.
+
+Focused source/contract, CRUD, permission, validation, public-route, replay,
+and restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-document-url-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Image Ratios (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`)
 
 Wave 29 selected the smallest uncovered Website Sale catalog setting after
