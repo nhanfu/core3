@@ -40,6 +40,11 @@ actions:
     permission: manufacturing.read
     navigate_to: /manufacturing/work-centers/waiting-availability
     params: { workcenter_id: '{row.id}', workcenter: '{row.name}', search_default_waiting: true }
+  - id: open_mrp_workcenter_late
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-centers/late-orders
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}', search_default_late: true }
   - id: open_mrp_workcenter_oee
     type: navigate
     permission: manufacturing.read

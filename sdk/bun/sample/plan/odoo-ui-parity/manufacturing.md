@@ -2,6 +2,62 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Work Center Late Orders bounded action (`MANUFACTURING-WCLATE-001`)
+
+### Source analysis and current-source comparison
+
+Local Odoo 19 source identifies the Work Center Overview `Late` link in
+`addons/mrp/views/mrp_workcenter_views.xml` as a distinct dashboard workflow.
+The link invokes `mrp.workcenter.action_work_order`, which returns the
+`mrp.action_work_orders` window action. That action targets `mrp.workorder`,
+uses `list,form,pivot,graph,calendar`, excludes `done` and `cancel` rows, and
+scopes the selected work center through `search_default_workcenter_id`.
+The link adds `search_default_late=1`; the authoritative search view defines
+Late as `date_start <= today`. The same source view exposes To Do, Blocked, In
+Progress, Done, Work Center, Product, and Start Date search/group controls.
+
+Existing Core3 Work Center Work Orders already implements the base action and
+reuses the durable `mrp_workorders` workflow, while Waiting Availability is a
+fixed Waiting-state slice. Neither provides the source Late default from the
+Work Center Overview or a route/action contract for that dashboard link. The
+existing durable `late` field is populated by the Work Orders migration and is
+the deterministic persisted representation of the source late predicate; no
+fixture-only rows are required. The existing work-center/state/planned-date
+index is extended with a late-state index for the new query.
+
+### Gap matrix and acceptance checklist
+
+| Odoo behavior | Current Core3 | Gap/change | Verification |
+| --- | --- | --- | --- |
+| Work Center Overview `Late` link | No action | Add read-permissioned navigation with work-center ID/name and `search_default_late` | YAML/discovery test |
+| Selected-center non-terminal late work orders | Generic scoped action has optional Late filter | Add page/API-bound Late route with durable `late` filtering and terminal exclusion | datasource query tests |
+| List/Form/Pivot/Graph/Calendar modes | Existing renderer supports modes on adjacent slices | Declare source modes as visible tabs and reuse Work Order detail | page contract/browser runtime |
+| Operator workflow | Existing `mrp_workorders` guards | Expose only Plan/Start/Pause/Continue/Block/Cancel with existing CAS guards | permission/action contract |
+| Restart persistence | Existing work orders are durable | Add index and file-backed restart assertion; no new demo rows | migration/restart test |
+| Odoo visual comparison | Shared profile cannot open Manufacturing | Capture exact Discuss redirect at desktop/mobile and mark visual gate blocked | evidence screenshots/blocker |
+
+Feature acceptance requires page/API separation by `page.id`, deterministic
+late/non-late and empty/error results, selected work-center scoping, terminal
+row exclusion, migration replay, file-backed restart, explicit 401/403/503
+states, `manufacturing.read` reads, `manufacturing.write` workflow actions,
+absence of create/delete actions, and no horizontal overflow when the Core3
+runtime is available. No Odoo visual parity claim is made without an
+authenticated Manufacturing capture.
+
+The live authenticated check with browser instance `245ea108` and database
+`core3_reference` was blocked before the action could render: both
+`/odoo/work-centers?db=core3_reference` and the authenticated shell resolve to
+Discuss/OdooBot, and the launcher has no Manufacturing entry. Exact blocker
+captures are in
+`odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-WCLATE-001/`.
+
+Core3 implementation files are the page-only
+`services/manufacturing/pages/work-center-late.yaml`, page-id-bound
+`services/manufacturing/api/work-center-late.yaml`, the Work Center Overview
+navigation update, and migration
+`20260922110000-023-work-center-late-index.yaml`. Focused coverage is
+`test/manufacturing_work_center_late.integration.test.ts`.
+
 ## 2026-09-22 Work Center Waiting Availability bounded action
 
 Source comparison of the existing Work Center Overview and scoped Work Orders

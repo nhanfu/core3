@@ -276,6 +276,30 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 - Desktop/mobile visual parity: pending
 - Tester decision: conditional; no module sign-off until paired Odoo and remaining interaction gates close
 
+## 2026-09-22 bounded Work Center Late Orders (`MANUFACTURING-WCLATE-001`)
+
+- Source action: Work Center Overview `Late` link in local Odoo 19
+  `mrp_workcenter_kanban`; it returns `mrp.action_work_orders` with
+  `search_default_late=1`, selected work center context, non-terminal domain,
+  and List/Form/Pivot/Graph/Calendar modes.
+- Core3 implementation: page/API-separated
+  `/manufacturing/work-centers/late-orders`, durable `mrp_workorders` late
+  filtering, reused Work Order detail/workflow, and idempotent migration `0.0.23`.
+- Focused tests passed 4 tests / 29 assertions. The adjacent regression set
+  for Overview, Waiting Availability, Work Center Work Orders, and BoM
+  Operations Performance passed; the Work Center Work Orders suite was
+  separately rerun at 4 tests / 24 assertions. Manufacturing audit passed at
+  805 pages / 814 routes / 1,664 datasources; targeted ESLint, Manufacturing
+  CSS build, and diff check passed.
+- Core3 bsk verification on instance `245ea108` passed at exact 1440x900 and
+  390x844 list states, plus desktop Graph and Work Order detail navigation.
+  Captures are recorded in the feature evidence verification file and remain
+  under `/tmp`.
+- Odoo visual verification is blocked: the authenticated shared session
+  redirects `/odoo/work-centers?db=core3_reference` to Discuss/OdooBot and
+  exposes no Manufacturing launcher. Desktop/mobile blocker captures are in
+  the feature evidence folder. No paired Odoo visual parity claim is made.
+
 ## 2026-09-21 Work Centers Overview bounded slice
 
 - Source basis: local Odoo 19 `mrp_workcenter_kanban_action` / `mrp_workcenter_kanban` in `addons/mrp/views/mrp_workcenter_views.xml`; distinct from the completed configuration Work Centers action.

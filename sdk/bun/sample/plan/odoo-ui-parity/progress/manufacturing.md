@@ -54,6 +54,24 @@ Status: in-progress
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated manufacturing QA
 
+## 2026-09-22 bounded next slice — Work Center Late Orders
+
+- Implemented `MANUFACTURING-WCLATE-001`, the distinct Work Center Overview
+  `Late` action. It adds the page-only/API-separated route
+  `/manufacturing/work-centers/late-orders`, selected-center and Late-default
+  navigation, durable non-terminal late filtering, existing guarded operator
+  actions, and migration `0.0.23` for the idempotent query index.
+- Focused feature verification passed 4 tests / 29 assertions. Adjacent
+  Work Center Overview, Waiting Availability, Work Center Work Orders, and BoM
+  Operations Performance regression tests passed; audit passed 805 pages / 814
+  routes / 1,664 datasources; Manufacturing CSS, targeted ESLint, and diff
+  check passed.
+- Authenticated Core3 bsk captures passed at 1440x900 and 390x844, including
+  selected Assembly 2 late row, visible view tabs, Graph mode, and reused Work
+  Order detail. Odoo paired capture remains blocked by the shared profile's
+  Discuss redirect and missing Manufacturing launcher; no visual parity
+  sign-off is claimed.
+
 ## 2026-09-21 bounded next slice — Work Centers Overview
 
 - Implemented the uncovered Odoo `mrp_workcenter_kanban_action` dashboard as a
