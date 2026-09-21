@@ -1,0 +1,11 @@
+{
+  "feature_id": "EMP-EMPLOYEE-TIMEZONE-001",
+  "surface": "Core3",
+  "command": "bun dev --db=ddb --memory",
+  "phase": "global page discovery before backend bind",
+  "frontend_ready": true,
+  "backend_port": 3001,
+  "blocker": "PageSchemaError: Invalid page definition: actions[1].fields is not allowed",
+  "ownership": "unrelated shared page definition; no Employees file was changed to work around it",
+  "browser_capture": "not claimed"
+}

@@ -2076,3 +2076,23 @@ no populated tag chips. Core3 shows the Tags tab at both viewports; the
 authenticated company is `Core3 Demo Company` while deterministic Employees
 fixtures are `Core3 Vietnam`, so populated Core3 tag rows are company-guarded
 empty. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-TIMEZONE-001: Employee Timezone settings workflow (2026-09-21)
+
+Odoo defines the tracked `hr.employee.tz` selection and exposes it in the
+employee Settings form. Core3 already displayed a legacy `timezone` value,
+but had no dedicated source-backed action or create-time validation. This
+slice adds replay-safe deterministic timezone normalization, supported-value
+options to the employee create contract, and the guarded
+`edit_employee_timezone` action in the separate employee-detail API YAML.
+
+The Settings page remains layout-only and joins the API by `page.id`; its
+read-only Timezone field is paired with the Employees-write header action.
+The action requires an authenticated actor, active current-company employee,
+supported timezone, and optimistic employee row version. Focused verification
+is **4 tests / 19 assertions**, covering create/update, actor/company/stale/
+invalid guards, migration replay, and file-backed restart.
+
+Authenticated Odoo and Core3 desktop/mobile evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. Runtime or fixture
+limitations are recorded there; no aggregate Employees sign-off is claimed.

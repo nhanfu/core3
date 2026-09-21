@@ -647,3 +647,17 @@ Focused test: `test/employees_tags.integration.test.ts` (4 tests, 30
 assertions), plus `test/employees_employee_work_tab.integration.test.ts`
 (3 tests, 15 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`.
+
+## EMP-EMPLOYEE-TIMEZONE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `tz` selection and Settings field map to paired Core3 page/API contracts | pass |
+| Timezone CRUD | Employee create accepts supported timezone values and detail action updates the durable projection | pass |
+| Permission and scope | Actor, active/current company, supported value, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic and edited timezone values | pass |
+| Browser comparison | Authenticated Core3 Settings desktop/mobile plus Odoo employee Settings desktop/mobile capture | conditional; exact runtime or fixture limitations are recorded in evidence |
+
+Focused test: `test/employees_timezone.integration.test.ts` (4 tests, 19
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`.

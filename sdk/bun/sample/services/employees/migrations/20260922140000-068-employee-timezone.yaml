@@ -1,0 +1,21 @@
+version: 0.0.68
+kind: data
+description: Normalize deterministic Odoo employee timezone fixtures
+type:
+  postgres:
+    up: |
+      UPDATE employees
+      SET timezone = CASE id
+        WHEN 'employee-demo-001' THEN COALESCE(NULLIF(timezone, ''), 'Asia/Ho_Chi_Minh')
+        WHEN 'employee-demo-002' THEN COALESCE(NULLIF(timezone, ''), 'Asia/Ho_Chi_Minh')
+        WHEN 'employee-demo-003' THEN COALESCE(NULLIF(timezone, ''), 'Asia/Ho_Chi_Minh')
+        WHEN 'employee-demo-004' THEN COALESCE(NULLIF(timezone, ''), 'Asia/Ho_Chi_Minh')
+        ELSE COALESCE(NULLIF(timezone, ''), 'UTC')
+      END
+      WHERE timezone IS NULL OR TRIM(timezone) = '';
+    down: |
+      UPDATE employees SET timezone = NULL WHERE id IN ('employee-demo-001', 'employee-demo-002', 'employee-demo-003', 'employee-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

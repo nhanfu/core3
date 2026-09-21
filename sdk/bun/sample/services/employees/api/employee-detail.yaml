@@ -739,6 +739,35 @@ actions:
         - { query: "DELETE FROM employee_tag_rel WHERE employee_id = :id AND tag_id = :tag_id" }
         - { query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", expect_changed: true, status: 409, code: STALE_RECORD, message: This employee changed before the tag was removed. }
       result: { query: "SELECT :id AS employee_id, :tag_id AS tag_id" }
+  - id: edit_employee_timezone
+    type: server_form
+    permission: employees.write
+    title: Edit Timezone
+    description: Set the Odoo employee timezone used for presence and working-time calculations.
+    action: employees.records.timezone.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_detail
+    refresh: [employee_detail]
+    mutation:
+      fields: [timezone]
+      required: [timezone]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_TIMEZONE_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the timezone was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:timezone AS VARCHAR) IN ('UTC', 'Asia/Ho_Chi_Minh', 'Asia/Tokyo', 'Europe/London', 'America/Los_Angeles')", status: 422, code: EMPLOYEES_TIMEZONE_INVALID, message: Select a supported employee timezone. }
+      steps:
+        - query: "UPDATE employees SET timezone = CAST(:timezone AS VARCHAR), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the timezone was saved. Reload and try again.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: timezone, label: Timezone, type: select, options: [{ value: UTC, label: UTC }, { value: Asia/Ho_Chi_Minh, label: Asia/Ho_Chi_Minh }, { value: Asia/Tokyo, label: Asia/Tokyo }, { value: Europe/London, label: Europe/London }, { value: America/Los_Angeles, label: America/Los_Angeles }], required: true }
   - id: edit_employee_department
     type: server_form
     permission: employees.write

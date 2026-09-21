@@ -923,3 +923,20 @@ Candidate commit: current working tree
   `Core3 Demo Company` while deterministic fixtures are `Core3 Vietnam`, so
   populated tag rows remain a documented fixture-company blocker. No
   aggregate sign-off is claimed.
+
+## EMP-EMPLOYEE-TIMEZONE-001 (2026-09-21)
+
+- Selected Odoo's tracked `hr.employee.tz` Timezone setting as the smallest
+  uncovered source-visible employee workflow after Employee Tags.
+- Added migration `20260922140000-068` with replay-safe deterministic timezone
+  normalization for the existing employee fixtures.
+- Added timezone to the employee create contract with supported-value
+  validation, and added separate employee-detail API/page workflow contracts
+  through guarded `edit_employee_timezone` and the Settings header action.
+- Guards cover `employees.write`, actor, active/current company, supported
+  values, and optimistic row-version concurrency; restart coverage preserves
+  an edited timezone.
+- Focused verification is **4 tests / 19 assertions**. Authenticated Odoo and
+  Core3 desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. No aggregate
+  Employees sign-off is claimed.

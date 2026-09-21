@@ -1,0 +1,17 @@
+{
+  "feature_id": "EMP-EMPLOYEE-TIMEZONE-001",
+  "surface": "Odoo",
+  "authenticated_actor": "codex@core3.local",
+  "login_route": "http://127.0.0.1:8069/web/login",
+  "route": "http://127.0.0.1:8069/odoo/employees/1",
+  "employee_fixture": "Mitchell Admin",
+  "settings_tab": true,
+  "tz_dom_control_count": 1,
+  "tz_dom_control_visible": true,
+  "viewports": {
+    "desktop": { "width": 1440, "height": 1100, "title": "Mitchell Admin", "markers": ["Settings", "USER", "APPLICATION SETTINGS", "ATTENDANCE/POINT OF SALE"] },
+    "mobile": { "width": 390, "height": 844, "title": "Mitchell Admin", "markers": ["Settings", "USER", "APPLICATION SETTINGS", "ATTENDANCE/POINT OF SALE"] }
+  },
+  "source_control": "tz field is defined in addons/hr/models/hr_employee.py and rendered in addons/hr/views/hr_employee_views.xml",
+  "blocker": "The reference employee's timezone value is empty/default in the authenticated fixture, so no populated Odoo timezone value is claimed."
+}

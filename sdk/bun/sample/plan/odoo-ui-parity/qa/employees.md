@@ -1104,3 +1104,17 @@ Focused checks: `test/employees_tags.integration.test.ts` plus the owned
 Work-tab contract test: **7 tests, 45 assertions, 0 failures**. Evidence is
 under `evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-TIMEZONE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-047 | Odoo `hr.employee.tz` create/read/update workflow | pass; supported timezone values persist through employee creation and guarded detail update |
+| EMP-PERM-047 | `employees.write`, actor, current company, supported value, and row version | pass; missing actor, wrong company, stale, and unsupported timezone requests reject atomically |
+| EMP-DATA-047 | Migration replay and file-backed restart | pass; deterministic timezone fixtures and an edited value survive restart |
+| EMP-UI-043 | Authenticated Core3/Odoo desktop and mobile | conditional; captures and any fixture-company/runtime limitation are recorded in the feature evidence |
+
+Focused test: `test/employees_timezone.integration.test.ts` (4 tests, 19
+assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TIMEZONE-001/`. No aggregate
+Employees sign-off is claimed.

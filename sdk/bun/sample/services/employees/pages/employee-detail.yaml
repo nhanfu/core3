@@ -17,6 +17,7 @@ components:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: edit_employee_related_user, label: Set Related User, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_timezone, label: Edit Timezone, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: launch_employee_plan, label: Launch Plan, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
