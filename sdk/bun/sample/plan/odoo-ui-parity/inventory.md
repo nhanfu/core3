@@ -2122,3 +2122,33 @@ errors, failed responses, or horizontal overflow. The supplied Odoo runtime
 returned HTTP 303 to `/web/login?redirect=%2Fweb%3F`; the exact blocker is
 recorded and no paired live Odoo execution or full Inventory sign-off is
 claimed.
+
+## On Hand > Quant Move History — `INV-QUANT-MOVE-HISTORY-001` (2026-09-21)
+
+This bounded Wave 27 slice closes Odoo's On Hand quant-row `History` action
+without duplicating the global Moves History, Moves Analysis, lot traceability,
+or stock-location reports. Odoo declares the row button in
+`addons/stock/views/stock_quant_views.xml:147-148`; `stock.quant.action_view_stock_moves`
+scopes `stock.move.line` by product, source/destination location, lot, and
+package in `addons/stock/models/stock_quant.py:371-389`. The destination action
+and default Done filter are defined in
+`addons/stock/views/stock_move_line_views.xml:225-243`.
+
+Core3 adds durable migration
+`20260922140000-064-inventory-quant-move-history.yaml` with deterministic
+company-scoped movement fixtures and report-run history. The On Hand page/API
+adds a permissioned History row action, while separate
+`pages/quant-history.yaml` and `api/quant-history.yaml` contracts share
+`page.id: quant-history`. The contextual report filters by quant product,
+location, lot, company, status, and operation; its Refresh action records a
+durable run with actor, company, and row-version guards.
+
+Focused verification is in
+`test/inventory_quant_move_history.integration.test.ts`: 4 tests / 38
+assertions cover source comparison, contract separation, deterministic
+context/filtering, permission/company/actor/stale/empty guards, migration
+replay, and file-backed restart persistence. Authenticated Core3 desktop and
+mobile evidence is under
+`evidence/inventory/2026-09-21/INV-QUANT-MOVE-HISTORY-001/`. The supplied
+Odoo runtime redirected HTTP 303 to `/web/login`; paired live Odoo evidence is
+blocked and not claimed. Full Inventory sign-off remains open.

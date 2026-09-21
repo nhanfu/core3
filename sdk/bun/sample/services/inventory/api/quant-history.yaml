@@ -1,0 +1,72 @@
+page: { id: quant-history }
+datasources:
+  - id: inventory_quant_history_context
+    single: true
+    permission: inventory.read
+    error_states:
+      not_found: { status: 404, code: INVENTORY_QUANT_HISTORY_NOT_FOUND, message: The selected quantity is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_QUANT_HISTORY_CONTEXT_UNAVAILABLE, message: Quantity history context is temporarily unavailable. }
+    query: "SELECT q.id, q.row_version, q.product_id, q.product_name, COALESCE(l.name, q.location_id) AS location_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number, COALESCE(q.company_name, 'Core3 Demo Company') AS company_name, CAST(q.quantity AS DOUBLE) AS quantity, CAST(q.reserved_quantity AS DOUBLE) AS reserved_quantity, CAST(COUNT(m.id) AS BIGINT) AS history_count FROM inventory_quants q LEFT JOIN inventory_locations l ON l.id = q.location_id LEFT JOIN inventory_move_lines m ON m.product_id = q.product_id AND m.company_name = q.company_name AND m.state = 'Done' AND (m.source_location_id = q.location_id OR m.destination_location_id = q.location_id) AND ((q.lot_serial_number IS NULL AND COALESCE(m.lot_serial_number, '') = '') OR m.lot_serial_number = q.lot_serial_number) WHERE q.id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name) GROUP BY q.id, q.row_version, q.product_id, q.product_name, l.name, q.location_id, q.lot_serial_number, q.company_name, q.quantity, q.reserved_quantity"
+  - id: inventory_quant_history_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('todo', 'To Do'), ('done', 'Done')) states(value, label)"
+  - id: inventory_quant_history_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('incoming', 'Incoming'), ('outgoing', 'Outgoing'), ('internal', 'Internal')) types(value, label)"
+  - id: inventory_quant_history_lines
+    single: false
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_QUANT_HISTORY_LINES_UNAVAILABLE, message: Quantity movements are temporarily unavailable. }
+    query: "SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference, m.product_id, m.product_name, m.lot_serial_number, COALESCE(sl.name, m.source_location_id) AS source_location, COALESCE(dl.name, m.destination_location_id) AS destination_location, m.company_name, CAST(m.quantity AS DOUBLE) AS quantity, CAST(m.quantity_product_uom AS DOUBLE) AS quantity_product_uom, m.unit_name, m.state, m.done_by, m.origin, m.movement_type FROM inventory_move_lines m JOIN inventory_quants q ON q.id = :quant_id AND m.product_id = q.product_id AND m.company_name = q.company_name AND (m.source_location_id = q.location_id OR m.destination_location_id = q.location_id) AND ((q.lot_serial_number IS NULL AND COALESCE(m.lot_serial_number, '') = '') OR m.lot_serial_number = q.lot_serial_number) LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id WHERE (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR m.reference ILIKE '%' || :q || '%' OR COALESCE(sl.name, '') ILIKE '%' || :q || '%' OR COALESCE(dl.name, '') ILIKE '%' || :q || '%' OR COALESCE(m.lot_serial_number, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR :state = '' OR (:state = 'done' AND m.state = 'Done') OR (:state = 'todo' AND m.state NOT IN ('Done', 'Draft', 'Cancelled'))) AND (:movement_type IS NULL OR :movement_type = '' OR m.movement_type = :movement_type) ORDER BY m.date DESC, m.id DESC"
+  - id: inventory_quant_history_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_QUANT_HISTORY_RUNS_UNAVAILABLE, message: Quantity history report history is temporarily unavailable. } }
+    query: "SELECT id, row_version, quant_id, product_name, location_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_quant_history_runs WHERE quant_id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name) ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_quant_history
+    type: client
+    permission: inventory.read
+    script: |
+      // js
+      async ({ state, query, request }) => {
+        const context = state.inventory_quant_history_context;
+        if (!context?.id) throw new Error('Quantity history context is unavailable');
+        await request('/api/actions/inventory.quants.history', {
+          method: 'POST',
+          body: { quant_id: context.id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_quant_history
+    type: server
+    permission: inventory.read
+    action: inventory.quants.history
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_quant_history_context, inventory_quant_history_lines, inventory_quant_history_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'quant-history-' || CAST(:quant_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_quant_history_runs WHERE quant_id = :quant_id) AS VARCHAR) AS id, q.product_name, COALESCE(l.name, q.location_id) AS location_name, q.lot_serial_number, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), q.company_name, 'Core3 Demo Company') AS company_name, COUNT(m.id) AS line_count FROM inventory_quants q LEFT JOIN inventory_locations l ON l.id = q.location_id LEFT JOIN inventory_move_lines m ON m.product_id = q.product_id AND m.company_name = q.company_name AND m.state = 'Done' AND (m.source_location_id = q.location_id OR m.destination_location_id = q.location_id) AND ((q.lot_serial_number IS NULL AND COALESCE(m.lot_serial_number, '') = '') OR m.lot_serial_number = q.lot_serial_number) WHERE q.id = :quant_id GROUP BY q.id, q.product_name, l.name, q.location_id, q.lot_serial_number, q.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_quants WHERE id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 404, code: INVENTORY_QUANT_HISTORY_NOT_FOUND, message: The selected quantity is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :quant_id AND row_version = :expected_row_version AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 409, code: INVENTORY_QUANT_HISTORY_STALE, message: The quantity changed before history was requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_quants q JOIN inventory_move_lines m ON m.product_id = q.product_id AND m.company_name = q.company_name AND m.state = 'Done' AND (m.source_location_id = q.location_id OR m.destination_location_id = q.location_id) AND ((q.lot_serial_number IS NULL AND COALESCE(m.lot_serial_number, '') = '') OR m.lot_serial_number = q.lot_serial_number) WHERE q.id = :quant_id)", status: 404, code: INVENTORY_QUANT_HISTORY_EMPTY, message: This quantity has no completed inventory movements to report. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_QUANT_HISTORY_ACTOR_REQUIRED, message: An authenticated inventory actor is required to refresh quantity history. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_QUANT_HISTORY_COMPANY, message: The history company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_quant_history_runs(id, quant_id, product_name, location_name, lot_serial_number, company_name, requested_by, line_count, opened_at, row_version) VALUES(:id, :quant_id, :product_name, :location_name, :lot_serial_number, :company_name, :requested_by, :line_count, TIMESTAMP '2026-01-15 10:00:00', 1)"
+      result: { query: "SELECT id, quant_id, product_name, location_name, requested_by, company_name, line_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_quant_history_runs WHERE id = :id" }
+  - id: back_to_inventory_stock_from_quant_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock
+  - id: view_inventory_quant_history_move
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves/detail
+    params: { id: '{row.id}' }

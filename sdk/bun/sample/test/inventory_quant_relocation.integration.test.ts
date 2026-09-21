@@ -24,7 +24,7 @@ describe('Inventory quant relocation parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.page.id).toBe('stock');
     expect(page.components[0].source).toBe('inventory_stock');
-    expect(page.components[0].columns.find((column: any) => column.field === 'actions').actions[0].id).toBe('relocate_inventory_quant');
+    expect(page.components[0].columns.find((column: any) => column.field === 'actions').actions).toContainEqual(expect.objectContaining({ id: 'relocate_inventory_quant' }));
     expect(api.page.id).toBe('stock');
     expect(api.datasources.map((source: any) => source.id)).toEqual(['inventory_stock_locations', 'inventory_stock', 'inventory_quant_relocations']);
     expect(action.permission).toBe('inventory.manage');

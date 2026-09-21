@@ -1494,3 +1494,31 @@ sign-off remains open.
 QA disposition: PASS for the bounded Core3 package barcode report lifecycle;
 PARTIAL/BLOCKED for unavailable live Odoo comparison. Full Inventory sign-off
 remains open.
+
+## Inventory Quant Move History QA — `INV-QUANT-MOVE-HISTORY-001`
+
+- Odoo source/action: PASS. The On Hand quant list's History button invokes
+  `stock.quant.action_view_stock_moves`, scoping Moves History by product,
+  location, lot, and package; the action defaults the Done filter. Exact
+  references are in the paired `source-comparison.json`.
+- Core3 contract: PASS. `quant-history` page/API YAML is separate and joined
+  by `page.id`; the On Hand row action binds `quant_id`. Migration 0.0.64
+  persists deterministic completed movements and report history. Queries
+  enforce quant/company context and filters; Refresh enforces actor, company,
+  completed movement, and row-version guards.
+- Focused verification: PASS —
+  `bun test test/inventory_quant_move_history.integration.test.ts`, 4 tests /
+  38 assertions. Coverage includes source/schema checks, deterministic
+  filtering, permission/company/actor/stale/empty boundaries, migration
+  replay, and restart persistence.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. The quant context and incoming/outgoing history rows render with no
+  browser errors or horizontal overflow; captures and JSON are in the feature
+  evidence directory.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable quant-history report;
+PARTIAL/BLOCKED for paired live Odoo comparison. Full Inventory sign-off
+remains open.

@@ -1,0 +1,20 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4340/inventory/stock/quant-history?quant_id=quant-box-main&current_company_name=Core3%20Demo%20Company",
+    "title": "Quant Move History",
+    "text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nQuant Move History\n\nProduct\n\n[E-COM08] Storage Box\n\nLocation\n\nStock\n\nLot / Serial\n\nMoves\n\n2\n\nRefresh History\nBack to On Hand\nSupply Chain / Inventory / On Hand / History\n1-2 / 2\n‹\n›\nStatus: Done\nDate\n\tReference\n\tFrom\n\tTo\n\tLot / Serial\n\tQuantity\n\tUnit\n\tStatus\n\tDone By\n\n2026-01-15 09:00:00\t\nWH/OUT/HISTORY/0001\n\tStock\tCustomers\t—\t4\tUnits\tDone\tInventory Operator\n2026-01-14 08:00:00\t\nWH/IN/HISTORY/0001\n\tVendors\tStock\t—\t12\tUnits\tDone\tInventory Operator\nHello, Admin User\nHello, Admin User",
+    "body_scroll_width": 1440,
+    "viewport_width": 1440,
+    "errors": [],
+    "bad_responses": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4340/inventory/stock/quant-history?quant_id=quant-box-main&current_company_name=Core3%20Demo%20Company",
+    "title": "Quant Move History",
+    "text": "AU\nQuant Move History\n\nProduct\n\n[E-COM08] Storage Box\n\nLocation\n\nStock\n\nLot / Serial\n\nMoves\n\n2\n\nRefresh History\nBack to On Hand\nHistory\n1-2 / 2\n‹\n›\nStatus: Done\nWH/OUT/HISTORY/0001\n\noutgoing\n\nDate\n2026-01-15 09:00:00\nFrom\nStock\nTo\nCustomers\nQuantity\n4\nStatus\nDone\nWH/IN/HISTORY/0001\n\nincoming\n\nDate\n2026-01-14 08:00:00\nFrom\nVendors\nTo\nStock\nQuantity\n12\nStatus\nDone",
+    "body_scroll_width": 390,
+    "viewport_width": 390,
+    "errors": [],
+    "bad_responses": []
+  }
+}

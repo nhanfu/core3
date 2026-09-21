@@ -19,6 +19,7 @@ components:
         label: Actions
         sortable: false
         actions:
+          - { id: view_inventory_quant_history, label: History, icon: history, permission: inventory.read }
           - { id: relocate_inventory_quant, label: Relocate, icon: transfer, variant: secondary, permission: inventory.manage }
     page_size: 50
     row_key: id

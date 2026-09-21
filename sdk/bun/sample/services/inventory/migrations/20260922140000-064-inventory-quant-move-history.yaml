@@ -1,0 +1,35 @@
+version: 0.0.64
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_quant_history_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        quant_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        location_name VARCHAR NOT NULL,
+        lot_serial_number VARCHAR,
+        company_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS inventory_quant_history_runs_quant_idx
+        ON inventory_quant_history_runs(quant_id, opened_at, id);
+      INSERT INTO inventory_move_lines(id, row_version, date, reference, product_id, product_name, product_category_name, lot_serial_number, source_package, result_package, source_location_id, destination_location_id, picking_partner_name, company_name, quantity, quantity_product_uom, unit_name, state, done_by, origin, movement_type, created_at)
+      VALUES
+        ('quant-history-move-in-0001', 1, TIMESTAMP '2026-01-14 08:00:00', 'WH/IN/HISTORY/0001', 'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-supplier', 'location-stock', 'History Supplier', 'Core3 Demo Company', 12, 12, 'Units', 'Done', 'Inventory Operator', 'PO/HISTORY/0001', 'incoming', TIMESTAMP '2026-01-14 08:00:00'),
+        ('quant-history-move-out-0001', 1, TIMESTAMP '2026-01-15 09:00:00', 'WH/OUT/HISTORY/0001', 'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-stock', 'location-customer', 'History Customer', 'Core3 Demo Company', 4, 4, 'Units', 'Done', 'Inventory Operator', 'SO/HISTORY/0001', 'outgoing', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_quant_history_runs(id, row_version, quant_id, product_name, location_name, lot_serial_number, company_name, requested_by, line_count, opened_at)
+      VALUES ('quant-history-run-0001', 1, 'quant-box-main', '[E-COM08] Storage Box', 'WH/Stock', NULL, 'Core3 Demo Company', 'Seeded Inventory', 2, TIMESTAMP '2026-01-15 10:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_quant_history_runs WHERE id = 'quant-history-run-0001';
+      DELETE FROM inventory_move_lines WHERE id IN ('quant-history-move-in-0001', 'quant-history-move-out-0001');
+      DROP TABLE IF EXISTS inventory_quant_history_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

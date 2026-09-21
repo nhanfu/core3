@@ -1116,3 +1116,20 @@ Full Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-PACKAGE-BARCODE-001/`; Odoo live
   comparison is blocked by HTTP 303 to `/web/login?redirect=%2Fweb%3F` and is
   recorded in the paired blocker file. Full Inventory sign-off remains open.
+
+## `INV-QUANT-MOVE-HISTORY-001` — On Hand Quant Move History (2026-09-21)
+
+- Selected Odoo's uncovered On Hand quant-row `History` action
+  `stock.quant.action_view_stock_moves`, distinct from the global Moves
+  History, Moves Analysis, lot traceability, and stock-location slices.
+- Added migration `20260922140000-064-inventory-quant-move-history.yaml`
+  with deterministic Core3 Demo Company completed movement fixtures and a
+  durable quant-history run ledger. Added separate page/API YAML joined by
+  `page.id: quant-history`; the On Hand row action supplies `quant_id`.
+- Focused verification passes 4 tests / 38 assertions for source mapping,
+  product/location/lot/company filtering, actor/company/stale/empty guards,
+  migration replay, restart persistence, and read permission denial.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-QUANT-MOVE-HISTORY-001/`. Odoo comparison
+  is blocked by the supplied HTTP 303 login redirect; full Inventory sign-off
+  remains open.

@@ -1,0 +1,25 @@
+{
+  "feature_id": "INV-QUANT-MOVE-HISTORY-001",
+  "odoo": {
+    "entry": "On Hand quant list row History button",
+    "action": "stock.quant.action_view_stock_moves",
+    "source": [
+      "addons/stock/views/stock_quant_views.xml:147-148",
+      "addons/stock/models/stock_quant.py:371-389",
+      "addons/stock/views/stock_move_line_views.xml:225-243"
+    ],
+    "semantics": [
+      "open Moves History for one quant",
+      "scope by product, source or destination location, and lot",
+      "default the Done filter and preserve pivot/list/form action modes"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/quant-history.yaml",
+    "api": "services/inventory/api/quant-history.yaml",
+    "page_id": "quant-history",
+    "entry_binding": "services/inventory/pages/stock.yaml + services/inventory/api/stock.yaml",
+    "migration": "services/inventory/migrations/20260922140000-064-inventory-quant-move-history.yaml",
+    "guards": ["inventory.read", "current company", "authenticated actor", "quant row version", "completed movement exists"]
+  }
+}

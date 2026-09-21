@@ -54,22 +54,23 @@ describe('Inventory Moves History Odoo parity', () => {
     const params = { q: null, state: 'done', movement_type: null, from_date: null, to_date: null, fixture_state: null };
 
     const done = await repository.querySource(source, params, 0, 50);
-    expect(done.data).toHaveLength(10);
+    expect(done.data).toHaveLength(13);
     expect(done.data.map((row: any) => row.id)).toEqual([
-      'move-line-0002', 'move-line-0001', 'move-line-0003', 'move-line-0004', 'move-line-0005',
-      'move-line-0006', 'move-line-0007', 'move-line-0008', 'move-line-0009', 'move-line-0010',
+      'quant-history-move-out-0001', 'trace-move-line-0001', 'move-line-0002', 'move-line-0001', 'move-line-0003',
+      'quant-history-move-in-0001', 'move-line-0004', 'move-line-0005', 'move-line-0006', 'move-line-0007',
+      'move-line-0008', 'move-line-0009', 'move-line-0010',
     ]);
     expect(done.data.every((row: any) => row.state === 'Done')).toBe(true);
     expect(done.data.every((row: any) => String(row.date).startsWith('2026-'))).toBe(true);
 
     const todo = await repository.querySource(source, { ...params, state: 'todo' }, 0, 50);
-    expect(todo.data.map((row: any) => row.id)).toEqual(['move-line-0016', 'move-line-0015', 'move-line-0013', 'move-line-0012', 'move-line-0011']);
+    expect(todo.data.map((row: any) => row.id)).toEqual(['move-line-0016', 'move-line-0015', 'move-line-0013', 'move-line-0012', 'move-line-0011', 'delivery-detailed-0001-line-001']);
     const searched = await repository.querySource(source, { ...params, q: 'CM-BOX' }, 0, 50);
     expect(searched.data).toMatchObject([{ id: 'move-line-0009', lot_serial_number: 'CM-BOX-00001', product_name: 'Cable Management Box' }]);
     const filtered = await repository.querySource(source, { ...params, movement_type: 'outgoing' }, 0, 50);
-    expect(filtered.data.map((row: any) => row.id)).toEqual(['move-line-0004', 'move-line-0005', 'move-line-0008', 'move-line-0010']);
+    expect(filtered.data.map((row: any) => row.id)).toEqual(['quant-history-move-out-0001', 'move-line-0004', 'move-line-0005', 'move-line-0008', 'move-line-0010']);
     const dated = await repository.querySource(source, { ...params, from_date: '2026-01-14', to_date: '2026-01-15' }, 0, 50);
-    expect(dated.data.map((row: any) => row.id)).toEqual(['move-line-0002', 'move-line-0001', 'move-line-0003']);
+    expect(dated.data.map((row: any) => row.id)).toEqual(['quant-history-move-out-0001', 'trace-move-line-0001', 'move-line-0002', 'move-line-0001', 'move-line-0003', 'quant-history-move-in-0001']);
     expect((await repository.querySource(source, { ...params, q: 'not-a-move' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_MOVE_HISTORY_UNAVAILABLE' });
@@ -79,7 +80,7 @@ describe('Inventory Moves History Odoo parity', () => {
     });
     expect(pivot.data).toEqual(expect.arrayContaining([
       expect.objectContaining({ product_category_name: 'Furniture', Quantity: 195 }),
-      expect.objectContaining({ product_category_name: 'Office Supplies', Quantity: 83 }),
+      expect.objectContaining({ product_category_name: 'Office Supplies', Quantity: 114 }),
     ]));
 
     const detail = yaml('api/move-line-detail.yaml').datasources[0];
@@ -102,8 +103,11 @@ describe('Inventory Moves History Odoo parity', () => {
     expect(page.actions).toBeUndefined();
     expect(detailPage.actions).toBeUndefined();
     expect(api.actions).toEqual([{ id: 'view_inventory_move_line', type: 'navigate', permission: 'inventory.read', navigate_to: '/moves/detail', params: { id: '{row.id}' } }]);
-    expect(detailApi.actions).toEqual([{ id: 'back_to_inventory_move_history', type: 'navigate', permission: 'inventory.read', navigate_to: '/moves' }]);
-    expect(JSON.stringify([page, api, detailPage, detailApi])).not.toMatch(/inventory\.write|inventory\.manage|operation: (create|update|delete)/);
+    expect(detailApi.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'back_to_inventory_move_history', type: 'navigate', permission: 'inventory.read', navigate_to: '/moves' }),
+      expect.objectContaining({ id: 'revert_inventory_adjustment', permission: 'inventory.manage', operation: 'revert_inventory_adjustment' }),
+    ]));
+    expect(JSON.stringify([page, api])).not.toMatch(/inventory\.write|inventory\.manage|operation: (create|update|delete)/);
     expect(migration.type.postgres.up).toContain("TIMESTAMP '2026-01-15");
     expect(migration.type.postgres.up).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)/);
     expect(api.datasources.find((source: any) => source.id === 'inventory_move_lines').error_states.transport_error).toMatchObject({ status: 503, code: 'INVENTORY_MOVE_HISTORY_UNAVAILABLE' });

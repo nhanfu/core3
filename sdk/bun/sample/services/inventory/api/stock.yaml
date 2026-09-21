@@ -14,6 +14,11 @@ datasources:
     permission: inventory.read
     query: "SELECT r.id, r.row_version, r.quant_id, r.product_name, COALESCE(r.lot_serial_number, '') AS lot_serial_number, sl.name AS source_location, dl.name AS destination_location, CAST(r.quantity AS DOUBLE) AS quantity, r.unit_name, COALESCE(r.message, '') AS message, r.relocated_by, CAST(r.relocated_at AS VARCHAR) AS relocated_at FROM inventory_quant_relocations r JOIN inventory_locations sl ON sl.id = r.source_location_id JOIN inventory_locations dl ON dl.id = r.destination_location_id ORDER BY r.relocated_at DESC, r.id DESC"
 actions:
+  - id: view_inventory_quant_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock/quant-history
+    params: { quant_id: '{row.id}' }
   - id: relocate_inventory_quant
     type: server_form
     permission: inventory.manage

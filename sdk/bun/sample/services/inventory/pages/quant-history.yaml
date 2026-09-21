@@ -1,0 +1,57 @@
+title: Quant Move History
+page: { id: quant-history, route: /stock/quant-history, breadcrumb: [Supply Chain, Inventory, On Hand, History], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_quant_history_context
+    title: Quant Move History
+    stats:
+      - { label: Product, field: product_name }
+      - { label: Location, field: location_name }
+      - { label: Lot / Serial, field: lot_serial_number }
+      - { label: Moves, field: history_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_quant_history_lines
+    header_actions:
+      - { id: refresh_inventory_quant_history, label: Refresh History, variant: secondary, permission: inventory.read }
+      - { id: back_to_inventory_stock_from_quant_history, label: Back to On Hand, variant: secondary, permission: inventory.read }
+    default_filters: { state: done }
+    search: { label: Search moves, placeholder: 'Search references, locations, or lots...' }
+    filters:
+      - { field: state, label: Status, options_source: inventory_quant_history_states }
+      - { field: movement_type, label: Operation, options_source: inventory_quant_history_types }
+    group_by:
+      - { field: movement_type, label: Operation }
+      - { field: date, label: Date }
+      - { field: state, label: Status }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: reference
+          subtitle: movement_type
+          fields:
+            - { field: date, label: Date }
+            - { field: source_location, label: From }
+            - { field: destination_location, label: To }
+            - { field: quantity, label: Quantity }
+            - { field: state, label: Status }
+    columns:
+      - { field: date, label: Date, mobile: true, sortable: true }
+      - { field: reference, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: lot_serial_number, label: Lot / Serial, mobile: false }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: unit_name, label: Unit, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: done_by, label: Done By, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_quant_history_move
+    row_double_click_action: view_inventory_quant_history_move
+    empty_state: { title: No moves for this quantity, description: Completed inventory movements for this product and location will appear here. }
