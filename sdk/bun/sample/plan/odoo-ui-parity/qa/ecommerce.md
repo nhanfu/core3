@@ -13,10 +13,10 @@
 - Focused and adjacent verification: **11 tests, 125 assertions, 0 failures**
   across Wishlist Page Layout, Wishlist Lifecycle, Wishlist Session Merge, and
   Comparison Price Visibility.
-- Audit/build: `bun run audit` and authenticated Core3 rendering were not
-  available in this environment; the known shared runtime ports 3000, 4312,
-  and 4313 refused connections. Scoped diff/lint checks are recorded in the
-  feature evidence.
+- Audit/build: `bun run audit` passed at **802 pages, 811 routes, and 1656
+  datasources**; `bun run css:build:ecommerce`, scoped ESLint, and
+  `git diff --check` passed. Authenticated Core3 rendering remains blocked by
+  connection refusal on the known shared runtime ports 3000, 4312, and 4313.
 - Authenticated Odoo comparison uses `http://localhost:8069`, database
   `core3_reference`, and the shared QA login. `/shop/wishlist` is an exact
   authenticated 404 at desktop and iPhone-14 mobile viewports; no visual

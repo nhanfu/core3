@@ -13,6 +13,22 @@ missing fixture reads, migration replay, Wishlist projection, and DuckDB
 restart persistence. Existing wishlist lifecycle/merge and compare-price
 visibility regressions also pass.
 
-`git diff --check` is required before commit. A repository-wide `bun run audit`
-was not used as a sign-off gate because the shared checkout has unrelated
-module-level YAML/runtime blockers; no other module was modified.
+Additional checks:
+
+```text
+bun run audit
+UI audit: 802 pages, 811 routes, 1656 datasources
+UI audit passed
+
+bun run css:build:ecommerce
+passed
+
+bun x eslint test/ecommerce_wishlist_page_layout.integration.test.ts
+passed
+
+git diff --check
+passed
+```
+
+The authenticated Core3 browser runtime remains unavailable; no other module
+was modified.
