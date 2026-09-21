@@ -1,0 +1,45 @@
+version: 0.0.59
+kind: data
+description: Persist the Odoo employee-specific Work Address assignment
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_work_addresses (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        company_name VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_work_addresses(id, row_version, name, company_name, active) VALUES
+        ('work-address-core3-hq', 1, 'Core3 Vietnam HQ, District 1', 'Core3 Vietnam', true),
+        ('work-address-danang', 1, 'Da Nang Engineering Office', 'Core3 Vietnam', true),
+        ('work-address-hanoi', 1, 'Hanoi Design Studio', 'Core3 Vietnam', true),
+        ('work-address-home', 1, 'Home Office Address', 'Core3 Vietnam', true),
+        ('work-address-legacy', 1, 'Odoo Legacy Address', 'Core3 Vietnam', false),
+        ('work-address-sf', 1, 'San Francisco HQ', 'My Company (San Francisco)', true);
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_address_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS work_address_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS work_address_name VARCHAR;
+      UPDATE employees e
+      SET work_address_id = (
+        SELECT a.id FROM employee_work_addresses a
+        WHERE a.name = e.address_name AND a.active = true
+        ORDER BY a.id LIMIT 1
+      )
+      WHERE e.work_address_id IS NULL AND NULLIF(TRIM(COALESCE(e.address_name, '')), '') IS NOT NULL;
+      UPDATE employee_versions v
+      SET work_address_id = (SELECT e.work_address_id FROM employees e WHERE e.id = v.employee_id),
+          work_address_name = (SELECT e.address_name FROM employees e WHERE e.id = v.employee_id)
+      WHERE v.work_address_id IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_address_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS work_address_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS work_address_name;
+      DROP TABLE IF EXISTS employee_work_addresses;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

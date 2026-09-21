@@ -514,3 +514,17 @@ assertions). Evidence:
 Focused test: `test/employees_work_location_assignment.integration.test.ts` (4
 tests, 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-WORK-LOCATION-ASSIGNMENT-001/`.
+
+## EMP-WORK-ADDRESS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.address_id` and Work > Location view map to paired employee-detail page/API contracts | pass |
+| Employee update | Dedicated action updates employee display/relation and active Payroll version durably | pass |
+| Permission and scope | `employees.write`, actor, current company, active address/version, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Work Address relations | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Work desktop/mobile captures | conditional; Odoo control visible at both viewports, Core3 blocked by unrelated page schema validation |
+
+Focused test: `test/employees_work_address_assignment.integration.test.ts` (4
+tests, 22 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`.

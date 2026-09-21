@@ -1850,6 +1850,28 @@ visible at both viewports. The bounded Core3 runtime printed its backend URL
 but never bound port 3001, so Core3 browser comparison remains a precise
 conditional blocker. No aggregate Employees sign-off is claimed.
 
+## EMP-WORK-ADDRESS-001: Employee Work Address assignment (2026-09-21)
+
+Odoo's Work tab exposes the current Payroll version's `hr.version.address_id`
+as Work Address before Work Location. Core3 previously kept only an untyped
+`address_name` display value in the broad employee editor. This slice adds the
+missing company-scoped employee Work Address assignment lifecycle without
+duplicating Work Location assignment.
+
+Migration `20260922050000-059` adds a deterministic `employee_work_addresses`
+catalog, durable `work_address_id` columns on employees and employee versions,
+and replay-safe relation backfills. The paired employee-detail page/API
+contracts add address options and a guarded Edit Work Address action. The
+action updates the employee and active Payroll record together and enforces
+actor, active/current-company, supported-address, active-version, and
+optimistic row-version guards.
+
+Focused coverage is **4 tests / 22 assertions**. Authenticated Odoo
+desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`. Core3 startup was blocked
+by an unrelated concurrent page schema error (`components[3].title`), recorded
+precisely in the evidence. No aggregate Employees sign-off is claimed.
+
 ## EMP-WORK-LOCATION-ASSIGNMENT-001: Employee Work Location assignment (2026-09-21)
 
 Odoo's Work tab exposes the current Payroll version's

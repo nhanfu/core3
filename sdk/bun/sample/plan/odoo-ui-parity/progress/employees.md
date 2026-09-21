@@ -711,6 +711,28 @@ Candidate commit: current working tree
   Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
   No aggregate Employees sign-off is claimed.
 
+## EMP-WORK-ADDRESS-001 (2026-09-21)
+
+- Selected the next uncovered source-visible employee behavior: Odoo's
+  `hr.version.address_id`, rendered as Work Address in the Work tab's Location
+  group. It is distinct from Work Location assignment and the existing broad
+  employee editor.
+- Added migration `20260922050000-059` with deterministic
+  `employee_work_addresses` fixtures, employee/version `work_address_id`
+  columns, and relation backfill from existing `address_name` values.
+- Added the employee-detail API options datasource and guarded
+  `edit_employee_work_address` action; the page adds the action binding while
+  retaining the Odoo Work > Location field order. Employee and active Payroll
+  version values update together.
+- Guards require `employees.write`, actor identity, active/current-company
+  employee, active company address, active Payroll version, and stale
+  row-version protection. Focused verification is **4 tests / 22 assertions**.
+- Authenticated Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`. Core3 startup was
+  blocked by unrelated `components[3].title is not allowed` page discovery;
+  the exact blocker is in `verification.md`. No aggregate Employees sign-off
+  is claimed.
+
 ## EMP-WORK-LOCATION-ASSIGNMENT-001 (2026-09-21)
 
 - Selected the next uncovered source-visible employee behavior: Odoo's

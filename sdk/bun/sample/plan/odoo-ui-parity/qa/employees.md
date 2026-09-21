@@ -711,6 +711,20 @@ session is `Core3 Demo Company` while deterministic employee fixtures are
 `Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
 sign-off is claimed.
 
+## EMP-WORK-ADDRESS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-040 | Employee Work Address assignment | pass; selected address persists on employee and active Payroll record |
+| EMP-PERM-040 | `employees.write`, actor, current company, active address/version, row version | pass; actor, invalid, stale, and wrong-company requests reject atomically |
+| EMP-DATA-040 | Migration replay and file-backed restart | pass; deterministic address relations survive restart without duplicates |
+| EMP-UI-036 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo Work Address is visible at both viewports, while Core3 startup is blocked by unrelated page schema validation |
+
+Focused test: `test/employees_work_address_assignment.integration.test.ts` (4
+tests, 22 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`. No aggregate Employees
+sign-off is claimed.
+
 ## EMP-WORK-LOCATION-ASSIGNMENT-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |
