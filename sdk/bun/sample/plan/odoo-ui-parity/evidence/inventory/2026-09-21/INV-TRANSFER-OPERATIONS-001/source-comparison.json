@@ -1,0 +1,28 @@
+{
+  "feature": "INV-TRANSFER-OPERATIONS-001",
+  "odoo": {
+    "method_source": "../../../../../odoo/addons/stock/models/stock_picking.py",
+    "method_lines": "1958-1965",
+    "method": "stock.picking.action_picking_move_tree",
+    "view_source": "../../../../../odoo/addons/stock/views/stock_picking_views.xml",
+    "view_lines": "176-187",
+    "behavior": [
+      "opens stock.move using stock.stock_move_action",
+      "forces the picking move list view",
+      "passes the current transfer context and defaults",
+      "filters moves by picking_id in the current transfer ids",
+      "hides the Operations stat for locked or Done transfers"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-operations.yaml",
+    "api": "services/inventory/api/transfer-operations.yaml",
+    "page_id": "transfer-operations",
+    "transfer_page": "services/inventory/pages/transfer-detail.yaml",
+    "transfer_api": "services/inventory/api/transfer-detail.yaml",
+    "action": "view_inventory_transfer_operations",
+    "migration": "services/inventory/migrations/20260922320000-082-inventory-transfer-operations.yaml",
+    "mapping": "A read-only transfer-context Operations page exposes durable picking moves, search, company scope, cancelled exclusion, and expected transfer row-version guards, with Back to Transfer navigation."
+  },
+  "comparison_scope": "Core3 implements the bounded transfer Operations contextual read workflow; authenticated visual parity and Odoo execution could not be reached without credentials/runtime availability."
+}

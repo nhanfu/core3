@@ -1,0 +1,8 @@
+{
+  "feature": "INV-TRANSFER-OPERATIONS-001",
+  "url": "http://127.0.0.1:8069/web",
+  "http_status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "authenticated_comparison": false,
+  "blocker": "Odoo redirected the unauthenticated probe to /web/login; no credentials/session were supplied, so no Odoo desktop/mobile workflow or source execution is claimed."
+}

@@ -1,0 +1,23 @@
+page: { id: transfer-operations }
+datasources:
+  - id: inventory_transfer_operations_context
+    single: true
+    permission: inventory.read
+    error_states:
+      not_found: { status: 404, code: INVENTORY_TRANSFER_OPERATIONS_NOT_FOUND, message: Transfer operations were not found. }
+      forbidden: { status: 403, code: INVENTORY_TRANSFER_OPERATIONS_FORBIDDEN, message: You do not have permission to view transfer operations. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_OPERATIONS_UNAVAILABLE, message: Transfer operation context is temporarily unavailable. }
+    query: "SELECT p.id AS picking_id, p.row_version, p.name AS transfer_name, p.state, p.company_name, sl.name AS source_location, dl.name AS destination_location, CAST(COUNT(m.id) AS BIGINT) AS operation_count FROM inventory_pickings p JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id LEFT JOIN inventory_picking_moves m ON m.picking_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :picking_id AND p.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) AND (:expected_row_version IS NULL OR p.row_version = CAST(:expected_row_version AS BIGINT)) GROUP BY p.id, p.row_version, p.name, p.state, p.company_name, sl.name, dl.name"
+  - id: inventory_transfer_operations
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_TRANSFER_OPERATIONS_FORBIDDEN, message: You do not have permission to view transfer operations. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_OPERATIONS_UNAVAILABLE, message: Transfer operations are temporarily unavailable. }
+    query: "SELECT m.id, p.id AS picking_id, p.row_version, m.product_name, CAST(m.quantity AS DOUBLE) AS demand, CAST(m.done_quantity AS DOUBLE) AS done_quantity, CASE WHEN m.done_quantity >= m.quantity THEN 'Done' WHEN m.done_quantity > 0 THEN 'Partially Done' ELSE p.state END AS state, 'Unit(s)' AS uom, sl.name AS source_location, dl.name AS destination_location, p.company_name FROM inventory_picking_moves m JOIN inventory_pickings p ON p.id = m.picking_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND p.id = :picking_id AND p.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) AND (:expected_row_version IS NULL OR p.row_version = CAST(:expected_row_version AS BIGINT)) AND (:q IS NULL OR m.product_name ILIKE '%' || :q || '%' OR COALESCE(sl.name, '') ILIKE '%' || :q || '%' OR COALESCE(dl.name, '') ILIKE '%' || :q || '%') ORDER BY m.id"
+actions:
+  - id: back_to_inventory_transfer_from_operations
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }

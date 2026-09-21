@@ -1,0 +1,8 @@
+{
+  "feature": "INV-TRANSFER-OPERATIONS-001",
+  "captured_at": "2026-09-21",
+  "authenticated": false,
+  "runtime_started": false,
+  "results": [],
+  "blocker": "The scoped Core3 agent server could not start because an unrelated Timesheets page fails discovery: portal_task_timesheet_detail references unknown datasource portal_task_timesheet_detail and unknown action back_to_portal_task_timesheets. No desktop/mobile screenshot or visual sign-off is claimed."
+}

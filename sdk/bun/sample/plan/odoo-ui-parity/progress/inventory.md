@@ -1500,3 +1500,24 @@ Full Inventory sign-off remains open.
   exact evidence is under
   `evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGES-CONTEXT-001/`. Full
   Inventory sign-off remains open.
+
+## `INV-TRANSFER-OPERATIONS-001` — Transfer Operations contextual list (2026-09-21)
+
+- Selected Odoo `stock.picking.action_picking_move_tree()` from
+  `addons/stock/models/stock_picking.py:1958-1965`; the transfer form exposes
+  the Operations stat at `addons/stock/views/stock_picking_views.xml:176-187`
+  and scopes `stock.move` by the current picking, with the action hidden for
+  locked or Done transfers.
+- Added presentation-only `pages/transfer-operations.yaml` and backend
+  `api/transfer-operations.yaml`, joined by `page.id: transfer-operations`,
+  plus the transfer-detail Operations stat/action. Migration
+  `20260922320000-082-inventory-transfer-operations.yaml` seeds a replay-safe
+  Ready transfer with two durable move rows.
+- The read workflow enforces `inventory.read`, current-company scope,
+  cancelled-transfer exclusion, missing/empty/503 states, deterministic search,
+  and expected transfer row-version guards. Focused verification passes 3
+  tests / 29 assertions, with restart persistence and permission denial.
+  Core3 browser startup is blocked by an unrelated Timesheets discovery error;
+  Odoo is login-blocked. Exact evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-OPERATIONS-001/`. Full Inventory
+  sign-off remains open.

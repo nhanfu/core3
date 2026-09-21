@@ -2614,3 +2614,29 @@ YAML schema/discovery audit, `bun run audit`, scoped ESLint, and `git diff
 login-blocked; exact evidence is under
 `evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGES-CONTEXT-001/`. Full
 Inventory sign-off remains open.
+
+## Operations > Transfer Operations contextual list — `INV-TRANSFER-OPERATIONS-001` (2026-09-21)
+
+This bounded Wave 45 slice covers Odoo
+`stock.picking.action_picking_move_tree()` at
+`addons/stock/models/stock_picking.py:1958-1965`. The transfer form exposes
+the Operations stat at `addons/stock/views/stock_picking_views.xml:176-187`;
+Odoo opens the `stock.move` list with the current transfer domain/context and
+hides the stat for locked or Done transfers.
+
+Core3 keeps `pages/transfer-operations.yaml` presentation-only and adds
+`api/transfer-operations.yaml`, joined by `page.id: transfer-operations`; the
+transfer detail page/API gains the read-permission Operations stat/action.
+Migration
+`services/inventory/migrations/20260922320000-082-inventory-transfer-operations.yaml`
+seeds a durable Ready transfer with two move rows. The contextual API enforces
+current-company scope, cancelled exclusion, missing/empty/503 states,
+deterministic search, and expected transfer row-version guards.
+
+Focused verification passes 3 tests / 29 assertions. YAML schema/discovery
+audit, `bun run audit`, scoped ESLint, and `git diff --check` pass. An
+adjacent regression command was partially blocked by an unrelated Timesheets
+page discovery error, so no other owner files were changed. Core3 browser
+startup and authenticated Odoo comparison are blocked; exact evidence is
+under `evidence/inventory/2026-09-21/INV-TRANSFER-OPERATIONS-001/`. Full
+Inventory sign-off remains open.

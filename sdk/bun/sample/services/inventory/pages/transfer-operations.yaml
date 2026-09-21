@@ -1,0 +1,47 @@
+title: Transfer Operations
+page: { id: transfer-operations, route: /inventory/transfer/operations, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Transfer, Operations], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_operations_context
+    title: Operations
+    stats:
+      - { label: Transfer, field: transfer_name }
+      - { label: State, field: state }
+      - { label: Operations, field: operation_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_operations
+    header_actions:
+      - { id: back_to_inventory_transfer_from_operations, label: Back to Transfer, variant: secondary, permission: inventory.read }
+    search: { label: Search operations, placeholder: 'Search products, transfers, or locations...' }
+    group_by:
+      - { field: state, label: Status }
+      - { field: source_location, label: From }
+      - { field: destination_location, label: To }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: product_name
+          subtitle: state
+          fields:
+            - { field: demand, label: Demand }
+            - { field: done_quantity, label: Done }
+            - { field: uom, label: Unit }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: demand, label: Demand, mobile: true }
+      - { field: done_quantity, label: Done, mobile: true }
+      - { field: uom, label: Unit, mobile: false }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    empty_state: { title: No transfer operations, description: Stock moves on this transfer will appear here. }

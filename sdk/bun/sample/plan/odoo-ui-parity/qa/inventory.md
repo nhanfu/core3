@@ -1960,3 +1960,31 @@ PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-of
 QA disposition: PASS for the bounded Core3 durable open-transfer Packages read
 workflow; PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full
 Inventory sign-off remains open.
+
+## Inventory Transfer Operations QA — `INV-TRANSFER-OPERATIONS-001`
+
+- Odoo source/action: PASS. `stock.picking.action_picking_move_tree` is mapped
+  from `stock_picking.py:1958-1965`; the Operations stat is in
+  `stock_picking_views.xml:176-187`. Exact list-view, transfer-domain,
+  context, and locked/Done visibility references are in
+  `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-operations.yaml`
+  and backend `api/transfer-operations.yaml` share
+  `page.id: transfer-operations`; the transfer stat/action is read-gated and
+  move rows are read-only. Migration 0.0.82 persists the deterministic move
+  fixture.
+- Focused verification: PASS — 3 tests / 29 assertions in
+  `test/inventory_transfer_operations.integration.test.ts`. Coverage includes
+  source/schema mapping, deterministic rows and search, missing/company/stale/
+  503 boundaries, permission denial, and restart persistence. The combined
+  adjacent regression command was partially blocked by an unrelated Timesheets
+  discovery error; no Timesheets files were changed.
+- Core3 browser evidence: BLOCKED before server startup by the unrelated
+  Timesheets page discovery error. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact source,
+  runtime, and blocker details are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-OPERATIONS-001/`.
+
+QA disposition: PASS for the bounded Core3 durable Transfer Operations read
+workflow; PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full
+Inventory sign-off remains open.
