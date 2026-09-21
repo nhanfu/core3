@@ -632,3 +632,18 @@ tests, 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-DEPARTMENT-001/`.
 Global audit is conditional on the unrelated shared page-schema error
 `components[0].views[1].group_by is required for kanban`.
+
+## EMP-EMPLOYEE-TAGS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `category_ids` and `many2many_tags` map to paired employee page/API contracts | pass |
+| Tag CRUD | Deterministic tag assignments add, read, remove, and clear through relation-row actions | pass |
+| Permission and scope | `employees.read`/`employees.write`, actor, current company, supported tag, duplicate relation, missing relation, and stale parent guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the deterministic catalog and assignments | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile Tags tab plus Odoo employee desktop/mobile form capture | conditional; Odoo fixture has no populated chips and Core3 fixture-company mismatch is recorded |
+
+Focused test: `test/employees_tags.integration.test.ts` (4 tests, 30
+assertions), plus `test/employees_employee_work_tab.integration.test.ts`
+(3 tests, 15 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`.

@@ -1,0 +1,24 @@
+{
+  "feature_id": "EMP-EMPLOYEE-TAGS-001",
+  "surface": "Core3",
+  "authenticated_actor": "admin@tms.local",
+  "login_status": 200,
+  "company": "Core3 Demo Company",
+  "route": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "title": "Employee",
+      "visible_markers": ["Work", "Tags", "Resume", "Personal", "Payroll", "Settings", "Work Mobile", "Company", "Department"]
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "title": "Employee",
+      "visible_markers": ["Work", "Tags", "Resume", "Personal", "Payroll", "Settings", "Work Mobile", "Company", "Department"]
+    }
+  },
+  "request_failures": [],
+  "blocker": "The authenticated company is Core3 Demo Company while deterministic employee-demo-001 fixtures are Core3 Vietnam, so the company guard correctly produces empty projections instead of populated tag rows."
+}

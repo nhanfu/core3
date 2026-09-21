@@ -903,3 +903,23 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-DEPARTMENT-001/`. Core3 discovery is
   conditionally blocked by unrelated `components[4].title is not allowed`;
   no aggregate sign-off is claimed.
+
+## EMP-EMPLOYEE-TAGS-001 (2026-09-21)
+
+- Selected Odoo's source-visible `hr.employee.category_ids` many-to-many Tags
+  field as the next uncovered employee behavior after Department.
+- Added migration `20260922130000-067` with deterministic tag catalog and
+  employee assignments, replay-safe under migration reruns.
+- Added separate API datasource/options plus guarded `add_employee_tag` and
+  `remove_employee_tag` actions; the page adds a Tags notebook tab and
+  assignment grid without embedding SQL in page YAML.
+- Guards cover `employees.read`/`employees.write`, actor, active/current
+  company, supported and duplicate tags, relation existence, and stale parent
+  row version. CRUD and file-backed restart are covered by
+  `employees_tags.integration.test.ts`.
+- Authenticated Odoo and Core3 desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`. Odoo's selected
+  fixture has no populated chips; Core3's authenticated company is
+  `Core3 Demo Company` while deterministic fixtures are `Core3 Vietnam`, so
+  populated tag rows remain a documented fixture-company blocker. No
+  aggregate sign-off is claimed.

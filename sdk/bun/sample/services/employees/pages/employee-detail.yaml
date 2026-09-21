@@ -50,7 +50,7 @@ components:
           label: Work
           groups:
             - title: Work
-              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: coach_name, label: Coach }, { field: mobile_phone, label: Work Mobile }]
+              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: coach_name, label: Coach }, { field: mobile_phone, label: Work Mobile }, { field: employee_tags, label: Tags }]
             - title: Location
               fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }]
             - title: Departure
@@ -80,6 +80,26 @@ components:
               - type: LineItemActions
                 id: employee_skill_assignment_actions
                 actions: [{ id: archive_employee_skill, label: Archive, icon: archive, variant: danger, permission: employees.write }]
+        - id: tags
+          label: Tags
+          groups:
+            - title: Employee Tags
+              permission: employees.read
+              fields: [{ field: employee_tags, label: Tags, readonly: true, wide: true }]
+          component:
+            type: LineItemGrid
+            source: employee_tag_assignments
+            parent_source: employee_detail
+            title: Tags
+            description: Assign the Odoo employee taxonomy tags used to classify this employee.
+            variant: odoo_x2many
+            page_size: 20
+            row_key: id
+            actions: [{ id: add_employee_tag, label: Add a tag, variant: primary, permission: employees.write }]
+            empty_state: { title: No tags, description: Add a tag to classify this employee. }
+            children:
+              - { type: LineItemField, id: name, field: name, label: Tag, readonly: true }
+              - { type: LineItemActions, id: employee_tag_actions, actions: [{ id: remove_employee_tag, label: Remove, icon: trash, variant: danger, permission: employees.write }] }
         - id: resume
           label: Resume
           groups:

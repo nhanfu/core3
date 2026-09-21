@@ -15,7 +15,7 @@ describe('Employees Odoo Work tab parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(work.groups.map((group: any) => group.title)).toEqual(['Work', 'Location', 'Departure', 'Note']);
-    expect(work.groups[0].fields.map((field: any) => field.label)).toEqual(['Company', 'Department', 'Job Position', 'Job Title', 'Manager', 'Coach', 'Work Mobile']);
+    expect(work.groups[0].fields.map((field: any) => field.label)).toEqual(['Company', 'Department', 'Job Position', 'Job Title', 'Manager', 'Coach', 'Work Mobile', 'Tags']);
     expect(work.groups[1].fields.map((field: any) => field.label)).toEqual(['Address', 'Work Location']);
     expect(work.groups[2].show_if).toBe("state.employee_detail.active === false");
     expect(work.groups[3].permission).toBe('employees.write');

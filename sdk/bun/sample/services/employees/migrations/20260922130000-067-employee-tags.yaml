@@ -1,0 +1,39 @@
+version: 0.0.67
+kind: data
+description: Persist Odoo employee tags and assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_tags (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        name VARCHAR NOT NULL UNIQUE,
+        color INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS employee_tag_rel (
+        employee_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        PRIMARY KEY (employee_id, tag_id)
+      );
+      INSERT OR IGNORE INTO employee_tags (id, name, color)
+      VALUES
+        ('employee-tag-engineering', 'Engineering', 4),
+        ('employee-tag-onboarding', 'Onboarding', 2),
+        ('employee-tag-remote', 'Remote', 9),
+        ('employee-tag-vietnam', 'Vietnam', 7);
+      INSERT OR IGNORE INTO employee_tag_rel (employee_id, tag_id)
+      VALUES
+        ('employee-demo-001', 'employee-tag-engineering'),
+        ('employee-demo-001', 'employee-tag-vietnam'),
+        ('employee-demo-002', 'employee-tag-engineering'),
+        ('employee-demo-003', 'employee-tag-onboarding'),
+        ('employee-demo-004', 'employee-tag-remote');
+    down: |
+      DROP TABLE IF EXISTS employee_tag_rel;
+      DROP TABLE IF EXISTS employee_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

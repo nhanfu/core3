@@ -1090,3 +1090,17 @@ sign-off is claimed.
 The global UI audit is conditional because shared page discovery currently
 fails on `components[0].views[1].group_by is required for kanban`; this is
 outside the Employees slice.
+
+## EMP-EMPLOYEE-TAGS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-046 | Odoo `category_ids` employee tag add/remove lifecycle | pass; deterministic tag relations and the employee display projection persist through CRUD |
+| EMP-PERM-046 | `employees.read`/`employees.write`, actor, current company, supported/duplicate relation, and row version | pass; actor, wrong-company, stale, unsupported, duplicate, and missing-relation requests reject atomically |
+| EMP-DATA-046 | Migration replay and file-backed restart | pass; deterministic tag catalog and assignments survive restart without duplicates |
+| EMP-UI-042 | Authenticated Core3/Odoo desktop and mobile | conditional; both authenticated surfaces were captured, Odoo's selected fixture has no tag chips, and Core3's session company does not match deterministic Employee fixtures |
+
+Focused checks: `test/employees_tags.integration.test.ts` plus the owned
+Work-tab contract test: **7 tests, 45 assertions, 0 failures**. Evidence is
+under `evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`. No aggregate
+Employees sign-off is claimed.

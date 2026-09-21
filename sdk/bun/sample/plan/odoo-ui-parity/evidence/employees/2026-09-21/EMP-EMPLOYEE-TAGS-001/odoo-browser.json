@@ -1,0 +1,24 @@
+{
+  "feature_id": "EMP-EMPLOYEE-TAGS-001",
+  "surface": "Odoo",
+  "authenticated_actor": "codex@core3.local",
+  "login_route": "http://127.0.0.1:8069/web/login",
+  "route": "http://127.0.0.1:8069/odoo/employees/1",
+  "employee_fixture": "Mitchell Admin",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 1100,
+      "title": "Mitchell Admin",
+      "visible_markers": ["Employees", "Work", "Department", "Job Position", "Work Location", "Payroll", "Settings"]
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "title": "Mitchell Admin",
+      "visible_markers": ["Work", "Department", "Job Position", "Work Location", "Payroll", "Settings"]
+    }
+  },
+  "source_control": "category_ids with widget many2many_tags is present in addons/hr/views/hr_employee_views.xml:139-141",
+  "blocker": "The authenticated Mitchell Admin demo row has no populated tag chips in the rendered form, so the source field is verified from XML but a populated Odoo tag mutation is not claimed from this fixture."
+}

@@ -2052,3 +2052,27 @@ file-backed restart. Authenticated Odoo desktop/mobile captures are under
 Core3 browser evidence is conditional because shared page discovery fails on
 `components[4].title is not allowed`; no aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-TAGS-001: Employee Tags many-to-many relation (2026-09-21)
+
+Odoo exposes `hr.employee.category_ids` as the HR-user-only Tags field and
+renders it with the `many2many_tags` widget in the employee form. Core3 had no
+durable employee tag catalog or relation lifecycle. This slice adds the
+replay-safe deterministic `employee_tags`/`employee_tag_rel` migration, the
+separate employee-detail API datasource/options and add/remove actions, and a
+Tags notebook tab with a line-item assignment grid.
+
+The add/remove actions require `employees.write`, an authenticated actor, an
+active employee in the current company, a supported non-duplicate tag, and
+the parent employee row version. Reads use `employees.read` and the same
+company boundary. Focused verification is **7 tests / 45 assertions** when
+including the existing Work-tab contract test; the tag test itself covers
+CRUD, guard rejection, migration replay, and file-backed restart.
+
+Authenticated Odoo and Core3 desktop/mobile evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-TAGS-001/`. Odoo source and the
+authenticated employee form were captured, but the selected Odoo fixture has
+no populated tag chips. Core3 shows the Tags tab at both viewports; the
+authenticated company is `Core3 Demo Company` while deterministic Employees
+fixtures are `Core3 Vietnam`, so populated Core3 tag rows are company-guarded
+empty. No aggregate Employees sign-off is claimed.
