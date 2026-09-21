@@ -1,0 +1,12 @@
+version: 0.0.22
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS timesheet_tasks_project_context_idx ON timesheet_tasks(id, project_id, company_name, open);
+    down: |
+      DROP INDEX IF EXISTS timesheet_tasks_project_context_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

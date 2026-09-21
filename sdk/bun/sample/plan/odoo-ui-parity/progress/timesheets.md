@@ -1021,3 +1021,23 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   unauthenticated `/web/login` boundary, so authenticated desktop/mobile
   evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
+
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-PROJECT-CONTEXT-001`
+
+- Selected Odoo `project.task.action_view_subtask_timesheet`, whose source
+  action supplies `default_project_id: self.project_id.id` alongside the
+  descendant task scope. This is distinct from the completed task subtask
+  expansion and `active_ids` multi-scope slices.
+- Added durable `task_timesheet_entry_defaults` to the task API, a
+  source-prefilled task create form, project relation guards, and the
+  replay-safe `20260921170000-022-timesheets-task-project-context.yaml` index
+  migration. The layout-only page renders the context and the page/API pair
+  remains joined by `page.id: task-timesheets`.
+- Focused coverage passed 4/4 tests with 23 expectations. Related task,
+  action, report, and preview coverage passed 26/26 tests with 151
+  expectations. Scoped ESLint passed; UI audit passed at 754 pages / 763
+  routes / 1,523 datasources.
+- Core3 port 3001 refused connections and Odoo 8069/8073 exposed only the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.

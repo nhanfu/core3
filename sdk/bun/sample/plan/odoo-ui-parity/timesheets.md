@@ -2063,3 +2063,35 @@ Core3 was not listening on port 3001 and both Odoo endpoints served only the
 unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
+
+## Wave 39 — `TIMESHEET-TASK-ACTION-PROJECT-CONTEXT-001`
+
+The next uncovered task action context is Odoo's
+`project.task.action_view_subtask_timesheet`. The source action scopes rows to
+the task and descendants and supplies `default_project_id: self.project_id.id`
+so a new line opened from that task action retains the task's project.
+This is distinct from the completed descendant row scope and task
+`active_ids` multi-scope behavior.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds the permissioned
+`task_timesheet_entry_defaults` source to
+`api/task-timesheets.yaml`, joined by `page.id: task-timesheets`. The source
+derives the current-company open task and active timesheetable project from
+durable relations; the create form is source-prefilled, canonicalizes task and
+project values, and rejects stale project context or task/project mismatches.
+Migration `20260921170000-022-timesheets-task-project-context.yaml` adds a
+replay-safe task/project context index.
+
+Focused coverage is
+`test/timesheets_task_action_project_context.integration.test.ts`: 4 tests /
+23 expectations. Related task/action/report coverage is 26 tests / 151
+expectations. Scoped ESLint and UI audit pass at 754 pages, 763 routes, and
+1,523 datasources; the Timesheets-owned staged diff check is recorded with the
+commit evidence.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-project-context-001/`.
+Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
+`/web/login`, so authenticated desktop/mobile comparison is blocked and no
+visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
+open.

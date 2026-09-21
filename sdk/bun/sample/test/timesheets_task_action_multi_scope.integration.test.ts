@@ -39,7 +39,7 @@ describe('Timesheets task active_ids multi-scope parity', () => {
     expect(entries.query).toContain(':task_ids');
     expect(scope).toMatchObject({ id: 'task_timesheet_scope', single: true, permission: 'timesheets.read' });
     expect(scope.query).toContain('string_split');
-    expect(create.params).toEqual({ context_task_id: '{state.task_id}', context_task_ids: '{state.task_ids}' });
+    expect(create.params).toMatchObject({ context_task_id: '{state.task_id}', context_task_ids: '{state.task_ids}', context_project_id: '{state.task_timesheet_entry_defaults.project_id}' });
     expect(create.mutation.guards).toContainEqual(expect.objectContaining({ code: 'TASK_TIMESHEET_CONTEXT_SCOPE' }));
   });
 

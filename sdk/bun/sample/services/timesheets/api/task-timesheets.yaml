@@ -21,6 +21,11 @@ datasources:
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_SCOPE_UNAVAILABLE, message: Task timesheet scope is temporarily unavailable. } }
     query: "WITH selected_tasks AS (SELECT t.id, t.name, t.company_name FROM timesheet_tasks t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.id IN (SELECT UNNEST(string_split(COALESCE(NULLIF(:task_ids, ''), :task_id), ',')))), selected_scope AS (SELECT STRING_AGG(id, ',' ORDER BY id) AS task_ids, STRING_AGG(name, ', ' ORDER BY id) AS task_names, COUNT(*) AS task_count FROM selected_tasks), entry_totals AS (SELECT COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_entries e JOIN selected_tasks t ON t.id = e.task_id AND t.company_name = e.company_name) SELECT s.task_ids, s.task_names, s.task_count, e.entry_count, e.total_hours FROM selected_scope s CROSS JOIN entry_totals e WHERE s.task_count > 0"
+  - id: task_timesheet_entry_defaults
+    single: true
+    permission: timesheets.write
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_ENTRY_DEFAULTS_UNAVAILABLE, message: Task project context is temporarily unavailable. } }
+    query: "SELECT t.id AS task_id, t.name AS task_name, t.project_id, p.name AS project_name, p.company_name, 'task_subtask_action' AS context_action FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :task_id AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.open AND p.active AND p.allow_timesheets AND p.has_analytic_account"
   - id: timesheet_task_report_runs
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_REPORT_RUNS_UNAVAILABLE, message: Task timesheet report history is temporarily unavailable. } }
@@ -109,9 +114,11 @@ actions:
     permission: timesheets.write
     title: New task timesheet
     action: timesheets.task_entries.create
-    params: { context_task_id: '{state.task_id}', context_task_ids: '{state.task_ids}' }
+    params: { context_task_id: '{state.task_id}', context_task_ids: '{state.task_ids}', context_project_id: '{state.task_timesheet_entry_defaults.project_id}' }
     handler: yaml_mutation
     operation: create
+    prefill: source
+    prefill_source: task_timesheet_entry_defaults
     refresh: [task_timesheet_entries]
     mutation:
       operation: insert
@@ -120,10 +127,12 @@ actions:
       required: [name, task_id, task_name, project_id, project_name, work_date, description, hours]
       defaults: { employee_id: employee-demo-001, employee_name: Admin User, billable: true, unit_amount: 125, state: Draft, row_version: 1 }
       steps:
-        - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE id = :id"
+        - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), task_name = (SELECT name FROM timesheet_tasks WHERE id = :task_id), project_id = (SELECT project_id FROM timesheet_tasks WHERE id = :task_id), project_name = (SELECT p.name FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE t.id = :task_id) WHERE id = :id"
       guards:
         - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:context_task_ids, ''), '') = '' OR :task_id IN (SELECT UNNEST(string_split(:context_task_ids, ',')))", status: 403, code: TASK_TIMESHEET_CONTEXT_SCOPE, message: The new entry must stay within the selected task context. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:context_project_id, ''), '') = '' OR :project_id = :context_project_id", status: 403, code: TASK_TIMESHEET_PROJECT_CONTEXT, message: The new entry must stay within the task project context. }
         - { query: "SELECT id FROM timesheet_tasks WHERE id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND open", status: 403, code: TASK_TIMESHEET_TASK_SCOPE, message: Select an open task in the current company. }
+        - { query: "SELECT t.id FROM timesheet_tasks t JOIN timesheet_projects p ON p.id = t.project_id WHERE t.id = :task_id AND t.project_id = :project_id AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account", status: 403, code: TASK_TIMESHEET_PROJECT_RELATION, message: Select a task belonging to an active timesheetable project. }
         - { query: "SELECT id FROM timesheet_entries WHERE task_id = :task_id LIMIT 1", status: 404, code: TASK_TIMESHEET_NOT_FOUND, message: Task not found or has no timesheets. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date and time between 0 and 24 hours. }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
