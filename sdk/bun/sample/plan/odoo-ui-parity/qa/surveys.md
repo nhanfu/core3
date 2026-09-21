@@ -1847,3 +1847,26 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
+
+## Bounded QA run: `SURVEYS-SCORING-CONFIG-001` — 2026-09-21
+
+- Source/UI: Odoo's authenticated Options form exposes four scoring modes and
+  `Required Score (%)`; the local source also constrains certification and
+  per-page scoring/roaming combinations.
+- Persistence/contracts: migration `0.0.71` adds durable scoring columns;
+  `api/survey-detail.yaml` owns the server form and
+  `pages/survey-detail.yaml` owns the Time & Scoring group, joined by
+  `page.id: survey-detail`. Public scoring consumes the configured threshold.
+- Guards: `surveys.write`, actor, missing/archived/stale survey, invalid mode,
+  invalid threshold, certification-without-scoring, and per-page-scoring with
+  roaming are explicit 403/404/409/422 boundaries.
+- Verification: **9 focused/adjacent tests / 68 assertions** pass. The audit
+  reports **778 pages, 787 routes, and 1,600 datasources**; scoped ESLint and
+  diff-check pass.
+- Runtime/reference: authenticated Odoo desktop and mobile captures exist in
+  the feature evidence directory. Core3 started, but its fresh in-memory auth
+  store returned 401 for `/api/pages/dashboard`; authenticated Core3 browser
+  evidence and parity sign-off are blocked by missing QA login state.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.

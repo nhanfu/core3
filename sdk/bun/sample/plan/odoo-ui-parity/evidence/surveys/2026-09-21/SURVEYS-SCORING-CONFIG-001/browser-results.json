@@ -1,0 +1,25 @@
+{
+  "feature": "SURVEYS-SCORING-CONFIG-001",
+  "date": "2026-09-21",
+  "browser_instance": "245ea108",
+  "reference": {
+    "url": "http://localhost:8069/odoo?db=core3_reference",
+    "authenticated": true,
+    "module_present": true,
+    "desktop": {
+      "screenshot": "odoo-desktop.png",
+      "viewport": "1916x833",
+      "observed": "MyCompany Vendor Certification Options shows Scoring with answers at the end, Required Score (%) 80.00, and certification enabled."
+    },
+    "mobile": {
+      "screenshot": "odoo-mobile.png",
+      "viewport": "390x844",
+      "observed": "The same authenticated Options state was captured under iPhone 14 emulation."
+    }
+  },
+  "core3": {
+    "runtime": "http://127.0.0.1:3002",
+    "authenticated": false,
+    "blocker": "The fresh in-memory Core3 runtime returned 401 Unauthorized for /api/pages/dashboard because no QA login state was available in that runtime. No Core3 screenshot or sign-off is claimed."
+  }
+}

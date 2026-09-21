@@ -37,6 +37,7 @@ describe('Surveys certification template parity', () => {
       'SURVEY_CERTIFICATION_TEMPLATE_STALE',
       'SURVEY_CERTIFICATION_TEMPLATE_ACTOR_REQUIRED',
       'SURVEY_CERTIFICATION_TEMPLATE_INVALID',
+      'SURVEY_CERTIFICATION_TEMPLATE_SCORING_REQUIRED',
     ]);
     expect(action.fields.find((field: any) => field.field === 'certification_report_layout').options).toHaveLength(6);
     expect(yaml('migrations/20261101000000-070-survey-certification-template.yaml').version).toBe('0.0.70');

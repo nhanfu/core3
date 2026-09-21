@@ -499,7 +499,7 @@ export default class SurveysModule implements ModuleLifecycle {
       })
       .map((question: any) => question.question_text || question.id);
     if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
-    const scoring = await this.publicScore(service, detail.id, answers);
+    const scoring = await this.publicScore(service, detail.id, answers, detail);
     try {
       const identity = this.respondentIdentity(questions, answers);
       const result = await service.call('surveys.public.submit', {
@@ -897,7 +897,7 @@ export default class SurveysModule implements ModuleLifecycle {
       && parsed.getUTCSeconds() === Number(value.slice(17, 19));
   }
 
-  private async publicScore(service: PublicService, surveyId: string, answers: Record<string, unknown>): Promise<{ score: number; quiz_passed: boolean }> {
+  private async publicScore(service: PublicService, surveyId: string, answers: Record<string, unknown>, survey: any): Promise<{ score: number; quiz_passed: boolean }> {
     const rows = (await service.call('survey.public.scoring_answers', { survey_id: surveyId }))?.answers || [];
     const grouped = new Map<string, any[]>();
     for (const row of rows) {
@@ -927,7 +927,9 @@ export default class SurveysModule implements ModuleLifecycle {
       }
     }
     const score = possible > 0 ? Math.round((earned / possible) * 10000) / 100 : 0;
-    return { score, quiz_passed: possible > 0 && score >= 80 };
+    const scoringType = String(survey?.scoring_type || 'no_scoring');
+    const threshold = Number(survey?.scoring_success_min ?? 80);
+    return { score, quiz_passed: scoringType !== 'no_scoring' && possible > 0 && score >= threshold };
   }
 
   private isToken(value: string): boolean {

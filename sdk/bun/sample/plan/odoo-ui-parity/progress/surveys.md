@@ -1426,3 +1426,25 @@ open in Core3; no sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
+
+## 2026-09-21 — `SURVEYS-SCORING-CONFIG-001`
+
+Implemented the next uncovered Odoo Survey Options behavior: four scoring
+modes and the required-score threshold. Migration `0.0.71` persists both
+settings with Odoo-backed defaults. The API owns the guarded scoring server
+form, the `survey-detail` page owns the Time & Scoring group, and both bind
+through `page.id: survey-detail`. Public pass evaluation now uses the stored
+threshold.
+
+Guards cover permission, actor authentication, missing/archived/stale rows,
+invalid mode/threshold, certification without scoring, and the Odoo roaming
+conflict. Verification is **9/9 tests and 68 assertions**; audit **778 pages,
+787 routes, 1,600 datasources**; scoped ESLint and diff-check pass.
+
+Authenticated Odoo desktop/mobile captures are retained. Core3 browser proof
+is blocked because the fresh in-memory runtime returned 401 for
+`/api/pages/dashboard` without the shared QA login state. No visual/parity
+sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.

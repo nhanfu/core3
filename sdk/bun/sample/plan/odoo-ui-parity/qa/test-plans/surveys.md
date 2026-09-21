@@ -840,3 +840,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
+
+## `SURVEYS-SCORING-CONFIG-001` — Survey scoring mode and threshold
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-073 | authenticated configuration | Survey detail → Time & Scoring → Configure scoring | API-owned four-option server form and page-owned group join through `page.id: survey-detail` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-072 | permission/actor/state/validation | Missing actor/survey, archived or stale row, invalid mode/threshold, certification and roaming conflicts | Reject before mutation with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-070 | persistence/public scoring/restart | Update threshold → public pass evaluation → stale replay → file-backed reopen | Configuration is durable, threshold affects pass state, and replay cannot overwrite a newer row | test-results.md, focused test | pass |
+| SURVEYS-UI-071 | authenticated responsive/reference | Odoo Options scoring desktop/mobile plus Core3 detail action | Odoo captures retained; Core3 evidence is conditional on QA login state | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.

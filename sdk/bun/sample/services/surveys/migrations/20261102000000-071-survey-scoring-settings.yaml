@@ -1,0 +1,25 @@
+version: 0.0.71
+description: Durable Odoo survey scoring settings
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS scoring_type VARCHAR;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS scoring_success_min DECIMAL(8,2);
+      UPDATE surveys
+      SET scoring_type = CASE
+            WHEN id IN ('survey-demo-certification', 'survey-demo-001') THEN 'scoring_with_answers'
+            ELSE 'no_scoring'
+          END,
+          scoring_success_min = CASE
+            WHEN id = 'survey-demo-001' THEN 55
+            ELSE 80
+          END
+      WHERE scoring_type IS NULL OR scoring_type = '' OR scoring_success_min IS NULL;
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS scoring_success_min;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS scoring_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -36,6 +36,7 @@ const answers = {
 };
 
 async function seedScoring(repository: YamlRepository) {
+  await repository.run("UPDATE surveys SET scoring_type = 'scoring_with_answers', scoring_success_min = 80 WHERE id = 'survey-demo-feedback'");
   await repository.query('INSERT INTO survey_suggested_values(id, question_id, question_text, value, sequence, score) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET score = excluded.score RETURNING id', [
     'score-feedback-service-excellent-2026', 'question-feedback-service', 'How would you rate our service?', 'Excellent', 1, 100,
   ]);

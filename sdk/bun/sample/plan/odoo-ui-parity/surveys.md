@@ -2734,3 +2734,36 @@ scoring-type field; no parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
+
+## Wave 48 — `SURVEYS-SCORING-CONFIG-001`
+
+The next genuinely uncovered bounded behavior is Odoo Survey scoring
+configuration. Odoo 19 defines the four `scoring_type` values and the
+`scoring_success_min` threshold in
+`addons/survey/models/survey_survey.py:108-114`, constrains certification and
+0..100 thresholds at `:181-188`, and rejects roaming with per-page scoring at
+`:437-443`. The Options form renders these controls in
+`addons/survey/views/survey_survey_views.xml:130-188`; the inspected model has
+no `company_id`, so company scoping is not applicable.
+
+Core3 adds durable `scoring_type` and `scoring_success_min` columns in
+migration `0.0.71`, with Odoo-backed demo defaults. The API owns the guarded
+`update_survey_scoring` server form and the `survey-detail` page owns the
+Time & Scoring group and action; they bind through matching `page.id` values.
+Public score/pass evaluation now uses the configured threshold. Guards cover
+`surveys.write`, actor authentication, missing/archived/stale surveys,
+unsupported modes, thresholds outside 0..100, certification without scoring,
+and per-page scoring with roaming. A file-backed restart test proves the
+settings survive reopen and stale writes are rejected.
+
+Focused verification is **9 passed / 68 assertions** across the new scoring
+test and adjacent certification/public-scoring/restart regressions. The UI
+audit passes with **778 pages, 787 routes, and 1,600 datasources**; scoped
+ESLint and `git diff --check` pass. Authenticated Odoo desktop and mobile
+captures are present in the feature evidence directory. Core3's fresh
+in-memory runtime returned 401 for `/api/pages/dashboard` because it did not
+contain the shared QA login state, so authenticated Core3 desktop/mobile
+evidence and parity sign-off remain blocked.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.
