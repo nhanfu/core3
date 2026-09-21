@@ -1,0 +1,11 @@
+{
+  "feature_id": "SURVEYS-SECTION-RANDOM-COUNT-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "ports": [3000, 3001], "status": "blocked", "detail": "curl connection refused or unreachable on both ports" },
+    "mobile": { "ports": [3390, 3391], "status": "blocked", "detail": "curl connection refused or unreachable on both ports" }
+  },
+  "odoo": { "port": 8072, "status": "blocked", "detail": "curl connection refused or unreachable; no authenticated paired comparison" },
+  "signoff": false,
+  "blocker": "No Core3 or Odoo runtime was listening, so authenticated desktop/mobile screenshots and paired Odoo evidence could not be captured."
+}

@@ -1351,3 +1351,26 @@ paired Odoo evidence; no visual or parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.
+
+## 2026-09-21 — `SURVEYS-SECTION-RANDOM-COUNT-001`
+
+Implemented the next Odoo-backed section behavior: `random_questions_count`.
+Migration `0.0.68` persists the setting and deterministic fixture. The
+`survey-detail` API/page pair exposes the write-permissioned section action;
+the public question graph derives section membership and samples the bounded
+count per section for randomized surveys. The selected order is durable and
+replayed after file-backed restart and idempotent start.
+
+Guards cover actor, missing section, non-section question, archived/changed
+survey, stale section, and 0..100 range validation. Odoo Survey has no
+`company_id`, so company scope is not applicable.
+
+Verification: focused **3/3 tests, 34 assertions**; adjacent regression
+**17/17 tests, 159 assertions**; broader Surveys integration **23/23 tests,
+220 assertions**; audit **764 pages, 773 routes, 1,555 datasources**;
+scoped ESLint and diff-check pass. Core3 ports 3000/3001/3390/3391 and Odoo
+8072 were closed or unreachable, so authenticated desktop/mobile and paired
+Odoo evidence remain blocked. No sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.

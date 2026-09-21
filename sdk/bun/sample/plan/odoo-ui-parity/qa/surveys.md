@@ -1772,3 +1772,28 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.
+
+## Bounded QA run: `SURVEYS-SECTION-RANDOM-COUNT-001` — 2026-09-21
+
+- Source/UI: Odoo stores `random_questions_count` on `survey.question` pages,
+  shows it in the randomized section form, and samples that many questions
+  from each section while retaining unsectioned questions.
+- Persistence/contracts: migration `0.0.68` adds durable section count and a
+  deterministic fixture. `api/survey-detail.yaml` owns the server form and
+  `pages/survey-detail.yaml` owns the Questions grid action; both join at
+  `page.id: survey-detail`. The public operation and route persist the sampled
+  `question_order`.
+- Guards: `surveys.write`, actor, missing row, section-only type, archived or
+  changed parent, stale section, and 0..100 count validation execute before
+  the atomic update. Odoo Survey has no `company_id`, so company scoping is
+  not applicable.
+- Verification: **3 focused tests / 34 assertions**, **17 adjacent tests /
+  159 assertions**, and **23 broader Surveys tests / 220 assertions** pass.
+  Audit reports **764 pages, 773 routes, and 1,555 datasources**; scoped
+  ESLint and diff-check pass.
+- Runtime/reference: ports 3000, 3001, 3390, 3391, and 8072 were closed or
+  unreachable. Authenticated Core3 desktop/mobile and paired Odoo captures
+  are unavailable; no visual or Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.

@@ -1,0 +1,30 @@
+version: 0.0.68
+description: Durable Odoo per-section random question counts
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS random_questions_count INTEGER;
+      UPDATE survey_questions SET random_questions_count = 1 WHERE random_questions_count IS NULL;
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, questions_layout, questions_selection, progression_mode, users_can_go_back, published_at, created_at, updated_at)
+      VALUES ('survey-demo-section-random', 'SURVEY/SECTION-RANDOM', 'Section Random Survey', 'Pick a deterministic sample from each section.', 'Thanks for completing the section-random survey.', 'Mitchell Admin', 0, 'Published', 'section-random-token-2026', 'public', 'page_per_section', 'random', 'number', true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET state = 'Published', access_token = 'section-random-token-2026', access_mode = 'public', questions_layout = 'page_per_section', questions_selection = 'random', progression_mode = 'number', users_can_go_back = true;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, is_page, random_questions_count)
+      VALUES
+        ('section-random-products', 'survey-demo-section-random', 'Products', 'Section', 1, false, '', true, 2),
+        ('section-random-products-1', 'survey-demo-section-random', 'Which product do you use?', 'Choice', 2, true, 'Desk,Laptop', false, 1),
+        ('section-random-products-2', 'survey-demo-section-random', 'Which product needs review?', 'Choice', 3, true, 'Desk,Laptop', false, 1),
+        ('section-random-products-3', 'survey-demo-section-random', 'Which product is new?', 'Choice', 4, true, 'Desk,Laptop', false, 1),
+        ('section-random-support', 'survey-demo-section-random', 'Support', 'Section', 5, false, '', true, 1),
+        ('section-random-support-1', 'survey-demo-section-random', 'How did support help?', 'Choice', 6, true, 'Email,Phone', false, 1),
+        ('section-random-support-2', 'survey-demo-section-random', 'How fast was support?', 'Choice', 7, true, 'Fast,Slow', false, 1)
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options, is_page = excluded.is_page, random_questions_count = excluded.random_questions_count;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-section-random';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-section-random';
+      DELETE FROM surveys WHERE id = 'survey-demo-section-random';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS random_questions_count;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

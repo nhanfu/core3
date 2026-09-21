@@ -685,9 +685,9 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private orderPublicQuestions(questions: any[], questionOrder: string, seed: string): any[] {
-    const byId = new Map(questions.map((question) => [String(question.id), question]));
     const orderedIds = String(questionOrder || '').split('||').map((id) => id.trim()).filter(Boolean);
     if (orderedIds.length) {
+      const byId = new Map(questions.map((question) => [String(question.id), question]));
       const used = new Set<string>();
       const ordered = orderedIds.map((id) => {
         const question = byId.get(id);
@@ -695,13 +695,36 @@ export default class SurveysModule implements ModuleLifecycle {
         used.add(id);
         return question;
       }).filter(Boolean);
-      return [...ordered, ...questions.filter((question) => !used.has(String(question.id)))];
+      return ordered;
     }
-    return [...questions].sort((left, right) => {
+    const selected = this.selectRandomSectionQuestions(questions, seed);
+    return selected.sort((left, right) => {
       const leftHash = this.publicQuestionHash(`${seed}:${left.id}`);
       const rightHash = this.publicQuestionHash(`${seed}:${right.id}`);
       return leftHash - rightHash || String(left.id).localeCompare(String(right.id));
     });
+  }
+
+  private selectRandomSectionQuestions(questions: any[], seed: string): any[] {
+    const selected = questions.filter((question) => !String(question.page_id || '').trim());
+    const sections = new Map<string, any[]>();
+    for (const question of questions) {
+      const pageId = String(question.page_id || '').trim();
+      if (!pageId) continue;
+      const group = sections.get(pageId) || [];
+      group.push(question);
+      sections.set(pageId, group);
+    }
+    for (const [pageId, group] of sections) {
+      const count = Number(group[0]?.random_questions_count || 0);
+      const shuffled = [...group].sort((left, right) => {
+        const leftHash = this.publicQuestionHash(`${seed}:${pageId}:${left.id}`);
+        const rightHash = this.publicQuestionHash(`${seed}:${pageId}:${right.id}`);
+        return leftHash - rightHash || String(left.id).localeCompare(String(right.id));
+      });
+      selected.push(...(count > 0 && count < shuffled.length ? shuffled.slice(0, count) : shuffled));
+    }
+    return selected;
   }
 
   private publicQuestionHash(value: string): number {

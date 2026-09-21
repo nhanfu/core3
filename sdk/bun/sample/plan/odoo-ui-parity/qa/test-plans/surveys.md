@@ -804,3 +804,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.
+
+## `SURVEYS-SECTION-RANDOM-COUNT-001` — Per-section random question count
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-070 | authenticated configuration | Survey detail → Questions → configure randomized section count | Separate API/page YAML exposes the Odoo field and action joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-069 | permission/actor/state/validation | Missing actor/row, non-section row, archived or changed survey, stale section, invalid count | Reject before mutation with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-067 | public sampling/restart/idempotency | Start randomized survey → sample each section → replay start → file-backed reopen | The bounded per-section sample and response order are durable and replay-safe | test-results.md, focused test | pass |
+| SURVEYS-UI-068 | authenticated responsive/reference | Section count form and sampled public flow desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.

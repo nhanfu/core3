@@ -84,6 +84,11 @@ components:
       - { type: LineItemField, id: question_text, field: question_text, label: Question or section, input_type: text, required: true }
       - { type: LineItemField, id: question_type, field: question_type, label: Type, input_type: text, readonly: true }
       - { type: LineItemField, id: is_page, field: is_page, label: Section, input_type: checkbox, readonly: true }
+      - { type: LineItemField, id: random_questions_count, field: random_questions_count, label: Random count, input_type: number, readonly: true }
+      - type: LineItemActions
+        id: survey_question_section_actions
+        actions:
+          - { id: configure_survey_section_random_count, label: Randomize questions, icon: settings, permission: surveys.write, show_if: "row.is_page === true" }
     columns:
       - { field: sequence, label: '#', align: right, width: 52 }
       - { field: question_text, label: Question or section, type: PrimaryEntityCell, width: 320 }
@@ -91,6 +96,7 @@ components:
       - { field: is_page, label: Section }
       - { field: required, label: Required }
       - { field: answer_options, label: Options }
+      - { field: random_questions_count, label: Random count }
     empty_state: { title: No questions or sections, description: Add a question or section to structure this survey. }
   - type: LineItemGrid
     mount_in: previous-panel

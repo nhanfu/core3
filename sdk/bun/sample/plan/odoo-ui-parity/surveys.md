@@ -2630,3 +2630,40 @@ authenticated desktop/mobile browser capture and paired Odoo comparison were
 unavailable. No visual or paired Odoo sign-off is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-REORDER-001/`.
+
+## Wave 45 — `SURVEYS-SECTION-RANDOM-COUNT-001`
+
+The next uncovered source-backed behavior is Odoo's per-section random
+question count. `survey.question.random_questions_count` defaults to one and
+is used when randomized surveys sample questions from each section
+(`addons/survey/models/survey_question.py:76-84`). Odoo's survey preparation
+keeps unsectioned questions, then samples `page.random_questions_count` from
+each section when `questions_selection == 'random'`
+(`addons/survey/models/survey_survey.py:621-645`); the section form renders
+the field only for randomized sections
+(`addons/survey/views/survey_question_views.xml:29-33`).
+
+Core3 adds durable `random_questions_count` storage in migration `0.0.68`,
+exposes the field and a guarded configure action from the Survey Questions
+grid, and joins the API/page contracts at `page.id: survey-detail`. The
+public question operation derives the current section and count, and the
+public workflow deterministically samples each section before persisting the
+selected `question_order`; a resumed token replays that exact order.
+Mutations require `surveys.write` and an authenticated actor, reject missing
+or non-section rows, archived/changed parents, stale sections, and counts
+outside 0..100. The inspected Odoo Survey source has no `company_id`, so
+company scoping is not applicable.
+
+Focused verification is **3 passed / 34 assertions**; the adjacent
+six-file regression is **17 passed / 159 assertions**; and
+`test/surveys.integration.test.ts` is **23 passed / 220 assertions**. The UI
+audit passes with **764 pages, 773 routes, and 1,555 datasources**; scoped
+ESLint and `git diff --check` pass.
+
+Core3 ports 3000, 3001, 3390, and 3391, plus Odoo port 8072, were closed or
+unreachable. Authenticated desktop/mobile browser capture and paired Odoo
+comparison were therefore unavailable; no visual, Odoo, or full-parity
+sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SECTION-RANDOM-COUNT-001/`.
