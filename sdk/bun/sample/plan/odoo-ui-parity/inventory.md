@@ -2688,3 +2688,36 @@ startup is blocked before route serving by the unrelated global
 captures, source comparison, and blockers are under
 `evidence/inventory/2026-09-21/INV-TRANSFER-WAITING-QUEUE-001/`. Full
 Inventory sign-off remains open.
+
+## Operations > Late Transfers queue — `INV-TRANSFER-LATE-QUEUE-001` (2026-09-21)
+
+This bounded Wave 48 slice covers Odoo's `stock.action_picking_tree_late`
+action at `addons/stock/views/stock_picking_views.xml:593-599`, reached from
+the Inventory overview Late card through `get_action_picking_tree_late`.
+Odoo names the action Late Transfers, opens `stock.picking` in
+`list,kanban,form,calendar`, and applies `search_default_late`. The shared
+search filter at `stock_picking_views.xml:375-376` includes active
+assigned/waiting/confirmed transfers whose scheduled date or deadline is
+past, or whose computed deadline flag is set.
+
+Core3 keeps `pages/transfer-late-queue.yaml` presentation-only and adds
+`api/transfer-late-queue.yaml`, joined by `page.id: transfer-late-queue`, at
+`/inventory/transfer/late`. Migration
+`services/inventory/migrations/20260922350000-085-inventory-transfer-late-queue.yaml`
+adds durable deadline fields, a company queue context, refresh history, and
+deterministic Ready/Waiting fixtures. The API preserves the Odoo late
+predicate, search/operation/group states, empty and transport responses,
+transfer navigation, and actor/company/row-version guards on Refresh. No new
+top-level menu entry is added because the source exposes this as an overview
+card action rather than a menu leaf.
+
+Focused verification passes 3 tests / 30 assertions with the migration replay
+timeout budget, and scoped ESLint plus `git diff --check` pass. The live Odoo
+reference was captured authenticated at desktop and 390x844 mobile; the
+action keeps an active `Late` filter and four visible rows, while the live
+shell labels the resulting list `YourCompany: Receipts`. Core3 authenticated
+desktop/mobile capture is blocked before route serving by the unrelated global
+Surveys YAML parse error in `services/surveys/api/survey-detail.yaml`.
+Exact source comparison, captures, test results, and the blocker are under
+`evidence/inventory/2026-09-21/INV-TRANSFER-LATE-QUEUE-001/`. Full Inventory
+sign-off remains open.

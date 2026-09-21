@@ -1,0 +1,50 @@
+title: Late Transfers
+page: { id: transfer-late-queue, route: /inventory/transfer/late, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Late], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_late_queue_context
+    title: Late Transfers
+    stats:
+      - { label: Queue, field: title }
+      - { label: Late Transfers, field: transfer_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_late_transfers
+    header_actions:
+      - { id: refresh_inventory_transfer_late_queue, label: Refresh, variant: secondary, permission: inventory.read }
+    search: { label: Search late transfers, placeholder: 'Search references, contacts, or source documents...' }
+    filters:
+      - { field: operation_kind, label: Operation, options: [{ id: receipt, label: Receipts }, { id: delivery, label: Deliveries }, { id: internal, label: Internal }] }
+    group_by:
+      - { field: operation_type_name, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date }
+      - { field: company_name, label: Company }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Cards
+        icon: dashboard
+        mobile: true
+        group_by: operation_type_name
+        card:
+          title: name
+          subtitle: contact_name
+          fields:
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: state, label: Status }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: operation_type_name, label: Operation Type, mobile: true }
+      - { field: contact_name, label: Contact, mobile: false }
+      - { field: scheduled_date, label: Scheduled Date, mobile: true, sortable: true }
+      - { field: source_document, label: Source Document, mobile: false }
+      - { field: date_deadline, label: Deadline, mobile: false, sortable: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_late_transfer
+    row_double_click_action: view_inventory_late_transfer
+    empty_state: { title: No late transfers, description: Transfers past their deadline or scheduled date will appear here. }

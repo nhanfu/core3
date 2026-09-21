@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-TRANSFER-LATE-QUEUE-001",
+  "odoo": {
+    "source_file": "/home/nhanjs/projects/odoo/addons/stock/views/stock_picking_views.xml",
+    "action_id": "action_picking_tree_late",
+    "lines": "375-376, 593-599",
+    "name": "Late Transfers",
+    "res_model": "stock.picking",
+    "view_mode": "list,kanban,form,calendar",
+    "context": "{'contact_display': 'partner_address', 'search_default_late': 1}",
+    "predicate": "state in assigned/waiting/confirmed and (has_deadline_issue or date_deadline < current_date or scheduled_date < current_date)"
+  },
+  "core3": {
+    "page_file": "services/inventory/pages/transfer-late-queue.yaml",
+    "api_file": "services/inventory/api/transfer-late-queue.yaml",
+    "page_id": "transfer-late-queue",
+    "route": "/inventory/transfer/late",
+    "migration": "services/inventory/migrations/20260922350000-085-inventory-transfer-late-queue.yaml",
+    "permissions": ["inventory.read"],
+    "guards": ["current company", "authenticated actor", "expected queue row version", "missing/empty/transport states"],
+    "source_action": "stock.action_picking_tree_late"
+  },
+  "comparison": "Core3 preserves the source action name, Late context, list/kanban/form/calendar intent, active-state predicate, search fields, operation filters, and transfer navigation. Core3 adds durable company queue context, refresh history, fixed seeded dates, and explicit permission/concurrency boundaries. Odoo deadline data is represented by durable date_deadline and has_deadline_issue fields; the Core3 visual comparison remains open because its shared runtime is blocked before serving."
+}

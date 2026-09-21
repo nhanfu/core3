@@ -1,0 +1,13 @@
+{
+  "feature_id": "INV-TRANSFER-LATE-QUEUE-001",
+  "runtime": "Core3",
+  "route": "/inventory/transfer/late",
+  "status": "blocked-before-route-serving",
+  "command": "bun run dev --db=ddb --memory",
+  "blocker": "Global discovery fails before backend bind because services/surveys/api/survey-detail.yaml has malformed YAML. The exact discovery exception is YAML Parse error: Unexpected token at packages/server/src/discovery.ts:166 while parsing that Surveys API file.",
+  "scope": "Unrelated to Inventory; no Surveys, Accounting, Manufacturing, Project, or other module files were changed.",
+  "backend_port": "127.0.0.1:3001 refused after Vite became ready on 127.0.0.1:3002",
+  "authenticated_core3_desktop": false,
+  "authenticated_core3_mobile": false,
+  "visual_parity_claim": false
+}
