@@ -12,7 +12,14 @@ components:
     activity_complete_action: complete_survey_activity
     message_source: survey_activities
     chatter_label: Activities
-    chatter_empty: No survey activities yet.
+    chatter_empty: No survey activities or notes yet.
+    note_action: log_survey_note
+    note_label: Log note
+    note_placeholder: Write an internal note…
+    message_actor_field: actor_name
+    message_action_field: activity_type
+    message_detail_field: summary
+    message_timestamp_field: created_at
     header_actions:
       - { id: see_survey_results_detail, label: See results, variant: secondary, permission: surveys.read }
       - { id: test_survey_detail, label: Test, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }

@@ -450,6 +450,21 @@ Core3 ports 3000/3001/3390/3391 and Odoo port 8072 unavailable; no
 authenticated desktop/mobile or paired Odoo sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/`.
 
+## 2026-09-21 — `SURVEYS-CHATTER-NOTE-001`
+
+Selected the smallest open authenticated behavior after Survey activities:
+Odoo's `mail.thread` chatter note on `survey.survey`. Core3 now persists
+`survey_messages`, unions notes into the existing authenticated activity/
+chatter datasource, and binds a separate `surveys.write` note action through
+the existing page/API pair. Actor, permission, active/current row-version,
+content, stale replay, migration replay, and restart guards are covered.
+
+Focused verification: **3 passed / 12 assertions**; compatibility regression:
+**6 passed / 30 assertions**. Runtime evidence records Core3 ports
+3000/3001/3390/3391 and Odoo port 8072 unavailable, so no authenticated
+desktop/mobile or paired Odoo sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/`.
+
 ## 2026-09-21 — `SURVEYS-INVITE-ATTACHMENT-001`
 
 Selected the next smallest open source-backed invite behavior: Odoo's

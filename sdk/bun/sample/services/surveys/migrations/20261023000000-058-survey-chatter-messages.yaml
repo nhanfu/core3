@@ -1,0 +1,25 @@
+version: 0.0.58
+description: Durable authenticated Survey chatter notes
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_messages (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        survey_id VARCHAR NOT NULL,
+        actor_id VARCHAR,
+        actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL DEFAULT 'surveys.chatter.note',
+        action_label VARCHAR NOT NULL DEFAULT 'Internal note',
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS survey_messages_survey_idx ON survey_messages(survey_id, created_at, id);
+    down: |
+      DROP INDEX IF EXISTS survey_messages_survey_idx;
+      DROP TABLE IF EXISTS survey_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

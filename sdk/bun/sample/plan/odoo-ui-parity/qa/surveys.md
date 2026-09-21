@@ -1573,3 +1573,23 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/.
+
+## Bounded QA run: `SURVEYS-CHATTER-NOTE-001` — 2026-09-21
+
+- Source/UI: Odoo `survey.survey` inherits `mail.thread` and renders its
+  form `<chatter/>` widget.
+- Persistence/guards: Core3 migrations `0.0.58`/`0.0.59` add and seed durable
+  notes. The existing activity/chatter datasource combines activities and
+  notes; `log_survey_note` requires `surveys.write`, an actor, a live/current
+  survey row version, and valid content. Parent version advancement rejects
+  duplicate stale replay.
+- Verification: **3 focused tests / 12 assertions** pass; activity/chatter
+  compatibility is **6 passed / 30 assertions**, including restart and
+  migration replay. Scoped diff-check passes; full repository regression was
+  not run.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, and 3391 were unavailable
+  for authenticated desktop/mobile capture. Odoo port 8072 was unavailable.
+  No authenticated visual or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/.

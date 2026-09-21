@@ -2386,3 +2386,25 @@ and paired Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and
 8072 were unavailable. No authenticated visual or paired Odoo sign-off is
 claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/`.
+
+## Wave 37 — `SURVEYS-CHATTER-NOTE-001`
+
+The next smallest uncovered source-backed behavior is authenticated Survey
+chatter notes. Odoo's `survey.survey` inherits `mail.thread`
+(`addons/survey/models/survey_survey.py:23`) and its form renders the
+`<chatter/>` widget (`addons/survey/views/survey_survey_views.xml:199`).
+
+Core3 adds durable `survey_messages` storage with a deterministic internal
+note fixture. The existing `survey-detail` API datasource now combines
+activity and note entries for the OdooFormView chatter stream, while a
+separate `log_survey_note` API action and page binding require `surveys.write`,
+an authenticated actor, an active/current survey row version, and valid note
+content. Parent version advancement rejects stale replay and restart retains
+the note.
+
+Focused verification is **3 passed / 12 assertions**; chatter/activity
+compatibility is **6 passed / 30 assertions**. Core3 desktop/mobile and paired
+Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and 8072 were
+unavailable. No authenticated visual or paired Odoo sign-off is claimed.
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/`.

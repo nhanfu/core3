@@ -1,0 +1,19 @@
+version: 0.0.59
+description: Deterministic Survey chatter note fixture
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_messages(
+        id, row_version, survey_id, actor_id, actor_name, action, action_label, detail, created_at
+      ) VALUES (
+        'survey-message-demo-001', 1, 'survey-demo-001', 'user-admin', 'Admin User',
+        'surveys.chatter.note', 'Internal note',
+        'Confirm the customer feedback survey before publishing.', TIMESTAMP '2026-01-15 09:30:00'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_messages WHERE id = 'survey-message-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

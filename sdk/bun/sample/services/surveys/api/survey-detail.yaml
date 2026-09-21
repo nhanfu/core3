@@ -21,8 +21,32 @@ datasources:
   - id: survey_activities
     permission: surveys.read
     error_states: { transport_error: { status: 503, code: SURVEY_ACTIVITIES_UNAVAILABLE, message: Survey activities are temporarily unavailable. } }
-    query: "SELECT id, row_version, survey_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user_id, assigned_user_name, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_activities WHERE survey_id = :id ORDER BY due_date NULLS LAST, created_at DESC, id"
+    query: "SELECT id, row_version, survey_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user_id, assigned_user_name, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_activities WHERE survey_id = :id UNION ALL SELECT id, row_version, survey_id, 'note' AS activity_type, 'Internal note' AS summary, NULL AS due_date, NULL AS assigned_user_id, NULL AS assigned_user_name, 'done' AS state, NULL AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_messages WHERE survey_id = :id ORDER BY due_date NULLS LAST, created_at DESC, id"
 actions:
+  - id: log_survey_note
+    type: server_form
+    permission: surveys.write
+    title: Log note
+    action: surveys.records.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{state.survey_detail.id}', expected_row_version: '{state.survey_detail.row_version}' }
+    refresh: [survey_detail, survey_activities]
+    fields:
+      - { field: content, label: Note, type: textarea, required: true, placeholder: Write an internal note… }
+    mutation:
+      generated: [message_id]
+      before_steps:
+        - query: "SELECT :id || '-message-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM survey_messages WHERE survey_id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_NOTE_ACTOR_REQUIRED, message: An authenticated survey actor is required to log a note. }
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :expected_row_version", status: 409, code: SURVEY_NOTE_STALE, message: This survey changed or is archived. Reload before logging a note. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:content AS VARCHAR), ''))) BETWEEN 1 AND 4000", status: 422, code: SURVEY_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO survey_messages(id, row_version, survey_id, actor_id, actor_name, action, action_label, detail) VALUES(:message_id, 1, :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Admin User'), 'surveys.chatter.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)))", expect_changed: true, status: 409, code: SURVEY_NOTE_EXISTS, message: The note could not be recorded. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_NOTE_STALE, message: This survey changed while the note was being logged. }
+      result: { query: "SELECT id, survey_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM survey_messages WHERE id = :message_id" }
   - id: schedule_survey_activity
     type: server_form
     permission: surveys.write

@@ -709,3 +709,15 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/.
+
+## `SURVEYS-CHATTER-NOTE-001` — internal chatter note
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-062 | authenticated chatter | Survey detail → log internal note | Existing page/API pair stores and renders one durable note | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-061 | permission/actor | Missing actor, archived/stale survey, invalid content | Reject before mutation with explicit guard codes | test-results.md, focused test | pass |
+| SURVEYS-WF-059 | restart/idempotency | Log note → stale replay → migration replay/reopen | One note survives restart and stale replay cannot duplicate it | test-results.md, focused test | pass |
+| SURVEYS-UI-060 | authenticated responsive/reference | Chatter note desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/.
