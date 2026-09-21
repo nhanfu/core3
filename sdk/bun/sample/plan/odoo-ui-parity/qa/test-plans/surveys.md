@@ -685,3 +685,15 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.
+
+## `SURVEYS-RESPONSIBLE-USER-001` — responsible user assignment
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-060 | authenticated form | Survey detail → change Responsible | Existing page/API pair projects and updates durable responsible fields | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-059 | permission/actor | Missing actor and restricted outsider | Reject before mutation with explicit actor/restriction guards | test-results.md, focused test | pass |
+| SURVEYS-WF-057 | restart/idempotency | Assign → stale replay → file-backed reopen | One current assignment survives restart; stale replay cannot mutate it | test-results.md, focused test | pass |
+| SURVEYS-UI-058 | authenticated responsive/reference | Responsible form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.

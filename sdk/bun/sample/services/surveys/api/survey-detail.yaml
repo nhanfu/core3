@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: SURVEY_DETAIL_FORBIDDEN, message: You do not have permission to view this survey. }
       missing_record: { status: 404, code: SURVEY_DETAIL_NOT_FOUND, message: Survey not found. }
       transport_error: { status: 503, code: SURVEY_DETAIL_UNAVAILABLE, message: This survey is temporarily unavailable. }
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, COALESCE((SELECT string_agg(r.user_name, '||' ORDER BY r.user_name, r.user_id) FROM survey_restricted_users r WHERE r.survey_id = s.id), '') AS restricted_user_names, s.response_count, s.access_token, COALESCE(s.access_mode, 'public') AS access_mode, COALESCE(s.questions_selection, 'all') AS questions_selection, COALESCE(s.users_login_required, false) AS users_login_required, COALESCE(s.is_attempts_limited, false) AS is_attempts_limited, COALESCE(s.attempts_limit, 1) AS attempts_limit, COALESCE(s.users_can_go_back, false) AS users_can_go_back, s.languages, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS registered_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.state = 'Completed') AS completed_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at, ls.id AS session_id, ls.row_version AS session_row_version, CASE WHEN ls.state IN ('Ready', 'In Progress') THEN ls.state ELSE NULL END AS session_state, ls.session_code, ls.session_link, ls.current_question_text, CAST(ls.session_start_time AS VARCHAR) AS session_start_time, ls.answer_count AS session_answer_count, ls.question_answer_count AS session_question_answer_count FROM surveys s LEFT JOIN survey_live_sessions ls ON ls.survey_id = s.id WHERE s.id = :id AND (NOT EXISTS (SELECT 1 FROM survey_restricted_users restricted WHERE restricted.survey_id = s.id) OR COALESCE(NULLIF(:current_user_id, ''), 'user-admin') IN (SELECT allowed.user_id FROM survey_restricted_users allowed WHERE allowed.survey_id = s.id))"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.responsible_user_id, s.responsible_user_name, COALESCE((SELECT string_agg(r.user_name, '||' ORDER BY r.user_name, r.user_id) FROM survey_restricted_users r WHERE r.survey_id = s.id), '') AS restricted_user_names, s.response_count, s.access_token, COALESCE(s.access_mode, 'public') AS access_mode, COALESCE(s.questions_selection, 'all') AS questions_selection, COALESCE(s.users_login_required, false) AS users_login_required, COALESCE(s.is_attempts_limited, false) AS is_attempts_limited, COALESCE(s.attempts_limit, 1) AS attempts_limit, COALESCE(s.users_can_go_back, false) AS users_can_go_back, s.languages, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS registered_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.state = 'Completed') AS completed_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at, ls.id AS session_id, ls.row_version AS session_row_version, CASE WHEN ls.state IN ('Ready', 'In Progress') THEN ls.state ELSE NULL END AS session_state, ls.session_code, ls.session_link, ls.current_question_text, CAST(ls.session_start_time AS VARCHAR) AS session_start_time, ls.answer_count AS session_answer_count, ls.question_answer_count AS session_question_answer_count FROM surveys s LEFT JOIN survey_live_sessions ls ON ls.survey_id = s.id WHERE s.id = :id AND (NOT EXISTS (SELECT 1 FROM survey_restricted_users restricted WHERE restricted.survey_id = s.id) OR COALESCE(NULLIF(:current_user_id, ''), 'user-admin') IN (SELECT allowed.user_id FROM survey_restricted_users allowed WHERE allowed.survey_id = s.id))"
   - id: survey_restricted_users
     permission: surveys.read
     query: "SELECT r.id, r.survey_id, r.user_id, r.user_name, r.row_version, CAST(r.created_at AS VARCHAR) AS created_at FROM survey_restricted_users r JOIN surveys s ON s.id = r.survey_id WHERE r.survey_id = :id AND (NOT EXISTS (SELECT 1 FROM survey_restricted_users restricted WHERE restricted.survey_id = s.id) OR COALESCE(NULLIF(:current_user_id, ''), 'user-admin') IN (SELECT allowed.user_id FROM survey_restricted_users allowed WHERE allowed.survey_id = s.id)) ORDER BY r.user_name, r.user_id"
@@ -19,6 +19,31 @@ datasources:
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, language_code, answer_data, skipped_questions, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
 actions:
+  - id: update_survey_responsible_user
+    type: server_form
+    permission: surveys.write
+    title: Change responsible user
+    action: surveys.records.responsible.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.survey_detail.id}' }
+    prefill: { responsible_user_id: '{state.survey_detail.responsible_user_id}', responsible_user_name: '{state.survey_detail.responsible_user_name}' }
+    fields:
+      - { field: responsible_user_id, label: User ID, type: text, required: true, placeholder: 'e.g. user-demo' }
+      - { field: responsible_user_name, label: Responsible user, type: text, required: true, placeholder: 'e.g. Demo Survey Officer' }
+    refresh: [survey_detail, surveys]
+    mutation:
+      operation: update
+      table: surveys
+      fields: [responsible_user_id, responsible_user_name]
+      required: [responsible_user_id, responsible_user_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :expected_row_version", status: 409, code: SURVEY_RESPONSIBLE_STALE, message: This survey changed or is archived. Reload before changing the responsible user. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_RESPONSIBLE_ACTOR_REQUIRED, message: An authenticated survey actor is required to change the responsible user. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:responsible_user_id AS VARCHAR), ''))) BETWEEN 1 AND 120 AND LENGTH(TRIM(COALESCE(CAST(:responsible_user_name AS VARCHAR), ''))) BETWEEN 1 AND 200", status: 422, code: SURVEY_RESPONSIBLE_REQUIRED, message: A responsible user ID and display name are required. }
+        - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :id AND (NOT EXISTS (SELECT 1 FROM survey_restricted_users r WHERE r.survey_id = s.id) OR EXISTS (SELECT 1 FROM survey_restricted_users r WHERE r.survey_id = s.id AND r.user_id = :responsible_user_id))", status: 422, code: SURVEY_RESPONSIBLE_RESTRICTED, message: The responsible user must be allowed to access this restricted survey. }
+      result: { query: "SELECT id, row_version, responsible_user_id, responsible_user_name FROM surveys WHERE id = :id" }
   - id: add_survey_restricted_user
     type: server_form
     permission: surveys.write
@@ -142,12 +167,12 @@ actions:
           assign: true
         - query: |
             INSERT INTO surveys(
-              id, name, title, description, owner, response_count, state,
+              id, name, title, description, owner, responsible_user_id, responsible_user_name, response_count, state,
               published_at, closed_at, row_version, created_at, updated_at, access_token, languages
             )
             SELECT
               :duplicate_id, :duplicate_name, :duplicate_title, s.description,
-              s.owner, 0, 'Draft', NULL, NULL, 1,
+              s.owner, s.responsible_user_id, s.responsible_user_name, 0, 'Draft', NULL, NULL, 1,
               TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00',
               :duplicate_access_token, s.languages
             FROM surveys s

@@ -12,6 +12,7 @@ components:
       - { id: see_survey_results_detail, label: See results, variant: secondary, permission: surveys.read }
       - { id: test_survey_detail, label: Test, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: share_survey_detail, label: Share, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
+      - { id: update_survey_responsible_user, label: Change responsible user, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments_detail, label: Invite attachments, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: start_live_session_detail, label: Create Live Session, variant: primary, permission: surveys.manage, show_if: "!record.session_state" }
       - { id: open_live_session_detail, label: Open Session Manager, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
@@ -39,9 +40,9 @@ components:
     group_columns: 2
     groups:
       - title: Survey
-        fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: response_count, label: Responses }]
+        fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: responsible_user_name, label: Responsible }, { field: response_count, label: Responses }]
       - title: Participants
-        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: restricted_user_names, label: Restricted users }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
+        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: responsible_user_name, label: Responsible }, { field: restricted_user_names, label: Restricted users }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
       - title: Description
         fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
   - type: LineItemGrid

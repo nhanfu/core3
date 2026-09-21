@@ -2342,3 +2342,25 @@ pass. Core3 desktop/mobile capture was blocked by refused ports 3000, 3001,
 session-code probe returned HTTP 200 `{"error":"survey_wrong"}`. No
 authenticated visual or paired Odoo sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/`.
+
+## Wave 35 — `SURVEYS-RESPONSIBLE-USER-001`
+
+The next smallest uncovered source-backed behavior is Odoo's separate
+`survey.survey.user_id` Responsible assignment. Odoo renders it as an
+internal-user many2one distinct from `restrict_user_ids` and validates that a
+restricted survey's responsible officer retains access
+(`addons/survey/models/survey_survey.py:65-69,446-459`;
+`addons/survey/views/survey_survey_views.xml:63-70`).
+
+Core3 adds durable responsible user ID/name columns, deterministic fixture
+projection, and a permissioned assignment action to the existing paired
+catalog/detail page/API contracts. The mutation requires an authenticated
+`surveys.write` actor, non-archived state, optimistic row version, valid
+fields, and restricted-user membership when access is constrained. Stale
+replays fail before mutation and assignments survive file-backed restart.
+
+Focused verification is **3 passed / 17 assertions**. Core3 desktop/mobile
+and paired Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and
+8072 were unavailable. No authenticated visual or paired Odoo sign-off is
+claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/`.

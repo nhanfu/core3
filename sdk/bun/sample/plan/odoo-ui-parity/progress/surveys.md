@@ -419,6 +419,22 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-RESPONSIBLE-USER-001`
+
+Selected the smallest open behavior after restricted-user access: Odoo's
+authenticated `survey.survey.user_id` Responsible assignment, distinct from
+the completed `restrict_user_ids` relation. Core3 now persists
+`responsible_user_id`/`responsible_user_name`, projects both through the
+existing catalog/detail API pair, and binds a `surveys.write` page action.
+The mutation requires an actor, current row version, non-archived survey,
+valid fields, and restricted-user membership when applicable; stale replay is
+rejected and file-backed restart preserves the assignment.
+
+Focused verification: **3 passed / 17 assertions**. Runtime evidence records
+Core3 ports 3000/3001/3390/3391 and Odoo port 8072 unavailable, so no
+authenticated desktop/mobile or paired Odoo sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/`.
+
 ## 2026-09-21 — `SURVEYS-INVITE-ATTACHMENT-001`
 
 Selected the next smallest open source-backed invite behavior: Odoo's

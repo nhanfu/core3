@@ -1532,3 +1532,24 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.
+
+## Bounded QA run: `SURVEYS-RESPONSIBLE-USER-001` — 2026-09-21
+
+- Source/UI: Odoo's `survey.survey.user_id` is the internal Responsible
+  many2one, rendered separately from `restrict_user_ids`; its model
+  constraint preserves responsible-user access for restricted surveys.
+- Persistence/guards: Core3 migrations `0.0.54`/`0.0.55` add and seed durable
+  responsible fields. Catalog/detail projections and the existing
+  `survey-detail` page/API pair expose them. Assignment requires
+  `surveys.write`, an authenticated actor, non-archived/current row version,
+  valid fields, and restricted membership where applicable.
+- Verification: **3 focused tests / 17 assertions** pass. The test covers
+  page/API binding, permission/actor and stale/restricted guards, durable
+  assignment, and file-backed restart. Scoped diff-check passes; full
+  repository regression was not run.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, and 3391 were unavailable
+  for authenticated desktop/mobile capture. Odoo port 8072 was unavailable.
+  No authenticated visual or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.

@@ -1,0 +1,17 @@
+version: 0.0.55
+description: Deterministic responsible-user names for existing survey fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE surveys
+      SET responsible_user_name = COALESCE(NULLIF(TRIM(owner), ''), 'Admin User')
+      WHERE responsible_user_id = 'user-admin' AND responsible_user_name = 'Admin User';
+    down: |
+      UPDATE surveys
+      SET responsible_user_name = 'Admin User'
+      WHERE responsible_user_id = 'user-admin';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

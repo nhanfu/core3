@@ -1,0 +1,21 @@
+version: 0.0.54
+description: Durable Odoo-style responsible user assignment for surveys
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS responsible_user_id VARCHAR DEFAULT 'user-admin';
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS responsible_user_name VARCHAR DEFAULT 'Admin User';
+      UPDATE surveys
+      SET responsible_user_id = COALESCE(NULLIF(TRIM(responsible_user_id), ''), 'user-admin'),
+          responsible_user_name = COALESCE(NULLIF(TRIM(responsible_user_name), ''), NULLIF(TRIM(owner), ''), 'Admin User')
+      WHERE responsible_user_id IS NULL OR responsible_user_name IS NULL
+         OR TRIM(responsible_user_id) = '' OR TRIM(responsible_user_name) = ''
+         OR (responsible_user_id = 'user-admin' AND responsible_user_name = 'Admin User');
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS responsible_user_name;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS responsible_user_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
