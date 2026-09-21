@@ -1,0 +1,116 @@
+page: { id: product-update-quantity }
+datasources:
+  - id: inventory_product_update_quantity_context
+    single: true
+    permission: inventory.manage
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_NOT_FOUND, message: The selected product is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_CONTEXT_UNAVAILABLE, message: Product quantities are temporarily unavailable. }
+    query: |
+      WITH selected_product AS (
+        SELECT id, row_version, name, default_code, unit_name, company_name
+        FROM inventory_product_templates
+        WHERE id = :product_id
+          AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+            OR company_name = 'Shared'
+            OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))
+        UNION ALL
+        SELECT id, row_version, name, default_code, unit_name, company_name
+        FROM inventory_product_variants
+        WHERE id = :product_id
+          AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+            OR company_name = 'Shared'
+            OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))
+      )
+      SELECT p.id AS product_id, p.row_version, p.default_code, p.name AS product_name,
+        p.unit_name, p.company_name, CAST(COALESCE(SUM(q.quantity), 0) AS DOUBLE) AS on_hand,
+        CAST(COUNT(q.id) AS BIGINT) AS quant_count
+      FROM selected_product p
+      LEFT JOIN inventory_quants q ON q.product_name ILIKE '%' || p.name || '%'
+        AND (q.company_name = p.company_name OR q.company_name = 'Shared')
+      GROUP BY p.id, p.row_version, p.default_code, p.name, p.unit_name, p.company_name
+  - id: inventory_product_update_quantity_lines
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_LINES_UNAVAILABLE, message: Product quantities are temporarily unavailable. } }
+    query: |
+      WITH selected_product AS (
+        SELECT id, name, unit_name, company_name FROM inventory_product_templates WHERE id = :product_id
+        UNION ALL
+        SELECT id, name, unit_name, company_name FROM inventory_product_variants WHERE id = :product_id
+      )
+      SELECT q.id, q.row_version, p.id AS product_id, q.product_id AS quant_product_id,
+        q.product_name, l.name AS location_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number,
+        CAST(q.quantity AS DOUBLE) AS quantity, CAST(q.reserved_quantity AS DOUBLE) AS reserved_quantity,
+        CAST(q.quantity - q.reserved_quantity AS DOUBLE) AS available_quantity,
+        COALESCE(q.unit_name, p.unit_name, 'Units') AS unit_name, q.company_name
+      FROM selected_product p
+      JOIN inventory_quants q ON q.product_name ILIKE '%' || p.name || '%'
+        AND (q.company_name = p.company_name OR q.company_name = 'Shared')
+      JOIN inventory_locations l ON l.id = q.location_id AND l.usage IN ('Internal', 'Transit')
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%'
+          OR COALESCE(q.lot_serial_number, '') ILIKE '%' || :q || '%')
+        AND (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name)
+      ORDER BY l.name, q.product_name, q.id
+  - id: inventory_product_quantity_updates
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_HISTORY_UNAVAILABLE, message: Quantity update history is temporarily unavailable. } }
+    query: "SELECT id, row_version, product_id, product_name, quant_id, location_name, CAST(previous_quantity AS DOUBLE) AS previous_quantity, CAST(new_quantity AS DOUBLE) AS new_quantity, CAST(quantity_delta AS DOUBLE) AS quantity_delta, company_name, updated_by, CAST(updated_at AS VARCHAR) AS updated_at FROM inventory_product_quantity_updates WHERE product_id = :product_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name) ORDER BY updated_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_product_update_quantity
+    type: client
+    permission: inventory.manage
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_product_update_quantity_context;
+        if (!context?.product_id) throw new Error('Product quantity context is unavailable');
+        window.location.reload();
+      }
+  - id: update_inventory_product_quantity
+    type: server_form
+    permission: inventory.manage
+    title: Update Quantity
+    action: inventory.products.update_quantity
+    handler: yaml_mutation
+    operation: update_quantity
+    prefill: { product_id: '{state.inventory_product_update_quantity_context.product_id}', quant_id: '{row.id}', expected_row_version: '{row.row_version}', company_name: '{row.company_name}', quantity: '{row.quantity}' }
+    refresh: [inventory_product_update_quantity_context, inventory_product_update_quantity_lines, inventory_product_quantity_updates]
+    success_message: Quantity updated.
+    mutation:
+      generated: [id]
+      concurrency: { required: true }
+      before_steps:
+        - query: "SELECT 'product-quantity-update-' || CAST(:product_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_product_quantity_updates WHERE product_id = :product_id) AS VARCHAR) AS id, q.product_name, q.quantity AS previous_quantity, l.name AS location_name, q.company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS updated_by FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE q.id = :quant_id GROUP BY q.id, q.product_name, q.quantity, l.name, q.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT q.id FROM inventory_quants q WHERE q.id = :quant_id AND (EXISTS (SELECT 1 FROM inventory_product_templates p WHERE p.id = :product_id AND q.product_name ILIKE '%' || p.name || '%') OR EXISTS (SELECT 1 FROM inventory_product_variants p WHERE p.id = :product_id AND q.product_name ILIKE '%' || p.name || '%')) AND (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name)", status: 404, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_NOT_FOUND, message: The selected quantity is not available for this product and company. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :quant_id AND row_version = :expected_row_version", status: 409, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_STALE, message: This quantity changed before it could be updated. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_ACTOR_REQUIRED, message: An authenticated inventory manager is required to update quantity. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :quant_id AND COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = company_name", status: 403, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_COMPANY, message: The quantity company must match the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :quant_id AND CAST(:quantity AS DECIMAL(18,3)) >= reserved_quantity AND CAST(:quantity AS DECIMAL(18,3)) >= 0 AND CAST(:quantity AS DECIMAL(18,3)) <= 1000000000", status: 422, code: INVENTORY_PRODUCT_UPDATE_QUANTITY_INVALID, message: Quantity must be non-negative and cannot be below reserved stock. }
+      steps:
+        - query: "UPDATE inventory_quants SET quantity = CAST(:quantity AS DECIMAL(18,3)), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 08:30:00' WHERE id = :quant_id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_PRODUCT_UPDATE_QUANTITY_STALE
+          message: The quantity changed before it could be updated.
+        - query: "UPDATE inventory_stock_report SET on_hand = (SELECT COALESCE(SUM(q.quantity), 0) FROM inventory_quants q WHERE q.product_name = :product_name AND q.company_name = :company_name), free_to_use = (SELECT COALESCE(SUM(q.quantity - q.reserved_quantity), 0) FROM inventory_quants q WHERE q.product_name = :product_name AND q.company_name = :company_name), total_value = (SELECT COALESCE(SUM(q.quantity * q.unit_cost), 0) FROM inventory_quants q WHERE q.product_name = :product_name AND q.company_name = :company_name) WHERE product_name = :product_name"
+        - query: "INSERT INTO inventory_product_quantity_updates(id, product_id, product_name, quant_id, location_name, previous_quantity, new_quantity, quantity_delta, company_name, updated_by, updated_at, row_version) VALUES (:id, :product_id, :product_name, :quant_id, :location_name, :previous_quantity, CAST(:quantity AS DECIMAL(18,3)), CAST(:quantity AS DECIMAL(18,3)) - :previous_quantity, :company_name, :updated_by, TIMESTAMP '2026-01-15 08:30:00', 1)"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_PRODUCT_UPDATE_QUANTITY_FAILED
+          message: The quantity update could not be recorded.
+      result: { query: "SELECT id, product_id, product_name, quant_id, location_name, previous_quantity, new_quantity, quantity_delta, company_name, updated_by, row_version FROM inventory_product_quantity_updates WHERE id = :id" }
+    fields:
+      - { field: product_id, label: Product ID, type: hidden }
+      - { field: quant_id, label: Quantity ID, type: hidden }
+      - { field: expected_row_version, label: Quantity Row Version, type: hidden }
+      - { field: company_name, label: Company, type: hidden }
+      - { field: quantity, label: On Hand Quantity, type: number, min: 0, required: true }
+  - id: back_to_inventory_product_detail_from_quantity
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /products

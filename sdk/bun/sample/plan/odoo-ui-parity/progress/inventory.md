@@ -1235,3 +1235,25 @@ Full Inventory sign-off remains open.
   authenticated visual pass is claimed. Odoo returned HTTP 303 to
   `/web/login`; exact blockers are recorded under the feature evidence
   directory. Full Inventory sign-off remains open.
+
+## `INV-PRODUCT-UPDATE-QUANTITY-001` — Product form Update Quantity (2026-09-21)
+
+- Selected Odoo's missing product-form manager action `action_open_quants`,
+  which opens the editable stock quant view with `default_product_id` and the
+  `Update Quantity` action label. This is distinct from stock-report Locations,
+  physical inventory counting, and quant move history.
+- Added migration `20260922200000-070-inventory-product-update-quantity.yaml`
+  with a deterministic product-context quantity-update ledger fixture. Added
+  separate `product-update-quantity` page/API YAML joined by `page.id`; product
+  template and variant details expose the manager-only entry action.
+- Quantity updates are durable and recompute the matching stock report row.
+  Guards enforce `inventory.manage`, current company, authenticated actor,
+  non-negative quantity not below reserved stock, and quant row version.
+- Focused verification passes 4 tests / 36 assertions, including source and
+  discovery checks, deterministic multi-quant data, CRUD guards, restart
+  persistence, and reader denial. `bun run audit` passes.
+- Core3 desktop/mobile probes reached only `/auth/login`, so no authenticated
+  visual pass is claimed. Odoo returned HTTP 303 to `/web/login`; exact source,
+  browser, and Odoo blocker evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-UPDATE-QUANTITY-001/`.
+  Full Inventory sign-off remains open.

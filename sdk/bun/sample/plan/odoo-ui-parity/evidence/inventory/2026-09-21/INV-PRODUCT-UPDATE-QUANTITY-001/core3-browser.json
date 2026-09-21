@@ -1,0 +1,28 @@
+{
+  "feature": "INV-PRODUCT-UPDATE-QUANTITY-001",
+  "authenticated": false,
+  "results": [
+    {
+      "viewport": "desktop",
+      "requested": "http://127.0.0.1:4344/products/update-quantity?product_id=inventory-template-storage-box",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:4344/auth/login?redirect=%2Fproducts%2Fupdate-quantity%3Fproduct_id%3Dinventory-template-storage-box",
+      "title": "Sign in to your account",
+      "body": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "errors": [],
+      "badResponses": [],
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": "mobile",
+      "requested": "http://127.0.0.1:4344/products/update-quantity?product_id=inventory-template-storage-box",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:4344/auth/login?redirect=%2Fproducts%2Fupdate-quantity%3Fproduct_id%3Dinventory-template-storage-box",
+      "title": "Sign in to your account",
+      "body": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "errors": [],
+      "badResponses": [],
+      "horizontalOverflow": false
+    }
+  ]
+}

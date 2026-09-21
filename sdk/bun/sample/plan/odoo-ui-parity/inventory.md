@@ -1489,7 +1489,6 @@ paired Odoo comparison/blocker evidence is under
 `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`. Full Inventory
 sign-off remains open.
 
-
 ## Procurement > Replenishment Information — `INV-REPLENISH-INFO-001` (2026-09-21)
 
 This bounded slice covers Odoo's source-backed Replenishment Information action
@@ -2295,3 +2294,31 @@ login shell, and Odoo returned HTTP 303 to `/web/login`; exact blockers and
 non-authenticated captures are under
 `evidence/inventory/2026-09-21/INV-REPLENISH-MANUAL-QTY-001/`. Full Inventory
 sign-off remains open.
+
+## Product form > Update Quantity — `INV-PRODUCT-UPDATE-QUANTITY-001` (2026-09-21)
+
+This bounded Wave 33 slice closes Odoo's product-form manager quantity action
+without duplicating stock-report Locations, physical inventory counting, or
+quant move history. Odoo declares the `action_open_quants` link in
+`addons/stock/views/product_views.xml:191-194`; the source method in
+`addons/stock/models/product.py:663-695` enables inventory mode for managers,
+passes `default_product_id`/`single_product`, scopes the quant domain, and
+labels the action `Update Quantity`.
+
+Core3 adds migration
+`services/inventory/migrations/20260922200000-070-inventory-product-update-quantity.yaml`
+with a deterministic product-context update ledger fixture. Separate
+`pages/product-update-quantity.yaml` and `api/product-update-quantity.yaml`
+contracts share `page.id: product-update-quantity`; product template and
+variant detail pages expose the manager-only entry action. The mutation updates
+the selected quant durably, recomputes the matching stock report row, and
+guards current company, authenticated actor, reserved/non-negative quantity,
+and quant row version.
+
+Focused verification passes 4 tests / 36 assertions in
+`test/inventory_product_update_quantity.integration.test.ts`; `bun run audit`
+passes. Core3 desktop/mobile probing reached only the sign-in shell, and live
+Odoo returned HTTP 303 to `/web/login`; exact source, browser, and blocker
+evidence is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-UPDATE-QUANTITY-001/`. Full
+Inventory sign-off remains open.

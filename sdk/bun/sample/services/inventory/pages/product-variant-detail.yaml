@@ -10,6 +10,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit }
     header_actions:
       - { id: back_to_inventory_product_variants, label: Back to Product Variants, icon: arrow-left, permission: inventory.read }
+      - { id: update_inventory_product_variant_quantity, label: Update Quantity, variant: secondary, permission: inventory.manage }
       - { id: edit_inventory_product_variant, label: Edit, variant: primary, permission: inventory.manage }
       - { id: archive_inventory_product_variant, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.active === true" }
       - { id: restore_inventory_product_variant, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.active === false" }

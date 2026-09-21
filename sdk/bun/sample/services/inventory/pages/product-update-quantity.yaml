@@ -1,0 +1,50 @@
+title: Update Quantity
+page: { id: product-update-quantity, route: /products/update-quantity, breadcrumb: [Supply Chain, Inventory, Products, Update Quantity], auth: { require: [inventory.manage] } }
+components:
+  - type: StatRow
+    source: inventory_product_update_quantity_context
+    title: Update Quantity
+    stats:
+      - { label: Product, field: product_name }
+      - { label: On Hand, field: on_hand }
+      - { label: Quantities, field: quant_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_product_update_quantity_lines
+    header_actions:
+      - { id: refresh_inventory_product_update_quantity, label: Refresh Quantities, variant: primary, permission: inventory.manage }
+      - { id: back_to_inventory_product_detail_from_quantity, label: Back to Product, variant: secondary, permission: inventory.manage }
+    search: { label: Search quantities, placeholder: 'Search locations, lots, or products...' }
+    columns:
+      - { field: location_name, label: Location, type: PrimaryEntityCell, sortable: true }
+      - { field: product_name, label: Product }
+      - { field: lot_serial_number, label: Lot/Serial Number }
+      - { field: quantity, label: On Hand, align: right, sortable: true }
+      - { field: reserved_quantity, label: Reserved, align: right }
+      - { field: available_quantity, label: Available, align: right }
+      - { field: unit_name, label: Unit }
+      - field: actions
+        label: Actions
+        sortable: false
+        actions:
+          - { id: update_inventory_product_quantity, label: Set Quantity, icon: edit, permission: inventory.manage }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No quantities for this product, description: This product has no quantities in internal or transit locations. }
+  - type: ListView
+    variant: odoo
+    source: inventory_product_quantity_updates
+    columns:
+      - { field: updated_at, label: Updated At, type: PrimaryEntityCell, sortable: true }
+      - { field: location_name, label: Location }
+      - { field: previous_quantity, label: Previous, align: right }
+      - { field: new_quantity, label: New, align: right }
+      - { field: quantity_delta, label: Delta, align: right }
+      - { field: updated_by, label: Updated By }
+      - { field: company_name, label: Company }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No quantity updates, description: Changes made from this product form will appear here. }

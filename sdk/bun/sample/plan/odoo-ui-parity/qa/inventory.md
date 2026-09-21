@@ -1662,3 +1662,32 @@ comparison. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable reset lifecycle;
 PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Product Update Quantity QA — `INV-PRODUCT-UPDATE-QUANTITY-001`
+
+- Odoo source/action: PASS from
+  `addons/stock/views/product_views.xml:191-194` and
+  `addons/stock/models/product.py:663-695`. The product-form quantity link is
+  manager-only, scopes `stock.quant` to the product, enables inventory mode,
+  and labels the destination `Update Quantity`.
+- Core3 contract: PASS. Presentation-only
+  `pages/product-update-quantity.yaml` and backend
+  `api/product-update-quantity.yaml` share `page.id:
+  product-update-quantity`; product template and variant details expose the
+  entry action. Migration 0.0.70 persists a deterministic update ledger and
+  the mutation recomputes the matching stock report row.
+- Focused verification: PASS —
+  `bun test test/inventory_product_update_quantity.integration.test.ts`,
+  4 tests / 36 assertions. Coverage includes source/schema/discovery checks,
+  deterministic multi-quant context, CRUD guards, restart persistence, and
+  permission denial. `bun run audit` passes.
+- Core3 browser evidence: BLOCKED for this wave. Desktop and mobile probes
+  reached `/auth/login`; captures are explicitly not authenticated product
+  quantity evidence and authenticated overflow was not assessed.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired action or
+  screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable product quantity lifecycle;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.

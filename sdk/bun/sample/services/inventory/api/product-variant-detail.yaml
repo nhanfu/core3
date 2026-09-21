@@ -27,6 +27,11 @@ actions:
     type: navigate
     permission: inventory.read
     navigate_to: /product-variants
+  - id: update_inventory_product_variant_quantity
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /products/update-quantity
+    params: { product_id: '{state.inventory_product_variant_detail.id}' }
   - id: edit_inventory_product_variant
     type: server_form
     permission: inventory.manage

@@ -1,0 +1,26 @@
+{
+  "feature": "INV-PRODUCT-UPDATE-QUANTITY-001",
+  "odoo": {
+    "view": "addons/stock/views/product_views.xml:191-194",
+    "model": "addons/stock/models/product.py:663-695",
+    "menu_action": "product.template/product.product form quantity link -> action_open_quants -> stock.quant action_view_quants",
+    "manager_boundary": "stock.group_stock_manager",
+    "context": ["inventory_mode", "default_product_id", "single_product", "hide_location", "hide_lot", "no_at_date"],
+    "label": "Update Quantity"
+  },
+  "core3": {
+    "page": "services/inventory/pages/product-update-quantity.yaml",
+    "api": "services/inventory/api/product-update-quantity.yaml",
+    "page_id": "product-update-quantity",
+    "route": "/products/update-quantity",
+    "entry_points": [
+      "services/inventory/pages/product-template-detail.yaml",
+      "services/inventory/api/product-template-detail.yaml",
+      "services/inventory/pages/product-variant-detail.yaml",
+      "services/inventory/api/product-variant-detail.yaml"
+    ],
+    "persistence": "services/inventory/migrations/20260922200000-070-inventory-product-update-quantity.yaml",
+    "guards": ["inventory.manage", "current company", "authenticated actor", "quant row_version", "reserved quantity and non-negative quantity"]
+  },
+  "comparison": "Core3 provides the manager-only product-context quant list, durable quantity adjustment ledger, and stock-report recomputation while preserving page/API YAML separation through page.id."
+}
