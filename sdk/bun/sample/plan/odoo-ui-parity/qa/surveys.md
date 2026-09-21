@@ -1486,3 +1486,26 @@ Evidence:
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.
+
+## Bounded QA run: `SURVEYS-INVITE-ATTACHMENT-001` — 2026-09-21
+
+- Source/UI: Odoo `survey.invite.attachment_ids` is a many-to-many binary
+  composer field (`survey_invite_views.xml:59-64`) and `_send_mail` passes each
+  selected attachment into the outgoing mail (`survey_invite.py:231-241`).
+  Core3 binds a separate authenticated invitation page/API pair and shared
+  attachment upload/download surface.
+- Persistence/guards: `survey_invite_attachments` survives migration replay
+  and file-backed reopen. The upload requires `surveys.write` and a current
+  actor, and rejects missing/archived invites, stale invitation versions,
+  empty files, and duplicate names before mutation.
+- Verification: **3 focused tests / 32 assertions** and **29 adjacent tests /
+  274 assertions** pass. UI audit reports **746 pages, 755 routes, and 1,483
+  datasources**; scoped ESLint and `git diff --check` pass. Full repository
+  regression was not run for this bounded slice.
+- Runtime/reference: Core3 desktop/mobile probes were refused on ports 3000,
+  3001, 3390, and 3391. Odoo `/odoo/surveys?` returned 303 to login; the
+  session probe returned 200 with `{"error":"survey_wrong"}`. No
+  authenticated desktop/mobile capture or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.

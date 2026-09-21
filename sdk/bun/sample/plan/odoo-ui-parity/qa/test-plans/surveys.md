@@ -661,3 +661,15 @@ Evidence:
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.
+
+## `SURVEYS-INVITE-ATTACHMENT-001` — invitation attachment lifecycle
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-058 | authenticated invite | Invitation → attach document | Separate page/API pair lists and uploads an Odoo-style invite attachment | source-comparison.md, focused test | pass |
+| SURVEYS-WF-055 | restart/idempotency | Upload → duplicate replay → file-backed reopen/download | One durable attachment row and stored bytes survive restart; duplicate replay is rejected | test-results.md, focused test | pass |
+| SURVEYS-PERM-057 | permission/actor | Missing write permission or actor | Reject before mutation with explicit permission/actor guards | source-comparison.md, focused test | pass |
+| SURVEYS-UI-056 | authenticated responsive/reference | Invitation attachment desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.

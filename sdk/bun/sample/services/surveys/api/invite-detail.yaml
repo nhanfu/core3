@@ -1,0 +1,34 @@
+page: { id: survey-invite-detail }
+datasources:
+  - id: survey_invite_detail
+    single: true
+    permission: surveys.read
+    query: "SELECT i.id, i.row_version, i.survey_id, i.survey_name, i.survey_link, i.send_email, i.recipients, i.additional_emails, i.subject, i.body, i.attachment_names, i.deadline, i.mail_template, i.state, CAST(i.sent_at AS VARCHAR) AS sent_at, s.state AS survey_state FROM survey_invites i JOIN surveys s ON s.id = i.survey_id WHERE i.survey_id = :survey_id AND i.id = (SELECT latest.id FROM survey_invites latest WHERE latest.survey_id = :survey_id ORDER BY latest.created_at DESC, latest.id DESC LIMIT 1)"
+  - id: survey_invite_attachments
+    permission: surveys.read
+    query: "SELECT a.id, a.invite_id, a.survey_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM survey_invite_attachments a JOIN survey_invites i ON i.id = a.invite_id JOIN surveys s ON s.id = i.survey_id WHERE i.survey_id = :survey_id AND a.invite_id = (SELECT latest.id FROM survey_invites latest WHERE latest.survey_id = :survey_id ORDER BY latest.created_at DESC, latest.id DESC LIMIT 1) AND s.state <> 'Archived' ORDER BY a.created_at DESC, a.id"
+actions:
+  - id: upload_survey_invite_attachment
+    type: upload
+    action: surveys.invites.attachments.upload
+    handler: attachment_metadata
+    permission: surveys.write
+    kind: survey_invite_attachment
+    params: { invite_id: '{state.survey_invite_detail.id}', expected_row_version: '{state.survey_invite_detail.row_version}' }
+    refresh: [survey_invite_attachments, survey_invite_detail]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT i.id FROM survey_invites i JOIN surveys s ON s.id = i.survey_id WHERE i.id = :invite_id AND s.state <> 'Archived'", status: 404, code: SURVEY_INVITE_NOT_FOUND, message: This survey invitation is not available. }
+        - { query: "SELECT i.id FROM survey_invites i WHERE i.id = :invite_id AND i.row_version = :expected_row_version", status: 409, code: SURVEY_INVITE_CHANGED, message: This invitation changed before the attachment was saved. Reload it before retrying. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_INVITE_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated survey actor is required to attach an invitation document. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:fileName, ''))) BETWEEN 1 AND 255 AND :sizeBytes > 0", status: 422, code: SURVEY_INVITE_ATTACHMENT_INVALID, message: A non-empty invitation document is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_invite_attachments WHERE invite_id = :invite_id AND file_name = :fileName)", status: 409, code: SURVEY_INVITE_ATTACHMENT_DUPLICATE, message: This document is already attached to the invitation. }
+      steps:
+        - { query: "INSERT INTO survey_invite_attachments(id, invite_id, survey_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT :attachment_id, i.id, i.survey_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id FROM survey_invites i WHERE i.id = :invite_id" }
+        - { query: "UPDATE survey_invites SET row_version = row_version + 1 WHERE id = :invite_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_INVITE_CHANGED, message: This invitation changed before the attachment was saved. Reload it before retrying. }
+      result: { query: "SELECT id, invite_id, survey_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM survey_invite_attachments WHERE id = :attachment_id" }
+  - id: download_survey_invite_attachment
+    type: download
+    permission: surveys.read
+    kind: survey_invite_attachment

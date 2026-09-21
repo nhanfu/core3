@@ -12,6 +12,7 @@ components:
       - { id: see_survey_results_detail, label: See results, variant: secondary, permission: surveys.read }
       - { id: test_survey_detail, label: Test, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: share_survey_detail, label: Share, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
+      - { id: manage_survey_invite_attachments_detail, label: Invite attachments, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: start_live_session_detail, label: Create Live Session, variant: primary, permission: surveys.manage, show_if: "!record.session_state" }
       - { id: open_live_session_detail, label: Open Session Manager, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
       - { id: end_live_session_detail, label: Close Live Session, variant: danger, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
@@ -78,6 +79,11 @@ components:
       - { field: state, label: Status, type: StatusChip }
     empty_state: { title: No responses, description: Responses will appear here after publication. }
 actions:
+  - id: manage_survey_invite_attachments_detail
+    type: navigate
+    permission: surveys.write
+    navigate_to: /surveys/invite
+    params: { survey_id: '{row.id}' }
   - id: duplicate_survey_detail
     type: client
     permission: surveys.write

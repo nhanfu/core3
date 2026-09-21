@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${SURVEYS_UPLOAD_ROOT:-.data/surveys-uploads}
+  credentials: {}
+
+attachments:
+  survey_invite_attachment:
+    download:
+      route: /api/surveys/invite-attachments
+      permission: surveys.read
+      query: SELECT a.* FROM survey_invite_attachments a JOIN survey_invites i ON i.id = a.invite_id JOIN surveys s ON s.id = i.survey_id WHERE a.id = :attachment_id AND s.state <> 'Archived'

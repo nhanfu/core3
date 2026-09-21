@@ -1,0 +1,28 @@
+title: Survey Invitation
+page: { id: survey-invite-detail, route: /surveys/invite, breadcrumb: [Marketing, Surveys, Invitation], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_invite_detail
+    title_field: survey_name
+    subtitle_field: id
+    status_field: state
+    editable: false
+    attachment_source: survey_invite_attachments
+    attachment_page_size: 100
+    attachment_label: Email attachments
+    add_attachment_label: Attach document
+    no_attachments_label: No documents attached
+    uploading_label: Uploading…
+    upload_failed_label: Upload failed
+    download_label: Download
+    attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
+    attachment_upload_action: upload_survey_invite_attachment
+    attachment_download_action: download_survey_invite_attachment
+    fields:
+      - { field: survey_name, label: Survey }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: survey_link, label: Survey Link }
+      - { field: recipients, label: Recipients }
+      - { field: subject, label: Subject }
+      - { field: deadline, label: Answer deadline }
+      - { field: sent_at, label: Sent at }

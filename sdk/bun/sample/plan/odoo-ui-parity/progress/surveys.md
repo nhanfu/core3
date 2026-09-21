@@ -419,6 +419,28 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-INVITE-ATTACHMENT-001`
+
+Selected the next smallest open source-backed invite behavior: Odoo's
+`survey.invite.attachment_ids` many-to-many binary composer field and its
+inclusion in outgoing invite mail. Core3 now has a separate authenticated
+`survey-invite-detail` page/API pair, a durable `survey_invite_attachments`
+ledger, shared upload/download storage, and a deterministic certification
+guide fixture. The upload is permissioned by `surveys.write`, requires an
+authenticated actor, rejects archived/missing invitations, stale row versions,
+empty files, and duplicate names, and stores the actor and bytes durably.
+
+Focused coverage is **3 passed / 32 assertions**; the adjacent invite/catalog
+regression is **29 passed / 274 assertions**. File-backed DuckDB reopen and
+download preserve the uploaded invitation document. Core3 desktop/mobile
+capture was blocked because ports 3000, 3001, 3390, and 3391 refused
+connections. Odoo `/odoo/surveys?` returned HTTP 303 to login and the
+session-code probe returned HTTP 200 `{"error":"survey_wrong"}`; no
+authenticated fixture or paired visual comparison is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/`.
+
 ## 2026-09-21 — SURVEYS-CERTIFICATION-BADGE-001
 
 Selected the smallest open certification behavior after the Wave 31 report:

@@ -2286,3 +2286,28 @@ returned HTTP 415 because the authenticated JSON-RPC content type/session was
 unavailable. No badge parity sign-off is claimed.
 
 Evidence: plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.
+
+## Wave 33 — `SURVEYS-INVITE-ATTACHMENT-001`
+
+The next smallest open source-backed invite behavior is Odoo's
+`survey.invite.attachment_ids` many-to-many binary composer field. Odoo renders
+it in the invite wizard as `many2many_binary` and passes selected attachments
+to outgoing mail (`addons/survey/wizard/survey_invite.py:27-29,231-241`;
+`survey_invite_views.xml:59-64`).
+
+Core3 adds the authenticated `survey-invite-detail` page/API pair with a
+shared attachment upload/download contract. The `survey_invite_attachments`
+ledger has deterministic fixture data, stores uploaded metadata and bytes, and
+is migration/restart safe. Uploads require `surveys.write`, an authenticated
+actor, a non-archived invitation, the current invitation row version, and a
+non-empty file; duplicate filenames are rejected before mutation. Survey list
+and detail actions navigate to the latest invitation for the selected survey.
+
+Focused verification is **3 passed / 32 assertions** and adjacent
+invite/catalog verification is **29 passed / 274 assertions**. Core3 desktop
+and mobile browser capture was blocked by refused ports 3000, 3001, 3390, and
+3391. Odoo `/odoo/surveys?` returned HTTP 303 to login and the session-code
+probe returned HTTP 200 `{"error":"survey_wrong"}`. No authenticated visual,
+mail-server delivery, binary mail rendering, or paired Odoo sign-off is
+claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/`.

@@ -1,0 +1,33 @@
+version: 0.0.52
+description: Durable Odoo-style attachments for survey invitation mail
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_invite_attachments (
+        id VARCHAR PRIMARY KEY,
+        invite_id VARCHAR NOT NULL,
+        survey_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_invite_attachments_invite_file_idx
+        ON survey_invite_attachments(invite_id, file_name);
+      INSERT INTO survey_invite_attachments(
+        id, invite_id, survey_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, created_at
+      ) VALUES (
+        'survey-invite-attachment-certification-guide', 'invite-certification-sent',
+        'survey-demo-certification', 'certification-guide.pdf', 'application/pdf', 4096,
+        'survey-invite-attachment-certification-guide', 'user-admin', TIMESTAMP '2026-01-15 09:05:00'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS survey_invite_attachments_invite_file_idx;
+      DROP TABLE IF EXISTS survey_invite_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
