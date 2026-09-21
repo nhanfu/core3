@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Wishlist Add to Cart (`ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`, 2026-09-22)
+
+- Odoo source: pass. The local Odoo 19 Wishlist template renders a visible
+  `Add to Cart` button with saved template/variant IDs; the interaction calls
+  the normal cart service with no immediate redirect, removes the wishlist
+  item only after a positive quantity, and redirects to `/shop/cart` when the
+  wishlist becomes empty.
+- Core3 lifecycle: pass. The separate Wishlist API/page contracts now expose
+  a permissioned add-to-cart action with customer/company, row-version,
+  publication, variant, zero-price, and open-cart guards. It creates/reuses a
+  durable customer cart, adds or increments the matching line, deletes the
+  saved item atomically, refreshes Wishlist/Cart datasources, and returns the
+  `/ecommerce/cart` redirect intent.
+- Focused verification: `bun test ./test/ecommerce_wishlist.integration.test.ts
+  --timeout 30000` — **7 passed, 48 assertions, 0 failures**. This includes
+  the new add-to-cart workflow, ownership/stale/missing/unavailable guards,
+  quantity merge, wishlist removal, redirect intent, and DuckDB restart.
+- Runtime checks: `ss -ltnp` found no listener on ports 3000, 4312, or 4313;
+  Core3 browser rendering is not claimed. Authenticated bsk capture against
+  `http://localhost:8069`, database `core3_reference`, browser instance
+  `245ea108` shows exact `/shop/wishlist` HTTP 404 at desktop and iPhone-14
+  mobile viewports because Website Sale/Wishlist is not installed. No paired
+  rendered parity sign-off is claimed.
+- Evidence: `evidence/ecommerce/2026-09-22/ecom-catalog-wishlist-add-to-cart-001/`.
+
 ## Wishlist Page Layout (`ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`, 2026-09-22)
 
 - Odoo source/builder/template/styles: pass. The supplied

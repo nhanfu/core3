@@ -1,6 +1,40 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Wishlist Page Layout slice; module sign-off remains open)
+Status: qa-in-progress (bounded Wishlist Add to Cart slice; module sign-off remains open)
+
+## Bounded feature — Wishlist Add to Cart (`ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`)
+
+Wave 52 selects the next distinct Website Sale Wishlist workflow after the
+completed wishlist lifecycle, session merge, page layout, Shop product-card
+wishlist visibility, and compare-price slices. Odoo's Wishlist Page template
+renders an `Add to Cart` button for each sellable saved item, and the
+`product_wishlist` interaction sends the saved product/variant through the
+normal cart service. Only after a positive cart quantity does it remove the
+wishlist row; when that was the last item, it redirects to `/shop/cart`.
+
+The local Odoo 19 source evidence is
+`website_sale_wishlist/views/website_sale_wishlist_template.xml:368-388` and
+`website_sale_wishlist/static/src/interactions/product_wishlist.js:24-50`.
+The authenticated `core3_reference` browser route remains an exact 404 because
+Website Sale/Wishlist is not installed, so no live rendered Add to Cart state
+can be captured.
+
+Core3 adds `add_to_cart_ecommerce_wishlist_item` to the existing separate
+`api/wishlist.yaml` and `pages/wishlist.yaml` contracts. The mutation requires
+`ecommerce.write`, checks customer/company ownership, row-version freshness,
+published active product and variant availability, zero-price policy, and an
+open owned cart. It creates or reuses the durable customer cart, merges the
+product/variant quantity, removes the wishlist item atomically, refreshes the
+Wishlist and Cart datasources, and returns `/ecommerce/cart` as the redirect
+intent. The page exposes the action as a visible Wishlist row action.
+
+Focused verification covers source/template/interaction comparison, page/API
+binding, permission and stale/missing guards, unavailable and zero-price
+boundaries, quantity merge, wishlist removal, Cart redirect intent, and
+DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-catalog-wishlist-add-to-cart-001/`.
+Core3 authenticated rendering is unavailable while ports 3000, 4312, and 4313
+have no listener. No visual-parity sign-off is claimed.
 
 ## Bounded feature — Wishlist Page Layout (`ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`)
 
