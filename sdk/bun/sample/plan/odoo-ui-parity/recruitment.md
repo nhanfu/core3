@@ -1,6 +1,46 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-8-implemented-visual-capture-blocked`
+Status: `batch-10-implemented-odoo-reference-menu-blocked`
+
+## Batch 10 — Applications → Calendar
+
+Source trace: Odoo 19 `addons/hr_recruitment/views/hr_applicant_views.xml`
+defines `hr_applicant_calendar_view` for `hr.applicant`. The Calendar view is
+month-based, uses `activity_date_deadline` as `date_start`, colors by the
+responsible user, hides time, limits events to five per day, and disables quick
+create. Its event content is Applicant, Job Position, Priority, and Activity
+Summary; the parent `crm_case_categ0_act_job` action exposes Calendar after the
+existing list, pivot, graph, and before the already implemented Next Activities
+surface. Applicant read access remains the Odoo recruitment-user/interviewer
+boundary, represented by Core3's `recruitment.read` permission.
+
+Core3 adds a page-id-local Calendar view to `pages/applicants.yaml`, backed by
+the existing service-owned `recruitment_applicants` datasource. It uses the
+durably persisted activity deadline, summary, recruiter, priority, stage, and
+company-scope fields introduced by the applicant activity/company migrations;
+records without a deadline do not render as calendar events. The page remains
+presentation-only and the datasource remains separate in `api/applicants.yaml`.
+The existing applicant workflow transitions and company-scope guards remain the
+write boundary; Calendar is read-only and cannot bypass them.
+
+Focused verification:
+
+- `bun test test/recruitment_applicant_calendar.integration.test.ts` — 3
+  passed, 0 failed, 18 assertions.
+- `bun test test/recruitment_applicant_calendar.integration.test.ts
+  test/recruitment_applicant_activities.integration.test.ts` — 5 passed, 0
+  failed.
+- `bun run audit` — passed: 769 pages, 778 routes, 1572 datasources.
+- Focused ESLint and `git diff --check` — passed.
+
+Browser evidence: Core3 capture is attempted at authenticated desktop
+1440×900 and mobile 390×844. The shared authenticated Odoo reference session
+does not expose a Recruitment root in its live launcher (it exposes Employees,
+including Departments), and `/odoo/recruitment-applications` returns the Odoo
+shell rather than the Recruitment action. Odoo Calendar screenshots therefore
+remain blocked; no visual-parity claim is made for the reference surface.
+The detailed source comparison and blocker hashes are recorded in
+`odoo-ui-parity/evidence/recruitment/2026-09-21/RECRUITMENT-APPLICANT-CALENDAR-001/`.
 
 ## Batch 9 — Applications → Next Activities
 

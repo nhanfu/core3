@@ -25,6 +25,15 @@ components:
         record_date_field: activity_date_deadline
         activity_types: [{ id: Email, label: Email, icon: ✉ }, { id: Interview, label: Interview, icon: ◉ }, { id: Call, label: Call, icon: ☎ }]
         card: { title: name, subtitle: activity_type, fields: [{ field: activity_date_deadline, label: Deadline }, { field: activity_summary, label: Summary }, { field: stage, label: Stage }, { field: activity_user, label: Assigned to }, { field: activity_exception, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: activity_date_deadline
+        card:
+          title: name
+          subtitle: opening_name
+          fields: [{ field: priority, label: Priority }, { field: activity_summary, label: Activity }, { field: recruiter, label: Recruiter }]
       - id: kanban
         label: Kanban
         icon: dashboard
