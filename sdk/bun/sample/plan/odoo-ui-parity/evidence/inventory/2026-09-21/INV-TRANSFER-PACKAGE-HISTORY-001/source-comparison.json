@@ -1,0 +1,31 @@
+{
+  "feature_id": "INV-TRANSFER-PACKAGE-HISTORY-001",
+  "odoo": {
+    "menu_or_entry": "stock.picking form Packages stat for Done transfers",
+    "action": "stock.picking.action_see_package_histories",
+    "model": "stock.package.history",
+    "source": [
+      "addons/stock/views/stock_picking_views.xml:153-160",
+      "addons/stock/models/stock_picking.py:1944-1957",
+      "addons/stock/views/stock_package_history_views.xml:3-40",
+      "addons/stock/models/stock_package_history.py:7-44"
+    ],
+    "semantics": [
+      "Done transfer opens a picking-scoped list of package histories",
+      "Main Packages is the default filter",
+      "list fields include package, package type, origin/destination locations and containers, company, and View"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-package-history.yaml",
+    "api": "services/inventory/api/transfer-package-history.yaml",
+    "page_id": "transfer-package-history",
+    "detail_binding": "services/inventory/pages/transfer-detail.yaml + services/inventory/api/transfer-detail.yaml",
+    "migration": "services/inventory/migrations/20260922130000-063-inventory-transfer-package-history.yaml",
+    "parity": [
+      "Done-state and current-company scope",
+      "Main Packages and package/container search filters",
+      "responsive list/card presentation and package navigation"
+    ]
+  }
+}

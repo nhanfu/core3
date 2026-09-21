@@ -53,7 +53,7 @@ describe('Inventory package transfers parity', () => {
     expect((await repository.querySource(source, { package_id: 'package-main-0001', q: 'WH/OUT/00001', state: null, fixture_state: null }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(source, { package_id: 'package-main-0001', q: null, state: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { package_id: 'package-main-0001', q: null, state: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_PACKAGE_TRANSFERS_UNAVAILABLE' });
-    expect((await repository.query('SELECT COUNT(*) AS count FROM inventory_package_move_lines', []) )[0].count).toBe(5);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM inventory_package_move_lines', []) )[0].count).toBe(6);
     database.close();
   });
 

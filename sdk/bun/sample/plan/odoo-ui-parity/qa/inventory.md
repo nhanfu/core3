@@ -426,6 +426,33 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Done Transfer Package History QA — `INV-TRANSFER-PACKAGE-HISTORY-001`
+
+- Odoo source/action: PASS. `action_see_package_histories` opens the
+  `stock.package.history` list for a Done picking, defaults Main Packages,
+  and exposes package/type/location/container/company/View fields. References
+  and exact comparison are in the paired evidence `source-comparison.json`.
+- Core3 contract: PASS. The presentation-only
+  `transfer-package-history` page and API/action contract share
+  `page.id`; the transfer detail Packages stat binds `picking_id`. Migration
+  0.0.63 persists deterministic history and queries enforce Done state and
+  current-company scope.
+- Focused verification: PASS —
+  `bun test test/inventory_transfer_package_history.integration.test.ts`, 4
+  tests / 31 assertions. Coverage includes filters, permission, company and
+  Done-state boundaries, migration replay, and restart persistence.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. The package history context and row render with no page/console
+  errors or horizontal overflow; captures and JSON are in the feature evidence
+  directory.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable package-history read slice;
+PARTIAL/BLOCKED for paired live Odoo comparison. Full Inventory sign-off
+remains open.
+
 ## Inventory Transfer Detailed Operations QA — `INV-TRANSFER-DETAILED-OPS-001`
 
 - Odoo source/menu/action: PASS from

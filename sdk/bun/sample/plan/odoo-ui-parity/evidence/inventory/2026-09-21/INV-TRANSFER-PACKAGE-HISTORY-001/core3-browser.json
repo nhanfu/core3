@@ -1,0 +1,18 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4338/inventory/transfer/package-history?picking_id=delivery-package-history-0001&current_company_name=Core3%20Demo%20Company",
+    "title": "Package History",
+    "text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nPackage History\n\nFrom Transfer\n\nWH/OUT/PACKHISTORY/0001\n\nTransfer State\n\nDone\n\nPackages\n\n1\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nSupply Chain / Inventory / Operations / Transfers / Package History\n1-1 / 1\n‹\n›\nPackage\n\tPackage Type\n\tOrigin\n\tOrigin Container\n\tDestination\n\tDestination Container\n\tCompany\n\tMove Lines\n\n\nPACK/HISTORY/0001\n\tPallet\tWH/Stock\t—\tCustomers/Wood Corner\t—\tCore3 Demo Company\t1",
+    "body_scroll_width": 1440,
+    "viewport_width": 1440,
+    "errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4338/inventory/transfer/package-history?picking_id=delivery-package-history-0001&current_company_name=Core3%20Demo%20Company",
+    "title": "Package History",
+    "text": "AU\nPackage History\n\nFrom Transfer\n\nWH/OUT/PACKHISTORY/0001\n\nTransfer State\n\nDone\n\nPackages\n\n1\n\nCompany\n\nCore3 Demo Company\n\nBack to Transfer\nPackage History\n1-1 / 1\n‹\n›\nPACK/HISTORY/0001\n\nPallet\n\nOrigin\nWH/Stock\nDestination\nCustomers/Wood Corner\nMove Lines\n1",
+    "body_scroll_width": 390,
+    "viewport_width": 390,
+    "errors": []
+  }
+}

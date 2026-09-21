@@ -1,0 +1,53 @@
+version: 0.0.63
+description: Inventory done-transfer package history context
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_package_histories (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        package_id VARCHAR NOT NULL,
+        package_name VARCHAR NOT NULL,
+        package_type_name VARCHAR,
+        location_name VARCHAR,
+        parent_orig_name VARCHAR,
+        location_dest_name VARCHAR,
+        parent_dest_name VARCHAR,
+        company_name VARCHAR NOT NULL,
+        move_count BIGINT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(picking_id, package_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_package_histories_picking_idx
+        ON inventory_package_histories(picking_id, package_name, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-package-history-0001', 'operation-deliveries', 'WH/OUT/PACKHISTORY/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/PACKHISTORY/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Done')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-package-history-0001-move-001', 'delivery-package-history-0001', '[E-COM08] Storage Box', 4, 4)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_packages(id, row_version, name, parent_package_name, package_type_name, location_name, owner_name, company_name, pack_date, state, content_count)
+      VALUES ('package-history-0001', 1, 'PACK/HISTORY/0001', NULL, 'Pallet', 'WH/Stock', 'Core3 Demo Customer', 'Core3 Demo Company', DATE '2026-01-15', 'In internal locations', 1)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_contents(id, package_id, product_name, lot_name, quantity, unit_name)
+      VALUES ('package-history-content-0001', 'package-history-0001', '[E-COM08] Storage Box', NULL, 4, 'Units')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_move_lines(id, package_id, move_id, relation_type)
+      VALUES ('package-history-move-0001', 'package-history-0001', 'delivery-package-history-0001-move-001', 'result')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_histories(id, picking_id, package_id, package_name, package_type_name, location_name, parent_orig_name, location_dest_name, parent_dest_name, company_name, move_count)
+      VALUES ('package-history-row-0001', 'delivery-package-history-0001', 'package-history-0001', 'PACK/HISTORY/0001', 'Pallet', 'WH/Stock', NULL, 'Customers/Wood Corner', NULL, 'Core3 Demo Company', 1)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_package_histories WHERE id = 'package-history-row-0001';
+      DELETE FROM inventory_package_move_lines WHERE id = 'package-history-move-0001';
+      DELETE FROM inventory_package_contents WHERE id = 'package-history-content-0001';
+      DELETE FROM inventory_packages WHERE id = 'package-history-0001';
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-package-history-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-package-history-0001';
+      DROP TABLE IF EXISTS inventory_package_histories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

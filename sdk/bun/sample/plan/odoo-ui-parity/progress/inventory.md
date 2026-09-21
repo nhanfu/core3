@@ -854,6 +854,24 @@ Inventory sign-off remains open.
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
 Full Inventory sign-off remains open.
 
+## `INV-TRANSFER-PACKAGE-HISTORY-001` — Done Transfer Package History (2026-09-21)
+
+- Selected Odoo's uncovered Done-transfer `action_see_package_histories`
+  list after package barcode, keeping package history distinct from package
+  transfers, relocation/removal, and barcode reporting.
+- Added migration `20260922130000-063-inventory-transfer-package-history.yaml`
+  with a deterministic Done transfer, package, package contents, move link,
+  and package-history row. Added separate page/API YAML joined by
+  `page.id: transfer-package-history`; the transfer detail now exposes its
+  permissioned Packages stat and context navigation.
+- Focused verification passes 4 tests / 31 assertions for source comparison,
+  deterministic package/search/Main Packages results, Done/company/read
+  boundaries, migration replay, and file-backed restart persistence.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGE-HISTORY-001/`.
+  Odoo comparison is blocked by the supplied HTTP 303 login redirect; full
+  Inventory sign-off remains open.
+
 ## `INV-PRODUCT-ATTRIBUTES-001` — Inventory Product Attributes (2026-09-21)
 
 - Selected the next uncovered source-backed Inventory configuration workflow

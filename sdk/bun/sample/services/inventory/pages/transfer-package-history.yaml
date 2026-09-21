@@ -1,0 +1,50 @@
+title: Package History
+page: { id: transfer-package-history, route: /inventory/transfer/package-history, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Package History], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_package_history_context
+    title: Package History
+    stats:
+      - { label: From Transfer, field: source_transfer_name }
+      - { label: Transfer State, field: source_state }
+      - { label: Packages, field: package_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_package_histories
+    header_actions:
+      - { id: back_to_inventory_transfer_from_package_history, label: Back to Transfer, variant: secondary, permission: inventory.read }
+    search: { label: Search packages, placeholder: 'Search package names or containers...' }
+    filters:
+      - { field: main_packages, label: Main Packages, options: [{ id: main, label: Main Packages }] }
+    group_by:
+      - { field: location_name, label: Location }
+      - { field: package_type_name, label: Package Type }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: package_name
+          subtitle: package_type_name
+          fields:
+            - { field: location_name, label: Origin }
+            - { field: location_dest_name, label: Destination }
+            - { field: move_count, label: Move Lines }
+    columns:
+      - { field: package_name, label: Package, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: package_type_name, label: Package Type, mobile: true }
+      - { field: location_name, label: Origin, mobile: true }
+      - { field: parent_orig_name, label: Origin Container, mobile: false }
+      - { field: location_dest_name, label: Destination, mobile: true }
+      - { field: parent_dest_name, label: Destination Container, mobile: false }
+      - { field: company_name, label: Company, mobile: false }
+      - { field: move_count, label: Move Lines, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_transfer_package_history_package
+    row_double_click_action: view_inventory_transfer_package_history_package
+    empty_state: { title: No package history, description: Completed transfer package movements will appear here. }

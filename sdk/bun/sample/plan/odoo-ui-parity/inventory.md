@@ -1775,6 +1775,38 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Done Transfer Package History — `INV-TRANSFER-PACKAGE-HISTORY-001` (2026-09-21)
+
+This bounded Wave 26 slice closes Odoo's Done-transfer Packages history action
+without duplicating package transfers, package relocation/removal, or package
+barcode reporting. Odoo exposes `action_see_package_histories` in
+`addons/stock/views/stock_picking_views.xml:153-160`; the action is defined at
+`addons/stock/models/stock_picking.py:1944-1957` and opens the
+`stock.package.history` list. Its source search/list contract is in
+`addons/stock/views/stock_package_history_views.xml:3-40`, with the model
+fields and package navigation in `addons/stock/models/stock_package_history.py:7-44`.
+
+Core3 adds durable migration
+`20260922130000-063-inventory-transfer-package-history.yaml`, a deterministic
+Done transfer/package/history fixture, and separate
+`pages/transfer-package-history.yaml` and
+`api/transfer-package-history.yaml` contracts joined by
+`page.id: transfer-package-history`. The existing transfer detail page/API
+adds the Done package-history stat and contextual navigation. Read queries
+enforce Done state and current-company scope, while the page provides the
+source-shaped Main Packages/search/grouping list and responsive cards.
+
+Focused verification is in
+`test/inventory_transfer_package_history.integration.test.ts`: 4 tests / 31
+assertions cover source comparison, page/API separation, deterministic
+filters, read/company/Done-state boundaries, migration replay, and
+file-backed restart persistence. Authenticated Core3 desktop/mobile evidence
+is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGE-HISTORY-001/`.
+The supplied Odoo runtime redirected HTTP 303 to `/web/login`; paired live
+Odoo action/screenshots are blocked and not claimed. Full Inventory sign-off
+remains open.
+
 ## Transfers > Next Transfers — `INV-TRANSFER-NEXT-001` (2026-09-21)
 
 This bounded Wave 23 slice covers the transfer-form `Next Transfer` contextual
