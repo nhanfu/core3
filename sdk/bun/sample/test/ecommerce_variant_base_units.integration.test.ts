@@ -45,6 +45,8 @@ describe('eCommerce variant base-unit pricing parity', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, migrations, undefined, 'ecommerce_variant_base_units_test', ['schema', 'data']);
     await migrateDatabase(repository, migrations, undefined, 'ecommerce_variant_base_units_test', ['schema', 'data']);
+    const referencePriceApi = yaml('api/product-reference-price-policy.yaml');
+    await repository.executeMutation(action(referencePriceApi, 'edit_ecommerce_product_reference_price_policy').mutation, { current_company_name: 'My Company', id: 'ecommerce-product-reference-price-my-company', expected_row_version: 1, values: { show_reference_price: true } });
     const api = yaml('api/product-variant-detail.yaml');
     const detail = api.datasources.find((source: any) => source.id === 'ecommerce_product_variant_detail');
     expect((await repository.querySource(detail, { id: 'ecommerce-variant-mug-blue', company_name: 'My Company' }, 0, 1)).data)

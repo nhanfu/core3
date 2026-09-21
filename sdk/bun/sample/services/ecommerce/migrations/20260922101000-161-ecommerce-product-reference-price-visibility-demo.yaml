@@ -1,0 +1,14 @@
+version: 0.0.161
+kind: data
+description: deterministic Website Sale Product Reference Price visibility fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_reference_price_policies (id, row_version, company_name, show_reference_price)
+      VALUES ('ecommerce-product-reference-price-my-company', 1, 'My Company', FALSE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_reference_price_policies WHERE id = 'ecommerce-product-reference-price-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

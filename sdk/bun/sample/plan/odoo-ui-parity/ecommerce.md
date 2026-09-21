@@ -1,6 +1,39 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop product-card ratings visibility slice; module sign-off remains open)
+Status: qa-in-progress (bounded Product Reference Price visibility slice; module sign-off remains open)
+
+## Bounded feature — Product Reference Price Visibility (`ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001`)
+
+Wave 48 selects the next genuinely uncovered Website Sale setting after the
+completed base-unit pricing data slice: Odoo's `group_show_uom_price` feature
+group and the Settings view's “Product Reference Price” checkbox. The supplied
+Odoo configuration defaults this feature off, and the product form plus
+checkout/product templates gate base-unit metadata and derived price on
+`website_sale.group_show_uom_price`. This is distinct from the existing
+durable `base_unit_count`, `base_unit_name`, and `base_unit_price` fields: this
+slice controls whether the reference-price projection is exposed.
+
+Core3 migration 160 adds a durable company-scoped visibility policy and
+migration 161 adds the deterministic My Company fixture, defaulting to hidden
+reference prices like Odoo's disabled group. Separate
+`api/product-reference-price-policy.yaml` and
+`pages/product-reference-price-policy.yaml` contracts join through
+`ecommerce-product-reference-price-policy`; updates require `ecommerce.write`,
+validate a boolean, and use company and row-version guards. Product Detail and
+Product Variant Detail keep their existing page/API separation while gating
+base-unit projections and the variant configuration action on the effective
+policy.
+
+Focused tests cover the supplied Odoo setting/group/template source, the
+separate page/API contracts, permissioned optimistic update, invalid,
+foreign-company, missing, and stale guards, migration replay, gated variant
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-catalog-product-reference-price-visibility-001/`.
+The authenticated Odoo reference does not have Website Sale installed:
+`/shop` is an exact Odoo 404 at desktop and iPhone-14 mobile viewports, so no
+paired Odoo feature-rendering sign-off is claimed. Core3 browser rendering is
+also blocked by unavailable ports 3000, 4312, and 4313. Ecommerce module
+sign-off remains open.
 
 ## Bounded feature — Shop Product-Card Ratings Visibility (`ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`)
 

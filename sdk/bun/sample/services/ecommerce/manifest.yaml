@@ -181,6 +181,10 @@ menu:
           label: Shop Product Ratings
           icon: star
           permission: ecommerce.read
+        - path: /ecommerce/product-reference-price
+          label: Product Reference Price
+          icon: tag
+          permission: ecommerce.read
         - path: /ecommerce/product-extra-fields
           label: Product Page Extra Fields
           icon: list

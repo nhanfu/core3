@@ -33,7 +33,7 @@ describe('eCommerce Product Variants parity', () => {
     const discovered = discoverPages(discoveryRoot);
     expect(page.page).toMatchObject({ id: 'ecommerce-product-detail', route: '/ecommerce/products/detail' });
     expect(api.page).toEqual({ id: 'ecommerce-product-detail' });
-    expect(page.components[1]).toMatchObject({ type: 'ListView', source: 'ecommerce_product_variants', create_action: 'create_ecommerce_product_variant' });
+    expect(page.components.find((component: any) => component.source === 'ecommerce_product_variants')).toMatchObject({ type: 'ListView', source: 'ecommerce_product_variants', create_action: 'create_ecommerce_product_variant' });
     expect(discovered.pageDatasources.get('ecommerce-product-detail')).toEqual(expect.arrayContaining(['ecommerce_product_detail', 'ecommerce_product_variants']));
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/ecommerce/products/detail', page: 'ecommerce-product-detail', module: 'ecommerce' })]));
     expect(api.datasources.find((source: any) => source.id === 'ecommerce_product_variants').permission).toBe('ecommerce.read');

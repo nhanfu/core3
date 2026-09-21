@@ -7,6 +7,27 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001
+
+- ECOM-FUNC-077: trace Odoo `res.config.settings.group_show_uom_price`,
+  `website_sale.group_show_uom_price`, the “Product Reference Price” setting,
+  the product form group restriction, and the product/checkout base-unit price
+  templates; verify separate Core3 policy and Product Detail/Product Variant
+  Detail page/API contracts.
+- ECOM-WF-088: replay the deterministic hidden-reference-price policy, enable
+  and disable reference-price projections, preserve base-unit source values
+  while hiding them when disabled, reject invalid, foreign-company, missing,
+  and stale writes, and preserve the policy across migration replay and DuckDB
+  restart.
+- ECOM-PERM-084: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; enforce current-company scope and optimistic
+  row-version guards.
+- ECOM-UI-070: render the configuration form and Product Variant Detail at
+  desktop and mobile and compare the authenticated Odoo Product Reference
+  Price setting and gated reference-price fields. The supplied Odoo reference
+  returns `/shop` HTTP 404 and Core3 ports 3000/4312/4313 are unavailable, so
+  paired rendered UI sign-off is blocked.
+
 ## ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001
 
 - ECOM-FUNC-076: trace Website Sale

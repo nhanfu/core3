@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Product Reference Price Visibility (`ECOM-CATALOG-PRODUCT-REFERENCE-PRICE-VISIBILITY-001`, 2026-09-22)
+
+- Odoo source: pass. `res.config.settings.group_show_uom_price` defaults to
+  disabled and implies `website_sale.group_show_uom_price`; the Website Sale
+  settings view labels the control “Product Reference Price”; product form
+  base-unit fields and product/checkout templates gate the reference-price
+  projection on that group.
+- Core3 lifecycle: migrations 160/161 add the durable company policy and
+  deterministic hidden-reference-price fixture. Separate page/API YAML exposes
+  a permissioned optimistic update. Product Detail and Product Variant Detail
+  queries preserve base-unit data but return null projections while the policy
+  is disabled; the variant configuration action is hidden in that state.
+- Focused verification: `bun test
+  ./test/ecommerce_product_reference_price_visibility.integration.test.ts
+  --timeout 30000` — **2 passed, 29 assertions, 0 failures**.
+- Browser: authenticated Core3 rendering is blocked by connection refusal on
+  ports 3000, 4312, and 4313. No Core3 visual sign-off is claimed.
+- Authenticated Odoo comparison: `/shop` is an exact HTTP 404 in the supplied
+  `core3_reference` database at desktop and iPhone-14 mobile viewports; the
+  Website Sale/eCommerce screen is not present, so no paired Odoo rendering
+  sign-off is claimed.
+- Evidence:
+  `evidence/ecommerce/2026-09-22/ecom-catalog-product-reference-price-visibility-001/`.
+  Ecommerce module sign-off remains open.
+
 ## Shop Product-Card Ratings Visibility (`ECOM-CATALOG-SHOP-PRODUCT-RATINGS-VISIBILITY-001`, 2026-09-21)
 
 - Odoo source/builder/template: pass. `website.shop_opt_products_design_classes`
