@@ -1842,3 +1842,35 @@ Core3 was not listening on port 3001 and Odoo 8069/8073 served only the
 unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
+
+## Wave 32 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
+
+The next smallest open source-backed task behavior is Odoo's
+`project.task.action_view_subtask_timesheet`. The source collects the task and
+its descendants and opens the Timesheets action with a domain over all those
+task IDs. This is distinct from the completed Parent Task group-by: it changes
+the task-context record scope and keeps child work visible with the parent.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and
+`api/task-timesheets.yaml` data/action-only, joined by
+`page.id: task-timesheets`. The page defaults the task-context list to an
+Include sub-tasks filter and exposes the filter, parent task, and sub-task
+state. The API joins durable `timesheet_tasks.parent_task_id` metadata and
+expands only when `include_subtasks=true`; absent context retains exact-task
+behavior. Migration `20260921160000-021-timesheets-task-subtask-scope.yaml`
+adds the deterministic task hierarchy and maps an existing fixed report row to
+the child task. Company, permission, empty, missing-task, relation-refresh,
+migration replay, and file-backed restart guards remain explicit.
+
+Focused coverage is
+`test/timesheets_task_subtask_scope.integration.test.ts`: 4 tests / 25
+expectations. The full Timesheets regression passes 231 tests / 1,427
+expectations across 61 files. Scoped ESLint, UI audit (743 pages / 752 routes /
+1,473 datasources), and Timesheets-owned `git diff --check` pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`.
+Core3 was not listening on port 3001 and both Odoo endpoints served only the
+unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
+and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
+open blockers; no module sign-off is claimed.

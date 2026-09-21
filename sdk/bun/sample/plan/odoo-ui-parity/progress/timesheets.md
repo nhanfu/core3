@@ -916,3 +916,12 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Full Timesheets regression passed 227/227 tests with 1,402 expectations across 60 files. Scoped ESLint and Timesheets-owned `git diff --check` passed.
 - Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused connections. Odoo 8069/8073 are reachable but expose only `/web/login`; authenticated desktop/mobile comparison is not claimed. Exact probes are under `evidence/timesheets/2026-09-21/timesheet-department-report-context-001/`.
 - Repository audit is blocked by the unrelated shared eCommerce schema error `actions[1].fields is not allowed`; no other-owner file was edited. Odoo Print/PDF/action blockers remain open; no sign-off is claimed.
+
+## 2026-09-21 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
+
+- Selected Odoo `project.task.action_view_subtask_timesheet`, which expands a task-context Timesheets action to the task and its descendant task IDs; this is distinct from the completed Parent Task group-by.
+- Added durable task hierarchy migration `20260921160000-021-timesheets-task-subtask-scope.yaml`; added the default Include sub-tasks filter and parent/sub-task columns to `pages/task-timesheets.yaml`; added company-scoped expansion to `api/task-timesheets.yaml`. Page/API remain joined by `page.id: task-timesheets`.
+- Focused coverage passed 4/4 tests with 25 expectations, including Odoo source mapping, exact versus expanded scope, permission/company/empty/missing guards, relation refresh, migration replay, and file-backed restart.
+- Full Timesheets regression passed 231/231 tests with 1,427 expectations across 61 files. Scoped ESLint and Timesheets-owned `git diff --check` passed. UI audit passed with 743 pages, 752 routes, and 1,473 datasources.
+- Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused connections. Odoo 8069/8073 are reachable but expose only `/web/login`; authenticated desktop/mobile comparison is not claimed. Exact probes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`.
+- Odoo Print/PDF/action blockers remain open; no module sign-off is claimed.

@@ -1,0 +1,25 @@
+version: 0.0.21
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS parent_task_id VARCHAR;
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS parent_task_name VARCHAR;
+      UPDATE timesheet_tasks
+      SET parent_task_id = 'task-demo-001', parent_task_name = 'Complete module migration'
+      WHERE id = 'task-demo-002';
+      UPDATE timesheet_entries
+      SET task_id = 'task-demo-002', task_name = 'Quality analysis'
+      WHERE id = 'timesheet-report-004';
+      CREATE INDEX IF NOT EXISTS timesheet_tasks_parent_idx ON timesheet_tasks(parent_task_id, company_name, open);
+    down: |
+      UPDATE timesheet_entries
+      SET task_id = 'task-report-002', task_name = 'Requirements analysis'
+      WHERE id = 'timesheet-report-004';
+      DROP INDEX IF EXISTS timesheet_tasks_parent_idx;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS parent_task_name;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS parent_task_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

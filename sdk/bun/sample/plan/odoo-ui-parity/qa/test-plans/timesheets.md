@@ -305,6 +305,20 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 32 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo task action comparison | `action_view_subtask_timesheet`, descendant task IDs, `task_id in task_ids` | pass in focused source test |
+| Paired YAML contract | `page.id: task-timesheets`, Include sub-tasks filter, API expansion predicate | pass |
+| Durable hierarchy | persisted child task relation and deterministic child timesheet row | pass |
+| Permission/company/empty guards | `timesheets.read`, current company, empty fixture, missing task | pass |
+| Exact versus expanded scope | absent context stays exact; `include_subtasks=true` includes child work | pass |
+| Freshness/restart | relation change, migration replay, and file-backed restart | pass |
+| Focused/full regression | new test 4/4; full Timesheets 231/231 | pass |
+| Audit/lint/diff | UI audit 743/752/1473; ESLint; `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo route/action capture | blocked; exact runtime blockers recorded, no sign-off |
+
 ## Wave 31 — `TIMESHEET-DEPARTMENT-REPORT-CONTEXT-001`
 
 | Check | Expected evidence | Result |

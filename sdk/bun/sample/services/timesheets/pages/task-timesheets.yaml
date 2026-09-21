@@ -10,9 +10,11 @@ components:
       - { id: print_task_timesheets_report, label: Print, permission: timesheets.read, variant: secondary }
       - { id: print_task_timesheet_lines_report, label: Print lines, permission: timesheets.read, variant: secondary }
     search: { label: Search timesheets, placeholder: 'Search employee, entry, or description...' }
+    default_filters: { include_subtasks: 'true' }
     filters:
       - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
       - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
+      - { field: include_subtasks, label: Include sub-tasks, options: [{ id: 'true', label: Include sub-tasks }] }
     group_by: [{ field: employee_name, label: Employee }, { field: state, label: Status }]
     view_navigation: tabs
     views:
@@ -22,6 +24,8 @@ components:
       - { field: employee_name, label: Employee }
       - { field: name, label: Entry }
       - { field: description, label: Description }
+      - { field: parent_task_name, label: Parent Task, optional: hide }
+      - { field: is_subtask, label: Sub-task, type: BooleanCell, optional: hide }
       - { field: time_spent_display, label: Time Spent, align: right }
       - { field: state, label: Status, type: StatusChip, optional: hide }
     row_key: id

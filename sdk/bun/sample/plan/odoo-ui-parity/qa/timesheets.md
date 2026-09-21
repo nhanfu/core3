@@ -955,3 +955,13 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Regression/static gates: full Timesheets 227 passed / 1,402 expectations across 60 files; scoped ESLint passed; Timesheets-owned `git diff --check` passed.
 - Browser gate: blocked. Core3 `127.0.0.1:3001` refused connections; Odoo 8069/8073 returned unauthenticated `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-department-report-context-001/`; no authenticated desktop/mobile sign-off is claimed.
 - Audit blocker: `bun scripts/audit-order-ui.ts` stops on unrelated shared eCommerce schema error `actions[1].fields is not allowed`; no eCommerce file was staged or edited. Existing Odoo Print/PDF/action surfaces remain blockers.
+
+## Wave 32 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
+
+- Source gate: `project_task.py` `action_view_subtask_timesheet` gathers descendant task IDs and applies `('task_id', 'in', task_ids)` to the Timesheets action.
+- Core3 contract gate: separate `task-timesheets` page/API contracts default to Include sub-tasks, expose parent/sub-task state, and expand durable child-task rows only for `include_subtasks=true`.
+- Focused gate: `bun test test/timesheets_task_subtask_scope.integration.test.ts --timeout 20000` — 4 passed / 25 expectations.
+- Persistence/security gate: deterministic task hierarchy, exact versus expanded scope, current-company and empty guards, permission boundary, relation refresh, migration replay, and file-backed restart pass.
+- Regression/static gates: full Timesheets 231 passed / 1,427 expectations across 61 files; scoped ESLint passed; UI audit passed with 743/752/1,473; Timesheets-owned `git diff --check` passed.
+- Browser gate: blocked. Core3 `127.0.0.1:3001` refused connections; Odoo 8069/8073 returned unauthenticated `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`; no authenticated desktop/mobile sign-off is claimed.
+- Existing Odoo Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
