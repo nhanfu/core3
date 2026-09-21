@@ -2824,3 +2824,32 @@ shared page discovery and no unrelated module path was edited.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.
+
+## Bounded slice: `SURVEYS-ACCESS-SETTINGS-001` — 2026-09-22
+
+The next distinct authenticated Options behavior after scoring and the survey
+time limit is Odoo's Participants access configuration. The Odoo source model
+defines `access_mode` (`public` or `token`), `users_login_required`,
+`is_attempts_limited`, `attempts_limit`, and `users_can_go_back`; the form
+renders them under Options → Participants as Access Mode, Require Login, Limit
+Attempts, “to N attempts,” and Allow Roaming.
+
+Core3 adds the API-owned `update_survey_access` server form and the page-owned
+Access settings action to the existing `survey-detail` pair, joined by
+`page.id: survey-detail`. Existing durable columns are reused. Guards require
+`surveys.write` and an actor, reject missing/archived/stale rows, unsupported
+access modes, non-positive attempts, anonymous-public attempt limits, and the
+Odoo scoring-after-each-page roaming conflict. Public access, login, attempt,
+and roaming workflows continue consuming the same durable settings.
+
+Focused verification passes **3/3 tests and 20 assertions**; adjacent scoring
+and time-limit suites pass **6/6 tests and 46 assertions**; audit passes with
+**807 pages, 816 routes, and 1,671 datasources**; scoped ESLint and diff-check
+pass; frontend build was run. Authenticated Odoo desktop/mobile captures are
+under `/tmp/core3-odoo-parity/surveys-access-20260922/` and referenced by the
+feature evidence. The Core3 runtime is blocked before readiness by the exact
+shared discovery error `PageSchemaError: actions[4].success_message is not
+allowed`; no Core3 visual parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.

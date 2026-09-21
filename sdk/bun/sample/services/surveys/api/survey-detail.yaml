@@ -276,6 +276,42 @@ actions:
         - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_TIME_LIMIT_ACTOR_REQUIRED, message: An authenticated survey actor is required to change the survey time limit. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:is_time_limited AS BOOLEAN), false) = false OR TRY_CAST(:time_limit AS DECIMAL(8,2)) > 0", status: 422, code: SURVEY_TIME_LIMIT_INVALID, message: The time limit must be a positive number of minutes when enabled. }
       result: { query: "SELECT id, row_version, is_time_limited, time_limit FROM surveys WHERE id = :id" }
+  - id: update_survey_access
+    type: server_form
+    permission: surveys.write
+    title: Configure survey access
+    action: surveys.records.access.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.survey_detail.id}', expected_row_version: '{state.survey_detail.row_version}' }
+    prefill:
+      access_mode: '{state.survey_detail.access_mode}'
+      users_login_required: '{state.survey_detail.users_login_required}'
+      is_attempts_limited: '{state.survey_detail.is_attempts_limited}'
+      attempts_limit: '{state.survey_detail.attempts_limit}'
+      users_can_go_back: '{state.survey_detail.users_can_go_back}'
+    refresh: [survey_detail, surveys]
+    fields:
+      - { field: access_mode, label: Access Mode, type: select, required: true, options: [{ value: public, label: Anyone with the link }, { value: token, label: Invited people only }] }
+      - { field: users_login_required, label: Require Login, type: checkbox }
+      - { field: is_attempts_limited, label: Limit Attempts, type: checkbox }
+      - { field: attempts_limit, label: Number of attempts, type: number, required: true, default: 1, min: 1 }
+      - { field: users_can_go_back, label: Allow Roaming, type: checkbox }
+    mutation:
+      operation: update
+      table: surveys
+      fields: [access_mode, users_login_required, is_attempts_limited, attempts_limit, users_can_go_back]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id", status: 404, code: SURVEY_ACCESS_NOT_FOUND, message: Survey not found. }
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :expected_row_version", status: 409, code: SURVEY_ACCESS_STALE, message: This survey changed or is archived. Reload before changing access settings. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_ACCESS_ACTOR_REQUIRED, message: An authenticated survey actor is required to change access settings. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:access_mode AS VARCHAR), '') IN ('public', 'token')", status: 422, code: SURVEY_ACCESS_MODE_INVALID, message: Select a supported access mode. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:is_attempts_limited AS BOOLEAN), false) = false OR TRY_CAST(:attempts_limit AS INTEGER) > 0", status: 422, code: SURVEY_ACCESS_ATTEMPTS_INVALID, message: The number of attempts must be positive when attempts are limited. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:is_attempts_limited AS BOOLEAN), false) = false OR COALESCE(CAST(:users_login_required AS BOOLEAN), false) = true OR COALESCE(CAST(:access_mode AS VARCHAR), 'public') <> 'public'", status: 422, code: SURVEY_ACCESS_ATTEMPTS_REQUIRES_IDENTITY, message: Limited attempts require login or invited access. }
+        - { query: "SELECT 1 AS ok FROM surveys WHERE id = :id AND (COALESCE(CAST(:users_can_go_back AS BOOLEAN), false) = false OR COALESCE(scoring_type, 'no_scoring') <> 'scoring_with_answers_after_page')", status: 422, code: SURVEY_ACCESS_ROAMING_CONFLICT, message: Allow Roaming cannot be combined with scoring after each page. }
+      result: { query: "SELECT id, row_version, access_mode, users_login_required, is_attempts_limited, attempts_limit, users_can_go_back FROM surveys WHERE id = :id" }
   - id: add_survey_restricted_user
     type: server_form
     permission: surveys.write

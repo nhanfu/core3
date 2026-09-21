@@ -1468,3 +1468,29 @@ No visual parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.
+
+## 2026-09-22 — `SURVEYS-ACCESS-SETTINGS-001`
+
+Implemented the next distinct authenticated Odoo Options workflow after the
+scoring and survey-time-limit settings: Access Mode, Require Login, Limit
+Attempts, Number of attempts, and Allow Roaming. The page-owned Participants
+group and API-owned `update_survey_access` server form remain joined by
+`page.id: survey-detail`; the durable public access/attempt contract consumes
+the same stored values.
+
+Guards cover `surveys.write`, authenticated actor, missing/archived/stale
+surveys, `public`/`token` access modes, positive attempt counts, anonymous
+public attempt-limit rejection, and Odoo's scoring-after-each-page roaming
+conflict. No migration was needed because the durable columns already exist.
+
+Verification: focused **3/3 tests, 20 assertions**; adjacent scoring/time-limit
+regression **8/8 tests, 46 assertions**; audit **807 pages, 816 routes, 1,671
+datasources**; scoped ESLint and diff-check pass. Frontend build was run.
+Authenticated Odoo Options captures are retained at 1440x900 and 390x844.
+Core3 browser verification is blocked before readiness by the exact shared
+discovery error `PageSchemaError: actions[4].success_message is not allowed`,
+followed by `net::ERR_CONNECTION_REFUSED`; the offending entries are outside
+Surveys and were not edited. No Core3 visual parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.

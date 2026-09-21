@@ -1870,3 +1870,28 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.
+
+## Bounded QA run: `SURVEYS-ACCESS-SETTINGS-001` — 2026-09-22
+
+- Source/UI: Odoo's authenticated Options form exposes Access Mode, Require
+  Login, Limit Attempts with “to N attempts,” and Allow Roaming under
+  Participants. The source model constrains positive attempts and rejects
+  roaming with scoring after each page.
+- Persistence/contracts: `api/survey-detail.yaml` owns the guarded
+  `surveys.records.access.update` server form and `pages/survey-detail.yaml`
+  owns the Participants group/action; both join at `page.id: survey-detail`.
+  Existing durable columns require no new migration.
+- Guards: `surveys.write`, actor, missing/archived/stale survey, public/token
+  access mode, positive attempts, identity-required attempts, and the Odoo
+  roaming conflict are explicit 403/404/409/422 boundaries.
+- Verification: focused **3 tests / 20 assertions** pass; adjacent scoring and
+  time-limit suites pass **6 tests / 46 assertions**; audit reports **807
+  pages, 816 routes, 1,671 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: authenticated Odoo desktop/mobile Options captures are
+  retained. Core3 failed before readiness with
+  `PageSchemaError: actions[4].success_message is not allowed`; the entries
+  are outside Surveys and were not edited. No Core3 visual parity sign-off is
+  claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.

@@ -864,3 +864,14 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.
+
+## `SURVEYS-ACCESS-SETTINGS-001`
+
+| Case ID | Class | Setup/actor | Exact action | Expected result and persistence assertion | Evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-075 | functional | `survey-demo-feedback`, Admin | `surveys.records.access.update` with public/token, login, attempt, and roaming values | The detail datasource and survey row expose the saved values; page/API share `page.id: survey-detail` | source-comparison.md, test-results.md | pass |
+| SURVEYS-PERM-074 | permission/security | Admin, missing actor, missing/archived/stale survey | Direct mutation with `surveys.write` boundary and row version | 403 actor, 404 missing, and 409 archived/stale responses leave data unchanged | test-results.md | pass |
+| SURVEYS-FUNC-076 | validation | Admin | Invalid access mode, zero attempts, anonymous-public attempt limit | Explicit 422 codes `SURVEY_ACCESS_MODE_INVALID`, `SURVEY_ACCESS_ATTEMPTS_INVALID`, and `SURVEY_ACCESS_ATTEMPTS_REQUIRES_IDENTITY` | test-results.md | pass |
+| SURVEYS-WF-072 | workflow/recovery | File-backed DuckDB, Admin | Save access settings, close/reopen, replay with stale row version | Values and row version survive restart; stale replay is rejected | test-results.md | pass |
+| SURVEYS-FUNC-077 | cross-setting workflow | Feedback Form with scoring-after-each-page | Enable Allow Roaming through access action | Odoo conflict is rejected as `SURVEY_ACCESS_ROAMING_CONFLICT` before mutation | test-results.md | pass |
+| SURVEYS-UI-073 | visual/responsive | Authenticated Odoo reference; Core3 module runtime | Options → Participants at 1440x900 and 390x844 | Compare exact labels, controls, conditional attempts row, spacing, and overflow; Core3 is blocked by shared discovery error | verification.md | conditional |
