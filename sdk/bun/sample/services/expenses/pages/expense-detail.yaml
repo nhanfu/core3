@@ -73,6 +73,12 @@ components:
           label: Chatter
           content_slot: true
     message_source: expense_detail_activity
+    activity_action: schedule_expense_activity
+    activity_complete_action: complete_expense_activity
+    activity_complete_label: Mark done
+    activity_label: Schedule activity
+    activity_placeholder: Describe the activity…
+    schedule_label: Schedule
     attachment_source: expense_detail_attachments
     attachment_page_size: 50
     chatter_label: Messages and activities

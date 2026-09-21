@@ -528,3 +528,29 @@ joined by expenses-settings). Migration
 20260921100000-012-expenses-email-gateway.yaml is idempotent and uses
 deterministic dates. See expenses-batch-7.md for source paths, contract, tests,
 and the honest browser blocker.
+
+## Expense activity follow-up (2026-09-22)
+
+Batch 8 (EXPENSE-FUNC-011) closes the next genuinely uncovered Odoo feature:
+`hr.expense` activity scheduling and completion. Odoo's `hr.expense` inherits
+`mail.activity.mixin`, its list view exposes `activity_ids` with `list_activity`,
+and its window actions include the `activity` view. Core3 previously exposed
+only immutable workflow/email history in the detail chatter; there was no
+durable planned activity, deadline, assignee, Mark done action, or completion
+audit.
+
+The page remains presentation-only and binds to
+`services/expenses/api/expense-detail.yaml` through `page.id: expense-detail`.
+Migration `20260922100000-013-expense-activities.yaml` adds the company-scoped
+`expense_scheduled_activities` table and one deterministic planned fixture.
+`schedule_expense_activity` validates actor, company, parent row version,
+activity type, summary, and ISO deadline; it increments the expense version and
+persists a planned activity. `complete_expense_activity` requires the planned
+state and activity row version, marks it Done, increments its version, and
+records a completion audit entry. Both actions require `expenses.write` and
+survive database close/reopen and migration replay.
+
+Focused verification is recorded in
+`test/expenses_activities.integration.test.ts`; evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-011/`. The paired Odoo
+reference is available at `http://localhost:8069` in `core3_reference`.

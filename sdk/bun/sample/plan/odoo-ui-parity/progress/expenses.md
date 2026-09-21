@@ -92,4 +92,19 @@ across 12 files, audit and Expenses CSS passed, and the migration replay gate
 now includes 12 versions. The Core3 backend eventually bound after delayed
 startup, but the shared browser profile had no Core3 authentication and
 `/api/pages/dashboard` returned 401, so no new Core3 desktop/mobile parity
-claim is made.
+ claim is made.
+
+## Batch 8 - expense activity scheduling/completion (2026-09-22)
+
+EXPENSE-FUNC-011 is implemented in the Expenses service. It maps Odoo's
+`mail.activity.mixin` / `activity_ids` contract to a durable scheduled-activity
+table, detail chatter source, Schedule activity action, Mark done action,
+company/actor/version/type/date guards, deterministic seed data, completion
+audit, and restart/migration replay coverage. Focused result: 4 tests / 23
+assertions; audit 782/791/1,606; CSS build and diff-check pass.
+
+Evidence: `odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-011/`.
+The migration replay expectation was updated from 12 to 13 versions after the
+new Expenses migration. Paired Odoo screenshots and the Core3 browser result
+are recorded in the feature evidence; no module sign-off is claimed while the
+broader authenticated actor and paired visual gates remain open.

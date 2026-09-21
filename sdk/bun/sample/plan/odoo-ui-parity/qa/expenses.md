@@ -139,3 +139,21 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 - Disposition: **conditional bounded PASS; integrated**. Fresh authenticated
   paired Odoo comparison and file-backed live process restart remain open.
   Expenses is not fully signed off.
+
+## Batch 8 - expense activity scheduling/completion (2026-09-22)
+
+- Candidate scope: EXPENSE-FUNC-011, source-backed `hr.expense` activity
+  scheduling and completion from `mail.activity.mixin` / `activity_ids`.
+- Core3 adds the durable `expense_scheduled_activities` migration and joins its
+  planned/done records with the existing detail chatter datasource. The page
+  remains presentation-only and uses `page.id: expense-detail`; shared
+  `OdooChatter` renders Schedule activity and Mark done.
+- Focused evidence: `expenses_activities.integration.test.ts` — 4 tests / 23
+  assertions passed. It covers source mapping, deterministic seeded activity,
+  scheduling/completion, invalid type/summary/date, actor/company and stale
+  guards, completion audit, file-backed restart, and migration replay.
+- Audit passed with 782 pages, 791 routes, and 1,606 datasources; Expenses CSS
+  build and `git diff --check` passed. The first full Expenses run found and was
+  repaired for the expected migration count increase from 12 to 13.
+- Authenticated Odoo reference captures and any Core3 browser blocker are
+  recorded in the feature evidence folder. No full module sign-off is claimed.

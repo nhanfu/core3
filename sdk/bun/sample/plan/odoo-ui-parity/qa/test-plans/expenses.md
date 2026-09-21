@@ -37,6 +37,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-FUNC-007 | Empty/error/not-found | Missing, empty, forbidden and transport-error states are explicit for each datasource | pass at contract level |
 | EXPENSE-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate expenses, receipts or activities | pass: upgrade/replay persistence test |
 | EXPENSE-FUNC-009 | Receipts/import/export/print | Exercise receipt upload/preview, expense import/export and exposed report/print actions | pass: import persistence/guards and action contracts; browser interaction gate remains |
+| EXPENSE-FUNC-011 | Expense activities | Schedule and complete a company-scoped `mail.activity.mixin` activity from expense detail; persist deadline, assignee, state, versions, audit, and restart replay | pass: `expenses_activities.integration.test.ts`; paired browser evidence |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-WF-003 | Department approval | Department and manager boundaries select the correct approver and preserve scope | pass at contract level |
 | EXPENSE-WF-004 | Accounting integration | Posting uses the declared journal/date contract and maintains expense/accounting relation | pass at contract level; browser integration planned |
 | EXPENSE-WF-005 | Durable/external boundary | Receipt processing, notifications, posting callbacks and cross-module flows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| EXPENSE-WF-006 | Activity lifecycle | Planned expense activity can be completed once; stale, missing, wrong-company, invalid-type/date, and anonymous requests do not mutate the expense | pass: `expenses_activities.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -68,6 +70,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-UI-002 | Approval/duplicate/split/post dialogs | both | Dialogs, line grid, validation and action states match Odoo | planned paired capture |
 | EXPENSE-UI-003 | Reports/configuration | both | Graph/pivot/list, department scope, categories and settings match Odoo | planned paired capture |
 | EXPENSE-UI-004 | Current route regression | all 10 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 20-check matrix |
+| EXPENSE-UI-005 | Activity chatter controls | 1440x900, 390x844 | Schedule activity and Mark done controls are usable without overflow; paired Odoo activity surface is captured | conditional; evidence folder |
 
 ## Exit criteria
 

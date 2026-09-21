@@ -1,0 +1,38 @@
+version: 0.0.13
+description: Persisted hr.expense mail.activity scheduling and completion
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS expense_scheduled_activities (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        activity_type VARCHAR NOT NULL,
+        summary VARCHAR NOT NULL,
+        due_date DATE,
+        assigned_to VARCHAR,
+        note VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Planned',
+        created_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        completed_by VARCHAR,
+        completed_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_scheduled_activities_expense
+        ON expense_scheduled_activities(expense_id, state, due_date);
+      INSERT INTO expense_scheduled_activities(
+        id, expense_id, row_version, company_name, activity_type, summary, due_date,
+        assigned_to, note, state, created_by, created_at
+      ) VALUES(
+        'expense-scheduled-activity-expense-demo-submitted-1', 'expense-demo-submitted', 1,
+        'Core3 Demo Company', 'todo', 'Review the submitted receipt', DATE '2026-09-23',
+        'Operations Lead', 'Confirm the receipt before approval.', 'Planned', 'Operations Lead',
+        TIMESTAMP '2026-09-22 09:00:00'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_scheduled_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
