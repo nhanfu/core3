@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded confirmation email template slice; module sign-off remains open)
+Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
+
+## Bounded feature — Abandoned Cart Recovery (`ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`)
+
+Wave 26 selected Odoo Website Sale's abandoned-cart recovery behavior, which
+was not represented in Core3. Odoo exposes `cart_recovery_mail_template_id`,
+`cart_abandoned_delay`, and `send_abandoned_cart_email` on the website and
+through `res.config.settings`; its Abandoned Carts action exposes
+`action_recovery_email_send`, while the scheduled website method sends only
+eligible unsent carts and marks `cart_recovery_email_sent`.
+
+Core3 migrations 116/117 add a durable company-scoped recovery policy, active
+sale-order recovery template fixture, company/recovery fields on abandoned
+carts, and a deterministic send ledger. Separate Abandoned Cart Recovery
+page/API YAML provides active template options, `ecommerce.write` optimistic
+updates, company/delay/template validation, and stale guards. The existing
+Abandoned Carts page/API now exposes recovery state and a permissioned,
+idempotent Send Recovery Email action; migration replay and DuckDB restart
+preserve the policy and send ledger.
+
+Focused source/contract, CRUD, permission, validation, concurrency,
+idempotency, abandoned-cart workflow, migration replay, restart, scoped YAML
+audit, lint, and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-abandoned-cart-recovery-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Checkout Confirmation Email Template (`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`)
 

@@ -13,8 +13,11 @@ components:
       - { field: currency, label: Currency }
       - { field: abandoned_at, label: Abandoned On }
       - { field: state, label: Status, type: StatusChip }
+      - { field: recovery_email_sent, label: Recovery Email Sent, type: checkbox }
     row_open_action: view_ecommerce_abandoned_cart
     row_double_click_action: view_ecommerce_abandoned_cart
+    actions:
+      - { id: send_ecommerce_abandoned_cart_recovery_email, label: Send Recovery Email, permission: ecommerce.write, variant: primary, show_if: "row.recovery_enabled === true && row.recovery_email_sent !== true" }
     page_size: 50
     row_key: id
     empty_state: { title: No abandoned carts, description: Carts left without checkout appear here. }

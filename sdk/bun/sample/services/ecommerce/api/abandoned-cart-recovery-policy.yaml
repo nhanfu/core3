@@ -1,0 +1,39 @@
+page: { id: ecommerce-abandoned-cart-recovery-policy }
+datasources:
+  - id: ecommerce_abandoned_cart_recovery_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ABANDONED_CART_POLICY_UNAUTHENTICATED, message: Sign in to view abandoned-cart recovery policy. }
+      forbidden: { status: 403, code: ECOMMERCE_ABANDONED_CART_POLICY_FORBIDDEN, message: You do not have permission to view abandoned-cart recovery policy. }
+      missing_record: { status: 404, code: ECOMMERCE_ABANDONED_CART_POLICY_NOT_FOUND, message: Abandoned-cart recovery policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_ABANDONED_CART_POLICY_UNAVAILABLE, message: Abandoned-cart recovery policy is temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.company_name, p.send_abandoned_cart_email, p.cart_abandoned_delay_hours, p.recovery_template_id, t.name AS recovery_template_name, CASE WHEN p.send_abandoned_cart_email THEN 'Enabled' ELSE 'Disabled' END AS recovery_status, p.updated_at FROM ecommerce_abandoned_cart_policies p JOIN ecommerce_confirmation_email_templates t ON t.id = p.recovery_template_id WHERE p.company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_abandoned_cart_recovery_template_options
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_confirmation_email_templates WHERE active = TRUE AND model_name = 'sale.order' ORDER BY name, id"
+actions:
+  - id: edit_ecommerce_abandoned_cart_recovery_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Abandoned Cart Recovery
+    action: ecommerce.shop.abandoned_cart_recovery.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_abandoned_cart_recovery_policy, ecommerce_abandoned_carts]
+    mutation:
+      required: [id, expected_row_version, send_abandoned_cart_email, cart_abandoned_delay_hours, recovery_template_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_abandoned_cart_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_ABANDONED_CART_POLICY_STALE, message: This abandoned-cart recovery policy changed or belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:cart_abandoned_delay_hours AS DECIMAL(6,2)) > 0 AND CAST(:cart_abandoned_delay_hours AS DECIMAL(6,2)) <= 720", status: 422, code: ECOMMERCE_ABANDONED_CART_DELAY_INVALID, message: Recovery delay must be between 0 and 720 hours. }
+        - { query: "SELECT id FROM ecommerce_confirmation_email_templates WHERE id = :recovery_template_id AND model_name = 'sale.order' AND active = TRUE", status: 422, code: ECOMMERCE_ABANDONED_CART_TEMPLATE_INVALID, message: Choose an active sale-order recovery template. }
+      steps:
+        - { query: "UPDATE ecommerce_abandoned_cart_policies SET send_abandoned_cart_email = CAST(:send_abandoned_cart_email AS BOOLEAN), cart_abandoned_delay_hours = CAST(:cart_abandoned_delay_hours AS DECIMAL(6,2)), recovery_template_id = :recovery_template_id, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_ABANDONED_CART_POLICY_STALE, message: This abandoned-cart recovery policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT p.id, p.row_version, p.company_name, p.send_abandoned_cart_email, p.cart_abandoned_delay_hours, p.recovery_template_id, t.name AS recovery_template_name, CASE WHEN p.send_abandoned_cart_email THEN 'Enabled' ELSE 'Disabled' END AS recovery_status FROM ecommerce_abandoned_cart_policies p JOIN ecommerce_confirmation_email_templates t ON t.id = p.recovery_template_id WHERE p.id = :id" }
+    fields:
+      - { field: send_abandoned_cart_email, label: Send Abandoned Cart Email, type: checkbox }
+      - { field: cart_abandoned_delay_hours, label: Send After Hours, type: number, min: 0.01, max: 720, required: true }
+      - { field: recovery_template_id, label: Recovery Email Template, type: select, options_source: ecommerce_abandoned_cart_recovery_template_options, required: true }

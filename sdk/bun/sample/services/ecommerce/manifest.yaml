@@ -125,3 +125,7 @@ menu:
           label: Confirmation Email
           icon: email
           permission: ecommerce.read
+        - path: /ecommerce/abandoned-cart-recovery-policy
+          label: Abandoned Cart Recovery
+          icon: email
+          permission: ecommerce.read

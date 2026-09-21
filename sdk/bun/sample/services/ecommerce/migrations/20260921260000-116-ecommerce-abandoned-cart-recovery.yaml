@@ -1,0 +1,38 @@
+version: 0.0.116
+kind: schema
+description: durable eCommerce abandoned-cart recovery policy and send ledger
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_abandoned_cart_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        send_abandoned_cart_email BOOLEAN NOT NULL DEFAULT FALSE,
+        cart_abandoned_delay_hours DECIMAL(6,2) NOT NULL DEFAULT 10,
+        recovery_template_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (cart_abandoned_delay_hours > 0 AND cart_abandoned_delay_hours <= 720)
+      );
+      ALTER TABLE ecommerce_abandoned_carts ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE ecommerce_abandoned_carts ADD COLUMN IF NOT EXISTS recovery_email_sent BOOLEAN;
+      ALTER TABLE ecommerce_abandoned_carts ADD COLUMN IF NOT EXISTS recovery_email_sent_at TIMESTAMP;
+      UPDATE ecommerce_abandoned_carts SET company_name = 'My Company' WHERE company_name IS NULL;
+      UPDATE ecommerce_abandoned_carts SET recovery_email_sent = FALSE WHERE recovery_email_sent IS NULL;
+      CREATE INDEX IF NOT EXISTS ecommerce_abandoned_cart_policies_company_idx
+        ON ecommerce_abandoned_cart_policies(company_name);
+      CREATE INDEX IF NOT EXISTS ecommerce_abandoned_carts_recovery_idx
+        ON ecommerce_abandoned_carts(company_name, recovery_email_sent, state, abandoned_at);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_abandoned_carts_recovery_idx;
+      DROP INDEX IF EXISTS ecommerce_abandoned_cart_policies_company_idx;
+      ALTER TABLE ecommerce_abandoned_carts DROP COLUMN IF EXISTS recovery_email_sent_at;
+      ALTER TABLE ecommerce_abandoned_carts DROP COLUMN IF EXISTS recovery_email_sent;
+      ALTER TABLE ecommerce_abandoned_carts DROP COLUMN IF EXISTS company_name;
+      DROP TABLE IF EXISTS ecommerce_abandoned_cart_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

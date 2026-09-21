@@ -6,6 +6,24 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_ABANDONED_CARTS_UNAUTHENTICATED, message: Sign in to view abandoned carts. }
       forbidden: { status: 403, code: ECOMMERCE_ABANDONED_CARTS_FORBIDDEN, message: You do not have permission to view abandoned carts. }
       transport_error: { status: 503, code: ECOMMERCE_ABANDONED_CARTS_UNAVAILABLE, message: Abandoned carts are temporarily unavailable. }
-    query: "SELECT id, row_version, cart_number, customer_name, customer_email, item_count, amount_total, currency, CAST(abandoned_at AS VARCHAR) AS abandoned_at, state FROM ecommerce_abandoned_carts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR cart_number ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR COALESCE(customer_email, '') ILIKE '%' || :q || '%') ORDER BY abandoned_at DESC, cart_number"
+    query: "SELECT a.id, a.row_version, a.cart_number, a.customer_name, a.customer_email, a.item_count, a.amount_total, a.currency, CAST(a.abandoned_at AS VARCHAR) AS abandoned_at, a.state, a.company_name, a.recovery_email_sent, CAST(a.recovery_email_sent_at AS VARCHAR) AS recovery_email_sent_at, COALESCE(p.send_abandoned_cart_email, FALSE) AS recovery_enabled, p.cart_abandoned_delay_hours, t.name AS recovery_template_name FROM ecommerce_abandoned_carts a LEFT JOIN ecommerce_abandoned_cart_policies p ON p.company_name = COALESCE(a.company_name, 'My Company') LEFT JOIN ecommerce_confirmation_email_templates t ON t.id = p.recovery_template_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR a.cart_number ILIKE '%' || :q || '%' OR a.customer_name ILIKE '%' || :q || '%' OR COALESCE(a.customer_email, '') ILIKE '%' || :q || '%') AND (:company_name IS NULL OR COALESCE(a.company_name, 'My Company') = :company_name) ORDER BY a.abandoned_at DESC, a.cart_number"
 actions:
   - { id: view_ecommerce_abandoned_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/abandoned-carts/detail, params: { id: '{row.id}' } }
+  - id: send_ecommerce_abandoned_cart_recovery_email
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.abandoned_carts.recovery_email.send
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_abandoned_carts]
+    mutation:
+      required: [id, expected_row_version]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_abandoned_carts WHERE id = :id AND row_version = :expected_row_version AND state = 'Abandoned' AND COALESCE(:current_company_name, '') IN ('', COALESCE(company_name, 'My Company'))", status: 409, code: ECOMMERCE_ABANDONED_CART_RECOVERY_STALE, message: This abandoned cart changed or belongs to another company. Reload before retrying. }
+        - { query: "SELECT id FROM ecommerce_abandoned_carts WHERE id = :id AND recovery_email_sent = FALSE AND customer_email IS NOT NULL AND LENGTH(TRIM(customer_email)) > 3", status: 422, code: ECOMMERCE_ABANDONED_CART_RECOVERY_UNAVAILABLE, message: This abandoned cart has no eligible recovery recipient or was already processed. }
+        - { query: "SELECT a.id FROM ecommerce_abandoned_carts a JOIN ecommerce_abandoned_cart_policies p ON p.company_name = COALESCE(a.company_name, 'My Company') WHERE a.id = :id AND p.send_abandoned_cart_email = TRUE AND p.recovery_template_id IS NOT NULL", status: 422, code: ECOMMERCE_ABANDONED_CART_RECOVERY_DISABLED, message: Enable abandoned-cart recovery before sending a recovery email. }
+      steps:
+        - { query: "UPDATE ecommerce_abandoned_carts SET recovery_email_sent = TRUE, recovery_email_sent_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND recovery_email_sent = FALSE", expect_changed: true, status: 409, code: ECOMMERCE_ABANDONED_CART_RECOVERY_STALE, message: This abandoned cart recovery email was already claimed. }
+      result: { query: "SELECT id, row_version, cart_number, recovery_email_sent, CAST(recovery_email_sent_at AS VARCHAR) AS recovery_email_sent_at FROM ecommerce_abandoned_carts WHERE id = :id" }

@@ -1,0 +1,23 @@
+version: 0.0.117
+kind: data
+description: deterministic eCommerce abandoned-cart recovery fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_confirmation_email_templates (id, name, model_name, active)
+      VALUES ('website_sale.mail_template_sale_cart_recovery', 'Ecommerce Cart Recovery', 'sale.order', TRUE)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, model_name = EXCLUDED.model_name, active = EXCLUDED.active;
+      INSERT INTO ecommerce_abandoned_cart_policies
+        (id, row_version, company_name, send_abandoned_cart_email, cart_abandoned_delay_hours, recovery_template_id)
+      VALUES ('ecommerce-abandoned-cart-policy-my-company', 1, 'My Company', FALSE, 10, 'website_sale.mail_template_sale_cart_recovery')
+      ON CONFLICT (company_name) DO UPDATE SET recovery_template_id = EXCLUDED.recovery_template_id;
+      UPDATE ecommerce_abandoned_carts
+      SET company_name = COALESCE(company_name, 'My Company'), recovery_email_sent = COALESCE(recovery_email_sent, FALSE)
+      WHERE id IN ('ecommerce-cart-001', 'ecommerce-cart-002');
+    down: |
+      DELETE FROM ecommerce_abandoned_cart_policies WHERE id = 'ecommerce-abandoned-cart-policy-my-company';
+      DELETE FROM ecommerce_confirmation_email_templates WHERE id = 'website_sale.mail_template_sale_cart_recovery';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

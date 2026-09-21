@@ -7,6 +7,23 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001
+
+- ECOM-FUNC-055: trace Odoo Website Sale's abandoned-cart menu/action,
+  recovery template, delay and enablement settings, scheduled sender, and
+  `action_recovery_email_send`; verify the Core3 page/API pairing.
+- ECOM-WF-066: replay deterministic abandoned carts, enable recovery, select
+  a valid template, send a recovery email once, expose the sent ledger, reject
+  a repeat/stale send, and preserve policy and send state across migration
+  replay and restart.
+- ECOM-PERM-062: require `ecommerce.read` for policy/cart reads and
+  `ecommerce.write` for policy updates and recovery sends; reject
+  wrong-company, invalid-delay, invalid-template, disabled-policy, and stale
+  writes without mutating state.
+- ECOM-UI-048: render recovery policy controls and Abandoned Carts recovery
+  state/action at desktop and mobile; Core3 browser and Odoo comparison remain
+  blocked by runtime availability and `/shop` HTTP 404.
+
 ## ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001
 
 - ECOM-FUNC-054: trace Odoo Website Sale's

@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Abandoned Cart Recovery (`ECOM-CHECKOUT-ABANDONED-CART-RECOVERY-001`, 2026-09-21)
+
+- Odoo source/menu/settings: pass. `website.py` defines the recovery template,
+  abandoned delay, send-enable policy, and scheduled recovery method;
+  `res_config_settings.py` relates the settings; the settings view exposes the
+  Abandoned Carts control and template action; the Abandoned Carts menu opens
+  `action_view_abandoned_tree`; and `sale_order.py` exposes the recovery-send
+  action and `cart_recovery_email_sent` idempotency field.
+- Core3 lifecycle: pass for this bounded contract. Migrations 116/117 add the
+  durable company policy, active sale-order recovery template, abandoned-cart
+  recovery fields, and deterministic fixtures. Separate policy page/API YAML
+  exposes active template options and `ecommerce.write` optimistic updates
+  with company, delay, template, and stale guards. The Abandoned Carts
+  page/API exposes recovery status and a permissioned one-shot send action.
+- Focused verification: `bun test
+  test/ecommerce_abandoned_cart_recovery.integration.test.ts` — **3 passed,
+  42 assertions, 0 failures**. Existing Abandoned Carts and checkout
+  regression results are recorded in the evidence directory.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` are run for this slice. Full repository audit status is
+  recorded with the exact result in evidence.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-abandoned-cart-recovery-001/`.
+
 ## Checkout Confirmation Email Template (`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`, 2026-09-21)
 
 - Odoo source/settings/order action: pass. `website.py` defines the
