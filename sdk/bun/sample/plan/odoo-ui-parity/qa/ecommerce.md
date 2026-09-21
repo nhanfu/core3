@@ -1,5 +1,23 @@
 # ecommerce QA ledger
 
+## Shop Product-Card Action Style (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`, 2026-09-21)
+
+- Odoo source/builder/styles: pass.
+  `website.shop_opt_products_design_classes` stores the Subtle, Promote, or
+  Theme Colors product action class; the product-tile stylesheet applies the
+  corresponding button treatment.
+- Core3 lifecycle: migrations 156/157 add the durable company policy and
+  deterministic `subtle` fixture. Separate page/API YAML exposes supported
+  values, a permissioned optimistic update, and Shop projection.
+- Focused verification: **2 tests, 37 assertions, 0 failures**.
+- Adjacent Shop regression: **17 tests, 243 assertions, 0 failures**.
+- Audit passes at **766 pages, 775 routes, and 1562 datasources**; scoped
+  ESLint and `git diff --check` pass. Playwright Core3 capture is blocked by
+  connection refusal on ports 3000/4312/4313. Playwright opens Odoo on 8069
+  but receives `404 NOT FOUND` for `/shop`; the same exact blocker is present
+  on 8073. No browser sign-off is claimed; module sign-off remains open.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-action-style-001/`.
+
 ## Shop Product-Card Action Placement (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001`, 2026-09-21)
 
 - Odoo source/builder/styles: pass.

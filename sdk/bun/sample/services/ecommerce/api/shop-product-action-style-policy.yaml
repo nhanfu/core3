@@ -1,0 +1,36 @@
+page: { id: ecommerce-shop-product-action-style-policy }
+datasources:
+  - id: ecommerce_shop_product_action_style_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_UNAUTHENTICATED, message: Sign in to view Shop product action style settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_FORBIDDEN, message: You do not have permission to view Shop product action style settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_NOT_FOUND, message: Shop product action style settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_UNAVAILABLE, message: Shop product action style settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, action_style, CASE action_style WHEN 'promote' THEN 'Promote' WHEN 'theme' THEN 'Theme Colors' ELSE 'Subtle' END AS action_style_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_action_style_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_shop_product_action_style_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('subtle', 'Subtle'), ('promote', 'Promote'), ('theme', 'Theme Colors')) styles(value, label)"
+actions:
+  - id: edit_ecommerce_shop_product_action_style_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Product Action Style
+    action: ecommerce.shop.product_action_style.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_product_action_style_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, action_style]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_product_action_style_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_STALE, message: These Shop product action style settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :action_style IN ('subtle', 'promote', 'theme')", status: 422, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_INVALID, message: Choose Subtle, Promote, or Theme Colors for product actions. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_product_action_style_policies SET action_style = :action_style, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_PRODUCT_ACTION_STYLE_STALE, message: These Shop product action style settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, action_style, CASE action_style WHEN 'promote' THEN 'Promote' WHEN 'theme' THEN 'Theme Colors' ELSE 'Subtle' END AS action_style_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_action_style_policies WHERE id = :id" }
+    fields:
+      - { field: action_style, label: Product Action Style, type: select, options_source: ecommerce_shop_product_action_style_options, required: true }

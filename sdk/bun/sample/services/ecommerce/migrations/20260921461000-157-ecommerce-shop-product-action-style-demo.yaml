@@ -1,0 +1,14 @@
+version: 0.0.157
+kind: data
+description: deterministic Website Sale Shop product-card action style fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_action_style_policies (id, row_version, company_name, action_style)
+      VALUES ('ecommerce-shop-product-action-style-my-company', 1, 'My Company', 'subtle')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_action_style_policies WHERE id = 'ecommerce-shop-product-action-style-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

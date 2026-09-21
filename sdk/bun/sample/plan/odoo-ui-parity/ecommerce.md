@@ -1,6 +1,34 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop product-card action placement slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop product-card action style slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card Action Style (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001`)
+
+Wave 46 selects the Website Sale Products Design Panel's product-card action
+Style control. Odoo's `shop_opt_products_design_classes` stores one of
+`o_wsale_products_opt_actions_subtle`,
+`o_wsale_products_opt_actions_promote`, or
+`o_wsale_products_opt_actions_theme`; the product-tile stylesheet applies the
+corresponding button treatment. The builder collects and saves the class list
+through `/shop/config/website`. This is distinct from the completed action
+placement and CTA visibility policies.
+
+Core3 migration 156 and deterministic data migration 157 add a durable,
+company-scoped enum defaulting to Odoo's `subtle` class. Separate
+`api/shop-product-action-style-policy.yaml` and
+`pages/shop-product-action-style-policy.yaml` contracts join by
+`ecommerce-shop-product-action-style-policy`; the update requires
+`ecommerce.write`, validates the three source-backed values, and uses company
+and row-version guards. The Shop API projects the effective style onto
+products and a read-only Shop projection exposes the same setting.
+
+Focused tests cover the supplied Odoo model, builder plugin/panel, product
+tile stylesheet, page/API separation, permissioned update,
+missing/invalid/foreign-company/stale guards, migration replay, Shop
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-action-style-001/`.
+Authenticated Core3 desktop/mobile capture and paired Odoo rendering remain
+runtime-blocked; no Ecommerce module sign-off is claimed.
 
 ## Bounded feature — Shop Product-Card Action Placement (`ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001`)
 

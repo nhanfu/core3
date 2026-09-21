@@ -173,6 +173,10 @@ menu:
           label: Shop Product Action Placement
           icon: layout
           permission: ecommerce.read
+        - path: /ecommerce/shop-product-action-style
+          label: Shop Product Action Style
+          icon: palette
+          permission: ecommerce.read
         - path: /ecommerce/product-extra-fields
           label: Product Page Extra Fields
           icon: list

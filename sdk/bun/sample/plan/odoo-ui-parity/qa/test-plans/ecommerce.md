@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PRODUCT-ACTION-STYLE-001
+
+- ECOM-FUNC-075: trace Website Sale
+  `website.shop_opt_products_design_classes`, the Products Design Panel
+  Subtle/Promote/Theme Colors controls, the product-tile button-style
+  stylesheet boundary, and `/shop/config/website`; verify separate Core3 Shop
+  policy and page/API contracts.
+- ECOM-WF-086: replay the deterministic Subtle policy, switch to Promote and
+  Theme Colors, project the effective Shop style, reject invalid,
+  foreign-company, missing, and stale writes, and preserve it across
+  migration replay and DuckDB restart.
+- ECOM-PERM-082: require `ecommerce.read` for policy/options/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-068: render the configuration form and Shop projection at desktop
+  and mobile and compare the authenticated Odoo Products Design Panel action
+  style controls; Core3 runtime is unavailable and Odoo `/shop` is HTTP 404
+  in the supplied references.
+
 ## ECOM-CATALOG-SHOP-PRODUCT-ACTION-PLACEMENT-001
 
 - ECOM-FUNC-074: trace Website Sale
