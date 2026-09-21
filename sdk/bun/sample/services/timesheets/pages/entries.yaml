@@ -23,6 +23,7 @@ components:
       stats:
         - { label: Total, field: total_time_spent_display }
     header_actions:
+      - { id: create_timesheet_entry, label: New Timesheet, permission: timesheets.write, variant: primary }
       - { id: download_timesheet_import_template, label: Download import template, permission: timesheets.write, variant: secondary }
       - { id: create_timesheet_calendar_batch, label: Log multiple days, permission: timesheets.write, variant: secondary }
     search: { label: Search, placeholder: 'Search...' }

@@ -861,3 +861,34 @@ sign-off is claimed.
 - Added the All Timesheets page group-by and API `group_by_contracts` metadata through the existing `page.id: all-timesheets` pair; durable `timesheet_entries.billing_type` supplies the grouping state.
 - Focused coverage passed 4/4 tests with 17 expectations; the All Timesheets regression passed 58/58 with 346 expectations. ESLint, UI audit (729 pages / 738 routes / 1,419 datasources), and diff-check passed.
 - Evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billing-type-group/`. Core3 and authenticated Odoo runtime blockers are recorded exactly; no screenshots or sign-off are claimed. Odoo Print/PDF/report-action blockers remain open.
+
+## Wave 28 — `TIMESHEET-MY-FAVORITE-PROJECT-PREFILL-001` (2026-09-21)
+
+The smallest distinct open source-backed behavior after the prior All/My,
+filter, grouping, action, report, and import-template slices is Odoo's New
+Timesheet favorite-project prefill. `hr_timesheet/models/hr_timesheet.py` uses
+`_get_favorite_project_id()` to inspect the employee's recent five active
+timesheetable projects, choose the mode, and assign `project_id` in
+`default_get()` when `is_timesheet` is active.
+
+Core3 adds the durable `timesheet_entry_defaults` API datasource and binds it to
+the existing `create_timesheet_entry` server form with `prefill: source`.
+The My Timesheets page exposes that form as a separate `New Timesheet` header
+action while retaining the prior inline-create action. Page/API contracts are
+joined by `page.id: timesheets`; the source requires `timesheets.write`, scopes
+by current employee/company, filters active timesheetable projects, and returns
+an empty prefill for empty or foreign scope. Existing durable entry relations
+and create guards remain the write boundary, so no duplicate migration was
+needed.
+
+Focused coverage is
+`test/timesheets_favorite_project_prefill.integration.test.ts` — 3 tests / 17
+expectations. The full Timesheets regression passes 215 tests / 1335
+expectations across 57 files. UI audit passes 735 pages / 744 routes / 1440
+datasources; scoped ESLint and Timesheets-owned diff-check pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-favorite-project-prefill/`.
+Core3 port 3001 was unavailable and Odoo 8069/8073 redirected to `/web/login`,
+so authenticated desktop/mobile captures are not claimed. Existing Odoo
+Print/PDF/action blockers remain open; no sign-off is claimed.

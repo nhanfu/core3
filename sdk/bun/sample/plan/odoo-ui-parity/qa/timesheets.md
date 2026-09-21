@@ -910,3 +910,22 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused test: 4/4, 17 expectations. All Timesheets regression: 58/58, 346 expectations.
 - Static gates: ESLint passed; UI audit passed with 729 pages, 738 routes, 1,419 datasources; `git diff --check` passed.
 - Evidence: `evidence/timesheets/2026-09-21/timesheet-all-billing-type-group/`. Core3/Odoo authenticated captures were blocked by recorded runtime failures; no visual sign-off is claimed.
+
+## Wave 28 — `TIMESHEET-MY-FAVORITE-PROJECT-PREFILL-001`
+
+- Source gate: Odoo `_get_favorite_project_id()` and `default_get()` choose the
+  current employee's recent-five project mode for a new `is_timesheet` entry.
+- Core3 contract gate: `pages/entries.yaml` exposes `New Timesheet`; the API
+  owns `timesheet_entry_defaults` and source-prefills `create_timesheet_entry`,
+  joined by `page.id: timesheets`.
+- Focused gate: `bun test test/timesheets_favorite_project_prefill.integration.test.ts --timeout 20000` — 3 passed / 17 expectations.
+- Persistence/security gate: durable entry-derived favorite, employee/company
+  and empty guards, write permission, migration replay, and file-backed restart
+  pass in the focused suite.
+- Regression/static gates: full Timesheets 215 passed / 1335 expectations;
+  audit 735/744/1440; scoped ESLint and Timesheets-owned diff-check passed.
+- Browser gate: blocked. Core3 port 3001 was unavailable; Odoo 8069 and 8073
+  redirected `/odoo/timesheets` to `/web/login`. Exact responses are under
+  `evidence/timesheets/2026-09-21/timesheet-my-favorite-project-prefill/`.
+- Blockers: authenticated desktop/mobile comparison and existing Odoo
+  Print/PDF/action parity remain open; no sign-off is claimed.

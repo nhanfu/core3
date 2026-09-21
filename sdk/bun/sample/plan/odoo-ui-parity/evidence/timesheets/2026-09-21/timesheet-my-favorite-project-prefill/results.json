@@ -1,0 +1,25 @@
+{
+  "feature_id": "TIMESHEET-MY-FAVORITE-PROJECT-PREFILL-001",
+  "source": {
+    "file": "/home/nhanjs/projects/odoo/addons/hr_timesheet/models/hr_timesheet.py",
+    "methods": ["_get_favorite_project_id", "default_get"],
+    "contract": "mode of the employee's recent five active timesheetable projects; default_get assigns project_id for is_timesheet"
+  },
+  "core3": {
+    "authenticated_desktop": "blocked",
+    "authenticated_mobile": "blocked",
+    "endpoint": "http://127.0.0.1:3001/api/modules",
+    "http_status": 0,
+    "blocker": "No Core3 listener was available on port 3001 during the bounded probe; no authenticated desktop/mobile screenshots are claimed."
+  },
+  "odoo": {
+    "authenticated_desktop": "blocked",
+    "authenticated_mobile": "blocked",
+    "endpoints": [
+      { "url": "http://127.0.0.1:8069/odoo/timesheets", "http_status": 303, "location": "/web/login" },
+      { "url": "http://127.0.0.1:8073/odoo/timesheets", "http_status": 303, "location": "/web/login" }
+    ],
+    "blocker": "The supplied Odoo endpoints redirected to /web/login during the bounded probe; no authenticated desktop/mobile captures are claimed."
+  },
+  "disposition": "bounded source contract, durable actor/company-scoped prefill, and restart behavior verified; browser evidence blocked; existing Odoo Print/PDF/action blockers remain open; no sign-off"
+}
