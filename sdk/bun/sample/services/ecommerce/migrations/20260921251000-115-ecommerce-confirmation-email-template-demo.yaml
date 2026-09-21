@@ -1,0 +1,28 @@
+version: 0.0.115
+kind: data
+description: deterministic eCommerce confirmation email template fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_confirmation_email_templates (id, name, model_name, active)
+      VALUES
+        ('sale.mail_template_sale_confirmation', 'Sales Order Confirmation', 'sale.order', TRUE),
+        ('ecommerce.website_sale_confirmation', 'Website Sale Confirmation', 'sale.order', TRUE)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, model_name = EXCLUDED.model_name, active = EXCLUDED.active;
+      INSERT INTO ecommerce_confirmation_email_policies (id, row_version, company_name, template_id)
+      VALUES ('ecommerce-confirmation-email-policy-my-company', 1, 'My Company', 'sale.mail_template_sale_confirmation')
+      ON CONFLICT (company_name) DO UPDATE SET template_id = EXCLUDED.template_id;
+      UPDATE ecommerce_orders o
+      SET confirmation_email_template_id = p.template_id,
+          confirmation_email_template_name = t.name
+      FROM ecommerce_confirmation_email_policies p
+      JOIN ecommerce_confirmation_email_templates t ON t.id = p.template_id
+      WHERE o.company_name = p.company_name
+        AND o.confirmation_email_template_id IS NULL;
+    down: |
+      DELETE FROM ecommerce_confirmation_email_policies WHERE id = 'ecommerce-confirmation-email-policy-my-company';
+      DELETE FROM ecommerce_confirmation_email_templates WHERE id IN ('sale.mail_template_sale_confirmation', 'ecommerce.website_sale_confirmation');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

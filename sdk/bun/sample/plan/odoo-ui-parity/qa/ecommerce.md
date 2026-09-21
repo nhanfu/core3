@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Checkout Confirmation Email Template (`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`, 2026-09-21)
+
+- Odoo source/settings/order action: pass. `website.py` defines the
+  `confirmation_email_template_id` `mail.template` relation restricted to
+  `sale.order` with the default confirmation template; `res_config_settings.py`
+  relates it to the website; the settings view exposes Order Confirmation;
+  and `sale_order.py` returns the website template from
+  `_get_confirmation_template()`.
+- Core3 lifecycle: pass for this bounded contract. Migrations 114/115 add the
+  durable active template catalog, company policy, order snapshot columns, and
+  deterministic fixtures. Separate page/API YAML exposes active sale-order
+  template options and an `ecommerce.write` optimistic update with company,
+  validation, and stale guards. Authenticated and guest checkout snapshot the
+  selected template and order list/detail APIs expose it.
+- Focused verification: `bun test
+  test/ecommerce_checkout_confirmation_email.integration.test.ts` — **3
+  passed, 32 assertions, 0 failures**. Checkout and Orders regression — **14
+  passed, 79 assertions, 0 failures**.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` are run for this slice. Full repository audit status is
+  recorded with the exact result in evidence.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-confirmation-email-template-001/`.
+
 ## Checkout Tax Display Mode (`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`, 2026-09-21)
 
 - Odoo source/settings/template: pass. `website.py` stores

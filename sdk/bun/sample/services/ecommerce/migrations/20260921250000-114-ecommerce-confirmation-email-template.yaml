@@ -1,0 +1,41 @@
+version: 0.0.114
+kind: schema
+description: durable eCommerce order confirmation email template policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_confirmation_email_templates (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        model_name VARCHAR NOT NULL DEFAULT 'sale.order',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CHECK (model_name = 'sale.order')
+      );
+      CREATE TABLE IF NOT EXISTS ecommerce_confirmation_email_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        template_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name)
+      );
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS confirmation_email_template_id VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS confirmation_email_template_name VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_confirmation_email_policies_company_idx
+        ON ecommerce_confirmation_email_policies(company_name);
+      CREATE INDEX IF NOT EXISTS ecommerce_orders_confirmation_email_idx
+        ON ecommerce_orders(company_name, confirmation_email_template_id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_orders_confirmation_email_idx;
+      DROP INDEX IF EXISTS ecommerce_confirmation_email_policies_company_idx;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS confirmation_email_template_name;
+      ALTER TABLE ecommerce_orders DROP COLUMN IF EXISTS confirmation_email_template_id;
+      DROP TABLE IF EXISTS ecommerce_confirmation_email_policies;
+      DROP TABLE IF EXISTS ecommerce_confirmation_email_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

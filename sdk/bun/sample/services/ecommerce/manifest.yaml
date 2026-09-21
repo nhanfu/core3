@@ -121,3 +121,7 @@ menu:
           label: Tax Display Policy
           icon: invoice
           permission: ecommerce.read
+        - path: /ecommerce/confirmation-email-policy
+          label: Confirmation Email
+          icon: email
+          permission: ecommerce.read

@@ -10,7 +10,7 @@ components:
       - { id: print_ecommerce_order, label: Print, variant: secondary }
     groups:
       - { title: Order, columns: 2, fields: [{ field: order_number, label: Order }, { field: state, label: Status, type: StatusChip }, { field: date_order, label: Order Date }, { field: company_name, label: Company }] }
-      - { title: Customer, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: customer_email, label: Email }] }
+      - { title: Customer, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: customer_email, label: Email }, { field: confirmation_email_template_name, label: Confirmation Email }] }
       - { title: Total, columns: 2, fields: [{ field: amount_total, label: Total }, { field: currency, label: Currency }] }
     notebook:
       active: order_lines

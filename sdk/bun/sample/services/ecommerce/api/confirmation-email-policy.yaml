@@ -1,0 +1,36 @@
+page: { id: ecommerce-confirmation-email-policy }
+datasources:
+  - id: ecommerce_confirmation_email_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_UNAUTHENTICATED, message: Sign in to view confirmation email policy. }
+      forbidden: { status: 403, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_FORBIDDEN, message: You do not have permission to view confirmation email policy. }
+      missing_record: { status: 404, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_NOT_FOUND, message: Confirmation email policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_UNAVAILABLE, message: Confirmation email policy is temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.company_name, p.template_id, t.name AS template_name, t.model_name, CASE WHEN t.active THEN 'Active' ELSE 'Inactive' END AS template_status, p.updated_at FROM ecommerce_confirmation_email_policies p JOIN ecommerce_confirmation_email_templates t ON t.id = p.template_id WHERE p.company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_confirmation_email_template_options
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_confirmation_email_templates WHERE active = TRUE AND model_name = 'sale.order' ORDER BY name, id"
+actions:
+  - id: edit_ecommerce_confirmation_email_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Confirmation Email
+    action: ecommerce.shop.confirmation_email_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_confirmation_email_policy, ecommerce_orders]
+    mutation:
+      required: [id, expected_row_version, template_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_confirmation_email_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_STALE, message: This confirmation email policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT id FROM ecommerce_confirmation_email_templates WHERE id = :template_id AND model_name = 'sale.order' AND active = TRUE", status: 422, code: ECOMMERCE_CONFIRMATION_EMAIL_TEMPLATE_INVALID, message: Choose an active sale order confirmation template. }
+      steps:
+        - { query: "UPDATE ecommerce_confirmation_email_policies SET template_id = :template_id, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_CONFIRMATION_EMAIL_POLICY_STALE, message: This confirmation email policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT p.id, p.row_version, p.company_name, p.template_id, t.name AS template_name, t.model_name, CASE WHEN t.active THEN 'Active' ELSE 'Inactive' END AS template_status FROM ecommerce_confirmation_email_policies p JOIN ecommerce_confirmation_email_templates t ON t.id = p.template_id WHERE p.id = :id" }
+    fields:
+      - { field: template_id, label: Confirmation Email, type: select, options_source: ecommerce_confirmation_email_template_options, required: true }

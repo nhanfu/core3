@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded tax display mode slice; module sign-off remains open)
+Status: qa-in-progress (bounded confirmation email template slice; module sign-off remains open)
+
+## Bounded feature — Checkout Confirmation Email Template (`ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001`)
+
+Wave 25 selected Odoo Website Sale's `website.confirmation_email_template_id`,
+the next uncovered checkout/company behavior after the completed tax display
+setting. Odoo defines a website-scoped `mail.template` relation restricted to
+`sale.order`, exposes it as the Order Confirmation setting in
+`res.config.settings`, and overrides `sale.order._get_confirmation_template()`
+to use the website choice when a website order is confirmed.
+
+Core3 migrations 114/115 add durable confirmation-template catalog and
+company-scoped policy tables plus order-level template selection columns and
+deterministic fixtures. Separate Confirmation Email page/API YAML provides the
+active sale-order template options, `ecommerce.write` optimistic update,
+company scope, validation, and stale-row guards. Authenticated and guest
+checkout order creation snapshots the selected template onto the durable order;
+order list/detail projections expose that selection. Migration replay and
+DuckDB restart preserve the policy.
+
+Focused source/contract, CRUD, permission, validation, concurrency, checkout
+snapshot, migration replay, restart, scoped YAML audit, lint, and diff-check
+evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-confirmation-email-template-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Checkout Tax Display Mode (`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`)
 

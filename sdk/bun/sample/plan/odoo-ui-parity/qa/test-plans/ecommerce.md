@@ -7,6 +7,23 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CHECKOUT-CONFIRMATION-EMAIL-TEMPLATE-001
+
+- ECOM-FUNC-054: trace Odoo Website Sale's
+  `confirmation_email_template_id` website field, sale-order model domain,
+  Order Confirmation settings control, and `_get_confirmation_template()`
+  override; verify the Core3 page/API pairing and order projections.
+- ECOM-WF-065: replay deterministic sale-order template fixtures, select the
+  Website Sale template, create authenticated and guest checkout orders with
+  the selected template snapshot, and preserve policy/order state across
+  migration replay and restart.
+- ECOM-PERM-061: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, inactive/missing
+  template, and stale-row writes without changing the policy.
+- ECOM-UI-047: render the Confirmation Email configuration and selected order
+  template at desktop and mobile; Core3 browser and Odoo comparison remain
+  blocked by runtime availability and `/shop` HTTP 404.
+
 ## ECOM-CHECKOUT-TAX-DISPLAY-MODE-001
 
 - ECOM-FUNC-053: trace Odoo Website Sale's
