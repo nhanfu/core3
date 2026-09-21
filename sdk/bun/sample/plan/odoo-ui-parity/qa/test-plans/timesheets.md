@@ -305,6 +305,29 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 38 — `TIMESHEET-TASK-ACTION-MULTI-SCOPE-001`
+
+- Source: `hr_timesheet/views/hr_timesheet_views.xml`,
+  `timesheet_action_task`, domain `task_id in active_ids`, context
+  `is_timesheet: 1`.
+- Core3: the existing `task-timesheets` page/API pair accepts multi-task
+  `task_ids`, exposes `task_timesheet_scope`, and preserves exact single-task
+  and optional descendant behavior.
+- Persistence/security: durable task and entry relations are current-company
+  scoped; create requires selected-task membership and rejects missing, stale,
+  closed, and foreign-company context.
+- Focused test:
+  `test/timesheets_task_action_multi_scope.integration.test.ts` — 4/4 tests,
+  22 expectations. Related task regression — 18/18 tests, 105 expectations.
+- Restart: file-backed DuckDB close/reopen with existing migrations and a
+  created multi-context row.
+- Static gates: scoped ESLint passed; UI audit passed at 753 pages / 762
+  routes / 1,519 datasources; staged Timesheets diff-check passed.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. No authenticated desktop/mobile
+  evidence or sign-off is claimed. Exact blockers are in the feature evidence
+  directory.
+
 ## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
 
 - Source: `hr_timesheet/views/hr_timesheet_views.xml`,

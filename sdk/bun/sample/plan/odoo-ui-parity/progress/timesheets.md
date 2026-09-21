@@ -1003,3 +1003,21 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Scoped ESLint passed; UI audit passed with 746 pages, 755 routes, and 1,483 datasources; Timesheets-owned `git diff --check` passed.
 - Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused both `/api/modules` and `/employee-timesheets`; Odoo 8069/8073 returned HTTP 200 only for unauthenticated `/web/login`. Exact probes and the paired source comparison are under `evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`. No authenticated browser sign-off is claimed.
 - Odoo Print/PDF/action surfaces remain open blockers; no module sign-off is claimed.
+
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-MULTI-SCOPE-001`
+
+- Selected Odoo `timesheet_action_task`, whose source domain is
+  `task_id in active_ids`; this is distinct from the completed task action
+  display-name and single-task subtask-scope slices.
+- Extended the existing durable `task-timesheets` API with multi-task
+  `task_ids` context, the `task_timesheet_scope` aggregate, and selected-task
+  create membership guards. The layout-only page renders the aggregate and
+  the page/API contracts remain joined by `page.id: task-timesheets`.
+- Focused coverage passed 4/4 tests with 22 expectations. Related task,
+  action, report, and subtask coverage passed 18/18 tests with 105
+  expectations. Scoped ESLint and UI audit passed at 753 pages / 762 routes /
+  1,519 datasources; the Timesheets-owned staged diff check passed.
+- Core3 port 3001 refused connections and Odoo 8069/8073 exposed only the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.

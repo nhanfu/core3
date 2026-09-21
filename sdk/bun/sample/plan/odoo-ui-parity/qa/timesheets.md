@@ -1052,3 +1052,21 @@ sign-off is claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-display-name-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
+
+## Wave 38 — `TIMESHEET-TASK-ACTION-MULTI-SCOPE-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `timesheet_action_task`, `task_id in active_ids`, `is_timesheet` context | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page and API `page.id` binding | pass |
+| Durable multi-task scope | selected durable tasks/entries, aggregate IDs/names/count/hours | pass |
+| Permission/company/missing/empty guards | `timesheets.read`, current company, missing/empty fixtures | pass |
+| Create/stale/concurrency boundary | selected-task membership, open-task and foreign-company guards | pass |
+| Restart | file-backed multi-task scope and created row survive reopen | pass |
+| Focused regression | new test 4/4 (22 expectations); related task regression 18/18 (105 expectations) | pass |
+| Audit/lint/diff | UI audit 753/762/1519; ESLint; staged `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login`; no sign-off |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-multi-scope-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no module sign-off is
+claimed.

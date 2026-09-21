@@ -1843,6 +1843,34 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 38 — `TIMESHEET-TASK-ACTION-MULTI-SCOPE-001`
+
+The next uncovered task action behavior is Odoo `timesheet_action_task` with
+the domain `task_id in active_ids`. This adds multi-selected-task context to
+the task Timesheets action and is distinct from the prior action display name
+and single-task descendant expansion slices.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and extends
+`api/task-timesheets.yaml` with comma-separated `task_ids`, the durable
+`task_timesheet_scope` aggregate, and a selected-task membership guard on
+create. Existing task and entry relations supply durable persistence; current
+company, permission, missing, empty, stale, closed-task, and foreign-company
+boundaries remain explicit. The API/page contracts join through
+`page.id: task-timesheets`.
+
+Focused coverage is
+`test/timesheets_task_action_multi_scope.integration.test.ts`: 4 tests / 22
+expectations. Related task/action/report/subtask coverage is 18 tests / 105
+expectations. Scoped ESLint and the UI audit pass at 753 pages, 762 routes,
+and 1,519 datasources; the Timesheets-owned staged diff check passes.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-multi-scope-001/`.
+Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
+`/web/login`, so authenticated desktop/mobile comparison is blocked and no
+visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
+open.
+
 ## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
 
 The next smallest open source-backed task behavior is Odoo's

@@ -40,5 +40,9 @@ components:
     source: task_timesheet_action_context
     title: Task action context
     stats: [{ label: Action title, field: action_label }]
+  - type: StatRow
+    source: task_timesheet_scope
+    title: Task scope
+    stats: [{ label: Tasks, field: task_count }, { label: Entries, field: entry_count }, { label: Total hours, field: total_hours }]
 actions:
   - { id: view_task_timesheet_entry, type: navigate, permission: timesheets.read, navigate_to: /timesheets/detail, params: { id: '{row.id}', view_scope: task, task_id: '{state.task_id}' } }
