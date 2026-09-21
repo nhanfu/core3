@@ -2730,3 +2730,41 @@ Core3 desktop/mobile screenshot is claimed for this slice; the exact blocker
 and the required recapture states are recorded in
 `evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-ORG-CHART-001: Employee organization chart (2026-09-22)
+
+The next missing Employee form surface is Odoo's Work-tab organization chart.
+The source model defines `parent_id` and `child_ids` for the manager/direct
+subordinate relation in `/home/nhanjs/projects/odoo/addons/hr/models/hr_employee.py:193-195`,
+and the Employee form mounts the chart at
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml:155-183`.
+The Employees menu action is `open_view_employee_list_my`, with path
+`employees` and `kanban,list,form,activity,graph,pivot` modes at
+`hr_employee_views.xml:663-667`; the live tab could not be borrowed for this
+run, so no live action state is claimed.
+
+Core3 adds the `employee_org_chart` datasource and `view_employee_org_report`
+drilldown action to the existing `employee-detail` API contract. The Work tab
+binds a second shared `LineItemGrid` beside Skills through the matching
+`page.id`; its read projection is active, same-company, target-scoped, and
+supports deterministic empty and transport-error states. The query preserves
+legacy `org_parent_name` fixtures while also honoring durable `manager_id` and
+manager-name relations. Migration `20260923030000-093` adds the idempotent
+organization-chart lookup index; there is no mutation in this read-only slice,
+so stale-write guards are not applicable.
+
+Focused verification is `test/employees_org_chart.integration.test.ts`, 3
+tests / 15 assertions. The employee-detail schema validates independently and
+the organization-chart plus manager-assignment regressions pass. The full
+repository audit remains blocked by unrelated concurrent page-schema errors;
+the existing Work-tab regression also has a pre-existing expectation mismatch
+for `Work Location Type`.
+
+Browser evidence is conditional under
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-ORG-CHART-001/`: BrowserSkill
+instance `245ea108` is connected, but the authenticated Odoo user tab
+`1770662590` is owned by active session `zqun`; the task session received the
+daemon error `tab is borrowed by another session`. No Odoo or Core3 desktop or
+mobile screenshot is claimed. The exact blocker and recapture requirements
+are recorded in the evidence files.
+No aggregate Employees sign-off is claimed.

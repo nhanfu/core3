@@ -1,0 +1,14 @@
+version: 0.0.93
+kind: data
+description: Add durable lookup coverage for the Employee organization chart
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employees_org_chart_lookup_idx
+        ON employees(company_name, active, manager_id, org_parent_name, manager_name);
+    down: |
+      DROP INDEX IF EXISTS employees_org_chart_lookup_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

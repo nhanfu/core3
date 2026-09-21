@@ -113,26 +113,44 @@ components:
               permission: employees.write
               fields: [{ field: additional_note, label: Note, type: textarea, wide: true }]
           organization_chart: { parent_field: org_parent_name, direct_reports_field: org_direct_reports }
-          component:
-            type: LineItemGrid
-            source: employee_skill_assignments
-            parent_source: employee_detail
-            title: Skills
-            description: Add current skills and levels to the employee profile.
-            variant: odoo_x2many
-            page_size: 20
-            row_key: id
-            actions: [{ id: add_employee_skill, label: Add a skill, variant: primary, permission: employees.write }]
-            empty_state: { title: No skills, description: Add a skill and level to this employee. }
-            children:
-              - { type: LineItemField, id: skill_type_name, field: skill_type_name, label: Category, readonly: true }
-              - { type: LineItemField, id: skill_name, field: skill_name, label: Skill, readonly: true }
-              - { type: LineItemField, id: skill_level_name, field: skill_level_name, label: Level, readonly: true }
-              - { type: LineItemField, id: level_progress, field: level_progress, label: Progress, readonly: true }
-              - { type: LineItemField, id: validity_status, field: validity_status, label: Validity, readonly: true }
-              - type: LineItemActions
-                id: employee_skill_assignment_actions
-                actions: [{ id: archive_employee_skill, label: Archive, icon: archive, variant: danger, permission: employees.write }]
+          components:
+            - type: LineItemGrid
+              source: employee_org_chart
+              parent_source: employee_detail
+              title: Organization chart
+              description: Active employees reporting to this employee in the current company.
+              variant: odoo_x2many
+              page_size: 20
+              row_key: id
+              empty_state: { title: No direct reports, description: This employee has no active direct reports in the current company. }
+              children:
+                - { type: LineItemField, id: name, field: name, label: Employee, readonly: true }
+                - { type: LineItemField, id: job_title, field: job_title, label: Job Position, readonly: true }
+                - { type: LineItemField, id: department_name, field: department_name, label: Department, readonly: true }
+                - { type: LineItemField, id: work_email, field: work_email, label: Work Email, readonly: true }
+                - type: LineItemActions
+                  id: employee_org_chart_actions
+                  actions:
+                    - { id: view_employee_org_report, label: Open employee, icon: arrow-right, variant: ghost, permission: employees.read }
+            - type: LineItemGrid
+              source: employee_skill_assignments
+              parent_source: employee_detail
+              title: Skills
+              description: Add current skills and levels to the employee profile.
+              variant: odoo_x2many
+              page_size: 20
+              row_key: id
+              actions: [{ id: add_employee_skill, label: Add a skill, variant: primary, permission: employees.write }]
+              empty_state: { title: No skills, description: Add a skill and level to this employee. }
+              children:
+                - { type: LineItemField, id: skill_type_name, field: skill_type_name, label: Category, readonly: true }
+                - { type: LineItemField, id: skill_name, field: skill_name, label: Skill, readonly: true }
+                - { type: LineItemField, id: skill_level_name, field: skill_level_name, label: Level, readonly: true }
+                - { type: LineItemField, id: level_progress, field: level_progress, label: Progress, readonly: true }
+                - { type: LineItemField, id: validity_status, field: validity_status, label: Validity, readonly: true }
+                - type: LineItemActions
+                  id: employee_skill_assignment_actions
+                  actions: [{ id: archive_employee_skill, label: Archive, icon: archive, variant: danger, permission: employees.write }]
         - id: tags
           label: Tags
           groups:

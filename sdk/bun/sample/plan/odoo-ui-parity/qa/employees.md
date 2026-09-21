@@ -1444,3 +1444,18 @@ No aggregate Employees sign-off is claimed.
 Focused test: `test/employees_contract_filters.integration.test.ts` (3 tests,
 22 assertions). Adjacent regression set passes 17 tests / 105 assertions.
 Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.
+
+## EMP-EMPLOYEE-ORG-CHART-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-060 | Odoo `parent_id`/`child_ids` and Employee Work-tab chart mapping | pass from local source; live action observation blocked |
+| EMP-FUNC-060 | Active direct reports, same-company scope, drilldown action, empty state | pass; 2 seeded active reports for `employee-demo-001`, zero for a leaf employee |
+| EMP-PERM-060 | `employees.read` datasource/action boundary | pass; both chart projection and drilldown require `employees.read` |
+| EMP-DATA-060 | Migration replay and file-backed restart | pass; lookup index is idempotent and chart remains queryable after reopen |
+| EMP-UI-060 | Authenticated Odoo/Core3 desktop and mobile | blocked; Odoo tab `1770662590` was borrowed by BrowserSkill session `zqun` |
+
+Focused test: `test/employees_org_chart.integration.test.ts` (3 tests, 15
+assertions). The full audit is blocked by unrelated concurrent page-schema
+errors, and the adjacent Work-tab test has a pre-existing expected-field
+mismatch for `Work Location Type`. No aggregate Employees sign-off is claimed.
