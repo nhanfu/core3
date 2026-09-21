@@ -1,0 +1,33 @@
+page: { id: ecommerce-shop-product-descriptions-policy }
+datasources:
+  - id: ecommerce_shop_product_descriptions_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_UNAUTHENTICATED, message: Sign in to view Shop product descriptions settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_FORBIDDEN, message: You do not have permission to view Shop product descriptions settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_NOT_FOUND, message: Shop product descriptions settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_UNAVAILABLE, message: Shop product descriptions settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, show_descriptions, CASE WHEN show_descriptions THEN 'Show descriptions' ELSE 'Hide descriptions' END AS description_behavior, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_description_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - id: edit_ecommerce_shop_product_descriptions_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Product Descriptions
+    action: ecommerce.shop.product_descriptions.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_product_descriptions_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, show_descriptions]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_product_description_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_STALE, message: These Shop product descriptions settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(CAST(:show_descriptions AS VARCHAR)) IN ('true', 'false')", status: 422, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_INVALID, message: Show descriptions must be true or false. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_product_description_policies SET show_descriptions = CAST(:show_descriptions AS BOOLEAN), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_PRODUCT_DESCRIPTIONS_STALE, message: These Shop product descriptions settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, show_descriptions, CASE WHEN show_descriptions THEN 'Show descriptions' ELSE 'Hide descriptions' END AS description_behavior, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_product_description_policies WHERE id = :id" }
+    fields:
+      - { field: show_descriptions, label: Show Product Descriptions, type: checkbox, required: true }

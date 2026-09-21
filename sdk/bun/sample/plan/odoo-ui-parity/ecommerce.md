@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product page extra-fields slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop product-card descriptions slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card Descriptions (`ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`)
+
+Wave 43 selects the Website Sale Products Design Panel's Description checkbox.
+Odoo persists the selected `o_wsale_products_opt_has_description` class in
+`website.shop_opt_products_design_classes`; the Shop grid applies the class to
+the product-card design and the builder saves the class list through
+`/shop/config/website`. This is the card visibility policy, distinct from the
+completed product `website_description` content field.
+
+Core3 migration 150 and deterministic data migration 151 add a durable,
+company-scoped boolean policy defaulting to the Odoo default of showing
+descriptions. Separate `api/shop-product-descriptions-policy.yaml` and
+`pages/shop-product-descriptions-policy.yaml` contracts join by
+`ecommerce-shop-product-descriptions-policy`; the update requires
+`ecommerce.write`, validates the boolean, and uses company and row-version
+guards. The Shop API projects the effective policy onto products and a
+read-only Shop projection exposes the same setting.
+
+Focused tests cover the supplied Odoo model, builder plugin/panel, and
+template; page/API separation; permissioned update; missing, invalid,
+foreign-company, and stale guards; migration replay; Shop projection; and
+DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-descriptions-001/`.
+Authenticated Core3 desktop/mobile capture and paired Odoo rendering remain
+runtime-blocked; no Ecommerce module sign-off is claimed.
 
 ## Bounded feature — Product Page Grid Columns (`ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`)
 

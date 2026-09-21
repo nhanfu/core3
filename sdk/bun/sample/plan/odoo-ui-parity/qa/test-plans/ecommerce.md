@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001
+
+- ECOM-FUNC-072: trace Website Sale
+  `website.shop_opt_products_design_classes`, the Products Design Panel
+  `o_wsale_products_opt_has_description` checkbox, its
+  `/shop/config/website` save boundary, and the Shop template class
+  projection; verify separate Core3 policy and Shop page/API contracts.
+- ECOM-WF-083: replay the deterministic visible-description policy, hide and
+  restore card descriptions, project the effective Shop setting, reject
+  invalid, foreign-company, missing, and stale writes, and preserve it across
+  migration replay and DuckDB restart.
+- ECOM-PERM-079: require `ecommerce.read` for policy/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-065: render the configuration form and Shop projection at desktop
+  and mobile and compare the authenticated Odoo Products Design Panel
+  Description checkbox; Core3 runtime is unavailable and Odoo `/shop` is
+  HTTP 404 in the supplied references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001
 
 - ECOM-FUNC-071: trace Website Sale `product_page_grid_columns`, the

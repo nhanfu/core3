@@ -1,5 +1,23 @@
 # ecommerce QA ledger
 
+## Shop Product-Card Descriptions (`ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`, 2026-09-21)
+
+- Odoo source/builder/template: pass. `website.shop_opt_products_design_classes`
+  stores the `o_wsale_products_opt_has_description` checkbox and the Shop
+  template applies the class list to product cards.
+- Core3 lifecycle: migrations 150/151 add the durable company policy and
+  deterministic visible-description fixture. Separate page/API YAML exposes
+  a permissioned optimistic update and the Shop API projects the effective
+  policy.
+- Focused verification: **2 tests, 29 assertions, 0 failures**.
+- Adjacent Shop regression: **10 passes and one existing grid-columns timeout**;
+  the timed-out test rerun independently passed **2 tests, 26 assertions**.
+- Audit: **758 pages, 767 routes, 1544 datasources**, passed. Scoped ESLint
+  and `git diff --check` pass. Core3 desktop/mobile capture is unavailable;
+  Odoo `/shop` is HTTP 404 on ports 8069 and 8073. Module sign-off remains
+  open.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-descriptions-001/`.
+
 ## Product Page Grid Columns (`ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`, 2026-09-21)
 
 - Odoo source/builder: pass. `website.product_page_grid_columns` defaults to

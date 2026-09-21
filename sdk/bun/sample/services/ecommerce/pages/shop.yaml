@@ -48,3 +48,9 @@ components:
     title_field: company_name
     groups:
       - { title: Shop Grid, columns: 2, fields: [{ field: company_name, label: Company }, { field: grid_gap, label: Shop Grid Gap, type: StatusChip }] }
+  - type: OdooFormView
+    source: ecommerce_shop_product_descriptions
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Shop Product Cards, columns: 2, fields: [{ field: company_name, label: Company }, { field: show_descriptions, label: Show Product Descriptions, type: Boolean }, { field: description_behavior, label: Current Behavior, type: StatusChip }] }

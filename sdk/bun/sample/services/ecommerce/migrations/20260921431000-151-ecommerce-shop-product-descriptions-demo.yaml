@@ -1,0 +1,14 @@
+version: 0.0.151
+kind: data
+description: deterministic Website Sale Shop product-card description visibility fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_description_policies (id, row_version, company_name, show_descriptions)
+      VALUES ('ecommerce-shop-product-descriptions-my-company', 1, 'My Company', TRUE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_description_policies WHERE id = 'ecommerce-shop-product-descriptions-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

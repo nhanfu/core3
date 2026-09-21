@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Product-Card Descriptions](ecom-catalog-shop-product-descriptions-001/README.md)
+
 - [Product Page Grid Columns](ecom-catalog-product-page-grid-columns-001/README.md)
 
 - [Product Page Extra Fields](ecom-catalog-product-extra-fields-001/README.md)

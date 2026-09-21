@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 43 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`
+(committed locally as `f12a1362eb7dc669cadf39c5a7ad88f226fdac4a`; not pushed).
 Latest Wave 42 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`
 (committed locally; not pushed).
 Latest Wave 41 bounded slice: `ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`
@@ -36,6 +38,14 @@ Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+Wave 43 verification: the focused suite passes **2 tests and 29 assertions**;
+the bounded Shop regression had one concurrent 5000ms timeout, while its
+isolated grid-columns rerun passes **2 tests and 26 assertions**. The global UI
+audit passes at **758 pages, 767 routes, and 1544 datasources**; scoped ESLint
+and Ecommerce diff checks pass. Core3 desktop/mobile capture is unavailable;
+Odoo `/shop` is HTTP 404 on 8069 and 8073. Ecommerce module sign-off remains
+open.
 
 Wave 42 verification: the focused suite passes **2 tests and 30 assertions**;
 the Product Detail/layout regression passes **17 tests and 193 assertions**.
