@@ -4,8 +4,26 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `29be880bcb203a6ee09b632f1cca2159dc17ceab`
-(`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`, not pushed).
+Latest committed bounded slice: `d63f86dbba63048508ef3792f48fd195eebd81a1`
+(`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`, local and not pushed). The prior
+zero-price policy commit remains `29be880bcb203a6ee09b632f1cca2159dc17ceab`.
+
+## Current bounded task — `ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`
+
+Wave 22 selected Odoo Website Sale's `website.add_to_cart_action`, backed by
+the `cart_redirect_setting`, website session, cart service, and `/shop/cart/add`
+controller. Core3 migrations 108/109 add a company-scoped durable policy and
+deterministic fixture. Separate page/API YAML provides the Configuration form,
+mode options, permissioned optimistic update, and shop mutation redirect intent
+for authenticated and anonymous carts.
+
+Focused verification passed **3 tests, 31 assertions, 0 failures**; the Shop
+regression plus the focused suite passed **6 tests, 56 assertions, 0 failures**.
+Scoped Ecommerce YAML validation, scoped ESLint, and `git diff --check` passed;
+the repository UI audit passed at 725 pages, 734 routes, and 1407 datasources.
+Core3 authenticated desktop/mobile capture is blocked
+by missing `js_repl` and unavailable ports 3000/4312/4313; Odoo `/shop` is an
+exact HTTP 404 on 8069/8073. Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`
 
