@@ -305,6 +305,29 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 40 — `TIMESHEET-TASK-ACTION-GRAPH-VIEW-001`
+
+- Source: `hr_timesheet/models/project_task.py`,
+  `action_view_subtask_timesheet` replaces the graph view with
+  `hr_timesheet.view_hr_timesheet_line_graph_by_employee`.
+- Core3: `task-timesheets` page/API retains the `page.id` binding; the page
+  adds a desktop-only Graph tab using employee categories and hours measure,
+  while the API's durable task entry source supplies graph-ready fields.
+- Persistence/security: migration `20260921180000-023-timesheets-task-action-graph.yaml`
+  adds the task graph lookup index; source rows remain current-company and
+  `timesheets.read` scoped with missing, empty, and descendant guards.
+- Focused test:
+  `test/timesheets_task_action_graph_view.integration.test.ts` — 4/4 tests,
+  19 expectations. Related task regression — 30/30 tests, 170 expectations.
+- Restart: file-backed DuckDB close/reopen with migration replay.
+- Static gates: scoped ESLint passed; UI audit passed at 755 pages / 764
+  routes / 1,528 datasources; staged Timesheets diff-check recorded before
+  commit.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. No authenticated desktop/mobile
+  evidence or sign-off is claimed. Exact blockers are in the feature evidence
+  directory.
+
 ## Wave 39 — `TIMESHEET-TASK-ACTION-PROJECT-CONTEXT-001`
 
 - Source: `hr_timesheet/models/project_task.py`,

@@ -19,6 +19,7 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: hours, measure_label: Time Spent, type: bar, mobile: false }
     columns:
       - { field: work_date, label: Date }
       - { field: employee_name, label: Employee }

@@ -2095,3 +2095,34 @@ Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
 `/web/login`, so authenticated desktop/mobile comparison is blocked and no
 visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
 open.
+
+## Wave 40 — `TIMESHEET-TASK-ACTION-GRAPH-VIEW-001`
+
+The next uncovered task action behavior is Odoo's graph-view replacement in
+`project.task.action_view_subtask_timesheet`. The source swaps in
+`view_hr_timesheet_line_graph_by_employee` while retaining the task and
+descendant Timesheet scope. This is distinct from the completed task/project
+contexts, active_ids scope, personal analysis pages, and report previews.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds a desktop-only
+Graph tab categorized by employee with Time Spent as the measure. The API
+continues to expose the durable `task_timesheet_entries` datasource with
+employee, task, date, and hours fields, preserving current-company,
+permission, missing, empty, and descendant-scope guards. The contracts remain
+joined by `page.id: task-timesheets`. Migration
+`20260921180000-023-timesheets-task-action-graph.yaml` adds a replay-safe task
+graph lookup index.
+
+Focused coverage is
+`test/timesheets_task_action_graph_view.integration.test.ts`: 4 tests / 19
+expectations. Related task/action/report coverage is 30 tests / 170
+expectations. Scoped ESLint and UI audit pass at 755 pages, 764 routes, and
+1,528 datasources; the Timesheets-owned staged diff check is recorded with the
+commit evidence.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-graph-view-001/`.
+Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
+`/web/login`, so authenticated desktop/mobile comparison is blocked and no
+visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
+open.

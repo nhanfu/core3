@@ -1088,3 +1088,21 @@ claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-project-context-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no module sign-off is
 claimed.
+
+## Wave 40 — `TIMESHEET-TASK-ACTION-GRAPH-VIEW-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `action_view_subtask_timesheet`, `view_hr_timesheet_line_graph_by_employee`, graph replacement branch | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page and API `page.id` binding | pass |
+| Durable graph projection | employee category, task/date fields, persisted hours measure | pass |
+| Permission/company/missing/empty guards | `timesheets.read`, current company, missing/empty fixtures | pass |
+| Guarded CRUD freshness | created task row is graph-ready and remains task/project guarded | pass |
+| Restart | migration replay and file-backed graph-ready rows survive reopen | pass |
+| Focused regression | new test 4/4 (19 expectations); related task regression 30/30 (170 expectations) | pass |
+| Audit/lint/diff | UI audit 755/764/1528; ESLint; staged `git diff --check` | pass after staging |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task graph capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login`; no sign-off |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-graph-view-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no module sign-off is
+claimed.

@@ -1022,6 +1022,26 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-GRAPH-VIEW-001`
+
+- Selected the missing graph branch of Odoo
+  `project.task.action_view_subtask_timesheet`, which replaces the action graph
+  with `view_hr_timesheet_line_graph_by_employee` while retaining task and
+  descendant scope.
+- Added a desktop-only employee-by-task Graph tab to the layout-only
+  `task-timesheets` page, backed by the existing durable API entry projection,
+  plus replay-safe migration `20260921180000-023-timesheets-task-action-graph.yaml`.
+  Page/API remain joined by `page.id: task-timesheets`; company, permission,
+  missing, empty, create, and restart behavior remain covered.
+- Focused coverage passed 4/4 tests with 19 expectations. Related task,
+  action, report, and preview coverage passed 30/30 tests with 170
+  expectations. Scoped ESLint passed; UI audit passed at 755 pages / 764
+  routes / 1,528 datasources.
+- Core3 port 3001 refused connections and Odoo 8069/8073 exposed only the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.
+
 ## 2026-09-21 — `TIMESHEET-TASK-ACTION-PROJECT-CONTEXT-001`
 
 - Selected Odoo `project.task.action_view_subtask_timesheet`, whose source
