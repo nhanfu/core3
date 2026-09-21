@@ -1,0 +1,47 @@
+page: { id: manufacturing-work-center-overview }
+datasources:
+  - id: mrp_workcenter_overview
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_WORKCENTER_OVERVIEW_UNAUTHORIZED, message: Sign in to view Work Centers Overview. }
+      forbidden: { status: 403, code: MRP_WORKCENTER_OVERVIEW_FORBIDDEN, message: You do not have permission to view Work Centers Overview. }
+      transport_error: { status: 503, code: MRP_WORKCENTER_OVERVIEW_UNAVAILABLE, message: Work Centers Overview is temporarily unavailable. }
+    query: |
+      SELECT w.id, w.row_version, w.name, COALESCE(w.code, '') AS code, w.active,
+        w.working_state, w.company_name,
+        COALESCE(m.oee, 0) AS oee, COALESCE(m.planned_minutes, 0) AS planned_minutes,
+        SUM(CASE WHEN wo.state NOT IN ('Finished', 'Cancelled') THEN 1 ELSE 0 END) AS workorder_count,
+        SUM(CASE WHEN wo.state = 'Ready' THEN 1 ELSE 0 END) AS ready_workorder_count,
+        SUM(CASE WHEN wo.state = 'Progress' THEN 1 ELSE 0 END) AS progress_workorder_count,
+        SUM(CASE WHEN wo.late = TRUE AND wo.state NOT IN ('Finished', 'Cancelled') THEN 1 ELSE 0 END) AS late_workorder_count
+      FROM mrp_workcenters w
+      LEFT JOIN mrp_workcenter_overview_metrics m ON m.workcenter_id = w.id
+      LEFT JOIN mrp_workorders wo ON wo.workcenter = w.name
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:active IS NULL OR (:active = 'active' AND w.active = TRUE) OR (:active = 'archived' AND w.active = FALSE))
+        AND (:working_state IS NULL OR w.working_state = :working_state)
+        AND (:q IS NULL OR w.name ILIKE '%' || :q || '%' OR COALESCE(w.code, '') ILIKE '%' || :q || '%')
+      GROUP BY w.id, w.row_version, w.name, w.code, w.active, w.working_state, w.company_name, m.oee, m.planned_minutes, w.sequence
+      ORDER BY w.sequence, w.id
+actions:
+  - id: view_mrp_workcenter_overview
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /work-centers/detail
+    params: { id: '{row.id}' }
+  - id: open_mrp_workcenter_orders
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /workorders
+    params: { workcenter: '{row.name}', search_default_ready: true, search_default_progress: true, search_default_blocked: true }
+  - id: open_mrp_workcenter_waiting
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /workorders
+    params: { workcenter: '{row.name}', state: Waiting, search_default_ready: false, search_default_progress: false, search_default_blocked: false }
+  - id: open_mrp_workcenter_oee
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/oee
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}' }

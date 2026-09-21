@@ -164,6 +164,12 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 - Desktop/mobile visual parity: pending
 - Tester decision: conditional; no module sign-off until paired Odoo and remaining interaction gates close
 
+## 2026-09-21 Work Centers Overview bounded slice
+
+- Source basis: local Odoo 19 `mrp_workcenter_kanban_action` / `mrp_workcenter_kanban` in `addons/mrp/views/mrp_workcenter_views.xml`; distinct from the completed configuration Work Centers action.
+- Product evidence: `test/manufacturing_work_center_overview.integration.test.ts` passes 3 tests / 22 assertions. The isolated Manufacturing discovery audit passes 33 pages / 36 routes / 68 datasources; targeted ESLint and `git diff --check` pass.
+- Browser blocker: the authenticated shared Odoo browser instance `245ea108` rendered Discuss at `http://localhost:8069/odoo`; the Manufacturing launcher was absent and `/odoo/manufacturing` redirected to Discuss. The Core3 runtime reached its login page, but the browser profile had no Core3 session and the browser-skill login-help request received no human completion. No desktop/mobile screenshot pair was obtained, and no visual parity or module sign-off is claimed.
+
 ## Merge review record — candidate `383583f6` / QA `112ed911`
 
 - The QA results were retained as conditional evidence: 10 tests/108

@@ -39,6 +39,7 @@ IDs/dates.
 | MRP-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate MOs, work orders or moves | planned restart/migration gate |
 | MRP-FUNC-009 | Attachments/import/export/print | Exercise exposed BoM/MO attachments, import/export and report/print actions | planned browser interaction gate |
 | MRP-FUNC-010 | Work Orders action 649 existing-record edit | Open a non-terminal work order, edit operation/work center/duration/schedule, reload, and confirm persisted values; prove create/delete are not exposed by the Odoo action | planned bounded continuation |
+| MRP-FUNC-011 | Work Centers Overview action | Persist dashboard metrics, derive work-order counts by work center, and preserve empty/transport/permission boundaries without CRUD controls | pass: focused suite |
 
 ## Workflow and integration cases
 
@@ -62,6 +63,7 @@ IDs/dates.
 | MRP-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | MRP-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current manufacturing row unchanged | pass at contract level |
 | MRP-PERM-007 | Work Orders action 649 edit | Manufacturing write can edit a non-terminal work order; read-only/ordinary actors cannot invoke the mutation; create/delete remain unavailable | planned bounded continuation |
+| MRP-PERM-008 | Work Centers Overview | Dashboard datasource and navigation actions require `manufacturing.read`; no mutation action is exposed by the create-disabled source action | pass: focused suite |
 
 ## Visual, responsive, and regression cases
 
@@ -72,6 +74,7 @@ IDs/dates.
 | MRP-UI-003 | Reports/configuration | both | Graph/pivot/list, settings and configuration forms match Odoo | planned paired capture |
 | MRP-UI-004 | Current route regression | all 32 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 64-check matrix |
 | MRP-UI-005 | Work Orders edit form | Odoo action 649 list/detail/edit state | 1440x900 and 390x844 | Work Order form exposes Edit for non-terminal rows, preserves visible tabs/status, saves without overflow, and reload shows the persisted change | planned bounded continuation |
+| MRP-UI-006 | Work Centers Overview Kanban/Form | `/manufacturing/work-centers-overview` | 1440x900 and 390x844 | Dashboard cards expose status, work-order counts, OEE/load metrics, and guarded navigation without overflow | blocked: Core3 auth and Odoo MRP menu unavailable in shared profile |
 
 ## Exit criteria
 

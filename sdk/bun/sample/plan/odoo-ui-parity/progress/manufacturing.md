@@ -30,6 +30,19 @@ Status: in-progress
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated manufacturing QA
 
+## 2026-09-21 bounded next slice — Work Centers Overview
+
+- Implemented the uncovered Odoo `mrp_workcenter_kanban_action` dashboard as a
+  page/API-separated Core3 route with durable overview metrics and derived
+  persisted Work Order counts.
+- Focused verification passes 3 tests / 22 assertions; targeted ESLint and
+  `git diff --check` pass. Manufacturing-only discovery passes 33 pages, 36
+  routes, and 68 datasources.
+- The global audit is blocked by unrelated schema errors in other modules.
+  Authenticated Odoo MRP and Core3 desktop/mobile browser evidence is blocked
+  by the shared-profile redirects/missing Core3 auth; this remains conditional
+  and is not a parity sign-off.
+
 ## Current state
 
 The module has a current functional/browser QA candidate. No complete parity

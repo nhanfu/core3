@@ -2,6 +2,50 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-21 Work Centers Overview bounded slice
+
+Source inspection after the completed Work Orders action-649 checkpoint found
+one distinct installed `mrp` action not represented by Core3's configuration
+Work Centers page: `mrp.mrp_workcenter_kanban_action`, named **Work Centers
+Overview**, at the source path `/odoo/work-centers`. The local Odoo 19 source
+defines it in `addons/mrp/views/mrp_workcenter_views.xml` with model
+`mrp.workcenter`, `kanban,form` modes, the dashboard Kanban view
+`mrp_workcenter_kanban`, `create="0"`, `can_open="0"`, persisted work-order
+counts/state/OEE fields, and navigation into Work Orders, OEE, Performance, and
+Waiting Availability. It is a distinct action from the configured
+`mrp.mrp_workcenter_action` (`/odoo/workcenters`, `list,kanban,form`) already
+covered by Core3 `/work-centers`.
+
+The shared authenticated Odoo browser session was checked at
+`http://localhost:8069/odoo` using browser instance `245ea108`. The current
+reference tab rendered Discuss and the launcher had no Manufacturing menu;
+`/odoo/manufacturing` and `/odoo?db=core3_reference` also resolved to Discuss.
+No reference database or credentials were changed, and no source visual claim
+is made from that redirect.
+
+Core3 adds the bounded route `/manufacturing/work-centers-overview`. The page
+contract is presentation-only in `pages/work-center-overview.yaml`; the
+page-id-bound backend contract is `api/work-center-overview.yaml`. Migration
+`20260921090000-020-work-center-overview.yaml` durably seeds one deterministic
+overview-metrics row per existing work center. The datasource derives active,
+blocked, ready, in-progress, and late work-order counts from persisted
+`mrp_workorders`, joins the durable OEE/load snapshot, and exposes explicit
+read/401/403/503 states. Navigation actions are read-permissioned and reuse the
+existing guarded Work Orders workflow; create/update/delete are intentionally
+absent because the source overview action is dashboard-only and create-disabled.
+
+Focused coverage is
+`test/manufacturing_work_center_overview.integration.test.ts`: 3 tests / 22
+assertions pass, including page/API separation, source `kanban,form` contract,
+idempotent migration replay, persisted metrics, derived counts, empty and
+transport states, and permissioned navigation. Isolated Manufacturing
+discovery passes with 33 pages, 36 routes, and 68 datasources. The full sample
+audit is blocked by unrelated pre-existing schema errors in other modules, and
+authenticated Core3 desktop/mobile captures could not be completed because the
+shared profile was not authenticated to Core3 and the browser login-help
+request received no human completion. This slice therefore has no browser
+visual sign-off and does not claim full Manufacturing parity.
+
 ## 2026-09-20 Work Orders action 649 bounded gap
 
 Independent inspection of the current Core3 Work Orders contract, the Odoo 19

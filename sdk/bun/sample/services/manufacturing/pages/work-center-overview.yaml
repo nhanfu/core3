@@ -1,0 +1,46 @@
+title: Work Centers Overview
+page: { id: manufacturing-work-center-overview, route: /manufacturing/work-centers-overview, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers Overview], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workcenter_overview
+    search: { label: Search work centers, placeholder: Search work centers or codes... }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+      - { field: working_state, label: Workcenter Status, options: [{ id: normal, label: Normal }, { id: blocked, label: Blocked }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: ''
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: working_state, label: Status, type: StatusChip }
+            - { field: workorder_count, label: Work Orders }
+            - { field: ready_workorder_count, label: To Launch }
+            - { field: progress_workorder_count, label: In Progress }
+            - { field: late_workorder_count, label: Late }
+            - { field: oee, label: OEE }
+            - { field: oee_target, label: OEE Target }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/work-center-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_workcenter_overview
+    row_double_click_action: view_mrp_workcenter_overview
+    row_actions: menu
+    empty_state: { title: No work centers found, description: No work centers match the current filters. }
+    columns:
+      - { field: name, label: Work Center, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: working_state, label: Status, type: StatusChip, mobile: true }
+      - { field: workorder_count, label: Work Orders, align: right, mobile: true }
+      - { field: ready_workorder_count, label: To Launch, align: right, mobile: false }
+      - { field: progress_workorder_count, label: In Progress, align: right, mobile: false }
+      - { field: late_workorder_count, label: Late, align: right, mobile: false }
+      - { field: planned_minutes, label: Load (minutes), align: right, mobile: false }
+      - { field: oee, label: OEE, align: right, mobile: true }
+      - { field: oee_target, label: OEE Target, align: right, mobile: false }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: open_mrp_workcenter_orders, label: Work Orders, icon: tools }, { id: open_mrp_workcenter_oee, label: OEE, icon: chart }, { id: view_mrp_workcenter_overview, label: Open, icon: eye }] }
+    page_size: 25

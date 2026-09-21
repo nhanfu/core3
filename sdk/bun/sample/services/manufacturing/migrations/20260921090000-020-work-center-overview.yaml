@@ -1,0 +1,32 @@
+version: 0.0.20
+description: Durable Work Center Overview dashboard metrics
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_workcenter_overview_metrics (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        workcenter_id VARCHAR NOT NULL UNIQUE,
+        oee DECIMAL(8,2) NOT NULL DEFAULT 0,
+        planned_minutes DECIMAL(18,2) NOT NULL DEFAULT 0,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO mrp_workcenter_overview_metrics (id, workcenter_id, oee, planned_minutes, company_name)
+      VALUES
+        ('workcenter-overview-assembly-1', 'workcenter-assembly-1', 72, 330, 'My Company'),
+        ('workcenter-overview-assembly-2', 'workcenter-assembly-2', 64, 60, 'My Company'),
+        ('workcenter-overview-drill-1', 'workcenter-drill-1', 0, 25, 'My Company'),
+        ('workcenter-overview-packaging-1', 'workcenter-packaging-1', 0, 0, 'My Company')
+      ON CONFLICT(workcenter_id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_workcenter_overview_metrics WHERE id IN (
+        'workcenter-overview-assembly-1', 'workcenter-overview-assembly-2',
+        'workcenter-overview-drill-1', 'workcenter-overview-packaging-1'
+      );
+      DROP TABLE IF EXISTS mrp_workcenter_overview_metrics;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
