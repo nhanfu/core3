@@ -1843,6 +1843,36 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 36 — `TIMESHEET-PROJECT-ACTION-DISPLAY-NAME-001`
+
+The smallest remaining source-backed project action behavior is Odoo's
+`project.project.action_project_timesheets` display-name branch. A standalone
+project action is labeled `<Project>'s Timesheets`; an embedded project action
+with `from_embedded_action` keeps the generic `Timesheets` label. This is
+distinct from the completed project context default and multi-project action
+scope slices.
+
+Core3 keeps `pages/project-timesheets.yaml` layout-only and adds the durable,
+permission-gated `project_timesheet_action_context` datasource to
+`api/project-timesheets.yaml`, joined by `page.id: project-timesheets`. The
+page renders the resolved label through a `StatRow`. The datasource fails
+closed for empty, inactive, non-timesheetable, missing-analytic-account, or
+foreign-company projects and derives all values from the durable project
+relation; no migration is needed.
+
+Focused coverage is
+`test/timesheets_project_action_display_name.integration.test.ts`: 3 tests /
+18 expectations, including Odoo source mapping, both display-name branches,
+page/API separation, permission metadata, current-company/empty guards, and
+file-backed restart stability.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-project-action-display-name-001/`.
+Core3 port 3001 refused both bounded probes and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures are blocked and no
+visual sign-off is claimed. Existing Odoo Print/PDF/action blockers remain
+open.
+
 ## Wave 35 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
 
 The next smallest uncovered project action behavior is Odoo's separate

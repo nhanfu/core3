@@ -1017,3 +1017,20 @@ claimed.
 
 Evidence: `evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`.
 Odoo Print/PDF/action parity remains a separate blocker.
+
+## Wave 36 — `TIMESHEET-PROJECT-ACTION-DISPLAY-NAME-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source comparison | `action_project_timesheets`, standalone `<Project>'s Timesheets`, embedded `from_embedded_action` generic label | pass in focused source test |
+| Paired YAML contract | layout-only `project-timesheets` page, API `page.id`, action-context `StatRow` binding | pass |
+| Durable action context | label derived from durable current-company project relation | pass |
+| Permission/company/empty guards | `timesheets.read`, current company, active/timesheetable/analytic-account project, empty fixture | pass |
+| Restart | migration replay and file-backed label read | pass |
+| Focused regression | 3 tests, 18 expectations | pass |
+| Audit/lint/diff | scoped ESLint, UI audit 750/759/1504, Timesheets-owned `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo project action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-project-action-display-name-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.

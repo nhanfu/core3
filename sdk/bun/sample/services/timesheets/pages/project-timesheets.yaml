@@ -53,5 +53,9 @@ components:
     row_double_click_action: view_project_timesheet_entry
     form_view: { page: apps/services/timesheets/pages/timesheet-detail.yaml, side_panel: true }
     empty_state: { title: No timesheets, description: Track your working hours by projects every day. }
+  - type: StatRow
+    source: project_timesheet_action_context
+    title: Project action context
+    stats: [{ label: Action title, field: action_label }]
 actions:
   - { id: view_project_timesheet_entry, type: navigate, permission: timesheets.read, navigate_to: /timesheets/detail, params: { id: '{row.id}', view_scope: project } }

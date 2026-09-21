@@ -17,6 +17,11 @@ datasources:
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: PROJECT_TIMESHEET_SCOPE_UNAVAILABLE, message: Project timesheet scope is temporarily unavailable. } }
     query: "WITH selected_projects AS (SELECT p.id, p.name, p.company_name FROM timesheet_projects p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account AND p.id IN (SELECT UNNEST(string_split(COALESCE(NULLIF(:project_ids, ''), :project_id), ',')))), selected_scope AS (SELECT STRING_AGG(id, ',' ORDER BY id) AS project_ids, STRING_AGG(name, ', ' ORDER BY id) AS project_names, COUNT(*) AS project_count FROM selected_projects), entry_totals AS (SELECT COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_entries e JOIN selected_projects p ON p.id = e.project_id AND p.company_name = e.company_name) SELECT s.project_ids, s.project_names, s.project_count, e.entry_count, e.total_hours FROM selected_scope s CROSS JOIN entry_totals e WHERE s.project_count > 0"
+  - id: project_timesheet_action_context
+    single: true
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: PROJECT_TIMESHEET_ACTION_CONTEXT_UNAVAILABLE, message: Project timesheet action context is temporarily unavailable. } }
+    query: "SELECT p.id, p.name AS project_name, CASE WHEN LOWER(CAST(COALESCE(:from_embedded_action, 'false') AS VARCHAR)) IN ('true', '1') THEN 'Timesheets' ELSE p.name || '''s Timesheets' END AS action_label FROM timesheet_projects p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :project_id AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account"
   - id: project_timesheet_context
     single: true
     permission: timesheets.read

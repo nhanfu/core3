@@ -305,6 +305,24 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 36 — `TIMESHEET-PROJECT-ACTION-DISPLAY-NAME-001`
+
+- Source: `hr_timesheet/models/project_project.py` `action_project_timesheets`.
+- Standalone action label: `<Project>'s Timesheets`.
+- Embedded action context: `from_embedded_action` preserves generic `Timesheets`.
+- Core3 pair: `pages/project-timesheets.yaml` and
+  `api/project-timesheets.yaml`, joined by `page.id`.
+- API source: `project_timesheet_action_context`, derived from durable
+  `timesheet_projects`, permission `timesheets.read`.
+- Guards: current company, active project, timesheetable project, analytic
+  account, empty fixture, and missing project.
+- Focused test: `test/timesheets_project_action_display_name.integration.test.ts`
+  — 3 tests / 18 expectations.
+- Restart: file-backed DuckDB close/reopen with migration replay.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. No authenticated desktop/mobile
+  evidence or sign-off is claimed.
+
 ## Wave 35 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
 
 - Source: `hr_timesheet/views/hr_timesheet_views.xml`,
