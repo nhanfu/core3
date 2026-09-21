@@ -77,3 +77,27 @@ layout-only; workflow/API contracts own persistence and guards.
 - Full Blog wildcard regression was attempted but shared discovery was blocked
   by unrelated concurrent Sales duplicate datasource `sale_quotation_templates`;
   no full-suite claim is made.
+
+## BLOG-BLOG-ARCHIVE-001 — 2026-09-22
+
+Implemented the next source-backed Blog slice from Odoo 19's
+`BlogBlog.active`, `BlogBlog.write()` cascade, and Blogs Archived search filter.
+The page/API contract remains separated by `page.id: blog`; the existing
+baseline active column is reused and the workflow owns durable archive state.
+
+- `services/blog/pages/blogs.yaml` now defaults to active blogs, exposes the
+  Records Active/Archived filter, and declares row archive affordances.
+- `services/blog/api/blogs.yaml` owns the active-state datasource and
+  permissioned archive/unarchive actions; `pages/blog-blog-workflow.yaml`
+  enforces row-version/company guards and cascades to child posts.
+- `services/blog/operations.yaml` requires the parent blog to be active for
+  public list/detail reads.
+- Focused test: `bun test ./test/blog_blog_archive.integration.test.ts
+-  --timeout 20000` — 4 pass, 25 assertions, including file-backed restart.
+- Blog wildcard: `bun test ./test/blog*.integration.test.ts --timeout 20000` —
+  32 pass, 181 assertions; UI audit passed at 784 pages, 793 routes, and 1,614
+  datasources; Blog Sass, targeted ESLint, and diff-check passed.
+- Odoo desktop/mobile blocker captures are recorded under the 2026-09-22
+  Blog evidence bundle. Website/Blog is not installed in `core3_reference`
+  (`/blog` is 404), and Core3 `localhost:3001` refused connection; no paired
+  visual-parity claim is made.

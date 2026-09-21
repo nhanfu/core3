@@ -1,12 +1,15 @@
 page: { id: blog }
 datasources:
+  - id: blog_active_states
+    permission: blog.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
   - id: blog_blogs
     permission: blog.read
     error_states:
       unauthorized: { status: 401, code: BLOG_BLOGS_UNAUTHORIZED, message: Sign in to view blogs. }
       forbidden: { status: 403, code: BLOG_BLOGS_FORBIDDEN, message: You do not have permission to view blogs. }
       transport_error: { status: 503, code: BLOG_BLOGS_UNAVAILABLE, message: Blogs are temporarily unavailable. }
-    query: "SELECT b.id, b.row_version, b.name, b.subtitle, b.active, b.sequence, b.company_name, (SELECT COUNT(*) FROM blog_posts p WHERE p.blog_id = b.id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name))) AS post_count FROM blog_blogs b WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR b.company_name = COALESCE(:current_company_name, :company_name)) AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.subtitle ILIKE '%' || :q || '%') ORDER BY b.sequence, b.name, b.id"
+    query: "SELECT b.id, b.row_version, b.name, b.subtitle, b.active, b.sequence, b.company_name, (SELECT COUNT(*) FROM blog_posts p WHERE p.blog_id = b.id AND p.active = TRUE AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name))) AS post_count FROM blog_blogs b WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR b.company_name = COALESCE(:current_company_name, :company_name)) AND (CAST(:active AS VARCHAR) IS NULL OR (CAST(:active AS VARCHAR) = 'active' AND b.active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND b.active = FALSE)) AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.subtitle ILIKE '%' || :q || '%') ORDER BY b.sequence, b.name, b.id"
   - id: blog_detail
     single: true
     permission: blog.read
@@ -65,3 +68,21 @@ actions:
       - { field: name, label: Blog Name, type: text, required: true }
       - { field: subtitle, label: Blog Subtitle, type: text }
       - { field: company_name, label: Company, type: text }
+  - id: archive_blog
+    type: server
+    permission: blog.manage
+    action: blog.blogs.archive
+    handler: order_transition
+    workflow: blog_blogs
+    operation: archive
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', current_company_name: '{row.company_name}' }
+    refresh: [blog_blogs, blog_detail, blog_posts]
+  - id: unarchive_blog
+    type: server
+    permission: blog.manage
+    action: blog.blogs.unarchive
+    handler: order_transition
+    workflow: blog_blogs
+    operation: unarchive
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', current_company_name: '{row.company_name}' }
+    refresh: [blog_blogs, blog_detail, blog_posts]

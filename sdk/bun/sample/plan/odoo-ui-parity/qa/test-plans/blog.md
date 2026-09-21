@@ -5,7 +5,7 @@ QA owner: blog-qa
 Developer owner: blog module owner  
 Reference addon/version: website_blog, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This plan follows [`blog.md`](../../blog.md); executed evidence is recorded in
 [`../blog.md`](../blog.md).
@@ -80,3 +80,13 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-ARCHIVE-WF-001 | workflow | Same actor; archived post | Unarchive persists `active = true`, returns the post to Draft, does not republish it, and increments row version | pass: focused 3-test slice |
 | BLOG-ARCHIVE-PERM-001 | permission/security | Read/write actor without `blog.manage` | Archive is rejected with 403 and the row remains unchanged | pass: focused 3-test slice |
 | BLOG-ARCHIVE-UI-001 | responsive/visual | Authenticated shared Odoo profile; 1440x900 target and 390x844 target | Odoo Blog Post Pages and archived filter should be compared against Core3; exact blockers are recorded because reference `/blog` is 404 and Core3 `:3001` is unavailable | blocked: no visual claim |
+
+## BLOG-BLOG-ARCHIVE-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-BLOG-ARCHIVE-FUNC-001 | functional/data | Seeded active blog with one published and one draft child post; Blog Manager with `blog.manage` | Archive persists parent `active=false`, increments its version, sets every child inactive/Archived, clears publication dates, and increments child versions; unarchive restores active Draft without republishing | pass: focused 4-test slice, 25 assertions |
+| BLOG-BLOG-ARCHIVE-PERM-001 | permission/security | Blog Editor with `blog.read` and `blog.write` but no `blog.manage` | Archive returns 403 and parent/children remain unchanged | pass: focused slice |
+| BLOG-BLOG-ARCHIVE-WF-001 | workflow/security | Blog Manager with stale parent row version and wrong-company context | Guard returns 409 before mutation; no child cascade occurs | pass: stale and company guard contract |
+| BLOG-BLOG-ARCHIVE-RESTART-001 | data/regression | File-backed DuckDB; archive then close/reopen and reapply migrations | Parent and all cascaded child states remain durable after restart | pass: focused slice |
+| BLOG-BLOG-ARCHIVE-UI-001 | responsive/visual | Authenticated Odoo reference, desktop and emulated mobile | Compare Blogs Archived filter and archive actions at 1440x900 and 390x844; record exact blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection |

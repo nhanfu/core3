@@ -58,6 +58,17 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 | BLOG-ARCHIVE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `/tmp/core3-odoo-parity/blog/2026-09-21/odoo-blog-404-desktop.png` (1916x833), `odoo-blog-404-mobile.png` (390x844) | blocked: Odoo Website/Blog is not installed in `core3_reference`; Core3 `localhost:3001` refused connection |
 | BLOG-QA-009 | Slice regression/tooling gates | Focused archive test 3/13, Blog Sass build, and Blog-scoped `git diff --check`; full Blog wildcard attempted | conditional pass; full wildcard blocked by unrelated concurrent Sales duplicate `sale_quotation_templates` discovery ID |
 
+## Blog archive/unarchive slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-BLOG-ARCHIVE-FUNC-001 | Durable Odoo `blog.blog.active` archive state | `test/blog_blog_archive.integration.test.ts` — active blog archives to `active=false`, increments the blog version, cascades every child post to inactive Archived with cleared publication dates, then unarchives to active Draft without republishing | pass: 4 tests / 25 assertions |
+| BLOG-BLOG-ARCHIVE-PERM-001 | Archive permission boundary | The same focused test rejects a `blog.read`/`blog.write` actor with 403 and leaves the blog and child posts unchanged | pass |
+| BLOG-BLOG-ARCHIVE-WF-001 | Workflow and stale guard | Archive/unarchive actions are `blog.manage` transitions; a stale parent version returns 409 before any cascade step runs | pass |
+| BLOG-BLOG-ARCHIVE-RESTART-001 | Restart durability | File-backed DuckDB is closed and reopened after archive; the inactive parent and all inactive child posts remain persisted after migrations are reapplied | pass |
+| BLOG-BLOG-ARCHIVE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `/tmp/core3-odoo-parity/blog/2026-09-22/odoo-blog-404-desktop.png`, `odoo-blog-404-mobile.png`; browser-check records the observed 404 and Core3 connection refusal | blocked: `core3_reference` does not have `website_blog` installed and Core3 `:3001` is unavailable; no visual-parity claim |
+| BLOG-QA-010 | Slice regression/tooling gates | Focused test 4/25, Blog wildcard 32/181, UI audit 784/793/1,614, Blog Sass, targeted ESLint, and Blog-scoped diff-check passed | pass; paired visual parity remains blocked |
+
 ### BLOG-POST-ARCHIVE-001 evidence
 
 See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/). This is a bounded slice result and does not sign off the Blog module.

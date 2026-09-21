@@ -15,6 +15,7 @@ function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoo
   const postsPage = yaml('pages/posts.yaml');
   const detailPage = yaml('api/post-detail.yaml');
   const workflow = yaml('pages/blog-workflow.yaml').workflow;
+  const blogWorkflow = yaml('pages/blog-blog-workflow.yaml').workflow;
   const sources = [
     ...blogsApi.datasources,
     ...postsPage.datasources,
@@ -28,7 +29,7 @@ function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoo
     },
     sources: new Map(sources.map((source: any) => [source.id, source])),
     pageSources: new Map([
-      ['blog', ['blog_blogs', 'blog_detail']],
+      ['blog', ['blog_active_states', 'blog_blogs', 'blog_detail']],
       ['blog-posts', ['blog_post_states', 'blog_lookup', 'blog_posts']],
       ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments', 'blog_post_tags', 'blog_post_tag_lookup']],
     ]),
@@ -39,7 +40,7 @@ function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoo
     ]),
     catalogs: new Map(),
     menus: new Map(),
-    workflows: new Map([['blog_posts', workflow]]),
+    workflows: new Map([['blog_posts', workflow], ['blog_blogs', blogWorkflow]]),
     workflowFiles: new Map(),
     permissions: { permissions: ['blog.read', 'blog.write', 'blog.manage'], tables: {}, endpoints: {} },
     uploadRoot,
@@ -68,6 +69,7 @@ describe('Blog site/company actor boundary', () => {
     const detailPage = yaml('api/post-detail.yaml');
     const analysisPage = yaml('pages/analysis.yaml');
     const workflow = yaml('pages/blog-workflow.yaml').workflow;
+    const blogWorkflow = yaml('pages/blog-blog-workflow.yaml').workflow;
     const sources = [
       ...yaml('api/blogs.yaml').datasources,
       ...postsPage.datasources,
@@ -94,7 +96,7 @@ describe('Blog site/company actor boundary', () => {
         ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments', 'blog_post_tags', 'blog_post_tag_lookup']],
         ['blog-analysis', ['blog_analysis_totals', 'blog_analysis_states']],
       ]),
-      pages: new Map([['blog-post-detail', detailPage], ['blog-analysis', analysisPage]]), catalogs: new Map(), menus: new Map(), workflows: new Map([['blog_posts', workflow]]), workflowFiles: new Map(),
+      pages: new Map([['blog-post-detail', detailPage], ['blog-analysis', analysisPage]]), catalogs: new Map(), menus: new Map(), workflows: new Map([['blog_posts', workflow], ['blog_blogs', blogWorkflow]]), workflowFiles: new Map(),
       permissions: { permissions: ['blog.read', 'blog.write', 'blog.manage'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
     });
     const query = (sourceId: string, params: Record<string, unknown> = {}) => api(new Request('http://blog.test/api/query', {

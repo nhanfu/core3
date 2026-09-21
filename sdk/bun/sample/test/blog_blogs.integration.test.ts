@@ -45,20 +45,21 @@ describe('Blog Blogs parity slice', () => {
     const api = yaml('api/blogs.yaml');
     expect(page.datasources).toBeUndefined();
     expect(api.page.id).toBe(page.page.id);
-    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('blog')).toEqual(['blog_blogs', 'blog_detail']);
+    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('blog')).toEqual(['blog_active_states', 'blog_blogs', 'blog_detail']);
     expect(discoverPageRoutes(discoverPages(join(import.meta.dir, '..')))).toContainEqual(expect.objectContaining({ page: 'blog', path: '/blog' }));
   });
 
   test('matches Odoo list/form fields and protects mutations', () => {
     const page = yaml('pages/blogs.yaml');
     const api = yaml('api/blogs.yaml');
-    expect(page.components[0].columns.map((column: any) => column.field)).toEqual(['sequence', 'name', 'post_count']);
+    expect(page.components[0].columns.map((column: any) => column.field)).toEqual(['sequence', 'name', 'post_count', 'active']);
     expect(page.components[0].row_open_action).toBe('edit_blog');
-    expect(api.actions.map((action: any) => action.id)).toEqual(['create_blog', 'edit_blog']);
-    expect(api.actions.every((action: any) => action.permission === 'blog.write')).toBe(true);
+    expect(api.actions.map((action: any) => action.id)).toEqual(['create_blog', 'edit_blog', 'archive_blog', 'unarchive_blog']);
+    expect(api.actions.slice(0, 2).every((action: any) => action.permission === 'blog.write')).toBe(true);
+    expect(api.actions.slice(2).every((action: any) => action.permission === 'blog.manage')).toBe(true);
     expect(api.actions[0].mutation.guards.map((guard: any) => guard.code)).toEqual(['BLOG_NAME_REQUIRED', 'BLOG_COMPANY_SCOPE_REQUIRED', 'BLOG_EXISTS']);
-    expect(api.actions.map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle', 'company_name'], ['name', 'subtitle', 'company_name']]);
-    expect(api.datasources[0].error_states.transport_error.status).toBe(503);
+    expect(api.actions.slice(0, 2).map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle', 'company_name'], ['name', 'subtitle', 'company_name']]);
+    expect(api.datasources[1].error_states.transport_error.status).toBe(503);
   });
 
   test('edits persisted post content through the detail contract', async () => {

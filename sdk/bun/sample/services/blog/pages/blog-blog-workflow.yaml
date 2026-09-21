@@ -1,0 +1,34 @@
+workflow:
+  id: blog_blogs
+  entity: blog_blogs
+  handler: order_transition
+  initial: Active
+  permission: blog.manage
+  mutable: true
+  status_source: blog_active_states
+  states:
+    - { id: Active, label: Active, color: green }
+    - { id: Archived, label: Archived, color: red }
+  transitions:
+    - id: archive
+      from: [Active]
+      to: Archived
+      permission: blog.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: BLOG_BLOG_STALE, message: The blog changed or is outside your company. Reload before archiving. }
+        steps:
+          - { query: "UPDATE blog_blogs SET active = FALSE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BLOG_BLOG_STALE, message: The blog changed before it could be archived. }
+          - { query: "UPDATE blog_posts SET active = FALSE, state = 'Archived', published_date = NULL, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE blog_id = :id" }
+        result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
+    - id: unarchive
+      from: [Archived]
+      to: Active
+      permission: blog.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = FALSE AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: BLOG_BLOG_STALE, message: The blog changed or is outside your company. Reload before unarchiving. }
+        steps:
+          - { query: "UPDATE blog_blogs SET active = TRUE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BLOG_BLOG_STALE, message: The blog changed before it could be unarchived. }
+          - { query: "UPDATE blog_posts SET active = TRUE, state = CASE WHEN state = 'Archived' THEN 'Draft' ELSE state END, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE blog_id = :id" }
+        result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }

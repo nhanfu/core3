@@ -7,10 +7,15 @@ components:
     create_action: create_blog
     create_label: New blog
     search: { label: Search blogs, placeholder: 'Search blog name or subtitle...' }
+    default_filters: { active: active }
+    filters:
+      - { field: active, label: Records, options_source: blog_active_states }
+    row_actions: menu
     columns:
       - { field: sequence, label: Sequence, align: right }
       - { field: name, label: Blog Name, type: PrimaryEntityCell }
       - { field: post_count, label: Posts, align: right }
+      - { field: active, label: Active, type: StatusChip, optional: hide }
     page_size: 50
     row_key: id
     row_open_action: edit_blog

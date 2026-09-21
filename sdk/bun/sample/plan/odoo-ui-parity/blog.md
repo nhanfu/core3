@@ -152,3 +152,55 @@ build and Blog-scoped diff-check passed. The full Blog wildcard run was blocked
 by the concurrent unrelated duplicate datasource `sale_quotation_templates` in
 `services/order`; `bun run audit` stops on the same duplicate before producing
 an audit count. No full Blog sign-off is made.
+
+## Blog archive/unarchive slice — 2026-09-22
+
+The next genuinely uncovered bounded source behavior is Odoo's durable
+`blog.blog.active` archive flag and its child-post cascade. In
+`addons/website_blog/models/website_blog.py`, `BlogBlog.active` defaults true and
+`BlogBlog.write()` writes the same active value to every related `blog.post`.
+In `addons/website_blog/views/website_blog_views.xml`, the Blogs list includes
+an invisible active field and the search view exposes the Archived filter.
+
+Stable ID: `BLOG-BLOG-ARCHIVE-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| Blogs default to active records with an Archived filter | `blog_blogs` returned both active states and the page had no filter | `pages/blogs.yaml` declares the active-only default, Records filter, and hidden active status column; `api/blogs.yaml` applies the real `active` query parameter | page/API contract test and persisted filter query |
+| Archive/unarchive a blog | `blog_blogs.active` existed in the baseline schema but had no action or workflow | `api/blogs.yaml` adds permissioned archive/unarchive actions; `pages/blog-blog-workflow.yaml` adds row-version and company guards | workflow, permission, stale, and atomicity assertions |
+| `BlogBlog.write()` cascades to posts | archiving a blog did not affect child posts | archive sets child posts inactive/Archived/unpublished; unarchive restores active Draft without republishing | child rows and versions after both transitions |
+| Public website excludes archived blogs | public SQL only guarded the post row | `operations.yaml` joins the active parent blog for public list/detail reads | contract inspection plus cascade/public-state assertions |
+
+### Core3 contract
+
+- Presentation remains layout-only in `services/blog/pages/blogs.yaml` and
+  joins `services/blog/api/blogs.yaml` by matching `page.id: blog`.
+- The API owns the real active-state datasource, actions, permissions, and
+  refresh targets. Workflow persistence is isolated in the Blog-owned
+  `pages/blog-blog-workflow.yaml` contract.
+- The existing baseline `blog_blogs.active` column is reused; no migration is
+  required for this slice. Child post active/state changes are transactional
+  workflow steps with row-version guards.
+- Archive/unarchive requires `blog.manage`, while list/detail reads remain
+  `blog.read`. A stale parent or wrong-company transition returns 409 without
+  changing the parent or its posts.
+
+### Verification — 2026-09-22
+
+- Focused test: `bun test ./test/blog_blog_archive.integration.test.ts
+  --timeout 20000` passed, 4 tests / 25 assertions.
+- The test covers `page.id` joining, active filtering, archive and unarchive
+  state guards, permission enforcement, child-post cascade, no automatic
+  republish, and file-backed restart persistence.
+- Authenticated Odoo blocker captures are under
+  `evidence/blog/2026-09-22/BLOG-BLOG-ARCHIVE-001/` and
+  `/tmp/core3-odoo-parity/blog/2026-09-22/`. The reference database has no
+  Website/Blog installation: the launcher has no Website or Blog item and
+  `/blog` returns Error 404. Core3 `localhost:3001` refused the browser
+  navigation, so no paired visual-parity claim is made.
+- Full Blog wildcard: `bun test ./test/blog*.integration.test.ts
+  --timeout 20000` passed, 32 tests / 181 assertions. Shared UI audit passed
+  with 784 pages, 793 routes, and 1,614 datasources. Blog Sass, targeted Blog
+  ESLint, and Blog-scoped `git diff --check` are the final commit gates.
