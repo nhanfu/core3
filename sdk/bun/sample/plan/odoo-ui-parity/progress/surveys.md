@@ -1448,3 +1448,23 @@ sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.
+
+## 2026-09-22 — `SURVEYS-TIME-LIMIT-CONFIG-001`
+
+Implemented the next distinct authenticated Options behavior after scoring:
+the Odoo `Survey Time Limit` checkbox and minutes setting. The existing
+durable public-timer columns are now exposed through the authenticated
+`survey-detail` page/API pair with a guarded `surveys.records.time_limit.update`
+server form. Positive enabled durations, disabled values, actor/permission,
+missing, archived, stale, and restart/replay boundaries are covered.
+
+Verification: focused **3/3 tests, 23 assertions**; audit **799 pages, 808
+routes, 1,646 datasources**; scoped ESLint and diff-check pass; frontend build
+command run. Odoo desktop and iphone-14 mobile Options captures are retained.
+Core3 visual verification is conditional because the isolated runtime failed
+before readiness with `PageSchemaError: Invalid page definition: actions[0].fields
+must be a non-empty array`, followed by bsk `net::ERR_CONNECTION_REFUSED`.
+No visual parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.

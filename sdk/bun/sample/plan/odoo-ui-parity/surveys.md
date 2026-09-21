@@ -2767,3 +2767,60 @@ evidence and parity sign-off remain blocked.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.
+
+## Planned next slice: `SURVEYS-TIME-LIMIT-CONFIG-001`
+
+The next distinct uncovered authenticated Options behavior after scoring
+configuration is Odoo's `Survey Time Limit` setting. The source model defines
+`is_time_limited` and `time_limit` in `addons/survey/models/survey_survey.py`
+and enforces a strictly positive minute value whenever the checkbox is enabled
+with `_time_limit_check`. The form in `addons/survey/views/survey_survey_views.xml`
+renders the checkbox and `float_time` minutes field in `Time & Scoring`, hides
+the control for live-session surveys, and the public controller consumes the
+same persisted values to start and enforce the respondent timer.
+
+Core3 already has durable `surveys.is_time_limited`, `surveys.time_limit`, and
+`survey_responses.start_datetime` from the public timer slice. The bounded
+change adds the fields to the existing `survey-detail` datasource and Time &
+Scoring group, plus an API-owned `update_survey_time_limit` server form joined
+by `page.id: survey-detail`. It requires `surveys.write` and an authenticated
+actor, rejects missing/archived/stale surveys and enabled non-positive or
+non-numeric durations, and preserves the existing public timer contract.
+No new renderer, migration, live-session timer, or scoring behavior is
+included.
+
+Acceptance is the test-plan block `SURVEYS-TIME-LIMIT-CONFIG-001`: YAML
+page/API joining, exact labels/defaults, permission and optimistic guards,
+disabled and enabled boundary values, public metadata/expiry consumption,
+file-backed restart, and authenticated Odoo/Core3 desktop/mobile captures
+when both runtimes are available. A missing authenticated runtime or reference
+fixture is a blocker, not a visual parity sign-off.
+
+## Bounded slice: `SURVEYS-TIME-LIMIT-CONFIG-001` — 2026-09-22
+
+Implemented the authenticated Odoo Options `Survey Time Limit` setting after
+the scoring configuration slice. Core3 reuses the durable fields introduced by
+the public timer work, projects `is_time_limited` and `time_limit` through the
+existing `survey-detail` datasource, adds the Time & Scoring group fields, and
+adds the API-owned `update_survey_time_limit` server form. The page and API
+remain separate and joined by `page.id: survey-detail`; no new migration or
+renderer was required.
+
+The mutation requires `surveys.write` and an actor, rejects missing surveys,
+archived/stale rows, and enabled non-positive/non-numeric durations with
+explicit 404/403/409/422 guards. Disabled values remain valid. The existing
+public `survey.public.detail` timer projection is verified after a file-backed
+DuckDB reopen and migration replay.
+
+Focused verification passes **3/3 tests and 23 assertions**. `bun run audit`
+passes with **799 pages, 808 routes, and 1,646 datasources**; scoped ESLint
+and `git diff --check` pass; the frontend build command was run. Authenticated
+Odoo reference captures are retained at desktop and iphone-14 mobile
+emulation. The isolated Core3 runtime failed before readiness with
+`PageSchemaError: Invalid page definition: actions[0].fields must be a
+non-empty array`; bsk navigation then returned `net::ERR_CONNECTION_REFUSED`.
+No Core3 screenshot or visual parity sign-off is claimed. The blocker is
+shared page discovery and no unrelated module path was edited.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.

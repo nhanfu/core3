@@ -1,0 +1,25 @@
+{
+  "feature_id": "SURVEYS-TIME-LIMIT-CONFIG-001",
+  "browser_instance": "245ea108",
+  "odoo": {
+    "url": "http://localhost:8069/odoo/surveys/2",
+    "database": "core3_reference",
+    "desktop_semantic_viewport": "1440x719",
+    "mobile_emulation": "iphone-14, 390x844",
+    "desktop_capture": "odoo-desktop-1440x900.png",
+    "mobile_capture": "odoo-mobile-390x844.png",
+    "state": "Options > TIME & SCORING visible",
+    "failed_requests": "not observed in bsk flow"
+  },
+  "core3": {
+    "url": "http://127.0.0.1:3390/surveys/detail?id=survey-demo-public-timer",
+    "state": "blocked before readiness",
+    "error": "PageSchemaError: Invalid page definition: actions[0].fields must be a non-empty array",
+    "navigation_error": "net::ERR_CONNECTION_REFUSED",
+    "desktop_capture": null,
+    "mobile_capture": null,
+    "visual_signoff": false
+  },
+  "sessions_stopped": true
+}
+

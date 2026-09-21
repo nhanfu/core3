@@ -35,6 +35,7 @@ components:
       - { id: update_survey_speed_rating, label: Quick-answer rewards, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_certification_template, label: Certification template, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_scoring, label: Scoring settings, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
+      - { id: update_survey_time_limit, label: Survey Time Limit, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: schedule_survey_activity, label: Schedule activity, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments_detail, label: Invite attachments, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: start_live_session_detail, label: Create Live Session, variant: primary, permission: surveys.manage, show_if: "!record.session_state" }
@@ -69,7 +70,7 @@ components:
       - title: Live Session
         fields: [{ field: session_speed_rating, label: Reward quick answers }, { field: session_speed_rating_time_limit, label: Reward window (seconds) }]
       - title: Time & Scoring
-        fields: [{ field: scoring_type, label: Scoring }, { field: scoring_success_min, label: Required Score (%) }]
+        fields: [{ field: is_time_limited, label: Survey Time Limit }, { field: time_limit, label: 'Time limit (minutes)' }, { field: scoring_type, label: Scoring }, { field: scoring_success_min, label: Required Score (%) }]
       - title: Certification
         fields: [{ field: certification, label: Certification }, { field: certification_report_layout, label: Template }]
       - title: Description

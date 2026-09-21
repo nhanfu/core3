@@ -852,3 +852,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SCORING-CONFIG-001/`.
+
+## `SURVEYS-TIME-LIMIT-CONFIG-001` — Survey time-limit settings
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-074 | authenticated configuration | Survey detail → Time & Scoring → Survey Time Limit | API-owned server form exposes the Odoo checkbox and minutes field; page group and API datasource join through `page.id: survey-detail` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-073 | permission/actor/state/validation | Missing actor/survey, archived or stale row, enabled with zero/negative/non-numeric minutes | Reject before mutation with explicit 403/404/409/422 guards; disabled mode remains valid | test-results.md, focused test | pass |
+| SURVEYS-WF-071 | persistence/public workflow/restart | Enable at a positive duration → public metadata/expiry guard → stale replay → file-backed reopen | Settings persist, public timer consumes the same values, and replay cannot overwrite a newer row | test-results.md, focused test | pass |
+| SURVEYS-UI-072 | authenticated responsive/reference | Odoo Options Time & Scoring and Core3 configuration form at desktop/mobile | Odoo reference captured; Core3 capture blocked by pre-ready shared page discovery error | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-TIME-LIMIT-CONFIG-001/`.
