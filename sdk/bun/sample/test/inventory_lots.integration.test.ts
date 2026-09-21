@@ -54,10 +54,10 @@ describe('Inventory Lots / Serial Numbers Odoo action parity', () => {
     await migrateDatabase(repository, migrations, undefined, 'inventory_lots_test_migrations', ['schema', 'data']);
 
     const lots = source('lots.yaml', 'inventory_lots');
-    expect((await repository.querySource(lots, { q: null, availability: null, fixture_state: null }, 0, 50)).data).toHaveLength(7);
+    expect((await repository.querySource(lots, { q: null, availability: null, fixture_state: null }, 0, 50)).data).toHaveLength(8);
     expect((await repository.querySource(lots, { q: 'CM-BOX-00001', availability: null, fixture_state: null }, 0, 50)).data[0]).toMatchObject({ name: 'CM-BOX-00001', product_qty: 50, location_name: 'Shelf 2', tracking: 'lot' });
     expect((await repository.querySource(lots, { q: null, availability: 'at_customer', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['CUST-LOT-0001']);
-    expect((await repository.querySource(lots, { q: null, availability: 'on_hand', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['CUST-LOT-0001', 'CM-BOX-00001', 'CM-BOX-00002', '0000000000029', 'T0001']);
+    expect((await repository.querySource(lots, { q: null, availability: 'on_hand', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['CUST-LOT-0001', 'TRACE-LOT-0001', 'CM-BOX-00001', 'CM-BOX-00002', '0000000000029', 'T0001']);
     expect((await repository.querySource(lots, { q: 'does-not-exist', availability: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(lots, { q: null, availability: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(lots, { q: null, availability: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_LOTS_UNAVAILABLE' });

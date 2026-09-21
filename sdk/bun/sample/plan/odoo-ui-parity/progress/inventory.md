@@ -854,6 +854,26 @@ Inventory sign-off remains open.
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
 Full Inventory sign-off remains open.
 
+## `INV-LOT-LOCATIONS-001` — Lot/Serial Number Locations (2026-09-21)
+
+- Selected the next uncovered source-backed lot workflow: Odoo's Lot/Serial
+  Number form `Location` stat action, `stock.lot.action_lot_open_quants`.
+  This is distinct from lot Traceability, product Stock Locations, and quant
+  Move History.
+- Added migration `20260922150000-065-inventory-lot-locations.yaml` with a
+  deterministic Core3 Demo Company lot quant and durable location-report
+  history. Added separate `lot-locations` page/API YAML joined by `page.id`
+  and bound the action from the lot detail pair.
+- Focused verification passes 4 tests / 31 assertions for source/schema
+  comparison, deterministic location/history queries, permission/company/
+  actor/stale/empty guards, migration replay, and file-backed restart.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-LOT-LOCATIONS-001/`; both captures have
+  empty browser error/HTTP failure lists and no horizontal overflow.
+- Odoo live comparison is blocked by HTTP 303 to `/web/login`; the exact
+  response is recorded in paired evidence. Full Inventory sign-off remains
+  open.
+
 ## `INV-TRANSFER-PACKAGE-HISTORY-001` — Done Transfer Package History (2026-09-21)
 
 - Selected Odoo's uncovered Done-transfer `action_see_package_histories`

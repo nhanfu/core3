@@ -1,0 +1,20 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4341/inventory/lots/locations?id=lot-traceable-0001&current_company_name=Core3%20Demo%20Company",
+    "title": "Lot Locations",
+    "text": "Overview Transfers Adjustments Procurement Reporting Products Configuration ⌘ K AU Location Lot/Serial Number TRACE-LOT-0001 Product [E-COM08] Storage Box Quantity 15 Locations 1 Refresh Locations Back to Lot Supply Chain / Inventory / Products / Lots / Serial Numbers / Location 1-1 / 1 ‹ › Location Warehouse On Hand Reserved Available Unit Shelf 2 Main Warehouse 15 2 13 Units Supply Chain / Inventory / Products / Lots / Serial Numbers / Location 1-1 / 1 ‹ › Opened At Requested By Company Locations 2026-01-15 08:35:00 Seeded Inventory Core3 Demo Company 1 Hello, Admin User",
+    "body_scroll_width": 1440,
+    "viewport_width": 1440,
+    "errors": [],
+    "bad_responses": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4341/inventory/lots/locations?id=lot-traceable-0001&current_company_name=Core3%20Demo%20Company",
+    "title": "Lot Locations",
+    "text": "AU Location Lot/Serial Number TRACE-LOT-0001 Product [E-COM08] Storage Box Quantity 15 Locations 1 Refresh Locations Back to Lot Location 1-1 / 1 ‹ › Location Warehouse On Hand Reserved Available Unit Shelf 2 Main Warehouse 15 2 13 Units Location 1-1 / 1 ‹ › Opened At Requested By Company Locations 2026-01-15 08:35:00 Seeded Inventory Core3 Demo Company 1 Hello, Admin User",
+    "body_scroll_width": 390,
+    "viewport_width": 390,
+    "errors": [],
+    "bad_responses": []
+  }
+}
