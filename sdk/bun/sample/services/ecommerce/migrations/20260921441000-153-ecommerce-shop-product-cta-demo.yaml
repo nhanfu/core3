@@ -1,0 +1,14 @@
+version: 0.0.153
+kind: data
+description: deterministic Website Sale Shop product-card Add to Cart fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_product_cta_policies (id, row_version, company_name, show_cta)
+      VALUES ('ecommerce-shop-product-cta-my-company', 1, 'My Company', TRUE)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_product_cta_policies WHERE id = 'ecommerce-shop-product-cta-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

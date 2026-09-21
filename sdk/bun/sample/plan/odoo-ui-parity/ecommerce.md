@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop product-card descriptions slice; module sign-off remains open)
+Status: qa-in-progress (bounded Shop product-card CTA visibility slice; module sign-off remains open)
+
+## Bounded feature — Shop Product-Card CTA Visibility (`ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001`)
+
+Wave 44 selects the Website Sale Products Design Panel's Add to Cart button
+control. Odoo's `shop_opt_products_design_classes` stores the
+`o_wsale_products_opt_has_cta` class; the product-tile template gates the
+quick-add button with that class and the supplied product-tile stylesheet
+exposes the CTA display variable. The builder saves the class list through
+`/shop/config/website`. This is distinct from the completed add-to-cart
+redirect policy and product-card description visibility policy.
+
+Core3 migration 152 and deterministic data migration 153 add a durable,
+company-scoped boolean policy defaulting to the Odoo default of showing Add to
+Cart. Separate `api/shop-product-cta-policy.yaml` and
+`pages/shop-product-cta-policy.yaml` contracts join by
+`ecommerce-shop-product-cta-policy`; the update requires `ecommerce.write`,
+validates the boolean, and uses company and row-version guards. The Shop API
+projects the effective CTA setting onto products and a read-only Shop
+projection exposes the same setting.
+
+Focused tests cover the supplied Odoo model, builder plugin/panel,
+product-tile template/styles, page/API separation, permissioned update,
+missing/invalid/foreign-company/stale guards, migration replay, Shop
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-cta-visibility-001/`.
+Authenticated Core3 desktop/mobile capture and paired Odoo rendering remain
+runtime-blocked; no Ecommerce module sign-off is claimed.
 
 ## Bounded feature — Shop Product-Card Descriptions (`ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`)
 

@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 44 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001`
+(implementation complete; local commit pending; not pushed).
 Latest Wave 43 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`
 (committed locally as `f12a1362eb7dc669cadf39c5a7ad88f226fdac4a`; not pushed).
 Latest Wave 42 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`
@@ -46,6 +48,13 @@ audit passes at **758 pages, 767 routes, and 1544 datasources**; scoped ESLint
 and Ecommerce diff checks pass. Core3 desktop/mobile capture is unavailable;
 Odoo `/shop` is HTTP 404 on 8069 and 8073. Ecommerce module sign-off remains
 open.
+
+Wave 44 verification: the focused suite passes **2 tests and 34 assertions**;
+the bounded Shop regression passes **13 tests, 170 assertions, 0 failures**.
+The UI audit passes at **760 pages, 769 routes, and 1548 datasources**;
+scoped ESLint and Ecommerce diff checks pass. Core3 desktop/mobile capture is
+blocked because ports 3000/4312/4313 have no listener; Odoo `/shop` returns
+HTTP 404 on 8069 and 8073. Ecommerce module sign-off remains open.
 
 Wave 42 verification: the focused suite passes **2 tests and 30 assertions**;
 the Product Detail/layout regression passes **17 tests and 193 assertions**.

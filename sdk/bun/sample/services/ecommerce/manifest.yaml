@@ -165,6 +165,10 @@ menu:
           label: Shop Product Descriptions
           icon: list
           permission: ecommerce.read
+        - path: /ecommerce/shop-product-cta
+          label: Shop Add to Cart
+          icon: cart
+          permission: ecommerce.read
         - path: /ecommerce/product-extra-fields
           label: Product Page Extra Fields
           icon: list

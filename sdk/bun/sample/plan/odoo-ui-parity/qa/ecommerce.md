@@ -1,5 +1,23 @@
 # ecommerce QA ledger
 
+## Shop Product-Card CTA Visibility (`ECOM-CATALOG-SHOP-PRODUCT-CTA-VISIBILITY-001`, 2026-09-21)
+
+- Odoo source/builder/template/styles: pass.
+  `website.shop_opt_products_design_classes` stores the
+  `o_wsale_products_opt_has_cta` Add to Cart control; the product tile gates
+  quick add on that class and CSS exposes the CTA display variable.
+- Core3 lifecycle: migrations 152/153 add the durable company policy and
+  deterministic visible-CTA fixture. Separate page/API YAML exposes a
+  permissioned optimistic update and the Shop API projects the effective
+  policy.
+- Focused verification: **2 tests, 34 assertions, 0 failures**.
+- Adjacent Shop regression: **13 tests, 170 assertions, 0 failures**.
+- Audit: **760 pages, 769 routes, 1548 datasources**, passed. Scoped ESLint
+  and `git diff --check` pass. Core3 desktop/mobile capture is unavailable;
+  Odoo `/shop` is HTTP 404 on ports 8069 and 8073. Module sign-off remains
+  open.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-product-cta-visibility-001/`.
+
 ## Shop Product-Card Descriptions (`ECOM-CATALOG-SHOP-PRODUCT-DESCRIPTIONS-001`, 2026-09-21)
 
 - Odoo source/builder/template: pass. `website.shop_opt_products_design_classes`
