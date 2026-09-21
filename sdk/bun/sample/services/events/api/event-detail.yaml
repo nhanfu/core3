@@ -3,7 +3,7 @@ datasources:
   - id: event_detail
     single: true
     permission: events.read
-    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, (SELECT COUNT(*) FROM event_linked_leads l WHERE l.event_id = e.id) AS lead_count, COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS sale_price_total, printf('$ %,.2f', CAST(COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS DOUBLE)) AS sale_price_total_display, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, 'Europe/Brussels' AS display_timezone, 'Exhibition' AS template, 'Online' AS tags, 'YourCompany' AS company, '' AS online_url, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) > 1 AS multiple_slots, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) AS slot_count, false AS limit_registrations, e.state FROM events e WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
+    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, (SELECT COUNT(*) FROM event_linked_leads l WHERE l.event_id = e.id) AS lead_count, COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS sale_price_total, printf('$ %,.2f', CAST(COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS DOUBLE)) AS sale_price_total_display, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, 'Europe/Brussels' AS display_timezone, 'Exhibition' AS template, 'Online' AS tags, 'YourCompany' AS company, '' AS online_url, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) > 1 AS multiple_slots, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) AS slot_count, false AS limit_registrations, COALESCE(e.badge_format, 'A6') AS badge_format, e.badge_image_file_name, e.badge_image_mime_type, e.badge_image_size_bytes, e.badge_image_uploaded_by, CAST(e.badge_image_updated_at AS VARCHAR) AS badge_image_updated_at, e.ticket_instructions, e.note, e.state FROM events e WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
   - id: event_registrations
     permission: events.read
     query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY registered_at DESC"
@@ -21,8 +21,43 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_COMMUNICATIONS_UNAVAILABLE, message: Event communications are temporarily unavailable. } }
     query: "SELECT id, row_version, event_id, event_name, template_ref, interval_nbr, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN 'Hours' WHEN 'days' THEN 'Days' WHEN 'weeks' THEN 'Weeks' WHEN 'months' THEN 'Months' ELSE interval_unit END AS interval_unit, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type, CAST(scheduled_date AS VARCHAR) AS scheduled_date, mail_count_done, CASE mail_state WHEN 'running' THEN 'Running' WHEN 'scheduled' THEN 'Scheduled' WHEN 'sent' THEN 'Sent' WHEN 'error' THEN 'Error' WHEN 'cancelled' THEN 'Cancelled' ELSE mail_state END AS mail_state_label FROM event_mail_schedulers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY sequence, id"
+  - id: event_badge_background
+    permission: events.read
+    query: "SELECT id, id AS event_id, badge_image_file_name AS file_name, badge_image_mime_type AS mime_type, badge_image_size_bytes AS size_bytes, badge_image_uploaded_by AS uploaded_by, CAST(badge_image_updated_at AS VARCHAR) AS updated_at, row_version FROM events WHERE id = :id AND badge_image_file_name IS NOT NULL"
 actions:
   - { id: event_sales_orders_detail, type: navigate, permission: events.read, navigate_to: /events/sales-orders, params: { event_id: '{row.id}' } }
+  - id: upload_event_badge_background
+    type: upload
+    action: events.records.badge_background.upload
+    handler: attachment_metadata
+    permission: events.write
+    kind: event_badge_background
+    params: { id: '{state.event_detail.id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_badge_background]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_BADGE_BACKGROUND_STALE, message: This event changed before its badge background could be uploaded. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND LOWER(CAST(:mimeType AS VARCHAR)) LIKE 'image/%' AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 5242880", status: 422, code: EVENT_BADGE_BACKGROUND_INVALID, message: Upload a non-empty image up to 5 MB. }
+      steps:
+        - { query: "UPDATE events SET row_version = row_version + 1, badge_image_file_name = :fileName, badge_image_mime_type = :mimeType, badge_image_size_bytes = CAST(:sizeBytes AS BIGINT), badge_image_storage_key = :storageKey, badge_image_uploaded_by = :current_user_id, badge_image_updated_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_BADGE_BACKGROUND_STALE, message: This event changed before its badge background could be uploaded. Reload before retrying. }
+      result: { query: "SELECT id, id AS event_id, badge_image_file_name AS file_name, badge_image_mime_type AS mime_type, badge_image_size_bytes AS size_bytes, badge_image_uploaded_by AS uploaded_by, CAST(badge_image_updated_at AS VARCHAR) AS updated_at, row_version FROM events WHERE id = :id" }
+  - id: download_event_badge_background
+    type: download
+    permission: events.read
+    kind: event_badge_background
+  - id: remove_event_badge_background
+    type: server
+    action: events.records.badge_background.remove
+    handler: yaml_mutation
+    permission: events.write
+    params: { id: '{state.event_detail.id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_badge_background]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :expected_row_version AND badge_image_file_name IS NOT NULL", status: 409, code: EVENT_BADGE_BACKGROUND_STALE, message: This event changed before its badge background could be removed. Reload before retrying. }
+      steps:
+        - { query: "UPDATE events SET row_version = row_version + 1, badge_image_file_name = NULL, badge_image_mime_type = NULL, badge_image_size_bytes = NULL, badge_image_storage_key = NULL, badge_image_uploaded_by = NULL, badge_image_updated_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_BADGE_BACKGROUND_STALE, message: This event changed before its badge background could be removed. Reload before retrying. }
+      result: { query: "SELECT TRUE AS removed, :id AS id" }
   - id: add_event_detail_communication
     type: server_form
     permission: events.write

@@ -7,6 +7,16 @@ components:
     status_field: state
     editable: true
     content_slot: true
+    attachment_source: event_badge_background
+    attachment_label: Badge Background
+    add_attachment_label: Upload your file
+    no_attachments_label: Upload your file
+    uploading_label: Uploading badge background…
+    upload_failed_label: Badge background upload failed
+    attachment_accept: image/*
+    attachment_upload_action: upload_event_badge_background
+    attachment_actions:
+      - { id: remove_event_badge_background, label: Remove, variant: danger, permission: events.write }
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: registration_desk_event_detail, label: Registration Desk, variant: primary, permission: events.read }
@@ -28,6 +38,16 @@ components:
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Published: blue, In Progress: amber, Completed: green, Cancelled: red }
     group_columns: 2
+    notebook:
+      active: notes
+      tabs:
+        - id: notes
+          label: Notes & Documents
+          fields:
+            - { field: badge_format, label: Badge Dimension, type: select, options: [{ value: A4_french_fold, label: A4 foldable }, { value: A6, label: A6 }, { value: four_per_sheet, label: 4 per sheet }] }
+            - { field: badge_image_file_name, label: Badge Background, readonly: true }
+            - { field: ticket_instructions, label: Ticket Instructions, type: richtext, wide: true }
+            - { field: note, label: Note, type: textarea, wide: true, placeholder: 'Add some internal notes (to do lists, contact info, ...)' }
     groups:
       - title: Event
         fields:
@@ -117,13 +137,6 @@ components:
             row_key: id
             page_size: 50
             empty_state: { title: No questions, description: Registration questions will appear here. }
-      - id: notes
-        label: Notes & Documents
-        components:
-          - type: Html
-            tag: p
-            class: event-detail-empty-tab
-            text: Notes and documents will appear here.
       - id: slots
         label: Slots
         components:
@@ -246,10 +259,16 @@ actions:
     mutation:
       operation: update
       table: events
-      fields: [name, event_type, organizer, venue, description, capacity, start_at, end_at]
+      fields: [name, event_type, organizer, venue, description, capacity, start_at, end_at, badge_format, ticket_instructions, note]
       required: [name]
-      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_NOTES_STALE, message: This event changed before its notes and documents could be saved. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:badge_format, 'A6') IN ('A4_french_fold', 'A6', 'four_per_sheet')", status: 422, code: EVENT_BADGE_FORMAT_INVALID, message: Choose a valid badge dimension. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:ticket_instructions, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:ticket_instructions, '') AS VARCHAR)) NOT LIKE '%<script%'", status: 422, code: EVENT_TICKET_INSTRUCTIONS_INVALID, message: Ticket Instructions must be safe HTML up to 10000 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:note, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:note, '') AS VARCHAR)) NOT LIKE '%<script%'", status: 422, code: EVENT_NOTE_INVALID, message: Note must be safe HTML up to 10000 characters. }
       result: { query: "SELECT * FROM events WHERE id = :id" }
+      timestamps: true
     fields:
       - { field: name, label: Event, type: text, required: true }
       - { field: event_type, label: Type, type: text }
@@ -259,6 +278,9 @@ actions:
       - { field: capacity, label: Capacity, type: number }
       - { field: start_at, label: Starts at, type: datetime }
       - { field: end_at, label: Ends at, type: datetime }
+      - { field: badge_format, label: Badge Dimension, type: select, options: [{ value: A4_french_fold, label: A4 foldable }, { value: A6, label: A6 }, { value: four_per_sheet, label: 4 per sheet }] }
+      - { field: ticket_instructions, label: Ticket Instructions, type: richtext, wide: true }
+      - { field: note, label: Note, type: textarea, wide: true }
   - id: delete_event_detail
     type: server
     permission: events.write

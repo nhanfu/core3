@@ -1,5 +1,29 @@
 # events QA ledger
 
+## Bounded QA - Event Notes & Documents (2026-09-22)
+
+- Source contract: **PASS**. Odoo 19 `event.event` and `event_event_views.xml`
+  expose Badge Dimension, Badge Background, Ticket Instructions, and Note on
+  the `Notes & Documents` form page.
+- YAML ownership and permissions: **PASS**. The `event-detail` page owns the
+  notebook and upload/remove controls; its API owns the datasource/actions.
+  Reads require `events.read`; mutations require `events.write`.
+- Durable data and guards: **PASS**. Migration 034 persists all note/instruction
+  and badge metadata, with image type/size, HTML safety, valid-dimension,
+  stale-row, and removal guards.
+- Focused tests: **PASS**, 9 tests / 70 assertions with the Events form
+  regression; the new test covers restart persistence and downloaded bytes.
+- Runtime/diff checks: **PASS**. Core3 memory-mode startup reached backend,
+  Vite, and the event mediator; no Events YAML discovery error was observed.
+- Odoo browser evidence: **PASS**, authenticated desktop and mobile captures
+  from `http://localhost:8069` / `core3_reference` are recorded in the feature
+  evidence folder.
+- Core3 visual evidence: **NOT CLAIMED**. No new Core3 screenshot was needed
+  for the requested Odoo reference capture; broader Events visual and actor
+  permission gates remain open.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-22/event-notes-documents/`.
+
 ## Bounded QA - attendee registration answer editor (2026-09-21)
 
 - Source contract: **PASS**. Odoo's `event.registration.answer` model and

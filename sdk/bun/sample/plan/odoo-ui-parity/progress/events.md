@@ -2,9 +2,19 @@
 
 Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: qa-in-progress
+Status: bounded batch implemented; QA conditional
 Verification trigger: feature-complete
-Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
+Candidate commit: Events Notes & Documents commit pending
+
+## Bounded feature - event Notes & Documents (2026-09-22)
+
+The event form now has the source-backed Notes & Documents notebook fields,
+durable badge background metadata, permissioned upload/download/remove actions,
+safe rich-text validation, optimistic row-version guards, and restart coverage.
+The focused Events form regression passes 9 tests / 70 assertions. Authenticated
+Odoo desktop/mobile reference captures are recorded under the matching evidence
+folder. Broader Events actor permissions and complete responsive visual parity
+remain open; this batch is not module sign-off.
 
 ## Bounded feature - attendee registration answer editor (2026-09-21)
 

@@ -5,7 +5,7 @@ QA owner: events-qa
 Developer owner: events module owner  
 Reference addon/version: event, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This checklist follows the current 33-route inventory and the bounded batches
 in [`events.md`](../../events.md). Executed evidence remains in
@@ -33,6 +33,8 @@ and the linked confirmed order.
 
 | Case ID | Class | Route/action | Expected result and persistence assertion | Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
+| EVENTS-FUNC-013 | functional | Event detail Notes & Documents | Edit badge dimension, ticket instructions, and internal note; reload retains values | `events_notes_documents.integration.test.ts` | pass |
+| EVENTS-DATA-013 | data | Badge background attachment | Upload image, reopen database, download exact bytes, remove metadata | `events_notes_documents.integration.test.ts` | pass |
 | EVENTS-FUNC-001 | functional | Events list/detail | Search/filter/sort/paginate/open and create/edit event; reload retains values | events integration suite/browser create | pass |
 | EVENTS-FUNC-002 | functional | Event lifecycle | Draft → Published → In Progress → Completed; invalid/stale transitions are guarded | authenticated lifecycle probe | pass |
 | EVENTS-FUNC-003 | functional | Tickets and attendees | Create/update ticket and attendee; required fields and event scope persist | attendee edit focused test; ticket contracts | partial: attendee update passes; create remains open |
@@ -50,6 +52,7 @@ and the linked confirmed order.
 
 | Case ID | Class | Workflow/integration | Expected transition/side effect | Failure/recovery assertion | Status |
 | --- | --- | --- | --- | --- | --- |
+| EVENTS-WF-008 | workflow | Notes/document optimistic concurrency | Stale event row rejects edit/upload/remove without a partial write | `events_notes_documents.integration.test.ts` | pass |
 | EVENTS-WF-001 | workflow | Event lifecycle | State, published/completed metadata and row version update atomically | Forbidden transition/stale version returns 409 without partial write | pass |
 | EVENTS-WF-002 | workflow | Registration capacity | First attendee registers; capacity-1 second attempt is rejected | 409 capacity guard; no second registration | pass |
 | EVENTS-WF-003 | workflow | Attendee confirmation/cancellation | Registration state and event counts update; cancellation/reopen paths are guarded | Missing/cancelled/stale attendee returns stable error | pass: focused registration confirmation test verifies Unconfirmed → Registered → Attended, cancellation, stale replay, and missing-record guards |
@@ -62,6 +65,8 @@ and the linked confirmed order.
 
 | Case ID | Actor/scope | Route/action | Expected result | Status |
 | --- | --- | --- | --- | --- |
+| EVENTS-PERM-007 | Event User | Notes/document read/write | Read is `events.read`; edit/upload/remove are `events.write`; direct action declarations remain permission-filtered | pass |
+| EVENTS-SEC-003 | Event User | Rich text fields and image upload | Reject script tags, oversized/non-image files, and empty filenames | `events_notes_documents.integration.test.ts` | pass |
 | EVENTS-PERM-001 | Administrator/Event Manager | All manager/settings/workflow actions | Allowed and persisted | planned |
 | EVENTS-PERM-002 | Event User | Ordinary event/attendee CRUD | `events.read/write` actions allowed within scope | attendee edit action declares `events.write`; authenticated actor matrix remains open | partial |
 | EVENTS-PERM-003 | Fleet ordinary user | Event route and direct API | 403 for missing `events.read/write`; no mutation | pass for read boundary; write probe planned |
@@ -73,6 +78,7 @@ and the linked confirmed order.
 
 | Case ID | State | Viewport | Required assertion | Status |
 | --- | --- | --- | --- | --- |
+| EVENTS-UI-006 | Notes & Documents form | Odoo desktop 1916x833 and mobile 390x844 | Badge dimension, upload area, instructions, and note remain visible in authenticated reference | Odoo captures in feature evidence | pass |
 | EVENTS-UI-001 | Event/list/detail normal | 1440x900 and 390x844 | Odoo menu order, tabs, fields, cards, actions, text, geometry and overflow | partial |
 | EVENTS-UI-002 | Registration/attendee forms and modal | both | Composer, badge/ticket, registration desk, mobile sheet/footer and focus behavior | partial |
 | EVENTS-UI-003 | Reports/stat actions | both | Graph/pivot/list controls, event scope, labels, empty/loading/error states | partial |

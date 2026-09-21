@@ -1,3 +1,10 @@
 database:
   storage:
     driver: duckdb
+
+attachments:
+  event_badge_background:
+    download:
+      route: /api/events/badge-backgrounds
+      permission: events.read
+      query: SELECT id, badge_image_file_name AS file_name, badge_image_mime_type AS mime_type, badge_image_size_bytes AS size_bytes, badge_image_storage_key AS storage_key FROM events WHERE id = :attachment_id AND badge_image_file_name IS NOT NULL

@@ -1,5 +1,34 @@
 # Events UI parity
 
+## Current bounded batch: Event Notes & Documents (2026-09-22)
+
+The next genuinely uncovered bounded source feature was the Odoo event form's
+`Notes & Documents` notebook page. Odoo 19 declares `badge_format`,
+`badge_image`, `ticket_instructions`, and `note` on `event.event`; the source
+view is `addons/event/views/event_event_views.xml`, where the page exposes
+Badge Dimension, Badge Background, Ticket Instructions, and Note. The
+authenticated reference showed the same fields on the `Design Fair Los
+Angeles` event at desktop and mobile widths.
+
+Core3 keeps the page/API contract separate through the matching `event-detail`
+page id. `pages/event-detail.yaml` owns the Odoo form notebook, editable field
+definitions, and permission-filtered badge upload/remove controls;
+`api/event-detail.yaml` owns the datasource, upload/download/remove actions,
+`events.read`/`events.write` boundaries, validation, and optimistic row-version
+guards. Migration `20260922100000-034-event-notes-documents.yaml` adds durable
+note/instruction, badge-dimension, and badge-file metadata columns. The
+file-backed integration test verifies mutation validation, stale-write
+rejection, upload/remove, download bytes, and metadata after reopening the
+database.
+
+Focused validation for this batch is 9 tests / 70 assertions when run with the
+existing Events form regression. Authenticated Odoo evidence is recorded in
+`odoo-ui-parity/evidence/events/2026-09-22/event-notes-documents/`. Core3
+memory-mode startup reached backend, Vite, and the event mediator during this
+checkpoint, but no new Core3 visual screenshot is claimed. Full Events sign-off
+remains conditional on the broader permission actor matrix and route-level
+visual coverage.
+
 ## Current bounded batch: Attendee registration answer editor (2026-09-21)
 
 The next source-backed gap after the question answer-choice and question-scoped
