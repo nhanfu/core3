@@ -1216,6 +1216,7 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 Product Attributes lifecycle and
 guards; PARTIAL/BLOCKED for any unavailable live Odoo visual or mutation
 comparison. Full Inventory sign-off remains open.
+
 ## Inventory Product Templates QA — `INV-PRODUCT-TEMPLATES-001`
 
 - Odoo source/menu/action: PASS from
@@ -1607,4 +1608,32 @@ comparison. Full Inventory sign-off remains open.
 
 QA disposition: PASS for the bounded Core3 durable quant-replenishment
 lifecycle; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
+comparison. Full Inventory sign-off remains open.
+
+## Inventory Operation Type Reporting QA — `INV-OP-TYPE-MOVES-ANALYSIS-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_type_views.xml:208-215`,
+  `addons/stock/models/stock_picking.py:456-461`, and the global move action
+  in `addons/stock/views/stock_move_views.xml:4-25`. The Reporting link
+  scopes the stock move report to the selected operation type.
+- Core3 contract: PASS. The presentation-only
+  `pages/operation-type-moves-analysis.yaml` and backend
+  `api/operation-type-moves-analysis.yaml` are joined by `page.id`; the
+  operation-type detail exposes the read-permission entry action. Migration
+  0.0.68 persists the stock-move operation context and report-open history.
+- Focused verification: PASS —
+  `bun test test/inventory_operation_type_moves_analysis.integration.test.ts`,
+  4 tests / 34 assertions. Coverage includes source/schema checks,
+  deterministic operation/company/date/state/type/search filters,
+  actor/company/stale guards, restart persistence, and permission denial.
+- Core3 browser evidence: BLOCKED for this wave. Desktop and mobile probes
+  reached `/auth/login`; captures are explicitly not authenticated report-page
+  evidence and authenticated overflow was not assessed.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo action
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable operation-type report
+contract; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
 comparison. Full Inventory sign-off remains open.

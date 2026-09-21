@@ -11,6 +11,11 @@ actions:
     permission: inventory.read
     navigate_to: /operation-types/ready-moves
     params: { operation_type_id: '{state.inventory_operation_type_detail.id}' }
+  - id: view_inventory_operation_type_moves_analysis
+    type: navigate
+    permission: inventory.read
+    navigate_to: /operation-types/moves-analysis
+    params: { operation_type_id: '{state.inventory_operation_type_detail.id}', current_company_name: '{state.inventory_operation_type_detail.company_name}' }
   - id: back_to_inventory_operation_types
     type: navigate
     permission: inventory.manage

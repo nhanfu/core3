@@ -1,0 +1,30 @@
+version: 0.0.68
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_stock_moves ADD COLUMN IF NOT EXISTS operation_type_id VARCHAR;
+      UPDATE inventory_stock_moves SET operation_type_id = CASE operation_type_name WHEN 'Receipts' THEN 'operation-receipts' WHEN 'Delivery Orders' THEN 'operation-deliveries' WHEN 'Internal Transfers' THEN 'operation-internal' ELSE NULL END WHERE operation_type_id IS NULL;
+      CREATE INDEX IF NOT EXISTS idx_inventory_stock_moves_operation_type ON inventory_stock_moves(operation_type_id, company_name, date, id);
+      CREATE TABLE IF NOT EXISTS inventory_operation_type_moves_analysis_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        operation_type_id VARCHAR NOT NULL, operation_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, requested_by VARCHAR NOT NULL,
+        move_count BIGINT NOT NULL DEFAULT 0, opened_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_operation_type_moves_analysis_runs_type ON inventory_operation_type_moves_analysis_runs(operation_type_id, opened_at, id);
+      INSERT INTO inventory_operation_type_moves_analysis_runs(id, operation_type_id, operation_name, company_name, requested_by, move_count, opened_at)
+      SELECT 'operation-type-moves-analysis-operation-deliveries-1', t.id, t.name, t.company_name, 'Seeded Inventory', COUNT(m.id), TIMESTAMP '2026-01-15 10:25:00'
+      FROM inventory_operation_types t LEFT JOIN inventory_stock_moves m ON m.operation_type_id = t.id AND m.company_name = t.company_name
+      WHERE t.id = 'operation-deliveries'
+      GROUP BY t.id, t.name, t.company_name
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_operation_type_moves_analysis_runs WHERE id = 'operation-type-moves-analysis-operation-deliveries-1';
+      DROP TABLE IF EXISTS inventory_operation_type_moves_analysis_runs;
+      DROP INDEX IF EXISTS idx_inventory_stock_moves_operation_type;
+      ALTER TABLE inventory_stock_moves DROP COLUMN IF EXISTS operation_type_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

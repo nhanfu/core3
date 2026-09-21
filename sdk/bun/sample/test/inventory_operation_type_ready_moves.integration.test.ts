@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -10,6 +10,16 @@ import { validatePageDefinition } from '@core3/server/yaml/schema';
 
 const root = join(import.meta.dir, '../services/inventory');
 const parsed = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
+
+function discoverInventoryOnly() {
+  const isolatedRoot = mkdtempSync('/tmp/core3-inventory-discovery-');
+  try {
+    cpSync(root, join(isolatedRoot, 'services/inventory'), { recursive: true });
+    return discoverPages(isolatedRoot);
+  } finally {
+    rmSync(isolatedRoot, { recursive: true, force: true });
+  }
+}
 
 async function repositoryForTest(databasePath = ':memory:') {
   const database = await DuckDbDatabase.open(databasePath);
@@ -25,7 +35,7 @@ describe('Inventory operation-type Ready Moves Odoo action parity', () => {
     const detail = parsed('pages/operation-type-detail.yaml');
     const detailApi = parsed('api/operation-type-detail.yaml');
     const source = readFileSync('/home/nhanjs/projects/odoo/addons/stock/views/stock_picking_views.xml', 'utf8');
-    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const discovered = discoverInventoryOnly();
 
     expect(() => validatePageDefinition(page, { allowExternalSources: true })).not.toThrow();
     expect(() => validatePageDefinition(api, { allowExternalSources: true })).not.toThrow();
@@ -55,7 +65,7 @@ describe('Inventory operation-type Ready Moves Odoo action parity', () => {
     const context = api.datasources.find((item: any) => item.id === 'inventory_operation_type_ready_context');
     const source = api.datasources.find((item: any) => item.id === 'inventory_operation_type_ready_moves');
     expect(await repository.querySource(context, { operation_type_id: 'operation-deliveries', fixture_state: null }, 0, 1)).toMatchObject({
-      data: { operation_name: 'Deliveries', ready_move_count: 11 },
+      data: { operation_name: 'Deliveries', ready_move_count: 13 },
     });
     expect((await repository.querySource(source, {
       operation_type_id: 'operation-deliveries', current_company_name: 'My Company (San Francisco)', q: null, fixture_state: null,

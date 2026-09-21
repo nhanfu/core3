@@ -1197,3 +1197,22 @@ Full Inventory sign-off remains open.
   attempt, so no authenticated visual pass is claimed. Odoo returned HTTP 303
   to `/web/login`; exact blockers and captures are recorded under the feature
   evidence directory. Full Inventory sign-off remains open.
+
+## `INV-OP-TYPE-MOVES-ANALYSIS-001` — Operation Type Reporting (2026-09-21)
+
+- Selected Odoo's missing operation-type kanban `Reporting` action after the
+  quant replenishment wave. Odoo's `get_action_picking_type_moves_analysis`
+  opens the global stock move action with a `picking_type_id` domain.
+- Added migration `20260922180000-068-inventory-operation-type-moves-analysis.yaml`
+  with an idempotent operation-type context column on stock moves and a
+  durable report-open ledger. Added separate page/API YAML joined by
+  `page.id: operation-type-moves-analysis`; operation-type detail now exposes
+  the read-permission Reporting action.
+- Focused verification passes 4 tests / 34 assertions for source mapping,
+  discovery, deterministic company/type/state/date/search filtering,
+  actor/company/stale guards, migration replay, restart persistence, and
+  `inventory.read` permission denial.
+- Core3 probing reached only the login shell at both requested viewports, so no
+  authenticated visual pass is claimed. Odoo returned HTTP 303 to
+  `/web/login`; exact blockers and captures are recorded under the feature
+  evidence directory. Full Inventory sign-off remains open.

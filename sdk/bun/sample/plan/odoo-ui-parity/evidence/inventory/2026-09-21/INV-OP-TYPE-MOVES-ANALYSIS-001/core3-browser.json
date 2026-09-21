@@ -1,0 +1,14 @@
+{
+  "feature_id": "INV-OP-TYPE-MOVES-ANALYSIS-001",
+  "status": "blocked_authentication",
+  "target": "/operation-types/moves-analysis?operation_type_id=operation-deliveries&current_company_name=My%20Company%20%28San%20Francisco%29",
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900, "capture": "desktop.png", "authenticated": false, "url": "/auth/login" },
+    "mobile": { "width": 390, "height": 844, "capture": "mobile.png", "authenticated": false, "url": "/auth/login" }
+  },
+  "observed": "The bounded Core3 probes rendered the sign-in shell without page errors or failed responses. Authentication did not complete, so the report page, actions, and overflow were not visually assessed.",
+  "page_errors": [],
+  "failed_responses": [],
+  "horizontal_overflow": { "desktop": false, "mobile": false, "authenticated_page_assessment": "not_assessed" },
+  "captured_at": "2026-09-21"
+}

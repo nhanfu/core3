@@ -2239,3 +2239,32 @@ only the sign-in shell, and live Odoo returned HTTP 303 to `/web/login`; exact
 blockers and non-authenticated login-shell captures are under
 `evidence/inventory/2026-09-21/INV-QUANT-REPLENISHMENT-001/`. Full Inventory
 sign-off remains open.
+
+## Configuration > Operations Types > Reporting — `INV-OP-TYPE-MOVES-ANALYSIS-001` (2026-09-21)
+
+This bounded Wave 31 slice closes the missing operation-type Reporting
+drilldown without duplicating the global Moves Analysis report or Ready Moves
+context. Odoo exposes the kanban Reporting link in
+`addons/stock/views/stock_picking_type_views.xml:208-215`; the source method
+`get_action_picking_type_moves_analysis` in
+`addons/stock/models/stock_picking.py:456-461` opens `stock.stock_move_action`
+with a `picking_type_id = self.id` domain.
+
+Core3 adds migration
+`services/inventory/migrations/20260922180000-068-inventory-operation-type-moves-analysis.yaml`
+with a durable operation-type foreign context on stock moves and report-open
+history. Separate `pages/operation-type-moves-analysis.yaml` and
+`api/operation-type-moves-analysis.yaml` contracts share
+`page.id: operation-type-moves-analysis`; the operation-type detail exposes the
+read-permission Reporting action. Queries are company-scoped and the Refresh
+report action enforces actor, company, and operation-type row-version guards.
+
+Focused verification passes 4 tests / 34 assertions in
+`test/inventory_operation_type_moves_analysis.integration.test.ts`, covering
+source comparison, discovery/schema separation, deterministic filtering and
+empty / transport states, durable report history, migration replay, restart
+persistence, and permission denial. Core3 desktop/mobile probing reached only
+the sign-in shell, and live Odoo returned HTTP 303 to `/web/login`; exact
+blockers and non-authenticated captures are under
+`evidence/inventory/2026-09-21/INV-OP-TYPE-MOVES-ANALYSIS-001/`. Full Inventory
+sign-off remains open.

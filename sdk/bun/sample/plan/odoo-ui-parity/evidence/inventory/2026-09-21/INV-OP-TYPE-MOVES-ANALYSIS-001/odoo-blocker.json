@@ -1,0 +1,8 @@
+{
+  "feature_id": "INV-OP-TYPE-MOVES-ANALYSIS-001",
+  "status": "blocked",
+  "request": "GET http://127.0.0.1:8069/web",
+  "observed": "HTTP 303 Location: /web/login?redirect=%2Fweb%3F",
+  "impact": "No authenticated Odoo operation-type kanban Reporting action or paired report screenshot is claimed.",
+  "captured_at": "2026-09-21"
+}

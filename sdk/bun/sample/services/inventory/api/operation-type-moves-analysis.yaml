@@ -1,0 +1,97 @@
+page: { id: operation-type-moves-analysis }
+datasources:
+  - id: inventory_operation_type_moves_context
+    single: true
+    permission: inventory.read
+    error_states:
+      not_found: { status: 404, code: INVENTORY_OPERATION_TYPE_MOVES_NOT_FOUND, message: The selected operation type is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_OPERATION_TYPE_MOVES_CONTEXT_UNAVAILABLE, message: Operation type reporting is temporarily unavailable. }
+    query: "SELECT t.id AS operation_type_id, t.row_version, t.name AS operation_name, t.code, t.company_name, CAST(COUNT(m.id) AS BIGINT) AS move_count FROM inventory_operation_types t LEFT JOIN inventory_stock_moves m ON m.operation_type_id = t.id AND m.company_name = t.company_name WHERE t.id = :operation_type_id AND t.active = TRUE AND (NULLIF(:current_company_name, '') IS NULL OR t.company_name = :current_company_name) GROUP BY t.id, t.row_version, t.name, t.code, t.company_name"
+  - id: inventory_operation_type_moves_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('ready', 'Ready'), ('todo', 'To Do'), ('done', 'Done')) states(value, label)"
+  - id: inventory_operation_type_moves_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('incoming', 'Incoming'), ('outgoing', 'Outgoing'), ('internal', 'Internal'), ('inventory', 'Inventory')) types(value, label)"
+  - id: inventory_operation_type_moves
+    single: false
+    permission: inventory.read
+    pivot: { fields: [id, date, reference, product_name, operation_type_name, picking_name, source_location, destination_location, product_uom_qty, quantity, unit_name, state, movement_type, origin] }
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_OPERATION_TYPE_MOVES_UNAVAILABLE, message: Operation type move data is temporarily unavailable. }
+    query: |
+      SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference,
+        m.product_id, m.product_name, t.name AS operation_type_name, m.picking_id,
+        m.picking_name, sl.name AS source_location, dl.name AS destination_location,
+        m.source_location_id, m.destination_location_id, m.partner_name,
+        m.company_name, CAST(m.product_uom_qty AS DOUBLE) AS product_uom_qty,
+        CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state,
+        m.origin, m.movement_type, m.is_inventory
+      FROM inventory_stock_moves m
+      JOIN inventory_operation_types t ON t.id = m.operation_type_id
+      LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
+      WHERE m.operation_type_id = :operation_type_id
+        AND (NULLIF(:current_company_name, '') IS NULL OR m.company_name = :current_company_name)
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR m.reference ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(m.picking_name, '') ILIKE '%' || :q || '%' OR COALESCE(sl.name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(dl.name, '') ILIKE '%' || :q || '%' OR COALESCE(m.partner_name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.origin, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR :state = '' OR (:state = 'done' AND m.state = 'Done')
+          OR (:state = 'ready' AND m.state = 'Assigned') OR (:state = 'todo' AND m.state IN ('Assigned', 'Confirmed', 'Waiting')))
+        AND (:movement_type IS NULL OR :movement_type = '' OR m.movement_type = :movement_type)
+        AND (:from_date IS NULL OR :from_date = '' OR CAST(m.date AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR :to_date = '' OR CAST(m.date AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY m.date DESC, m.id DESC
+  - id: inventory_operation_type_moves_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_OPERATION_TYPE_MOVES_RUNS_UNAVAILABLE, message: Operation type report history is temporarily unavailable. } }
+    query: "SELECT id, row_version, operation_type_id, operation_name, company_name, requested_by, move_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_operation_type_moves_analysis_runs WHERE operation_type_id = :operation_type_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name) ORDER BY opened_at DESC, id DESC"
+actions:
+  - id: refresh_inventory_operation_type_moves
+    type: client
+    permission: inventory.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_operation_type_moves_context;
+        if (!context?.operation_type_id) throw new Error('Operation type report context is unavailable');
+        await request('/api/actions/inventory.operation_types.moves_analysis', {
+          method: 'POST',
+          body: { operation_type_id: context.operation_type_id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_operation_type_moves
+    type: server
+    permission: inventory.read
+    action: inventory.operation_types.moves_analysis
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_operation_type_moves_context, inventory_operation_type_moves, inventory_operation_type_moves_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'operation-type-moves-analysis-' || CAST(:operation_type_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_operation_type_moves_analysis_runs WHERE operation_type_id = :operation_type_id) AS VARCHAR) AS id, t.name AS operation_name, t.company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COUNT(m.id) AS move_count FROM inventory_operation_types t LEFT JOIN inventory_stock_moves m ON m.operation_type_id = t.id AND m.company_name = t.company_name WHERE t.id = :operation_type_id GROUP BY t.id, t.name, t.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_operation_types WHERE id = :operation_type_id AND active = TRUE AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 404, code: INVENTORY_OPERATION_TYPE_MOVES_NOT_FOUND, message: The selected operation type is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_operation_types WHERE id = :operation_type_id AND row_version = :expected_row_version AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 409, code: INVENTORY_OPERATION_TYPE_MOVES_STALE, message: The operation type changed before reporting was opened. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_OPERATION_TYPE_MOVES_ACTOR_REQUIRED, message: An authenticated inventory actor is required to open operation reporting. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)')) = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)')", status: 403, code: INVENTORY_OPERATION_TYPE_MOVES_COMPANY, message: The report company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_operation_type_moves_analysis_runs(id, operation_type_id, operation_name, company_name, requested_by, move_count, opened_at, row_version) VALUES(:id, :operation_type_id, :operation_name, :company_name, :requested_by, :move_count, TIMESTAMP '2026-01-15 10:30:00', 1)"
+      result: { query: "SELECT id, operation_type_id, operation_name, company_name, requested_by, move_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_operation_type_moves_analysis_runs WHERE id = :id" }
+  - id: back_to_inventory_operation_type
+    type: navigate
+    permission: inventory.read
+    navigate_to: /operation-types/detail
+    params: { id: '{query.operation_type_id}' }
+  - id: view_inventory_operation_type_move
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves-analysis/detail
+    params: { id: '{row.id}' }

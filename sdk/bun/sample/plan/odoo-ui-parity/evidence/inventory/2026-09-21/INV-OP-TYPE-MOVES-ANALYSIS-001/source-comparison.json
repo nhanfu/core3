@@ -1,0 +1,24 @@
+{
+  "feature_id": "INV-OP-TYPE-MOVES-ANALYSIS-001",
+  "odoo": {
+    "menu_view": "addons/stock/views/stock_picking_type_views.xml:208-215",
+    "method": "addons/stock/models/stock_picking.py:456-461",
+    "global_action": "addons/stock/views/stock_move_views.xml:4-25",
+    "behavior": "The operation-type kanban Reporting link opens the global stock.move action with a domain scoped to picking_type_id=self.id."
+  },
+  "core3": {
+    "page": "services/inventory/pages/operation-type-moves-analysis.yaml",
+    "api": "services/inventory/api/operation-type-moves-analysis.yaml",
+    "page_id": "operation-type-moves-analysis",
+    "entrypoint": "services/inventory/pages/operation-type-detail.yaml:view_inventory_operation_type_moves_analysis",
+    "migration": "services/inventory/migrations/20260922180000-068-inventory-operation-type-moves-analysis.yaml",
+    "behavior": "The operation-type detail Reporting action opens a company-scoped list/pivot/graph/kanban/form report, records durable refresh history, and navigates rows to the existing move detail."
+  },
+  "comparison": {
+    "source_mapping": "pass",
+    "page_api_separation": "pass",
+    "durable_context_and_history": "pass",
+    "permission_company_stale_actor_guards": "pass",
+    "live_odoo_execution": "blocked_by_login_redirect"
+  }
+}
