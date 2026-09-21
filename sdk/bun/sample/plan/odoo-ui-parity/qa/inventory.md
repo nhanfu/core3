@@ -426,6 +426,30 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Transfer Reception Report QA — `INV-TRANSFER-RECEPTION-REPORT-001`
+
+- Odoo source/action: PASS. Incoming/internal transfer forms expose Allocation
+  when the reception-report group and eligible source/demand moves are present;
+  the client action supports source-demand reporting, Assign, Unassign, and
+  Assign All.
+- Core3 contract: PASS. The transfer-detail stat links to separate
+  `transfer-reception-report` page/API contracts sharing `page.id`. Migration
+  0.0.74 persists deterministic allocation lines, report runs, and assignment
+  events.
+- Focused verification: PASS — 12 tests / 103 assertions across the feature,
+  transfer workflow, and reservation suites. YAML audit, focused ESLint, and
+  `git diff --check` pass.
+- Core3 browser evidence: BLOCKED before authentication. Desktop and mobile
+  captures reached `/auth/login`, with no page errors, failed responses, or
+  horizontal overflow. See `core3-browser.json` and both screenshots.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP 303
+  to `/web/login?redirect=%2Fweb%3F`; no authenticated Allocation action or
+  screenshot is claimed.
+
+QA disposition: PASS for the bounded durable Core3 reception allocation
+lifecycle; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
+comparison. Full Inventory sign-off remains open.
+
 ## Inventory Transfer Traceability QA — `INV-TRANSFER-TRACEABILITY-001`
 
 - Odoo source/action: PASS. The transfer form's Done/tracked Traceability

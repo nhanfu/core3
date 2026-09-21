@@ -1,0 +1,44 @@
+title: Reception Report
+page: { id: transfer-reception-report, route: /inventory/transfer/reception-report, breadcrumb: [Supply Chain, Inventory, Operations, Receipts, Allocation], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_reception_report_context
+    title: Reception Report
+    stats:
+      - { label: Receipt, field: transfer_name }
+      - { label: Company, field: company_name }
+      - { label: Lines, field: line_count }
+      - { label: Assigned, field: assigned_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_reception_report_lines
+    header_actions:
+      - { id: assign_all_inventory_reception, label: Assign All, variant: primary, permission: inventory.write }
+      - { id: record_inventory_transfer_reception_report, label: Refresh Allocation, variant: secondary, permission: inventory.read }
+      - { id: back_to_inventory_transfer_from_reception_report, label: Back to Receipt, variant: secondary, permission: inventory.read }
+    search: { label: Search allocation, placeholder: 'Search source, product, or document...' }
+    columns:
+      - { field: source_reference, label: Source, type: PrimaryEntityCell, sortable: true }
+      - { field: source_document, label: Origin, sortable: true }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: assigned_quantity, label: Assigned, align: right }
+      - { field: scheduled_date, label: Expected Date, sortable: true }
+      - { field: source_contact, label: Contact }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 30
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No allocation need found, description: Incoming products with linked demand will appear here. }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_reception_report_events
+    columns:
+      - { field: action_label, label: Action, type: PrimaryEntityCell }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: actor_name, label: Operator }
+      - { field: created_at, label: Created At }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No allocation history, description: Assignment changes and report refreshes will appear here. }

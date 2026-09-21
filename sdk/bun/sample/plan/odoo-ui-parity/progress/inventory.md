@@ -1330,3 +1330,28 @@ Full Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-TRANSFER-DETAILED-OPS-EDIT-001/`.
   No Odoo action sign-off is claimed without a reachable authenticated session.
 - Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-RECEPTION-REPORT-001` — Transfer Allocation / Reception Report (2026-09-21)
+
+- Selected Odoo's incoming/internal-transfer Allocation stat after the
+  completed transfer traceability slice. The source action is
+  `action_view_reception_report`, gated by `stock.group_reception_report` and
+  backed by `report.stock.report_reception` with Assign, Unassign, and Assign
+  All operations.
+- Added separate `transfer-reception-report` page/API contracts joined by
+  `page.id`, linked from the transfer-detail Allocation stat. Migration
+  `20260922240000-074-inventory-transfer-reception-report.yaml` adds a
+  deterministic receipt, demand transfer, allocation line, report run, and
+  durable assignment-event history.
+- The report supports refresh, per-line Assign/Unassign, and Assign All. Read
+  access uses `inventory.read`; assignment uses `inventory.write`. Company,
+  open-state, authenticated-actor, row-version, and already-assigned guards
+  are covered, with file-backed restart persistence.
+- Focused verification passes 12 tests / 103 assertions across the new report,
+  transfer workflow, and reservation regression suites. YAML audit, focused
+  ESLint, and diff-check pass.
+- Core3 desktop/mobile probes reached `/auth/login`; exact captures and
+  no-error/no-overflow results are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-RECEPTION-REPORT-001/`. Odoo
+  returned HTTP 303 to `/web/login`; no authenticated paired sign-off is
+  claimed. Full Inventory sign-off remains open.

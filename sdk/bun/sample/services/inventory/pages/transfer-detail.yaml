@@ -38,6 +38,7 @@ components:
       - { id: view_inventory_transfer_detailed_operations, label: Moves, icon: list, value_field: move_count, permission: inventory.read }
       - { id: view_inventory_transfer_package_histories, label: Packages, icon: package, value_field: package_history_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.package_history_count > 0" }
       - { id: view_inventory_transfer_traceability, label: Traceability, icon: history, value_field: traceability_count, permission: inventory.tracking, show_if: "state.inventory_transfer_detail.traceability_count > 0 && state.inventory_transfer_detail.state === 'Done'" }
+      - { id: view_inventory_transfer_reception_report, label: Allocation, icon: assignment, value_field: reception_report_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.reception_report_count > 0 && state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: view_inventory_transfer_next, label: Next Transfer, icon: transfer, value_field: next_transfer_count, permission: inventory.read, show_if: "state.inventory_transfer_detail.next_transfer_count > 0" }
     message_source: inventory_transfer_timeline
     chatter_label: Messages and activities

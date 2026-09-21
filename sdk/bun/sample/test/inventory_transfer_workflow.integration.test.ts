@@ -68,7 +68,7 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
 
     const receipts = source('transfers.yaml', 'inventory_receipts');
     const deliveries = source('deliveries.yaml', 'inventory_deliveries');
-    expect((await repository.querySource(receipts, { q: null, state: null, scheduled_date: null, fixture_state: null }, 0, 50)).data).toHaveLength(6);
+    expect((await repository.querySource(receipts, { q: null, state: null, scheduled_date: null, fixture_state: null }, 0, 50)).data).toHaveLength(7);
     expect((await repository.querySource(deliveries, { q: 'WH/OUT/00008', state: null, scheduled_date: null, fixture_state: null }, 0, 50)).data[0]).toMatchObject({ name: 'WH/OUT/00008', contact_name: 'Gemini Furniture, Oscar Morgan', state: 'Ready' });
     expect((await repository.querySource(receipts, { q: null, state: null, scheduled_date: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(receipts, { q: null, state: null, scheduled_date: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_TRANSFER_DATA_UNAVAILABLE' });

@@ -96,7 +96,7 @@ describe('Inventory transfer reservation parity', () => {
       authProvider: { async getCurrentUser() { return user; }, hasPermission(candidate: any, permission: string) { return candidate.permissions.includes(permission); } },
       sources: new Map(api.datasources.map((candidate: any) => [candidate.id, candidate])), pageSources: new Map([['transfer-detail', api.datasources.map((candidate: any) => candidate.id)]]),
       pages: new Map([['transfer-detail', { ...page, actions: api.actions }]]), catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
-      permissions: { permissions: ['inventory.read', 'inventory.write'], tables: {}, endpoints: {} }, uploadRoot: '/tmp/core3-inventory-reservations-test', eventStore: {}, topics: {},
+      permissions: { permissions: ['inventory.read', 'inventory.write', 'inventory.manage'], tables: {}, endpoints: {} }, uploadRoot: '/tmp/core3-inventory-reservations-test', eventStore: {}, topics: {},
     });
     await expect(handler(new Request('http://inventory.test/api/actions/inventory.pickings.check_availability', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ values: { id: 'delivery-reserve-0001', expected_row_version: 1 } }) }), new URL('http://inventory.test/api/actions/inventory.pickings.check_availability'))).rejects.toMatchObject({ status: 403, message: 'Requires permission: inventory.write' });
   });

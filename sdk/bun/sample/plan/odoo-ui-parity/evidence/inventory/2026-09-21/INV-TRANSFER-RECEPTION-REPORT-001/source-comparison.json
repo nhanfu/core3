@@ -1,0 +1,18 @@
+{
+  "feature_id": "INV-TRANSFER-RECEPTION-REPORT-001",
+  "odoo_sources": [
+    "addons/stock/views/stock_picking_views.xml:166-173",
+    "addons/stock/models/stock_picking.py:983-990,1056-1070,1967-1968",
+    "addons/stock/report/report_stock_reception.py:11-238,319-374",
+    "addons/stock/report/report_stock_reception.xml:39-119",
+    "addons/stock/static/src/components/reception_report_main/stock_reception_report_main.js:39-102"
+  ],
+  "source_behavior": "Incoming or internal transfers with the reception-report group expose Allocation; the reception_report client action shows source-demand lines and supports Assign, Unassign, Assign All, report print, and reception labels.",
+  "core3_contract": {
+    "page": "services/inventory/pages/transfer-reception-report.yaml",
+    "api": "services/inventory/api/transfer-reception-report.yaml",
+    "page_id": "transfer-reception-report",
+    "entrypoint": "services/inventory/pages/transfer-detail.yaml + services/inventory/api/transfer-detail.yaml"
+  },
+  "comparison": "Core3 implements the bounded report context, deterministic demand lines, durable refresh/event history, Assign/Unassign/Assign All, and company/actor/stale guards. Live authenticated Odoo comparison is blocked by the login redirect."
+}

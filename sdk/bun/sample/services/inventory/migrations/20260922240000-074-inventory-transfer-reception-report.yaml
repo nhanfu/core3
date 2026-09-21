@@ -1,0 +1,115 @@
+version: 0.0.74
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_reception_report_lines (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        demand_picking_id VARCHAR NOT NULL,
+        demand_move_id VARCHAR NOT NULL,
+        incoming_move_id VARCHAR NOT NULL,
+        source_reference VARCHAR NOT NULL,
+        source_document VARCHAR,
+        source_contact VARCHAR,
+        scheduled_date DATE NOT NULL,
+        product_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL,
+        assigned_quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        uom VARCHAR NOT NULL,
+        is_qty_assignable BOOLEAN NOT NULL DEFAULT TRUE,
+        is_assigned BOOLEAN NOT NULL DEFAULT FALSE,
+        state VARCHAR NOT NULL DEFAULT 'Waiting',
+        assigned_by VARCHAR,
+        assigned_at TIMESTAMP,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_reception_report_lines_picking
+        ON inventory_reception_report_lines(picking_id, scheduled_date, id);
+      CREATE TABLE IF NOT EXISTS inventory_reception_report_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        transfer_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        line_count BIGINT NOT NULL DEFAULT 0,
+        assigned_count BIGINT NOT NULL DEFAULT 0,
+        generated_at TIMESTAMP NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS inventory_reception_report_events (
+        id VARCHAR PRIMARY KEY,
+        picking_id VARCHAR NOT NULL,
+        line_id VARCHAR,
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        actor_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_reception_report_events_picking
+        ON inventory_reception_report_events(picking_id, created_at, id);
+      INSERT INTO inventory_pickings(
+        id, operation_type_id, name, contact_name, scheduled_date, source_document,
+        company_name, source_location_id, destination_location_id, state
+      ) VALUES
+        ('receipt-reception-report-0001', 'operation-receipts', 'WH/IN/RECEPTION/0001',
+         'Reception Customer', DATE '2026-01-16', 'PO/RECEPTION/0001', 'Core3 Demo Company',
+         'location-customer', 'location-stock', 'Ready'),
+        ('delivery-reception-demand-0001', 'operation-deliveries', 'WH/OUT/RECEPTION/0001',
+         'Reception Customer', DATE '2026-01-17', 'SO/RECEPTION/0001', 'Core3 Demo Company',
+         'location-stock', 'location-customer', 'Waiting')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES
+        ('receipt-reception-report-0001-move-001', 'receipt-reception-report-0001', '[E-COM01] Office Chair', 10, 0),
+        ('delivery-reception-demand-0001-move-001', 'delivery-reception-demand-0001', '[E-COM01] Office Chair', 6, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_reception_report_lines(
+        id, picking_id, demand_picking_id, demand_move_id, incoming_move_id,
+        source_reference, source_document, source_contact, scheduled_date,
+        product_id, product_name, quantity, assigned_quantity, uom,
+        is_qty_assignable, is_assigned, state, company_name, created_at
+      ) VALUES (
+        'reception-line-0001', 'receipt-reception-report-0001',
+        'delivery-reception-demand-0001', 'delivery-reception-demand-0001-move-001',
+        'receipt-reception-report-0001-move-001', 'WH/OUT/RECEPTION/0001',
+        'SO/RECEPTION/0001', 'Reception Customer', DATE '2026-01-17',
+        'product-office-chair', '[E-COM01] Office Chair', 6, 0, 'Units',
+        TRUE, FALSE, 'Waiting', 'Core3 Demo Company', TIMESTAMP '2026-01-15 17:00:00'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_reception_report_runs(
+        id, picking_id, transfer_name, requested_by, company_name, line_count,
+        assigned_count, generated_at
+      ) VALUES (
+        'reception-report-receipt-reception-report-0001-1',
+        'receipt-reception-report-0001', 'WH/IN/RECEPTION/0001', 'Seeded Inventory',
+        'Core3 Demo Company', 1, 0, TIMESTAMP '2026-01-15 17:20:00'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_reception_report_events(
+        id, picking_id, line_id, action, action_label, quantity, actor_name,
+        company_name, created_at
+      ) VALUES (
+        'reception-report-open-seed-0001', 'receipt-reception-report-0001', NULL,
+        'inventory.reception.report_opened', 'Report refreshed', 1,
+        'Seeded Inventory', 'Core3 Demo Company', TIMESTAMP '2026-01-15 17:20:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_reception_report_events WHERE picking_id IN ('receipt-reception-report-0001', 'delivery-reception-demand-0001');
+      DELETE FROM inventory_reception_report_runs WHERE picking_id = 'receipt-reception-report-0001';
+      DELETE FROM inventory_reception_report_lines WHERE id = 'reception-line-0001';
+      DELETE FROM inventory_picking_moves WHERE id IN ('receipt-reception-report-0001-move-001', 'delivery-reception-demand-0001-move-001');
+      DELETE FROM inventory_pickings WHERE id IN ('receipt-reception-report-0001', 'delivery-reception-demand-0001');
+      DROP INDEX IF EXISTS idx_inventory_reception_report_events_picking;
+      DROP INDEX IF EXISTS idx_inventory_reception_report_lines_picking;
+      DROP TABLE IF EXISTS inventory_reception_report_events;
+      DROP TABLE IF EXISTS inventory_reception_report_runs;
+      DROP TABLE IF EXISTS inventory_reception_report_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

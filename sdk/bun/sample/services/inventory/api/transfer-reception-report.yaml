@@ -1,0 +1,109 @@
+page: { id: transfer-reception-report }
+datasources:
+  - id: inventory_transfer_reception_report_context
+    single: true
+    permission: inventory.read
+    error_states:
+      not_found: { status: 404, code: INVENTORY_RECEPTION_REPORT_NOT_FOUND, message: The receipt is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_RECEPTION_REPORT_CONTEXT_UNAVAILABLE, message: Reception allocation is temporarily unavailable. }
+    query: "SELECT p.id AS picking_id, p.row_version, p.name AS transfer_name, p.company_name, p.state, t.name AS operation_type_name, CAST(COUNT(r.id) AS BIGINT) AS line_count, CAST(COALESCE(SUM(CASE WHEN r.is_assigned THEN 1 ELSE 0 END), 0) AS BIGINT) AS assigned_count, 'Reception Report' AS report_name FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id LEFT JOIN inventory_reception_report_lines r ON r.picking_id = p.id AND r.company_name = p.company_name WHERE p.id = :picking_id AND t.operation_kind IN ('receipt', 'internal') AND p.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) GROUP BY p.id, p.row_version, p.name, p.company_name, p.state, t.name"
+  - id: inventory_transfer_reception_report_lines
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_RECEPTION_REPORT_LINES_UNAVAILABLE, message: Reception allocation lines are temporarily unavailable. } }
+    query: "SELECT id, row_version, picking_id, demand_picking_id, source_reference, source_document, source_contact, CAST(scheduled_date AS VARCHAR) AS scheduled_date, product_id, product_name, CAST(quantity AS DOUBLE) AS quantity, CAST(assigned_quantity AS DOUBLE) AS assigned_quantity, uom, is_qty_assignable, is_assigned, state, company_name FROM inventory_reception_report_lines WHERE picking_id = :picking_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR source_reference ILIKE '%' || :q || '%' OR source_document ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%') ORDER BY scheduled_date, source_reference, id"
+  - id: inventory_transfer_reception_report_events
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_RECEPTION_REPORT_EVENTS_UNAVAILABLE, message: Reception allocation history is temporarily unavailable. } }
+    query: "SELECT id, picking_id, line_id, action, action_label, CAST(quantity AS DOUBLE) AS quantity, actor_name, company_name, CAST(created_at AS VARCHAR) AS created_at FROM inventory_reception_report_events WHERE picking_id = :picking_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) ORDER BY created_at DESC, id DESC"
+  - id: inventory_transfer_reception_report_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_RECEPTION_REPORT_RUNS_UNAVAILABLE, message: Reception report history is temporarily unavailable. } }
+    query: "SELECT id, picking_id, transfer_name, requested_by, company_name, line_count, assigned_count, CAST(generated_at AS VARCHAR) AS generated_at FROM inventory_reception_report_runs WHERE picking_id = :picking_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) ORDER BY generated_at DESC, id DESC"
+actions:
+  - id: back_to_inventory_transfer_from_reception_report
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }
+  - id: record_inventory_transfer_reception_report
+    type: server
+    permission: inventory.read
+    action: inventory.transfers.reception_report.open
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_transfer_reception_report_context, inventory_transfer_reception_report_lines, inventory_transfer_reception_report_events, inventory_transfer_reception_report_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'reception-report-' || CAST(:picking_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_reception_report_runs WHERE picking_id = :picking_id) AS VARCHAR) AS id, p.name AS transfer_name, COALESCE(NULLIF(:current_user_name, ''), 'Inventory User') AS requested_by, p.company_name, COUNT(r.id) AS line_count, COUNT(CASE WHEN r.is_assigned THEN 1 END) AS assigned_count FROM inventory_pickings p LEFT JOIN inventory_reception_report_lines r ON r.picking_id = p.id WHERE p.id = :picking_id GROUP BY p.id, p.name, p.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT p.id FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE p.id = :picking_id AND t.operation_kind IN ('receipt', 'internal') AND p.state <> 'Cancelled'", status: 404, code: INVENTORY_RECEPTION_REPORT_NOT_FOUND, message: The receipt is not available in the current company. }
+        - { query: "SELECT p.id FROM inventory_pickings p WHERE p.id = :picking_id AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), p.company_name)", status: 403, code: INVENTORY_RECEPTION_REPORT_COMPANY, message: The receipt is outside the current company scope. }
+        - { query: "SELECT p.id FROM inventory_pickings p WHERE p.id = :picking_id AND p.row_version = :expected_row_version", status: 409, code: INVENTORY_RECEPTION_REPORT_STALE, message: The receipt changed before the report was opened. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_RECEPTION_REPORT_ACTOR_REQUIRED, message: An authenticated inventory actor is required to open the report. }
+      steps:
+        - query: "INSERT INTO inventory_reception_report_runs(id, picking_id, transfer_name, requested_by, company_name, line_count, assigned_count, generated_at, row_version) VALUES(:id, :picking_id, :transfer_name, :requested_by, :company_name, :line_count, :assigned_count, TIMESTAMP '2026-01-15 17:30:00', 1)"
+        - query: "INSERT INTO inventory_reception_report_events(id, picking_id, line_id, action, action_label, quantity, actor_name, company_name, created_at) VALUES('reception-report-open-' || :id, :picking_id, NULL, 'inventory.reception.report_opened', 'Report refreshed', :line_count, :requested_by, :company_name, TIMESTAMP '2026-01-15 17:30:00')"
+      result: { query: "SELECT id, picking_id, transfer_name, requested_by, company_name, line_count, assigned_count, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM inventory_reception_report_runs WHERE id = :id" }
+  - id: assign_all_inventory_reception
+    type: server
+    permission: inventory.write
+    action: inventory.transfers.reception_report.assign_all
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_transfer_reception_report_context, inventory_transfer_reception_report_lines, inventory_transfer_reception_report_events, inventory_transfer_reception_report_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'reception-assign-all-' || CAST(:picking_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_reception_report_events WHERE picking_id = :picking_id AND action = 'inventory.reception.assign_all') AS VARCHAR) AS event_id, p.company_name, COUNT(r.id) AS line_count, COALESCE(SUM(r.quantity), 0) AS quantity FROM inventory_pickings p LEFT JOIN inventory_reception_report_lines r ON r.picking_id = p.id AND r.is_qty_assignable = TRUE AND r.is_assigned = FALSE WHERE p.id = :picking_id GROUP BY p.id, p.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT p.id FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE p.id = :picking_id AND t.operation_kind IN ('receipt', 'internal') AND p.state IN ('Waiting', 'Ready')", status: 409, code: INVENTORY_RECEPTION_ASSIGN_NOT_ALLOWED, message: Allocation is available only for an open receipt or internal transfer. }
+        - { query: "SELECT p.id FROM inventory_pickings p WHERE p.id = :picking_id AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), p.company_name)", status: 403, code: INVENTORY_RECEPTION_REPORT_COMPANY, message: The receipt is outside the current company scope. }
+        - { query: "SELECT p.id FROM inventory_pickings p WHERE p.id = :picking_id AND p.row_version = :expected_row_version", status: 409, code: INVENTORY_RECEPTION_REPORT_STALE, message: The receipt changed before allocation. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_RECEPTION_REPORT_ACTOR_REQUIRED, message: An authenticated inventory actor is required to allocate demand. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_reception_report_lines WHERE picking_id = :picking_id AND is_qty_assignable = TRUE AND is_assigned = FALSE)", status: 409, code: INVENTORY_RECEPTION_ASSIGN_EMPTY, message: All allocation lines are already assigned. }
+      steps:
+        - query: "UPDATE inventory_reception_report_lines SET assigned_quantity = quantity, is_assigned = TRUE, state = 'Assigned', assigned_by = :current_user_name, assigned_at = TIMESTAMP '2026-01-15 17:35:00', row_version = row_version + 1 WHERE picking_id = :picking_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) AND is_qty_assignable = TRUE AND is_assigned = FALSE"
+        - query: "INSERT INTO inventory_reception_report_events(id, picking_id, line_id, action, action_label, quantity, actor_name, company_name, created_at) VALUES(:event_id, :picking_id, NULL, 'inventory.reception.assign_all', 'Assign All', :quantity, :current_user_name, :company_name, TIMESTAMP '2026-01-15 17:35:00')"
+      result: { query: "SELECT :event_id AS id, :picking_id AS picking_id, :line_count AS line_count, :quantity AS quantity, :current_user_name AS assigned_by" }
+  - id: assign_inventory_reception_line
+    type: server
+    permission: inventory.write
+    action: inventory.transfers.reception_report.assign
+    handler: yaml_mutation
+    operation: update
+    params: { line_id: '{row.id}', expected_row_version: '{row.row_version}', picking_id: '{query.picking_id}' }
+    refresh: [inventory_transfer_reception_report_context, inventory_transfer_reception_report_lines, inventory_transfer_reception_report_events]
+    mutation:
+      steps:
+        - query: "UPDATE inventory_reception_report_lines SET assigned_quantity = quantity, is_assigned = TRUE, state = 'Assigned', assigned_by = :current_user_name, assigned_at = TIMESTAMP '2026-01-15 17:40:00', row_version = row_version + 1 WHERE id = :line_id AND row_version = :expected_row_version AND picking_id = :picking_id AND is_qty_assignable = TRUE AND is_assigned = FALSE"
+        - query: "INSERT INTO inventory_reception_report_events(id, picking_id, line_id, action, action_label, quantity, actor_name, company_name, created_at) SELECT 'reception-assign-' || :line_id || '-' || CAST(:expected_row_version AS VARCHAR), picking_id, id, 'inventory.reception.assign', 'Assigned', quantity, :current_user_name, company_name, TIMESTAMP '2026-01-15 17:40:00' FROM inventory_reception_report_lines WHERE id = :line_id"
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND picking_id = :picking_id", status: 404, code: INVENTORY_RECEPTION_LINE_NOT_FOUND, message: Allocation line not found. }
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 403, code: INVENTORY_RECEPTION_REPORT_COMPANY, message: The allocation line is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND is_qty_assignable = TRUE AND is_assigned = FALSE", status: 409, code: INVENTORY_RECEPTION_ASSIGN_NOT_ALLOWED, message: This allocation line is already assigned or cannot be assigned. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_RECEPTION_REPORT_ACTOR_REQUIRED, message: An authenticated inventory actor is required to allocate demand. }
+      result: { query: "SELECT id, row_version, picking_id, source_reference, product_name, quantity, assigned_quantity, is_assigned, state, assigned_by FROM inventory_reception_report_lines WHERE id = :line_id" }
+  - id: unassign_inventory_reception_line
+    type: server
+    permission: inventory.write
+    action: inventory.transfers.reception_report.unassign
+    handler: yaml_mutation
+    operation: update
+    params: { line_id: '{row.id}', expected_row_version: '{row.row_version}', picking_id: '{query.picking_id}' }
+    refresh: [inventory_transfer_reception_report_context, inventory_transfer_reception_report_lines, inventory_transfer_reception_report_events]
+    mutation:
+      steps:
+        - query: "UPDATE inventory_reception_report_lines SET assigned_quantity = 0, is_assigned = FALSE, state = 'Waiting', assigned_by = NULL, assigned_at = NULL, row_version = row_version + 1 WHERE id = :line_id AND row_version = :expected_row_version AND picking_id = :picking_id AND is_assigned = TRUE"
+        - query: "INSERT INTO inventory_reception_report_events(id, picking_id, line_id, action, action_label, quantity, actor_name, company_name, created_at) SELECT 'reception-unassign-' || :line_id || '-' || CAST(:expected_row_version AS VARCHAR), picking_id, id, 'inventory.reception.unassign', 'Unassigned', quantity, :current_user_name, company_name, TIMESTAMP '2026-01-15 17:45:00' FROM inventory_reception_report_lines WHERE id = :line_id"
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND picking_id = :picking_id", status: 404, code: INVENTORY_RECEPTION_LINE_NOT_FOUND, message: Allocation line not found. }
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 403, code: INVENTORY_RECEPTION_REPORT_COMPANY, message: The allocation line is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_reception_report_lines WHERE id = :line_id AND is_assigned = TRUE", status: 409, code: INVENTORY_RECEPTION_UNASSIGN_NOT_ALLOWED, message: This allocation line is not assigned. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_RECEPTION_REPORT_ACTOR_REQUIRED, message: An authenticated inventory actor is required to change allocation. }
+      result: { query: "SELECT id, row_version, picking_id, source_reference, product_name, quantity, assigned_quantity, is_assigned, state, assigned_by FROM inventory_reception_report_lines WHERE id = :line_id" }

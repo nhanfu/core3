@@ -1775,6 +1775,33 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Operations > Transfer Reception Report / Allocation — `INV-TRANSFER-RECEPTION-REPORT-001` (2026-09-21)
+
+Odoo source comparison: `addons/stock/views/stock_picking_views.xml:166-173`
+declares the incoming/internal transfer Allocation stat and maps it to
+`action_view_reception_report`, gated by `stock.group_reception_report`.
+`addons/stock/models/stock_picking.py:983-990,1056-1070,1967-1968` computes
+when the action is visible and returns the `stock_reception_action` client
+action. `addons/stock/report/report_stock_reception.py` builds source-demand
+allocation lines and implements `action_assign` / `action_unassign`; the
+client component also provides Assign All and report/label print controls.
+
+Core3 adds presentation-only
+`services/inventory/pages/transfer-reception-report.yaml` and backend
+`services/inventory/api/transfer-reception-report.yaml`, joined by
+`page.id: transfer-reception-report`, plus the transfer-detail Allocation
+stat/navigation binding. Migration
+`20260922240000-074-inventory-transfer-reception-report.yaml` provides a
+deterministic receipt/demand fixture and durable report/assignment history.
+The API exposes refresh, source-demand lines, Assign, Unassign, Assign All,
+and guarded report history. Permission, company, open-state, actor, and stale
+row guards are covered by focused restart/CRUD tests.
+
+Evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-RECEPTION-REPORT-001/`. Core3
+desktop/mobile reached the login shell; Odoo returned HTTP 303 to its login
+route. These are recorded blockers, not authenticated parity sign-off.
+
 ## Operations > Transfer Traceability — `INV-TRANSFER-TRACEABILITY-001` (2026-09-21)
 
 Odoo source comparison: `addons/stock/views/stock_picking_views.xml:161-166`
