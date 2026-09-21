@@ -1520,3 +1520,38 @@ reload persistence claim is intentionally not made because the isolated app
 lost its in-memory authentication after direct reload; the resulting 401 was
 an environment/session limitation, not treated as a feature pass. Actual
 Core3 PDF rendering/download remains an explicit follow-up boundary.
+
+## Current batch: invoice Reset to Draft workflow (2026-09-22)
+
+The local Odoo 19 `account.move` form declares `button_draft` as the
+`Reset to Draft` object action, visible on posted invoices when
+`show_reset_to_draft_button` is true. `account.move.button_draft` accepts
+posted or cancelled entries after Odoo's draftability checks and returns the
+record to Draft. The authenticated `core3_reference` browser confirmed this
+on `INV/2026/00008`: desktop shows `Reset to Draft` beside Send, Print, Pay,
+Preview, and Credit Note; mobile exposes it in the overflow menu. The live
+transition produced an editable Draft form with Confirm/Cancel and was
+restored to Posted after the comparison.
+
+Core3 adds the distinct `reset_accounting_invoice_to_draft` action to the
+page-ID-matched `invoice-detail` API and header. The Accounting workflow now
+declares Posted/Cancelled → Draft with `accounting.write`, expected-row-version
+and source-state guards, an atomic row-version increment, and refreshed detail
+state. The existing Draft OdooFormView therefore becomes editable after the
+transition; no invoice/PDF behavior is duplicated.
+
+Focused validation passes 2 tests and 18 assertions, covering source/action
+contracts, page/API separation, posted and cancelled transitions, paid/stale
+guards, direct API permission denial, DuckDB close/reopen persistence, and
+idempotent migration replay. Odoo captures are under
+`/tmp/core3-odoo-parity/accounting-invoice-reset-to-draft-20260922/` and are
+indexed in `evidence/accounting/2026-09-22/ACC-INVOICE-RESET-DRAFT-001/`.
+
+The Core3 authenticated browser pass could not start because the shared
+checkout contains unrelated dirty Inventory/Manufacturing/Project YAML. The
+exact discovery failure is `PageSchemaError: components[0].views[5].category_field
+is required for graph` plus missing `title_field` and `activity_types` for
+`components[0].views[6]`; `bun run agent:module -- accounting --port=4012`,
+`bun run audit`, and the existing invoice Print discovery test stop there.
+Those files were not changed. No Core3 screenshot or visual-parity claim is
+made for this batch; Odoo desktop/mobile states are source-confirmed evidence.

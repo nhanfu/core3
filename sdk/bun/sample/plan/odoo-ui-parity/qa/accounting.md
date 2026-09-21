@@ -825,3 +825,17 @@ sign-off is claimed.
   bundle**. Fresh authenticated Odoo comparison, file-backed/live restart
   limitations, and the missing-jsdom client DOM test environment remain open;
   no full Accounting sign-off is made.
+
+## QA disposition — invoice Reset to Draft candidate (2026-09-22)
+
+- **ACC-WF-008:** focused integration coverage passes for the YAML page/API
+  binding, Posted/Cancelled → Draft workflow, write permission, stale-row guard,
+  row-version increment, restart persistence, and forbidden actor response
+  (**2 tests / 18 assertions**).
+- Authenticated Odoo reference behavior was checked at `/odoo/invoicing/10` in
+  `core3_reference` on browser instance `245ea108` at desktop and 390x844 mobile
+  sizes. Posted invoice `INV/2026/00008` exposed Reset to Draft, entered Draft
+  with Confirm/Cancel controls, and was restored to Posted after verification.
+- Core3 authenticated browser verification is blocked before startup by unrelated
+  dirty Inventory/Manufacturing/Project YAML. The exact schema errors are recorded
+  in the feature evidence; no Core3 visual-parity claim is made.

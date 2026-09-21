@@ -13,4 +13,22 @@ workflow:
     - { id: Cancelled, label: Cancelled, color: red, terminal: true }
   transitions:
     - { id: post, from: [Draft], to: Posted, permission: accounting.write }
+    - id: reset_to_draft
+      from: [Posted, Cancelled]
+      to: Draft
+      permission: accounting.write
+      mutation:
+        guards:
+          - query: "SELECT id FROM accounting_invoices WHERE id = :id AND state IN ('Posted', 'Cancelled') AND row_version = :expected_row_version"
+            status: 409
+            code: ACCOUNTING_INVOICE_RESET_UNAVAILABLE
+            message: Only a posted or cancelled invoice can be reset to draft. Reload before resetting.
+        steps:
+          - query: "UPDATE accounting_invoices SET state = 'Draft', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            code: ACCOUNTING_INVOICE_RESET_STALE
+            message: The invoice changed; reload before resetting to draft.
+        result:
+          query: "SELECT * FROM accounting_invoices WHERE id = :id"
     - { id: cancel, from: [Draft, Posted], to: Cancelled, permission: accounting.write }

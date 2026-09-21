@@ -5,7 +5,7 @@ QA owner: accounting-qa
 Developer owner: accounting module owner  
 Reference addon/version: account, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This plan follows [`accounting.md`](../../accounting.md); executed evidence is
 recorded in [`../accounting.md`](../accounting.md).
@@ -59,6 +59,7 @@ required; development migrations must be idempotent.
 | ACC-WF-004 | workflow | Internal transfer/secure closing | Transfer and secure-entry state changes are audited | forbidden state and permission failures leave data unchanged | pass at contract level |
 | ACC-WF-005 | integration | Sales/Purchase/Expenses | Cross-module references use declared service contracts, not cross-service SQL | downstream failure is explicit and source transaction remains consistent | planned |
 | ACC-WF-006 | integration | Durable/external boundary | Payment provider, email, webhook, bank import or long-running close uses Temporal when activated | retry/timeout/compensation/replay/restart/shutdown required | planned |
+| ACC-WF-008 | workflow | Invoice Reset to Draft | Posted/Cancelled invoice detail resets to Draft with write permission, stale guard, row-version increment, and restart persistence | invalid state or stale row leaves invoice unchanged | pass; accounting_invoice_reset_to_draft.integration.test.ts |
 
 ## Permission and security cases
 
