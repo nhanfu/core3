@@ -1013,3 +1013,19 @@ Focused test: `test/employees_employee_type.integration.test.ts` (4 tests,
 was green for lint/diff-check; the global UI audit was blocked by the unrelated
 `components[1].title is not allowed` page-schema error. No aggregate Employees
 sign-off is claimed.
+
+## EMP-CONTRACT-PERIOD-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-041 | Payroll Contract Dates create/read/update projection | pass; contract start/end persist on the employee and active Payroll version together |
+| EMP-PERM-041 | `employees.manage`, actor, active/current company, active Payroll version, date format/order, row version | pass; actor, stale, wrong-company, invalid-date, invalid-order, and missing-version requests reject atomically |
+| EMP-DATA-041 | Migration replay and file-backed restart | pass; deterministic Contract Dates survive replay and restart without duplicates |
+| EMP-UI-037 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo shows the compact Contract date range at both viewports, while Core3 discovery is blocked by unrelated Inventory unknown actions |
+
+Focused test: `test/employees_contract_period.integration.test.ts` (4 tests,
+23 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-CONTRACT-PERIOD-001/`. Scoped lint and
+diff-check pass; global audit is blocked by unrelated Inventory disallowed
+action fields and Core3 discovery is blocked by unrelated Inventory action
+references. No aggregate Employees sign-off is claimed.

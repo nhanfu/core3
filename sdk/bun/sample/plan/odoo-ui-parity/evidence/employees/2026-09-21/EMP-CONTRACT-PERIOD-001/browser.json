@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-09-21T01:15:23.460Z",
+  "results": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1100,
+      "mobile": false,
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "hasContractDates": false,
+      "excerpt": "Employees Employees Departments Learning Reporting Configuration 7 40 My Company (San Francisco) New Employees Abigail Peterson Timesheets 0 Equipment History 1 1 / 1 Create User Launch Plan Aug 1, 2026 Work Resume Certifications Personal Payroll Settings CONTRACT OVERVIEW Load a Template Contract Aug 1 to Nov 10 New Contract Wage? $ 6,500.00 $ Employee Type Contract Type Pay Category SCHEDULE Working Hours? Send message Log note Activity 0 Sep 10, 2026 OdooBot Sep 10, 12:28 PM $ 0.00$ 10.00(Hourly Cost) OdooBot Sep 10, 12:12 PM Congratulations! May I recommend you to setup an onboarding plan? OdooBot Sep 10, 12:12 PM Employee created"
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "hasContractDates": false,
+      "excerpt": "Abigail Peterson 7 40 New Create User Aug 1, 2026 Work Resume Certifications Personal Payroll Settings CONTRACT OVERVIEW Load a Template Contract Aug 1 to Nov 10 New Contract Wage? $ 6,500.00 $ Employee Type Contract Type Pay Category SCHEDULE Working Hours? Send message Log note Activity 0 Sep 10, 2026 OdooBot Sep 10, 12:28 PM $ 0.00$ 10.00(Hourly Cost) OdooBot Sep 10, 12:12 PM Congratulations! May I recommend you to setup an onboarding plan? OdooBot Sep 10, 12:12 PM Employee created"
+    }
+  ]
+}

@@ -558,3 +558,18 @@ Focused test: `test/employees_employee_type.integration.test.ts` (4 tests,
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-TYPE-001/`. Scoped lint and
 diff-check pass; global audit is blocked by the unrelated page-schema error
 `components[1].title is not allowed`.
+
+## EMP-CONTRACT-PERIOD-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Payroll `contract_date_start` and `contract_date_end` map to paired employee-detail page/API contracts | pass |
+| Contract Dates CRUD | Create/read, manager update, active Payroll-version synchronization, and employee projection persist durably | pass |
+| Permission and scope | Employees manage, actor, active/current company, active Payroll version, ISO format/order, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Contract Dates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Payroll desktop/mobile captures | conditional; Odoo compact Contract range visible at both viewports, Core3 blocked by unrelated Inventory unknown actions |
+
+Focused test: `test/employees_contract_period.integration.test.ts` (4 tests,
+23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-CONTRACT-PERIOD-001/`. Scoped lint and
+diff-check pass; global audit is blocked by unrelated Inventory action fields.

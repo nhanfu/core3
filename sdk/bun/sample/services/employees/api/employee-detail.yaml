@@ -425,6 +425,43 @@ actions:
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: pay_category_name, label: Pay Category, type: select, options: [{ value: Employee, label: Employee }, { value: Worker, label: Worker }, { value: Contractor, label: Contractor }], required: true }
+  - id: edit_employee_contract_period
+    type: server_form
+    permission: employees.manage
+    title: Edit Contract Dates
+    description: Update the manager-only Payroll contract start and end dates on this employee's active record.
+    action: employees.records.contract_period.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_versions]
+    mutation:
+      fields: [contract_start, contract_end]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_CONTRACT_PERIOD_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the Contract Dates were edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :contract_start IS NULL OR regexp_matches(CAST(:contract_start AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_CONTRACT_PERIOD_START_INVALID, message: Contract Start Date must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok WHERE :contract_end IS NULL OR regexp_matches(CAST(:contract_end AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_CONTRACT_PERIOD_END_INVALID, message: Contract End Date must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok WHERE :contract_start IS NULL OR :contract_end IS NULL OR CAST(:contract_start AS DATE) <= CAST(:contract_end AS DATE)", status: 422, code: EMPLOYEES_CONTRACT_PERIOD_ORDER_INVALID, message: Contract Start Date must be on or before Contract End Date. }
+        - { query: "SELECT 1 AS ok FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')", status: 409, code: EMPLOYEES_CONTRACT_PERIOD_VERSION_NOT_FOUND, message: The employee has no active Payroll record to update. }
+      steps:
+        - query: "UPDATE employees SET contract_start = CAST(:contract_start AS DATE), contract_end = CAST(:contract_end AS DATE), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the Contract Dates were saved. Reload and try again.
+        - query: "UPDATE employee_versions SET contract_date_start = CAST(:contract_start AS DATE), contract_date_end = CAST(:contract_end AS DATE), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_CONTRACT_PERIOD_VERSION_NOT_FOUND
+          message: The employee's active Payroll record changed before Contract Dates were saved.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: contract_start, label: Contract Start Date, type: date }
+      - { field: contract_end, label: Contract End Date, type: date }
   - id: edit_employee_type
     type: server_form
     permission: employees.write

@@ -1942,3 +1942,26 @@ Type. Core3 discovery reached Vite but failed before backend port 3001 bound
 on the unrelated `components[1].title is not allowed` page-schema error; the
 exact conditional blocker is recorded in the evidence. No aggregate Employees
 sign-off is claimed.
+
+## EMP-CONTRACT-PERIOD-001: Employee Payroll Contract Dates (2026-09-21)
+
+Odoo's Payroll form exposes the active `hr.version.contract_date_start` and
+`contract_date_end` fields as Contract Start Date and Contract End Date. Core3
+previously exposed only employee-level dates through the broad editor, without
+an active Payroll-version synchronization or manager-scoped date action.
+
+Migration `20260922080000-062` deterministically reconciles existing employee
+and active Payroll contract dates. The paired employee-detail API/page
+contracts add a manager-only Contract Dates group and guarded
+`edit_employee_contract_period` action. It updates the employee and active
+Payroll version together and enforces actor, active/current-company,
+supported ISO-date, start-before-end, active-version, and optimistic
+row-version guards.
+
+Focused verification is **4 tests / 23 assertions**. Authenticated Odoo
+desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-CONTRACT-PERIOD-001/`; both show the
+compact Contract date range. Core3 discovery failed before backend port 3001
+bound because unrelated Inventory actions were unknown; the exact conditional
+blocker is recorded in the evidence. No aggregate Employees sign-off is
+claimed.

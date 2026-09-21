@@ -1,0 +1,23 @@
+version: 0.0.62
+kind: data
+description: Synchronize the Odoo Payroll contract period projection
+type:
+  postgres:
+    up: |
+      UPDATE employee_versions v
+      SET contract_date_start = COALESCE(v.contract_date_start, e.contract_start),
+          contract_date_end = COALESCE(v.contract_date_end, e.contract_end)
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.active = true;
+      UPDATE employees e
+      SET contract_start = COALESCE(e.contract_start, v.contract_date_start),
+          contract_end = COALESCE(e.contract_end, v.contract_date_end)
+      FROM employee_versions v
+      WHERE v.employee_id = e.id AND v.active = true
+        AND v.date_version = (SELECT MAX(current_v.date_version) FROM employee_versions current_v WHERE current_v.employee_id = e.id AND current_v.active = true AND current_v.contract_date_start <= DATE '2026-01-15');
+    down: |
+      SELECT 1;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

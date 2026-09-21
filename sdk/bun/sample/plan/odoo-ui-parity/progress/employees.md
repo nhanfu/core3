@@ -815,3 +815,20 @@ Candidate commit: current working tree
   `components[1].title is not allowed` page-schema error before backend 3001
   bound; the exact blocker is in `verification.md`. No aggregate Employees
   sign-off is claimed.
+
+## EMP-CONTRACT-PERIOD-001 (2026-09-21)
+
+- Selected Odoo's uncovered active Payroll `contract_date_start` and
+  `contract_date_end` Contract Dates behavior. Existing Core3 broad CRUD only
+  updated employee-level dates and did not synchronize the active version.
+- Added migration `20260922080000-062` for deterministic employee/active
+  Payroll date reconciliation. The paired API/page contracts add the
+  manager-gated Contract Dates group and update action.
+- Guards cover actor, active/current company, ISO date format, start/end
+  ordering, active Payroll version, and stale row version. Create, update,
+  migration replay, and restart are covered by **4 tests / 23 assertions**.
+- Authenticated Odoo desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-CONTRACT-PERIOD-001/`; both show the
+  compact Contract date range. Core3 browser evidence is blocked before
+  backend 3001 by unrelated Inventory unknown actions; the exact blocker is
+  in `verification.md`. No aggregate Employees sign-off is claimed.
