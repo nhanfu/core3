@@ -3,12 +3,17 @@ datasources:
   - id: accrual_plan_detail
     single: true
     permission: time_off.manage
-    query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans WHERE id = :id"
+    query: "SELECT p.id, p.name, p.level_count, (SELECT COUNT(DISTINCT a.employee_id) FROM leave_allocations a WHERE a.accrual_plan_id = p.id) AS employee_count, p.state FROM accrual_plans p WHERE p.id = :id"
   - id: accrual_plan_levels
     permission: time_off.manage
     error_states: { transport_error: { status: 503, code: TIME_OFF_ACCRUAL_LEVELS_UNAVAILABLE, message: Accrual plan milestones are temporarily unavailable. } }
     query: "SELECT id, row_version, accrual_plan_id, sequence, start_count, start_type, milestone_date, added_value, added_value_type, frequency, week_day, first_day, second_day, first_month_day, first_month, second_month_day, second_month, yearly_month, yearly_day, action_with_unused_accruals, carryover_options, postpone_max_days, accrual_validity, accrual_validity_count, accrual_validity_type, cap_accrued_time, maximum_leave, cap_accrued_time_yearly, maximum_leave_yearly, CASE WHEN milestone_date = 'creation' THEN 'At allocation creation' ELSE 'After ' || CAST(start_count AS VARCHAR) || ' ' || CASE start_type WHEN 'day' THEN 'day(s)' WHEN 'month' THEN 'month(s)' ELSE 'year(s)' END END AS milestone_summary, RTRIM(RTRIM(CAST(added_value AS VARCHAR), '0'), '.') || ' ' || CASE added_value_type WHEN 'day' THEN 'day(s)' ELSE 'hour(s)' END || ' every ' || CASE frequency WHEN 'hourly' THEN 'hour' WHEN 'daily' THEN 'day' WHEN 'weekly' THEN 'week' WHEN 'bimonthly' THEN 'twice a month' WHEN 'monthly' THEN 'month' WHEN 'biyearly' THEN 'twice a year' ELSE 'year' END || CASE WHEN frequency IN ('monthly','yearly') THEN ' on the ' || COALESCE(CAST(CASE WHEN frequency = 'monthly' THEN first_day ELSE yearly_day END AS VARCHAR), '') || ' of ' || CASE WHEN frequency = 'monthly' THEN 'the month' ELSE CASE yearly_month WHEN '1' THEN 'January' WHEN '2' THEN 'February' WHEN '3' THEN 'March' WHEN '4' THEN 'April' WHEN '5' THEN 'May' WHEN '6' THEN 'June' WHEN '7' THEN 'July' WHEN '8' THEN 'August' WHEN '9' THEN 'September' WHEN '10' THEN 'October' WHEN '11' THEN 'November' ELSE 'December' END END ELSE '' END || '.' AS frequency_summary, CASE action_with_unused_accruals WHEN 'all' THEN 'Unused days will be transferred totally on each start of the year.' ELSE 'Unused days will be lost.' END AS carryover_summary, CASE WHEN cap_accrued_time THEN 'A balance cap is set to ' || RTRIM(RTRIM(CAST(maximum_leave AS VARCHAR), '0'), '.') || ' day(s).' ELSE 'No balance cap.' END AS cap_summary FROM accrual_plan_levels WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND accrual_plan_id = :id AND (:q IS NULL OR CAST(start_count AS VARCHAR) ILIKE '%' || :q || '%' OR start_type ILIKE '%' || :q || '%' OR frequency ILIKE '%' || :q || '%' OR milestone_date ILIKE '%' || :q || '%' OR ('After ' || CAST(start_count AS VARCHAR) || ' ' || CASE start_type WHEN 'day' THEN 'day(s)' WHEN 'month' THEN 'month(s)' ELSE 'year(s)' END) ILIKE '%' || :q || '%') ORDER BY sequence, id"
 actions:
+  - id: open_accrual_plan_employees
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /accrual-plans/detail/employees
+    params: { id: '{state.id}' }
   - id: edit_accrual_plan
     type: server_form
     permission: time_off.manage

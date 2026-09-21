@@ -111,3 +111,24 @@ discovery assertions reporting the shared page-schema error
 `components[1].tabs[3].fields is not allowed`; the new overview calendar test
 passes and no shared/schema or other module path was changed to mask this
 blocker.
+
+## 2026-09-22 bounded candidate: accrual-plan employee stat
+
+- Focused test: **PASS**, 2 tests / 18 assertions in
+  `test/time_off_accrual_plan_employees.integration.test.ts`.
+- Persistence: **PASS**; migration `0.0.22` and its index replay idempotently,
+  and the plan-to-employee relation remains queryable after DuckDB close/reopen.
+- Contract: **PASS**; conditional Employees stat, matching page/API ids,
+  manager-only read datasource/action, stable grouping, search, empty, and 503
+  transport states are covered.
+- Source comparison: **PASS** against
+  `hr_leave_accrual_plan.py` and `hr_leave_accrual_views.xml` in local Odoo 19.
+- Odoo browser gate: **BLOCKED**; `core3_reference` has no Time Off menu or
+  accrual-plan action and direct `/odoo/time-off` resolves to Discuss. Core3
+  browser startup is separately blocked by the unrelated dirty
+  `services/fleet/api/vehicles.yaml` YAML parse error. Evidence details are in
+  `evidence/time-off/2026-09-22/TIMEOFF-ACCRUAL-PLAN-EMPLOYEES-001/README.md`.
+- Full Time Off regression: **PASS**, 63 tests / 650 assertions across 23
+  integration files; the earlier fixed multi-view inventory now includes the
+  new employee surface.
+- Disposition: **conditional bounded PASS**; no full Time Off sign-off.

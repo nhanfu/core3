@@ -8,6 +8,8 @@ components:
     statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
     status_colors: { Active: green, Archived: neutral }
     editable: true
+    stat_buttons:
+      - { id: open_accrual_plan_employees, label: Employees, value_field: employee_count, permission: time_off.manage, show_if: 'record.employee_count > 0' }
     header_actions:
       - { id: edit_accrual_plan, label: Edit, variant: secondary, permission: time_off.manage }
     group_columns: 2

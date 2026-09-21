@@ -1,0 +1,28 @@
+title: Accrual Plan's Employees
+page: { id: accrual-plan-employees, route: /accrual-plans/detail/employees, breadcrumb: [Human Resources, Time Off, Accrual Plans, Employees], auth: { require: [time_off.manage] } }
+toolbar:
+  - { id: back_to_accrual_plan, label: Accrual Plan, action: back_to_accrual_plan, permission: time_off.manage, variant: secondary }
+components:
+  - type: ListView
+    variant: odoo
+    source: accrual_plan_employees
+    search: { label: Search employees, placeholder: Search employees... }
+    empty_state: { title: No employees found, description: No employees are assigned to this accrual plan. }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: employee_name, fields: [{ field: department_name, label: Department }, { field: leave_type_name, label: Time Off Type }, { field: allocation_days, label: Allocated days }, { field: state, label: Status }] }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: department_name, label: Department }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: allocation_days, label: Allocated days, align: right }
+      - { field: date_from, label: Validity Start }
+      - { field: date_to, label: Validity End }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50

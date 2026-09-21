@@ -1,0 +1,12 @@
+page: { id: accrual-plan-employees }
+datasources:
+  - id: accrual_plan_employees
+    permission: time_off.manage
+    error_states: { transport_error: { status: 503, code: TIME_OFF_ACCRUAL_EMPLOYEES_UNAVAILABLE, message: Accrual plan employees are temporarily unavailable. } }
+    query: "SELECT a.employee_id, a.employee_name, COALESCE(e.department_name, 'Unassigned') AS department_name, a.leave_type_name, SUM(a.days) AS allocation_days, CAST(MIN(a.date_from) AS VARCHAR) AS date_from, CAST(MAX(a.date_to) AS VARCHAR) AS date_to, CASE WHEN BOOL_OR(a.state = 'Approved') THEN 'Approved' ELSE MAX(a.state) END AS state FROM leave_allocations a LEFT JOIN time_off_group_allocation_employees e ON e.id = a.employee_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.accrual_plan_id = :id AND (:q IS NULL OR a.employee_name ILIKE '%' || :q || '%' OR COALESCE(e.department_name, '') ILIKE '%' || :q || '%' OR a.leave_type_name ILIKE '%' || :q || '%') GROUP BY a.employee_id, a.employee_name, e.department_name, a.leave_type_name ORDER BY a.employee_name, a.leave_type_name"
+actions:
+  - id: back_to_accrual_plan
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /accrual-plans/detail
+    params: { id: '{state.id}' }

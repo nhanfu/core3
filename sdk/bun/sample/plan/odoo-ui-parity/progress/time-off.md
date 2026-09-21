@@ -37,3 +37,18 @@ QA reports balance idempotency, row-version/workflow recalculation,
 CRUD/permissions, authenticated desktop/mobile, reload, and file-backed reopen
 evidence. Temporal is not applicable to the synchronous local workflow. Fresh
 authenticated paired Odoo comparison remains open; no full sign-off.
+
+## 2026-09-22 bounded candidate: accrual-plan employee stat
+
+Implemented the source-backed Odoo `action_open_accrual_plan_employees` stat
+action. The manager-only `/accrual-plans/detail/employees` read surface is
+joined to its API by `page.id`, backed by migration `0.0.22` allocation-plan
+relations and an idempotent lookup index. Focused verification passes **2
+tests / 18 assertions**, including deterministic grouping, permission contract,
+empty/503 states, migration replay, and file-backed restart persistence.
+
+The live `core3_reference` database has no installed Time Off app/menu and
+direct Odoo Time Off navigation resolves to Discuss. Core3 browser startup is
+blocked by the unrelated dirty `services/fleet/api/vehicles.yaml` parse error;
+paired visual evidence is not claimed. Time Off remains conditional and
+unsigned-off.

@@ -36,6 +36,7 @@ mutations use isolated databases and deterministic dates.
 | TIMEOFF-UI-002 | Forms, calendars, approval dialogs, reports and empty/denied states match Odoo | planned paired interaction capture; supporting-document Core3 desktop/mobile capture passed, Odoo pair blocked by unavailable hr_holidays menu |
 | TIMEOFF-ATTACH-001 | Submitted request supporting documents list, upload/download/remove contracts, size/duplicate/state/stale guards, and restart persistence | pass: `time_off_request_attachments.integration.test.ts`; Core3 browser seeded-document capture; Odoo runtime blocked |
 | TIMEOFF-INT-001 | Payroll, calendar, notification and cross-module durable flows use Temporal with retry/replay/restart/compensation coverage | planned |
+| TIMEOFF-ACCRUAL-EMP-001 | Accrual Plan Employees stat filters durable allocation employees, enforces manager read scope, and preserves search/empty/transport/restart behavior | pass: `time_off_accrual_plan_employees.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
 
 ## Exit criteria
 

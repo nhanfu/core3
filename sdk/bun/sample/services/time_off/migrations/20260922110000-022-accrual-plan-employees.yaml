@@ -1,0 +1,16 @@
+version: 0.0.22
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS accrual_plan_id VARCHAR;
+      UPDATE leave_allocations SET accrual_plan_id = 'accrual-plan-demo-001' WHERE id IN ('allocation-demo-001', 'allocation-demo-002') AND accrual_plan_id IS NULL;
+      UPDATE leave_allocations SET accrual_plan_id = 'accrual-plan-demo-002' WHERE id IN ('allocation-demo-003', 'allocation-demo-004') AND accrual_plan_id IS NULL;
+      CREATE INDEX IF NOT EXISTS leave_allocations_accrual_plan_employee_idx ON leave_allocations(accrual_plan_id, employee_id);
+    down: |
+      DROP INDEX IF EXISTS leave_allocations_accrual_plan_employee_idx;
+      UPDATE leave_allocations SET accrual_plan_id = NULL WHERE id IN ('allocation-demo-001', 'allocation-demo-002', 'allocation-demo-003', 'allocation-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

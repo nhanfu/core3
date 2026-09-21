@@ -906,3 +906,43 @@ Time Off entry; mobile emulation has no Time Off action, and direct
 hashes are recorded at
 `odoo-ui-parity/evidence/time-off/2026-09-22/TIMEOFF-OVERVIEW-CALENDAR-DETAIL-001/README.md`.
 No paired Odoo popup claim is made.
+
+## Accrual Plan Employees stat action (2026-09-22)
+
+The next uncovered source-backed action is Odoo's
+`hr.leave.accrual.plan.action_open_accrual_plan_employees`, defined in
+`/home/nhanjs/projects/odoo/addons/hr_holidays/models/hr_leave_accrual_plan.py`
+and exposed by `hr_accrual_plan_view_form` in
+`/home/nhanjs/projects/odoo/addons/hr_holidays/views/hr_leave_accrual_views.xml`.
+Odoo renders a conditional `Employees` stat button (hidden when the plan has no
+employees) and opens `Accrual Plan's Employees` as a `kanban,list,form`
+`hr.employee` action whose domain is the employees linked through that plan's
+allocations. The action is limited to `hr.group_hr_user`.
+
+Core3 implements the bounded Time Off-owned read-only drilldown at
+`/accrual-plans/detail/employees`. The existing accrual-plan form now computes
+the employee stat from its durable `leave_allocations.accrual_plan_id` relation
+and exposes the matching manager-only action. The new layout and API fragments
+are separate and joined by `page.id: accrual-plan-employees`; the datasource
+groups employees by plan, includes department/type/allocation/date/state
+context, and declares deterministic empty and 503 transport states. The slice
+does not invent employee CRUD: Odoo delegates those forms to the owning
+Employees model, while Core3 keeps this context action read-only.
+
+Migration `0.0.22` links the fixed 2026 allocation fixtures to Seniority and
+Legacy plans and adds the idempotent `(accrual_plan_id, employee_id)` index.
+Focused coverage is in
+`test/time_off_accrual_plan_employees.integration.test.ts`: 2 tests and 18
+assertions pass for the source action, conditional stat, page/API separation,
+manager permission, deterministic relation/read results, migration replay,
+search/empty/transport states, and file-backed close/reopen persistence.
+
+The required browser session on instance `245ea108` verified that
+`core3_reference` has no Time Off menu and that direct `/odoo/time-off` falls
+back to the Discuss shell; `/odoo/action-632` also exposes no Time Off surface.
+Therefore no live Odoo accrual-plan employee screen exists to compare in this
+database and no Odoo mutation was made. Core3 browser capture is also blocked
+in this checkout because the shared discovery pass stops on the unrelated dirty
+`services/fleet/api/vehicles.yaml` YAML parse error before `/api/modules` can
+start. Exact browser and runtime blockers are recorded in the evidence README;
+no visual-parity claim is made.
