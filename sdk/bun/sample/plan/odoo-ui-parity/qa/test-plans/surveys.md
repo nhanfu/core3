@@ -579,3 +579,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-PROGRESSION-MODE-001`
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-051 | public progress | Progression metadata and renderer | Return durable `percent`/`number` mode through paired page/API YAML and render the selected progress label | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-048 | restart/idempotency | Start → progress → reopen → concurrent submit | Preserve mode and draft state across file-backed restart and converge one submitted response/count for one idempotency key | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-050 | token/state guard | Foreign token and public progress | Reject a foreign answer token without disclosure while retaining the existing `surveys.public` mutation boundary | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-049 | authenticated responsive/reference | Number progress desktop/mobile + Odoo comparison | Capture both viewport outcomes and exact Core3/Odoo blockers; no sign-off until authenticated routes and installed reference fixture are available | `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.

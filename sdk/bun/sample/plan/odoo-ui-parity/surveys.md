@@ -2108,3 +2108,30 @@ available. No parity sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-PROGRESSION-MODE-001`
+
+Wave 26 selects Odoo's next uncovered public survey setting: durable
+`progression_mode` (`percent` or `number`) from `survey_survey.py:85-88`.
+Odoo's public template renders the selected percentage or answered/page count
+at `survey_templates.xml:691-704`, with the controller supplying the active
+page list and cursor at `controllers/main.py:386-400`.
+
+Core3 migration `0.0.46` adds and normalizes `surveys.progression_mode`, then
+seeds a deterministic numbered two-question public survey. The paired
+`pages/surveys.yaml` / `api/surveys.yaml` contract and `survey.public.detail`
+project the setting. `PublicSurvey.ts` consumes it for page-per-question
+progress text while preserving one-page behavior and all existing public
+token/state/idempotency guards.
+
+Focused verification is **3 passed / 18 assertions**. The public/catalog
+regression is **100 passed / 921 assertions** across 33 files. UI audit passes
+with **731 pages, 740 routes, and 1,424 datasources**; scoped ESLint and
+`git diff --check` pass. Core3 ports 3000/3001/3002 refused before an
+authenticated desktop/mobile render. Odoo 8069 redirected both viewport
+probes to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`, and proxy 8072 refused;
+no installed authenticated Surveys fixture or visual comparison was
+available. No parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.

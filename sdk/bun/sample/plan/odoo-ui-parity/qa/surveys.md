@@ -1336,3 +1336,25 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-G
   claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
+
+## `SURVEYS-PUBLIC-PROGRESSION-MODE-001` — public progression display
+
+- Source: Odoo stores `progression_mode` at `survey_survey.py:85-88`; its
+  public progression template renders percent or numeric progress at
+  `survey_templates.xml:691-704`, with controller page/cursor data at
+  `controllers/main.py:386-400`.
+- Durable/API/page: migration `0.0.46` adds the setting and numbered fixture;
+  `survey.public.detail` and the admin list expose it; `pages/surveys.yaml`
+  and `api/surveys.yaml` remain joined by `page.id: surveys`.
+- Workflow/guards: page-per-question rendering consumes the setting; one-page
+  rendering stays all-questions; public token, state, required-answer, time,
+  and idempotency boundaries are unchanged.
+- Focused: **3 passed / 18 assertions**. Public/catalog: **100 passed / 921
+  assertions**. Audit: **731 pages, 740 routes, 1,424 datasources**. Scoped
+  ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000/3001/3002 refused. Odoo desktop and
+  mobile probes returned 303 to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`;
+  proxy 8072 refused. No authenticated visual or Odoo comparison/sign-off is
+  claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.

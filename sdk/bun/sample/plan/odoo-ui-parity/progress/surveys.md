@@ -461,6 +461,25 @@ Evidence is under
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-PROGRESSION-MODE-001`
+
+- Selected exactly one new source-backed behavior after one-page pagination:
+  Odoo's public `progression_mode` (`percent` / `number`) setting.
+- Added durable migration `0.0.46` and deterministic numbered fixture;
+  detail/list projections and the renderer consume the setting through the
+  paired `page.id: surveys` YAML contracts.
+- Implemented percentage and answered-count progress labels without changing
+  one-page behavior; existing token/state/required/time/idempotency guards
+  remain authoritative.
+- Focused: **3 passed / 18 assertions**. Public/catalog regression: **100
+  passed / 921 assertions**. Audit: **731 pages, 740 routes, 1,424
+  datasources**. Scoped ESLint and diff-check passed.
+- Core3 3000/3001/3002 refused connections; Odoo 8069 redirected desktop and
+  mobile probes to login and 8072 refused. Exact blockers are in the feature
+  evidence; no visual or Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-TOKEN-ACCESS-001`
 
 Wave 24 selects the next uncovered source-backed public access behavior after
