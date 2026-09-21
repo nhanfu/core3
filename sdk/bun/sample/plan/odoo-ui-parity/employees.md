@@ -2122,3 +2122,27 @@ omits it. Core3 loads the paired Trial Period group, but the authenticated
 company is `Core3 Demo Company` while deterministic fixtures are `Core3
 Vietnam`, so populated values and the manager action are not visible in that
 session. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-AVATAR-001: Employee avatar/image lifecycle (2026-09-21)
+
+Odoo's Employee form renders `image_1920` with the `image` widget, zoom, a
+128x158 preview, and the `avatar_128` preview field. Core3 previously exposed
+`image_url` only as a read projection and had no durable avatar action.
+
+This slice adds migration `20260922160000-070`, which creates
+`employee_avatar_assets`, seeds one deterministic inline SVG fixture, and
+projects the authenticated `/api/employees/avatars/<id>` image URL. The
+separate employee-detail API YAML declares an `employee_avatar` datasource,
+`upload_employee_avatar` upload mutation, and `remove_employee_avatar`
+mutation. Both writes require an authenticated actor, active/current-company
+employee, and optimistic row-version; upload additionally validates image MIME
+and size. The page YAML joins the API by `page.id`, binds `avatar_field` with a
+name fallback, and exposes the upload/remove actions.
+
+Focused verification is **4 tests / 25 assertions**, including restart
+persistence and atomic guard boundaries. Browser artifacts are under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`. Core3 authenticated
+desktop/mobile captures have no request/page failures or overflow, but the
+session company is `Core3 Demo Company` while deterministic fixtures are
+`Core3 Vietnam`. Odoo desktop/mobile comparison is blocked by rejected local
+credentials. No aggregate Employees sign-off is claimed.

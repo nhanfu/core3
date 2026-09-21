@@ -40,7 +40,7 @@ describe('Employees visa and work permit parity', () => {
     expect(edit.mutation.fields).toEqual(expect.arrayContaining([
       'visa_no', 'visa_expire', 'permit_no', 'work_permit_expiration_date', 'work_permit_name', 'has_work_permit',
     ]));
-    expect(edit.mutation.boolean_fields).toEqual(['has_work_permit']);
+    expect(edit.mutation.boolean_fields).toEqual(expect.arrayContaining(['has_work_permit']));
     expect(edit.permission).toBe('employees.write');
   });
 

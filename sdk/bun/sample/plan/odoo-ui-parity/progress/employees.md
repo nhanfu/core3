@@ -959,3 +959,22 @@ Candidate commit: current working tree
   view omits the field, and the authenticated Core3 company does not match
   deterministic Employees fixtures; both blockers are explicit. No aggregate
   Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-AVATAR-001 (2026-09-21)
+
+- Selected Odoo's source-visible Employee `image_1920` image widget as the
+  smallest remaining user-visible behavior after the trial-period slice.
+- Added migration `20260922160000-070` with durable avatar metadata, one
+  deterministic inline SVG fixture, and an authenticated download projection.
+- Added separate employee-detail API/page contracts for `employee_avatar`,
+  guarded `upload_employee_avatar`, and guarded `remove_employee_avatar`.
+  Guards enforce actor, active/current-company employee, image MIME/size, and
+  optimistic row-version concurrency.
+- Focused verification is **4 tests / 25 assertions**, including CRUD,
+  atomic actor/company/stale/invalid guards, migration replay, and file-backed
+  restart persistence.
+- Authenticated Core3 desktop/mobile captures and Odoo login-blocker captures
+  are under `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
+  Core3's authenticated company is `Core3 Demo Company` versus deterministic
+  fixtures in `Core3 Vietnam`; Odoo's available local credential was rejected.
+  These are explicit blockers and no aggregate sign-off is claimed.

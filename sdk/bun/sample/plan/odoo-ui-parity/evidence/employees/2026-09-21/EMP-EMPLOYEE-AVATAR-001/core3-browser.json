@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-09-21T04:42:32.056Z",
+  "feature": "EMP-EMPLOYEE-AVATAR-001",
+  "authenticated": true,
+  "actor": "admin@tms.local",
+  "authenticatedCompany": "Core3 Demo Company",
+  "deterministicFixtureCompany": "Core3 Vietnam",
+  "captures": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "avatarFieldCount": 0,
+      "markers": [
+        "Employee",
+        "Personal"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "avatarFieldCount": 0,
+      "markers": [
+        "Personal"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 390,
+        "scrollWidth": 390
+      }
+    }
+  ]
+}

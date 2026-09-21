@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${EMPLOYEES_UPLOAD_ROOT:-.data/employees-uploads}
+  credentials: {}
+
+attachments:
+  employee_avatar:
+    download:
+      route: /api/employees/avatars
+      permission: employees.read
+      query: SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.content_base64 FROM employee_avatar_assets a JOIN employees e ON e.id = a.employee_id WHERE a.id = :attachment_id AND a.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)

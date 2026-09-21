@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-09-21T04:42:53.407Z",
+  "feature": "EMP-EMPLOYEE-AVATAR-001",
+  "attemptedAuthenticatedRoute": "/odoo/employees/1",
+  "captures": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/web/login",
+      "title": "Odoo",
+      "authenticated": false,
+      "markers": [
+        "Email",
+        "Password",
+        "Wrong login/password"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/web/login",
+      "title": "Odoo",
+      "authenticated": false,
+      "markers": [
+        "Email",
+        "Password",
+        "Wrong login/password"
+      ],
+      "failed": [],
+      "errors": [],
+      "scroll": {
+        "innerWidth": 390,
+        "scrollWidth": 390
+      }
+    }
+  ]
+}

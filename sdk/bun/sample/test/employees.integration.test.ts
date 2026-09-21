@@ -113,8 +113,8 @@ describe('Employees Odoo action-mode parity batch', () => {
   test('forces employee archive and restore actions to override submitted form state', () => {
     for (const file of ['api/employees.yaml', 'api/employee-detail.yaml']) {
       const api = yaml(file);
-      const archive = api.actions.find((action: any) => action.id.startsWith('archive_employee'));
-      const restore = api.actions.find((action: any) => action.id.startsWith('restore_employee'));
+      const archive = api.actions.find((action: any) => action.id === (file === 'api/employees.yaml' ? 'archive_employee' : 'archive_employee_detail'));
+      const restore = api.actions.find((action: any) => action.id === (file === 'api/employees.yaml' ? 'restore_employee' : 'restore_employee_detail'));
       expect(archive.params).toEqual({ values: { active: false } });
       expect(restore.params).toEqual({ values: { active: true } });
       expect(archive.mutation.concurrency).toEqual({ required: true });

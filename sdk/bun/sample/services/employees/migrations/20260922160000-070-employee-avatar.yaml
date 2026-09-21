@@ -1,0 +1,32 @@
+version: 0.0.70
+kind: data
+description: Add durable Odoo employee avatar metadata and deterministic image fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_avatar_assets(
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR,
+        content_base64 VARCHAR,
+        uploaded_by VARCHAR,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO employee_avatar_assets(id, employee_id, company_name, file_name, mime_type, size_bytes, content_base64, uploaded_by)
+      VALUES ('employee-avatar-demo-001', 'employee-demo-001', 'Core3 Vietnam', 'employee-demo-001.svg', 'image/svg+xml', 274, 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTU4IiB2aWV3Qm94PSIwIDAgMTI4IDE1OCI+PHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxNTgiIGZpbGw9IiMwZjc2NmUiLz48Y2lyY2xlIGN4PSI2NCIgY3k9IjU0IiByPSIyNyIgZmlsbD0iI2VjZmVmZiIvPjxwYXRoIGQ9Ik0yMCAxNDJjNC0zMCAyMC00NSA0NC00NXM0MCAxNSA0NCA0NSIgZmlsbD0iI2VjZmVmZiIvPjx0ZXh0IHg9IjY0IiB5PSIxNTAiIGZpbGw9IiMwZjc2NmUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QzM8L3RleHQ+PC9zdmc+', 'system');
+      UPDATE employees
+      SET image_url = '/api/employees/avatars/employee-avatar-demo-001'
+      WHERE id = 'employee-demo-001' AND NULLIF(TRIM(COALESCE(image_url, '')), '') IS NULL;
+    down: |
+      UPDATE employees SET image_url = NULL WHERE image_url = '/api/employees/avatars/employee-avatar-demo-001';
+      DROP TABLE IF EXISTS employee_avatar_assets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

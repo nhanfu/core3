@@ -675,3 +675,17 @@ assertions). Evidence:
 Focused test: `test/employees_trial_period.integration.test.ts` (4 tests, 21
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`.
+
+## EMP-EMPLOYEE-AVATAR-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `image_1920` widget maps to paired Core3 avatar contracts | pass |
+| Avatar CRUD | Upload and remove update image metadata and the employee projection durably | pass |
+| Permission and scope | Actor, active/current company, MIME/size, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve fixture and uploaded metadata | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture company mismatch and rejected Odoo credential are documented |
+
+Focused test: `test/employees_avatar.integration.test.ts` (4 tests, 25
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.

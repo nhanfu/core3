@@ -14,6 +14,18 @@ Module owner: employees module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-EMPLOYEE-AVATAR-001 execution (2026-09-21)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-015 | Employee avatar upload/remove and authenticated image projection | pass; 4 focused tests / 25 assertions |
+| EMP-PERM-015 | Actor, active/current-company, MIME/size, and stale row-version guards | pass; rejected writes were atomic |
+| EMP-DATA-015 | Deterministic inline fixture, migration replay, and file-backed restart | pass |
+| EMP-UI-011 | Authenticated Core3/Odoo desktop/mobile avatar comparison | conditional; Core3 company/fixture mismatch and rejected Odoo credential are recorded blockers |
+
+Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-LAUNCH-PLAN-001 evidence ledger (2026-09-20)
 
 | Surface | Result | Evidence |

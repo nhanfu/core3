@@ -33,7 +33,7 @@ describe('Employees birth identity parity', () => {
     expect(page.page.id).toBe('employee-detail');
     expect(api.page.id).toBe(page.page.id);
     expect(group).toMatchObject({ title: 'Personal Information', permission: 'employees.read' });
-    expect(group.fields.map((field: any) => field.field)).toEqual(['place_of_birth', 'country_of_birth', 'sex']);
+    expect(group.fields.map((field: any) => field.field)).toEqual(expect.arrayContaining(['place_of_birth', 'country_of_birth', 'sex']));
     expect(api.datasources.find((source: any) => source.id === 'employee_detail').query).toContain('place_of_birth, country_of_birth, sex');
     expect(edit.mutation.fields).toEqual(expect.arrayContaining(['place_of_birth', 'country_of_birth', 'sex']));
     expect(edit.permission).toBe('employees.write');

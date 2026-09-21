@@ -5,6 +5,8 @@ components:
     source: employee_detail
     title_field: name
     subtitle_field: job_title
+    avatar_field: image_url
+    avatar_initials_field: name
     status_field: state
     statusbar: [{ value: Draft, label: New }, { value: Active, label: Active }, { value: On Leave, label: On leave }, { value: Terminated, label: Departed }]
     status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }
@@ -15,6 +17,8 @@ components:
       - { id: open_employee_history, label: History, value_field: version_count, permission: employees.read }
     header_actions:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
+      - { id: upload_employee_avatar, label: Upload Avatar, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: remove_employee_avatar, label: Remove Avatar, variant: ghost, permission: employees.write, show_if: "state.employee_detail.active === true && !!state.employee_detail.image_url" }
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: edit_employee_related_user, label: Set Related User, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_timezone, label: Edit Timezone, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
