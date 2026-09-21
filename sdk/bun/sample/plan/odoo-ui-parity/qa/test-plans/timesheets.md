@@ -261,3 +261,16 @@ evidence is blocked because the bounded backend startup did not expose
 `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain a known blocker
 and no module sign-off is claimed. The repository UI audit passed with 726
 pages, 735 routes, and 1,409 datasources.
+
+## Wave 25 — `TIMESHEET-SALES-ORDER-ITEM-ACTION-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `timesheet_action_from_sales_order_item`, `so_line = active_id`, billable and week defaults | pass in focused source test |
+| Paired YAML contract | page/API both declare `sales-order-item-timesheets` | pass |
+| Durable scoped read | persisted sales-order item relation and billable/current-week context | pass |
+| Permission/company/empty/missing relation | manager permission and fail-closed query guards | pass |
+| Freshness/restart | changed relation is visible and file-backed migration reopens it | pass |
+| Focused regression | new test 4/4; All Timesheets 54/54 | pass |
+| Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |

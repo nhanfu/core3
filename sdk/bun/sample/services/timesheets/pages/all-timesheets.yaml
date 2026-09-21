@@ -90,9 +90,16 @@ components:
       - { field: sales_order_item, label: Sales Order Item, optional: hide }
       - { field: time_spent_display, label: Time Spent, align: right }
       - { field: state, label: Status, type: StatusChip, optional: hide }
+      - field: id
+        label: ' '
+        sortable: false
+        width: 52
+        actions:
+          - { id: view_sales_order_item_timesheets, label: Sales Order Item Timesheets, icon: external-link, show_if: "row.sales_order_item" }
     form_view: { page: apps/services/timesheets/pages/all-timesheets-detail.yaml, side_panel: true }
     page_size: 25
     empty_state: { title: No timesheets, description: No timesheet entries match the current filters. }
     labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all rows, select_row: Select row, previous_page: Previous page, next_page: Next page }
 actions:
   - { id: view_all_timesheet_entry, type: navigate, permission: timesheets.manage, navigate_to: /all-timesheets/detail, params: { id: '{row.id}' } }
+  - { id: view_sales_order_item_timesheets, type: navigate, permission: timesheets.manage, navigate_to: /timesheets/sales-order-item, params: { sales_order_item: '{row.sales_order_item}' } }

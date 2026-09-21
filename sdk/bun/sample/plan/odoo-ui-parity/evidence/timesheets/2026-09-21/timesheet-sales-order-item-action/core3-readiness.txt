@@ -1,0 +1,17 @@
+Core3 Wave 25 bounded runtime check (2026-09-21)
+
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit 124 after frontend readiness; the process reached:
+  Backend: http://127.0.0.1:3001
+  Frontend: http://127.0.0.1:3002
+  Event mediator listening on ws://127.0.0.1:3010/events
+  VITE ready at http://127.0.0.1:3002/
+Endpoint probe while the PTY remained alive:
+  curl http://127.0.0.1:3001/api/modules -> curl: (7) Failed to connect to
+  127.0.0.1 port 3001 after 0 ms: Could not connect to server
+  curl http://127.0.0.1:3001/api/pages/sales-order-item-timesheets?lc=en -> same
+  connection failure
+
+Authenticated Core3 desktop/mobile capture was not possible because the
+backend listener was not available. The runtime was terminated with Ctrl-C
+after the bounded probe; no temporary runtime files were retained.

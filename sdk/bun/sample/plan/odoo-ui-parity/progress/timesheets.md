@@ -756,6 +756,13 @@ sign-off is claimed.
 - Focused feature coverage passed 3/3 tests with 18 expectations, including actor/company/empty guards, manager permission, and file-backed restart.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-my-filter/`; desktop applies My Timesheets and renders `1-42 / 42`, and mobile renders responsive Kanban without browser errors.
 - Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-SALES-ORDER-ITEM-ACTION-001`
+
+- Selected Odoo `sale_timesheet.timesheet_action_from_sales_order_item`, a scoped `so_line = active_id` action with billable-timesheet and current-week defaults; this is distinct from the excluded All Timesheets Sales Order search.
+- Added separate page/API YAML joined by `page.id: sales-order-item-timesheets`, with an All Timesheets row action and durable `timesheet_entries.sales_order_item` query.
+- Focused coverage passed 4/4 tests with 22 expectations; the All Timesheets regression passed 54/54 with 329 expectations. ESLint, UI audit (729 pages / 738 routes / 1,419 datasources), and diff-check passed.
+- Evidence is under `evidence/timesheets/2026-09-21/timesheet-sales-order-item-action/`. Core3 backend readiness and authenticated Odoo capture blockers are recorded exactly; no screenshots or sign-off are claimed. Odoo Print/PDF/report-action blockers remain open.
 - Repository audit is blocked before completion by an unrelated page-schema options error; exact output is in `audit-blocker.txt`. No other-owner page was edited.
 
 ## 2026-09-21 — `TIMESHEET-ALL-SALES-ORDER-SEARCH-001`

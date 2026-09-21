@@ -870,3 +870,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Odoo browser gate: authenticated desktop selects Billed Manually and renders `1-13 / 13`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-manually-filter/`.
 - Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
 - Repository UI audit passed with 726 pages, 735 routes, and 1,409 datasources; no audit blocker was introduced by this slice.
+
+## Wave 25 QA — `TIMESHEET-SALES-ORDER-ITEM-ACTION-001`
+
+- Source contract: `sale_timesheet.timesheet_action_from_sales_order_item`, domain `so_line = active_id`, billable-timesheet/current-week defaults.
+- Core3 contract: page/API separation through `page.id: sales-order-item-timesheets`; durable relation query; manager permission; company, empty, missing-item, freshness, and restart guards.
+- Focused test: 4/4, 22 expectations. All Timesheets regression: 54/54, 329 expectations.
+- Static gates: ESLint passed; UI audit passed with 729 pages, 738 routes, 1,419 datasources; `git diff --check` passed.
+- Evidence: `evidence/timesheets/2026-09-21/timesheet-sales-order-item-action/`. Core3 backend and Odoo `core3_user_demo` runtime blockers are recorded; authenticated desktop/mobile screenshots were unavailable, so no visual sign-off is claimed.

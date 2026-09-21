@@ -1,0 +1,13 @@
+Odoo Wave 25 authenticated capture blocker (2026-09-21)
+
+Reference database: core3_user_demo
+
+  curl POST http://127.0.0.1:8069/web/session/authenticate
+  response: Odoo Server Error - Database not found.
+
+  curl POST http://127.0.0.1:8073/web/session/authenticate
+  response: connection to server at 127.0.0.1:5432 failed
+
+The supplied source checkout remains available and is covered by the focused
+source-comparison test, but no authenticated Sales Order Item action route was
+available for desktop/mobile screenshots. No fabricated Odoo image is claimed.

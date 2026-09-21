@@ -1,0 +1,17 @@
+{
+  "feature_id": "TIMESHEET-SALES-ORDER-ITEM-ACTION-001",
+  "source": "addons/sale_timesheet/views/hr_timesheet_views.xml",
+  "authenticated_capture": {
+    "desktop": false,
+    "mobile": false,
+    "blocker": "Odoo reference database core3_user_demo is unavailable: port 8069 reports Database not found and port 8073 cannot connect to PostgreSQL."
+  },
+  "source_contract": {
+    "action": "timesheet_action_from_sales_order_item",
+    "domain": "so_line = active_id",
+    "defaults": ["billable_timesheet", "week", "so_line"]
+  },
+  "errors": [
+    "authenticated Odoo desktop/mobile evidence unavailable"
+  ]
+}

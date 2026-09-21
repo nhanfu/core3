@@ -1663,3 +1663,35 @@ Focused coverage is `test/timesheets_all_billed_manually_filter.integration.test
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billed-manually-filter/`: desktop selects Billed Manually and renders `1-13 / 13`; mobile captures responsive All Timesheets Kanban; both report no page/request errors. Core3 desktop/mobile capture is blocked before authentication because the bounded backend startup did not expose `127.0.0.1:3001/api/modules` within 18 seconds, recorded in `core3-readiness.txt`. Odoo Print/PDF/report-action surfaces remain open; no module sign-off is claimed.
 The repository UI audit passed with 726 pages, 735 routes, and 1,409 datasources; no audit blocker was introduced by this slice.
+
+## Wave 25 Sales Order Item Timesheets action — `TIMESHEET-SALES-ORDER-ITEM-ACTION-001` (2026-09-21)
+
+The next uncovered bounded source behavior is Odoo `sale_timesheet`'s
+`timesheet_action_from_sales_order_item` action in
+`addons/sale_timesheet/views/hr_timesheet_views.xml`. Its domain is
+`so_line = active_id`; its context enables the billable-timesheet and current
+week defaults and carries the active sales-order line into the timesheet
+surface. This is a scoped action, not the excluded All Timesheets Sales Order
+search or any billing filter.
+
+Core3 adds `pages/sales-order-item-timesheets.yaml` and
+`api/sales-order-item-timesheets.yaml`, joined by
+`page.id: sales-order-item-timesheets`, and a row action from the existing
+All Timesheets page. The API uses the durable `timesheet_entries.sales_order_item`
+relation, applies the billable/current-week source context, and retains the
+manager permission plus company, empty, missing-item, relation-freshness, and
+file-backed restart guards. No duplicate persistence model was added.
+
+Focused coverage is `test/timesheets_sales_order_item_action.integration.test.ts`:
+4 tests / 22 expectations. The bounded All Timesheets regression passed 54
+tests / 329 expectations. ESLint and `git diff --check` passed. The repository
+UI audit passed with 729 pages, 738 routes, and 1,419 datasources.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-sales-order-item-action/`.
+Core3 authentication was blocked because the backend listener was unavailable
+after the bounded startup reached frontend readiness. Authenticated Odoo
+capture was blocked because `core3_user_demo` was unavailable (`8069`:
+Database not found; `8073`: PostgreSQL connection failure). The exact blockers
+are recorded; no desktop/mobile screenshot or sign-off is claimed. Existing
+Odoo Print/PDF/report-action gaps remain open.
