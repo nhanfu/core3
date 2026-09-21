@@ -751,3 +751,35 @@ Status: bounded implementation; conditional evidence only, not CRM sign-off.
   Odoo desktop/mobile captures are recorded by path and hash. Core3
   authenticated captures are blocked by unrelated Events page-discovery
   errors in the shared runtime; no Core3 visual claim is made.
+
+## 2026-09-22 — Sales Team Overdue Opportunities
+
+Status: bounded implementation; not CRM sign-off.
+
+- Odoo 19 source: `addons/crm/views/crm_team_views.xml` defines
+  `crm_lead_action_team_overdue_opportunity` as an opportunity action with
+  `kanban,list,graph,form,calendar,pivot` modes, team/default-user context, and
+  the hidden `overdue_opp` filter from `crm_lead_views.xml` (`date_closed =
+  false`, `date_deadline < today`).
+- Core3 adds page/API contracts joined by `page.id:
+  crm-team-overdue-opportunities`, route `/crm/team-overdue-opportunities`, a
+  team-detail stat action, and a CRM-only manifest item. The API preserves the
+  existing `expected_closing` field as the source's `date_deadline`, excludes
+  `Won`/`Lost`, supports salesperson/search/empty/no-result/401/403/503 states,
+  and reuses the existing lead-detail form for drill-down.
+- Durable migration `20260922113000-031-team-overdue-opportunities.yaml`
+  (`0.0.31`) adds an idempotent overdue-opportunity index and stable Enterprise
+  fixture. The focused test proves migration replay, team scope, future/closed
+  exclusion, forbidden/missing-team behavior, and file-backed restart
+  visibility.
+- Focused validation: `test/crm_team_overdue_opportunities.integration.test.ts`
+  — 2 tests / 17 assertions. Related team regressions — 6 tests / 52
+  assertions. Discovery audit: 786 pages / 795 routes / 1,620 datasources.
+  Frontend build, targeted ESLint, and `git diff --check` pass.
+- Evidence is under
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-TEAM-OVERDUE-OPPORTUNITIES-001/`.
+  Authenticated Odoo Pipeline desktop/mobile and Sales Teams desktop captures
+  are recorded with hashes. The target action was not visible to the QA user,
+  and its action metadata was access-restricted; no target-action visual claim
+  is made. Core3 target-route capture is blocked by unrelated Events discovery
+  failures (`upload_event_badge_background`, `FormSection`).

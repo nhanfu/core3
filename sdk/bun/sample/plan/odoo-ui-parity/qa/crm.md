@@ -255,3 +255,26 @@ Conditional bounded result; not signed off.
   No Core3 visual parity claim is made. The bsk session was stopped cleanly.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
+
+## QA checkpoint — Team Overdue Opportunities (2026-09-22)
+
+Conditional bounded result; not signed off.
+
+- Source/action: Odoo's `crm_lead_action_team_overdue_opportunity` and hidden
+  `overdue_opp` filter were compared from the local Odoo 19 source.
+- Core3 focused coverage: `crm_team_overdue_opportunities.integration.test.ts`
+  passed 2 tests / 17 assertions; related team suites passed 6 tests / 52
+  assertions. Migration replay, team scope, overdue/open-state guards,
+  forbidden/missing-team responses, and file-backed restart visibility passed.
+- Static gates: discovery audit passed with 786 pages, 795 routes, and 1,620
+  datasources; targeted ESLint, frontend build, and CRM-scoped diff-check
+  passed.
+- Evidence:
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-TEAM-OVERDUE-OPPORTUNITIES-001/`.
+  Authenticated Odoo Pipeline desktop/mobile and Sales Teams desktop captures
+  are recorded with hashes. The target action was not visible in the QA user's
+  menu and action metadata access was restricted, so no target-action visual
+  claim is made.
+- Core3 target-route browser evidence remains blocked by unrelated Events page
+  discovery errors (`upload_event_badge_background`, `FormSection`). Overall
+  CRM remains conditional and unsigned-off.

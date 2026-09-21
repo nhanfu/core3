@@ -1,0 +1,52 @@
+title: Overdue Opportunities
+page: { id: crm-team-overdue-opportunities, route: /crm/team-overdue-opportunities, breadcrumb: [CRM, Sales Teams, Team, Overdue Opportunities], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_team_overdue_opportunities
+    search: { label: Search opportunities, placeholder: Search opportunities and customers... }
+    filters:
+      - { field: salesperson, label: Salesperson, options_source: crm_team_overdue_opportunity_salespeople }
+    default_filters: { type: opportunity, overdue: true }
+    view_navigation: tabs
+    views:
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: stage, groups_source: crm_team_overdue_opportunity_stages, card: { title: name, subtitle: partner_name, fields: [{ field: attention, label: Attention }, { field: expected_revenue, label: Expected revenue }, { field: expected_closing, label: Expected closing }] } }
+      - { id: list, label: List, icon: table }
+      - { id: graph, label: Graph, icon: graph, category_field: stage, measure_field: expected_revenue, type: bar }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: expected_closing, card: { title: name, subtitle: partner_name } }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: stage, column: Stage }
+            - { field: salesperson, column: Salesperson }
+            - { field: expected_closing, column: Expected closing, type: date }
+            - { field: expected_revenue, column: Expected revenue }
+            - { field: probability, column: Probability }
+          default: { rows: [stage], columns: [salesperson], measures: [{ field: expected_revenue, aggregate: sum, column: Expected revenue }] }
+          date_ranges: { expected_closing: month }
+    columns:
+      - { field: attention, label: Attention, type: StatusChip }
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: expected_closing, label: Expected closing }
+      - { field: probability, label: Probability, align: right }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: salesperson, label: Salesperson }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_crm_team_overdue_opportunity
+    row_double_click_action: view_crm_team_overdue_opportunity
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+    empty_state: { title: No overdue opportunities, description: Opportunities with an expected closing date before today will appear here. }
+
+actions:
+  - id: back_to_crm_team_from_overdue
+    type: navigate
+    permission: crm.read
+    navigate_to: /team-detail
+    params: { id: '{query.team_id}' }

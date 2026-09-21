@@ -1,0 +1,15 @@
+version: 0.0.31
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_overdue_opportunity ON crm_leads(type, stage, expected_closing);
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing, created_at)
+      VALUES ('crm-team-overdue-enterprise-001', 'Enterprise renewal follow-up', 'opportunity', 'Umbrella Health', 'renewals@umbrella.test', 'Referral', 72000, 'Proposition', 55, 'Dispatcher User', 'Enterprise', DATE '2026-09-18', TIMESTAMP '2026-05-10 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_leads WHERE id = 'crm-team-overdue-enterprise-001';
+      DROP INDEX IF EXISTS idx_crm_leads_overdue_opportunity;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

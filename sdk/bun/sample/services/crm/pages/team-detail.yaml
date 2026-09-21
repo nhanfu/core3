@@ -12,6 +12,7 @@ components:
     group_columns: 2
     stat_buttons:
       - { id: view_crm_team_opportunities, label: Opportunities, value_field: opportunity_count, permission: crm.read }
+      - { id: view_crm_team_overdue_opportunities, label: Overdue Opportunities, value_field: overdue_opportunity_count, permission: crm.read, show_if: "state.crm_team_detail.overdue_opportunity_count > 0" }
     groups:
       - title: Team Information
         fields:

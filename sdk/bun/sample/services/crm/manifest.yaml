@@ -88,6 +88,10 @@ menu:
           label: Teams Members
           icon: users
           permission: crm.manage
+        - path: /crm/team-overdue-opportunities
+          label: Overdue Opportunities
+          icon: alert
+          permission: crm.read
         - path: /configuration
           label: Configuration
           icon: settings

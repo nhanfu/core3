@@ -1,0 +1,39 @@
+page: { id: crm-team-overdue-opportunities }
+
+datasources:
+  - id: crm_team_overdue_opportunities_context
+    single: true
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_TEAM_OVERDUE_UNAUTHORIZED, message: Sign in to view overdue opportunities. }
+      forbidden: { status: 403, code: CRM_TEAM_OVERDUE_FORBIDDEN, message: You do not have permission to view overdue opportunities. }
+      transport_error: { status: 503, code: CRM_TEAM_OVERDUE_UNAVAILABLE, message: Overdue opportunities are temporarily unavailable. }
+    query: "SELECT id AS team_id, name AS team_name, active FROM crm_teams WHERE id = :team_id"
+  - id: crm_team_overdue_opportunities
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_TEAM_OVERDUE_UNAUTHORIZED, message: Sign in to view overdue opportunities. }
+      forbidden: { status: 403, code: CRM_TEAM_OVERDUE_FORBIDDEN, message: You do not have permission to view overdue opportunities. }
+      transport_error: { status: 503, code: CRM_TEAM_OVERDUE_UNAVAILABLE, message: Overdue opportunity data is temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.name, l.type, COALESCE(l.partner_name, '') AS partner_name, COALESCE(l.email, '') AS email, COALESCE(l.phone, '') AS phone, l.stage, l.probability, l.expected_revenue, COALESCE(l.salesperson, '') AS salesperson, t.id AS team_id, t.name AS team, COALESCE(l.tags, '') AS tags, CAST(l.expected_closing AS VARCHAR) AS expected_closing, CAST(l.created_at AS VARCHAR) AS created_at, 'Overdue' AS attention FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :team_id AND l.type = 'opportunity' AND l.stage NOT IN ('Won', 'Lost') AND l.expected_closing IS NOT NULL AND l.expected_closing < COALESCE(CAST(:as_of AS DATE), CURRENT_DATE) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR COALESCE(l.partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(l.salesperson, '') ILIKE '%' || :q || '%') AND (:salesperson IS NULL OR l.salesperson = :salesperson) ORDER BY l.expected_closing, l.created_at DESC, l.id"
+  - id: crm_team_overdue_opportunity_stages
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_team_overdue_opportunity_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT l.salesperson AS value, l.salesperson AS label FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :team_id AND l.type = 'opportunity' AND l.stage NOT IN ('Won', 'Lost') AND l.expected_closing IS NOT NULL AND l.expected_closing < COALESCE(CAST(:as_of AS DATE), CURRENT_DATE) AND NULLIF(TRIM(l.salesperson), '') IS NOT NULL ORDER BY l.salesperson"
+
+actions:
+  - id: view_crm_team_overdue_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: back_to_crm_team_from_overdue_action
+    type: navigate
+    permission: crm.read
+    navigate_to: /team-detail
+    params: { id: '{query.team_id}' }
