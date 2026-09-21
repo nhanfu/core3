@@ -1,0 +1,45 @@
+title: New Transfer
+page: { id: transfer-new, route: /inventory/transfer/new, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, New Transfer], auth: { require: [inventory.write] } }
+components:
+  - type: OdooFormView
+    source: inventory_transfer_new
+    title_field: operation_type_name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Ready, label: Ready }]
+    status_colors: { Draft: neutral, Waiting: amber, Ready: teal }
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_inventory_overview_from_new_transfer, label: Inventory Overview, icon: arrow-left, permission: inventory.read }
+      - { id: create_inventory_transfer, label: Save, variant: primary, permission: inventory.write }
+    group_columns: 2
+    groups:
+      - title: Transfer
+        fields:
+          - { field: operation_type_id, label: Operation Type, type: select, options_source: inventory_transfer_new_operation_types, required: true }
+          - { field: contact_name, label: Contact, type: text, placeholder: 'e.g. Lumber Inc' }
+          - { field: source_location_id, label: Source Location, type: select, options_source: inventory_transfer_new_locations, required: true }
+          - { field: destination_location_id, label: Destination Location, type: select, options_source: inventory_transfer_new_locations, required: true }
+      - title: Scheduling
+        fields:
+          - { field: scheduled_date, label: Scheduled Date, type: date, required: true }
+          - { field: source_document, label: Source Document, type: text, placeholder: 'e.g. PO0032' }
+          - { field: company_name, label: Company, type: text, required: true }
+          - { field: name, label: Reference, type: text, required: true, placeholder: 'e.g. WH/IN/00007' }
+    notebook:
+      active: additional-information
+      tabs:
+        - id: additional-information
+          label: Additional Info
+          groups:
+            - title: Operation
+              fields:
+                - { field: operation_kind, label: Operation kind }
+                - { field: state, label: Status }
+        - id: note
+          label: Note
+          groups:
+            - title: Note
+              fields:
+                - { field: note, label: Note, type: textarea, wide: true, placeholder: Add an internal note that will be printed on the Picking Operations sheet }

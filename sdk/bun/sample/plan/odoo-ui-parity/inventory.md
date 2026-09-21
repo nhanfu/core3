@@ -2761,3 +2761,44 @@ direct `/odoo/backorders` alias falls back to Discuss on both observed
 viewports, and the current overview has no visible Backorders card link, so
 no authenticated Odoo Backorders list/mutation or visual parity sign-off is
 claimed. Full Inventory sign-off remains open.
+## `INV-TRANSFER-NEW-001` — New Transfer draft workflow (2026-09-22)
+
+- Selected the distinct New Transfer form workflow from the Inventory Overview
+  operation-card menu after the Late and Backorders queue slices. Local Odoo 19
+  maps this to `stock.action_picking_form` in
+  `addons/stock/views/stock_picking_views.xml:688-700`: form-only
+  `stock.picking`, with `default_picking_type_id: active_id` and the
+  `contact_display: partner_address` context. The source form at
+  `:111-133`, `:215-260`, and `:263-273` defines the draft header/status
+  controls, Contact/locations/scheduled date/origin fields, Operations tab, and
+  Add a Product control.
+- Added presentation-only `services/inventory/pages/transfer-new.yaml` and
+  backend `services/inventory/api/transfer-new.yaml`, joined by
+  `page.id: transfer-new`. The Overview New card action passes the selected
+  operation type/company context. Migration `20260922370000-087-inventory-
+  transfer-new.yaml` adds the durable creation-run ledger.
+- The create mutation is permissioned by `inventory.write`, validates active
+  operation type/current company, required reference/date, distinct locations,
+  signed-in actor, duplicate reference, and row scope, then inserts a durable
+  Draft `inventory_pickings` record plus creation/message history. The page
+  refreshes the draft and history datasources and supports restart reads.
+- Focused verification passes 4 tests / 23 assertions in
+  `test/inventory_transfer_new.integration.test.ts`, covering source mapping,
+  page/API separation, option sources, create persistence, guards, permission,
+  and file-backed restart. Inventory-only route discovery found 70 routes and
+  `/inventory/transfer/new`.
+- Authenticated Odoo Inventory Overview was checked at desktop 1916x833 and
+  emulated mobile 390x844. The overview rendered Receipts, Delivery Orders,
+  and PoS Orders. Selecting the New menu item did not open the form; the
+  generated action route and Operations Types route both displayed Odoo's
+  generic “Oops! Something went wrong...” modal. No live Odoo form or mutation
+  parity is claimed. The desktop overview capture is in the feature evidence;
+  the mobile check is recorded from the authenticated accessibility snapshot.
+- Core3 authenticated browser verification is blocked before route serving: the
+  module runner and global audit fail on an unrelated page-schema discovery
+  error (`components[0].views[5].category_field` required for graph and
+  `components[0].views[6]` activity fields/types required). No Core3 visual
+  parity is claimed.
+
+Feature evidence: `evidence/inventory/2026-09-22/INV-TRANSFER-NEW-001/`.
+Full Inventory sign-off remains open.

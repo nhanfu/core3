@@ -11,6 +11,11 @@ datasources:
     error_states: { transport_error: { status: 503, code: INVENTORY_OVERVIEW_HISTORY_UNAVAILABLE, message: Inventory overview history is temporarily unavailable. } }
     query: "SELECT id, row_version, operation_type_id, operation_name, filter_name, requested_by, company_name, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_overview_runs WHERE NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)') ORDER BY opened_at DESC, id DESC"
 actions:
+  - id: new_inventory_transfer
+    type: navigate
+    permission: inventory.write
+    navigate_to: /inventory/transfer/new
+    params: { operation_type_id: '{row.id}', current_company_name: '{row.company_name}' }
   - id: open_inventory_backorder_queue
     type: navigate
     permission: inventory.read

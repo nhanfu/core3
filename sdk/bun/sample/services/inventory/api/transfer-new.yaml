@@ -1,0 +1,70 @@
+page: { id: transfer-new }
+datasources:
+  - id: inventory_transfer_new
+    single: true
+    permission: inventory.write
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_TRANSFER_NEW_FORBIDDEN, message: You do not have permission to create a transfer. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_NEW_UNAVAILABLE, message: The new transfer form is temporarily unavailable. }
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, 1 AS row_version, t.id AS operation_type_id, t.name AS operation_type_name, t.operation_kind, t.company_name, t.default_location_src_id AS source_location_id, t.default_location_dest_id AS destination_location_id, COALESCE(src.name, '') AS source_location_name, COALESCE(dest.name, '') AS destination_location_name, CAST('2026-01-15' AS VARCHAR) AS scheduled_date, CAST(NULL AS VARCHAR) AS contact_name, CAST(NULL AS VARCHAR) AS source_document, 'Draft' AS state, 'New Transfer' AS name, CAST(NULL AS VARCHAR) AS note FROM inventory_operation_types t LEFT JOIN inventory_locations src ON src.id = t.default_location_src_id LEFT JOIN inventory_locations dest ON dest.id = t.default_location_dest_id WHERE t.active = TRUE AND t.id = COALESCE(NULLIF(:operation_type_id, ''), 'operation-receipts') AND (COALESCE(:current_company_name, '') = '' OR t.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)'))"
+  - id: inventory_transfer_new_operation_types
+    single: false
+    permission: inventory.read
+    query: "SELECT t.id AS value, t.name || ' (' || t.code || ')' AS label FROM inventory_operation_types t WHERE t.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR t.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)')) ORDER BY t.sequence_number, t.name, t.id"
+  - id: inventory_transfer_new_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT l.id AS value, w.code || '/' || l.name AS label FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE l.active = TRUE AND l.usage <> 'View' ORDER BY label, l.id"
+  - id: inventory_transfer_new_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_NEW_HISTORY_UNAVAILABLE, message: Transfer creation history is temporarily unavailable. } }
+    query: "SELECT r.id, r.picking_id, p.name AS transfer_name, r.operation_type_name, r.company_name, r.created_by, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_transfer_create_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)') ORDER BY r.created_at DESC, r.id DESC"
+actions:
+  - id: back_to_inventory_overview_from_new_transfer
+    type: navigate
+    permission: inventory.read
+    navigate_to: /inventory/overview
+  - id: create_inventory_transfer
+    type: server_form
+    permission: inventory.write
+    title: New Transfer
+    action: stock.action_picking_form
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_transfer_new, inventory_transfer_new_runs]
+    success_message: Transfer created.
+    mutation:
+      operation: insert
+      table: inventory_pickings
+      generated: [id, run_id]
+      fields: [operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state, row_version]
+      defaults: { operation_type_id: operation-receipts, company_name: 'My Company (San Francisco)', source_location_id: location-customer, destination_location_id: location-stock, state: Draft, row_version: 1 }
+      before_steps:
+        - query: "SELECT 'transfer-new-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id, 'transfer-new-run-' || CAST(COUNT(*) + 1 AS VARCHAR) AS run_id FROM inventory_transfer_create_runs"
+          assign: true
+      required: [operation_type_id, name, scheduled_date, company_name, source_location_id, destination_location_id]
+      guards:
+        - { query: "SELECT id FROM inventory_operation_types WHERE id = :operation_type_id AND active = TRUE AND (company_name = :company_name OR (:current_company_name = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 403, code: INVENTORY_TRANSFER_NEW_OPERATION_TYPE_SCOPE, message: Select an active operation type in the current company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND CAST(:scheduled_date AS DATE) IS NOT NULL", status: 422, code: INVENTORY_TRANSFER_NEW_FIELDS_REQUIRED, message: Reference and scheduled date are required. }
+        - { query: "SELECT 1 AS ok WHERE :source_location_id <> :destination_location_id", status: 422, code: INVENTORY_TRANSFER_NEW_LOCATIONS_INVALID, message: Source and destination locations must be different. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_pickings WHERE name = TRIM(CAST(:name AS VARCHAR)))", status: 409, code: INVENTORY_TRANSFER_NEW_REFERENCE_EXISTS, message: A transfer with this reference already exists. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:current_user_name AS VARCHAR), ''))) > 0", status: 403, code: INVENTORY_TRANSFER_NEW_ACTOR_REQUIRED, message: A signed-in inventory operator is required to create a transfer. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, '') = COALESCE(NULLIF(:current_company_name, ''), :company_name) OR (:current_company_name = 'Core3 Demo Company' AND :company_name = 'My Company (San Francisco)')", status: 403, code: INVENTORY_TRANSFER_NEW_COMPANY_SCOPE, message: The transfer company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_transfer_create_runs(id, picking_id, operation_type_id, operation_type_name, company_name, created_by, created_at, row_version) SELECT :run_id, :id, t.id, t.name, :company_name, :current_user_name, TIMESTAMP '2026-01-15 12:00:00', 1 FROM inventory_operation_types t WHERE t.id = :operation_type_id"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_TRANSFER_NEW_FAILED
+          message: The transfer could not be created.
+        - query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail, created_at) VALUES(:run_id || '-message', :id, :current_user_name, 'inventory.transfer.created', 'Transfer created', 'Draft transfer created from the Inventory Overview.', TIMESTAMP '2026-01-15 12:00:00')"
+      result: { query: "SELECT p.id, p.row_version, p.operation_type_id, t.name AS operation_type_name, t.operation_kind, p.company_name, p.source_location_id, p.destination_location_id, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.contact_name, p.source_document, p.state, p.name FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE p.id = :id" }
+    fields:
+      - { field: operation_type_id, label: Operation Type, type: select, options_source: inventory_transfer_new_operation_types, required: true }
+      - { field: name, label: Reference, type: text, required: true, default: New Transfer }
+      - { field: contact_name, label: Contact, type: text }
+      - { field: source_location_id, label: Source Location, type: select, options_source: inventory_transfer_new_locations, required: true }
+      - { field: destination_location_id, label: Destination Location, type: select, options_source: inventory_transfer_new_locations, required: true }
+      - { field: scheduled_date, label: Scheduled Date, type: date, required: true, default: '2026-01-15' }
+      - { field: source_document, label: Source Document, type: text }
+      - { field: company_name, label: Company, type: text, required: true, default: 'My Company (San Francisco)' }

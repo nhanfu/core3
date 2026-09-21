@@ -2075,3 +2075,33 @@ evidence. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Backorders queue;
 PARTIAL/BLOCKED for the live Odoo queue surface. Full Inventory sign-off
 remains open.
+
+## Inventory New Transfer QA — `INV-TRANSFER-NEW-001`
+
+- Odoo source/action: PASS for source mapping. `stock.action_picking_form`
+  (`stock_picking_views.xml:688-700`) is a form-only `stock.picking` action
+  with the active operation type as its default. The source form's draft
+  header, locations, scheduled date, origin, Operations tab, and Add a Product
+  control are recorded in the feature evidence.
+- Core3 contract: PASS. `pages/transfer-new.yaml` and
+  `api/transfer-new.yaml` share `page.id: transfer-new`; Overview's New card
+  navigates with operation/company context. Migration 0.0.87 persists the
+  create-run ledger. The write action enforces `inventory.write`, company and
+  actor scope, required fields, location validity, duplicate references, and
+  restart-safe history.
+- Focused verification: PASS — 4 tests / 23 assertions in
+  `inventory_transfer_new.integration.test.ts`, including source/page/API
+  mapping, option sources, durable Draft creation, guards, permission, and
+  file-backed restart. Inventory CSS build and diff checks pass.
+- Authenticated Odoo browser: PARTIAL/BLOCKED. Overview rendered on desktop
+  and emulated 390x844 mobile. The New menu item did not open a form, while
+  the generated `action_picking_form` route and Operations Types route showed
+  Odoo's generic error modal. No Odoo New Transfer form/mutation sign-off is
+  claimed.
+- Authenticated Core3 browser: BLOCKED before route serving by the unrelated
+  global page discovery schema error for a graph `category_field` and activity
+  `title_field`/`activity_types`. No Core3 visual parity is claimed.
+
+QA disposition: PASS for the bounded durable Core3 New Transfer contract;
+PARTIAL/BLOCKED for authenticated visual and live Odoo form parity. Full
+Inventory sign-off remains open.

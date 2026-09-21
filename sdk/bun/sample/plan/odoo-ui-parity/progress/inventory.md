@@ -1589,3 +1589,21 @@ Full Inventory sign-off remains open.
   evidence is under
   `evidence/inventory/2026-09-22/INV-TRANSFER-BACKORDER-QUEUE-001/`.
   Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-NEW-001` — New Transfer draft workflow (2026-09-22)
+
+- Selected the source-backed `stock.action_picking_form` New Transfer workflow
+  (`addons/stock/views/stock_picking_views.xml:688-700`) as the next bounded
+  slice after Late and Backorders. Added separate page/API YAML joined by
+  `page.id: transfer-new`, an Overview New action, and migration `0.0.87` for
+  durable creation history.
+- The Inventory write workflow creates a company-scoped Draft transfer with
+  required-field, operation-type, location, actor, duplicate, and permission
+  guards; restart persistence and message/history refresh are covered by 4
+  focused tests / 23 assertions. CSS build passes.
+- Authenticated Odoo overview desktop/mobile checks completed, but the New
+  form action and direct action route show Odoo's generic error modal. Core3
+  browser serving remains blocked by unrelated global graph/activity page
+  schema errors. Exact source, test, browser, and residual details are under
+  `evidence/inventory/2026-09-22/INV-TRANSFER-NEW-001/`. Full Inventory
+  sign-off remains open.

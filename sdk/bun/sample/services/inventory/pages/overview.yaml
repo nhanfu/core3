@@ -25,6 +25,7 @@ components:
             - { field: count_move_ready, label: Operations }
           actions:
             - { id: open_inventory_backorder_queue, label: Back Orders, label_field: count_picking_backorders, variant: secondary, show_if: 'row.count_picking_backorders > 0' }
+            - { id: new_inventory_transfer, label: New, variant: secondary, permission: inventory.write }
       - { id: list, label: List, icon: table, mobile: false }
     columns:
       - { field: name, label: Operation Type, type: PrimaryEntityCell }

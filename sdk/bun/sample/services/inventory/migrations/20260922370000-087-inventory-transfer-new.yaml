@@ -1,0 +1,24 @@
+version: 0.0.87
+kind: schema
+description: Durable audit history for Inventory Overview New Transfer drafts
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_create_runs (
+        id VARCHAR PRIMARY KEY,
+        picking_id VARCHAR NOT NULL,
+        operation_type_id VARCHAR NOT NULL,
+        operation_type_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_create_runs_company_idx
+        ON inventory_transfer_create_runs(company_name, created_at, id);
+    down: |
+      DROP TABLE IF EXISTS inventory_transfer_create_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
