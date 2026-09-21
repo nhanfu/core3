@@ -36,5 +36,9 @@ components:
     source: task_timesheet_progress
     title: Task progress
     stats: [{ label: Allocated time, field: allocated_hours }, { label: Time spent, field: effective_hours }, { label: Remaining, field: remaining_hours }, { label: Progress %, field: progress_percent }, { label: Overtime, field: overtime_hours }]
+  - type: StatRow
+    source: task_timesheet_action_context
+    title: Task action context
+    stats: [{ label: Action title, field: action_label }]
 actions:
   - { id: view_task_timesheet_entry, type: navigate, permission: timesheets.read, navigate_to: /timesheets/detail, params: { id: '{row.id}', view_scope: task, task_id: '{state.task_id}' } }

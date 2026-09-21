@@ -1034,3 +1034,21 @@ Odoo Print/PDF/action parity remains a separate blocker.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-project-action-display-name-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
+
+## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source comparison | `timesheet_action_task`, `Task's Timesheets`, task `active_ids` domain | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page, API `page.id`, action-context `StatRow` binding | pass |
+| Durable action context | title and task name derived from durable current-company task relation | pass |
+| Permission/company/empty guards | `timesheets.read`, current company, missing task, empty fixture | pass |
+| Restart | migration replay and file-backed task label read | pass |
+| Focused regression | 3 tests, 17 expectations | pass |
+| Related task regression | task/action/report/subtask suites, 14 tests / 83 expectations | pass |
+| Audit/lint/diff | scoped ESLint, UI audit 751/760/1508, Timesheets-owned `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-display-name-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.

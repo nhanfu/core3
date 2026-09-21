@@ -11,6 +11,11 @@ datasources:
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_CONTEXT_UNAVAILABLE, message: Task report context is temporarily unavailable. } }
     query: "SELECT t.id, t.name AS task_name, t.project_id, COALESCE(MIN(e.project_name), '') AS project_name, COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_tasks t LEFT JOIN timesheet_entries e ON e.task_id = t.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE t.id = :task_id GROUP BY t.id, t.name, t.project_id"
+  - id: task_timesheet_action_context
+    single: true
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_ACTION_CONTEXT_UNAVAILABLE, message: Task timesheet action context is temporarily unavailable. } }
+    query: "SELECT t.id, t.name AS task_name, 'Task''s Timesheets' AS action_label FROM timesheet_tasks t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :task_id AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')"
   - id: timesheet_task_report_runs
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_REPORT_RUNS_UNAVAILABLE, message: Task timesheet report history is temporarily unavailable. } }

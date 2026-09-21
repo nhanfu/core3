@@ -935,6 +935,26 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Core3 desktop/mobile evidence is blocked because port 3001 refused `/api/modules` and `/project-timesheets`; Odoo 8069/8073 returned HTTP 200 only for unauthenticated `/web/login`. Exact probes and paired source comparison are under `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`. No authenticated browser sign-off is claimed.
 - Odoo Print/PDF/action surfaces remain open blockers; no module sign-off is claimed.
 
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
+
+- Selected the next open source-backed task behavior: Odoo
+  `timesheet_action_task` names the record-context action `Task's Timesheets`
+  and scopes it to task `active_ids`. This is separate from completed task and
+  subtask row-scope behavior.
+- Added the durable `task_timesheet_action_context` API datasource and a task
+  page `StatRow` bound through `page.id: task-timesheets`; page and API YAML
+  remain separated.
+- Current-company, missing, empty, and read-permission boundaries are
+  explicit. Existing durable task storage makes the title restart-safe without
+  a new migration.
+- Focused coverage passed 3/3 tests with 17 expectations; related task,
+  report, and subtask coverage passed 14 tests with 83 expectations.
+- Core3 desktop/mobile capture is blocked by connection-refused port 3001;
+  Odoo 8069/8073 expose only unauthenticated `/web/login`. Exact probes and
+  comparison are under
+  `evidence/timesheets/2026-09-21/timesheet-task-action-display-name-001/`.
+  No visual sign-off is claimed; Print/PDF/action blockers remain open.
+
 ## 2026-09-21 — `TIMESHEET-PROJECT-ACTION-DISPLAY-NAME-001`
 
 - Selected the next open source-backed project behavior: Odoo

@@ -1843,6 +1843,35 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
+
+The next smallest open source-backed task behavior is Odoo's
+`timesheet_action_task` record-context action. Odoo names it `Task's
+Timesheets`, applies the task `active_ids` domain, and opens the list action
+with the Timesheets context. This is distinct from the completed task and
+subtask scope behavior: this slice preserves the source action title in the
+task route.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds the durable,
+permission-gated `task_timesheet_action_context` datasource to
+`api/task-timesheets.yaml`, joined by `page.id: task-timesheets`. The page
+renders the resolved action title through a `StatRow`. The datasource fails
+closed for missing, empty, or foreign-company tasks and derives the task name
+from the durable task relation; no migration is needed.
+
+Focused coverage is
+`test/timesheets_task_action_display_name.integration.test.ts`: 3 tests / 17
+expectations, including Odoo source mapping, page/API separation,
+permission/company/empty guards, and file-backed restart stability. The
+related task/report/subtask regression passes 14 tests / 83 expectations.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-display-name-001/`.
+Core3 port 3001 refused both bounded probes and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures are blocked and no
+visual sign-off is claimed. Existing Odoo Print/PDF/action blockers remain
+open.
+
 ## Wave 36 — `TIMESHEET-PROJECT-ACTION-DISPLAY-NAME-001`
 
 The smallest remaining source-backed project action behavior is Odoo's
