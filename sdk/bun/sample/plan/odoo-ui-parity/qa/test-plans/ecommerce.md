@@ -7,6 +7,24 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001
+
+- ECOM-FUNC-071: trace Website Sale `product_page_grid_columns`, the
+  `productPageImageGridColumns` builder action, the 1/2/3 choices, and the
+  product-template `data-grid_columns` boundary; verify separate Core3
+  configuration and Product Detail page/API contracts.
+- ECOM-WF-082: replay the deterministic two-column policy, switch to one and
+  three columns, project the effective Product Detail setting, reject invalid,
+  foreign, missing, and stale writes, and preserve it across migration replay
+  and DuckDB restart.
+- ECOM-PERM-078: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards.
+- ECOM-UI-064: render the grid-column configuration and Product Detail
+  projection at desktop and mobile and compare the authenticated Odoo product
+  image-grid builder behavior; runtime is unavailable and Odoo `/shop` is
+  HTTP 404 in the supplied references.
+
 ## ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001
 
 - ECOM-FUNC-070: trace Website Sale `shop_extra_field_ids`, model

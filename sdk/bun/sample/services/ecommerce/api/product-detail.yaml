@@ -68,6 +68,13 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_FORBIDDEN, message: You do not have permission to view product page container. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_CONTAINER_UNAVAILABLE, message: Product page container is temporarily unavailable. }
     query: "SELECT c.id, c.row_version, c.company_name, c.page_container, CASE c.page_container WHEN 'regular' THEN 'Regular' WHEN 'fluid' THEN 'Full-width' ELSE 'Unset' END AS page_container_label FROM ecommerce_product_page_container_policies c JOIN ecommerce_products p ON p.company_name = c.company_name WHERE p.id = :id AND (:company_name IS NULL OR c.company_name = :company_name)"
+  - id: ecommerce_product_page_grid_columns
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_GRID_COLUMNS_UNAUTHENTICATED, message: Sign in to view product page grid columns. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_GRID_COLUMNS_FORBIDDEN, message: You do not have permission to view product page grid columns. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_GRID_COLUMNS_UNAVAILABLE, message: Product page grid columns are temporarily unavailable. }
+    query: "SELECT g.id, g.row_version, g.company_name, g.grid_columns, CASE g.grid_columns WHEN 1 THEN '1 column' WHEN 2 THEN '2 columns' ELSE '3 columns' END AS grid_columns_label FROM ecommerce_product_page_grid_columns_policies g JOIN ecommerce_products p ON p.company_name = g.company_name WHERE p.id = :id AND (:company_name IS NULL OR g.company_name = :company_name)"
   - id: ecommerce_product_categories
     permission: ecommerce.read
     error_states:

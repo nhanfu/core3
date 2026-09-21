@@ -1,0 +1,14 @@
+version: 0.0.149
+kind: data
+description: deterministic eCommerce product page image grid columns fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_grid_columns_policies (id, row_version, company_name, grid_columns)
+      VALUES ('ecommerce-product-page-grid-columns-my-company', 1, 'My Company', 2)
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_grid_columns_policies WHERE id = 'ecommerce-product-page-grid-columns-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

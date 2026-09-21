@@ -1,5 +1,24 @@
 # ecommerce QA ledger
 
+## Product Page Grid Columns (`ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`, 2026-09-21)
+
+- Odoo source/builder: pass. `website.product_page_grid_columns` defaults to
+  2; `productPageImageGridColumns` persists the value and the builder exposes
+  1, 2, and 3; the product template consumes `data-grid_columns`.
+- Core3 lifecycle: migrations 148/149 add the durable company policy and
+  deterministic fixture. Separate page/API YAML exposes a permissioned
+  optimistic update; Product Detail projects the effective policy.
+- Focused verification: **2 tests, 30 assertions, 0 failures**.
+- Regression: Product Detail and prior image/layout policy suites — **17
+  tests, 193 assertions, 0 failures**.
+- Audit: blocked by unrelated duplicate Employees datasource
+  `employee_language_options` in `services/employees/pages/employees.yaml`;
+  no other-owner file was changed. Scoped ESLint and `git diff --check`: pass.
+- Browser/Odoo: Core3 desktop/mobile runtime unavailable; supplied Odoo
+  `/shop` route remains HTTP 404. No visual sign-off is claimed.
+- Local commit: pending final handoff; not pushed.
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-grid-columns-001/`.
+
 ## Product Page Extra Fields (`ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`, 2026-09-21)
 
 - Odoo source: pass. `website.shop_extra_field_ids` points to

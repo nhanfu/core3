@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 42 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`
+(committed locally; not pushed).
 Latest Wave 41 bounded slice: `ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`
 (committed locally; not pushed).
 Latest Wave 40 bounded slice: `ECOM-CATALOG-SHOP-GRID-GAP-001`
@@ -34,6 +36,18 @@ Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+Wave 42 verification: the focused suite passes **2 tests and 30 assertions**;
+the Product Detail/layout regression passes **17 tests and 193 assertions**.
+The suite covers Odoo model/builder/template comparison, separate page/API
+YAML, deterministic options and fixture, permissioned optimistic update,
+company/invalid/missing/stale guards, Product Detail projection, migration
+replay, and DuckDB restart persistence. The repository audit is blocked by an
+unrelated duplicate Employees datasource `employee_language_options` in
+`services/employees/pages/employees.yaml`; no non-Ecommerce file was changed
+to repair that boundary. Core3 desktop/mobile capture is runtime-blocked and
+Odoo `/shop` remains an exact HTTP 404 blocker. Ecommerce module sign-off
+remains open.
 
 Wave 41 verification: the focused suite passes **2 tests and 35 assertions**;
 the Product Detail/Products/Shop regression passes **12 tests and 110

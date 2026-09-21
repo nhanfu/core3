@@ -2,6 +2,30 @@
 
 Status: qa-in-progress (bounded product page extra-fields slice; module sign-off remains open)
 
+## Bounded feature — Product Page Grid Columns (`ECOM-CATALOG-PRODUCT-PAGE-GRID-COLUMNS-001`)
+
+Wave 42 selects Website Sale’s product image-grid column setting after the
+completed Product Page Extra Fields slice. Odoo’s `website` model persists
+`product_page_grid_columns` with default 2; the Product Page Website Builder
+registers `productPageImageGridColumns`, offers exactly 1/2/3 columns, and
+persists the choice through `/shop/config/website`. The product template emits
+`data-grid_columns` and iterates that value when laying out product images.
+
+Core3 migrations 148/149 add a durable company-scoped policy and deterministic
+My Company fixture. Separate `api/product-page-grid-columns-policy.yaml` and
+`pages/product-page-grid-columns-policy.yaml` contracts join by
+`page.id: ecommerce-product-page-grid-columns-policy`; the update requires
+`ecommerce.write`, validates 1–3, and uses company and row-version guards.
+Product Detail exposes the effective company policy through a separate
+read-only projection. Focused tests cover source comparison, permissioned
+update, missing/invalid/foreign/stale guards, migration replay, and DuckDB
+restart persistence.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-grid-columns-001/`.
+Authenticated Core3 desktop/mobile capture and paired Odoo rendering remain
+runtime-blocked; no Ecommerce module sign-off is claimed.
+
 ## Bounded feature — Product Page Extra Fields (`ECOM-CATALOG-PRODUCT-EXTRA-FIELDS-001`)
 
 Wave 41 selects the next uncovered Website Sale settings surface after the

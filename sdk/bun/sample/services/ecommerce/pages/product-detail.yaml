@@ -37,6 +37,12 @@ components:
       - { field: field_label, label: Product Page Information, type: PrimaryEntityCell }
       - { field: value, label: Value }
       - { field: field_type, label: Type }
+  - type: OdooFormView
+    source: ecommerce_product_page_grid_columns
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Product Page Image Grid, columns: 2, fields: [{ field: company_name, label: Company }, { field: grid_columns_label, label: Image Columns, type: StatusChip }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_categories
