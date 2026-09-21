@@ -1967,3 +1967,31 @@ unavailable. No visual/reference sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.
+
+## 2026-09-21 — `SURVEYS-QUESTION-DUPLICATE-001`
+
+Wave 21 selects one genuinely uncovered question workflow after the completed
+public/live timer and question-type slices: Odoo question duplication. Odoo's
+`survey.question.copy()` delegates to ORM copy and preserves triggering-answer
+relationships (`addons/survey/models/survey_question.py:420-425`); the question
+form disables create while retaining duplication as an action.
+
+Core3 adds a permissioned Duplicate entry to the question-detail Actions menu.
+The separate API YAML copies the durable question and its suggested-value
+relations atomically, increments the parent survey `row_version`, rejects
+missing/archived/stale/duplicate requests, and navigates to the copied
+question. Focused coverage proves the page/API join, persistence, permission
+boundary, parent concurrency guard, file-backed restart, and replay without a
+second row.
+
+Focused verification is **3 passed / 21 assertions**. The bounded Surveys
+regression is **125 passed / 4 failed / 1,086 assertions** across 129 tests;
+the four failures are the known migration rollback/dependent-entry failures;
+no other module files were changed. The UI audit passes with **723 pages, 732
+routes, and 1,402 datasources**. Core3 ports 3000/3001/3002 refused before an
+authenticated desktop/mobile render. Odoo `/odoo/surveys` redirected both
+viewports to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`, and proxy 8072 refused,
+so no reference form or parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.

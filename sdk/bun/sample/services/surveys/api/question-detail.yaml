@@ -3,7 +3,39 @@ datasources:
   - id: survey_question_detail
     single: true
     permission: surveys.read
-    query: "SELECT q.id, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
+    query: "SELECT q.id, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name, s.row_version AS survey_row_version FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
   - id: question_suggested_values
     permission: surveys.read
     query: "SELECT id, question_text, value, sequence, score, matrix_row, matrix_column FROM survey_suggested_values WHERE question_id = :id ORDER BY sequence, id"
+actions:
+  - id: duplicate_question
+    type: server
+    permission: surveys.write
+    action: surveys.questions.duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    mutation:
+      guards:
+        - { query: "SELECT q.id FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :source_id", status: 404, code: SURVEY_QUESTION_DUPLICATE_NOT_FOUND, message: Question not found. }
+        - { query: "SELECT q.id FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :source_id AND s.state <> 'Archived'", status: 409, code: SURVEY_QUESTION_DUPLICATE_ARCHIVED, message: Questions in archived surveys cannot be duplicated. }
+        - { query: "SELECT s.id FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :source_id AND s.row_version = :expected_survey_row_version", status: 409, code: SURVEY_QUESTION_DUPLICATE_STALE, message: This survey changed before the question could be duplicated. Reload it and try again. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(CAST(:duplicate_id AS VARCHAR), ''), '') = '' OR NOT EXISTS (SELECT 1 FROM survey_questions WHERE id = :duplicate_id)", status: 409, code: SURVEY_QUESTION_DUPLICATE_EXISTS, message: The duplicate question already exists. Retry with a fresh request. }
+      before_steps:
+        - query: |
+            SELECT
+              CAST(COALESCE(NULLIF(CAST(:duplicate_id AS VARCHAR), ''), CAST(gen_random_uuid() AS VARCHAR)) AS VARCHAR) AS duplicate_id,
+              q.survey_id AS survey_id,
+              q.question_text,
+              q.question_type,
+              q.sequence,
+              q.required,
+              q.answer_options
+            FROM survey_questions q
+            WHERE q.id = :source_id
+          assign: true
+      steps:
+        - { query: "INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options) VALUES(:duplicate_id, :survey_id, :question_text, :question_type, :sequence, :required, :answer_options)", expect_changed: true, status: 409, code: SURVEY_QUESTION_DUPLICATE_FAILED, message: The question could not be duplicated. }
+        - { query: "INSERT INTO survey_suggested_values(id, row_version, question_id, question_text, value, sequence, score, matrix_row, matrix_column) SELECT :duplicate_id || '-answer-' || CAST(a.id AS VARCHAR), 1, :duplicate_id, a.question_text, a.value, a.sequence, a.score, a.matrix_row, a.matrix_column FROM survey_suggested_values a WHERE a.question_id = :source_id ORDER BY a.sequence, a.id" }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_QUESTION_DUPLICATE_STALE, message: This survey changed while the question was being duplicated. Reload it and try again. }
+      result:
+        query: "SELECT q.id, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name, s.row_version AS survey_row_version FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :duplicate_id"

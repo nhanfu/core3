@@ -519,3 +519,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.
+
+## `SURVEYS-QUESTION-DUPLICATE-001` — question duplication
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-047 | question CRUD | Duplicate a question from the Odoo Actions menu | Copy the durable question and suggested-value relations through the paired page/API contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-044 | restart/idempotency | Copy → parent version increment → reopen → replay | Preserve the copied question and reject replay without a second row | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-046 | permission/concurrency | Write permission, missing/archived/stale/duplicate guards | Reject invalid or stale mutation before durable changes | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-045 | authenticated responsive/reference | Question detail Actions menu desktop/mobile + Odoo comparison | Record exact Core3 connection and Odoo login/proxy blockers; no sign-off until both routes are available | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png`, `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.

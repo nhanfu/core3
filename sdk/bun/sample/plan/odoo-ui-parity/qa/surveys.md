@@ -1219,3 +1219,27 @@ Disposition: bounded Core3 timer lifecycle passes; Surveys remains
 **qa-in-progress / conditional**.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.
+
+## Bounded QA run: Question duplication — `SURVEYS-QUESTION-DUPLICATE-001`
+
+- Source comparison: Odoo `survey.question.copy()` delegates to ORM copy and
+  preserves trigger relationships; the form keeps create disabled while
+  allowing the duplicate action.
+- YAML/UI contract: `pages/question-detail.yaml` and
+  `api/question-detail.yaml` keep separate page/API actions and join through
+  `page.id: survey-question-detail`; the Actions-menu action is
+  `surveys.write`-protected.
+- Persistence/workflow: the YAML mutation copies one question and all
+  suggested values, increments the parent survey version, and returns the new
+  row for navigation. Missing, archived, stale, and duplicate-id requests are
+  rejected before a second durable row is created.
+- Focused verification: **3 passed / 21 assertions**; file-backed restart and
+  replay are covered. The bounded Surveys run is **125 passed / 4 failed /
+  1,086 assertions** across 129 tests; the four failures are the documented
+  migration rollback/dependent-entry failures.
+- Audit: **723 pages, 732 routes, 1,402 datasources**. Core3 ports refused
+  before authenticated desktop/mobile render. Odoo redirected both viewports
+  to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; proxy 8072 refused. No visual
+  or Odoo parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.

@@ -8,6 +8,12 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Question type }
     header_actions:
       - { id: edit_survey_question, label: Edit, variant: secondary, permission: surveys.write }
+    action_menu:
+      label: Actions
+      aria_label: Actions menu
+      icon: more-vertical
+      actions:
+        - { id: duplicate_survey_question, label: Duplicate, icon: copy, permission: surveys.write }
     group_columns: 2
     groups:
       - title: Question
@@ -25,6 +31,23 @@ components:
       - { field: matrix_column, label: Matrix Column, optional: hide }
     empty_state: { title: No suggested values, description: Add suggested answers for choice and matrix questions. }
 actions:
+  - id: duplicate_survey_question
+    type: client
+    permission: surveys.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const result = await request('/api/actions/surveys.questions.duplicate', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            source_id: row.id,
+            expected_survey_row_version: row.survey_row_version,
+          },
+        });
+        const app = await import('/app.ts');
+        await app.navigate('/surveys/question-detail', { id: String(result.id) });
+      }
   - id: edit_survey_question
     type: server_form
     permission: surveys.write

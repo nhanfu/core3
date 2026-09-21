@@ -419,6 +419,26 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-QUESTION-DUPLICATE-001`
+
+Selected the next uncovered source-backed question behavior: Odoo's
+`survey.question.copy()` action. Core3's question detail now has a separate
+page action and API mutation joined by `survey-question-detail`; the mutation
+copies the question and suggested values, increments the parent survey version,
+and enforces `surveys.write`, source, archived, stale, and duplicate-id guards.
+
+Focused verification is **3 passed / 21 assertions**, including file-backed
+restart and replay. The current bounded Surveys glob is **125 passed / 4
+failed / 1,086 assertions** across 129 tests; the four failures are the
+documented migration rollback dependent-entry failures, and no unrelated files
+were repaired. Audit is **723
+pages, 732 routes, 1,402 datasources**. Core3 desktop/mobile probes were
+blocked by connection refusal on 3000/3001/3002. Odoo redirected to its login
+shell and 8072 was unavailable; no authenticated reference comparison or
+sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-DUPLICATE-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-SURVEY-TIMER-001`
 
 Selected the smallest uncovered source-backed behavior after the completed
