@@ -1480,3 +1480,43 @@ under `/tmp/core3-odoo-parity/accounting-invoice-send-20260921/` and remain
 outside Git. Odoo desktop evidence is captured at 1916x833; the Odoo mobile
 capture was blocked when the shared browser session stopped, so no mobile Odoo
 parity claim is made.
+
+## Current batch: invoice Print report (2026-09-21)
+
+Odoo 19 exposes `Print` on posted customer invoices and customer credit notes
+through `addons/account/views/account_move_views.xml`, backed by
+`account.move.action_print_pdf`. The source resolves the `account.account_invoices`
+report (`Invoice PDF`, QWeb template `account.report_invoice_with_payments`,
+PDF output) and derives the filename from the invoice name. Vendor bills and
+vendor refunds are not eligible for this form action. The live reference at
+`http://localhost:8069/odoo/invoicing/10` showed the desktop action and the
+mobile overflow action; both produced successful `action_print_pdf` and
+`/report/download` requests, with the latter returning `application/pdf`.
+
+Core3 now adds the bounded `print_accounting_invoice` action to the
+page/API-separated `invoice-detail` contract. It is `accounting.read` guarded,
+requires an unchanged posted customer invoice or customer credit note, and
+rejects missing, stale, vendor, and blank-actor requests without a write. The
+new `accounting_invoice_print_runs` migration stores the report identity,
+filename, actor, timestamp, and row version; the detail API exposes the
+durable print history. The mutation prepares a durable report-run record but
+does not claim to render or download a binary PDF.
+
+Focused coverage passes 4 tests and 23 assertions, including matching page/API
+IDs, Odoo source/report metadata, permission/action contracts, state and
+optimistic-concurrency guards, durable history, and DuckDB close/reopen
+persistence. Authenticated captures are recorded under
+`/tmp/core3-odoo-parity/accounting-invoice-print-20260921/`; the committed
+evidence index is
+`evidence/accounting/2026-09-21/ACC-INVOICE-PRINT-001/README.md`.
+
+Core3 desktop and mobile action requests both returned 200 for `/api/mutate`
+and their refreshed `/api/query` calls. Odoo desktop and mobile evidence both
+returned 200 for `account.move/action_print_pdf` and `/report/download`.
+The bsk session used a DOM click fallback for Core3 after the inspected normal
+click did not dispatch the SPA listener; no credentials, cookies, or tokens
+were captured. File-backed restart coverage passed. A fresh Core3 browser
+reload persistence claim is intentionally not made because the isolated app
+lost its in-memory authentication after direct reload; the resulting 401 was
+an environment/session limitation, not treated as a feature pass. Actual
+Core3 PDF rendering/download remains an explicit follow-up boundary.

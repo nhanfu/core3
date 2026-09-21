@@ -1,0 +1,25 @@
+version: 0.0.50
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_invoice_print_runs (
+        id VARCHAR PRIMARY KEY,
+        invoice_id VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        report_action VARCHAR NOT NULL,
+        report_template VARCHAR NOT NULL,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        filename VARCHAR NOT NULL,
+        printed_by VARCHAR NOT NULL,
+        printed_at TIMESTAMP NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS accounting_invoice_print_runs_invoice_idx ON accounting_invoice_print_runs(invoice_id, printed_at DESC, id DESC);
+    down: |
+      DROP INDEX IF EXISTS accounting_invoice_print_runs_invoice_idx;
+      DROP TABLE IF EXISTS accounting_invoice_print_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

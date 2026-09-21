@@ -10,6 +10,11 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status, CAST(created_at AS VARCHAR) AS created_at FROM accounting_invoice_messages WHERE invoice_id = :id ORDER BY created_at DESC"
+  - id: accounting_invoice_print_runs
+    single: false
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_INVOICE_PRINTS_UNAVAILABLE, message: Invoice print history is temporarily unavailable } }
+    query: "SELECT r.id, r.invoice_id, i.name AS invoice_name, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM accounting_invoice_print_runs r JOIN accounting_invoices i ON i.id = r.invoice_id WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND r.invoice_id = :id ORDER BY r.printed_at DESC, r.id DESC"
 actions:
   - id: edit_accounting_invoice
     type: server_form
@@ -122,6 +127,27 @@ actions:
       - { field: recipient_email, label: To, type: text, default: billing@example.com, required: true }
       - { field: subject, label: Subject, type: text, default: Invoice, required: true }
       - { field: body, label: Message, type: textarea, default: Please find the invoice attached., required: true }
+  - id: print_accounting_invoice
+    type: server
+    permission: accounting.read
+    action: accounting.invoices.print
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.accounting_invoice_detail.id}', expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail, accounting_invoice_print_runs]
+    mutation:
+      generated: [print_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'accounting-invoice-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id FROM accounting_invoice_print_runs WHERE invoice_id = :id"
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id", status: 404, code: ACCOUNTING_INVOICE_PRINT_NOT_FOUND, message: Invoice not found. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note') AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_PRINT_UNAVAILABLE, message: Only an unchanged posted customer invoice or credit note can be printed. Reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: ACCOUNTING_INVOICE_PRINT_ACTOR_REQUIRED, message: A signed-in Accounting user is required to print the report. }
+      steps:
+        - { query: "INSERT INTO accounting_invoice_print_runs(id, invoice_id, report_name, report_action, report_template, output_format, filename, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Invoice PDF', 'account.account_invoices', 'account.report_invoice_with_payments', 'PDF', replace(name, '/', '_') || '.pdf', :current_user_name, TIMESTAMP '2026-09-21 09:00:00', 1 FROM accounting_invoices WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_PRINT_FAILED, message: The Invoice PDF report could not be prepared. }
+      result: { query: "SELECT r.id, r.invoice_id, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, r.row_version FROM accounting_invoice_print_runs r WHERE r.id = :print_run_id" }
   - id: send_accounting_invoice_message
     type: server_form
     permission: accounting.write

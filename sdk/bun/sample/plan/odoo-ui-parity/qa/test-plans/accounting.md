@@ -40,6 +40,15 @@ required; development migrations must be idempotent.
 | ACC-FUNC-008 | data | Schema/demo | Reapply migrations on clean/existing development DB without duplicates or moving fixture values | focused suite | pass |
 | ACC-FUNC-009 | functional | Import/export/attachments/print | Exercise available import/export, attachment, report and print actions | Journal Items export contract; Bank Statement attachment contract: `accounting_bank_statement_attachments.integration.test.ts` | partial; Journal Items export and Bank Statement attachment pass, broader actions planned |
 
+### Invoice Print report addendum (2026-09-21)
+
+| Case ID | Class | Surface | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| ACC-FUNC-010 | functional/data | Posted customer invoice Print | Page/API `invoice-detail` contracts match; report identity and filename are persisted in print history and survive DuckDB close/reopen | pass; `accounting_invoice_print.integration.test.ts` |
+| ACC-WF-007 | workflow | Invoice Print state guard | Unchanged posted customer invoice and customer credit note can print; missing, stale, vendor, and blank-actor requests are rejected without a row | pass; focused integration test |
+| ACC-PERM-007 | permission | Invoice Print read boundary | Page/action are `accounting.read` guarded and the mutation requires a signed-in Accounting actor | pass at contract/actor guard level; full alternate-role browser probe remains planned |
+| ACC-UI-005 | visual/responsive | Invoice detail Print | Odoo desktop/mobile action placement and successful PDF download are captured; Core3 desktop/mobile action requests and refreshed history are captured | conditional; Core3 reload persistence and binary PDF download remain open |
+
 ## Workflow and integration cases
 
 | Case ID | Class | Workflow/integration | Expected side effect | Failure/recovery | Status |
