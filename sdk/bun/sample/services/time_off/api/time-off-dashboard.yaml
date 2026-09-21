@@ -8,8 +8,8 @@ datasources:
       SELECT
         COUNT(*) AS request_count,
         COALESCE(SUM(days) FILTER (WHERE state = 'Approved'), 0) AS approved_days,
-        COUNT(*) FILTER (WHERE state = 'Submitted') AS pending_count,
-        COALESCE(SUM(days) FILTER (WHERE state IN ('Approved', 'Submitted')), 0) AS available_days
+        COUNT(*) FILTER (WHERE state IN ('Submitted', 'Second Approval')) AS pending_count,
+        COALESCE(SUM(days) FILTER (WHERE state IN ('Approved', 'Submitted', 'Second Approval')), 0) AS available_days
       FROM leave_requests
 
   - id: time_off_dashboard_requests

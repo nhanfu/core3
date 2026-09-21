@@ -974,3 +974,27 @@ stored with the evidence. Core3 browser startup is separately blocked before
 binding by the existing duplicate named action
 `time_off.requests.refuse` at `packages/server/src/routes/yaml-api.ts:259`.
 No visual-parity claim is made and no Odoo mutation occurred.
+
+## Second approval workflow (2026-09-22)
+
+The next distinct uncovered source workflow is Odoo's two-level leave approval:
+`hr.leave` uses `confirm` (To Approve), `validate1` (Second Approval), and
+`validate` (Approved) when the leave type's `leave_validation_type` is `both`.
+The form exposes Approve for the first step and Validate for the second step;
+final validation applies the balance and records the second approver. This is
+distinct from the already covered calendar detail, accrual employee drilldown,
+and allocation Activity views.
+
+Core3 adds the durable, module-owned mapping and approval audit in migration
+`0.0.24`, and exposes `Submitted -> Second Approval -> Approved` through the
+existing request detail, approval, and overview page/API seams. First approval
+and final Validate are manager-only, row-version guarded, and final balance
+application is idempotent by state. Refuse and Cancel also accept the pending
+second-approval state. Focused coverage is
+`test/time_off_second_approval.integration.test.ts`; the full Time Off suite
+passes 69 tests and 689 assertions. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-SECOND-APPROVAL-001/`.
+
+The authenticated `core3_reference` database still has no Time Off menu or
+`hr_holidays` action; direct `/odoo/time-off-approval` resolves to Discuss.
+No Odoo visual-parity claim or mutation is made for this slice.

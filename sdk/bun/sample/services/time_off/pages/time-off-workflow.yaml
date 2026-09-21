@@ -8,7 +8,8 @@ workflow:
   status_source: leave_request_detail_states
   states:
     - { id: Draft, label: Draft, color: neutral }
-    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Submitted, label: To Approve, color: amber }
+    - { id: Second Approval, label: Second Approval, color: amber }
     - { id: Approved, label: Approved, color: green, terminal: true }
     - { id: Refused, label: Refused, color: red, terminal: true }
     - { id: Cancelled, label: Cancelled, color: violet, terminal: true }
@@ -27,26 +28,62 @@ workflow:
       permission: time_off.manage
       mutation:
         guards:
-          - query: "SELECT r.id FROM leave_requests r JOIN leave_balances b ON b.employee_id = r.employee_id AND b.leave_type_id = r.leave_type_id AND b.year = EXTRACT(YEAR FROM r.date_from) WHERE r.id = :id AND r.row_version = :expected_row_version AND r.state = 'Submitted' AND b.allocated_days - b.used_days >= r.days"
+          - query: "SELECT r.id FROM leave_requests r JOIN leave_balances b ON b.employee_id = r.employee_id AND b.leave_type_id = r.leave_type_id AND b.year = EXTRACT(YEAR FROM r.date_from) WHERE r.id = :id AND r.row_version = :expected_row_version AND r.state = 'Submitted' AND NOT EXISTS (SELECT 1 FROM time_off_leave_validation_types v WHERE v.leave_type_id = r.leave_type_id AND v.validation_type = 'both') AND b.allocated_days - b.used_days >= r.days"
             status: 409
             message: The employee does not have enough leave balance
         steps:
           - query: "UPDATE leave_balances SET used_days = used_days + (SELECT days FROM leave_requests WHERE id = :id) WHERE employee_id = (SELECT employee_id FROM leave_requests WHERE id = :id) AND leave_type_id = (SELECT leave_type_id FROM leave_requests WHERE id = :id) AND year = EXTRACT(YEAR FROM (SELECT date_from FROM leave_requests WHERE id = :id))"
           - query: "UPDATE leave_requests SET state = 'Approved', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
         result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
-    - id: refuse
+    - id: approve_first
       from: [Submitted]
+      to: Second Approval
+      permission: time_off.manage
+      mutation:
+        guards:
+          - query: "SELECT r.id FROM leave_requests r JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id WHERE r.id = :id AND r.row_version = :expected_row_version AND r.state = 'Submitted' AND v.validation_type = 'both'"
+            status: 409
+            code: TIME_OFF_LEAVE_FIRST_APPROVAL_INVALID
+            message: Only an unchanged two-step request can receive first approval.
+        steps:
+          - query: "UPDATE leave_requests SET state = 'Second Approval', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            message: Leave request was changed by another user. Reload it before approving.
+          - query: "DELETE FROM time_off_leave_approvals WHERE request_id = :id"
+          - query: "INSERT INTO time_off_leave_approvals(request_id, first_approver, second_approver, row_version) VALUES (:id, :current_user_name, NULL, 1)"
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    - id: validate
+      from: [Second Approval]
+      to: Approved
+      permission: time_off.manage
+      mutation:
+        guards:
+          - query: "SELECT r.id FROM leave_requests r JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id JOIN leave_balances b ON b.employee_id = r.employee_id AND b.leave_type_id = r.leave_type_id AND b.year = EXTRACT(YEAR FROM r.date_from) WHERE r.id = :id AND r.row_version = :expected_row_version AND r.state = 'Second Approval' AND v.validation_type = 'both' AND b.allocated_days - b.used_days >= r.days"
+            status: 409
+            code: TIME_OFF_LEAVE_SECOND_APPROVAL_INVALID
+            message: The request must be in second approval with enough leave balance.
+        steps:
+          - query: "UPDATE leave_balances SET used_days = used_days + (SELECT days FROM leave_requests WHERE id = :id) WHERE employee_id = (SELECT employee_id FROM leave_requests WHERE id = :id) AND leave_type_id = (SELECT leave_type_id FROM leave_requests WHERE id = :id) AND year = EXTRACT(YEAR FROM (SELECT date_from FROM leave_requests WHERE id = :id))"
+          - query: "UPDATE leave_requests SET state = 'Approved', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            message: Leave request was changed by another user. Reload it before validating.
+          - query: "UPDATE time_off_leave_approvals SET second_approver = :current_user_name, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE request_id = :id"
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    - id: refuse
+      from: [Submitted, Second Approval]
       to: Refused
       permission: time_off.manage
       mutation:
-        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, message: Only submitted leave requests can be refused }]
+        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state IN ('Submitted', 'Second Approval')", status: 409, message: Only pending leave requests can be refused }]
         steps: [{ query: "UPDATE leave_requests SET state = 'Refused', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Leave request was changed by another user. Reload it before refusing. }]
         result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
     - id: cancel
-      from: [Draft, Submitted]
+      from: [Draft, Submitted, Second Approval]
       to: Cancelled
       permission: time_off.write
       mutation:
-        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state IN ('Draft', 'Submitted')", status: 409, message: Only open leave requests can be cancelled }]
+        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state IN ('Draft', 'Submitted', 'Second Approval')", status: 409, message: Only open leave requests can be cancelled }]
         steps: [{ query: "UPDATE leave_requests SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Leave request was changed by another user. Reload it before cancelling. }]
         result: { query: "SELECT * FROM leave_requests WHERE id = :id" }

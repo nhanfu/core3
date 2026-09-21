@@ -29,7 +29,12 @@ describe('Time Off overview calendar detail', () => {
     expect(form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label))).toEqual(expect.arrayContaining(['Employee', 'Time Off Type', 'Dates', 'Duration', 'Description']));
     expect(overview.components[0]).toMatchObject({ row_open_action: 'open_time_off_overview_detail' });
     expect(overviewApi.actions).toContainEqual(expect.objectContaining({ id: 'open_time_off_overview_detail', navigate_to: '/time-off-overview/detail' }));
-    expect(api.actions.map((action: any) => action.id)).toEqual(['approve_time_off_overview_detail', 'refuse_time_off_overview_detail']);
+    expect(api.actions.map((action: any) => action.id)).toEqual([
+      'approve_time_off_overview_detail',
+      'approve_first_time_off_overview_detail',
+      'validate_time_off_overview_detail',
+      'refuse_time_off_overview_detail',
+    ]);
     expect(api.actions.every((action: any) => action.permission === 'time_off.manage' && action.handler === 'order_transition')).toBe(true);
     expect(api.datasources.map((datasource: any) => datasource.id)).toEqual(['time_off_overview_detail']);
   });

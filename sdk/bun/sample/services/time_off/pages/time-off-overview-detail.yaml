@@ -5,10 +5,12 @@ components:
     source: time_off_overview_detail
     title_field: name
     status_field: state
-    status_colors: { Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    status_colors: { Submitted: amber, Second Approval: amber, Approved: green, Refused: red, Cancelled: violet }
     header_actions:
-      - { id: approve_time_off_overview_detail, label: Approve, variant: primary, permission: time_off.manage, show_if: "row.state === 'Submitted'" }
-      - { id: refuse_time_off_overview_detail, label: Refuse, variant: secondary, permission: time_off.manage, show_if: "row.state === 'Submitted'" }
+      - { id: approve_time_off_overview_detail, label: Approve, variant: primary, permission: time_off.manage, show_if: "row.state === 'Submitted' && row.validation_type !== 'both'" }
+      - { id: approve_first_time_off_overview_detail, label: Approve, variant: primary, permission: time_off.manage, show_if: "row.state === 'Submitted' && row.validation_type === 'both'" }
+      - { id: validate_time_off_overview_detail, label: Validate, variant: primary, permission: time_off.manage, show_if: "row.state === 'Second Approval'" }
+      - { id: refuse_time_off_overview_detail, label: Refuse, variant: secondary, permission: time_off.manage, show_if: "row.state === 'Submitted' || row.state === 'Second Approval'" }
     group_columns: 2
     labels: { save: Save, discard: Discard, editDetails: Details, workflowStatus: Status }
     groups:

@@ -72,3 +72,18 @@ the requested route to Discuss. Core3 module runtime also exits before binding
 on the existing duplicate `time_off.requests.refuse` named-action declaration.
 No Odoo/Core3 visual parity claim is made; Time Off remains conditional and
 unsigned-off.
+
+## 2026-09-22 bounded candidate: second approval workflow
+
+Implemented Odoo's two-level `hr.leave` approval contract. The existing request,
+approval, and overview seams now expose `Submitted`, `Second Approval`, and
+`Approved`, with separate manager-only first Approve and final Validate actions.
+Migration `0.0.24` adds idempotent validation-type and first/second approver
+audit tables; final validation applies balance once and all transitions require
+row-version guards.
+
+Focused verification passes **3/20**; full Time Off regression passes
+**69/689**. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-SECOND-APPROVAL-001/`. The authenticated
+`core3_reference` browser has no Time Off app/action surface, so paired Odoo
+desktop/mobile visual evidence is blocked and no parity claim is made.

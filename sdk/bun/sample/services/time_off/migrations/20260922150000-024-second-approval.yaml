@@ -1,0 +1,28 @@
+version: 0.0.24
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_leave_validation_types (
+        leave_type_id VARCHAR PRIMARY KEY,
+        validation_type VARCHAR NOT NULL DEFAULT 'manager',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS time_off_leave_approvals (
+        request_id VARCHAR PRIMARY KEY,
+        first_approver VARCHAR,
+        second_approver VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS time_off_leave_approvals_request_idx ON time_off_leave_approvals(request_id, row_version);
+      INSERT OR IGNORE INTO time_off_leave_validation_types(leave_type_id, validation_type)
+      VALUES ('leave-type-training', 'both');
+    down: |
+      DROP TABLE IF EXISTS time_off_leave_approvals;
+      DROP TABLE IF EXISTS time_off_leave_validation_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -33,7 +33,7 @@ components:
       - { field: date_to, label: End Date }
       - { field: days, label: Duration, align: right }
       - { field: state, label: Status, type: StatusChip }
-      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: refuse_approval_request, label: Refuse, icon: close, variant: danger, permission: time_off.manage, show_if: "row.state === 'Submitted'" }] }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: approve_first_approval_request, label: Approve, icon: check, variant: primary, permission: time_off.manage, show_if: "row.state === 'Submitted' && row.validation_type === 'both'" }, { id: validate_approval_request, label: Validate, icon: check, variant: primary, permission: time_off.manage, show_if: "row.state === 'Second Approval'" }, { id: refuse_approval_request, label: Refuse, icon: close, variant: danger, permission: time_off.manage, show_if: "row.state === 'Submitted' || row.state === 'Second Approval'" }] }
     page_size: 50
     row_key: id
     row_open_action: approval_open

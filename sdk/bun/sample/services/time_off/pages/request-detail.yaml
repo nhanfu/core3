@@ -5,14 +5,16 @@ components:
     source: leave_request_detail
     title_field: name
     status_field: state
-    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
-    status_colors: { Draft: neutral, Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: To Approve }, { value: Second Approval, label: Second Approval }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Submitted: amber, Second Approval: amber, Approved: green, Refused: red, Cancelled: violet }
     header_actions:
       - { id: submit_leave_request_detail, label: Submit, variant: primary, show_if: "row.state === 'Draft'" }
-      - { id: approve_leave_request_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: approve_leave_request_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted' && row.validation_type !== 'both'" }
+      - { id: approve_first_leave_request_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted' && row.validation_type === 'both'" }
+      - { id: validate_leave_request_detail, label: Validate, variant: primary, show_if: "row.state === 'Second Approval'" }
       - { id: back_to_approval_leave_request_detail, label: Back to Approval, variant: secondary, show_if: "row.state === 'Approved'" }
-      - { id: refuse_leave_request_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }
-      - { id: cancel_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+      - { id: refuse_leave_request_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted' || row.state === 'Second Approval'" }
+      - { id: cancel_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted' || row.state === 'Second Approval'" }
       - { id: cancel_approved_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Approved'" }
       - { id: delete_leave_request_detail, label: Delete, variant: danger, show_if: "row.state === 'Draft'" }
     group_columns: 2
@@ -30,6 +32,6 @@ components:
     attachment_download_action: download_leave_request_attachment
     groups:
       - title: Leave
-        fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }]
+        fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }, { field: validation_type, label: Approval }, { field: first_approver, label: First Approval }, { field: second_approver, label: Second Approval }]
       - title: Dates and approval
         fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }, { field: refusal_reason, label: Refusal reason, show_if: "row.state === 'Refused'" }, { field: cancellation_reason, label: Cancellation reason, show_if: "row.state === 'Cancelled'" }]

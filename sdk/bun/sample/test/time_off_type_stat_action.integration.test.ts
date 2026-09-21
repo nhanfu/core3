@@ -29,6 +29,7 @@ describe('Time Off Type Time Off stat action', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await repository.run(`CREATE TABLE leave_types(id VARCHAR PRIMARY KEY, name VARCHAR, code VARCHAR, allocation_days DECIMAL(18,3), requires_approval BOOLEAN, state VARCHAR);`);
+    await repository.run(`CREATE TABLE time_off_leave_validation_types(leave_type_id VARCHAR PRIMARY KEY, validation_type VARCHAR);`);
     await repository.run(`CREATE TABLE leave_requests(id VARCHAR, name VARCHAR, employee_name VARCHAR, leave_type_id VARCHAR, leave_type_name VARCHAR, date_from DATE, date_to DATE, days DECIMAL(18,3), state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1, refusal_reason VARCHAR);`);
     await repository.run(`CREATE TABLE leave_allocations(id VARCHAR, leave_type_id VARCHAR, date_from DATE, state VARCHAR);`);
     await repository.run(`CREATE TABLE accrual_plans(id VARCHAR PRIMARY KEY, time_off_type_id VARCHAR);`);

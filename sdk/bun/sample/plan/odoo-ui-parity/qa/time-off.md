@@ -154,3 +154,25 @@ blocker.
   integration files; the earlier fixed multi-view inventory now includes the
   new employee surface.
 - Disposition: **conditional bounded PASS**; no full Time Off sign-off.
+
+## 2026-09-22 bounded candidate: second approval workflow
+
+- Source workflow: Odoo `hr.leave.action_approve`, states `confirm`,
+  `validate1`, `validate`; leave type validation `both`.
+- Core3 surfaces: `/time-off/leave-request-detail`, `/time-off-approval`, and
+  `/time-off-overview/detail`; matching page/API IDs remain separate.
+- Focused test: **PASS**, 3 tests / 20 assertions in
+  `test/time_off_second_approval.integration.test.ts`.
+- Full Time Off regression: **PASS**, 69 tests / 689 assertions across 25
+  integration files.
+- Persistence: **PASS**; migration `0.0.24` is idempotent, first/second
+  approver audit survives file-backed close/reopen, and final validation
+  applies balance once.
+- Permission/workflow guards: **PASS**; first approval and Validate require
+  `time_off.manage`, current row version, `both` validation mapping, and valid
+  balance.
+- Odoo browser gate: **BLOCKED**; authenticated `core3_reference` has no Time
+  Off menu or `hr_holidays` action and direct approval navigation resolves to
+  Discuss. No paired desktop/mobile visual claim is made.
+- Evidence: `evidence/time-off/2026-09-22/TIMEOFF-SECOND-APPROVAL-001/`.
+- Disposition: conditional bounded PASS; no full Time Off sign-off.
