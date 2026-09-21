@@ -1,0 +1,14 @@
+version: 0.0.123
+kind: data
+description: deterministic eCommerce product page image-ratio fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_image_ratio_policies (id, row_version, company_name, desktop_ratio, mobile_ratio)
+      VALUES ('ecommerce-product-page-image-ratio-my-company', 1, 'My Company', '1_1', 'auto')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_image_ratio_policies WHERE id = 'ecommerce-product-page-image-ratio-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

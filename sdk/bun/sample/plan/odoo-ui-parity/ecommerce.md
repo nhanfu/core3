@@ -2,6 +2,34 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Image Ratios (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`)
+
+Wave 29 selected the smallest uncovered Website Sale catalog setting after
+shop visibility: the supplied Odoo `website` model defines the required
+`product_page_image_ratio` and `product_page_image_ratio_mobile` selections
+(`auto`, `21_9`, `16_9`, `4_3`, `6_5`, `1_1`, `4_5`, and `2_3`). The product
+template applies both values as desktop/mobile image-ratio classes and emits
+the desktop ratio as `data-image-ratio`; this is a layout policy, not the
+already-completed variant-media lifecycle.
+
+Core3 migrations 122/123 add a durable company-scoped policy and deterministic
+fixture. Separate `pages/product-page-image-ratio-policy.yaml` and
+`api/product-page-image-ratio-policy.yaml` contracts join by
+`ecommerce-product-page-image-ratio-policy`; the form requires
+`ecommerce.write`, validates both selections, and uses row-version optimistic
+concurrency. Product Detail has a separate read projection for the effective
+company policy and displays the desktop/mobile values. Migration replay and a
+DuckDB restart preserve the settings; invalid, foreign-company, and stale
+writes are rejected.
+
+Focused source/contract, CRUD, permission, validation, replay, projection, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-ratio-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — eCommerce Access Policy (`ECOM-CATALOG-ECOMMERCE-ACCESS-001`)
 
 Wave 28 selected Odoo Website Sale's `ecommerce_access` visibility policy,

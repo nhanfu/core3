@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## Product Page Image Ratios (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines desktop and mobile ratio
+  selections; the product template consumes both values for the product-image
+  layout and emits the desktop ratio data attribute.
+- Core3 lifecycle: pass for this bounded contract. Migrations 122/123 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes supported values and an `ecommerce.write` optimistic update; the
+  Product Detail API/page projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_image_ratio.integration.test.ts --timeout 30000`
+  — **2 passed, 25 assertions, 0 failures**.
+- Regression: image-ratio + Product Detail suites — **7 passed, 53 assertions,
+  0 failures**. An additional Products integration check retains a
+  pre-existing discovery failure for `components[1].search.contact` and
+  `components[1].search.or source document`; that page contract is outside
+  this slice and was not altered.
+- Audit/lint/diff: `bun run audit` passed at **737 pages, 746 routes, and 1449
+  datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime is
+  available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-ratio-001/`.
+
 ## eCommerce Access Policy (`ECOM-CATALOG-ECOMMERCE-ACCESS-001`, 2026-09-21)
 
 - Odoo source/settings/controller: pass. `website.py` defines the required

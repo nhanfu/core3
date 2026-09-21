@@ -1,0 +1,27 @@
+version: 0.0.122
+kind: schema
+description: durable eCommerce product page desktop and mobile image-ratio policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_page_image_ratio_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        desktop_ratio VARCHAR NOT NULL DEFAULT '1_1',
+        mobile_ratio VARCHAR NOT NULL DEFAULT 'auto',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (desktop_ratio IN ('auto', '21_9', '16_9', '4_3', '6_5', '1_1', '4_5', '2_3')),
+        CHECK (mobile_ratio IN ('auto', '21_9', '16_9', '4_3', '6_5', '1_1', '4_5', '2_3'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_page_image_ratio_company_idx
+        ON ecommerce_product_page_image_ratio_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_page_image_ratio_company_idx;
+      DROP TABLE IF EXISTS ecommerce_product_page_image_ratio_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

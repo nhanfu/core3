@@ -12,6 +12,13 @@ datasources:
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_page_image_ratio
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_UNAUTHENTICATED, message: Sign in to view product page image ratios. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_FORBIDDEN, message: You do not have permission to view product page image ratios. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_UNAVAILABLE, message: Product page image ratios are temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.company_name, r.desktop_ratio, r.mobile_ratio, CASE r.desktop_ratio WHEN 'auto' THEN 'Auto' WHEN '21_9' THEN 'Wider (21/9)' WHEN '16_9' THEN 'Wide (16/9)' WHEN '4_3' THEN 'Landscape (4/3)' WHEN '6_5' THEN 'Horizontal (6/5)' WHEN '1_1' THEN 'Default (1/1)' WHEN '4_5' THEN 'Portrait (4/5)' ELSE 'Vertical (2/3)' END AS desktop_ratio_label, CASE r.mobile_ratio WHEN 'auto' THEN 'Auto' WHEN '21_9' THEN 'Wider (21/9)' WHEN '16_9' THEN 'Wide (16/9)' WHEN '4_3' THEN 'Landscape (4/3)' WHEN '6_5' THEN 'Horizontal (6/5)' WHEN '1_1' THEN 'Default (1/1)' WHEN '4_5' THEN 'Portrait (4/5)' ELSE 'Vertical (2/3)' END AS mobile_ratio_label FROM ecommerce_product_page_image_ratio_policies r JOIN ecommerce_products p ON p.company_name = r.company_name WHERE p.id = :id AND (:company_name IS NULL OR r.company_name = :company_name)"
   - id: ecommerce_product_categories
     permission: ecommerce.read
     error_states:

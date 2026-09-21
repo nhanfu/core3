@@ -4,10 +4,27 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `841fd0fe`
-(`ECOM-CATALOG-ECOMMERCE-ACCESS-001`, local and not pushed).
+Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
+(committed locally as `18450233`; not pushed).
+Latest committed bounded slice: `18450233`
+(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`, local and not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
+
+Wave 29 selected Odoo Website Sale's desktop/mobile product image-ratio
+settings. Migrations 122/123 add the durable company policy and fixture;
+separate policy page/API YAML provides supported ratio options, permissioned
+optimistic updates, validation, and company isolation. Product Detail reads
+the effective policy and displays both desktop and mobile values. Focused
+source, contract, CRUD, invalid/foreign/stale, replay, projection, and
+restart tests pass. The focused Product Detail regression passes; the Products
+regression retains an unrelated existing discovery-schema failure. Core3
+desktop/mobile capture is blocked by unavailable ports 3000/4312/4313 and no
+persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and
+8073. This bounded slice is not module sign-off; the implementation commit
+will be recorded here after local commit.
 
 ## Current bounded task — `ECOM-CATALOG-ECOMMERCE-ACCESS-001`
 

@@ -117,6 +117,10 @@ menu:
           label: Add to Cart Redirect
           icon: cart
           permission: ecommerce.read
+        - path: /ecommerce/product-page-image-ratio
+          label: Product Page Image Ratios
+          icon: image
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

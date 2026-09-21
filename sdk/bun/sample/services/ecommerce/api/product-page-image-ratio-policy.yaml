@@ -1,0 +1,37 @@
+page: { id: ecommerce-product-page-image-ratio-policy }
+datasources:
+  - id: ecommerce_product_page_image_ratio_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_UNAUTHENTICATED, message: Sign in to view product page image-ratio settings. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_FORBIDDEN, message: You do not have permission to view product page image-ratio settings. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_NOT_FOUND, message: Product page image-ratio settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_UNAVAILABLE, message: Product page image-ratio settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, desktop_ratio, mobile_ratio, CASE desktop_ratio WHEN 'auto' THEN 'Auto' WHEN '21_9' THEN 'Wider (21/9)' WHEN '16_9' THEN 'Wide (16/9)' WHEN '4_3' THEN 'Landscape (4/3)' WHEN '6_5' THEN 'Horizontal (6/5)' WHEN '1_1' THEN 'Default (1/1)' WHEN '4_5' THEN 'Portrait (4/5)' ELSE 'Vertical (2/3)' END AS desktop_ratio_label, CASE mobile_ratio WHEN 'auto' THEN 'Auto' WHEN '21_9' THEN 'Wider (21/9)' WHEN '16_9' THEN 'Wide (16/9)' WHEN '4_3' THEN 'Landscape (4/3)' WHEN '6_5' THEN 'Horizontal (6/5)' WHEN '1_1' THEN 'Default (1/1)' WHEN '4_5' THEN 'Portrait (4/5)' ELSE 'Vertical (2/3)' END AS mobile_ratio_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_image_ratio_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_product_page_image_ratio_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('auto', 'Auto'), ('21_9', 'Wider (21/9)'), ('16_9', 'Wide (16/9)'), ('4_3', 'Landscape (4/3)'), ('6_5', 'Horizontal (6/5)'), ('1_1', 'Default (1/1)'), ('4_5', 'Portrait (4/5)'), ('2_3', 'Vertical (2/3)')) ratios(value, label)"
+actions:
+  - id: edit_ecommerce_product_page_image_ratio_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Product Page Image Ratios
+    action: ecommerce.products.page_image_ratio.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_page_image_ratio_policy, ecommerce_product_detail]
+    mutation:
+      required: [id, expected_row_version, desktop_ratio, mobile_ratio]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_page_image_ratio_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_STALE, message: These product page image-ratio settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :desktop_ratio IN ('auto', '21_9', '16_9', '4_3', '6_5', '1_1', '4_5', '2_3') AND :mobile_ratio IN ('auto', '21_9', '16_9', '4_3', '6_5', '1_1', '4_5', '2_3')", status: 422, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_INVALID, message: Choose a supported desktop and mobile image ratio. }
+      steps:
+        - { query: "UPDATE ecommerce_product_page_image_ratio_policies SET desktop_ratio = :desktop_ratio, mobile_ratio = :mobile_ratio, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_RATIO_STALE, message: These product page image-ratio settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, desktop_ratio, mobile_ratio, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_image_ratio_policies WHERE id = :id" }
+    fields:
+      - { field: desktop_ratio, label: Desktop Image Ratio, type: select, options_source: ecommerce_product_page_image_ratio_options, required: true }
+      - { field: mobile_ratio, label: Mobile Image Ratio, type: select, options_source: ecommerce_product_page_image_ratio_options, required: true }

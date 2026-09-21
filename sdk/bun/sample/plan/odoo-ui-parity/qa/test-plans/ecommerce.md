@@ -7,6 +7,24 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001
+
+- ECOM-FUNC-058: trace Website Sale `website.product_page_image_ratio` and
+  `product_page_image_ratio_mobile`, the supported selections, and the
+  product-template desktop/mobile class and data-attribute boundary; verify
+  the separate Core3 policy and Product Detail page/API contracts.
+- ECOM-WF-069: replay the deterministic company policy, update desktop and
+  mobile ratios, project the effective values on Product Detail, reject an
+  invalid value and stale/foreign-company write, and preserve state across
+  migration replay and DuckDB restart.
+- ECOM-PERM-065: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; keep company scope and optimistic row-version
+  guards on the mutation.
+- ECOM-UI-051: render the configuration and Product Detail ratio surfaces at
+  desktop and mobile and compare the authenticated Odoo product template;
+  Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-ECOMMERCE-ACCESS-001
 
 - ECOM-FUNC-057: trace Website Sale `ecommerce_access`, the settings control,
