@@ -1,0 +1,14 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_pages ADD COLUMN IF NOT EXISTS track BOOLEAN;
+      UPDATE website_pages SET track = FALSE WHERE track IS NULL;
+      UPDATE website_pages SET track = TRUE WHERE id IN ('website-page-demo-001', 'website-page-demo-003');
+    down: |
+      ALTER TABLE website_pages DROP COLUMN IF EXISTS track;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

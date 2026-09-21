@@ -138,3 +138,40 @@ Themes, SEO filters, tracked pages, page publish/unpublish browser workflow,
 import/export, and public/portal rendering remain open. Analytics is complete
 for the bounded contract/runtime slice but not for module sign-off until the
 Odoo Website installation/session and Core3 startup blockers are resolved.
+
+## Wave 5 execution evidence — 2026-09-22 — Page tracking and SEO filters
+
+The next uncovered bounded source feature is the Odoo Page Manager tracking
+slice. Odoo 19 `website_pages_view_search` declares `Tracked`, `Not tracked`,
+and `Not SEO optimized`; the Page Manager list carries the hidden `track`
+field, and the `website.page`/`ir.ui.view` models persist the flag. Core3 adds
+the durable `website_pages.track` column, deterministic tracked Home/Docs Home
+and untracked Contact us fixtures, matching API filters, and `website.write`
+permissioned edit persistence with row-version guards. Presentation remains in
+`pages/pages.yaml` and `pages/page-detail.yaml`; datasources/actions remain in
+the matching `api/pages.yaml` and `api/page-detail.yaml` contracts.
+
+Focused coverage passes in
+`test/website_page_tracking.integration.test.ts` (3 tests, 22 assertions),
+and the full Website focused suite passes (27 tests, 145 assertions).
+Migration replay and file-backed DuckDB restart preserve the flag and row
+version. Feature evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-page-tracking-001/`.
+
+Core3 authenticated browser evidence was captured through the isolated Website
+runner at `http://localhost:4320` on browser instance `245ea108`: the Page
+Manager rendered its Tracking/SEO filter group and three durable rows at
+desktop and mobile; captures are retained outside Git at
+`/tmp/core3-odoo-parity/website-page-tracking/core3-desktop.png` and
+`core3-mobile.png`. The shared authenticated Odoo session has no Website app;
+the launcher stops at Expenses/Apps and `/odoo/website-pages` redirects to
+Discuss at both viewports. Diagnostic captures are in the same temporary
+directory. No paired Odoo visual-parity claim is made.
+
+### Updated next slice
+
+Themes, page publish/unpublish browser workflow, import/export, and
+public/portal rendering remain open. SEO/tracking filter service/API and Core3
+desktop/mobile rendering are covered by this bounded slice, but Website module
+sign-off remains conditional on Odoo Website availability and the broader open
+gates.

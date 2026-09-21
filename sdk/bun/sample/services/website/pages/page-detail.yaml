@@ -22,5 +22,5 @@ components:
       - { id: back_to_website_pages, label: Back, variant: secondary }
       - { id: edit_website_page_detail, label: Edit, variant: primary, permission: website.write }
     groups:
-      - { title: Page, columns: 2, fields: [{ field: name, label: Page Title }, { field: url, label: Page URL }, { field: website_name, label: Website }, { field: state, label: Status, type: StatusChip }] }
+      - { title: Page, columns: 2, fields: [{ field: name, label: Page Title }, { field: url, label: Page URL }, { field: website_name, label: Website }, { field: state, label: Status, type: StatusChip }, { field: track, label: Track, type: checkbox }] }
       - { title: Content, columns: 1, fields: [{ field: content_html, label: Page content, type: textarea }] }

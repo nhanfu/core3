@@ -5,7 +5,7 @@ datasources:
     permission: website.read
     error_states:
       missing_record: { status: 404, code: WEBSITE_PAGE_NOT_FOUND, message: Website page not found. }
-    query: "SELECT id, row_version, website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE id = :id"
+    query: "SELECT id, row_version, website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized, track, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE id = :id"
   - id: website_page_assets
     permission: website.read
     query: "SELECT id, row_version, page_id, file_name, mime_type, size_bytes, is_public, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM website_page_assets WHERE page_id = :id ORDER BY created_at DESC, id"
@@ -71,7 +71,8 @@ actions:
     mutation:
       operation: update
       table: website_pages
-      fields: [website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
+      fields: [website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized, track]
+      boolean_fields: [is_indexed, is_homepage, is_in_menu, is_seo_optimized, track]
       required: [website_id, website_name, name, url]
       concurrency: { required: true }
       guards:
@@ -89,3 +90,4 @@ actions:
       - { field: is_homepage, label: Home page, type: checkbox }
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
       - { field: is_seo_optimized, label: Is SEO Optimized, type: checkbox }
+      - { field: track, label: Track, type: checkbox }

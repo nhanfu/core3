@@ -61,6 +61,20 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
 
+## 2026-09-22 page tracking checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-010 | Page Manager tracked/untracked/not-SEO filters | `test/website_page_tracking.integration.test.ts`; Odoo source anchors, page/API join, durable filter predicates, deterministic rows | pass: 3 tests / 22 assertions |
+| WEBSITE-WF-007 | Tracking flag edit, stale guard, migration replay, restart | `test/website_page_tracking.integration.test.ts`; `website_pages.track` and row version survive close/reopen and idempotent migration | pass |
+| WEBSITE-PERM-007 | Read-only actor cannot edit tracking | `test/website_page_tracking.integration.test.ts`; action endpoint returns 403 and the row remains unchanged | pass |
+| WEBSITE-UI-012 | Tracking/SEO filter browser rendering | `/tmp/core3-odoo-parity/website-page-tracking/core3-desktop.png` and `core3-mobile.png`; authenticated isolated Website runner on browser 245ea108 | pass for Core3 runtime; paired Odoo comparison blocked because the authenticated Odoo session has no Website app |
+
+Focused result: `bun test ./test/website_page_tracking.integration.test.ts
+--timeout 20000` — 3 tests, 22 assertions; full Website suite — 27 tests, 145
+assertions; `git diff --check` passed. This checkpoint advances the bounded
+slice only and does not sign off the Website module.
+
 ## Reviewer disposition — candidate `760f171f`
 
 - Integrated on the active branch as `b6cda7b6`; the bounded change adds the

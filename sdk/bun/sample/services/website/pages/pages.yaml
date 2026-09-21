@@ -7,7 +7,10 @@ components:
     create_action: create_website_page
     create_label: New page
     search: { label: Search pages, placeholder: Search pages... }
-    filters: [{ field: state, label: Status, options_source: website_page_states }]
+    filters:
+      - { field: state, label: Status, options_source: website_page_states }
+      - { field: track, label: Tracking, options: [{ id: tracked, label: Tracked }, { id: not_tracked, label: Not tracked }] }
+      - { field: is_seo_optimized, label: SEO, options: [{ id: not_optimized, label: Not SEO optimized }] }
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
