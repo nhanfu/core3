@@ -31,7 +31,57 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_ACTIVITIES_UNAVAILABLE, message: Event activities are temporarily unavailable. } }
     query: "SELECT id, row_version, event_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user_id, assigned_user_name, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM event_activities WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY due_date NULLS LAST, created_at DESC, id"
+  - id: event_detail_chatter
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_CHATTER_UNAVAILABLE, message: Event messages are temporarily unavailable. } }
+    query: "SELECT id, row_version, event_id, state, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, row_version, event_id, 'done' AS state, actor_name, action, action_label, detail, created_at FROM event_messages UNION ALL SELECT id, row_version, event_id, state, actor_name, action, action_label, detail, created_at FROM event_activities) timeline WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY created_at DESC, id"
 actions:
+  - id: send_event_detail_message
+    type: server_form
+    permission: events.write
+    title: Send message
+    action: events.records.chatter.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.event_detail.id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_detail_chatter, event_detail_activities]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'event-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM event_messages WHERE event_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EVENT_CHATTER_ACTOR_REQUIRED, message: An authenticated Events actor is required to send a message. }
+        - { query: "SELECT id FROM events WHERE id = :id AND state <> 'Cancelled' AND row_version = :expected_row_version", status: 409, code: EVENT_CHATTER_PARENT_CHANGED, message: This event changed or is cancelled. Reload before sending a message. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EVENT_CHATTER_CONTENT_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO event_messages(id, event_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Events User'), 'events.records.chatter.message', 'Message', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 11:00:00')", expect_changed: true, status: 409, code: EVENT_CHATTER_NOT_CREATED, message: The event message could not be sent. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_CHATTER_PARENT_CHANGED, message: The event changed while sending the message. Reload before retrying. }
+      result: { query: "SELECT * FROM event_messages WHERE id = :message_id" }
+  - id: log_event_detail_note
+    type: server_form
+    permission: events.write
+    title: Log note
+    action: events.records.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{state.event_detail.id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_detail_chatter, event_detail_activities]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'event-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM event_messages WHERE event_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EVENT_CHATTER_ACTOR_REQUIRED, message: An authenticated Events actor is required to log a note. }
+        - { query: "SELECT id FROM events WHERE id = :id AND state <> 'Cancelled' AND row_version = :expected_row_version", status: 409, code: EVENT_CHATTER_PARENT_CHANGED, message: This event changed or is cancelled. Reload before logging a note. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EVENT_CHATTER_CONTENT_INVALID, message: Note content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO event_messages(id, event_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Events User'), 'events.records.chatter.note', 'Note', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 11:00:00')", expect_changed: true, status: 409, code: EVENT_CHATTER_NOT_CREATED, message: The event note could not be logged. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_CHATTER_PARENT_CHANGED, message: The event changed while logging the note. Reload before retrying. }
+      result: { query: "SELECT * FROM event_messages WHERE id = :message_id" }
   - id: schedule_event_detail_activity
     type: server_form
     permission: events.write

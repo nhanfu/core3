@@ -1,5 +1,33 @@
 # Events UI parity
 
+## Current bounded batch: Event chatter message and internal note (2026-09-22)
+
+The next distinct uncovered event-form workflow after activities, Notes &
+Documents, and the Questions relation editor was the Odoo `mail.thread`
+chatter composer. Odoo 19's `event.event` inherits `mail.thread` and
+`mail.activity.mixin`; `event_event_views.xml` renders `<chatter/>`, and the
+authenticated `Design Fair Los Angeles` form exposes `Send message`, `Log
+note`, the follower composer, and the seeded `Event created` notification at
+desktop and mobile widths.
+
+Core3 keeps the page/API layers separate through `event-detail`. The page now
+uses the `event_detail_chatter` timeline and declares the Odoo-labelled Send
+message and Log note composers; `api/event-detail.yaml` owns the permissioned
+mutations. Migration `20260922160000-037-event-chatter.yaml` adds durable
+event messages and the deterministic Event created entry. Both mutations
+require `events.write`, validate actor/content/event state, use the event row
+version, advance the event atomically, and preserve existing activities in the
+unified chatter timeline. File-backed restart/replay coverage is included.
+
+Focused validation passes 4 tests / 25 assertions. The related Events form,
+activity, Notes & Documents, Questions relation, and regression tests pass;
+the UI audit and Events Sass build pass. Authenticated Odoo desktop/mobile
+captures are committed under
+`odoo-ui-parity/evidence/events/2026-09-22/event-chatter/`. Core3 browser
+interaction was not claimed in this finalization: the module runner reached
+`http://localhost:4026`, but the user requested browser sessions be closed
+before a new authenticated Core3 pass. Full Events sign-off remains open.
+
 ## Current bounded batch: Event activity scheduling and completion (2026-09-22)
 
 The next distinct source-backed gap was the event form activity workflow.

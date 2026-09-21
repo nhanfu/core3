@@ -69,7 +69,17 @@ components:
       - title: Schedule and attendance
         wide: true
         fields: [{ field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
-    message_source: event_detail_activities
+    message_source: event_detail_chatter
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_action: send_event_detail_message
+    note_action: log_event_detail_note
+    message_placeholder: Send a message to event followers…
+    note_placeholder: Log an internal note…
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
     activity_action: schedule_event_detail_activity
     activity_complete_action: complete_event_detail_activity
     activity_complete_label: Mark Done

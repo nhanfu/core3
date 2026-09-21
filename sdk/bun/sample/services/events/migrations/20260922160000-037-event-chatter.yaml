@@ -1,0 +1,30 @@
+version: 0.0.37
+kind: schema
+description: Durable Odoo Events chatter messages and internal notes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_messages (
+        id VARCHAR PRIMARY KEY,
+        event_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        actor_id VARCHAR,
+        actor_name VARCHAR,
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS event_messages_event_idx ON event_messages(event_id, created_at, id);
+      INSERT INTO event_messages(id, event_id, row_version, actor_id, actor_name, action, action_label, detail, created_at)
+      SELECT 'event-message-event-demo-001-1', e.id, 1, 'odoo-system', 'OdooBot', 'events.records.created', 'Event created', 'Event created', TIMESTAMP '2026-01-15 09:00:00'
+      FROM events e
+      WHERE e.id = 'event-demo-001'
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

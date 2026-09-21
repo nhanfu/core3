@@ -29,7 +29,7 @@ describe('Events activity parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(form).toMatchObject({
       source: 'event_detail',
-      message_source: 'event_detail_activities',
+      message_source: 'event_detail_chatter',
       activity_action: 'schedule_event_detail_activity',
       activity_complete_action: 'complete_event_detail_activity',
     });

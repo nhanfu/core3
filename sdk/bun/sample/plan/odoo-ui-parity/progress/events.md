@@ -1,5 +1,19 @@
 # events parity progress
 
+## Bounded feature - event chatter message and internal note (2026-09-22)
+
+The event detail form now exposes the source-backed Odoo Send message and Log
+note workflow. Page/API YAML remains joined by `event-detail`; migration 037
+persists the seeded Event created notification and new messages/notes. Both
+actions require `events.write`, validate actor/content/cancelled state, use
+optimistic event row versions, advance the parent atomically, and retain the
+existing activity records in one chatter timeline. Focused validation passes
+4 tests / 25 assertions; related Events checks, UI audit, Sass build, and
+diff-check pass. Odoo desktop/mobile captures are recorded in the feature
+evidence folder. Core3 authenticated interaction was not claimed because the
+requested browser sessions were closed before a new pass; full Events sign-off
+remains open.
+
 Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: bounded batch implemented; QA conditional

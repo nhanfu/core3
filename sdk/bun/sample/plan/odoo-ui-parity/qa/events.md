@@ -1,5 +1,36 @@
 # events QA ledger
 
+## Bounded QA - Event chatter message and internal note (2026-09-22)
+
+- Source contract: **PASS**. Local Odoo 19 source confirms `mail.thread` on
+  `event.event` and `<chatter/>`; the authenticated reference exposes Send
+  message, Log note, follower composer, and Event created at desktop/mobile.
+- YAML ownership and permissions: **PASS**. `event-detail` owns the chatter
+  presentation; matching `api/event-detail` owns `event_detail_chatter` and
+  both `events.write` server-form mutations.
+- Durable data and guards: **PASS**. Migration 037 adds `event_messages`,
+  seeds the Event created notification, validates actor/content/cancelled
+  state, uses required optimistic row versions, and advances the event only
+  with a successful insert.
+- Focused tests: **PASS**, 4 tests / 25 assertions, including restart/replay.
+- Related regression: **PASS** for the 19-test / 138-assertion bounded set
+  covering event form, activity, Notes & Documents, Questions relation, and
+  chatter. Full Events corpus was run during finalization but its long output
+  was not retained as a concise summary.
+- Audit/build/diff: **PASS**. UI audit reports 807 pages, 816 routes, and
+  1,671 datasources; Events Sass build and `git diff --check` pass.
+- Odoo browser evidence: **PASS**, authenticated browser instance 245ea108,
+  `http://localhost:8069`, database `core3_reference`; captures are committed
+  in the feature evidence folder.
+- Core3 browser evidence: **NOT CLAIMED**. The module runner reached
+  `http://localhost:4026`, but the user requested browser sessions be closed
+  before a new authenticated Core3 interaction pass. No Core3 screenshot is
+  presented as captured.
+- Full module sign-off: **OPEN**. Broader actor matrix and complete route-level
+  paired visual coverage remain outstanding.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-22/event-chatter/`.
+
 ## Bounded QA - Event activity scheduling and completion (2026-09-22)
 
 - Source contract: **PASS**. Odoo 19 `event.event` inherits

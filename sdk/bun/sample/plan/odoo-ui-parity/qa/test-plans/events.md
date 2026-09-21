@@ -7,6 +7,14 @@ Reference addon/version: event, Odoo 19 Community
 Plan status: approved  
 Last reviewed: 2026-09-22
 
+## Latest bounded cases — event chatter (2026-09-22)
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-015 | functional/data | Event detail Send message and Log note | Durable message/note rows appear in the unified event chatter timeline and parent version advances | pass: `events_chatter.integration.test.ts` |
+| EVENTS-WF-010 | workflow/security | Event chatter actor/state/concurrency/restart | Anonymous, blank, cancelled, stale, and replayed writes are rejected without partial writes | pass: `events_chatter.integration.test.ts` |
+| EVENTS-UI-008 | visual/responsive | Event detail chatter composer | Authenticated Odoo desktop/mobile captures; Core3 browser interaction is explicitly unclaimed after requested session closure | conditional: Odoo captures committed; Core3 capture blocker recorded |
+
 This checklist follows the current 33-route inventory and the bounded batches
 in [`events.md`](../../events.md). Executed evidence remains in
 [`../events.md`](../events.md).
