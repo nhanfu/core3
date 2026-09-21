@@ -1,6 +1,55 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-13-implemented-applicant-email-odoo-reference-blocked`
+Status: `batch-14-implemented-applicant-followers-odoo-reference-blocked`
+
+## Batch 14 — Applications → Add/Remove Followers
+
+The next distinct bounded Recruitment workflow is Odoo's applicant-bound
+`Add/Remove Followers` action. Local Odoo 19 source revision
+`659759969d535d286b656c96b675e4612b925ddd` binds
+`mail_followers_edit_action_from_hr_recruitment` to `hr.applicant` list and
+kanban views. It opens the `mail.followers.edit` modal for selected applicants;
+the form supports Add/Remove, a required contact list, optional recipient
+notification and extra comments, and `Update Followers`/`Discard`. Odoo's
+wizard subscribes or unsubscribes contacts idempotently across the selected
+applications.
+
+Core3 adds a page-local bulk `Add/Remove Followers` action to `/applicants` and
+keeps the API fragment joined by `page.id`. A Recruitment-owned migration adds
+deterministic active/inactive follower contacts, durable applicant/contact
+subscriptions, and a notification-intent audit table. The YAML server form
+guards selection, actor, applicant existence, company scope, active contacts,
+operation, notification mode, and message length. Applicant detail exposes a
+read-only follower count/name summary so persistence is visible after reload.
+The bounded adaptation does not claim the shared Mail partner directory,
+chatter, or external invitation delivery.
+
+Source/gap matrix for `RECRUITMENT-APPLICANT-FOLLOWERS-001`:
+
+| Odoo contract | Previous Core3 state | Batch 14 change | Verification |
+| --- | --- | --- | --- |
+| List/kanban `Add/Remove Followers` action | Missing | selectable applicants and page bulk action | page/API contract assertion |
+| Add/Remove contact wizard | Missing | YAML server form with radio, multi-select, notify, and comments | focused integration contract and Core3 browser attempt |
+| Subscribe/unsubscribe state | Missing | durable applicant/contact subscriptions with idempotent mutations | multi-applicant mutation and restart test |
+| Source/actor/company guards | Missing | explicit 400/403/404/422 guards and no-partial-write transaction | guard test |
+| Visible persisted result | Missing | applicant detail follower summary | detail query/reload assertion |
+
+Focused verification:
+
+- `bun test test/recruitment_applicant_followers.integration.test.ts` — 4
+  passed, 0 failed, 19 assertions.
+- Recruitment regression — 59 passed, 0 failed, 534 assertions across 16
+  files.
+- Targeted ESLint and `git diff --check` passed; audit/build results are
+  recorded in the feature evidence.
+
+The live authenticated Odoo reference remains blocked: browser instance
+`245ea108`, database `core3_reference`, and direct
+`http://localhost:8069/odoo/recruitment?db=core3_reference` expose only the
+Discuss/OdooBot shell with no Recruitment launcher. Exact desktop/mobile
+blocker captures and hashes are recorded under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-APPLICANT-FOLLOWERS-001/`.
+No paired Odoo visual-parity claim is made.
 
 ## Batch 13 — Applications → Send Email
 

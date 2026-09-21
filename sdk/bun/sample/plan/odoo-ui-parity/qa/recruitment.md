@@ -1,5 +1,33 @@
 # recruitment QA ledger
 
+## Batch 14 QA — Applicant Add/Remove Followers — 2026-09-22
+
+- Candidate scope: applicant list/kanban follower wizard, durable
+  subscriptions, notification-intent audit, and applicant detail summary;
+  Activity Types/Plans and Send Email remain separate prior batches.
+- Source boundary: Odoo 19 `mail_followers_edit_action_from_hr_recruitment`,
+  `mail.followers.edit`, and `mail_followers_edit_views.xml` were compared
+  against local source revision `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_applicant_followers.integration.test.ts`
+  — 4 passed, 0 failed, 19 assertions. Recruitment regression: `bun test
+  ./test/recruitment*.integration.test.ts --timeout 20000` — 59 passed, 0
+  failed, 534 assertions across 16 files.
+- Functional coverage: page/API `page.id` join, list/kanban bulk action,
+  Add/Remove radio, active contact selector, notify/comments controls,
+  multi-applicant idempotent add/remove, notification audit, actor/company/
+  contact/operation/notify/message guards, detail summary, and restart
+  persistence.
+- Odoo blocker: browser instance `245ea108`, database `core3_reference`, and
+  direct `/odoo/recruitment?db=core3_reference` exposed Discuss/OdooBot rather
+  than Recruitment on desktop and mobile. Blocker captures and hashes are in
+  `evidence/recruitment/2026-09-22/RECRUITMENT-APPLICANT-FOLLOWERS-001/`;
+  no paired visual comparison or visual parity claim is made.
+- Core3 browser capture: attempted only if an isolated runtime is available;
+  no evidence is claimed without an authenticated rendered surface.
+- QA decision: bounded functional batch complete; live-reference visual and
+  runtime/browser gates remain blocked or pending, so Recruitment is not
+  signed off.
+
 ## Batch 13 QA — Applicant Send Email — 2026-09-22
 
 - Candidate scope: Recruitment applicant mass-email composer and durable sent

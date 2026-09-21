@@ -4,9 +4,19 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment applicant email commit
+Candidate commit: pending Recruitment applicant followers commit
 
 ## Current state
+
+Batch 14 implements the next uncovered Recruitment workflow, applicant
+Add/Remove Followers wizard. Its focused suite passes 4 tests / 19 assertions
+with durable multi-applicant subscriptions, notification audit, guards, and
+file-backed restart coverage. The Recruitment regression passes 59 tests /
+534 assertions across 16 files. Core3 browser evidence is pending runtime
+availability. Authenticated Odoo desktop/mobile feature evidence is blocked
+because the shared `core3_reference` launcher has no Recruitment entry and the
+direct Recruitment URL returns Discuss. No paired visual parity sign-off is
+claimed.
 
 Batch 13 implements the next uncovered Recruitment workflow, applicant email
 composer/send. Its focused suite passes 4 tests / 29 assertions with durable

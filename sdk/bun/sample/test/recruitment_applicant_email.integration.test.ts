@@ -43,7 +43,8 @@ describe('Recruitment applicant email composer parity', () => {
     expect(sourceView).toContain('<field name="binding_view_types">list,kanban</field>');
     expect(sourceView).toContain('<field name="name">Send Email</field>');
     expect(page.page.id).toBe('applicants');
-    expect(page.components[0]).toMatchObject({ selectable: true, bulk_actions: [{ id: 'send_recruitment_applicant_email', label: 'Send Email', permission: 'recruitment.write' }] });
+    expect(page.components[0]).toMatchObject({ selectable: true });
+    expect(page.components[0].bulk_actions).toContainEqual({ id: 'send_recruitment_applicant_email', label: 'Send Email', permission: 'recruitment.write' });
     expect(api.page.id).toBe(page.page.id);
     expect(page.page.id).toBe(api.page.id);
     expect(api.datasources.map((source: any) => source.id)).toContain('recruitment_applicant_email_templates');

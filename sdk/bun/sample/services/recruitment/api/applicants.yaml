@@ -16,6 +16,11 @@ datasources:
     permission: recruitment.read
     single: false
     query: "SELECT id AS value, name AS label FROM recruitment_applicant_mail_templates WHERE active = TRUE ORDER BY name, id"
+  - id: recruitment_applicant_follower_options
+    permission: recruitment.write
+    single: false
+    error_states: { unauthorized: { status: 401, code: RECRUITMENT_FOLLOWERS_UNAUTHENTICATED, message: Sign in to manage applicant followers. }, forbidden: { status: 403, code: RECRUITMENT_FOLLOWERS_FORBIDDEN, message: You do not have permission to manage applicant followers. }, transport_error: { status: 503, code: RECRUITMENT_FOLLOWERS_UNAVAILABLE, message: Follower contacts are temporarily unavailable. } }
+    query: "SELECT id AS value, name || ' <' || email || '>' AS label FROM recruitment_follower_contacts WHERE active = TRUE ORDER BY name, id"
   - id: recruitment_applicants
     permission: recruitment.read
     workflow: recruitment_applicants
@@ -69,6 +74,40 @@ actions:
       - { field: body_html, label: Message, type: mail_body, placeholder: Write your message here... }
       - { field: attachment_name, label: Attachments, type: mail_attachment }
       - { field: template_id, label: Load template, type: select, options_source: recruitment_applicant_email_templates }
+  - id: edit_recruitment_applicant_followers
+    type: server_form
+    permission: recruitment.write
+    title: Add/Remove Followers
+    submit_label: Update Followers
+    cancel_label: Discard
+    success_message: Followers updated.
+    action: recruitment.applicants.edit_followers
+    handler: yaml_mutation
+    operation: follower_edit
+    refresh: [recruitment_applicants]
+    mutation:
+      fields: [operation, partner_ids, notify, message]
+      required: [operation, partner_ids]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: RECRUITMENT_FOLLOWERS_SELECTION_REQUIRED, message: Select at least one applicant. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_FOLLOWERS_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to update followers. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:operation AS VARCHAR) IN ('add', 'remove')", status: 422, code: RECRUITMENT_FOLLOWERS_OPERATION_INVALID, message: Choose Add or Remove. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds)", status: 404, code: RECRUITMENT_FOLLOWERS_APPLICANT_NOT_FOUND, message: One or more selected applicants were not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds AND COALESCE(:current_company_name, '') <> '' AND a.company_name <> :current_company_name)", status: 403, code: RECRUITMENT_FOLLOWERS_COMPANY_FORBIDDEN, message: One or more selected applicants belong to another company. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM recruitment_follower_contacts c WHERE c.id IN :partner_ids AND c.active = TRUE) AND NOT EXISTS (SELECT 1 FROM recruitment_follower_contacts c WHERE c.id IN :partner_ids AND c.active = FALSE)", status: 422, code: RECRUITMENT_FOLLOWERS_CONTACT_INVALID, message: Select active follower contacts only. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:notify, FALSE) AS BOOLEAN) = FALSE OR CAST(:operation AS VARCHAR) = 'add'", status: 422, code: RECRUITMENT_FOLLOWERS_NOTIFY_INVALID, message: Notifications can only be sent when adding followers. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:message, '') AS VARCHAR)) <= 4000", status: 422, code: RECRUITMENT_FOLLOWERS_MESSAGE_INVALID, message: Extra Comments must be 4000 characters or fewer. }
+      steps:
+        - query: "INSERT INTO recruitment_applicant_follower_events(id, applicant_id, contact_id, operation, notify, message, changed_by) SELECT 'recruitment-follower-event-' || a.id || '-' || c.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_applicant_follower_events prior WHERE prior.applicant_id = a.id AND prior.contact_id = c.id), 0) + 1 AS VARCHAR), a.id, c.id, :operation, CAST(COALESCE(:notify, FALSE) AS BOOLEAN), CAST(COALESCE(:message, '') AS VARCHAR), :current_user_name FROM recruitment_applicants a CROSS JOIN recruitment_follower_contacts c WHERE a.id IN :selectedIds AND c.id IN :partner_ids AND ((:operation = 'add' AND NOT EXISTS (SELECT 1 FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id AND f.contact_id = c.id)) OR (:operation = 'remove' AND EXISTS (SELECT 1 FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id AND f.contact_id = c.id)))"
+        - query: "INSERT INTO recruitment_applicant_followers(id, applicant_id, contact_id, company_name, added_by) SELECT 'recruitment-follower-' || a.id || '-' || c.id, a.id, c.id, a.company_name, :current_user_name FROM recruitment_applicants a CROSS JOIN recruitment_follower_contacts c WHERE :operation = 'add' AND a.id IN :selectedIds AND c.id IN :partner_ids AND c.active = TRUE AND NOT EXISTS (SELECT 1 FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id AND f.contact_id = c.id)"
+        - query: "DELETE FROM recruitment_applicant_followers WHERE :operation = 'remove' AND applicant_id IN :selectedIds AND contact_id IN :partner_ids"
+      result: { query: "SELECT f.applicant_id, f.contact_id, c.name AS contact_name, f.added_by, CAST(f.added_at AS VARCHAR) AS added_at FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id IN :selectedIds ORDER BY f.applicant_id, c.name, c.id" }
+    fields:
+      - { field: applicant_names, label: Applications, type: mail_recipient, default: Selected applicants }
+      - { field: operation, label: Operation, type: radio, options: [{ value: add, label: Add }, { value: remove, label: Remove }], default: add }
+      - { field: partner_ids, label: Followers, type: multi-select, options_source: recruitment_applicant_follower_options, multiple: true, required: true, placeholder: Add contacts }
+      - { field: notify, label: Notify Recipients, type: checkbox, default: false, show_if: "state.operation === 'add'" }
+      - { field: message, label: Extra Comments, type: textarea, placeholder: Extra Comments ..., show_if: "state.operation === 'add' && state.notify === true" }
   - id: create_recruitment_applicant
     type: server_form
     permission: recruitment.write

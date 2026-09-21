@@ -40,6 +40,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-FUNC-009 | Import/export/attachments | Exercise exposed applicant file, attachment, import/export and print actions | planned browser interaction gate |
 | RECRUITMENT-FUNC-010 | Activity Plans | Create, edit, search, archive/restore, delete, validate model/step shape, and reload ordered activity steps | pass: focused Activity Plans suite; Odoo browser blocked |
 | RECRUITMENT-FUNC-011 | Applicant email | Bulk composer validates recipients/templates/content, persists one sent audit row per applicant, and survives restart | pass: focused applicant email suite; Odoo browser blocked |
+| RECRUITMENT-FUNC-012 | Applicant followers | Bulk Add/Remove Followers validates active contacts, persists subscriptions and notification audit, and survives restart | pass: focused applicant followers suite; Odoo browser blocked |
 
 ## Workflow and integration cases
 
@@ -51,6 +52,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-WF-004 | Activities and notifications | Scheduled/completed activities remain linked to applicant and retry safely | planned |
 | RECRUITMENT-WF-005 | Durable/external boundary | Mail, timers, callbacks and cross-module hiring workflows use Temporal with retry, replay, restart and compensation coverage | planned |
 | RECRUITMENT-WF-006 | Applicant email send | Selected applicants produce durable sent-message audit rows atomically; invalid recipient/template/company/actor inputs produce no partial writes | pass: focused integration; external mail delivery remains out of scope |
+| RECRUITMENT-WF-007 | Applicant follower edit | Selected applicants add/remove contacts idempotently; notify/comments are audited only for Add and invalid inputs leave subscriptions unchanged | pass: focused integration; external invitation delivery remains out of scope |
 
 ## Permission and security cases
 
@@ -64,6 +66,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-PERM-006 | Stale/missing input | 409/404/422 responses leave the current row unchanged | pass at contract level |
 | RECRUITMENT-PERM-007 | Activity Plans manager boundary | Manager mutations work; non-manager/anonymous access is rejected without data | pass: contract declaration; live actor/browser gate pending |
 | RECRUITMENT-PERM-008 | Applicant email actor/company boundary | Recruitment write actor can send only selected same-company applicants with recipient email; actor/company/recipient violations are rejected atomically | pass: focused integration; live actor/browser gate pending |
+| RECRUITMENT-PERM-009 | Applicant follower actor/company/contact boundary | Recruitment write actor can manage only selected same-company applicants and active contacts; invalid contact/company/notify requests are rejected atomically | pass: focused integration; live actor/browser gate pending |
 
 ## Visual, responsive, and regression cases
 
@@ -75,6 +78,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-UI-004 | Current route regression | all 15 unique registered routes | 30 authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | pass |
 | RECRUITMENT-UI-005 | Activity Plans list/form | 1440x900, 390x844 | Recruitment Plans menu, List/Kanban tabs, empty/form labels and responsive state match Odoo | blocked: live reference has no Recruitment action |
 | RECRUITMENT-UI-006 | Applicant email composer | 1440x900, 390x844 | Applicant list bulk Send Email opens composer with subject/body/template/attachment controls and sends selected applicants | partial: authenticated Core3 desktop capture; mobile and paired Odoo blocked |
+| RECRUITMENT-UI-007 | Applicant follower wizard | 1440x900, 390x844 | Applicant list bulk Add/Remove Followers opens source-shaped modal, updates selected records, and detail shows persisted followers | partial: source-backed Core3 contract; live Odoo and Core3 runtime capture blocked/pending |
 
 ## Exit criteria
 

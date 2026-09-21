@@ -1,0 +1,67 @@
+version: 0.0.18
+kind: schema
+description: Durable Recruitment applicant follower subscriptions and notification audit
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_follower_contacts (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_followers (
+        id VARCHAR PRIMARY KEY,
+        applicant_id VARCHAR NOT NULL,
+        contact_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        added_by VARCHAR NOT NULL,
+        added_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        UNIQUE(applicant_id, contact_id)
+      );
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_follower_events (
+        id VARCHAR PRIMARY KEY,
+        applicant_id VARCHAR NOT NULL,
+        contact_id VARCHAR NOT NULL,
+        operation VARCHAR NOT NULL,
+        notify BOOLEAN NOT NULL DEFAULT FALSE,
+        message VARCHAR NOT NULL DEFAULT '',
+        changed_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_follower_contacts_active_idx ON recruitment_follower_contacts(active, name);
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_followers_applicant_idx ON recruitment_applicant_followers(applicant_id, contact_id);
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_follower_events_applicant_idx ON recruitment_applicant_follower_events(applicant_id, created_at, id);
+      INSERT OR IGNORE INTO recruitment_follower_contacts(id, name, email, company_name, active)
+      VALUES
+        ('recruitment-contact-hr-manager', 'Recruitment Manager', 'recruitment.manager@example.com', 'Core3 Demo Company', TRUE),
+        ('recruitment-contact-recruiter', 'Alex Chen', 'alex.chen@example.com', 'Core3 Demo Company', TRUE),
+        ('recruitment-contact-interviewer', 'Maya Singh', 'maya.singh@example.com', 'Core3 Demo Company', TRUE),
+        ('recruitment-contact-hiring-panel', 'Hiring Panel', 'hiring.panel@example.com', 'Core3 Demo Company', TRUE),
+        ('recruitment-contact-archived', 'Former Recruiter', 'former.recruiter@example.com', 'Core3 Demo Company', FALSE);
+      INSERT INTO recruitment_applicant_followers(id, applicant_id, contact_id, company_name, added_by)
+      SELECT 'recruitment-follower-applicant-demo-001-recruitment-contact-hr-manager', 'applicant-demo-001', 'recruitment-contact-hr-manager', a.company_name, 'Recruitment Team'
+      FROM recruitment_applicants a
+      WHERE a.id = 'applicant-demo-001'
+        AND NOT EXISTS (SELECT 1 FROM recruitment_applicant_followers f WHERE f.applicant_id = 'applicant-demo-001' AND f.contact_id = 'recruitment-contact-hr-manager');
+      INSERT INTO recruitment_applicant_followers(id, applicant_id, contact_id, company_name, added_by)
+      SELECT 'recruitment-follower-applicant-demo-002-recruitment-contact-recruiter', 'applicant-demo-002', 'recruitment-contact-recruiter', a.company_name, 'Recruitment Team'
+      FROM recruitment_applicants a
+      WHERE a.id = 'applicant-demo-002'
+        AND NOT EXISTS (SELECT 1 FROM recruitment_applicant_followers f WHERE f.applicant_id = 'applicant-demo-002' AND f.contact_id = 'recruitment-contact-recruiter');
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicant_follower_events_applicant_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_follower_events;
+      DROP INDEX IF EXISTS recruitment_applicant_followers_applicant_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_followers;
+      DROP INDEX IF EXISTS recruitment_follower_contacts_active_idx;
+      DROP TABLE IF EXISTS recruitment_follower_contacts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
