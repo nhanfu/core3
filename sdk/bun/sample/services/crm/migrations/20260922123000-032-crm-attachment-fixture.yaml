@@ -1,0 +1,16 @@
+version: 0.0.32
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_lead_attachments ADD COLUMN IF NOT EXISTS content_base64 VARCHAR;
+      INSERT INTO crm_lead_attachments(id, lead_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, content_base64)
+      VALUES ('crm-demo-attachment-001', 'crm-demo-001', 'qualification-brief.txt', 'text/plain', 24, '', 'user-admin', 'Q1JNIHF1YWxpZmljYXRpb24gYnJpZWYK')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_lead_attachments WHERE id = 'crm-demo-attachment-001';
+      ALTER TABLE crm_lead_attachments DROP COLUMN IF EXISTS content_base64;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

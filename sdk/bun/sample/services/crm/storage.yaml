@@ -10,6 +10,6 @@ files:
 attachments:
   crm_lead_attachment:
     download:
-      route: /api/crm/attachments
+      route: /crm/attachments
       permission: crm.attachment.download
-      query: SELECT * FROM crm_lead_attachments WHERE id = :attachment_id
+      query: SELECT a.* FROM crm_lead_attachments a JOIN crm_leads l ON l.id = a.lead_id WHERE a.id = :attachment_id

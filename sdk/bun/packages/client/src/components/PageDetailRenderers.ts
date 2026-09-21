@@ -14,6 +14,7 @@ export function attachmentDownloadPath(kind: unknown, id: unknown): string {
     expense_attachment: '/expenses/attachments',
     base_contact_attachment: '/base/contacts/attachments',
     accounting_bank_statement_attachment: '/accounting/bank-statement-attachments',
+    crm_lead_attachment: '/crm/attachments',
   };
   return `${routes[String(kind)] || '/chat/attachments'}/${encodedId}`;
 }
@@ -68,6 +69,7 @@ function attachmentDownloadPath(kind: unknown, id: unknown): string {
     order_attachment: '/orders/attachments',
     expense_attachment: '/expenses/attachments',
     base_contact_attachment: '/base/contacts/attachments',
+    crm_lead_attachment: '/crm/attachments',
   };
   return `${routes[String(kind)] || '/chat/attachments'}/${encodedId}`;
 }

@@ -256,6 +256,33 @@ Conditional bounded result; not signed off.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
 
+## QA checkpoint — Lead detail Attachments (`CRM-LEAD-ATTACHMENTS-001`)
+
+Conditional bounded result; not signed off.
+
+- Source/action: Odoo `crm.lead` uses the generic `mail.thread` chatter in
+  `addons/crm/views/crm_lead_views.xml`; local `mail_thread.py` confirms
+  `message_post` accepts and links attachment records.
+- Core3 focused coverage: `bun test
+  test/crm_lead_attachments.integration.test.ts` passed **2 tests / 23
+  assertions**. It covers page/API binding, protected route mapping, migration
+  replay, deterministic inline bytes, upload name/size/lead guards, audit
+  logging, 403/503 datasource states, and file-backed restart persistence.
+- Product fix: CRM download route is `/crm/attachments` under the API base;
+  the shared client mapping now resolves `crm_lead_attachment` to that route,
+  avoiding the previous Chat fallback. Downloads are scoped through a CRM lead
+  join and require `crm.attachment.download`.
+- Browser blocker: BrowserSkill daemon and browser `245ea108` were healthy,
+  but borrowing the existing authenticated Odoo tab timed out waiting for the
+  required user confirmation after 20 seconds. The session was stopped cleanly.
+  No Odoo/Core3 attachment screenshot was captured; visual parity is not
+  claimed.
+- Existing shared component test probe was attempted directly with Bun but
+  the repository test file requires a browser DOM (`document is not defined`)
+  without its normal harness. This is recorded as a test-environment blocker,
+  not as a product failure; the CRM contract test imports and asserts the
+  shared route helper directly.
+
 ## QA checkpoint — Team Overdue Opportunities (2026-09-22)
 
 Conditional bounded result; not signed off.

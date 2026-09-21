@@ -810,3 +810,32 @@ Status: bounded implementation; browser parity conditional.
   Pipeline route returning HTTP content.
 - Core3 browser capture remains blocked by the shared page-discovery errors
   `upload_event_badge_background` and unregistered `FormSection` in Events.
+
+## 2026-09-22 — Lead detail Attachments
+
+Status: bounded implementation; browser parity conditional.
+
+- Odoo 19 source: `addons/crm/views/crm_lead_views.xml` renders the generic
+  `<chatter reload_on_post="True"/>` on `crm.lead`. The model inherits
+  `mail.thread`, whose `message_post` contract accepts attachment records and
+  links them to the lead thread. The shared Odoo chatter exposes attachment
+  upload, image preview, and authenticated download behavior.
+- Existing Core3 coverage already had the YAML chatter panel and a durable
+  `crm_lead_attachments` table, but its storage route was `/api/crm/attachments`
+  while the client prefixes API paths with `/api`; the client also fell back to
+  `/chat/attachments` for the CRM attachment kind. Upload metadata could be
+  persisted, but download and image preview could not reach the CRM record.
+- Core3 now keeps page/API separation on `page.id: lead-detail`, adds explicit
+  attachment datasource 401/403/503 states and 1-byte-to-5MB/name guards,
+  scopes downloads through `crm_leads`, maps `crm_lead_attachment` to
+  `/crm/attachments`, and adds migration `0.0.32` with an idempotent inline
+  text fixture. The existing shared `OdooAttachmentPanel` therefore renders
+  the Attach files control, size, Preview for images, and Download for all
+  authenticated CRM attachments.
+- Stable ID: `CRM-LEAD-ATTACHMENTS-001`. Focused coverage verifies contract
+  binding, migration replay, upload validation, audit logging, protected
+  download bytes, permission/error states, and file-backed restart visibility.
+- Browser comparison was attempted through BrowserSkill on instance `245ea108`
+  using the existing Odoo tab. Borrow confirmation timed out after 20 seconds;
+  no live Odoo or Core3 screenshot was captured, and no visual parity claim is
+  made. The exact blocker is recorded in the feature evidence.

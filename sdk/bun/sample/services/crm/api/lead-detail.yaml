@@ -103,6 +103,10 @@ datasources:
   - id: crm_lead_attachments_list
     single: false
     permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_ATTACHMENTS_UNAUTHORIZED, message: Sign in to view attachments. }
+      forbidden: { status: 403, code: CRM_LEAD_ATTACHMENTS_FORBIDDEN, message: You do not have permission to view attachments. }
+      transport_error: { status: 503, code: CRM_LEAD_ATTACHMENTS_UNAVAILABLE, message: Attachments are temporarily unavailable. }
     query: |
       SELECT a.id, a.lead_id, a.file_name, a.mime_type, a.size_bytes,
         a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at
@@ -493,6 +497,14 @@ actions:
         - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
           status: 404
           message: Opportunity not found
+        - query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255"
+          status: 422
+          code: CRM_ATTACHMENT_NAME_INVALID
+          message: Attachment names must be between 1 and 255 characters.
+        - query: "SELECT 1 AS ok WHERE CAST(:sizeBytes AS BIGINT) BETWEEN 1 AND 5242880"
+          status: 422
+          code: CRM_ATTACHMENT_SIZE_INVALID
+          message: Attachments must be between 1 byte and 5 MB.
       steps:
         - query: "INSERT INTO crm_lead_attachments(id, lead_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :lead_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
         - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'crm.attachments.upload', 'crm_leads', :lead_id, :fileName)"
