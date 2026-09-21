@@ -7,4 +7,3 @@
 No new migration was required: migration `0.0.41` already persists these
 columns and `survey_responses.start_datetime` for the public timer. No
 live-session timer or scoring behavior was changed.
-

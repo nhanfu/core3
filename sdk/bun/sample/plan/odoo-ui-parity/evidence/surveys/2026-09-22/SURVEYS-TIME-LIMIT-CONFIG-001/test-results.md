@@ -16,4 +16,3 @@
 Adjacent scoring/public-timer tests were not used as the feature gate because
 their pre-existing 5-second default timeouts are migration-duration sensitive
 in this checkout; the new feature tests explicitly allow 15 seconds and pass.
-

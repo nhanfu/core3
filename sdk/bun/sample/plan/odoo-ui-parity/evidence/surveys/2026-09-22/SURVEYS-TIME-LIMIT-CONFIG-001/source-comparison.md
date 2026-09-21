@@ -8,4 +8,3 @@
 | Write/actor and optimistic state boundary | No authenticated time-limit write path | `surveys.write`, actor, missing, archived/stale guards | Implemented |
 | Public timer consumption | Existing `survey.public.detail` and public route already consume timer values | Contract retained and restart-tested through the same operation | Regression-covered |
 | Desktop/mobile visual parity | No Core3 capture possible | Odoo references captured; Core3 runtime unavailable | Conditional/blocker |
-

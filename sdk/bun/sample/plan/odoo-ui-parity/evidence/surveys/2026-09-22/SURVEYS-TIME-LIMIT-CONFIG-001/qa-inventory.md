@@ -11,5 +11,4 @@
   non-positive/non-numeric duration
 - Restart: file-backed DuckDB migration replay and readback passed
 - Visual: Odoo reference captured; Core3 visual evidence blocked by shared
-  page-discovery failure, so this feature is not visually signed off.
-
+page-discovery failure, so this feature is not visually signed off.

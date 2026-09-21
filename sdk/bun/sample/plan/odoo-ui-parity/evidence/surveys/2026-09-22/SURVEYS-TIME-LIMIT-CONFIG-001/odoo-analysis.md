@@ -18,5 +18,4 @@
 - Live observation: `MyCompany Vendor Certification` showed `Survey Time
   Limit` checked, `10:00`, and `minutes` in both desktop and iphone-14
   emulation. The same Options surface showed the four scoring modes, proving
-  this slice is distinct from scoring configuration.
-
+this slice is distinct from scoring configuration.

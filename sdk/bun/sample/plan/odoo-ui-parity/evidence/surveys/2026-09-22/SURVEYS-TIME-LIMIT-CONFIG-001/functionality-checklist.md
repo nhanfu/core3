@@ -14,5 +14,4 @@
 - [x] Capture authenticated Odoo desktop and mobile-emulation reference
   states.
 - [ ] Capture paired authenticated Core3 desktop/mobile states: blocked by the
-  shared page-discovery error before a listener was available.
-
+shared page-discovery error before a listener was available.

@@ -29,4 +29,3 @@ module path was edited.
 The bsk sessions created for this feature were stopped; the final daemon check
 showed those sessions stopped. Other pre-existing browser sessions were left
 untouched.
-

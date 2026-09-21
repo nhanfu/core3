@@ -19,4 +19,3 @@ Artifacts:
 
 No Core3 screenshot is claimed: the isolated module runtime failed before
 readiness with the shared page-discovery error recorded in `verification.md`.
-
