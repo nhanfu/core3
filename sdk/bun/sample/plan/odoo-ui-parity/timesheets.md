@@ -2305,3 +2305,33 @@ Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
 `/web/login`, so authenticated desktop/mobile comparison is blocked and no
 visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
 open.
+
+## Wave 47 — `TIMESHEET-PORTAL-VISIBILITY-DOMAIN-001`
+
+The next uncovered portal behavior is Odoo's `_timesheet_get_portal_domain`:
+portal rows are visible through the current partner's project/task relation
+only when the project privacy is `invited_users` or `portal`; the controller
+applies that domain to `/my/timesheets`. This is distinct from the completed
+portal list, sorting, task-hours summary, and task-action portal views.
+
+Core3 preserves the existing layout-only `timesheets-portal` page and its
+separate API contract joined by `page.id: timesheets-portal`. Migration
+`20260921210000-030-timesheets-portal-visibility-domain.yaml` durably adds
+project privacy/version state and active portal relation rows. The API uses a
+left relation join so internal employee-owned rows remain readable while
+portal users additionally require an active project/task relation and
+allowed project privacy; project/company, actor, missing, empty, and stale
+version guards fail closed.
+
+Focused coverage passed 4/4 new tests (27 expectations) and the related
+related portal regression passed 19/19 tests (136 expectations); one broader task
+test also exposed an unrelated shared-worktree page-schema error in another
+module (`actions[7].fields must be a non-empty array`). Scoped ESLint passed.
+The UI audit is blocked by that same unrelated discovery error. Odoo
+authenticated desktop/mobile captures are recorded in the evidence directory;
+Core3 capture is blocked because startup fails on the unrelated page-schema
+error before ports 3001/3002 become available. Odoo Print/PDF/action surfaces
+remain blockers; no sign-off is claimed.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-portal-visibility-domain-001/`.

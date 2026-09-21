@@ -534,6 +534,29 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 47 — `TIMESHEET-PORTAL-VISIBILITY-DOMAIN-001`
+
+- Source/action: Odoo `hr_timesheet` applies `_timesheet_get_portal_domain` to
+  `/my/timesheets`, requiring the current partner's project/task relation and
+  project privacy `invited_users` or `portal`.
+- Page contract: `pages/portal-timesheets.yaml` remains layout-only at
+  `/my/timesheets`; API `api/portal-timesheets.yaml` remains separate and is
+  joined by `page.id: timesheets-portal`.
+- Durable contract: migration
+  `20260921210000-030-timesheets-portal-visibility-domain.yaml` persists
+  project privacy/version state and active portal visibility relations.
+- Focused test:
+  `test/timesheets_portal_visibility_domain.integration.test.ts` — 4 tests /
+  27 expectations, including actor/company/privacy/relation/missing/empty/
+  stale guards and file-backed restart.
+- Related regression: 19 tests / 136 expectations passed. A broader task test
+  and UI audit are blocked by unrelated page discovery failure
+  `actions[7].fields must be a non-empty array`.
+- Browser gate: authenticated Odoo desktop/mobile captures are under the
+  feature evidence directory. Core3 could not start for capture because of
+  the unrelated discovery failure. Odoo Print/PDF/action surfaces remain
+  blockers; no sign-off is claimed.
+
 ## Wave 46 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
 
 - Source behavior: Odoo `project.task._get_portal_total_hours_dict` returns

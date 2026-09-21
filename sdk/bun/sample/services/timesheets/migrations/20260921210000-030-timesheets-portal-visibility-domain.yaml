@@ -1,0 +1,34 @@
+version: 0.0.30
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_projects ADD COLUMN IF NOT EXISTS privacy_visibility VARCHAR;
+      ALTER TABLE timesheet_projects ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE timesheet_projects
+      SET privacy_visibility = CASE id WHEN 'project-demo-002' THEN 'invited_users' WHEN 'project-demo-closed' THEN 'internal' ELSE 'portal' END,
+          row_version = COALESCE(row_version, 1)
+      WHERE privacy_visibility IS NULL OR row_version IS NULL;
+      CREATE TABLE IF NOT EXISTS timesheet_portal_visibility (
+        id VARCHAR PRIMARY KEY,
+        project_id VARCHAR NOT NULL,
+        portal_user_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        relation_type VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_portal_visibility_idx ON timesheet_portal_visibility(project_id, portal_user_name, company_name, relation_type, active, row_version);
+      INSERT OR IGNORE INTO timesheet_portal_visibility(id, project_id, portal_user_name, company_name, relation_type, active, row_version) VALUES
+        ('timesheet-portal-visibility-001', 'project-demo-001', 'Portal User', 'Core3 Demo Company', 'project_partner', TRUE, 1),
+        ('timesheet-portal-visibility-002', 'project-demo-002', 'Portal User', 'Core3 Demo Company', 'task_follower', TRUE, 1);
+    down: |
+      DROP INDEX IF EXISTS timesheet_portal_visibility_idx;
+      DROP TABLE IF EXISTS timesheet_portal_visibility;
+      ALTER TABLE timesheet_projects DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE timesheet_projects DROP COLUMN IF EXISTS privacy_visibility;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

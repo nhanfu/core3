@@ -1082,6 +1082,30 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-21 — `TIMESHEET-PORTAL-VISIBILITY-DOMAIN-001`
+
+- Selected Odoo's portal visibility domain from
+  `hr_timesheet.models.hr_timesheet._timesheet_get_portal_domain`, including
+  partner/task relation visibility and project privacy values
+  `invited_users`/`portal`, as applied by the `/my/timesheets` controller.
+- Updated the existing separate `timesheets-portal` page/API pair, joined by
+  `page.id`, with durable project privacy/version state and active portal
+  visibility relations in migration
+  `20260921210000-030-timesheets-portal-visibility-domain.yaml`. The query
+  preserves internal employee ownership while requiring portal relations,
+  company/privacy membership, and an optional expected project version for
+  stale reads.
+- New focused test passed 4/4 with 27 expectations. The related portal/task
+  regression passed 19/19 with 136 expectations. Scoped ESLint passed. The
+  broader task regression and UI audit are blocked by an unrelated shared
+  page-schema error: `actions[7].fields must be a non-empty array`.
+- Authenticated Odoo desktop/mobile captures are present. Core3 could not be
+  captured because the same unrelated discovery error prevents ports 3001/3002
+  from starting. Odoo Print/PDF/action surfaces remain explicit blockers; no
+  sign-off is claimed.
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-portal-visibility-domain-001/`.
+
 ## 2026-09-21 — `TIMESHEET-PORTAL-TASK-HOURS-SUMMARY-001`
 
 - Selected Odoo's `project.task._get_portal_total_hours_dict`, which exposes

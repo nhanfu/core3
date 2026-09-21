@@ -1212,3 +1212,22 @@ blockers remain open; no visual or module sign-off is claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-pivot-view-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
+
+## Wave 47 — `TIMESHEET-PORTAL-VISIBILITY-DOMAIN-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/controller comparison | `_timesheet_get_portal_domain`, partner/task relation, invited/portal privacy, `/my/timesheets` controller | pass in focused source test |
+| Paired YAML contract | layout-only `timesheets-portal` page and separate API with matching `page.id` | pass |
+| Durable visibility state | project privacy/version columns plus active portal relation table and replay-safe migration | pass |
+| Permission/company/actor/missing/empty/stale guards | `timesheets.read`, current company, relation/privacy membership, missing project, empty fixture, expected project version | pass |
+| Restart | file-backed project privacy and relation state survive reopen/migration replay | pass |
+| Focused regression | new test 4/4 (27 expectations); related portal suites 19/19 (136 expectations) | pass |
+| Lint | scoped ESLint for new integration test | pass |
+| UI audit | `scripts/audit-order-ui.ts` | blocked by unrelated shared page-schema error: `actions[7].fields must be a non-empty array` |
+| Core3 desktop/mobile evidence | authenticated `/my/timesheets` capture | blocked; startup fails before ports 3001/3002 due to the same unrelated discovery error |
+| Odoo desktop/mobile evidence | authenticated `http://localhost:8069/my/timesheets?db=core3_reference` | captured; see feature evidence PNGs |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-portal-visibility-domain-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.
