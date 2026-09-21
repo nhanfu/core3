@@ -1,0 +1,24 @@
+title: Theme Preview
+page: { id: website-theme-preview, route: /website-themes/preview, breadcrumb: [Website, Site, Pick a Theme, Preview], auth: { require: [website.read] } }
+components:
+  - type: OdooFormView
+    source: website_theme_preview
+    title_field: display_name
+    subtitle_field: summary
+    editable: false
+    header_actions:
+      - { id: open_theme_preview, label: Open preview, variant: primary, permission: website.read }
+      - { id: back_to_website_themes, label: Back to themes, variant: secondary, permission: website.read }
+    fields:
+      - { field: display_name, label: Theme }
+      - { field: category_name, label: Category }
+      - { field: author, label: Author }
+      - { field: summary, label: Summary, type: textarea }
+      - { field: preview_url, label: Preview URL }
+      - { field: website_name, label: Website }
+      - { field: theme_status, label: Installation state }
+      - { field: theme_revision, label: Theme revision }
+      - { field: primary_color, label: Primary color }
+      - { field: accent_color, label: Accent color }
+      - { field: surface_color, label: Surface color }
+      - { field: text_color, label: Text color }

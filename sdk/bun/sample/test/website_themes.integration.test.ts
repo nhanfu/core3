@@ -147,7 +147,7 @@ describe('Website Theme Manager parity', () => {
     expect(component.filters[0]).toMatchObject({ field: 'category_name', label: 'Category' });
     expect(component.group_by.map((group: any) => group.label)).toEqual(['Author', 'Category']);
     expect(component.columns.map((column: any) => column.label)).toEqual(['Theme', 'Summary', 'Category', 'Author', 'Status', '']);
-    expect(actionIds).toEqual(['choose_website_theme', 'refresh_website_theme', 'remove_website_theme']);
+    expect(actionIds).toEqual(['open_website_theme_preview', 'choose_website_theme', 'refresh_website_theme', 'remove_website_theme']);
     expect(api.actions.filter((action: any) => action.id.endsWith('_website_theme')).map((action: any) => action.permission)).toEqual(['website.manage', 'website.manage', 'website.manage']);
   });
 });

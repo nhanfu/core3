@@ -215,3 +215,41 @@ publish/unpublish browser workflow, import/export, and public/portal rendering
 remain open. Theme catalog/assignment service/API/action persistence is covered
 by this bounded slice only; Website module sign-off remains conditional on the
 Odoo Website actor, Core3 mobile capture, and broader open gates.
+
+## Wave 7 execution evidence — 2026-09-22 — Theme Preview and asset effects
+
+The next bounded feature implements the Odoo `theme_view_form_preview` contract:
+the `theme_install_kanban_action` form view is read-only, fullscreen, and
+renders the theme `url` through an iframe. Core3 adds the permissioned
+`/website-themes/preview` form page and API datasource, a row action from the
+Theme Manager, and an `Open preview` client action that opens the selected
+theme against the public Website preview boundary. Page and API YAML remain
+separate and join by `page.id: website-theme-preview`.
+
+The Odoo model source also shows that theme selection changes the current
+Website's `theme_id` and reloads theme assets. Core3 models the durable visual
+effect through Website-owned theme color tokens (`primary_color`,
+`accent_color`, `surface_color`, and `text_color`) and applies only validated
+hex colors to the public page root. Installed-theme state, preview-theme state,
+theme revision, and public page scope are covered by migration replay and
+file-backed restart assertions; no Odoo frontend code is copied.
+
+Focused coverage passes in
+`test/website_theme_preview.integration.test.ts` (3 tests, 21 assertions),
+plus Theme Manager/public regressions (11 tests, 77 assertions across the
+three-file scoped run). Feature evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-theme-preview-001/`.
+
+Browser comparison is blocked. The required borrow of the existing Odoo tab on
+browser instance `245ea108` remained pending confirmation, while the available
+authenticated Odoo tab exposed CRM rather than Website. No Odoo or Core3
+preview screenshots were captured in this wave, so no visual-parity claim is
+made. The existing Website reference blocker (authenticated actor has no
+Website application) remains open.
+
+### Updated next slice
+
+Theme preview/form and public asset-token effects are covered at the
+contract/data/runtime level. Page publish/unpublish browser workflow,
+import/export, richer theme asset installation effects, and public/portal
+rendering remain open; paired Odoo desktop/mobile evidence is still required.

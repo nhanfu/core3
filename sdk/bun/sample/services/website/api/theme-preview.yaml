@@ -1,0 +1,27 @@
+page: { id: website-theme-preview }
+datasources:
+  - id: website_theme_preview
+    permission: website.read
+    single: true
+    error_states:
+      forbidden: { status: 403, code: WEBSITE_THEME_PREVIEW_FORBIDDEN, message: You do not have permission to view this theme preview. }
+      transport_error: { status: 503, code: WEBSITE_THEME_PREVIEW_UNAVAILABLE, message: The theme preview is temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, REPLACE(REPLACE(t.name, 'theme_', ''), '_', ' ') AS display_name, t.name, t.summary, t.category_name, t.author, t.preview_url, t.primary_color, t.accent_color, t.surface_color, t.text_color, w.id AS website_id, w.name AS website_name, w.row_version AS website_row_version, w.theme_id AS current_theme_id, w.theme_revision, CASE WHEN w.theme_id = t.id THEN 'Installed' ELSE 'Available' END AS theme_status FROM website_themes t JOIN website_websites w ON w.id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001') WHERE t.id = :id AND t.active = TRUE"
+actions:
+  - id: open_theme_preview
+    type: client
+    permission: website.read
+    script: |
+      async ({ row }) => {
+        const url = String(row?.preview_url || '').trim();
+        if (!url) return;
+        const target = new URL(url, window.location.origin);
+        target.searchParams.set('website_id', String(row?.website_id || 'website-demo-001'));
+        target.searchParams.set('theme_id', String(row?.id || ''));
+        window.open(target.href, '_blank', 'noopener,noreferrer');
+      }
+  - id: back_to_website_themes
+    type: navigate
+    permission: website.read
+    navigate_to: /website-themes
+    params: { website_id: '{state.website_theme_preview.website_id}' }

@@ -1,0 +1,19 @@
+version: 0.0.16
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_themes ADD COLUMN IF NOT EXISTS primary_color VARCHAR;
+      ALTER TABLE website_themes ADD COLUMN IF NOT EXISTS accent_color VARCHAR;
+      ALTER TABLE website_themes ADD COLUMN IF NOT EXISTS surface_color VARCHAR;
+      ALTER TABLE website_themes ADD COLUMN IF NOT EXISTS text_color VARCHAR;
+      UPDATE website_themes SET primary_color = COALESCE(NULLIF(primary_color, ''), '#714BCA'), accent_color = COALESCE(NULLIF(accent_color, ''), '#6B5DD3'), surface_color = COALESCE(NULLIF(surface_color, ''), '#FFFFFF'), text_color = COALESCE(NULLIF(text_color, ''), '#202A44');
+    down: |
+      ALTER TABLE website_themes DROP COLUMN IF EXISTS text_color;
+      ALTER TABLE website_themes DROP COLUMN IF EXISTS surface_color;
+      ALTER TABLE website_themes DROP COLUMN IF EXISTS accent_color;
+      ALTER TABLE website_themes DROP COLUMN IF EXISTS primary_color;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -85,3 +85,13 @@ Full Website sign-off requires the focused suite, authenticated editor CRUD and
 publish workflow, public/private and site-scope checks, reload/restart
 persistence, Fluent HTML rendering validation, and paired Odoo desktop/mobile
 comparisons. Current contract evidence is not module completion.
+
+## WEBSITE-THEME-PREVIEW-001 — 2026-09-22
+
+| Case | Setup / actor | Exact action or route | Expected result | Evidence |
+| --- | --- | --- | --- | --- |
+| FUNC-012 | Website reader; seeded theme catalog | Open `/website-themes`, choose `Preview`, then `/website-themes/preview?id=theme_docs&website_id=website-demo-001` | Read-only form/API pair exposes Odoo preview metadata and an Open preview action | `test/website_theme_preview.integration.test.ts` |
+| DATA-007 | Core3 Storefront/Core3 Docs; theme_core/theme_docs | Query installed and preview theme state, then public `/api/public/website/page?path=/` with theme scope | Site-scoped theme tokens and revision are deterministic and persist | `test/website_theme_preview.integration.test.ts` |
+| WF-009 | Website manager; file-backed DuckDB | Choose theme, close/reopen database, replay migrations | Installed theme and public visual tokens survive restart without duplicate seed rows | `test/website_theme_preview.integration.test.ts` |
+| PERM-009 | Website reader, no manage permission | Discover preview page and inspect actions | Read access works; no preview action mutates Website/theme state | `test/website_theme_preview.integration.test.ts` |
+| UI-008 | Authenticated Odoo/Core3 desktop and mobile | Compare preview form and themed public page at 1440x900 and 390x844 | Paired visual evidence required for sign-off | Blocked; no captures claimed, see feature evidence |

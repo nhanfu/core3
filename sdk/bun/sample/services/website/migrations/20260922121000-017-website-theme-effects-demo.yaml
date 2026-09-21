@@ -1,0 +1,14 @@
+version: 0.0.17
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE website_themes SET preview_url = '/website/page?path=%2F', primary_color = '#714BCA', accent_color = '#6B5DD3', surface_color = '#FFFFFF', text_color = '#202A44', updated_at = CURRENT_TIMESTAMP WHERE id = 'theme_core';
+      UPDATE website_themes SET preview_url = '/website/page?path=%2F', primary_color = '#0F766E', accent_color = '#0D9488', surface_color = '#F0FDFA', text_color = '#12343B', updated_at = CURRENT_TIMESTAMP WHERE id = 'theme_docs';
+    down: |
+      UPDATE website_themes SET preview_url = '/website', primary_color = '#714BCA', accent_color = '#6B5DD3', surface_color = '#FFFFFF', text_color = '#202A44', updated_at = CURRENT_TIMESTAMP WHERE id = 'theme_core';
+      UPDATE website_themes SET preview_url = '/website-homepage', primary_color = '#714BCA', accent_color = '#6B5DD3', surface_color = '#FFFFFF', text_color = '#202A44', updated_at = CURRENT_TIMESTAMP WHERE id = 'theme_docs';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

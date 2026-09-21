@@ -1,14 +1,14 @@
 .website-page { min-height: 100%; }
 
-.website-public { min-height: 100vh; background: #fff; color: #202a44; }
-.website-public-header { display: flex; justify-content: space-between; align-items: center; padding: 22px clamp(22px, 8vw, 120px); border-bottom: 1px solid #edf0f4; }
+.website-public { min-height: 100vh; background: var(--website-surface, #fff); color: var(--website-text, #202a44); }
+.website-public-header { display: flex; justify-content: space-between; align-items: center; padding: 22px clamp(22px, 8vw, 120px); border-bottom: 1px solid color-mix(in srgb, var(--website-text, #202a44) 12%, transparent); }
 .website-public-brand { font-size: 18px; font-weight: 700; }
-.website-public-home { color: #714bca; font-size: 13px; font-weight: 700; }
+.website-public-home { color: var(--website-primary, #714bca); font-size: 13px; font-weight: 700; }
 .website-public-article { max-width: 760px; margin: 0 auto; padding: 96px 24px; }
-.website-public-kicker { color: #6b5dd3; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.website-public-kicker { color: var(--website-accent, #6b5dd3); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .website-public-article h1 { margin: 14px 0; font-size: clamp(32px, 6vw, 60px); line-height: 1.08; }
 .website-public-path, .website-public-article time { display: block; color: #667085; }
-.website-public-content { margin-top: 28px; color: #475467; font-size: 18px; line-height: 1.7; }
+.website-public-content { margin-top: 28px; color: color-mix(in srgb, var(--website-text, #202a44) 72%, transparent); font-size: 18px; line-height: 1.7; }
 .website-public-content p { margin: 0 0 16px; }
 .website-public-asset { display: block; width: min(100%, 480px); height: auto; margin-top: 28px; border-radius: 12px; }
 .website-public-error, .website-public-loading { display: grid; place-content: center; padding: 48px 24px; text-align: center; }

@@ -139,3 +139,15 @@ evidence folder.
 
 - No product diff exists after the checkpoint; owner was re-prompted. QA event
   remains untriggered pending implementation and focused tests.
+
+## 2026-09-22 Theme Preview and asset-effects checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-012 | Odoo read-only theme preview form and page/API separation | `test/website_theme_preview.integration.test.ts`; `theme_view_form_preview`, iframe source anchor, matching page IDs, and `/website-themes/preview` route | pass: 1 test / 10 assertions |
+| WEBSITE-DATA-007 | Installed and preview theme tokens | `test/website_theme_preview.integration.test.ts`; deterministic theme tokens, site-scoped preview query, and public page theme fields | pass |
+| WEBSITE-WF-009 | Theme effects and restart replay | `test/website_theme_preview.integration.test.ts`; choose theme, public installed-theme response, file-backed close/reopen, and migration replay | pass |
+| WEBSITE-PERM-009 | Preview read boundary | `test/website_theme_preview.integration.test.ts`; datasource and actions require `website.read`, with no preview mutation | pass |
+| WEBSITE-UI-008 | Authenticated preview form and public themed page comparison | Browser instance `245ea108`; Odoo tab borrow remained pending, available tab was CRM without Website, and no Core3 captures were produced | blocked; no visual-parity claim |
+
+Scoped result: `bun test ./test/website_themes.integration.test.ts ./test/website_theme_preview.integration.test.ts ./test/website_public.integration.test.ts --timeout 20000` — 11 tests, 77 assertions, pass. `git diff --check` and `bun run frontend:build` pass. This checkpoint does not sign off the Website module.

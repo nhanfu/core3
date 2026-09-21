@@ -8,6 +8,12 @@ type WebsitePage = {
   content_html?: string;
   asset_url?: string | null;
   date_publish?: string;
+  theme_id?: string | null;
+  theme_name?: string | null;
+  theme_primary_color?: string | null;
+  theme_accent_color?: string | null;
+  theme_surface_color?: string | null;
+  theme_text_color?: string | null;
 };
 
 const SAFE_TAGS = new Set(['P', 'H2', 'H3', 'STRONG', 'EM', 'UL', 'OL', 'LI', 'A', 'BR']);
@@ -70,6 +76,12 @@ export async function mount(outlet: HTMLElement, pagePath: string) {
 
   const page = payload.page as WebsitePage;
   const root = html.take(outlet).add('main').className('website-public').ele();
+  const safeColor = (value: unknown, fallback: string) => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value) : fallback;
+  root.style.setProperty('--website-primary', safeColor(page.theme_primary_color, '#714BCA'));
+  root.style.setProperty('--website-accent', safeColor(page.theme_accent_color, '#6B5DD3'));
+  root.style.setProperty('--website-surface', safeColor(page.theme_surface_color, '#FFFFFF'));
+  root.style.setProperty('--website-text', safeColor(page.theme_text_color, '#202A44'));
+  root.dataset.themeId = String(page.theme_id || '');
   const header = html.take(root).header.className('website-public-header').ele();
   html.take(header).div.className('website-public-brand').text(page.website_name || 'Website');
   html.take(header).a.className('website-public-home').href('/website/page?path=%2F').text('Home');

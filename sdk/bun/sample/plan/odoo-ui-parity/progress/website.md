@@ -37,6 +37,27 @@ the action endpoint, and second-site persistence after file-backed restart and
 migration replay.
 These are Core3 runtime checks, not paired Odoo visual sign-off.
 
+## 2026-09-22 owner checkpoint — Theme Preview and asset effects
+
+Implemented `WEBSITE-THEME-PREVIEW-001`, the next uncovered Website slice after
+tracking/SEO filters and Theme Manager catalog/actions. The Odoo
+`theme_view_form_preview` read-only iframe form is represented by a separate
+permissioned Core3 preview page/API contract, with a Theme Manager row action
+and safe public preview opener. Theme selection now has durable visual tokens
+and the public Website renderer applies validated colors for installed or
+previewed themes. Migration replay, file-backed restart, site scope, and the
+existing Theme Manager/public regressions pass.
+
+Focused result: 11 tests / 77 assertions across Theme Manager, Theme Preview,
+and public Website visibility. Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-theme-preview-001/`.
+
+Odoo browser comparison is blocked because browser instance `245ea108` did not
+provide a confirmed borrow of the existing Odoo tab and the available
+authenticated tab was CRM without the Website application. No screenshots are
+claimed. Page publish/unpublish browser workflow, import/export, richer asset
+installation effects, and paired Odoo desktop/mobile comparison remain open.
+
 ## 2026-09-22 owner checkpoint — Theme Manager
 
 Implemented the next absent Website source-backed slice from Odoo 19's

@@ -20,7 +20,7 @@ components:
       - { field: category_name, label: Category }
       - { field: author, label: Author }
       - { field: theme_status, label: Status, type: StatusChip }
-      - { field: id, label: '', sortable: false, actions: [{ id: choose_website_theme, label: Use this theme, icon: check, variant: primary, show_if: 'row.is_installed_on_current_website !== true' }, { id: refresh_website_theme, label: Update theme, icon: refresh, variant: primary, show_if: 'row.is_installed_on_current_website === true' }, { id: remove_website_theme, label: Remove theme, icon: trash, variant: secondary, show_if: 'row.is_installed_on_current_website === true' }] }
+      - { field: id, label: '', sortable: false, actions: [{ id: open_website_theme_preview, label: Preview, icon: eye, variant: secondary }, { id: choose_website_theme, label: Use this theme, icon: check, variant: primary, show_if: 'row.is_installed_on_current_website !== true' }, { id: refresh_website_theme, label: Update theme, icon: refresh, variant: primary, show_if: 'row.is_installed_on_current_website === true' }, { id: remove_website_theme, label: Remove theme, icon: trash, variant: secondary, show_if: 'row.is_installed_on_current_website === true' }] }
     page_size: 50
     row_key: id
     row_actions: menu

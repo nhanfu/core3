@@ -32,13 +32,13 @@ export default class WebsiteModule implements ModuleLifecycle {
   async handlePublicRoute(request: Request, url: URL, service: WebsiteService): Promise<Response | null> {
     if (url.pathname === '/api/public/website/pages') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-      const result = await service.call('website.public.pages', { q: url.searchParams.get('q')?.trim() || null, website_id: url.searchParams.get('website_id')?.trim() || null });
+      const result = await service.call('website.public.pages', { q: url.searchParams.get('q')?.trim() || null, website_id: url.searchParams.get('website_id')?.trim() || null, preview_theme_id: url.searchParams.get('theme_id')?.trim() || null });
       return this.json({ pages: result?.pages || [] });
     }
     if (url.pathname === '/api/public/website/page') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
       const path = url.searchParams.get('path') || '/';
-      const result = await service.call('website.public.page_by_path', { url: path, website_id: url.searchParams.get('website_id')?.trim() || null });
+      const result = await service.call('website.public.page_by_path', { url: path, website_id: url.searchParams.get('website_id')?.trim() || null, preview_theme_id: url.searchParams.get('theme_id')?.trim() || null });
       const page = result?.pages?.[0];
       if (!page) return this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
       return this.json({ page: { ...page, asset_url: page.asset_id ? `/api/public/website/assets/${encodeURIComponent(String(page.asset_id))}` : null } });
@@ -59,7 +59,7 @@ export default class WebsiteModule implements ModuleLifecycle {
     const match = url.pathname.match(/^\/api\/public\/website\/pages\/([^/]+)$/);
     if (!match) return null;
     if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-    const result = await service.call('website.public.page', { id: decodeURIComponent(match[1]), website_id: url.searchParams.get('website_id')?.trim() || null });
+    const result = await service.call('website.public.page', { id: decodeURIComponent(match[1]), website_id: url.searchParams.get('website_id')?.trim() || null, preview_theme_id: url.searchParams.get('theme_id')?.trim() || null });
     const page = result?.pages?.[0];
     return page ? this.json({ page: { ...page, asset_url: page.asset_id ? `/api/public/website/assets/${encodeURIComponent(String(page.asset_id))}` : null } }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
   }
