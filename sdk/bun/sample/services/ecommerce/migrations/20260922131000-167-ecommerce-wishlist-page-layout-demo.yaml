@@ -1,0 +1,18 @@
+version: 0.0.167
+kind: data
+description: deterministic Website Sale Wishlist page layout fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_wishlist_page_layout_policies (
+        id, row_version, company_name, wishlist_grid_columns,
+        wishlist_mobile_columns, wishlist_gap
+      ) VALUES (
+        'ecommerce-wishlist-page-layout-my-company', 1, 'My Company', 5, 2, '16px'
+      )
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_wishlist_page_layout_policies WHERE id = 'ecommerce-wishlist-page-layout-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

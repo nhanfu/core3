@@ -18,3 +18,9 @@ components:
     page_size: 50
     row_key: id
     empty_state: { title: Your wishlist is empty, description: Save a published product to find it here later. }
+  - type: OdooFormView
+    source: ecommerce_wishlist_page_layout
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Wishlist Page Layout, columns: 2, fields: [{ field: company_name, label: Company }, { field: desktop_columns_label, label: Desktop, type: StatusChip }, { field: mobile_columns_label, label: Mobile, type: StatusChip }, { field: gap_label, label: Grid Gap, type: StatusChip }] }

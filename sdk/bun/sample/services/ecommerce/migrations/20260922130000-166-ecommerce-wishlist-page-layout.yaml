@@ -1,0 +1,28 @@
+version: 0.0.166
+kind: schema
+description: durable Website Sale Wishlist page layout policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_wishlist_page_layout_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        wishlist_grid_columns INTEGER NOT NULL DEFAULT 5,
+        wishlist_mobile_columns INTEGER NOT NULL DEFAULT 2,
+        wishlist_gap VARCHAR NOT NULL DEFAULT '16px',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (wishlist_grid_columns BETWEEN 2 AND 6),
+        CHECK (wishlist_mobile_columns BETWEEN 1 AND 2)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_wishlist_page_layout_company_idx
+        ON ecommerce_wishlist_page_layout_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_wishlist_page_layout_company_idx;
+      DROP TABLE IF EXISTS ecommerce_wishlist_page_layout_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,6 +1,38 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Shop Product-Card Wishlist visibility slice; module sign-off remains open)
+Status: qa-in-progress (bounded Wishlist Page Layout slice; module sign-off remains open)
+
+## Bounded feature — Wishlist Page Layout (`ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`)
+
+Wave 51 selects the next genuinely uncovered Website Sale Wishlist builder
+surface after the completed compare-price visibility and Shop product-card
+wishlist visibility slices. Odoo's `website_sale_wishlist` addon persists
+`wishlist_grid_columns` (default 5), `wishlist_mobile_columns` (default 2),
+and `wishlist_gap` (default `16px`) on `website`; the Wishlist Page builder
+offers desktop 2–6 columns, mobile 1–2 columns, and a 0–28px gap range. The
+wishlist template emits the column data attributes and the addon stylesheet
+uses them for the responsive wishlist grid. This is distinct from wishlist
+item persistence, login/session merge, and Shop product-card Wishlist button
+visibility.
+
+Core3 migrations 166/167 add a durable company-scoped layout policy and an
+idempotent My Company fixture with the Odoo defaults. Separate
+`api/wishlist-page-layout-policy.yaml` and
+`pages/wishlist-page-layout-policy.yaml` contracts join through
+`ecommerce-wishlist-page-layout-policy`; updates require `ecommerce.write`,
+validate desktop/mobile columns and a safe 0–28px CSS gap, and use company and
+row-version guards. The existing Wishlist page/API remain separate and project
+the effective layout policy through a read-only datasource.
+
+Focused verification covers the Odoo website model, Wishlist builder actions,
+template/stylesheet, page/API separation, permissioned optimistic update,
+invalid, foreign-company, missing, and stale guards, migration replay, Wishlist
+projection, and DuckDB restart persistence. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-catalog-wishlist-page-layout-001/`.
+The authenticated Odoo reference does not have Website Sale/Wishlist installed:
+`/shop/wishlist` is an exact authenticated 404 at desktop and mobile viewports.
+Core3 browser rendering is blocked by connection refusal on ports 3000, 4312,
+and 4313. No paired visual-parity sign-off is claimed.
 
 ## Bounded feature — Shop Product-Card Wishlist Visibility (`ECOM-CATALOG-SHOP-PRODUCT-WISHLIST-VISIBILITY-001`)
 

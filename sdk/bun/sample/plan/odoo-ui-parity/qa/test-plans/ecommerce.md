@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001
+
+- ECOM-FUNC-090: trace Odoo `website_sale_wishlist.models.website`, the
+  Wishlist Page builder option/plugin, 2–6 desktop and 1–2 mobile choices,
+  the 0–28px gap range, wishlist data attributes, and responsive stylesheet;
+  verify the separate Core3 layout policy page/API and Wishlist projection.
+- ECOM-WF-090: replay the deterministic 5-column/2-column/16px policy,
+  update each supported layout value, reject invalid, foreign-company,
+  missing, and stale writes, and preserve the policy across migration replay
+  and DuckDB restart.
+- ECOM-PERM-090: require `ecommerce.read` for policy/layout reads and
+  `ecommerce.write` for updates; enforce current-company scope and optimistic
+  row-version guards.
+- ECOM-UI-090: render the Wishlist Page Layout form and Wishlist projection at
+  desktop and mobile and compare the authenticated Odoo Wishlist Page builder;
+  the supplied Odoo reference returns authenticated `/shop/wishlist` HTTP 404
+  and Core3 ports 3000/4312/4313 are unavailable, so paired rendered UI
+  sign-off is blocked with exact evidence.
+
 ## ECOM-CATALOG-PRODUCT-COMPARE-PRICE-VISIBILITY-001
 
 - ECOM-FUNC-078: trace Odoo `group_product_price_comparison`, the Comparison

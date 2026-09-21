@@ -4,6 +4,10 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 51 bounded slice: `ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`
+(implementation and focused/adjacent verification complete; authenticated Odoo
+visual comparison blocked by exact `/shop/wishlist` 404 and Core3 runtime
+connection refusal; module sign-off remains open).
 Latest Wave 50 bounded slice: `ECOM-CATALOG-SHOP-PRODUCT-WISHLIST-VISIBILITY-001`
 (implementation and focused verification complete; authenticated Odoo visual
 comparison blocked by exact `/shop` 404; module sign-off remains open).

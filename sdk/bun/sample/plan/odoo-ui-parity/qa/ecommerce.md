@@ -1,5 +1,28 @@
 # ecommerce QA ledger
 
+## Wishlist Page Layout (`ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`, 2026-09-22)
+
+- Odoo source/builder/template/styles: pass. The supplied
+  `website_sale_wishlist` addon persists desktop 2–6 and mobile 1–2 wishlist
+  columns plus a 0–28px gap, writes them through Wishlist Page builder actions,
+  emits data attributes/style, and applies responsive grid CSS.
+- Core3 lifecycle: migrations 166/167 add the durable company policy and
+  deterministic 5/2/16px fixture. Separate page/API YAML exposes a
+  permissioned optimistic update; the existing Wishlist page/API projects the
+  effective layout without changing item ordering or ownership behavior.
+- Focused and adjacent verification: **11 tests, 125 assertions, 0 failures**
+  across Wishlist Page Layout, Wishlist Lifecycle, Wishlist Session Merge, and
+  Comparison Price Visibility.
+- Audit/build: `bun run audit` and authenticated Core3 rendering were not
+  available in this environment; the known shared runtime ports 3000, 4312,
+  and 4313 refused connections. Scoped diff/lint checks are recorded in the
+  feature evidence.
+- Authenticated Odoo comparison uses `http://localhost:8069`, database
+  `core3_reference`, and the shared QA login. `/shop/wishlist` is an exact
+  authenticated 404 at desktop and iPhone-14 mobile viewports; no visual
+  parity sign-off is claimed.
+- Evidence: `evidence/ecommerce/2026-09-22/ecom-catalog-wishlist-page-layout-001/`.
+
 ## Shop Product-Card Wishlist Visibility (`ECOM-CATALOG-SHOP-PRODUCT-WISHLIST-VISIBILITY-001`, 2026-09-22)
 
 - Odoo source/builder/template/styles: pass. The supplied

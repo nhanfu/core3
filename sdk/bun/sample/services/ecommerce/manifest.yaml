@@ -185,6 +185,10 @@ menu:
           label: Shop Product Wishlist
           icon: heart
           permission: ecommerce.read
+        - path: /ecommerce/wishlist-page-layout
+          label: Wishlist Page Layout
+          icon: grid
+          permission: ecommerce.read
         - path: /ecommerce/product-reference-price
           label: Product Reference Price
           icon: tag

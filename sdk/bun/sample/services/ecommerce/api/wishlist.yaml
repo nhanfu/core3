@@ -7,6 +7,14 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_WISHLIST_FORBIDDEN, message: You do not have access to this wishlist. }
       transport_error: { status: 503, code: ECOMMERCE_WISHLIST_UNAVAILABLE, message: Wishlist is temporarily unavailable. }
     query: "SELECT i.id, i.row_version, i.wishlist_id, i.product_id, i.variant_id, i.product_name, i.variant_name, i.price, i.company_name, i.active, CAST(i.added_at AS VARCHAR) AS added_at, w.owner_type, w.customer_id, w.customer_name, w.customer_email FROM ecommerce_wishlist_items i JOIN ecommerce_wishlists w ON w.id = i.wishlist_id JOIN ecommerce_products p ON p.id = i.product_id WHERE i.active = TRUE AND w.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND (:wishlist_id IS NULL OR i.wishlist_id = :wishlist_id) AND (:company_name IS NULL OR i.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(w.customer_email, '')) = lower(:current_user_email)) ORDER BY i.added_at DESC, i.id"
+  - id: ecommerce_wishlist_page_layout
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_WISHLIST_LAYOUT_UNAUTHENTICATED, message: Sign in to view Wishlist Page settings. }
+      forbidden: { status: 403, code: ECOMMERCE_WISHLIST_LAYOUT_FORBIDDEN, message: You do not have permission to view Wishlist Page settings. }
+      transport_error: { status: 503, code: ECOMMERCE_WISHLIST_LAYOUT_UNAVAILABLE, message: Wishlist Page settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, wishlist_grid_columns, wishlist_mobile_columns, wishlist_gap, CAST(wishlist_grid_columns AS VARCHAR) || ' desktop columns' AS desktop_columns_label, CAST(wishlist_mobile_columns AS VARCHAR) || ' mobile columns' AS mobile_columns_label, CAST(wishlist_gap AS VARCHAR) AS gap_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_wishlist_page_layout_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company')"
 actions:
   - id: add_ecommerce_wishlist_item
     type: server_form
