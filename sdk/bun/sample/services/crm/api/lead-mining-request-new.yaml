@@ -1,0 +1,62 @@
+page: { id: crm-lead-mining-request-new }
+datasources:
+  - id: crm_lead_mining_request_new
+    single: true
+    permission: crm.manage
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, 1 AS row_version, 'New' AS name, 'draft' AS state, NULL AS error_type, 3 AS lead_number, 'companies' AS search_type, 'opportunity' AS lead_type, NULL AS team_name, NULL AS user_name, 'United States' AS country_names, '' AS state_names, 'Technology' AS industry_names, '' AS default_tags, false AS filter_on_size, 1 AS company_size_min, 1000 AS company_size_max, 10 AS contact_number, 'role' AS contact_filter_type, NULL AS preferred_role, '' AS other_roles, NULL AS seniority, 0 AS generated_lead_count"
+  - id: crm_lead_mining_request_new_teams
+    permission: crm.manage
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_lead_mining_request_new_salespeople
+    permission: crm.manage
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true AND NULLIF(TRIM(user_name), '') IS NOT NULL ORDER BY user_name"
+actions:
+  - id: back_to_crm_lead_mining_requests
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/lead-mining-requests
+  - id: create_crm_lead_mining_request
+    type: server_form
+    permission: crm.manage
+    title: New Lead Mining Request
+    action: crm.lead_mining_requests.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [crm_lead_mining_requests]
+    mutation:
+      operation: insert
+      table: crm_lead_mining_requests
+      generated: [id]
+      fields: [name, lead_number, search_type, lead_type, team_name, user_name, country_names, state_names, industry_names, default_tags, filter_on_size, company_size_min, company_size_max, contact_number, contact_filter_type, preferred_role, other_roles, seniority, state, error_type, generated_lead_count, row_version]
+      required: [lead_number, search_type, lead_type, country_names, industry_names]
+      defaults: { name: New, state: draft, row_version: 1, error_type: null, generated_lead_count: 0, state_names: '', default_tags: '', filter_on_size: false, company_size_min: 1, company_size_max: 1000, contact_number: 10, contact_filter_type: role, other_roles: '' }
+      boolean_fields: [filter_on_size]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:lead_number AS INTEGER) BETWEEN 1 AND 200", status: 422, code: CRM_LEAD_MINING_NUMBER_INVALID, message: Number of leads must be between 1 and 200. }
+        - { query: "SELECT 1 AS ok WHERE :search_type IN ('companies', 'people')", status: 422, code: CRM_LEAD_MINING_TARGET_INVALID, message: Select a valid lead mining target. }
+        - { query: "SELECT 1 AS ok WHERE :lead_type IN ('lead', 'opportunity')", status: 422, code: CRM_LEAD_MINING_TYPE_INVALID, message: Select a valid lead type. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:country_names AS VARCHAR))) > 0", status: 422, code: CRM_LEAD_MINING_COUNTRIES_REQUIRED, message: Select at least one country. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:industry_names AS VARCHAR))) > 0", status: 422, code: CRM_LEAD_MINING_INDUSTRIES_REQUIRED, message: Select at least one industry. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:filter_on_size, false) AS BOOLEAN) = false OR (CAST(:company_size_min AS INTEGER) >= 1 AND CAST(:company_size_max AS INTEGER) >= CAST(:company_size_min AS INTEGER))", status: 422, code: CRM_LEAD_MINING_SIZE_INVALID, message: Company size range is invalid. }
+        - { query: "SELECT 1 AS ok WHERE :search_type <> 'people' OR CAST(:contact_number AS INTEGER) BETWEEN 1 AND 5", status: 422, code: CRM_LEAD_MINING_CONTACTS_INVALID, message: Contacts per company must be between 1 and 5. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team_name, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team_name AND active = true)", status: 422, code: CRM_LEAD_MINING_TEAM_INVALID, message: Select an active opportunity sales team. }
+      result: { query: "SELECT * FROM crm_lead_mining_requests WHERE id = :id" }
+    fields:
+      - { field: name, label: Request Number, type: text }
+      - { field: lead_number, label: Number of Leads, type: number, required: true, min: 1, max: 200 }
+      - { field: search_type, label: Target, type: select, options: [{ value: companies, label: Companies }, { value: people, label: Companies and their Contacts }] }
+      - { field: lead_type, label: Type, type: select, options: [{ value: lead, label: Leads }, { value: opportunity, label: Opportunities }] }
+      - { field: country_names, label: Countries, type: text, required: true }
+      - { field: state_names, label: States, type: text }
+      - { field: industry_names, label: Industries, type: text, required: true }
+      - { field: team_name, label: Sales Team, type: select, options_source: crm_lead_mining_request_new_teams }
+      - { field: user_name, label: Salesperson, type: select, options_source: crm_lead_mining_request_new_salespeople }
+      - { field: default_tags, label: Default Tags, type: text }
+      - { field: filter_on_size, label: Filter on Size, type: checkbox }
+      - { field: company_size_min, label: From employees, type: number, min: 1 }
+      - { field: company_size_max, label: To employees, type: number, min: 1 }
+      - { field: contact_number, label: Extra contacts per Company, type: number, min: 1, max: 5 }
+      - { field: contact_filter_type, label: Filter on, type: select, options: [{ value: role, label: Role }, { value: seniority, label: Seniority }] }
+      - { field: preferred_role, label: Preferred Role, type: text }
+      - { field: other_roles, label: Other Roles, type: text }
+      - { field: seniority, label: Seniority, type: text }

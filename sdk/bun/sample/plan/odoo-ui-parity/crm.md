@@ -515,6 +515,32 @@ Reference contract:
   missing. No Odoo or Core3 screenshot was produced and no visual parity claim
   is made for this batch.
 
+## 2026-09-21 — Lead Generation / Lead Mining Requests
+
+Status: bounded implementation; not full parity or sign-off.
+
+- Odoo 19 source: `addons/crm_iap_mine/views/crm_menus.xml`,
+  `crm_iap_lead_mining_request_views.xml`, and
+  `models/crm_iap_lead_mining_request.py`. Live authenticated Odoo showed
+  CRM -> Configuration -> Lead Generation -> Lead Mining Requests, its empty
+  list state, and the New form.
+- Core3 adds separate list/new/detail pages and APIs, a durable migration,
+  manager-only permissions, validation, row-version guards, and Draft/Error/
+  Done Submit/Retry workflows. The duplicate `crm_lead_mining_teams` ID is
+  absent; new/detail lookups use unique datasource IDs.
+- Focused test: 2 pass / 26 assertions. UI audit: 772 pages, 781 routes,
+  1,582 datasources. Diff-check and focused ESLint passed.
+- Criteria use durable comma-separated values rather than Odoo many2many
+  widgets. The external Odoo IAP service is unavailable locally, so Submit/
+  Retry persist `service_unavailable` and do not fabricate leads.
+- Odoo desktop/mobile/form evidence is recorded under `/tmp/core3-odoo-parity/`.
+  Core3 bsk rendered only an empty shell, so no authenticated Core3 visual
+  claim is made; the bsk sessions were stopped cleanly.
+- Full CRM remains 45 pass / 1 fail because the AI allowlist lacks the four
+  new operations (`crm.lead_mining_requests.create`, `.update`, `.submit`,
+  `.retry`). AI is outside this CRM-only commit scope; no full sign-off is
+  claimed.
+
 ## Pipeline Analysis contract correction (2026-09-12)
 
 The source/action audit corrected the Core3 Pipeline Analysis pivot contract to

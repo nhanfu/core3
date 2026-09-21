@@ -1,0 +1,46 @@
+title: Lead Mining Request
+page: { id: crm-lead-mining-request-detail, route: /crm/lead-mining-requests/detail, breadcrumb: [CRM, Configuration, Lead Generation, Lead Mining Requests, Request], auth: { require: [crm.manage] } }
+components:
+  - type: OdooFormView
+    source: crm_lead_mining_request_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: draft, label: Draft }, { value: done, label: Done }, { value: error, label: Error }]
+    status_colors: { draft: neutral, done: green, error: red }
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: back_to_crm_lead_mining_requests, label: Lead Mining Requests, variant: secondary, permission: crm.manage }
+      - { id: edit_crm_lead_mining_request, label: Save, variant: primary, permission: crm.manage, show_if: "record.state !== 'done'" }
+      - { id: submit_crm_lead_mining_request, label: Submit, variant: primary, permission: crm.manage, show_if: "record.state === 'draft'" }
+      - { id: retry_crm_lead_mining_request, label: Retry, variant: primary, permission: crm.manage, show_if: "record.state === 'error'" }
+    groups:
+      - title: Request
+        fields:
+          - { field: name, label: Request Number }
+          - { field: lead_number, label: Number of Leads, type: number }
+          - { field: search_type_label, label: Target }
+          - { field: lead_type_label, label: Type }
+          - { field: state_label, label: Status }
+          - { field: error_message, label: Error }
+          - { field: generated_lead_count, label: Generated Leads, type: number }
+      - title: Criteria
+        fields:
+          - { field: country_names, label: Countries, type: text }
+          - { field: state_names, label: States, type: text }
+          - { field: industry_names, label: Industries, type: text }
+          - { field: filter_on_size, label: Filter on Size, type: checkbox }
+          - { field: company_size_min, label: From employees, type: number }
+          - { field: company_size_max, label: To employees, type: number }
+      - title: Lead Assignment
+        fields:
+          - { field: team_name, label: Sales Team, type: select, options_source: crm_lead_mining_request_detail_teams }
+          - { field: user_name, label: Salesperson, type: select, options_source: crm_lead_mining_request_detail_salespeople }
+          - { field: default_tags, label: Default Tags, type: text }
+      - title: Contact Criteria
+        fields:
+          - { field: contact_number, label: Extra contacts per Company, type: number }
+          - { field: contact_filter_type, label: Filter on, type: select, options: [{ value: role, label: Role }, { value: seniority, label: Seniority }] }
+          - { field: preferred_role, label: Preferred Role, type: text }
+          - { field: other_roles, label: Other Roles, type: text }
+          - { field: seniority, label: Seniority, type: text }

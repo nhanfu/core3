@@ -1,0 +1,30 @@
+title: Lead Mining Requests
+page: { id: crm-lead-mining-requests, route: /crm/lead-mining-requests, breadcrumb: [CRM, Configuration, Lead Generation, Lead Mining Requests], auth: { require: [crm.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_mining_requests
+    create_action: new_crm_lead_mining_request
+    create_label: New
+    search: { label: Search, placeholder: Search lead mining requests... }
+    filters:
+      - { field: state, label: Status, options: [{ id: draft, label: Draft }, { id: done, label: Done }, { id: error, label: Error }] }
+      - { field: lead_type, label: Type, options: [{ id: lead, label: Leads }, { id: opportunity, label: Opportunities }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+    row_key: id
+    row_open_action: edit_crm_lead_mining_request
+    row_double_click_action: edit_crm_lead_mining_request
+    row_actions: menu
+    columns:
+      - { field: name, label: Request Number, type: PrimaryEntityCell }
+      - { field: lead_number, label: Number of Leads, align: right }
+      - { field: search_type_label, label: Target }
+      - { field: country_names, label: Countries }
+      - { field: industry_names, label: Industries }
+      - { field: team_name, label: Sales Team, optional: true }
+      - { field: user_name, label: Salesperson, optional: true }
+      - { field: state_label, label: Status, type: StatusChip }
+    page_size: 50
+    empty_state: { title: Create a Lead Mining Request, description: 'Generate new leads based on their country, industry, size, etc.' }

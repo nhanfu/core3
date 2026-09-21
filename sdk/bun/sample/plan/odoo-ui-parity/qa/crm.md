@@ -213,3 +213,18 @@ module sign-off is claimed.
 - Disposition: **conditional bounded PASS; reconciled**. File-backed restart
   durability and authenticated Odoo comparison remain open. No full CRM
   sign-off.
+
+## QA checkpoint — Lead Mining Requests (2026-09-21)
+
+Conditional bounded result; not signed off.
+
+- Duplicate `crm_lead_mining_teams` discovery issue resolved; no such ID
+  remains in CRM fragments. Focused test passed 2 tests / 26 assertions.
+- UI audit passed: 772 pages / 781 routes / 1,582 datasources. Diff-check and
+  focused ESLint passed.
+- Full CRM passed 45 / failed 1 (222 assertions); the failure is the AI
+  allowlist invariant for the four new named actions. No AI file was changed
+  because this handoff is CRM-only.
+- Odoo authenticated desktop/mobile/list-form captures exist; Core3 bsk
+  rendered only an empty shell, so no Core3 visual parity claim is made.
+- Evidence: `odoo-ui-parity/evidence/crm/2026-09-21/CRM-LEAD-MINING-REQUESTS-001/verification.md`.

@@ -1,0 +1,18 @@
+page: { id: crm-lead-mining-requests }
+datasources:
+  - id: crm_lead_mining_requests
+    permission: crm.manage
+    error_states:
+      forbidden: { status: 403, code: CRM_LEAD_MINING_REQUESTS_FORBIDDEN, message: You do not have permission to manage lead mining requests. }
+      transport_error: { status: 503, code: CRM_LEAD_MINING_REQUESTS_UNAVAILABLE, message: Lead mining requests are temporarily unavailable. }
+    query: "SELECT id, row_version, name, lead_number, search_type, CASE search_type WHEN 'people' THEN 'Companies and their Contacts' ELSE 'Companies' END AS search_type_label, lead_type, CASE lead_type WHEN 'lead' THEN 'Leads' ELSE 'Opportunities' END AS lead_type_label, country_names, industry_names, team_name, user_name, state, CASE state WHEN 'done' THEN 'Done' WHEN 'error' THEN 'Error' ELSE 'Draft' END AS state_label FROM crm_lead_mining_requests WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR country_names ILIKE '%' || :q || '%' OR industry_names ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:lead_type IS NULL OR lead_type = :lead_type) ORDER BY created_at DESC, id"
+actions:
+  - id: new_crm_lead_mining_request
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/lead-mining-requests/new
+  - id: edit_crm_lead_mining_request
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/lead-mining-requests/detail
+    params: { id: '{row.id}' }

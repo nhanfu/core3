@@ -1,0 +1,40 @@
+title: New Lead Mining Request
+page: { id: crm-lead-mining-request-new, route: /crm/lead-mining-requests/new, breadcrumb: [CRM, Configuration, Lead Generation, Lead Mining Requests, New], auth: { require: [crm.manage] } }
+components:
+  - type: OdooFormView
+    source: crm_lead_mining_request_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    group_columns: 2
+    header_actions:
+      - { id: back_to_crm_lead_mining_requests, label: Lead Mining Requests, variant: secondary, permission: crm.manage }
+      - { id: create_crm_lead_mining_request, label: Save, variant: primary, permission: crm.manage }
+    groups:
+      - title: Request
+        fields:
+          - { field: name, label: Request Number, type: text, readonly: true }
+          - { field: lead_number, label: Number of Leads, type: number, required: true, min: 1, max: 200 }
+          - { field: search_type, label: Target, type: select, options: [{ value: companies, label: Companies }, { value: people, label: Companies and their Contacts }] }
+          - { field: lead_type, label: Type, type: select, options: [{ value: lead, label: Leads }, { value: opportunity, label: Opportunities }] }
+          - { field: state, label: Status, type: text, readonly: true }
+      - title: Criteria
+        fields:
+          - { field: country_names, label: Countries, type: text, required: true, placeholder: 'United States, Canada' }
+          - { field: state_names, label: States, type: text, placeholder: 'California, Ontario' }
+          - { field: industry_names, label: Industries, type: text, required: true, placeholder: 'Technology, Healthcare' }
+          - { field: filter_on_size, label: Filter on Size, type: checkbox }
+          - { field: company_size_min, label: From employees, type: number, min: 1 }
+          - { field: company_size_max, label: To employees, type: number, min: 1 }
+      - title: Lead Assignment
+        fields:
+          - { field: team_name, label: Sales Team, type: select, options_source: crm_lead_mining_request_new_teams }
+          - { field: user_name, label: Salesperson, type: select, options_source: crm_lead_mining_request_new_salespeople }
+          - { field: default_tags, label: Default Tags, type: text, placeholder: 'Priority, Enterprise' }
+      - title: Contact Criteria
+        fields:
+          - { field: contact_number, label: Extra contacts per Company, type: number, min: 1, max: 5 }
+          - { field: contact_filter_type, label: Filter on, type: select, options: [{ value: role, label: Role }, { value: seniority, label: Seniority }] }
+          - { field: preferred_role, label: Preferred Role, type: text }
+          - { field: other_roles, label: Other Roles, type: text }
+          - { field: seniority, label: Seniority, type: text }

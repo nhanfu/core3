@@ -1,0 +1,89 @@
+page: { id: crm-lead-mining-request-detail }
+datasources:
+  - id: crm_lead_mining_request_detail
+    single: true
+    permission: crm.manage
+    error_states:
+      not_found: { status: 404, code: CRM_LEAD_MINING_REQUEST_NOT_FOUND, message: Lead mining request not found. }
+      forbidden: { status: 403, code: CRM_LEAD_MINING_REQUEST_FORBIDDEN, message: You do not have permission to manage this lead mining request. }
+      transport_error: { status: 503, code: CRM_LEAD_MINING_REQUEST_UNAVAILABLE, message: Lead mining request details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, state, CASE state WHEN 'done' THEN 'Done' WHEN 'error' THEN 'Error' ELSE 'Draft' END AS state_label, error_type, CASE error_type WHEN 'service_unavailable' THEN 'The lead mining service is not configured.' WHEN 'credits' THEN 'There are not enough credits.' WHEN 'no_result' THEN 'The request returned no results.' ELSE '' END AS error_message, lead_number, search_type, CASE search_type WHEN 'people' THEN 'Companies and their Contacts' ELSE 'Companies' END AS search_type_label, lead_type, CASE lead_type WHEN 'lead' THEN 'Leads' ELSE 'Opportunities' END AS lead_type_label, team_name, user_name, country_names, state_names, industry_names, default_tags, filter_on_size, company_size_min, company_size_max, contact_number, contact_filter_type, preferred_role, other_roles, seniority, generated_lead_count FROM crm_lead_mining_requests WHERE id = :id"
+  - id: crm_lead_mining_request_detail_teams
+    permission: crm.manage
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_lead_mining_request_detail_salespeople
+    permission: crm.manage
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true AND NULLIF(TRIM(user_name), '') IS NOT NULL ORDER BY user_name"
+actions:
+  - id: back_to_crm_lead_mining_requests
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/lead-mining-requests
+  - id: edit_crm_lead_mining_request
+    type: server_form
+    permission: crm.manage
+    title: Edit Lead Mining Request
+    action: crm.lead_mining_requests.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state
+    refresh: [crm_lead_mining_request_detail, crm_lead_mining_requests]
+    mutation:
+      operation: update
+      table: crm_lead_mining_requests
+      fields: [lead_number, search_type, lead_type, team_name, user_name, country_names, state_names, industry_names, default_tags, filter_on_size, company_size_min, company_size_max, contact_number, contact_filter_type, preferred_role, other_roles, seniority]
+      required: [lead_number, search_type, lead_type, country_names, industry_names]
+      concurrency: { required: true }
+      boolean_fields: [filter_on_size]
+      guards:
+        - { query: "SELECT id FROM crm_lead_mining_requests WHERE id = :id AND state IN ('draft', 'error')", status: 409, code: CRM_LEAD_MINING_REQUEST_LOCKED, message: Completed lead mining requests cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:lead_number AS INTEGER) BETWEEN 1 AND 200", status: 422, code: CRM_LEAD_MINING_NUMBER_INVALID, message: Number of leads must be between 1 and 200. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:country_names AS VARCHAR))) > 0", status: 422, code: CRM_LEAD_MINING_COUNTRIES_REQUIRED, message: Select at least one country. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:industry_names AS VARCHAR))) > 0", status: 422, code: CRM_LEAD_MINING_INDUSTRIES_REQUIRED, message: Select at least one industry. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:filter_on_size, false) AS BOOLEAN) = false OR (CAST(:company_size_min AS INTEGER) >= 1 AND CAST(:company_size_max AS INTEGER) >= CAST(:company_size_min AS INTEGER))", status: 422, code: CRM_LEAD_MINING_SIZE_INVALID, message: Company size range is invalid. }
+        - { query: "SELECT 1 AS ok WHERE :search_type <> 'people' OR CAST(:contact_number AS INTEGER) BETWEEN 1 AND 5", status: 422, code: CRM_LEAD_MINING_CONTACTS_INVALID, message: Contacts per company must be between 1 and 5. }
+      result: { query: "SELECT * FROM crm_lead_mining_requests WHERE id = :id" }
+    fields:
+      - { field: lead_number, label: Number of Leads, type: number, required: true, min: 1, max: 200 }
+      - { field: search_type, label: Target, type: select, options: [{ value: companies, label: Companies }, { value: people, label: Companies and their Contacts }] }
+      - { field: lead_type, label: Type, type: select, options: [{ value: lead, label: Leads }, { value: opportunity, label: Opportunities }] }
+      - { field: country_names, label: Countries, type: text, required: true }
+      - { field: state_names, label: States, type: text }
+      - { field: industry_names, label: Industries, type: text, required: true }
+      - { field: team_name, label: Sales Team, type: select, options_source: crm_lead_mining_request_detail_teams }
+      - { field: user_name, label: Salesperson, type: select, options_source: crm_lead_mining_request_detail_salespeople }
+      - { field: default_tags, label: Default Tags, type: text }
+      - { field: filter_on_size, label: Filter on Size, type: checkbox }
+      - { field: company_size_min, label: From employees, type: number, min: 1 }
+      - { field: company_size_max, label: To employees, type: number, min: 1 }
+      - { field: contact_number, label: Extra contacts per Company, type: number, min: 1, max: 5 }
+      - { field: contact_filter_type, label: Filter on, type: select, options: [{ value: role, label: Role }, { value: seniority, label: Seniority }] }
+      - { field: preferred_role, label: Preferred Role, type: text }
+      - { field: other_roles, label: Other Roles, type: text }
+      - { field: seniority, label: Seniority, type: text }
+  - id: submit_crm_lead_mining_request
+    type: server
+    permission: crm.manage
+    action: crm.lead_mining_requests.submit
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}', values: { state: error, error_type: service_unavailable, generated_lead_count: 0 } }
+    refresh: [crm_lead_mining_request_detail, crm_lead_mining_requests]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM crm_lead_mining_requests WHERE id = :id AND state = 'draft'", status: 409, code: CRM_LEAD_MINING_REQUEST_STATE, message: Only draft requests can be submitted. }
+      steps:
+        - { query: "UPDATE crm_lead_mining_requests SET state = 'error', error_type = 'service_unavailable', generated_lead_count = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: CRM_LEAD_MINING_REQUEST_STALE, message: The request changed; reload before submitting. }
+      result: { query: "SELECT * FROM crm_lead_mining_requests WHERE id = :id" }
+  - id: retry_crm_lead_mining_request
+    type: server
+    permission: crm.manage
+    action: crm.lead_mining_requests.retry
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}', values: { state: error, error_type: service_unavailable, generated_lead_count: 0 } }
+    refresh: [crm_lead_mining_request_detail, crm_lead_mining_requests]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM crm_lead_mining_requests WHERE id = :id AND state = 'error'", status: 409, code: CRM_LEAD_MINING_REQUEST_STATE, message: Only failed requests can be retried. }
+      steps:
+        - { query: "UPDATE crm_lead_mining_requests SET state = 'error', error_type = 'service_unavailable', generated_lead_count = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: CRM_LEAD_MINING_REQUEST_STALE, message: The request changed; reload before retrying. }
+      result: { query: "SELECT * FROM crm_lead_mining_requests WHERE id = :id" }
