@@ -1,0 +1,41 @@
+{
+  "base": "http://127.0.0.1:4333",
+  "route": "/inventory/operation-types/ready-moves",
+  "authenticated": true,
+  "desktop": {
+    "readyUrl": "http://127.0.0.1:4333/inventory/operation-types/ready-moves?operation_type_id=operation-deliveries",
+    "buttonCount": 1,
+    "detailHasOperations": true,
+    "readyHasFixture": true,
+    "readyHasReadyMoves": true,
+    "failures": [],
+    "pageErrors": [],
+    "metrics": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "title": "Ready Moves"
+    },
+    "bodySample": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nReady Operations\n\nOperation Type\n\nDeliveries\n\nReady Moves\n\n11\n\nCompany\n\nMy Company (San Francisco)\n\nSupply Chain / Inventory / Configuration / Operation Types / Operations\n1-6 / 6\n‹\n›\nTransfer\n\tProduct\n\tScheduled Date\n\tDemand\n\tReserved\n\tFrom\n\tTo\n\tStatus\n\n\nWH/OUT/BACKORDER/0001\n\t[E-COM08] Storage Box\t2026-01-15\t6\t4\tStock\tCustomers\tReady\n\nWH/OUT/EMAIL/0001\n\t[E-COM08] Storage Box\t2026-01-15\t2\t2\tStock\tCustomers\tReady\n\nWH/OUT/LABEL/0001\n\t[E-COM08] Storage Box\t2026-01-15\t3\t3\tStock\tCustomers\tReady\n\nWH/OUT/PACKREMOVE/0001\n\t[FURN_8855] Drawer\t2026-01-15\t2\t2\tStock\tCustomers\tReady\n\nWH/OUT/READY/0001\n\t[E-COM08] Storage Box\t2026-01-15\t6\t6\tStock\tCustomers\tReady\n\nWH/OUT/SCRAP/0001\n\t[E-COM08] Storage Box\t2026-01-15\t2\t2\tStock\tCustomers\tReady"
+  },
+  "mobile": {
+    "readyUrl": "http://127.0.0.1:4333/inventory/operation-types/ready-moves?operation_type_id=operation-deliveries",
+    "buttonCount": 1,
+    "detailHasOperations": true,
+    "readyHasFixture": true,
+    "readyHasReadyMoves": true,
+    "failures": [],
+    "pageErrors": [],
+    "metrics": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "title": "Ready Moves"
+    },
+    "bodySample": "AU\nReady Operations\n\nOperation Type\n\nDeliveries\n\nReady Moves\n\n11\n\nCompany\n\nMy Company (San Francisco)\n\nOperations\n1-6 / 6\n‹\n›\n[E-COM08] Storage Box\n\nWH/OUT/BACKORDER/0001\n\nScheduled Date\n2026-01-15\nDemand\n6\nReserved\n4\nFrom\nStock\nTo\nCustomers\n[E-COM08] Storage Box\n\nWH/OUT/EMAIL/0001\n\nScheduled Date\n2026-01-15\nDemand\n2\nReserved\n2\nFrom\nStock\nTo\nCustomers\n[E-COM08] Storage Box\n\nWH/OUT/LABEL/0001\n\nScheduled Date\n2026-01-15\nDemand\n3\nReserved\n3\nFrom\nStock\nTo\nCustomers\n[FURN_8855] Drawer\n\nWH/OUT/PACKREMOVE/0001\n\nScheduled Date\n2026-01-15\nDemand\n2\nReserved\n2\nFrom\nStock\nTo\nCustomers\n[E-COM08] Storage Box\n\nWH/OUT/READY/0001\n\nScheduled Date\n2026-01-15\nDemand\n6\nReserved\n6\nFrom\nStock\nTo\nCustomers\n[E-COM08] Storage Box\n\nWH/OUT/SCRAP/0001\n\nScheduled Date\n2026-01-15\nDemand\n2\nReserved\n2\nFrom\nStock\nTo\nCustomers"
+  },
+  "odoo": {
+    "status": 303,
+    "location": "/web/login?redirect=%2Fweb%3F",
+    "reachable": true,
+    "blocker": "Odoo redirected to /web/login; authenticated paired visual/action evidence unavailable."
+  }
+}

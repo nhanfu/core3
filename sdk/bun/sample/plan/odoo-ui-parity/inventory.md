@@ -1879,3 +1879,34 @@ migration replay, and file-backed restart persistence. Authenticated Core3
 desktop/mobile and the paired Odoo source/login result are recorded under
 `evidence/inventory/2026-09-21/INV-TRANSFER-SCRAP-001/`.
 Full Inventory sign-off remains open.
+
+## Operation Types > Operations / Ready Moves — `INV-OP-TYPE-READY-MOVES-001` (2026-09-21)
+
+This bounded Wave 19 slice covers the operation-type Ready Moves drilldown,
+not the completed operation-type CRUD or Inventory Overview card lifecycle.
+Odoo's operation-type kanban declares the `Operations` link at
+`addons/stock/views/stock_picking_type_views.xml:279-286`; its bound method is
+`get_action_picking_type_ready_moves` at
+`addons/stock/models/stock_picking.py:472-473`. The resulting window action is
+`stock.action_get_picking_type_ready_moves` at
+`addons/stock/views/stock_picking_views.xml:609-616`, targeting `stock.move`
+with domain `picking_type_id = active_id` and context
+`search_default_ready = 1`.
+
+Core3 adds migration `20260922060000-056-inventory-operation-ready-moves.yaml`
+with a same-company Ready transfer/move fixture. The paired
+`pages/operation-type-ready-moves.yaml` and
+`api/operation-type-ready-moves.yaml` contracts share
+`page.id: operation-type-ready-moves`; the detail page/API expose the
+permissioned Operations drilldown. The API reproduces the source semantics by
+scoping to the selected operation type, Ready transfer state, and unfinished
+move quantity, while enforcing current-company read scope.
+
+Focused verification is in
+`test/inventory_operation_type_ready_moves.integration.test.ts`: 4 tests / 23
+assertions cover source/action comparison, schema/discovery, deterministic
+filters, permission/company boundaries, migration replay, and restart
+persistence. Core3 desktop/mobile captures and the paired Odoo comparison or
+exact live blocker are under
+`evidence/inventory/2026-09-21/INV-OP-TYPE-READY-MOVES-001/`.
+Full Inventory sign-off remains open.

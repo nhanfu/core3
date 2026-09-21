@@ -1,0 +1,17 @@
+version: 0.0.56
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-ready-moves-0001', 'operation-deliveries', 'WH/OUT/READY/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/READY/0001', 'My Company (San Francisco)', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-ready-moves-0001-move-001', 'delivery-ready-moves-0001', '[E-COM08] Storage Box', 6, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-ready-moves-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-ready-moves-0001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

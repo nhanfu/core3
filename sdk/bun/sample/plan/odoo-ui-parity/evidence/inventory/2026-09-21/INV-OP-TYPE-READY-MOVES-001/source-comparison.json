@@ -1,0 +1,17 @@
+{
+  "feature_id": "INV-OP-TYPE-READY-MOVES-001",
+  "odoo_source": {
+    "kanban": "addons/stock/views/stock_picking_type_views.xml:279-286",
+    "method": "addons/stock/models/stock_picking.py:472-473",
+    "action": "addons/stock/views/stock_picking_views.xml:609-616",
+    "domain": "[('picking_type_id', '=', active_id)]",
+    "context": "{'search_default_ready': 1}"
+  },
+  "core3": {
+    "page": "services/inventory/pages/operation-type-ready-moves.yaml",
+    "api": "services/inventory/api/operation-type-ready-moves.yaml",
+    "migration": "services/inventory/migrations/20260922060000-056-inventory-operation-ready-moves.yaml",
+    "page_id": "operation-type-ready-moves"
+  },
+  "comparison": "Core3 preserves active operation type, Ready state, and unfinished quantity semantics; Odoo live visual/action comparison is paired in odoo-blocker.json."
+}

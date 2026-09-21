@@ -1,0 +1,6 @@
+{
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "reachable": true,
+  "blocker": "Odoo redirected to /web/login; authenticated paired visual/action evidence unavailable."
+}

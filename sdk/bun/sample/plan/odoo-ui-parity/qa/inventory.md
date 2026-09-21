@@ -1263,3 +1263,31 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 package removal lifecycle and
 guards; PARTIAL/BLOCKED for unavailable live Odoo visual/mutation comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Operation Type Ready Moves QA — `INV-OP-TYPE-READY-MOVES-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_picking_type_views.xml:279-286`,
+  `addons/stock/models/stock_picking.py:472-473`, and
+  `addons/stock/views/stock_picking_views.xml:609-616`. The Operations link
+  calls `stock.action_get_picking_type_ready_moves` for the active operation
+  type, with the Ready search context.
+- Core3 contract: PASS. `pages/operation-type-detail.yaml` owns the
+  permissioned Operations drilldown and
+  `pages/operation-type-ready-moves.yaml` owns the desktop/mobile report
+  surface; `api/operation-type-detail.yaml` and
+  `api/operation-type-ready-moves.yaml` own the route/action/datasources,
+  joined by `page.id`. Migration 0.0.56 persists the deterministic fixture.
+- Focused test: `bun test
+  test/inventory_operation_type_ready_moves.integration.test.ts` — PASS,
+  4 tests / 23 assertions. Coverage includes exact source markers, schema and
+  discovery, Ready unfinished move filtering, read permission, company
+  boundary, migration replay, and file-backed restart persistence.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  captures, response/error/overflow checks, and the exact Odoo live result are
+  under `evidence/inventory/2026-09-21/INV-OP-TYPE-READY-MOVES-001/`.
+
+QA disposition: PASS for the bounded Core3 Ready Moves read/drilldown
+contract and persistence; PARTIAL/BLOCKED for paired live Odoo visual or
+mutation comparison if the supplied Odoo session is unavailable. Full
+Inventory sign-off remains open.

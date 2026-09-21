@@ -950,3 +950,24 @@ Inventory sign-off remains open.
   desktop/mobile evidence and the exact Odoo live blocker are under
   `evidence/inventory/2026-09-21/INV-PACKAGE-REMOVE-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-OP-TYPE-READY-MOVES-001` — Operation Type Ready Moves (2026-09-21)
+
+- Selected the next uncovered operation-type workflow after package removal:
+  Odoo's operation-type kanban Operations link invokes
+  `get_action_picking_type_ready_moves`, which opens
+  `stock.action_get_picking_type_ready_moves` on `stock.move` with the active
+  picking type domain and Ready search context.
+- Added migration `20260922060000-056-inventory-operation-ready-moves.yaml`
+  with a deterministic same-company Ready transfer/move fixture. Added the
+  separate `operation-type-ready-moves` page/API contracts, joined by
+  `page.id`, with operation-type context, company-scoped unfinished Ready
+  moves, responsive list/card views, and a detail-page Operations drilldown.
+- Focused verification covers exact Odoo action/domain/context markers,
+  discovery/schema validation, deterministic query filtering, read permission,
+  company boundary, migration replay, and file-backed restart persistence.
+  Authenticated Core3 desktop/mobile evidence and the paired Odoo live result
+  are recorded under
+  `evidence/inventory/2026-09-21/INV-OP-TYPE-READY-MOVES-001/`.
+- Full Inventory sign-off remains open; this slice does not claim Odoo CRUD
+  mutation parity for the source read/report action.

@@ -1,0 +1,43 @@
+title: Ready Moves
+page: { id: operation-type-ready-moves, route: /operation-types/ready-moves, breadcrumb: [Supply Chain, Inventory, Configuration, Operation Types, Operations], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_operation_type_ready_context
+    title: Ready Operations
+    stats:
+      - { label: Operation Type, field: operation_name }
+      - { label: Ready Moves, field: ready_move_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_operation_type_ready_moves
+    search: { label: Ready moves, placeholder: Search products or transfers... }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: product_name
+          subtitle: reference
+          fields:
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: demand, label: Demand }
+            - { field: reserved_quantity, label: Reserved }
+            - { field: source_location, label: From }
+            - { field: destination_location, label: To }
+    columns:
+      - { field: reference, label: Transfer, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, sortable: true }
+      - { field: scheduled_date, label: Scheduled Date, mobile: false, sortable: true }
+      - { field: demand, label: Demand, align: right, mobile: true }
+      - { field: reserved_quantity, label: Reserved, align: right, mobile: true }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No ready moves, description: Assigned move lines for this operation type appear here until completed. }

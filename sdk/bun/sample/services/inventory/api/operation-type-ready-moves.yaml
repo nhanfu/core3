@@ -1,0 +1,37 @@
+page: { id: operation-type-ready-moves }
+datasources:
+  - id: inventory_operation_type_ready_context
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_READY_MOVES_CONTEXT_UNAVAILABLE, message: Ready move context is temporarily unavailable. } }
+    query: "SELECT t.id AS operation_type_id, t.name AS operation_name, t.row_version, t.company_name, CAST((SELECT COUNT(*) FROM inventory_picking_moves m JOIN inventory_pickings p ON p.id = m.picking_id WHERE p.operation_type_id = t.id AND p.state = 'Ready' AND m.done_quantity < m.quantity) AS BIGINT) AS ready_move_count FROM inventory_operation_types t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :operation_type_id"
+  - id: inventory_operation_type_ready_moves
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_READY_MOVES_FORBIDDEN, message: You do not have permission to view ready moves. }
+      transport_error: { status: 503, code: INVENTORY_READY_MOVES_UNAVAILABLE, message: Ready moves are temporarily unavailable. }
+    query: |
+      SELECT m.id, p.row_version, p.id AS picking_id, p.name AS reference, m.product_name,
+        CAST(m.quantity AS DOUBLE) AS demand, CAST(m.quantity - m.done_quantity AS DOUBLE) AS reserved_quantity,
+        CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.state, p.company_name,
+        COALESCE(sl.name, '') AS source_location, COALESCE(dl.name, '') AS destination_location,
+        t.name AS operation_name
+      FROM inventory_picking_moves m
+      JOIN inventory_pickings p ON p.id = m.picking_id
+      JOIN inventory_operation_types t ON t.id = p.operation_type_id
+      LEFT JOIN inventory_locations sl ON sl.id = p.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = p.destination_location_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND p.operation_type_id = :operation_type_id
+        AND p.state = 'Ready'
+        AND m.done_quantity < m.quantity
+        AND (NULLIF(:current_company_name, '') IS NULL OR p.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND p.company_name = 'My Company (San Francisco)'))
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%' OR COALESCE(sl.name, '') ILIKE '%' || :q || '%' OR COALESCE(dl.name, '') ILIKE '%' || :q || '%')
+      ORDER BY p.scheduled_date, p.name, m.id
+actions:
+  - id: back_to_inventory_operation_type_detail
+    type: navigate
+    permission: inventory.read
+    navigate_to: /operation-types/detail
+    params: { id: '{query.operation_type_id}' }
