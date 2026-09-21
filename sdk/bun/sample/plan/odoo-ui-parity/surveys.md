@@ -2081,3 +2081,30 @@ visual or module sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TOKEN-ACCESS-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-ONE-PAGE-001`
+
+Wave 25 selects Odoo's next uncovered public pagination behavior: the durable
+`questions_layout='one_page'` mode from `survey_survey.py:75-79`. Odoo's public
+controller switches from a question cursor to a page payload and marks a
+one-page response done on the all-question submit
+(`controllers/main.py:278-298,337-363,581-582`).
+
+Core3 migration `0.0.45` adds `surveys.questions_layout`, normalizes existing
+rows to the source default, and seeds a deterministic two-question one-page
+survey. The paired `pages/surveys.yaml` / `api/surveys.yaml` contract and
+`survey.public.detail` project the setting. `PublicSurvey.ts` now consumes the
+setting, renders all visible questions together, and submits one token-scoped
+answer object; the existing page-per-question cursor remains unchanged.
+
+Focused verification is **3 passed / 21 assertions**. The public/catalog
+regression is **97 passed / 903 assertions** across 32 files. UI audit passes
+with **729 pages, 738 routes, and 1,419 datasources**; scoped ESLint and
+`git diff --check` pass. Core3 ports 3000/3001/3002 refused before an
+authenticated desktop/mobile render. Odoo 8069 redirected both viewport
+probes to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`, and proxy 8072 refused;
+no installed authenticated Surveys fixture or visual comparison was
+available. No parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.

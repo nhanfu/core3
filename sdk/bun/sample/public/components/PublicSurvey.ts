@@ -26,7 +26,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; questions_layout?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -73,6 +73,7 @@ function installStyles() {
     .core3-public-survey__body { padding:0; }
     .core3-public-survey__description { color:#625a61; line-height:1.65; white-space:pre-wrap; }
     .core3-public-survey__question { margin:0 0 24px; font-size:clamp(20px,3vw,28px); line-height:1.35; font-weight:500; color:#30262d; }
+    .core3-public-survey__one-page-question { margin:0 0 30px; padding:0 0 26px; border-bottom:1px solid #eee7eb; }
     .core3-public-survey__required { color:#b45262; font-size:13px; margin-left:5px; }
     .core3-public-survey__options { display:grid; gap:10px; }
     .core3-public-survey__option { display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid #d9d1d7; border-radius:5px; cursor:pointer; transition:border-color .15s,background .15s; }
@@ -247,7 +248,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
     timer.innerHTML = 'Time remaining: <strong data-survey-timer-value>--:--</strong>';
     body.prepend(timer);
     const value = timer.querySelector<HTMLElement>('[data-survey-timer-value]')!;
-    const next = body.querySelector<HTMLButtonElement>('[data-next]');
+    const next = body.querySelector<HTMLButtonElement>('[data-next], [data-one-page-submit]');
     const update = () => {
       const remaining = Math.max(0, deadline - Date.now());
       if (remaining <= 0) {
@@ -275,6 +276,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   });
   const requiresRespondentEmail = Boolean(survey.users_login_required)
     || (Boolean(survey.is_attempts_limited) && String(survey.access_mode || 'public') !== 'public');
+  const isOnePage = String(survey.questions_layout || 'page_per_question') === 'one_page';
 
   if (payload.answer?.state === 'Submitted') {
     renderDone();
@@ -322,10 +324,75 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
     }
   });
 
+  const renderOnePage = () => {
+    stopTimer();
+    body.innerHTML = '';
+    for (const [index, question] of questions.entries()) {
+      const rendered = document.createElement('div');
+      renderQuestion(rendered, question, index, questions.length, answers[question.id], String(answers[`${question.id}__comment`] || ''), token, answerToken, false);
+      rendered.querySelector<HTMLElement>('.core3-public-survey__footer')?.remove();
+      const questionContainer = document.createElement('section');
+      questionContainer.className = 'core3-public-survey__one-page-question';
+      questionContainer.dataset.questionId = question.id;
+      questionContainer.innerHTML = rendered.innerHTML;
+      body.append(questionContainer);
+    }
+    const footer = document.createElement('div');
+    footer.className = 'core3-public-survey__footer';
+    footer.innerHTML = '<span class="core3-public-survey__progress">All questions</span><button class="core3-public-survey__button" data-one-page-submit type="button">Submit survey</button>';
+    body.append(footer);
+    startTimer();
+    footer.querySelector<HTMLButtonElement>('[data-one-page-submit]')!.addEventListener('click', async (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      button.disabled = true;
+      const missing: string[] = [];
+      for (const question of questions) {
+        const container = body.querySelector<HTMLElement>(`[data-question-id="${CSS.escape(question.id)}"]`);
+        if (!container) continue;
+        const value = answerValue(container, question);
+        const empty = value && typeof value === 'object' && !Array.isArray(value)
+          ? Object.values(value).every((selection) => selection.length === 0)
+          : Array.isArray(value) ? value.length === 0 : !String(value).trim();
+        if (question.required && empty) missing.push(question.question_text || question.id);
+        if (!empty) answers[question.id] = value;
+        const comment = container.querySelector<HTMLTextAreaElement>('[data-comment]')?.value.trim() || '';
+        if (question.comments_allowed && comment) answers[`${question.id}__comment`] = comment;
+        else delete answers[`${question.id}__comment`];
+      }
+      if (missing.length) {
+        button.disabled = false;
+        const error = document.createElement('div');
+        error.className = 'core3-public-survey__error';
+        error.textContent = `Please answer: ${missing.join(', ')}`;
+        body.prepend(error);
+        return;
+      }
+      try {
+        const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({})) as { error?: string };
+          throw new Error(errorPayload.error || `Survey could not be submitted (${response.status}).`);
+        }
+        const submitted = await response.json() as { answer?: SurveyPayload['answer'] };
+        renderDone(submitted.answer);
+      } catch (error) {
+        button.disabled = false;
+        const message = document.createElement('div');
+        message.className = 'core3-public-survey__error';
+        message.textContent = error instanceof Error ? error.message : String(error);
+        body.prepend(message);
+      }
+    });
+  };
+
   function renderCurrentQuestion() {
     stopTimer();
     if (!questions.length) {
       body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>There are no questions in this survey.</h2></div>';
+      return;
+    }
+    if (isOnePage) {
+      renderOnePage();
       return;
     }
     const currentQuestion = questions[questionIndex];

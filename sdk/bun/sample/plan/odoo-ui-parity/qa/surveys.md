@@ -1314,3 +1314,25 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ATTEMP
   `browser-results.json`; no authenticated visual or Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
+
+## `SURVEYS-PUBLIC-ONE-PAGE-001` — one-page public pagination
+
+- Source: Odoo stores required `questions_layout` with `one_page` at
+  `survey_survey.py:75-79`; the public controller uses page payload semantics
+  at `controllers/main.py:278-298`, omits the back cursor at `337-363`, and
+  marks the response done at `581-582`.
+- Durable/API/page: migration `0.0.45` adds the setting and fixture;
+  `survey.public.detail` and the admin list expose it; `pages/surveys.yaml`
+  and `api/surveys.yaml` remain joined by `page.id: surveys`.
+- Workflow/guards: the renderer collects all visible answers and submits one
+  durable response; required-answer, token, response-state, time, and
+  idempotency guards stay authoritative in the existing public route.
+- Focused: **3 passed / 21 assertions**. Public/catalog: **97 passed / 903
+  assertions**. Audit: **729 pages, 738 routes, 1,419 datasources**. Scoped
+  ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000/3001/3002 refused. Odoo desktop and
+  mobile probes returned 303 to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`;
+  proxy 8072 refused. No authenticated visual or Odoo comparison/sign-off is
+  claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.

@@ -442,6 +442,25 @@ Odoo parity sign-off is claimed.
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-ONE-PAGE-001`
+
+- Selected exactly one new source-backed behavior after token-only access:
+  Odoo's public `questions_layout=one_page` pagination.
+- Added durable migration `0.0.45` and deterministic two-question fixture;
+  detail/list projections and the public renderer consume the layout through
+  the paired `page.id: surveys` YAML contracts.
+- Implemented all-question public submit with required-answer validation,
+  existing token/state guards, progress persistence, restart recovery, and
+  concurrent idempotent convergence to one response/count.
+- Focused: **3 passed / 21 assertions**. Public/catalog regression: **97
+  passed / 903 assertions**. Audit: **729 pages, 738 routes, 1,419
+  datasources**. Scoped ESLint and diff-check passed.
+- Core3 3000/3001/3002 refused connections; Odoo 8069 redirected desktop and
+  mobile probes to login and 8072 refused. Exact blockers are in the feature
+  evidence; no visual or Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-TOKEN-ACCESS-001`
 
 Wave 24 selects the next uncovered source-backed public access behavior after

@@ -1,0 +1,44 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-ONE-PAGE-001",
+  "date": "2026-09-21",
+  "core3": {
+    "authenticated_desktop": {
+      "viewport": "1440x1000",
+      "url": "http://127.0.0.1:3000/survey/one-page-token-2026",
+      "status": null,
+      "result": "blocked",
+      "error": "curl: (7) Failed to connect to 127.0.0.1 port 3000 after 0 ms: Could not connect to server"
+    },
+    "authenticated_mobile": {
+      "viewport": "390x844",
+      "url": "http://127.0.0.1:3000/survey/one-page-token-2026",
+      "status": null,
+      "result": "blocked",
+      "error": "curl: (7) Failed to connect to 127.0.0.1 port 3000 after 0 ms: Could not connect to server"
+    },
+    "alternate_service_ports": [3001, 3002],
+    "result_note": "No authenticated Core3 desktop/mobile render was possible because ports 3000, 3001, and 3002 refused connections."
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x1000",
+      "url": "http://127.0.0.1:8069/odoo/surveys",
+      "status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "result": "blocked_by_login"
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "url": "http://127.0.0.1:8069/odoo/surveys",
+      "status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "result": "blocked_by_login"
+    },
+    "proxy_8072": {
+      "status": null,
+      "result": "blocked",
+      "error": "curl: (7) Failed to connect to 127.0.0.1 port 8072 after 0 ms: Could not connect to server"
+    },
+    "reference_note": "No authenticated installed Surveys fixture or paired visual comparison was available; no parity sign-off is claimed."
+  }
+}

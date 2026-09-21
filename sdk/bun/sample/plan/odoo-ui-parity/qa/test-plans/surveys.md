@@ -567,3 +567,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-ONE-PAGE-001`
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-050 | public pagination | One-page metadata and renderer | Return durable `questions_layout=one_page` through paired page/API YAML and render all visible questions together | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-047 | restart/idempotency | Start → progress all answers → reopen → concurrent submit | Preserve the complete draft across file-backed restart and converge one submitted response/count for one idempotency key | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-049 | token/state guard | Missing required answer and foreign token | Reject incomplete submission without mutation and retain the existing `surveys.public` token/state boundaries | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-048 | authenticated responsive/reference | One-page desktop/mobile + Odoo comparison | Capture both viewport outcomes and exact Core3/Odoo blockers; no sign-off until authenticated routes and installed reference fixture are available | `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PAGE-001/`.
