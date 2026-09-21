@@ -47,6 +47,13 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_ROUNDNESS_FORBIDDEN, message: You do not have permission to view product page image roundness. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_ROUNDNESS_UNAVAILABLE, message: Product page image roundness is temporarily unavailable. }
     query: "SELECT r.id, r.row_version, r.company_name, r.image_roundness, CASE r.image_roundness WHEN 'none' THEN 'None' WHEN 'small' THEN 'Small' WHEN 'medium' THEN 'Medium' ELSE 'Big' END AS image_roundness_label FROM ecommerce_product_page_image_roundness_policies r JOIN ecommerce_products p ON p.company_name = r.company_name WHERE p.id = :id AND (:company_name IS NULL OR r.company_name = :company_name)"
+  - id: ecommerce_product_page_columns_order
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_UNAUTHENTICATED, message: Sign in to view product page columns order. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_FORBIDDEN, message: You do not have permission to view product page columns order. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_UNAVAILABLE, message: Product page columns order is temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.company_name, c.columns_order, CASE c.columns_order WHEN 'inverse' THEN 'Inverse order' ELSE 'Regular order' END AS columns_order_label FROM ecommerce_product_page_columns_order_policies c JOIN ecommerce_products p ON p.company_name = c.company_name WHERE p.id = :id AND (:company_name IS NULL OR c.company_name = :company_name)"
   - id: ecommerce_product_categories
     permission: ecommerce.read
     error_states:

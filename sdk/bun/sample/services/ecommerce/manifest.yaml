@@ -137,6 +137,10 @@ menu:
           label: Product Page Image Roundness
           icon: image
           permission: ecommerce.read
+        - path: /ecommerce/product-page-columns-order
+          label: Product Page Columns Order
+          icon: layout
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

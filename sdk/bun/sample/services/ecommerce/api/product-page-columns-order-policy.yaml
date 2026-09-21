@@ -1,0 +1,36 @@
+page: { id: ecommerce-product-page-columns-order-policy }
+datasources:
+  - id: ecommerce_product_page_columns_order_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_UNAUTHENTICATED, message: Sign in to view product page columns order settings. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_FORBIDDEN, message: You do not have permission to view product page columns order settings. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_NOT_FOUND, message: Product page columns order settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_UNAVAILABLE, message: Product page columns order settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, columns_order, CASE columns_order WHEN 'inverse' THEN 'Inverse order' ELSE 'Regular order' END AS columns_order_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_columns_order_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_product_page_columns_order_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('regular', 'Regular order'), ('inverse', 'Inverse order')) column_orders(value, label)"
+actions:
+  - id: edit_ecommerce_product_page_columns_order_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Product Page Columns Order
+    action: ecommerce.products.page_columns_order.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_page_columns_order_policy, ecommerce_product_detail]
+    mutation:
+      required: [id, expected_row_version, columns_order]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_page_columns_order_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_STALE, message: These product page columns order settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :columns_order IN ('regular', 'inverse')", status: 422, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_INVALID, message: Choose a supported product page columns order. }
+      steps:
+        - { query: "UPDATE ecommerce_product_page_columns_order_policies SET columns_order = :columns_order, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_PAGE_COLUMNS_ORDER_STALE, message: These product page columns order settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, columns_order, CASE columns_order WHEN 'inverse' THEN 'Inverse order' ELSE 'Regular order' END AS columns_order_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_columns_order_policies WHERE id = :id" }
+    fields:
+      - { field: columns_order, label: Product Page Columns Order, type: select, options_source: ecommerce_product_page_columns_order_options, required: true }

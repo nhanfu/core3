@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Product Page Columns Order (`ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines Regular order and Inverse
+  order; the product template applies the inverse choice as
+  `flex-lg-row-reverse`.
+- Core3 lifecycle: focused verification pass. Migrations 134/135 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit order validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_columns_order.integration.test.ts --timeout
+  30000` — **2 passed, 24 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: columns-order, roundness, spacing, width, layout, ratio, and
+  Product Detail suites — **17 passed, 179 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **748 pages, 757 routes, and 1493
+  datasources**; scoped ESLint and `git diff --check` passed.
+- QA decision: bounded slice verified; local implementation commit is
+  `f88b6af4` and has not been pushed;
+  Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-columns-order-001/`.
+
 ## Product Page Image Roundness (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines None, Small, Medium, and

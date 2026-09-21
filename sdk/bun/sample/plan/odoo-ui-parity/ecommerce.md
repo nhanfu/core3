@@ -2,6 +2,34 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Product Page Columns Order (`ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`)
+
+Wave 35 selected Odoo Website Sale's still-open product-page main columns
+order setting. The supplied `website` model defines `product_page_cols_order`
+as Regular order or Inverse order; the product template applies the inverse
+choice as `flex-lg-row-reverse` on the main product-page row. This is distinct
+from the completed image roundness, spacing, layout, width, and desktop/mobile
+ratio policies.
+
+Core3 migrations 134/135 add a durable company-scoped columns-order policy and
+deterministic Regular order fixture. Separate
+`pages/product-page-columns-order-policy.yaml` and
+`api/product-page-columns-order-policy.yaml` contracts join by
+`ecommerce-product-page-columns-order-policy`; the form requires
+`ecommerce.write`, validates both source values, and uses row-version
+optimistic concurrency. Product Detail has a separate read projection for the
+effective company order and displays the current choice. Migration replay and
+DuckDB restart preserve the setting; invalid, foreign-company, and stale
+writes are rejected.
+
+Focused source/contract, CRUD, permission, validation, projection, replay, and
+restart coverage is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-page-columns-order-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Image Roundness (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`)
 
 Wave 34 selected Odoo Website Sale's still-open product image roundness

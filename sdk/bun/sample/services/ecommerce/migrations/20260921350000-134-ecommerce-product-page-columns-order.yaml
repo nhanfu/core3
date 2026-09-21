@@ -1,0 +1,25 @@
+version: 0.0.134
+kind: schema
+description: durable eCommerce product page columns order policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_page_columns_order_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        columns_order VARCHAR NOT NULL DEFAULT 'regular',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (columns_order IN ('regular', 'inverse'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_page_columns_order_company_idx
+        ON ecommerce_product_page_columns_order_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_page_columns_order_company_idx;
+      DROP TABLE IF EXISTS ecommerce_product_page_columns_order_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

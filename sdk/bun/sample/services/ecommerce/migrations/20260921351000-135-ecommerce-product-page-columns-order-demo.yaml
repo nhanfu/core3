@@ -1,0 +1,14 @@
+version: 0.0.135
+kind: data
+description: deterministic eCommerce product page columns order fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_columns_order_policies (id, row_version, company_name, columns_order)
+      VALUES ('ecommerce-product-page-columns-order-my-company', 1, 'My Company', 'regular')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_columns_order_policies WHERE id = 'ecommerce-product-page-columns-order-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

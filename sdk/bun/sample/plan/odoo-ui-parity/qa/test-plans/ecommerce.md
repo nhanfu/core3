@@ -7,6 +7,24 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001
+
+- ECOM-FUNC-064: trace Website Sale `product_page_cols_order`, its Regular
+  order/Inverse order values, and the product-template `flex-lg-row-reverse`
+  boundary; verify separate Core3 policy and Product Detail page/API
+  contracts.
+- ECOM-WF-075: replay the deterministic Regular order policy, switch to
+  Inverse order, project the effective Product Detail order, reject invalid,
+  foreign, and stale writes, and preserve the policy across migration replay
+  and DuckDB restart.
+- ECOM-PERM-071: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards with safe stale replay behavior.
+- ECOM-UI-057: render the columns-order form and Product Detail projection at
+  desktop and mobile and compare the authenticated Odoo product-page row
+  direction; Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the
+  supplied references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001
 
 - ECOM-FUNC-063: trace Website Sale `product_page_image_roundness`, its None,
