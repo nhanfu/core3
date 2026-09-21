@@ -528,3 +528,17 @@ tests, 20 assertions). Evidence:
 Focused test: `test/employees_work_address_assignment.integration.test.ts` (4
 tests, 22 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`.
+
+## EMP-MANAGER-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `parent_id` Manager field maps to paired employee-detail page/API contracts | pass |
+| Manager CRUD | Manager options, assignment, read projection, active Payroll-version synchronization, and org-chart display persist durably | pass |
+| Permission and scope | Employees write, actor, active/current company, active manager, self/cycle, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the relation and display label | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Work desktop/mobile captures | conditional; Odoo Manager visible at both viewports, Core3 backend did not bind after a DuckDB migration constraint error |
+
+Focused test: `test/employees_manager_assignment.integration.test.ts` (4
+tests, 24 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-MANAGER-001/`.

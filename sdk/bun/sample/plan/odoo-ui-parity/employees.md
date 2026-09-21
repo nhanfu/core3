@@ -1894,3 +1894,28 @@ desktop/mobile captures are under
 `evidence/employees/2026-09-21/EMP-WORK-LOCATION-ASSIGNMENT-001/`; both show the
 control. The bounded Core3 runtime did not bind port 3001, so Core3 browser
 comparison remains conditional. No aggregate Employees sign-off is claimed.
+
+## EMP-MANAGER-001: Employee Manager relation assignment (2026-09-21)
+
+Odoo's `hr.employee.parent_id` is a company-scoped Many2one Manager rendered in
+the Work tab and employee list/search views. Core3 previously exposed only a
+free-text `manager_name`, so it could not provide relation options or enforce
+the Odoo parent boundary. This slice adds durable `manager_id` columns to the
+employee and active Payroll-version records, synchronized `manager_name` and
+organization-chart projections, and a company-scoped manager options source.
+
+The paired employee-detail API/page contracts add `edit_employee_manager`.
+The action requires `employees.write`, an authenticated actor, an active
+employee in the current company, an active same-company manager, and the
+employee row version. Self, subordinate-cycle, wrong-company, and stale
+assignments reject atomically; clearing the nullable relation remains
+supported. Migration replay is deterministic and file-backed restart retains
+the relation.
+
+Focused verification is **4 tests / 24 assertions**. Authenticated Odoo
+desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-MANAGER-001/`; both show Manager. Core3
+startup reached Vite but did not bind backend port 3001 because the bounded
+runtime hit DuckDB's `Adding columns with constraints not yet supported`
+startup error; the exact conditional blocker is recorded in the evidence.
+No aggregate Employees sign-off is claimed.

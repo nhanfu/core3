@@ -725,6 +725,21 @@ tests, 22 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-WORK-ADDRESS-001/`. No aggregate Employees
 sign-off is claimed.
 
+## EMP-MANAGER-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-038 | Employee Manager relation options/read/update | pass; same-company manager assignments persist on the employee and active Payroll version, with display and org-chart projections synchronized |
+| EMP-PERM-038 | `employees.write`, actor, active/current company, active manager, self/cycle, row version | pass; actor, stale, wrong-company, invalid, self, and subordinate-cycle requests reject atomically |
+| EMP-DATA-038 | Migration replay and file-backed restart | pass; manager relation and active Payroll projection survive replay/restart without duplicates |
+| EMP-UI-034 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo desktop/mobile show Manager, while Core3 backend startup hit a DuckDB migration constraint error before port 3001 bound |
+
+Focused test: `test/employees_manager_assignment.integration.test.ts` (4
+tests, 24 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-MANAGER-001/`. Scoped audit/lint/diff-check
+results are recorded with the local commit. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-WORK-LOCATION-ASSIGNMENT-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

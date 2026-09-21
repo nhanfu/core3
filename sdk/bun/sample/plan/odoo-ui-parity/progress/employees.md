@@ -776,3 +776,23 @@ Candidate commit: current working tree
   Hours label in Payroll. Core3 backend port 3001 did not bind during the
   bounded memory-mode attempt; the exact blocker is in `verification.md`.
   No aggregate Employees sign-off is claimed.
+
+## EMP-MANAGER-001 (2026-09-21)
+
+- Selected Odoo's genuinely uncovered `hr.employee.parent_id` Manager
+  relation. Existing Core3 `manager_name` was display-only/free-text and did
+  not provide a durable Many2one-like relation or company-scoped choices.
+- Added migration `20260922060000-060` with replay-safe `manager_id` columns
+  on employees and employee versions. The guarded action synchronizes the
+  employee, active Payroll version, display label, and org-chart parent.
+- Added separate API options/action YAML and the employee-detail page action.
+  Guards cover actor, active/current company, active manager, self,
+  subordinate cycle, and stale row version; restart coverage preserves the
+  relation.
+- Focused verification is **4 tests / 24 assertions**. Authenticated Odoo
+  desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-MANAGER-001/` and both show Manager.
+  Core3 browser evidence is conditionally blocked: bounded memory-mode
+  startup reached Vite but backend 3001 did not bind after DuckDB reported
+  `Adding columns with constraints not yet supported`; the exact output is in
+  `verification.md`. No aggregate Employees sign-off is claimed.

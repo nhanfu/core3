@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-09-21T00:23:16.216Z",
+  "results": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1100,
+      "mobile": false,
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "hasManager": true,
+      "excerpt": "Employees Employees Departments Learning Reporting Configuration 7 40 My Company (San Francisco) New Employees Abigail Peterson Timesheets 0 Equipment History 1 1 / 1 Create User Launch Plan Aug 1, 2026 Work Resume Certifications Personal Payroll Settings WORK Company Department Job Position Job Title Manager LOCATION Work Address 8000 Marina Blvd, Suite 300 Brisbane CA 94005 United States Work Location USUAL WORK LOCATION Monday Tuesday Wednesday Thursday Friday Saturday Sunday NOTE ORGANIZATION CHART FULL CHART Mitchell Admin Chief Technical Officer 22 Jeffrey Kelly Marketing and Community Manager 4 Abigail Peterson Consultant Send message Log note Activity 0 Sep 10, 2026 OdooBot Sep 10, 12:28 PM $ 0.00$ 10.00(Hourly Cost) OdooBot Sep 10, 12:12 PM Congratulations! May I recommend you to setup an onboarding plan? OdooBot Sep 10, 12:12 PM Employee created"
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "hasManager": true,
+      "excerpt": "Abigail Peterson 7 40 New Create User Aug 1, 2026 Work Resume Certifications Personal Payroll Settings WORK Company Department Job Position Job Title Manager LOCATION Work Address 8000 Marina Blvd, Suite 300 Brisbane CA 94005 United States Work Location USUAL WORK LOCATION Monday Tuesday Wednesday Thursday Friday Saturday Sunday NOTE ORGANIZATION CHART FULL CHART Mitchell Admin Chief Technical Officer 22 Jeffrey Kelly Marketing and Community Manager 4 Abigail Peterson Consultant Send message Log note Activity 0 Sep 10, 2026 OdooBot Sep 10, 12:28 PM $ 0.00$ 10.00(Hourly Cost) OdooBot Sep 10, 12:12 PM Congratulations! May I recommend you to setup an onboarding plan? OdooBot Sep 10, 12:12 PM Employee created"
+    }
+  ]
+}

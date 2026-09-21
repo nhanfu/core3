@@ -3,11 +3,15 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, COALESCE(NULLIF(legal_name, ''), name) AS legal_name, image_url, auth_user_id, user_name, work_email, work_phone, mobile_phone, phone, private_email, private_phone, company_name, department_name, job_position_name, job_title, manager_name, coach_name, private_car_plate, work_location_id, work_address_id, COALESCE(NULLIF(employee_properties, ''), '{}') AS employee_properties, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, contract_type_name, pay_category_name, hr_responsible_name, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, COALESCE(birthday_public_display, false) AS birthday_public_display, CASE WHEN COALESCE(birthday_public_display, false) AND birthday IS NOT NULL THEN strftime(birthday, '%d %B') ELSE 'hidden' END AS birthday_public_display_string, wage, working_schedule, working_schedule_id, contract_template_id, contract_template_name, timezone, barcode, pin, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, CAST(passport_expiration_date AS VARCHAR) AS passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, id_card, id_card_name, driving_license, driving_license_name, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+    query: "SELECT id, row_version, employee_number, name, COALESCE(NULLIF(legal_name, ''), name) AS legal_name, image_url, auth_user_id, user_name, work_email, work_phone, mobile_phone, phone, private_email, private_phone, company_name, department_name, job_position_name, job_title, manager_id, manager_name, coach_name, private_car_plate, work_location_id, work_address_id, COALESCE(NULLIF(employee_properties, ''), '{}') AS employee_properties, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, contract_type_name, pay_category_name, hr_responsible_name, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, COALESCE(birthday_public_display, false) AS birthday_public_display, CASE WHEN COALESCE(birthday_public_display, false) AND birthday IS NOT NULL THEN strftime(birthday, '%d %B') ELSE 'hidden' END AS birthday_public_display_string, wage, working_schedule, working_schedule_id, contract_template_id, contract_template_name, timezone, barcode, pin, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, CAST(passport_expiration_date AS VARCHAR) AS passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, id_card, id_card_name, driving_license, driving_license_name, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
   - id: employee_work_addresses_for_employee
     single: false
     permission: employees.write
     query: "SELECT a.id AS value, a.name AS label FROM employee_work_addresses a WHERE a.active = true AND (a.company_name IS NULL OR a.company_name = :current_company_name) ORDER BY a.name, a.id"
+  - id: employee_manager_options
+    single: false
+    permission: employees.write
+    query: "SELECT e.id AS value, e.name AS label FROM employees e JOIN employees target ON target.id = :id WHERE e.active = true AND e.id <> target.id AND (e.company_name IS NULL OR e.company_name = target.company_name) AND (COALESCE(:current_company_name, '') = '' OR target.company_name = :current_company_name) ORDER BY e.name, e.id"
   - id: employee_work_locations_for_employee
     single: false
     permission: employees.write
@@ -526,6 +530,40 @@ actions:
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: work_address_id, label: Work Address, type: select, options_source: employee_work_addresses_for_employee, required: true }
+  - id: edit_employee_manager
+    type: server_form
+    permission: employees.write
+    title: Edit Manager
+    description: Assign an active same-company employee as this employee's Odoo Manager.
+    action: employees.records.manager.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_versions]
+    mutation:
+      fields: [manager_id]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_MANAGER_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the Manager was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :manager_id IS NULL OR EXISTS (SELECT 1 FROM employees target JOIN employees manager ON manager.id = :manager_id WHERE target.id = :id AND manager.active = true AND manager.id <> target.id AND (manager.company_name IS NULL OR manager.company_name = target.company_name) AND (COALESCE(:current_company_name, '') = '' OR target.company_name = :current_company_name))", status: 422, code: EMPLOYEES_MANAGER_INVALID, message: Select an active Manager from the employee's current company. }
+        - { query: "SELECT 1 AS ok WHERE :manager_id IS NULL OR NOT EXISTS (WITH RECURSIVE manager_chain(id, manager_id) AS (SELECT id, manager_id FROM employees WHERE id = :manager_id UNION ALL SELECT e.id, e.manager_id FROM employees e JOIN manager_chain c ON e.id = c.manager_id) SELECT 1 FROM manager_chain WHERE id = :id)", status: 422, code: EMPLOYEES_MANAGER_CYCLE, message: An employee cannot report to themselves or a subordinate. }
+      steps:
+        - query: "UPDATE employees SET manager_id = :manager_id, manager_name = (SELECT name FROM employees WHERE id = :manager_id), org_parent_name = (SELECT name FROM employees WHERE id = :manager_id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the Manager was saved. Reload and try again.
+        - query: "UPDATE employee_versions SET manager_id = :manager_id, manager_name = (SELECT name FROM employees WHERE id = :manager_id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_MANAGER_VERSION_NOT_FOUND
+          message: The employee has no active Payroll record to update.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: manager_id, label: Manager, type: select, options_source: employee_manager_options }
   - id: edit_employee_hr_responsible
     type: server_form
     permission: employees.write

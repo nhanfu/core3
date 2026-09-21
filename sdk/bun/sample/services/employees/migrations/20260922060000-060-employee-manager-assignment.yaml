@@ -1,0 +1,34 @@
+version: 0.0.60
+kind: data
+description: Persist the Odoo employee Manager parent relation
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS manager_name VARCHAR;
+      UPDATE employees e
+      SET manager_id = (
+        SELECT m.id FROM employees m
+        WHERE m.active = true AND m.id <> e.id AND m.name = e.manager_name
+          AND (m.company_name IS NULL OR m.company_name = e.company_name)
+        ORDER BY m.id LIMIT 1
+      )
+      WHERE e.manager_id IS NULL AND NULLIF(TRIM(COALESCE(e.manager_name, '')), '') IS NOT NULL;
+      UPDATE employees e
+      SET org_parent_name = NULLIF(TRIM(COALESCE(m.name, '')), '')
+      FROM employees m
+      WHERE e.manager_id = m.id AND e.id <> m.id;
+      UPDATE employee_versions v
+      SET manager_id = e.manager_id,
+          manager_name = e.manager_name
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.manager_id IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS manager_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS manager_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS manager_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
