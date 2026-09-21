@@ -1987,3 +1987,23 @@ compact Contract date range. Core3 discovery failed before backend port 3001
 bound because unrelated Inventory actions were unknown; the exact conditional
 blocker is recorded in the evidence. No aggregate Employees sign-off is
 claimed.
+
+## EMP-WAGE-001: Active Payroll Wage (2026-09-21)
+
+Odoo renders `hr.version.wage` as an editable manager-only Payroll field in
+Contract Overview and exposes it in employee records. Core3 already projected
+an employee-level wage through broad CRUD, but did not offer a dedicated
+active-Payroll wage action or synchronize the employee and current
+`employee_versions` record together.
+
+Migration `20260922100000-064` replay-safely reconciles existing wage values.
+The paired API/page contracts add `edit_employee_wage`, a manager-gated action
+that updates both projections with non-negative validation, actor,
+current-company, active-version, and optimistic concurrency guards. Focused
+verification is **4 tests / 20 assertions**, including replay and restart.
+
+Authenticated Odoo desktop/mobile Payroll captures are under
+`evidence/employees/2026-09-21/EMP-WAGE-001/` and show Wage. Core3 browser
+evidence is conditional because global discovery stops on the unrelated
+`actions[1].title is not allowed` page-schema error before backend bind. No
+aggregate Employees sign-off is claimed.

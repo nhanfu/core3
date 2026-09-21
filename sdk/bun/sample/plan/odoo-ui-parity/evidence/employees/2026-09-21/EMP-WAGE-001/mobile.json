@@ -1,0 +1,18 @@
+{
+  "label": "mobile",
+  "route": "http://127.0.0.1:8069/odoo/employees/1",
+  "title": "Mitchell Admin",
+  "authenticated": true,
+  "payroll_visible": true,
+  "wage_visible": true,
+  "body_excerpt": "Mitchell Admin\n7\n40\nNew\nLaunch Plan\nJan 1, 2020\nTrainer\nEmployee\nOff-Hours\nWork\nResume\nCertifications\nPersonal\nPayroll\nBadges\nSettings\nCONTRACT OVERVIEW\nLoad a Template\nContract\nJan 1, 2020\nto\nNew Contract\nWage?\n$ \n7,540.00\n$ \nEmployee Type\nContract Type\nPay Category\nSCHEDULE\nWorking Hours?\nSend message\nLog note\nActivity\n1\nPlanned Activities\n11 days overdue:“Scrum Master: Certified”for Mitchell Admin\n\nCertification missing or expiring soon\n\n Mark Done Scrum Master: Certified Edit Cancel\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 100.00(Hourly Cost)\nOdooBot\nSep 10, 12:13 PM\nNoneCivil Engineering: Applied Mathematics(Field of Study)\nNoneUniversité Catholique de Louvain (UCL)(School)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+  "events": [
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console:Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ]
+}

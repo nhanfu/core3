@@ -588,3 +588,17 @@ Focused test: `test/employees_related_user.integration.test.ts` (4 tests,
 24 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-RELATED-USER-001/`. Dynamic cross-service
 auth-user search/company normalization remains a documented blocker.
+
+## EMP-WAGE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.wage` Payroll field maps to paired employee page/API contracts | pass |
+| Payroll CRUD | Manager action updates employee and active Payroll wage durably | pass |
+| Permission and scope | `employees.manage`, actor, current company, non-negative wage, active version, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve both wage projections | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Payroll desktop/mobile captures | conditional; Odoo Wage visible, Core3 blocked by unrelated page schema |
+
+Focused test: `test/employees_wage.integration.test.ts` (4 tests, 20
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-WAGE-001/`.

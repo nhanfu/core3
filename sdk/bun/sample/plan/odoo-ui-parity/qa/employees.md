@@ -1045,3 +1045,17 @@ Focused test: `test/employees_contract_period.integration.test.ts` (4 tests,
 diff-check pass; global audit is blocked by unrelated Inventory disallowed
 action fields and Core3 discovery is blocked by unrelated Inventory action
 references. No aggregate Employees sign-off is claimed.
+
+## EMP-WAGE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-043 | Active Payroll Wage update and read projection | pass; employee and active Payroll wages persist together |
+| EMP-PERM-043 | `employees.manage`, actor, current company, non-negative value, active version, and row version | pass; actor, stale, wrong-company, and invalid-wage requests reject atomically |
+| EMP-DATA-043 | Migration replay and file-backed restart | pass; deterministic wage projections survive restart without duplicates |
+| EMP-UI-039 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo Payroll > Wage is visible at both viewports, Core3 discovery is blocked by unrelated page schema |
+
+Focused test: `test/employees_wage.integration.test.ts` (4 tests, 20
+assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-WAGE-001/`. The exact Core3 blocker is
+`actions[1].title is not allowed`; no aggregate Employees sign-off is claimed.

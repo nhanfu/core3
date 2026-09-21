@@ -851,3 +851,18 @@ Candidate commit: current working tree
   compact Contract date range. Core3 browser evidence is blocked before
   backend 3001 by unrelated Inventory unknown actions; the exact blocker is
   in `verification.md`. No aggregate Employees sign-off is claimed.
+
+## EMP-WAGE-001 (2026-09-21)
+
+- Selected Odoo's manager-only Payroll `hr.version.wage` as the smallest
+  remaining uncovered employee behavior after Related User assignment.
+- Added migration `20260922100000-064` to reconcile employee and active Payroll
+  wage projections deterministically and replay-safely.
+- Added separate API/page YAML for `edit_employee_wage`; the guarded action
+  updates both wage values and both row versions atomically.
+- Focused verification is **4 tests / 20 assertions**, covering mapping,
+  update, actor/company/stale/validation guards, replay, and restart.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-WAGE-001/`. Authenticated Odoo desktop
+  and mobile captures show Wage. Core3 startup is blocked by unrelated
+  `actions[1].title is not allowed` page-schema discovery; no sign-off claimed.

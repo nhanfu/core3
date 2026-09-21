@@ -1,0 +1,10 @@
+{
+  "feature_id": "EMP-WAGE-001",
+  "route": "/employees/detail?id=employee-demo-001",
+  "authenticated_attempt": true,
+  "desktop": { "viewport": "1440x1100", "rendered": false },
+  "mobile": { "viewport": "390x844", "rendered": false },
+  "blocker": "PageSchemaError: Invalid page definition: actions[1].title is not allowed",
+  "phase": "global page discovery before Core3 backend bind",
+  "ownership": "unrelated page/schema failure; not changed by Employees"
+}

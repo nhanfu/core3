@@ -1,0 +1,21 @@
+version: 0.0.64
+kind: data
+description: Synchronize the Odoo Payroll wage projection
+type:
+  postgres:
+    up: |
+      UPDATE employee_versions v
+      SET wage = COALESCE(v.wage, e.wage)
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.active = true;
+      UPDATE employees e
+      SET wage = COALESCE(e.wage, v.wage)
+      FROM employee_versions v
+      WHERE v.employee_id = e.id AND v.active = true
+        AND v.date_version = (SELECT MAX(current_v.date_version) FROM employee_versions current_v WHERE current_v.employee_id = e.id AND current_v.active = true AND current_v.contract_date_start <= DATE '2026-01-15');
+    down: |
+      SELECT 1;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

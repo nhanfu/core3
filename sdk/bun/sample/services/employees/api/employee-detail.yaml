@@ -505,6 +505,41 @@ actions:
     fields:
       - { field: contract_start, label: Contract Start Date, type: date }
       - { field: contract_end, label: Contract End Date, type: date }
+  - id: edit_employee_wage
+    type: server_form
+    permission: employees.manage
+    title: Edit Wage
+    description: Update the manager-only Payroll wage on this employee's active record.
+    action: employees.records.wage.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_versions]
+    mutation:
+      fields: [wage]
+      required: [wage]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_WAGE_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the Wage was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :wage IS NOT NULL AND CAST(:wage AS DECIMAL(18,2)) >= 0", status: 422, code: EMPLOYEES_WAGE_INVALID, message: Wage must be zero or greater. }
+        - { query: "SELECT 1 AS ok FROM employee_versions WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')", status: 409, code: EMPLOYEES_WAGE_VERSION_NOT_FOUND, message: The employee has no active Payroll record to update. }
+      steps:
+        - query: "UPDATE employees SET wage = CAST(:wage AS DECIMAL(18,2)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: This employee changed before the Wage was saved. Reload and try again.
+        - query: "UPDATE employee_versions SET wage = CAST(:wage AS DECIMAL(18,2)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :id AND active = true AND date_version = (SELECT MAX(date_version) FROM employee_versions WHERE employee_id = :id AND active = true AND contract_date_start <= DATE '2026-01-15')"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_WAGE_VERSION_NOT_FOUND
+          message: The employee's active Payroll record changed before Wage was saved.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: wage, label: Monthly Wage, type: number, min: 0, required: true }
   - id: edit_employee_type
     type: server_form
     permission: employees.write
