@@ -2,6 +2,48 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-21 Work Center Work Orders scoped action bounded slice
+
+Source inspection identified `mrp.action_work_orders` in
+`addons/mrp/views/mrp_workcenter_views.xml` as a distinct record-scoped action
+used by the Work Center dashboard's `WORK ORDERS` control. It targets
+`mrp.workorder`, excludes terminal `done` and `cancel` rows, scopes by the
+selected work center, and exposes `list,form,pivot,graph,calendar` modes. The
+underlying Work Order list is create-disabled; existing guarded operator
+transitions remain available. This is different from the global
+`mrp.mrp_workorder_todo` action already implemented at `/workorders`.
+
+Core3 adds the deliberate module-qualified alias
+`/manufacturing/work-centers/work-orders`. The presentation-only contract is
+`services/manufacturing/pages/work-center-workorders.yaml`; the page-id-bound
+API/action contract is `services/manufacturing/api/work-center-workorders.yaml`.
+The Work Center Overview `open_mrp_workcenter_orders` action now passes both
+the durable work-center ID and name to this scoped route. The list reuses the
+existing `manufacturing-workorder-detail` page and `mrp_workorders` workflow,
+so no duplicate form or workflow contract is introduced. Migration
+`20260921100000-021-work-center-workorders-index.yaml` adds an idempotent
+work-center/state/planned-date index to the durable Work Order table; it adds
+no fixture-only rows.
+
+Focused coverage is
+`test/manufacturing_work_center_workorders.integration.test.ts`: 3 tests / 22
+assertions pass. It verifies source modes, page/API separation, isolated
+Manufacturing discovery, route binding, idempotent migration replay, durable
+work-center scoping, terminal exclusion, empty/transport states, and
+permissioned guarded workflow actions. The existing Work Center Overview and
+global Work Orders regression tests also pass after their expected navigation
+contract update.
+
+The authenticated Odoo reference probe used browser instance `245ea108`,
+database URL `http://localhost:8069/odoo/work-centers`, and the shared QA
+session without reading credentials or browser secrets. Both desktop and
+mobile probes redirected to Discuss/OdooBot and the launcher exposed no
+Manufacturing menu, so no Odoo Manufacturing visual claim is made. Blocker
+captures and exact hashes are under
+`plan/odoo-ui-parity/evidence/manufacturing/2026-09-21/MANUFACTURING-WCWO-001/`.
+The shared repository audit remains blocked by an unrelated malformed
+`services/surveys/api/survey-detail.yaml`; this module slice does not edit it.
+
 ## 2026-09-21 Work Centers Overview bounded slice
 
 Source inspection after the completed Work Orders action-649 checkpoint found

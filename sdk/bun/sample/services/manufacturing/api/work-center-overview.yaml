@@ -33,8 +33,8 @@ actions:
   - id: open_mrp_workcenter_orders
     type: navigate
     permission: manufacturing.read
-    navigate_to: /workorders
-    params: { workcenter: '{row.name}', search_default_ready: true, search_default_progress: true, search_default_blocked: true }
+    navigate_to: /manufacturing/work-centers/work-orders
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}' }
   - id: open_mrp_workcenter_waiting
     type: navigate
     permission: manufacturing.read

@@ -1,5 +1,43 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-WCWO-001 — Work Center Work Orders scoped action (2026-09-21)
+
+- Source/action: local Odoo 19 `mrp.action_work_orders`,
+  `addons/mrp/views/mrp_workcenter_views.xml`; record-scoped Work Center
+  dashboard action for `mrp.workorder`, non-terminal domain, and
+  `list,form,pivot,graph,calendar` modes.
+- Core3 paths: presentation
+  `services/manufacturing/pages/work-center-workorders.yaml`; page-id-bound
+  API/actions `services/manufacturing/api/work-center-workorders.yaml`;
+  overview binding `services/manufacturing/api/work-center-overview.yaml`;
+  durable index migration
+  `services/manufacturing/migrations/20260921100000-021-work-center-workorders-index.yaml`;
+  focused test `test/manufacturing_work_center_workorders.integration.test.ts`.
+- Functional/data result: PASS, 3 tests / 22 assertions. Isolated discovery
+  finds the page/API pair and route. Replaying the Manufacturing migration
+  chain twice remains idempotent; Assembly 1 returns only its persisted
+  non-terminal row, Assembly 2 returns its waiting row, terminal rows are
+  excluded, and search/empty/503 states are covered.
+- Workflow/permission result: PASS at contract level. The six scoped actions
+  require `manufacturing.write`, reuse the durable `mrp_workorders` workflow,
+  and expose no create/delete action. Read and 401/403/503 declarations are
+  explicit.
+- Odoo browser verification: BLOCKED, exact reason. Using bsk session `nmok`
+  on browser instance `245ea108`, the authenticated navigation request to
+  `http://localhost:8069/odoo/work-centers` redirected to Discuss/OdooBot at
+  both desktop and emulated iPhone 14 (`390x844`); the launcher had no
+  Manufacturing menu. No credentials, cookies, or tokens were extracted.
+  No Odoo Manufacturing visual sign-off is claimed.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-21/MANUFACTURING-WCWO-001/`;
+  blocker screenshots are `odoo-desktop-blocker.png` and
+  `odoo-mobile-blocker.png`. Core3 browser visual evidence is not claimed from
+  this bsk session because the available authenticated profile was the Odoo
+  reference profile and no Core3 login was supplied through the browser skill.
+- Regression: the global `bun run audit` remains blocked by unrelated
+  malformed `services/surveys/api/survey-detail.yaml`; no Surveys file was
+  modified. Manufacturing-only focused tests, CSS build, and diff-check pass.
+
 ## MANUFACTURING-WORA-001 retest — candidate `63b8d712` (2026-09-13)
 
 - Worktree correction: the requested `/home/nhanjs/projects/core3-worktrees/agent/` path does not exist. The registered worktree used was `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis-transport-ui`, at the exact requested candidate `63b8d7127963e5a8b93a3df811e12b56315cde4b`; checkout was clean before testing.

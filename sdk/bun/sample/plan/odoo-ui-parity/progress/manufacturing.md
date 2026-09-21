@@ -1,5 +1,27 @@
 # manufacturing parity progress
 
+## 2026-09-21 bounded Work Center Work Orders scoped action
+
+- Added the distinct source-backed `mrp.action_work_orders` record-scoped
+  action at `/manufacturing/work-centers/work-orders`, with page/API YAML
+  separation, selected work-center filtering, terminal-state exclusion, and
+  five source view modes: List, Form, Calendar, Pivot, and Graph.
+- Reused existing durable `mrp_workorders` rows, the guarded `mrp_workorders`
+  workflow, and the existing Work Order detail page; no duplicate form,
+  fixture table, or workflow was added. Migration 021 adds an idempotent query
+  index only.
+- Focused suite passes 3 tests / 22 assertions; the related Work Center
+  Overview and global Work Orders regression tests pass. Manufacturing CSS and
+  `git diff --check` pass.
+- Authenticated Odoo desktop/mobile evidence is blocked: browser instance
+  `245ea108` and database URL `http://localhost:8069` redirect the shared QA
+  profile from `/odoo/work-centers` to Discuss/OdooBot with no Manufacturing
+  menu. Exact blocker screenshots and hashes are recorded in the feature
+  evidence folder. No visual sign-off is claimed.
+- Global audit is blocked by the unrelated malformed Surveys API YAML; the
+  active checkout also contains pre-existing untracked Surveys screenshots,
+  which are preserved and excluded from this module commit.
+
 ## 2026-09-13 retest — `MANUFACTURING-WORA-001` / `63b8d712`
 
 - Authenticated `admin@tms.local` browser evidence now verifies the exact `/manufacturing/work-orders-analysis?fixture_state=transport_error` URL at `1440x900` and `390x844`. Both render the `Data unavailable` alert with message `Work Orders Analysis is temporarily unavailable.` and `503 MRP_WORKORDER_ANALYSIS_UNAVAILABLE`; both have zero page/request errors and no horizontal overflow. Capture paths and SHA-256 values are recorded in `qa/manufacturing.md`.

@@ -5,7 +5,7 @@ QA owner: manufacturing-qa
 Developer owner: manufacturing module owner  
 Reference addon/version: mrp, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-21
 
 This plan follows [`manufacturing.md`](../../manufacturing.md); executed
 evidence is recorded in [`../manufacturing.md`](../manufacturing.md).
@@ -40,6 +40,7 @@ IDs/dates.
 | MRP-FUNC-009 | Attachments/import/export/print | Exercise exposed BoM/MO attachments, import/export and report/print actions | planned browser interaction gate |
 | MRP-FUNC-010 | Work Orders action 649 existing-record edit | Open a non-terminal work order, edit operation/work center/duration/schedule, reload, and confirm persisted values; prove create/delete are not exposed by the Odoo action | planned bounded continuation |
 | MRP-FUNC-011 | Work Centers Overview action | Persist dashboard metrics, derive work-order counts by work center, and preserve empty/transport/permission boundaries without CRUD controls | pass: focused suite |
+| MRP-FUNC-012 | Work Center `action_work_orders` | Scope persisted non-terminal work orders to the selected work center across list/form/calendar/pivot/graph modes; keep create/delete absent and retain guarded operator actions | pass: focused bounded suite |
 
 ## Workflow and integration cases
 
@@ -51,6 +52,7 @@ IDs/dates.
 | MRP-WF-004 | Scrap/unbuild | Scrap and unbuild update inventory-facing relations without partial writes | pass at contract level; browser integration planned |
 | MRP-WF-005 | Durable/external boundary | Scheduling, work-center callbacks, inventory/accounting integrations and notifications use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | MRP-WF-006 | Work-order edit guards | Edit a non-terminal row with its current version; reject terminal rows, invalid duration/date range, missing rows, stale versions, and unauthorized actors without partial writes | planned bounded continuation |
+| MRP-WF-007 | Work Center Work Orders workflow | Scoped Plan/Start/Pause/Continue/Block/Cancel actions reuse `mrp_workorders`, preserve row guards, and refresh the scoped durable source | pass: focused contract; browser blocked by reference profile |
 
 ## Permission and security cases
 
@@ -64,6 +66,7 @@ IDs/dates.
 | MRP-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current manufacturing row unchanged | pass at contract level |
 | MRP-PERM-007 | Work Orders action 649 edit | Manufacturing write can edit a non-terminal work order; read-only/ordinary actors cannot invoke the mutation; create/delete remain unavailable | planned bounded continuation |
 | MRP-PERM-008 | Work Centers Overview | Dashboard datasource and navigation actions require `manufacturing.read`; no mutation action is exposed by the create-disabled source action | pass: focused suite |
+| MRP-PERM-009 | Work Center Work Orders | Scoped reads require `manufacturing.read`; operator mutations require `manufacturing.write`; no create/delete action is exposed | pass: focused contract |
 
 ## Visual, responsive, and regression cases
 
@@ -75,6 +78,7 @@ IDs/dates.
 | MRP-UI-004 | Current route regression | all 32 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 64-check matrix |
 | MRP-UI-005 | Work Orders edit form | Odoo action 649 list/detail/edit state | 1440x900 and 390x844 | Work Order form exposes Edit for non-terminal rows, preserves visible tabs/status, saves without overflow, and reload shows the persisted change | planned bounded continuation |
 | MRP-UI-006 | Work Centers Overview Kanban/Form | `/manufacturing/work-centers-overview` | 1440x900 and 390x844 | Dashboard cards expose status, work-order counts, OEE/load metrics, and guarded navigation without overflow | blocked: Core3 auth and Odoo MRP menu unavailable in shared profile |
+| MRP-UI-007 | Work Center Work Orders scoped action | `/manufacturing/work-centers/work-orders` | 1440x900 and 390x844 | Source modes and selected-center rows render without overflow; paired Odoo capture is required where the reference action is available | blocked: shared Odoo profile redirects to Discuss and exposes no Manufacturing menu |
 
 ## Exit criteria
 

@@ -23,7 +23,7 @@ describe('Manufacturing Work Center Overview parity slice', () => {
     expect(api.page.id).toBe('manufacturing-work-center-overview');
     expect(page.page.route).toBe('/manufacturing/work-centers-overview');
     expect(api.actions).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'open_mrp_workcenter_orders', navigate_to: '/workorders', permission: 'manufacturing.read' }),
+      expect.objectContaining({ id: 'open_mrp_workcenter_orders', navigate_to: '/manufacturing/work-centers/work-orders', permission: 'manufacturing.read' }),
       expect.objectContaining({ id: 'open_mrp_workcenter_oee', navigate_to: '/manufacturing/oee', permission: 'manufacturing.read' }),
     ]));
     expect(api.actions.some((action: any) => ['create', 'update', 'delete'].includes(action.operation))).toBe(false);
