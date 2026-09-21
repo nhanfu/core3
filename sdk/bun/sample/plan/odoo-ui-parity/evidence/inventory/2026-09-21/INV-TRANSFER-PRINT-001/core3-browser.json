@@ -1,0 +1,71 @@
+{
+  "feature_id": "INV-TRANSFER-PRINT-001",
+  "generated_at": "2026-09-21T01:26:50.871Z",
+  "base": "http://127.0.0.1:4334",
+  "desktop": {
+    "label": "desktop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "states": {
+      "ready": {
+        "url": "http://127.0.0.1:4334/inventory/transfer/detail?id=delivery-print-0001",
+        "printVisible": true,
+        "containsReference": true,
+        "containsReport": true,
+        "containsPrintHistory": true,
+        "initialHasPrint": true
+      },
+      "done": {
+        "url": "http://127.0.0.1:4334/inventory/transfer/detail?id=delivery-print-0002",
+        "printVisible": true,
+        "containsReference": true,
+        "containsReport": true,
+        "containsPrintHistory": true,
+        "initialHasPrint": true
+      },
+      "viewportFit": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyWidth": 1440
+      }
+    }
+  },
+  "mobile": {
+    "label": "mobile",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "states": {
+      "ready": {
+        "url": "http://127.0.0.1:4334/inventory/transfer/detail?id=delivery-print-0001",
+        "printVisible": true,
+        "containsReference": true,
+        "containsReport": true,
+        "containsPrintHistory": true,
+        "initialHasPrint": true
+      },
+      "done": {
+        "url": "http://127.0.0.1:4334/inventory/transfer/detail?id=delivery-print-0002",
+        "printVisible": true,
+        "containsReference": true,
+        "containsReport": true,
+        "containsPrintHistory": true,
+        "initialHasPrint": true
+      },
+      "viewportFit": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyWidth": 390
+      }
+    }
+  },
+  "failures": [],
+  "errors": []
+}

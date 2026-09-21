@@ -1,0 +1,7 @@
+{
+  "feature_id": "INV-TRANSFER-PRINT-001",
+  "probe": "GET http://localhost:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "The supplied unauthenticated Odoo runtime redirects to /web/login; no paired authenticated Print action or report capture was claimed."
+}
