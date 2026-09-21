@@ -30,7 +30,7 @@ describe('Employees Work Address assignment parity', () => {
     expect(page.page.id).toBe('employee-detail');
     expect(api.page.id).toBe(page.page.id);
     expect(page.components[0].header_actions).toContainEqual(expect.objectContaining({ id: 'edit_employee_work_address', permission: 'employees.write' }));
-    expect(location.fields.map((field: any) => field.field)).toEqual(['address_name', 'work_location']);
+    expect(location.fields.map((field: any) => field.field)).toEqual(['address_name', 'work_location', 'work_location_type']);
     expect(api.datasources.find((source: any) => source.id === 'employee_detail').query).toContain('work_address_id');
     expect(api.datasources.find((source: any) => source.id === 'employee_work_addresses_for_employee').query).toContain('employee_work_addresses');
     expect(edit.mutation.fields).toEqual(['work_address_id']);

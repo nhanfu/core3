@@ -66,6 +66,7 @@ components:
       - { id: edit_employee_timezone, label: Edit Timezone, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_language, label: Edit Language, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: refresh_employee_presence, label: Refresh Presence, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: refresh_employee_work_location_type, label: Refresh Location Type, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: launch_employee_plan, label: Launch Plan, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
@@ -102,7 +103,7 @@ components:
             - title: Work
               fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: coach_name, label: Coach }, { field: mobile_phone, label: Work Mobile }, { field: work_contact_name, label: Work Contact }, { field: employee_tags, label: Tags }]
             - title: Location
-              fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }]
+              fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }, { field: work_location_type, label: Work Location Type }]
             - title: Departure
               show_if: "state.employee_detail.active === false"
               fields: [{ field: departure_reason_name, label: Departure Reason }, { field: departure_description, label: Description, type: textarea }, { field: departure_date, label: Departure Date, type: date }]

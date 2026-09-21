@@ -1,0 +1,16 @@
+version: 0.0.87
+kind: data
+description: Persist deterministic Odoo employee work location type projections
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_location_type VARCHAR;
+      UPDATE employees e
+      SET work_location_type = COALESCE((SELECT w.location_type FROM employee_work_locations w WHERE w.id = e.work_location_id), 'other')
+      WHERE e.work_location_type IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_location_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

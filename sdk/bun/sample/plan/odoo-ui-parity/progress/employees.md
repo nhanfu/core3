@@ -1218,6 +1218,23 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001 (2026-09-21)
+
+- Selected Odoo's computed `hr.employee.work_location_type` after the HR
+  presence slice; it derives from `hr.work.location.location_type` and is
+  distinct from the completed Work Location relation assignment.
+- Added migration `20260922330000-087`, durable `work_location_type`
+  projection, API refresh action, and Work Location synchronization. Page/API
+  YAML remain separate and join through `page.id: employee-detail`.
+- Guards cover actor, active/current-company, missing, and stale row-version
+  boundaries. Focused verification is **4 tests / 20 assertions**; adjacent
+  Work Location/Address regressions are **12 tests / 62 assertions**.
+- Core3 authenticated desktop/mobile captures render the field with 200 API
+  responses, but the seeded employee is hidden by the Demo Company context.
+  Odoo desktop/mobile is blocked by rejected `admin/admin` credentials.
+  Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`.
+- No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-HR-PRESENCE-001 (2026-09-21)
 
 - Selected Odoo's computed `hr_presence_state` and `hr_icon_display` fields

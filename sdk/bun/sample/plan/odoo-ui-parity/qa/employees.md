@@ -41,6 +41,22 @@ Focused test: `test/employees_hr_presence.integration.test.ts` (4 tests,
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-062 | Odoo `work_location_type` and `hr.work.location.location_type` source mapping | pass; Home/Office/Other projection is present in paired detail contracts |
+| EMP-WF-062 | Work Location Type refresh and assignment synchronization | pass; durable type refresh increments employee row version and assignment updates the projection |
+| EMP-PERM-062 | Actor, current company, missing employee, and stale row-version guards | pass; invalid requests reject atomically |
+| EMP-DATA-062 | Migration replay and file-backed restart | pass; seeded and refreshed values survive replay/reopen without duplicate migration effects |
+| EMP-UI-062 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 renders the field with 200 API responses but hides the Vietnam fixture under Demo Company; Odoo `admin/admin` login is rejected |
+
+Focused test: `test/employees_work_location_type.integration.test.ts` (4
+tests, 20 assertions), with Work Location/Address regressions (12 tests, 62
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`. No
+aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-USER-ACTIVE-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

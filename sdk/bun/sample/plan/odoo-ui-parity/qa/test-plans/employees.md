@@ -915,3 +915,17 @@ tests, 21 assertions). Evidence:
 Focused test: `test/employees_hr_presence.integration.test.ts` (4 tests, 26
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-HR-PRESENCE-001/`.
+
+## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo computed `work_location_type` and linked location selection map to separate API/detail page contracts through `page.id` | pass |
+| Type refresh CRUD | Refresh derives Home/Office/Other from the linked work location, persists it, and increments row version | pass |
+| Permission and scope | Authenticated actor, active/current company, missing employee, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the projection without duplicate seed effects | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 field renders with 200 API responses but the deterministic fixture is hidden by Demo Company; Odoo local `admin/admin` credentials are rejected |
+
+Focused test: `test/employees_work_location_type.integration.test.ts` (4
+tests, 20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`.

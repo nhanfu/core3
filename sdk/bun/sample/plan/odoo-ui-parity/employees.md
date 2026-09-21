@@ -1942,6 +1942,31 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-LOCATION-TYPE-001: Employee Work Location Type (2026-09-21)
+
+Odoo's `hr.employee.work_location_type` is a tracked computed selection with
+`home`, `office`, and `other`, derived from the linked
+`hr.work.location.location_type`. The existing Work Location assignment slice
+persisted the relation but did not project this source-backed type.
+
+Core3 adds migration `20260922330000-087` with a replay-safe persisted type
+projection and deterministic fallback to `other`. The API detail contract
+projects the type and owns a guarded `refresh_employee_work_location_type`
+action; the existing Work Location update keeps the projection synchronized.
+The page contract adds Work Location Type and its refresh action, joined to the
+API through `page.id: employee-detail`. Actor, active/current-company,
+missing, and stale row-version guards are covered.
+
+Focused verification is **4 tests / 20 assertions** for source mapping, CRUD
+refresh, boundaries, migration replay, and file-backed restart; the adjacent
+Work Location and Work Address regression run is **12 tests / 62 assertions**.
+Authenticated Core3 desktop/mobile captures render the new field with all
+observed API requests returning 200, but the seeded employee is hidden by the
+Demo Company context. Odoo desktop/mobile authentication is blocked by the
+local `admin/admin` rejection. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-LOCATION-TYPE-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-HR-PRESENCE-001: Employee HR presence state projection (2026-09-21)
 
 The next uncovered source-backed Employee behavior is Odoo's computed
