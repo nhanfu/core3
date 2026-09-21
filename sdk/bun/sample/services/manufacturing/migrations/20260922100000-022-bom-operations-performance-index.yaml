@@ -1,0 +1,27 @@
+version: 0.0.22
+description: Persist BoM scope for Operations Performance and index completed work orders
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_workorder_analysis ADD COLUMN IF NOT EXISTS bom_id VARCHAR;
+      UPDATE mrp_workorder_analysis SET bom_id = CASE id
+        WHEN 'wora-ready-001' THEN 'bom-table-top-odoo'
+        WHEN 'wora-progress-001' THEN 'bom-table-kit'
+        WHEN 'wora-finished-001' THEN 'bom-drawer-primary'
+        WHEN 'wora-waiting-001' THEN 'bom-table-top-odoo'
+        WHEN 'wora-finished-002' THEN 'bom-table-odoo'
+        WHEN 'wora-blocked-001' THEN 'bom-table-kit'
+        WHEN 'wora-cancelled-001' THEN 'bom-table-kit-odoo'
+        ELSE bom_id
+      END
+      WHERE id IN ('wora-ready-001', 'wora-progress-001', 'wora-finished-001', 'wora-waiting-001', 'wora-finished-002', 'wora-blocked-001', 'wora-cancelled-001');
+      CREATE INDEX IF NOT EXISTS idx_mrp_workorder_analysis_bom_done
+        ON mrp_workorder_analysis(bom_id, state, date_finished, operation_name);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_workorder_analysis_bom_done;
+      ALTER TABLE mrp_workorder_analysis DROP COLUMN IF EXISTS bom_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

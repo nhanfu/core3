@@ -1,5 +1,40 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-BOM-OP-001 — BoM Operations Performance (2026-09-22)
+
+- Source/action: local Odoo 19 `mrp.action_mrp_routing_time` in
+  `addons/mrp/views/mrp_workorder_views.xml`, launched by the BoM
+  `Operations / Performance` stat button in `addons/mrp/views/mrp_bom_views.xml`;
+  model `mrp.workorder`, `graph,pivot,list,form,calendar`, completed-state
+  domain scoped to the active BoM.
+- Core3 paths: presentation
+  `services/manufacturing/pages/bom-operations-performance.yaml`; page-id-bound
+  API/action `services/manufacturing/api/bom-operations-performance.yaml`;
+  BoM stat binding in `services/manufacturing/pages/bom-detail.yaml` and
+  `services/manufacturing/api/bom-detail.yaml`; durable migration
+  `services/manufacturing/migrations/20260922100000-022-bom-operations-performance-index.yaml`;
+  focused test
+  `test/manufacturing_bom_operations_performance.integration.test.ts`.
+- Functional/data result: PASS, 4 tests / 27 assertions. The report returns
+  only completed rows for the selected durable BoM, supports operation/work
+  center/search filters, empty and 503 transport states, and replays its
+  migration/index idempotently.
+- Workflow/permission result: PASS at contract level. The action is read-only;
+  all report/filter datasources require `manufacturing.read` and declare 401,
+  403, and 503 envelopes. No mutation or workflow transition is exposed.
+- Restart result: PASS. The BoM-scoped completed row remains queryable after a
+  file-backed DuckDB close/reopen and migration replay.
+- Odoo browser verification: BLOCKED, exact reason. Using bsk on browser
+  instance `245ea108`, authenticated navigation to
+  `http://localhost:8069/odoo/boms` redirected to Discuss/OdooBot at both
+  desktop and emulated iPhone 14 (`390x844`); the launcher exposed no
+  Manufacturing menu. No credentials, cookies, or tokens were extracted.
+  No Odoo Manufacturing visual sign-off is claimed.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-BOM-OP-001/`;
+  blocker captures are `odoo-desktop-blocker.png` and
+  `odoo-mobile-blocker.png`.
+
 ## MANUFACTURING-WCWO-001 — Work Center Work Orders scoped action (2026-09-21)
 
 - Source/action: local Odoo 19 `mrp.action_work_orders`,

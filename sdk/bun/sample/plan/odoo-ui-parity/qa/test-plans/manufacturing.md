@@ -41,6 +41,7 @@ IDs/dates.
 | MRP-FUNC-010 | Work Orders action 649 existing-record edit | Open a non-terminal work order, edit operation/work center/duration/schedule, reload, and confirm persisted values; prove create/delete are not exposed by the Odoo action | planned bounded continuation |
 | MRP-FUNC-011 | Work Centers Overview action | Persist dashboard metrics, derive work-order counts by work center, and preserve empty/transport/permission boundaries without CRUD controls | pass: focused suite |
 | MRP-FUNC-012 | Work Center `action_work_orders` | Scope persisted non-terminal work orders to the selected work center across list/form/calendar/pivot/graph modes; keep create/delete absent and retain guarded operator actions | pass: focused bounded suite |
+| MRP-FUNC-013 | BoM `action_mrp_routing_time` | Scope completed work orders to the selected BoM across graph/pivot/list/form/calendar; filter by operation/work center/search and persist the BoM scope through restart | pass: focused bounded suite |
 
 ## Workflow and integration cases
 
@@ -67,6 +68,7 @@ IDs/dates.
 | MRP-PERM-007 | Work Orders action 649 edit | Manufacturing write can edit a non-terminal work order; read-only/ordinary actors cannot invoke the mutation; create/delete remain unavailable | planned bounded continuation |
 | MRP-PERM-008 | Work Centers Overview | Dashboard datasource and navigation actions require `manufacturing.read`; no mutation action is exposed by the create-disabled source action | pass: focused suite |
 | MRP-PERM-009 | Work Center Work Orders | Scoped reads require `manufacturing.read`; operator mutations require `manufacturing.write`; no create/delete action is exposed | pass: focused contract |
+| MRP-PERM-010 | BoM Operations Performance | Report and filter datasources require `manufacturing.read`; the record-scoped action exposes no write/create/delete path and declares 401/403/503 responses | pass: focused contract |
 
 ## Visual, responsive, and regression cases
 
@@ -79,6 +81,7 @@ IDs/dates.
 | MRP-UI-005 | Work Orders edit form | Odoo action 649 list/detail/edit state | 1440x900 and 390x844 | Work Order form exposes Edit for non-terminal rows, preserves visible tabs/status, saves without overflow, and reload shows the persisted change | planned bounded continuation |
 | MRP-UI-006 | Work Centers Overview Kanban/Form | `/manufacturing/work-centers-overview` | 1440x900 and 390x844 | Dashboard cards expose status, work-order counts, OEE/load metrics, and guarded navigation without overflow | blocked: Core3 auth and Odoo MRP menu unavailable in shared profile |
 | MRP-UI-007 | Work Center Work Orders scoped action | `/manufacturing/work-centers/work-orders` | 1440x900 and 390x844 | Source modes and selected-center rows render without overflow; paired Odoo capture is required where the reference action is available | blocked: shared Odoo profile redirects to Discuss and exposes no Manufacturing menu |
+| MRP-UI-008 | BoM Operations Performance stat action | `/manufacturing/boms/detail/operations-performance` | 1440x900 and 390x844 | Operations Performance stat action and graph/pivot/list/form/calendar tabs match Odoo where the reference action is available; no overflow | blocked: shared Odoo profile redirects `/odoo/boms` to Discuss and exposes no Manufacturing menu |
 
 ## Exit criteria
 

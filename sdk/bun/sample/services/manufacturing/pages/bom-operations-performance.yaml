@@ -1,0 +1,71 @@
+title: Operations Performance
+page: { id: manufacturing-bom-operations-performance, route: /manufacturing/boms/detail/operations-performance, breadcrumb: [Supply Chain, Manufacturing, Products, Bills of Materials, Operations Performance], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_bom_operations_performance
+    search: { label: Search work orders, placeholder: 'Search operations, work centers, manufacturing orders, or products...' }
+    default_filters: { state: Finished }
+    filters:
+      - { field: operation_name, label: Operation, options_source: mrp_bom_operations_performance_operations }
+      - { field: workcenter, label: Work Center, options_source: mrp_bom_operations_performance_workcenters }
+    group_by:
+      - { field: operation_name, label: Operation }
+      - { field: workcenter, label: Work Center }
+      - { field: date_start, label: Date }
+    default_group_by: operation_name
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: operation_name
+        measure_field: duration
+        measure_label: Duration (minutes)
+        type: bar
+        measures:
+          - { field: duration, label: Duration (minutes), aggregate: sum }
+          - { field: duration_unit, label: Duration Per Unit, aggregate: average }
+          - { field: expected_duration, label: Expected Duration (minutes), aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: date_start, column: Date, type: date }
+            - { field: operation_name, column: Operation }
+            - { field: workcenter, column: Work Center }
+            - { field: duration, column: Duration (minutes) }
+            - { field: duration_unit, column: Duration Per Unit }
+            - { field: expected_duration, column: Expected Duration (minutes) }
+          default:
+            rows: [operation_name]
+            measures:
+              - { field: duration, aggregate: sum, column: Duration (minutes) }
+              - { field: duration_unit, aggregate: average, column: Duration Per Unit }
+              - { field: expected_duration, aggregate: sum, column: Expected Duration (minutes) }
+          date_ranges: { date_start: day }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_start
+        end_date_field: date_finished
+        card: { title: operation_name, subtitle: production_name, fields: [{ field: workcenter, label: Work Center }, { field: duration, label: Duration }] }
+    form_view: { page: apps/services/manufacturing/pages/work-orders-performance-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_bom_operations_performance
+    row_double_click_action: view_mrp_bom_operations_performance
+    row_actions: menu
+    empty_state: { title: No operations performance data, description: Completed work orders appear here after operations for this bill of materials are finished. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true, mobile_secondary: workcenter }
+      - { field: workcenter, label: Work Center, mobile: true }
+      - { field: production_name, label: Manufacturing Order, mobile: false }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: expected_duration, label: Expected Duration, align: right, mobile: false }
+      - { field: duration, label: Real Duration, align: right, mobile: true }
+      - { field: duration_unit, label: Duration Per Unit, align: right, mobile: false, optional: hide }
+      - { field: status_label, label: Status, type: StatusChip, mobile: false }

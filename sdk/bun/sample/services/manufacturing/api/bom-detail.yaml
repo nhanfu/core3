@@ -10,7 +10,8 @@ datasources:
         b.version, b.reference, b.bom_type, b.company_name, b.active,
         b.valid_from, b.valid_to, b.routing, b.notes,
         CASE WHEN b.active THEN 'Active' ELSE 'Archived' END AS status,
-        (SELECT COUNT(*) FROM mrp_bom_lines l WHERE l.bom_id = b.id) AS component_count
+        (SELECT COUNT(*) FROM mrp_bom_lines l WHERE l.bom_id = b.id) AS component_count,
+        (SELECT COUNT(*) FROM mrp_workorder_analysis w WHERE w.bom_id = b.id AND w.state = 'Finished') AS operation_performance_count
       FROM mrp_boms b
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND b.id = :id
   - id: mrp_bom_components
@@ -24,6 +25,11 @@ datasources:
     permission: manufacturing.read
     query: "SELECT id, bom_id, product_id, product_name, quantity, uom, cost_share FROM mrp_bom_byproducts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND bom_id = :id ORDER BY product_name, id"
 actions:
+  - id: bom_operations_performance
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/boms/detail/operations-performance
+    params: { bom_id: '{state.id}' }
   - id: back_to_mrp_boms
     type: navigate
     permission: manufacturing.read

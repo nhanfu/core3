@@ -15,6 +15,7 @@ components:
       - { id: unarchive_mrp_bom, label: Unarchive, icon: archive, permission: manufacturing.manage, show_if: 'record.active === false' }
       - { id: delete_mrp_bom, label: Delete, icon: trash, variant: danger, permission: manufacturing.manage, confirm: Delete this bill of materials? }
     stat_buttons:
+      - { id: bom_operations_performance, label: Operations Performance, value_field: operation_performance_count, icon: clock, permission: manufacturing.read }
       - { id: bom_overview, label: BoM Overview, value_field: component_count, permission: manufacturing.read }
     group_columns: 2
     groups:

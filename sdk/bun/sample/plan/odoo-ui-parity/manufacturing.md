@@ -2,6 +2,52 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 BoM Operations Performance bounded action
+
+Local Odoo 19 source inspection identified the next uncovered Manufacturing
+surface: the BoM form's `Operations Performance` stat button in
+`addons/mrp/views/mrp_bom_views.xml`. It launches
+`mrp.action_mrp_routing_time` from `addons/mrp/views/mrp_workorder_views.xml`
+for `mrp.workorder`, with `graph,pivot,list,form,calendar` modes, the default
+Done filter, and the record-scoped domain
+`operation_id.bom_id = active_id AND state = done`. This is a distinct
+record-scoped action, not a duplicate of global Work Orders or Work Orders
+Performance.
+
+Core3 adds the page-only contract
+`services/manufacturing/pages/bom-operations-performance.yaml` at
+`/manufacturing/boms/detail/operations-performance` and its page-id-bound
+API/action contract at
+`services/manufacturing/api/bom-operations-performance.yaml`. The existing BoM
+detail page now exposes `bom_operations_performance` and passes the durable
+`bom_id`; the existing read-only Work Order Performance detail page is reused
+for the source form mode rather than duplicating a detail contract. The report
+filters durable completed work-order analysis rows by BoM, operation, work
+center, and search text, and exposes graph/pivot/list/form/calendar states.
+
+Migration
+`services/manufacturing/migrations/20260922100000-022-bom-operations-performance-index.yaml`
+adds the durable BoM scope to the report rows, maps deterministic existing
+records, and creates the idempotent
+`idx_mrp_workorder_analysis_bom_done` index. No new fixture-only report rows
+are created. The API declares read permission plus explicit 401/403/503
+states; the action is read-only and has no mutation or workflow transition.
+
+Focused coverage is
+`test/manufacturing_bom_operations_performance.integration.test.ts`: 4 tests /
+27 assertions pass. It verifies the Odoo source action and stat button, page/API
+separation, route binding, all five modes, BoM scoping, Done-only behavior,
+search/empty/transport states, migration replay/index idempotence, read
+permission boundaries, and file-backed restart persistence.
+
+The authenticated Odoo probe used browser instance `245ea108`, database URL
+`http://localhost:8069/odoo/boms`, and the shared QA session without reading
+credentials or browser secrets. Desktop and mobile both redirected to
+Discuss/OdooBot and the launcher exposed no Manufacturing menu. No Odoo
+Manufacturing visual claim is made. Exact blocker captures and the source/Core3
+gap record are under
+`plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-BOM-OP-001/`.
+
 ## 2026-09-21 Work Center Work Orders scoped action bounded slice
 
 Source inspection identified `mrp.action_work_orders` in

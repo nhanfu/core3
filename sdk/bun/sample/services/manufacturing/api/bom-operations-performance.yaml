@@ -1,0 +1,41 @@
+page: { id: manufacturing-bom-operations-performance }
+datasources:
+  - id: mrp_bom_operations_performance_operations
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT operation_name AS value, operation_name AS label FROM mrp_workorder_analysis WHERE bom_id = :bom_id AND state = 'Finished' ORDER BY operation_name"
+  - id: mrp_bom_operations_performance_workcenters
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT workcenter AS value, workcenter AS label FROM mrp_workorder_analysis WHERE bom_id = :bom_id AND state = 'Finished' ORDER BY workcenter"
+  - id: mrp_bom_operations_performance
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_BOM_OPERATIONS_PERFORMANCE_UNAUTHORIZED, message: Sign in to view Operations Performance. }
+      forbidden: { status: 403, code: MRP_BOM_OPERATIONS_PERFORMANCE_FORBIDDEN, message: You do not have permission to view Operations Performance. }
+      transport_error: { status: 503, code: MRP_BOM_OPERATIONS_PERFORMANCE_UNAVAILABLE, message: Operations Performance is temporarily unavailable. }
+    pivot: { fields: [id, row_version, bom_id, operation_name, workcenter, production_name, product_name, quantity, expected_duration, duration, duration_unit, date_start, date_finished, state, status_label, company_name] }
+    query: |
+      SELECT id, row_version, bom_id, operation_name, workcenter, production_name, product_name,
+        CAST(quantity AS DOUBLE) AS quantity,
+        CAST(expected_duration AS DOUBLE) AS expected_duration,
+        CAST(duration AS DOUBLE) AS duration,
+        CAST(CASE WHEN quantity = 0 THEN 0 ELSE duration / quantity END AS DOUBLE) AS duration_unit,
+        CAST(date_start AS VARCHAR) AS date_start,
+        CAST(date_finished AS VARCHAR) AS date_finished,
+        state, 'Finished' AS status_label, company_name
+      FROM mrp_workorder_analysis
+      WHERE bom_id = :bom_id
+        AND state = 'Finished'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:operation_name IS NULL OR operation_name = :operation_name)
+        AND (:workcenter IS NULL OR workcenter = :workcenter)
+        AND (:q IS NULL OR operation_name ILIKE '%' || :q || '%' OR workcenter ILIKE '%' || :q || '%' OR production_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%')
+      ORDER BY date_finished, operation_name, id
+actions:
+  - id: view_mrp_bom_operations_performance
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-orders-performance/detail
+    params: { id: '{row.id}' }
