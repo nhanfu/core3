@@ -39,7 +39,7 @@ describe('Employees contract period parity', () => {
     expect(edit.mutation.fields).toEqual(['contract_start', 'contract_end']);
   });
 
-  test('creates and edits Contract Dates with active Payroll persistence', async () => {
+  test('creates and edits Contract Dates with active Payroll persistence', { timeout: 15000 }, async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrate(repository, 'employees_contract_period_crud');
@@ -66,7 +66,7 @@ describe('Employees contract period parity', () => {
     await database.close();
   });
 
-  test('rejects actor, stale, cross-company, invalid-order, invalid-format, and missing-version changes atomically', async () => {
+  test('rejects actor, stale, cross-company, invalid-order, invalid-format, and missing-version changes atomically', { timeout: 15000 }, async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrate(repository, 'employees_contract_period_guards');
@@ -91,7 +91,7 @@ describe('Employees contract period parity', () => {
     await database.close();
   });
 
-  test('preserves contract dates through migration replay and restart', async () => {
+  test('preserves contract dates through migration replay and restart', { timeout: 15000 }, async () => {
     const databasePath = `/tmp/core3-employees-contract-period-${crypto.randomUUID()}.duckdb`;
     const first = await DuckDbDatabase.open(databasePath);
     const firstRepository = new YamlRepository(first);

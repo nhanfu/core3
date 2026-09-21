@@ -1430,3 +1430,17 @@ Focused tests: `test/employees_education_school.integration.test.ts` and the
 Education regression test, **8 tests / 42 assertions**. Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-CONTRACT-FILTERS-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-059 | Odoo domains and `hr.group_hr_manager` source boundary | pass |
+| EMP-FUNC-059 | Current-company in/out contract results and active/archived boundary | pass |
+| EMP-DATA-059 | Migration replay and file-backed restart | pass |
+| EMP-PERM-059 | Exact manager-only UI filter visibility | conditional; shared schema has no filter-level permission key |
+| EMP-UI-059 | Authenticated Odoo/Core3 desktop/mobile | blocked; tab ownership and all Core3 runtime ports unavailable |
+
+Focused test: `test/employees_contract_filters.integration.test.ts` (3 tests,
+22 assertions). Adjacent regression set passes 17 tests / 105 assertions.
+Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.

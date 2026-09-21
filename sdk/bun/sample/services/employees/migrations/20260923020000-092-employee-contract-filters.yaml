@@ -1,0 +1,19 @@
+version: 0.0.92
+kind: data
+description: Add durable lookup coverage for Odoo Employee contract-status filters
+type:
+  postgres:
+    up: |
+      UPDATE employees
+      SET contract_end = DATE '2025-12-31'
+      WHERE id IN ('employee-demo-002', 'employee-demo-004')
+        AND company_name = 'Core3 Vietnam'
+        AND contract_end IS NULL;
+      CREATE INDEX IF NOT EXISTS employees_contract_filter_idx
+        ON employees(company_name, active, contract_start, contract_end);
+    down: |
+      DROP INDEX IF EXISTS employees_contract_filter_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -19,6 +19,23 @@ Status: qa-in-progress
   borrowed by bsk session `ojpy`; no desktop/mobile visual pass is claimed.
   Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
 
+## EMP-EMPLOYEE-CONTRACT-FILTERS-001 (2026-09-22)
+
+- Added Odoo's distinct manager-only `In Contract` and `Out of Contract`
+  filters after the completed New Contract, Newly Hired, and My Team/My
+  Department slices. Local source domains and group restriction are recorded.
+- Added durable status projections, matching Employees page/API bindings, and
+  migration `20260923020000-092` with expired fixtures and a contract-date
+  index.
+- Verification: focused 3 tests / 22 assertions; adjacent regression 17 tests
+  / 105 assertions; audit 807 pages / 816 routes / 1,671 datasources; scoped
+  ESLint clean.
+- Browser/runtime evidence is blocked: Odoo tab 1770662590 was held by bsk
+  session nhqc and Core3 ports 3000-3003 refused connections. No screenshots
+  or visual parity claim. Filter-level manager visibility is an explicit open
+  shared-schema gap.
+- Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.
+
 ## EMP-LAUNCH-PLAN-001 (2026-09-20)
 
 - Selected gap: Odoo employee-form `plan_wizard_action` / Launch Plan.

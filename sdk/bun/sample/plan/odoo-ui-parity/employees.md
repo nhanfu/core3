@@ -1942,6 +1942,30 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-CONTRACT-FILTERS-001: Employees In Contract and Out of Contract filters (2026-09-22)
+
+The next distinct uncovered Employees list behavior after New Contract, Newly
+Hired, and My Team/My Department is Odoo's manager-only `In Contract` and `Out
+of Contract` search filters. `hr_employee_views.xml` defines the exact domains:
+an in-contract employee has a start on/before today and no end or an end on/
+after today; an out-of-contract employee has no start, a future start, or an
+end before today. Both filters are restricted to `hr.group_hr_manager`.
+
+Core3 adds durable `in_contract` and `out_of_contract` projections to the
+existing Employees API query and matching layout filter bindings through
+`page.id: employees`. Migration `20260923020000-092` normalizes deterministic
+expired fixtures and adds a company/active/contract-date lookup index. Focused
+verification is 3 tests / 22 assertions; the adjacent contract/new-hire/team
+regression set is 17 tests / 105 assertions.
+
+The shared YAML filter schema has no filter-level permission key, so exact
+manager-only filter visibility remains an open shared-ListView contract gap;
+the Employees list stays `employees.read` and this limitation is not claimed
+as complete parity. Browser captures are also not claimed: the authenticated
+tab was held by another bsk session and Core3 ports 3000-3003 refused
+connections. Evidence is under
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.
+
 ## EMP-EMPLOYEE-NEWLY-HIRED-FILTER-001: Employees Newly Hired filter (2026-09-22)
 
 The next genuinely uncovered bounded source behavior is Odoo's `newly_hired`

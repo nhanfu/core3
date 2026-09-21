@@ -957,3 +957,17 @@ tests, 20 assertions). Evidence:
 Focused test: `test/employees_team_department_filters.integration.test.ts`
 (3 tests, 19 assertions). Evidence:
 `evidence/employees/2026-09-22/EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001/`.
+
+## EMP-EMPLOYEE-CONTRACT-FILTERS-001 test plan (2026-09-22)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo in/out domains and manager group map to matching page/API IDs | pass |
+| Filter behavior | Fixed-date status predicates, company scope, and active/archived results | pass |
+| Permission boundary | Manager-only filter visibility | conditional; shared filter schema lacks per-filter permission |
+| Persistence | Migration replay and file-backed restart retain status results | pass |
+| Browser comparison | Odoo/Core3 desktop and mobile captures | blocked; no screenshots claimed |
+
+Focused test: `test/employees_contract_filters.integration.test.ts` (3 tests,
+22 assertions). Evidence:
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.

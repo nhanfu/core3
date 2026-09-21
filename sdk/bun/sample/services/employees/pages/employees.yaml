@@ -16,6 +16,8 @@ components:
       - { field: my_team, label: My Team, options: [{ id: 'true', label: My Team }] }
       - { field: my_department, label: My Department, options: [{ id: 'true', label: My Department }] }
       - { field: newly_hired, label: Hiring, options: [{ id: 'true', label: Newly Hired }] }
+      - { field: in_contract, label: In Contract, options: [{ id: 'true', label: In Contract }] }
+      - { field: out_of_contract, label: Out of Contract, options: [{ id: 'true', label: Out of Contract }] }
       - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
     group_by:
       - { field: manager_name, label: Manager }
