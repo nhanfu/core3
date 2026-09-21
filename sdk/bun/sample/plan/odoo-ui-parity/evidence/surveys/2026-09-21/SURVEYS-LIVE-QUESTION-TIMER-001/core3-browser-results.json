@@ -1,0 +1,18 @@
+{
+  "feature_id": "SURVEYS-LIVE-QUESTION-TIMER-001",
+  "target": "http://127.0.0.1:3000/s/5177",
+  "desktop": {
+    "viewport": "1440x900",
+    "error": "net::ERR_CONNECTION_REFUSED",
+    "final_url": "about:blank",
+    "failed_requests": [{"url": "http://127.0.0.1:3000/s/5177", "error": "net::ERR_CONNECTION_REFUSED"}]
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "error": "net::ERR_CONNECTION_REFUSED",
+    "final_url": "about:blank",
+    "failed_requests": [{"url": "http://127.0.0.1:3000/s/5177", "error": "net::ERR_CONNECTION_REFUSED"}]
+  },
+  "status": "blocked_before_render",
+  "blocker": "No Core3 service was listening on port 3000 during the authenticated desktop/mobile probes."
+}

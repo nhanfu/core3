@@ -4,6 +4,9 @@ type SessionQuestion = {
   question_type: string;
   required?: boolean;
   answer_options?: string;
+  is_time_limited?: boolean;
+  time_limit?: number | null;
+  question_started_at?: string | null;
 };
 
 type SessionPayload = {
@@ -12,6 +15,9 @@ type SessionPayload = {
     survey_name: string;
     session_state: string;
     current_question_text?: string;
+    question_started_at?: string | null;
+    current_question_time_limited?: boolean;
+    current_question_time_limit?: number | null;
   };
   question?: SessionQuestion | null;
   attendee?: {
@@ -53,6 +59,7 @@ function installStyles() {
     .core3-live-session__option { display:flex; align-items:center; gap:10px; padding:12px 13px; border:1px solid #d9d1d7; border-radius:5px; cursor:pointer; }
     .core3-live-session__option input { accent-color:#714b67; width:17px; height:17px; }
     .core3-live-session__answer { margin-top:18px; padding:14px; border:1px solid #bdd8c6; border-radius:5px; color:#356444; background:#f2faf4; }
+    .core3-live-session__timer { margin:18px 0 0; padding:10px 12px; border:1px solid #e3c886; border-radius:5px; color:#705313; background:#fff8df; font-weight:600; }
     .core3-live-session__error { margin:18px 0; padding:12px 14px; border:1px solid #e6b9c0; border-radius:5px; color:#8b3041; background:#fff4f5; }
     @media (max-width:520px) { .core3-live-session { padding-top:24px; } .core3-live-session__card { padding:24px 18px; } }
   `;
@@ -80,10 +87,39 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
   document.body.classList.add('core3-public-live-session-body');
   let sessionCode = String(initialSessionCode || '').trim();
   let attendeeToken = String(initialAttendeeToken || '').trim();
+  let timerInterval: ReturnType<typeof setInterval> | null = null;
   outlet.className = '';
 
   const render = (content: string) => {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
     outlet.innerHTML = `<main class="core3-live-session"><section class="core3-live-session__card">${content}</section></main>`;
+  };
+
+  const timerMarkup = (question: SessionQuestion) => question.is_time_limited && Number(question.time_limit) > 0 && question.question_started_at
+    ? '<div class="core3-live-session__timer" role="timer" data-question-timer>Time remaining: <strong data-question-timer-value>--:--</strong></div>'
+    : '';
+
+  const startTimer = (question: SessionQuestion) => {
+    if (!question.is_time_limited || Number(question.time_limit) <= 0 || !question.question_started_at) return;
+    const timerValue = outlet.querySelector<HTMLElement>('[data-question-timer-value]');
+    const submit = outlet.querySelector<HTMLButtonElement>('[data-answer-form] button[type="submit"]');
+    if (!timerValue) return;
+    const startedAt = String(question.question_started_at);
+    const deadline = new Date(startedAt.replace(' ', 'T') + (startedAt.includes('Z') ? '' : 'Z')).getTime() + Number(question.time_limit) * 1000;
+    const update = () => {
+      const remaining = Math.max(0, deadline - Date.now());
+      const seconds = Math.ceil(remaining / 1000);
+      timerValue.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      if (remaining <= 0) {
+        timerValue.textContent = 'Time expired';
+        if (submit) submit.disabled = true;
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    };
+    update();
+    if (deadline > Date.now()) timerInterval = setInterval(update, 1000);
   };
 
   const load = async () => {
@@ -133,7 +169,8 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
       } else if (payload.answer) {
         render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}.</p><h2 class="core3-live-session__question">${escapeHtml(question.question_text)}</h2><div class="core3-live-session__answer">Answer submitted: <strong>${escapeHtml(payload.answer.answer_value)}</strong></div><div class="core3-live-session__actions"><button class="core3-live-session__button" type="button" data-refresh>Refresh</button></div>`);
       } else {
-        render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}. Submit one answer for the current question.</p><h2 class="core3-live-session__question">${escapeHtml(question.question_text)}${question.required ? ' *' : ''}</h2><form data-answer-form>${answerInput(question)}<div class="core3-live-session__actions"><button class="core3-live-session__button" type="submit">Submit answer</button><button class="core3-live-session__button core3-live-session__secondary" type="button" data-refresh>Refresh</button></div></form>`);
+        render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}. Submit one answer for the current question.</p><h2 class="core3-live-session__question">${escapeHtml(question.question_text)}${question.required ? ' *' : ''}</h2>${timerMarkup(question)}<form data-answer-form>${answerInput(question)}<div class="core3-live-session__actions"><button class="core3-live-session__button" type="submit">Submit answer</button><button class="core3-live-session__button core3-live-session__secondary" type="button" data-refresh>Refresh</button></div></form>`);
+        startTimer(question);
         outlet.querySelector<HTMLFormElement>('[data-answer-form]')?.addEventListener('submit', async (event) => {
           event.preventDefault();
           const form = event.currentTarget as HTMLFormElement;

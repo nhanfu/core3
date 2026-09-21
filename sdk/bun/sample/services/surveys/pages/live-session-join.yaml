@@ -1,5 +1,8 @@
 title: Join Live Session
 page: { id: survey-live-session-join, route: /surveys/live-session-join, breadcrumb: [Marketing, Surveys, Live Session, Join], auth: { require: [surveys.read] } }
+# The paired API returns the durable question start and limit; the
+# attendee renderer displays that timer while server-side answer guards remain
+# authoritative.
 components:
   - type: OdooFormView
     source: survey_live_session_join

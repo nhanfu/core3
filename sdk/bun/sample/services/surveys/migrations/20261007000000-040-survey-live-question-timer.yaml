@@ -1,0 +1,29 @@
+version: 0.0.40
+description: Durable Odoo-style live-session question timer fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS is_time_limited BOOLEAN;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS time_limit INTEGER;
+      INSERT INTO surveys(id, name, title, description, owner, state)
+      VALUES ('survey-demo-timer', 'SURVEY/TIMER', 'Live Timer Quiz', 'Answer each live question before its timer expires.', 'Mitchell Admin', 'Published')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, is_time_limited, time_limit)
+      VALUES ('question-timer-sauce', 'survey-demo-timer', 'Which sauce goes with a burger?', 'Choice', 1, true, 'Ketchup,Mustard', true, 30)
+      ON CONFLICT (id) DO UPDATE SET is_time_limited = excluded.is_time_limited, time_limit = excluded.time_limit;
+      INSERT INTO survey_live_sessions(id, survey_id, survey_name, state, session_code, session_link, current_question_id, current_question_text, leaderboard_enabled, created_at, updated_at)
+      VALUES ('live-session-timer', 'survey-demo-timer', 'Live Timer Quiz', 'Closed', '5177', '/s/5177', 'question-timer-sauce', 'Which sauce goes with a burger?', false, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, survey_name = excluded.survey_name, session_code = excluded.session_code, session_link = excluded.session_link, current_question_id = excluded.current_question_id, current_question_text = excluded.current_question_text, leaderboard_enabled = excluded.leaderboard_enabled;
+    down: |
+      DELETE FROM survey_live_session_answers WHERE session_id = 'live-session-timer';
+      DELETE FROM survey_live_attendees WHERE session_id = 'live-session-timer';
+      DELETE FROM survey_live_sessions WHERE id = 'live-session-timer';
+      DELETE FROM survey_questions WHERE id = 'question-timer-sauce';
+      DELETE FROM surveys WHERE id = 'survey-demo-timer';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS time_limit;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS is_time_limited;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

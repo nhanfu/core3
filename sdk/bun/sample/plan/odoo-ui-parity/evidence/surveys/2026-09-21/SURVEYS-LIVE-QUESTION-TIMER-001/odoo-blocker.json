@@ -1,0 +1,22 @@
+{
+  "feature_id": "SURVEYS-LIVE-QUESTION-TIMER-001",
+  "desktop": {
+    "requested": "http://127.0.0.1:8069/odoo/surveys",
+    "status": 200,
+    "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "title": "Odoo",
+    "body_prefix": "Skip to Content\nManage Databases Powered by Odoo",
+    "screenshot": "odoo-desktop.png"
+  },
+  "mobile": {
+    "requested": "http://127.0.0.1:8069/odoo/surveys",
+    "status": 200,
+    "final_url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "title": "Odoo",
+    "body_prefix": "Skip to Content\nManage Databases Powered by Odoo",
+    "screenshot": "odoo-mobile.png"
+  },
+  "proxy_8072": "connection_refused",
+  "status": "reference_login_only",
+  "blocker": "Authenticated installed Odoo Surveys comparison was unavailable: supplied route reached only the login shell and the paired proxy on port 8072 refused connections."
+}

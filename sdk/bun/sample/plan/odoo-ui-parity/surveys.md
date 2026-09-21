@@ -1912,3 +1912,29 @@ refused before rendering. Odoo desktop/mobile reached only the login shell and
 port 8072 refused; no Core3 visual or paired Odoo sign-off is claimed. Evidence
 is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.
+
+## 2026-09-21 — `SURVEYS-LIVE-QUESTION-TIMER-001`
+
+Selected one genuinely uncovered source-backed live-session behavior after the
+completed public question slices: Odoo's per-question live-session timer.
+Odoo stores `is_time_limited` and `time_limit` on the question, records the
+host's question start timestamp, renders an attendee countdown, and rejects a
+late answer before mutation. Core3 migration `0.0.40` adds those durable
+fields and an isolated timer survey/session fixture.
+
+The paired `survey-live-session-join` page/API contract returns the durable
+timestamp and limit. `PublicLiveSession.ts` renders the countdown and disables
+the submit button at the client deadline, while the YAML mutation repeats the
+expiry check with `SURVEY_SESSION_QUESTION_TIME_EXPIRED` after public session
+and attendee-token guards. Focused timer/live-answer verification passes **4
+tests / 45 assertions**, including late no-mutation, valid persistence,
+file-backed restart, and idempotent replay. The Surveys glob is **120 passed /
+4 failed / 1041 assertions**; the four failures are the existing DuckDB
+rollback/dependent-entry limitation.
+
+Audit passes with **721 pages, 730 routes, and 1396 datasources**; scoped
+ESLint and diff-check pass. Core3 desktop/mobile probes at 1440x900 and
+390x844 hit `ERR_CONNECTION_REFUSED` on port 3000. Odoo desktop/mobile at
+8069 reached only the login shell and port 8072 refused, so no authenticated
+Odoo timer comparison or parity sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.

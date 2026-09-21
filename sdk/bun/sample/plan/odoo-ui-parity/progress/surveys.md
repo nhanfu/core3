@@ -419,6 +419,25 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-LIVE-QUESTION-TIMER-001`
+
+Wave 19 selected the next uncovered source-backed live-session behavior: the
+Odoo per-question timer. Migration `0.0.40` persists question timer metadata
+and an isolated deterministic session; the paired page/API returns the timer
+state, the attendee renderer displays and expires the countdown, and the
+server-side mutation rejects late answers before answer/counter mutation.
+
+Focused timer plus related live-answer checks pass **4/4 with 45 assertions**;
+the full Surveys glob is **120 passed / 4 failed / 1041 assertions**. The four
+failures are the pre-existing DuckDB rollback/dependent-entry errors in the
+migration suite. Audit is **721 pages, 730 routes, 1396 datasources**; scoped
+lint and diff-check pass. Core3 port 3000 refused both authenticated desktop
+and mobile probes. Odoo 8069 returned the login shell for both viewports and
+8072 refused; no visual comparison or sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-BEGIN-001`
 
 Selected the next uncovered source-backed public lifecycle after test entry:

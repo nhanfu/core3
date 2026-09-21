@@ -52,6 +52,7 @@ describe('Surveys public live-session answers', () => {
     expect(answer.mutation.table).toBe('survey_live_session_answers');
     expect(answer.mutation.guards.map((guard: any) => guard.code)).toEqual([
       'SURVEY_SESSION_NOT_IN_PROGRESS', 'SURVEY_SESSION_ATTENDEE_NOT_FOUND',
+      'SURVEY_SESSION_QUESTION_TIME_EXPIRED',
       'SURVEY_SESSION_ANSWER_REQUIRED', 'SURVEY_SESSION_ANSWER_INVALID', 'SURVEY_SESSION_ANSWER_ALREADY_SUBMITTED',
     ]);
     expect(api.datasources[0].query).toContain(':attendee_token');

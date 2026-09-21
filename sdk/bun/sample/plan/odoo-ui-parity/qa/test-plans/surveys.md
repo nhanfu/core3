@@ -495,3 +495,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.
+
+## 2026-09-21 live-session question timer additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-045 | live session | Timed question metadata and attendee countdown | Return durable start/limit state through the paired page/API contract and render the timer | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-042 | restart/idempotency | Expired answer → valid answer → reopen → replay | Reject late answer without mutation; preserve one valid answer and replay it after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-044 | token/session guard | Wrong attendee/session state and expiry | Keep `surveys.public` and attendee guards ahead of the authoritative expiry guard | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-043 | authenticated responsive/reference | Live timer desktop/mobile + Odoo comparison | Capture both viewports and exact Core3/Odoo blockers; no sign-off until routes are available | `core3-browser-results.json`, `odoo-blocker.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.

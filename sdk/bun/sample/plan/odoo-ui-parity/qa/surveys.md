@@ -1156,3 +1156,30 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-Q
   No authenticated Odoo Multiple Choice fixture or parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIPLE-CHOICE-001/`.
+
+## Bounded QA run: Live-session question timer — `SURVEYS-LIVE-QUESTION-TIMER-001`
+
+- Source comparison: Odoo stores per-question `is_time_limited` and
+  `time_limit`, starts the timer from the host's question start timestamp,
+  exposes timer data to the attendee template, and rejects late answers with
+  the source timeout message.
+- YAML/UI contract: `pages/live-session-join.yaml` and
+  `api/live-session-join.yaml` remain separate and join through
+  `page.id: survey-live-session-join`; the API returns timer metadata and the
+  mutation retains `surveys.public` plus attendee-token/state guards before
+  `SURVEY_SESSION_QUESTION_TIME_EXPIRED`.
+- Focused verification: **4 passed / 45 assertions**; full Surveys glob:
+  **120 passed / 4 failed / 1041 assertions**. The four failures are the
+  existing DuckDB migration rollback/dependent-entry blocker.
+- Persistence/guards: expiry returns 409 without answer or counter mutation;
+  a valid answer persists, survives file-backed reopen, and replays the
+  original answer idempotently.
+- Audit: **721 pages, 730 routes, 1396 datasources**. Scoped ESLint and
+  `git diff --check` pass.
+- Core3 authenticated desktop/mobile probes at 1440x900 and 390x844 were
+  blocked before render by `ERR_CONNECTION_REFUSED` on port 3000.
+- Odoo desktop/mobile reached only the login shell at 8069; port 8072 refused.
+  No authenticated installed Surveys fixture, visual comparison, or module
+  sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.

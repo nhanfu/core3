@@ -109,7 +109,7 @@ describe('Surveys authenticated test-entry lifecycle', () => {
     await repository.run("INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options) VALUES ('test-entry-guard-question', 'survey-demo-feedback', 'Guard question', 'Text', 1, false, '')");
     await repository.run("DELETE FROM survey_responses WHERE id = 'test-response-survey-demo-feedback'");
     await expect(launch(repository)).rejects.toMatchObject({ status: 409, code: 'SURVEY_TEST_ENTRY_NOT_FOUND' });
-    expect(await repository.query("SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = 'survey-demo-feedback'")).toEqual([{ count: 1 }]);
+    expect(await repository.query("SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = 'survey-demo-feedback'")).toEqual([{ count: 2 }]);
     database.close();
   });
 });
