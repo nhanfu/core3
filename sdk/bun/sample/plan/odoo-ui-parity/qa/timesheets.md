@@ -878,3 +878,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused test: 4/4, 22 expectations. All Timesheets regression: 54/54, 329 expectations.
 - Static gates: ESLint passed; UI audit passed with 729 pages, 738 routes, 1,419 datasources; `git diff --check` passed.
 - Evidence: `evidence/timesheets/2026-09-21/timesheet-sales-order-item-action/`. Core3 backend and Odoo `core3_user_demo` runtime blockers are recorded; authenticated desktop/mobile screenshots were unavailable, so no visual sign-off is claimed.
+
+## Wave 26 QA — `TIMESHEET-ALL-BILLING-TYPE-GROUP-001`
+
+- Source contract: `sale_timesheet` `groupby_timesheet_invoice_type`, label `Billing Type`, field `timesheet_invoice_type`, Sales user group.
+- Core3 contract: All Timesheets page group-by plus API `group_by_contracts`, backed by durable `timesheet_entries.billing_type`.
+- Focused test: 4/4, 17 expectations. All Timesheets regression: 58/58, 346 expectations.
+- Static gates: ESLint passed; UI audit passed with 729 pages, 738 routes, 1,419 datasources; `git diff --check` passed.
+- Evidence: `evidence/timesheets/2026-09-21/timesheet-all-billing-type-group/`. Core3/Odoo authenticated captures were blocked by recorded runtime failures; no visual sign-off is claimed.

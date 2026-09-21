@@ -21,6 +21,7 @@ components:
       - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }
+      - { field: billing_type, label: Billing Type }
       - { field: state, label: Status }
       - { field: work_date, label: Date }
     view_navigation: tabs

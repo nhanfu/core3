@@ -1,0 +1,11 @@
+Core3 Wave 26 bounded runtime check (2026-09-21)
+
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit 124 after frontend readiness. The process reached:
+  Backend: http://127.0.0.1:3001
+  Frontend: http://127.0.0.1:3002
+  Event mediator listening on ws://127.0.0.1:3010/events
+  VITE ready at http://127.0.0.1:3002/
+The dev process ended its frontend child with code 143 at timeout and the
+authenticated API route was not available for capture. No temporary runtime
+files were retained.

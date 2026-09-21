@@ -1,0 +1,13 @@
+Odoo Wave 26 authenticated capture blocker (2026-09-21)
+
+Reference database: core3_user_demo
+
+  curl POST http://127.0.0.1:8069/web/session/authenticate
+  response: Odoo Server Error - Database not found.
+
+  curl POST http://127.0.0.1:8073/web/session/authenticate
+  response: Odoo Server Error - connection to server at PostgreSQL failed.
+
+The supplied Odoo source is available and covered by the focused source test,
+but the authenticated Billing Type group-by screen was unavailable for
+desktop/mobile capture. No fabricated screenshot is claimed.

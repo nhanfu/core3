@@ -274,3 +274,16 @@ pages, 735 routes, and 1,409 datasources.
 | Focused regression | new test 4/4; All Timesheets 54/54 | pass |
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
+
+## Wave 26 — `TIMESHEET-ALL-BILLING-TYPE-GROUP-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `groupby_timesheet_invoice_type`, Billing Type, `timesheet_invoice_type` | pass in focused source test |
+| Paired YAML contract | All Timesheets page group-by and API `group_by_contracts` | pass |
+| Durable grouping | persisted `timesheet_entries.billing_type` counts and pivot projection | pass |
+| Permission/company/empty guards | manager permission and current-company/empty reads | pass |
+| Freshness/restart | changed billing type is visible and restart preserves groups | pass |
+| Focused regression | new test 4/4; All Timesheets 58/58 | pass |
+| Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |

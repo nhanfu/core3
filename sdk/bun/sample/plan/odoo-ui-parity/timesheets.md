@@ -1695,3 +1695,29 @@ capture was blocked because `core3_user_demo` was unavailable (`8069`:
 Database not found; `8073`: PostgreSQL connection failure). The exact blockers
 are recorded; no desktop/mobile screenshot or sign-off is claimed. Existing
 Odoo Print/PDF/report-action gaps remain open.
+
+## Wave 26 All Timesheets Billing Type grouping — `TIMESHEET-ALL-BILLING-TYPE-GROUP-001` (2026-09-21)
+
+The next uncovered bounded source behavior is Odoo `sale_timesheet`'s
+`Billing Type` group-by in `addons/sale_timesheet/views/hr_timesheet_views.xml`.
+The `groupby_timesheet_invoice_type` filter groups by
+`timesheet_invoice_type` for the Sales user group. This is distinct from the
+excluded individual billed/non-billable filters.
+
+Core3 adds `Billing Type` to the existing All Timesheets group-by contract and
+declares the paired API `group_by_contracts` metadata through the existing
+`page.id: all-timesheets` binding. The grouping reads durable
+`timesheet_entries.billing_type`; no duplicate persistence model was added.
+Manager permission, current-company and empty guards, relation freshness, and
+file-backed restart remain enforced.
+
+Focused coverage is `test/timesheets_all_billing_type_group.integration.test.ts`:
+4 tests / 17 expectations. The bounded All Timesheets regression passed 58
+tests / 346 expectations. ESLint and `git diff --check` passed. The repository
+UI audit passed with 729 pages, 738 routes, and 1,419 datasources.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-all-billing-type-group/`.
+Core3 and authenticated Odoo captures were blocked by exact runtime failures
+recorded in the evidence files; no desktop/mobile screenshot or sign-off is
+claimed. Existing Odoo Print/PDF/report-action gaps remain open.

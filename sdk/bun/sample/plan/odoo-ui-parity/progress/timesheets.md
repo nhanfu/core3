@@ -824,3 +824,10 @@ sign-off is claimed.
 - Focused feature coverage passed 3/3 tests with 20 expectations, including project options, permission, company/empty guards, and file-backed restart.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-project-filter/`; desktop filters Research & Development to `1-80 / 159`, and mobile renders responsive Kanban without browser errors.
 - Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-ALL-BILLING-TYPE-GROUP-001`
+
+- Selected Odoo `sale_timesheet`'s Billing Type group-by (`groupby_timesheet_invoice_type`) over `timesheet_invoice_type`, distinct from the excluded individual billing filters.
+- Added the All Timesheets page group-by and API `group_by_contracts` metadata through the existing `page.id: all-timesheets` pair; durable `timesheet_entries.billing_type` supplies the grouping state.
+- Focused coverage passed 4/4 tests with 17 expectations; the All Timesheets regression passed 58/58 with 346 expectations. ESLint, UI audit (729 pages / 738 routes / 1,419 datasources), and diff-check passed.
+- Evidence is under `evidence/timesheets/2026-09-21/timesheet-all-billing-type-group/`. Core3 and authenticated Odoo runtime blockers are recorded exactly; no screenshots or sign-off are claimed. Odoo Print/PDF/report-action blockers remain open.

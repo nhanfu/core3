@@ -1,0 +1,18 @@
+{
+  "feature_id": "TIMESHEET-ALL-BILLING-TYPE-GROUP-001",
+  "source": "addons/sale_timesheet/views/hr_timesheet_views.xml",
+  "authenticated_capture": {
+    "desktop": false,
+    "mobile": false,
+    "blocker": "Odoo reference database core3_user_demo is unavailable: port 8069 reports Database not found and port 8073 reports a PostgreSQL connection failure."
+  },
+  "source_contract": {
+    "filter": "groupby_timesheet_invoice_type",
+    "label": "Billing Type",
+    "field": "timesheet_invoice_type",
+    "group": "sales_team.group_sale_salesman"
+  },
+  "errors": [
+    "authenticated Odoo desktop/mobile evidence unavailable"
+  ]
+}
