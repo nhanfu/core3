@@ -4,10 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `6e08fffb73749a837abc149ad92c06324ab31f12`
-(`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`, local and not pushed).
+Latest committed bounded slice: `9b328e27f2e313abc796e8af66bee90e51130e5b`
+(`ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`, local and not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CHECKOUT-TAX-DISPLAY-MODE-001`
+
+Wave 24 selected Odoo Website Sale's `show_line_subtotals_tax_selection`,
+which was not represented in Core3. Odoo's website field and settings view
+offer Tax Excluded and Tax Included modes, while the checkout templates use
+the selected mode for line subtotal tax indication. Core3 migrations 112/113
+add the company-scoped durable policy and deterministic Tax Excluded fixture.
+Separate page/API YAML provides the permissioned form and optimistic update;
+cart, checkout, and the public anonymous-cart operation expose the persisted
+display mode and subtotal label.
+
+The focused test covers Odoo source comparison, page/API pairing, migration
+replay, CRUD, company and invalid-mode rejection, optimistic concurrency,
+cart/checkout/public projection, and DuckDB restart persistence. Browser
+capture remains blocked by the unavailable Core3 ports and missing persistent
+browser runtime; Odoo `/shop` is an exact HTTP 404 on ports 8069 and 8073.
+Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`
 
