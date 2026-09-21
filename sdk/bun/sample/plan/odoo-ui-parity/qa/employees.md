@@ -1253,3 +1253,18 @@ tests, 21 assertions). Adjacent chatter/activity focused run: 20 tests, 112
 assertions. Merged API/page validation, scoped ESLint, UI audit, and staged
 diff-check are recorded with the commit. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-055 | Provision an Employee Work Contact from work name/email/phone | pass; contact creation and employee relation update atomically |
+| EMP-PERM-055 | `employees.write`, actor, current company, missing-contact precondition, generated identity, and row version | pass; actor, stale, wrong-company, duplicate, and collision requests reject atomically |
+| EMP-DATA-055 | Migration replay and file-backed restart | pass; provenance, copied work details, relation, and row versions remain durable without duplicate contacts |
+| EMP-UI-051 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 authenticated desktop/mobile captures had no request failures or overflow but the Vietnam fixture was hidden from the Demo Company session; Odoo credentials were rejected/rate-limited |
+
+Focused tests: `test/employees_work_contact_provisioning.integration.test.ts`
+plus `test/employees_related_contacts.integration.test.ts` (8 tests, 42
+assertions). UI audit passed at 753 pages, 762 routes, and 1,519 datasources;
+scoped ESLint and diff-check are recorded with the commit. No aggregate
+Employees sign-off is claimed.

@@ -2347,3 +2347,33 @@ authenticated capture is conditional because its seeded employee belongs to a
 different company than the login session; local Odoo comparison is blocked by
 the rejected/rate-limited credentials. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001: Employee Work Contact provisioning (2026-09-21)
+
+Odoo's `hr.employee` model implements `_inverse_work_contact_details` and
+`_create_work_contacts` in
+`/home/nhanjs/projects/odoo/addons/hr/models/hr_employee.py:799-842`.
+The inverse persists `work_email` and `work_phone` to the employee's linked
+work contact and creates that contact when the relation is missing. The
+Employee source form renders the Work Email and Work Phone fields in the
+header. The prior related-contacts slice only assigned or cleared an existing
+contact, so provisioning remained uncovered.
+
+Migration `20260922250000-079` adds `source` and `source_employee_id` to the
+durable `base_contacts` projection. The API YAML owns the guarded
+`create_employee_work_contact` action; the page YAML owns only its
+Create Work Contact header binding through `page.id`. The action copies the
+employee name, work email, and work phone into a same-company person contact,
+links `employees.work_contact_id`, and increments the employee row version in
+one transaction.
+
+The workflow requires `employees.write`, an authenticated actor, an active
+employee in the current company, no existing work contact, a free generated
+contact ID, and the expected employee row version. Focused verification is
+**8 tests / 42 assertions** including related-contact regression, migration
+replay, and restart persistence. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001/`.
+Core3 authenticated captures are conditional because the seeded employee's
+company is not the authenticated demo company; Odoo comparison is blocked by
+the rejected/rate-limited local credentials. No aggregate Employees sign-off
+is claimed.

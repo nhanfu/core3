@@ -367,6 +367,54 @@ actions:
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: work_contact_id, label: Work Contact, type: select, options_source: employee_work_contact_options }
+  - id: create_employee_work_contact
+    type: server
+    permission: employees.write
+    action: employees.records.work_contact.create
+    handler: yaml_mutation
+    operation: create_work_contact
+    params: { id: '{state.employee_detail.id}', expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_related_contacts, employee_work_contact_options]
+    mutation:
+      generated: [contact_id]
+      before_steps: [{ query: "SELECT 'employee-work-contact-' || CAST(:id AS VARCHAR) || '-' || CAST(COALESCE(:expected_row_version, 1) AS VARCHAR) AS contact_id", assign: true }]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_WORK_CONTACT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the work contact was created. Reload and try again. }
+        - { query: "SELECT 1 AS ok FROM employees WHERE id = :id AND work_contact_id IS NULL", status: 409, code: EMPLOYEES_WORK_CONTACT_EXISTS, message: This employee already has a work contact. Clear it before creating another. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE id = :contact_id)", status: 409, code: EMPLOYEES_WORK_CONTACT_PROVISIONING_CONFLICT, message: The generated work-contact identity already exists. Refresh and try again. }
+      steps:
+        - query: |
+            INSERT INTO base_contacts(
+              id, row_version, name, company_type, email, phone, is_company, active,
+              company_id, source, source_employee_id
+            )
+            SELECT
+              :contact_id, 1, e.name, 'person',
+              NULLIF(TRIM(CAST(e.work_email AS VARCHAR)), ''),
+              NULLIF(TRIM(CAST(e.work_phone AS VARCHAR)), ''),
+              false, true,
+              CASE
+                WHEN e.company_name IN ('Core3 Vietnam', 'Core3 Vietnam Branch') THEN 'company-vietnam'
+                WHEN e.company_name = 'Core3 Demo Company' THEN 'company-demo'
+                ELSE NULL
+              END,
+              'employee_provisioned', e.id
+            FROM employees e
+            WHERE e.id = :id AND e.active = true
+              AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+          expect_changed: true
+          status: 404
+          code: EMPLOYEES_WORK_CONTACT_EMPLOYEE_NOT_FOUND
+          message: Active employee not found in the current company.
+        - query: "UPDATE employees SET work_contact_id = :contact_id, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND work_contact_id IS NULL AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the work contact was created. Reload and try again.
+      result: { query: "SELECT c.*, e.row_version AS employee_row_version FROM base_contacts c JOIN employees e ON e.work_contact_id = c.id WHERE c.id = :contact_id" }
   - id: edit_employee_company
     type: server_form
     permission: employees.manage

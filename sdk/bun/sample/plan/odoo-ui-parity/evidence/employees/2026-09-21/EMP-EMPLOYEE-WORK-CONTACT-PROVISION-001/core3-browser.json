@@ -1,0 +1,47 @@
+{
+  "target": "http://127.0.0.1:3302/employees/detail?id=employee-demo-002",
+  "login": "admin@tms.local",
+  "password": "admin123",
+  "viewports": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "login": {
+        "ok": true,
+        "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-002"
+      },
+      "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-002",
+      "error": null,
+      "title": "Employee",
+      "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet.",
+      "has_employee_detail": true,
+      "has_work_contact": true,
+      "has_create_work_contact": false,
+      "horizontal_overflow": false,
+      "request_failures": [],
+      "console_errors": []
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "login": {
+        "ok": true,
+        "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-002"
+      },
+      "url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-002",
+      "error": null,
+      "title": "Employee",
+      "body_excerpt": "AU\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet.",
+      "has_employee_detail": false,
+      "has_work_contact": true,
+      "has_create_work_contact": false,
+      "horizontal_overflow": false,
+      "request_failures": [],
+      "console_errors": []
+    }
+  }
+}

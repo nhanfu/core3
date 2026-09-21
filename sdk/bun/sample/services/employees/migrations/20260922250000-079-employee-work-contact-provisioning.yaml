@@ -1,0 +1,21 @@
+version: 0.0.79
+kind: data
+description: Track Employees-provisioned work contacts
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS source VARCHAR;
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS source_employee_id VARCHAR;
+      UPDATE base_contacts
+      SET source = COALESCE(source, 'fixture')
+      WHERE id = 'employee-contact-demo-001';
+      UPDATE base_contacts
+      SET source_employee_id = COALESCE(source_employee_id, 'employee-demo-001')
+      WHERE id = 'employee-contact-demo-001';
+    down: |
+      ALTER TABLE base_contacts DROP COLUMN IF EXISTS source_employee_id;
+      ALTER TABLE base_contacts DROP COLUMN IF EXISTS source;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

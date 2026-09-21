@@ -801,3 +801,18 @@ Focused test: `test/employees_chatter_message.integration.test.ts` (4 tests,
 Focused test: `test/employees_activity_completion.integration.test.ts` (4
 tests, 21 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-COMPLETE-001/`.
+
+## EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `_inverse_work_contact_details` and `_create_work_contacts` map to paired API/page contracts | pass |
+| Provisioning workflow | Employee work name/email/phone create a durable same-company person contact and link `work_contact_id` | pass |
+| Permission and scope | `employees.write`, actor, current-company, existing-contact, generated-ID, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve contact provenance and the employee relation | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 fixture-company mismatch and rejected/rate-limited Odoo credentials are documented |
+
+Focused tests: `test/employees_work_contact_provisioning.integration.test.ts`
+and `test/employees_related_contacts.integration.test.ts` (8 tests, 42
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001/`.

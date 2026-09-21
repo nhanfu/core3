@@ -1145,3 +1145,25 @@ Candidate commit: current working tree
   not match the authenticated company, so Mark done was not rendered; local
   Odoo rejected `admin/admin` and then rate-limited the login. No aggregate
   Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001 (2026-09-21)
+
+- Selected Odoo's `_inverse_work_contact_details` / `_create_work_contacts`
+  behavior: when an Employee has no work contact, its work name, email, and
+  phone are persisted into a linked contact. This is distinct from the prior
+  related-contact assign/clear workflow.
+- Migration `20260922250000-079` adds durable provisioning provenance to
+  `base_contacts`, retaining the deterministic existing contact as a fixture.
+- Added the separate API `create_employee_work_contact` action and page header
+  binding. The action provisions a company-scoped person contact from the
+  employee's current work details and links it atomically.
+- Guards cover `employees.write`, actor, active/current-company employee,
+  missing-contact precondition, generated-contact collision, and optimistic
+  employee row-version concurrency. Focused verification is **8 tests / 42
+  assertions** including related-contact regression and file-backed restart.
+- Authenticated Core3 desktop/mobile captures are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001/`.
+  Both sessions authenticated and had no request failures or overflow, but
+  the deterministic Vietnam employee values did not match the demo company
+  session. Odoo rejected `admin/admin` and then rate-limited the second
+  attempt. No aggregate Employees sign-off is claimed.
