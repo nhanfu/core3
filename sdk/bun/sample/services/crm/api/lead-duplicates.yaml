@@ -1,0 +1,41 @@
+page: { id: crm-lead-duplicates }
+datasources:
+  - id: crm_lead_duplicates
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_DUPLICATES_UNAUTHORIZED, message: Sign in to view similar leads. }
+      forbidden: { status: 403, code: CRM_LEAD_DUPLICATES_FORBIDDEN, message: You do not have permission to view similar leads. }
+      transport_error: { status: 503, code: CRM_LEAD_DUPLICATES_UNAVAILABLE, message: Similar leads are temporarily unavailable. }
+    query: |
+      SELECT duplicate.id, duplicate.row_version, duplicate.name, duplicate.type,
+        COALESCE(duplicate.partner_name, '') AS partner_name,
+        COALESCE(duplicate.email, '') AS email,
+        COALESCE(duplicate.phone, '') AS phone,
+        duplicate.stage, duplicate.probability, duplicate.expected_revenue,
+        COALESCE(duplicate.salesperson, '') AS salesperson,
+        COALESCE(duplicate.team, '') AS team,
+        COALESCE(duplicate.tags, '') AS tags,
+        CAST(duplicate.expected_closing AS VARCHAR) AS expected_closing,
+        CAST(duplicate.created_at AS VARCHAR) AS created_at,
+        CASE
+          WHEN NULLIF(TRIM(current_lead.email), '') IS NOT NULL
+            AND LOWER(TRIM(duplicate.email)) = LOWER(TRIM(current_lead.email)) THEN 'Email'
+          WHEN NULLIF(TRIM(current_lead.phone), '') IS NOT NULL
+            AND REGEXP_REPLACE(duplicate.phone, '[^0-9]+', '', 'g') = REGEXP_REPLACE(current_lead.phone, '[^0-9]+', '', 'g') THEN 'Phone'
+          ELSE 'Customer'
+        END AS match_reason
+      FROM crm_leads current_lead
+      JOIN crm_leads duplicate ON duplicate.id <> current_lead.id
+        AND ((NULLIF(TRIM(current_lead.email), '') IS NOT NULL AND LOWER(TRIM(duplicate.email)) = LOWER(TRIM(current_lead.email)))
+          OR (NULLIF(TRIM(current_lead.phone), '') IS NOT NULL AND REGEXP_REPLACE(duplicate.phone, '[^0-9]+', '', 'g') = REGEXP_REPLACE(current_lead.phone, '[^0-9]+', '', 'g'))
+          OR (current_lead.partner_id IS NOT NULL AND duplicate.partner_id = current_lead.partner_id))
+      WHERE current_lead.id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END
+      ORDER BY duplicate.created_at DESC, duplicate.id
+actions:
+  - id: view_crm_duplicate_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

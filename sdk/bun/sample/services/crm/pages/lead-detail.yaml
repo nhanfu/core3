@@ -70,6 +70,8 @@ components:
       - { id: mark_lead_won_detail, label: Mark won, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Qualified' || state.crm_lead_detail.stage === 'Proposition'" }
       - { id: mark_lead_lost_detail, label: Mark lost, variant: danger, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: reopen_lead_detail, label: Reopen, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Lost'" }
+    stat_buttons:
+      - { id: view_crm_lead_duplicates, label: Similar Leads, value_field: duplicate_lead_count, permission: crm.read, show_if: "state.crm_lead_detail.duplicate_lead_count > 0" }
     group_columns: 2
     groups:
       - title: Opportunity

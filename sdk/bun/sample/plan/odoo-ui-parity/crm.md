@@ -717,3 +717,37 @@ Browser evidence boundary:
   attempted directory `/tmp/core3-odoo-parity/crm-pipeline-analysis-20260912/`
   contains only readiness probe text and no screenshots. No visual parity claim
   is made for this batch.
+
+## 2026-09-22 — Similar Leads stat action
+
+Status: bounded implementation; conditional evidence only, not CRM sign-off.
+
+- Odoo 19 source: `addons/crm/views/crm_lead_views.xml` exposes
+  `action_show_potential_duplicates` as the conditional `Similar Leads` stat
+  button, and `addons/crm/models/crm_lead.py` computes duplicates from email
+  domain, normalized phone, and commercial entity before opening the existing
+  opportunities action with create disabled.
+- Current Core3 comparison: the lead detail had no duplicate count,
+  duplicate datasource, stat action, or source-backed test. The existing
+  `merge_leads` bulk mutation is a separate feature and was not changed.
+- Core3 implementation: `pages/lead-detail.yaml` and `api/lead-detail.yaml`
+  now expose `duplicate_lead_count` and a read-only `Similar Leads` stat. The
+  dedicated `crm-lead-duplicates` page/API pair joins through matching
+  `page.id`, uses CRM-owned email/normalized-phone/customer matching, supports
+  list/kanban drill-down, and declares `crm.read` error states.
+- Durable data: migration
+  `migrations/20260922100000-030-lead-duplicate-fixtures.yaml` adds an
+  idempotent CRM-owned email index. The existing deterministic Globex pair
+  (`crm-demo-002` / `crm-forecast-002`) supplies the matching records, so
+  report fixture counts remain unchanged; focused coverage verifies replay and
+  file-backed restart visibility.
+- Focused validation: `test/crm_lead_duplicates.integration.test.ts` passes 2
+  tests / 13 assertions. The broader CRM run passes 47 tests / 236 assertions
+  with one pre-existing Lead Mining Requests AI-allowlist failure. Scoped
+  `git diff --check` passes; the repository audit is blocked by unrelated
+  Events page definitions (`upload_event_badge_background`, `FormSection`).
+- Evidence is under
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-DUPLICATES-001/`.
+  Odoo desktop/mobile captures are recorded by path and hash. Core3
+  authenticated captures are blocked by unrelated Events page-discovery
+  errors in the shared runtime; no Core3 visual claim is made.

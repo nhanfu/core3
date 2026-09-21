@@ -228,3 +228,30 @@ Conditional bounded result; not signed off.
 - Odoo authenticated desktop/mobile/list-form captures exist; Core3 bsk
   rendered only an empty shell, so no Core3 visual parity claim is made.
 - Evidence: `odoo-ui-parity/evidence/crm/2026-09-21/CRM-LEAD-MINING-REQUESTS-001/verification.md`.
+
+## Similar Leads stat action — `CRM-LEAD-DUPLICATES-001` (2026-09-22)
+
+- Source comparison: pass. Odoo 19 `crm_lead_views.xml` binds the
+  `action_show_potential_duplicates` stat action to `duplicate_lead_count`,
+  while `crm_lead.py` computes email-domain, normalized-phone, and commercial
+  entity matches. Core3 previously had no duplicate stat/datasource/action;
+  its existing bulk merge action is separate and unchanged.
+- Product verification: pass. Separate page/API contracts use
+  `page.id: crm-lead-duplicates`; CRM migration `0.0.30` is idempotent and
+  restart coverage preserves the existing deterministic matching records. Focused
+  test: **2 tests / 13 assertions**. Scoped `git diff --check`: pass. The
+  repository audit is blocked by unrelated Events page definitions
+  (`upload_event_badge_background` and unregistered `FormSection`).
+- Broader CRM verification: **47 pass / 1 fail / 236 assertions**. The one
+  failure is the existing Lead Mining Requests AI allowlist invariant for four
+  CRM actions; `services/ai` is outside this CRM-only change and was not edited.
+- Odoo evidence: the authenticated bsk session on `245ea108` reached
+  `http://localhost:8069/odoo`, but `core3_reference` has no CRM launcher and
+  `/odoo/crm` falls back to Discuss. Desktop/mobile blocker captures are
+  recorded in the evidence directory and remain outside Git.
+- Core3 browser evidence: blocked before authentication/rendering because the
+  shared runtime stopped during page discovery on unrelated Events definitions:
+  `upload_event_badge_background` is missing and `FormSection` is unregistered.
+  No Core3 visual parity claim is made. The bsk session was stopped cleanly.
+
+Disposition: conditional bounded implementation; not CRM sign-off.

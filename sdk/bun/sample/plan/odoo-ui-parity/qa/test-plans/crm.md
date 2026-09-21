@@ -38,6 +38,7 @@ unauthenticated actors are required.
 | CRM-FUNC-006 | functional | Teams/recurring plans | Team and plan CRUD/settings and active-member routing are deterministic | focused tests | pass |
 | CRM-FUNC-010 | functional | Team opportunities/members | Team stat opens scoped opportunities; create/edit/assign and technical member add/toggle persist with duplicate and closed guards | `crm_team_opportunities`, `crm_team_members` suites | pass |
 | CRM-FUNC-011 | functional | Team opportunity restart | A created, edited, and assigned team opportunity remains visible after closing and reopening the file-backed CRM database | `crm_team_opportunities.integration.test.ts` restart assertion | pass |
+| CRM-FUNC-012 | functional | Similar Leads stat action | Lead detail exposes a source-backed duplicate count; read-only stat navigation returns matching email/phone/customer leads and opens each detail | `crm_lead_duplicates.integration.test.ts` | pass; browser comparison conditional |
 | CRM-FUNC-007 | functional | Reports/forecast | Pipeline, leads, activities and forecast reports return real scoped graph/pivot/list rows | reporting tests | pass |
 | CRM-FUNC-008 | data | Empty/error/not-found | Every list/detail/report handles empty, no-result, missing and transport failure without fabricated rows | contract tests | pass |
 | CRM-FUNC-009 | data | Migration/seed | Reapply deterministic schema/demo data on clean/existing dev DB | Fixed IDs/dates, no duplicate records | focused suites | pass |
@@ -78,6 +79,7 @@ unauthenticated actors are required.
 | CRM-UI-004 | Reporting | both | Graph/pivot/list measures, creation-month grouping, empty/loading/error states | partial |
 | CRM-UI-005 | Current route regression | all 28 manifest route entries | 56 authenticated checks on `crm,base,order`; no page/request errors, HTTP errors, blank states or overflow | pass |
 | CRM-UI-006 | Team opportunity drill-down | 1440x900, 390x844 | Authenticated team stat navigation and opportunity route render populated deterministic rows with zero page/request errors and no document overflow | pass; Odoo visual comparison open |
+| CRM-UI-007 | Similar Leads stat/drill-down | 1440x900, 390x844 | Lead detail shows the conditional duplicate count and the drill-down stays responsive with list/kanban rows | conditional; Core3 runtime blocked by unrelated Events discovery failure; Odoo CRM absent in `core3_reference` |
 
 ## Exit criteria
 

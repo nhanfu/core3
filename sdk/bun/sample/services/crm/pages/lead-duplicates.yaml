@@ -1,0 +1,41 @@
+title: Similar Leads
+page: { id: crm-lead-duplicates, route: /crm/lead-duplicates, breadcrumb: [CRM, Opportunity, Similar Leads], auth: { require: [crm.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_duplicates
+    search: { label: Search similar leads, placeholder: Search similar leads... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: match_reason, label: Match }
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: match_reason, label: Match }
+      - { field: partner_name, label: Customer }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_closing, label: Expected closing }
+    page_size: 50
+    row_key: id
+    row_open_action: view_crm_duplicate_lead
+    row_double_click_action: view_crm_duplicate_lead
+actions:
+  - id: back_to_crm_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{query.id}' }

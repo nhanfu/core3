@@ -1,0 +1,12 @@
+version: 0.0.30
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_duplicate_email ON crm_leads(lower(email));
+    down: |
+      DROP INDEX IF EXISTS idx_crm_leads_duplicate_email;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
