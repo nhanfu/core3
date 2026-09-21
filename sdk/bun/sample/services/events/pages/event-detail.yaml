@@ -128,14 +128,19 @@ components:
             variant: odoo
             scroll: body
             source: event_detail_questions
+            create_label: Add a line
+            create_action: add_event_detail_question
             columns:
-              - { field: question, label: Question, type: PrimaryEntityCell }
+              - { field: sequence, label: '#', align: right }
+              - { field: question, label: Title, type: PrimaryEntityCell }
               - { field: question_type, label: Type }
               - { field: mandatory, label: Mandatory, type: StatusChip }
               - { field: once_per_order, label: Once per Order, type: StatusChip }
               - { field: answers, label: Answers }
+              - { field: id, label: '', sortable: false, actions: [{ id: view_event_question_answers_from_event, label: Attendee answers, icon: chart }, { id: edit_event_detail_question, label: Edit, icon: edit }, { id: remove_event_detail_question, label: Delete, icon: trash, variant: danger }] }
             row_key: id
             page_size: 50
+            row_actions: menu
             empty_state: { title: No questions, description: Registration questions will appear here. }
       - id: slots
         label: Slots

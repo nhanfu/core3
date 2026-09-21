@@ -6,6 +6,16 @@ Status: bounded batch implemented; QA conditional
 Verification trigger: feature-complete
 Candidate commit: Events Notes & Documents commit pending
 
+## Bounded feature - event Questions relation editor (2026-09-22)
+
+The event detail Questions tab now supports durable reusable-question
+attach/edit/detach behavior with scoped options, answer-stat navigation,
+permission checks, closed-event guards, optimistic concurrency, and restart
+coverage. Focused validation passes 3 tests / 23 assertions. Authenticated
+Odoo desktop/mobile captures are recorded under the matching evidence folder.
+Core3 visual capture was not rerun in this final checkpoint; broader Events
+actor permissions and complete responsive parity remain open.
+
 ## Bounded feature - event Notes & Documents (2026-09-22)
 
 The event form now has the source-backed Notes & Documents notebook fields,

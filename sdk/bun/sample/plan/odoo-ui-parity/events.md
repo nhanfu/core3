@@ -1,5 +1,35 @@
 # Events UI parity
 
+## Current bounded batch: Event Questions relation editor (2026-09-22)
+
+The next genuinely uncovered source-backed feature was the event form's
+Questions many-to-many editor. Odoo 19 declares \`question_ids\` on
+\`event.event\`; \`event_event_views.xml\` renders reusable questions with
+sequence, title, mandatory, once-per-order, type, answer choices, attendee
+answer statistics, and add/remove relation controls. The authenticated
+\`Design Fair Los Angeles\` reference showed the populated Questions tab at
+desktop and mobile widths, including \`Add a line\` and row deletion.
+
+Core3 now keeps the \`event-detail\` page layout separate from its matching
+\`api/event-detail.yaml\` contract. The page owns the Questions list and
+responsive action column; the API owns the scoped reusable-question lookup,
+answer-stat navigation, and permissioned attach/edit/detach mutations.
+Migration \`20260922120000-035-event-question-links.yaml\` adds durable
+question links and sequence values, backfills existing event-question rows,
+and seeds the three Questions visible on the fixed Design Fair event.
+Mutations require \`events.write\`, reject duplicate links and invalid
+questions, reject completed/cancelled events, and use parent/link row-version
+guards.
+
+Focused validation passes 3 tests and 23 assertions in
+\`test/events_event_question_links.integration.test.ts\`, including source
+mapping, scoped options, attach/edit/detach, and restart persistence.
+Authenticated Odoo desktop/mobile evidence is recorded in
+\`odoo-ui-parity/evidence/events/2026-09-22/event-question-links/\`. No Core3
+visual sign-off is claimed because the shared runtime was not restarted for
+this final bounded checkpoint. Full Events sign-off remains conditional on
+the broader actor matrix and complete route-level visual coverage.
+
 ## Current bounded batch: Event Notes & Documents (2026-09-22)
 
 The next genuinely uncovered bounded source feature was the Odoo event form's

@@ -12,7 +12,10 @@ datasources:
     query: "SELECT id, row_version, name, CAST(price AS DECIMAL(12,2)) AS price, CAST(registration_start AS VARCHAR) AS registration_start, CAST(registration_end AS VARCHAR) AS registration_end, maximum, registration_count, CASE WHEN maximum = 0 THEN NULL ELSE GREATEST(maximum - registration_count, 0) END AS seats_available, CASE WHEN maximum > 0 AND registration_count >= maximum THEN 'Sold out' ELSE 'Available' END AS availability FROM event_tickets WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY name"
   - id: event_detail_questions
     permission: events.read
-    query: "SELECT id, question, question_type, mandatory, once_per_order, answers FROM event_event_questions WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY id"
+    query: "SELECT l.id, l.row_version, l.event_id, l.question_id, COALESCE(q.title, l.question) AS question, COALESCE(q.question_type, l.question_type) AS question_type, l.mandatory, l.once_per_order, COALESCE(q.answers, l.answers, '') AS answers, COALESCE(l.sequence, 10) AS sequence FROM event_event_questions l LEFT JOIN event_questions q ON q.id = l.question_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.event_id = :id ORDER BY sequence, id"
+  - id: event_detail_question_options
+    permission: events.read
+    query: "SELECT q.id AS value, q.title AS label FROM event_questions q WHERE NOT EXISTS (SELECT 1 FROM event_event_questions l WHERE l.event_id = :id AND l.question_id = q.id) ORDER BY q.title, q.id"
   - id: event_detail_slots
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_SLOTS_UNAVAILABLE, message: Event slots are temporarily unavailable. } }
@@ -25,6 +28,79 @@ datasources:
     permission: events.read
     query: "SELECT id, id AS event_id, badge_image_file_name AS file_name, badge_image_mime_type AS mime_type, badge_image_size_bytes AS size_bytes, badge_image_uploaded_by AS uploaded_by, CAST(badge_image_updated_at AS VARCHAR) AS updated_at, row_version FROM events WHERE id = :id AND badge_image_file_name IS NOT NULL"
 actions:
+  - id: view_event_question_answers_from_event
+    type: navigate
+    permission: events.read
+    navigate_to: /events/answer-breakdown
+    params: { question_id: '{row.question_id}', event_id: '{row.event_id}' }
+  - id: add_event_detail_question
+    type: server_form
+    permission: events.write
+    title: Add event question
+    action: events.event_questions.attach
+    handler: line_item
+    operation: create
+    domain: event
+    params: { id: '{state.id}' }
+    refresh: [event_detail, event_detail_questions, event_detail_question_options]
+    fields:
+      - { field: question_id, label: Question, type: select, options_source: event_detail_question_options, required: true }
+    mutation:
+      generated: [link_id, question, question_type, question_answers, next_sequence]
+      before_steps:
+        - { query: "SELECT q.title AS question, q.question_type AS question_type, COALESCE(q.answers, '') AS question_answers, 'event-question-link-' || CAST(:id AS VARCHAR) || '-' || CAST(:question_id AS VARCHAR) AS link_id, COALESCE(MAX(l.sequence), 0) + 10 AS next_sequence FROM event_questions q LEFT JOIN event_event_questions l ON l.event_id = :id WHERE q.id = :question_id GROUP BY q.id, q.title, q.question_type, q.answers", assign: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :parent_expected_row_version AND state NOT IN ('Completed', 'Cancelled')", status: 409, code: EVENT_QUESTION_EVENT_CLOSED, message: Questions cannot be changed after the event is completed or cancelled, or after it has changed. }
+        - { query: "SELECT id FROM event_questions WHERE id = :question_id", status: 422, code: EVENT_EVENT_QUESTION_INVALID, message: Select a valid reusable event question. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_event_questions WHERE event_id = :id AND question_id = :question_id)", status: 409, code: EVENT_EVENT_QUESTION_EXISTS, message: This question is already linked to the event. }
+      steps:
+        - { query: "INSERT INTO event_event_questions(id, event_id, question_id, question, question_type, mandatory, once_per_order, answers, sequence, row_version) SELECT :link_id, :id, q.id, q.title, q.question_type, q.mandatory, q.once_per_order, COALESCE(q.answers, ''), :next_sequence, 1 FROM event_questions q WHERE q.id = :question_id", expect_changed: true, status: 422, code: EVENT_EVENT_QUESTION_INVALID, message: The event question could not be linked. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event changed while linking the question. Reload before saving. }
+      result: { query: "SELECT * FROM event_event_questions WHERE id = :link_id" }
+  - id: edit_event_detail_question
+    type: server_form
+    permission: events.write
+    title: Edit event question settings
+    action: events.event_questions.update
+    handler: line_item
+    operation: update
+    domain: event
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [event_detail, event_detail_questions]
+    fields:
+      - { field: mandatory, label: Mandatory, type: checkbox }
+      - { field: once_per_order, label: Once per Order, type: checkbox }
+      - { field: sequence, label: Sequence, type: number, min: 1, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :parent_expected_row_version AND state NOT IN ('Completed', 'Cancelled')", status: 409, code: EVENT_QUESTION_EVENT_CLOSED, message: Questions cannot be changed after the event is completed or cancelled, or after it has changed. }
+        - { query: "SELECT id FROM event_event_questions WHERE id = :line_id AND event_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_EVENT_QUESTION_STALE, message: This event question changed or was removed. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:sequence AS INTEGER), 0) > 0", status: 422, code: EVENT_EVENT_QUESTION_SEQUENCE_INVALID, message: Sequence must be greater than zero. }
+      steps:
+        - { query: "UPDATE event_event_questions SET mandatory = COALESCE(CAST(:mandatory AS BOOLEAN), false), once_per_order = COALESCE(CAST(:once_per_order AS BOOLEAN), false), sequence = CAST(:sequence AS INTEGER), row_version = row_version + 1 WHERE id = :line_id AND event_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_EVENT_QUESTION_STALE, message: This event question changed or was removed. Reload before saving. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event changed while saving the question. Reload before retrying. }
+      result: { query: "SELECT * FROM event_event_questions WHERE id = :line_id" }
+  - id: remove_event_detail_question
+    type: server
+    permission: events.write
+    action: events.event_questions.detach
+    handler: line_item
+    operation: delete
+    domain: event
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Remove question {{row.question}} from this event?'
+    refresh: [event_detail, event_detail_questions, event_detail_question_options]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :parent_expected_row_version AND state NOT IN ('Completed', 'Cancelled')", status: 409, code: EVENT_QUESTION_EVENT_CLOSED, message: Questions cannot be changed after the event is completed or cancelled, or after it has changed. }
+        - { query: "SELECT id FROM event_event_questions WHERE id = :line_id AND event_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_EVENT_QUESTION_STALE, message: This event question changed or was removed. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM event_event_questions WHERE id = :line_id AND event_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_EVENT_QUESTION_STALE, message: This event question changed or was removed. Reload before deleting. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event changed while deleting the question. Reload before retrying. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }
   - { id: event_sales_orders_detail, type: navigate, permission: events.read, navigate_to: /events/sales-orders, params: { event_id: '{row.id}' } }
   - id: upload_event_badge_background
     type: upload

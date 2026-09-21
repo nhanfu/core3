@@ -1,5 +1,30 @@
 # events QA ledger
 
+## Bounded QA - Event Questions relation editor (2026-09-22)
+
+- Source contract: **PASS**. Odoo 19 \`event.event.question_ids\` renders the
+  Questions notebook with reusable-question add, sequence, mandatory,
+  once-per-order, type, answers, stats, and remove controls.
+- YAML ownership and permissions: **PASS**. \`event-detail\` owns the list and
+  action presentation; matching \`api/event-detail\` owns the lookup and
+  mutations. Reads require \`events.read\`; attach/edit/detach require
+  \`events.write\`.
+- Durable data and guards: **PASS**. Migration 035 adds durable event links,
+  seeds Design Fair's Name/Email/Phone links, filters already-linked options,
+  rejects duplicate/invalid links and closed events, and uses parent/link
+  optimistic row versions.
+- Focused tests: **PASS**, 3 tests / 23 assertions. The restart test
+  reopens DuckDB and verifies the attached row before detaching it.
+- Odoo browser evidence: **PASS**, authenticated desktop and mobile captures
+  from \`http://localhost:8069\` / \`core3_reference\` are recorded in the feature
+  evidence folder using browser instance \`245ea108\`.
+- Core3 visual evidence: **NOT CLAIMED**. This final bounded checkpoint did
+  not restart the shared Core3 runtime for a new screenshot.
+- Full module sign-off: **OPEN**. The broader Events actor matrix and complete
+  authenticated route visual comparison remain outstanding.
+
+Evidence: \`odoo-ui-parity/evidence/events/2026-09-22/event-question-links/\`.
+
 ## Bounded QA - Event Notes & Documents (2026-09-22)
 
 - Source contract: **PASS**. Odoo 19 `event.event` and `event_event_views.xml`

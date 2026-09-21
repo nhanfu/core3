@@ -1,0 +1,46 @@
+version: 0.0.35
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_event_questions ADD COLUMN IF NOT EXISTS question_id VARCHAR;
+      ALTER TABLE event_event_questions ADD COLUMN IF NOT EXISTS sequence INTEGER DEFAULT 10;
+      UPDATE event_event_questions AS links
+      SET question_id = questions.id
+      FROM event_questions AS questions
+      WHERE links.question_id IS NULL AND LOWER(links.question) = LOWER(questions.title);
+      UPDATE event_event_questions
+      SET sequence = CASE WHEN sequence IS NULL OR sequence <= 0 THEN 10 ELSE sequence END;
+      INSERT INTO event_event_questions(
+        id, event_id, question_id, question, question_type, mandatory,
+        once_per_order, answers, sequence, row_version
+      )
+      SELECT 'event-question-001-name', 'event-demo-001', id, title,
+        question_type, mandatory, once_per_order, COALESCE(answers, ''), 10, 1
+      FROM event_questions WHERE id = 'question-name'
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_event_questions(
+        id, event_id, question_id, question, question_type, mandatory,
+        once_per_order, answers, sequence, row_version
+      )
+      SELECT 'event-question-001-email', 'event-demo-001', id, title,
+        question_type, mandatory, once_per_order, COALESCE(answers, ''), 20, 1
+      FROM event_questions WHERE id = 'question-email'
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_event_questions(
+        id, event_id, question_id, question, question_type, mandatory,
+        once_per_order, answers, sequence, row_version
+      )
+      SELECT 'event-question-001-phone', 'event-demo-001', id, title,
+        question_type, mandatory, once_per_order, COALESCE(answers, ''), 30, 1
+      FROM event_questions WHERE id = 'question-phone'
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_event_questions
+      WHERE id IN ('event-question-001-name', 'event-question-001-email', 'event-question-001-phone');
+      ALTER TABLE event_event_questions DROP COLUMN IF EXISTS question_id;
+      ALTER TABLE event_event_questions DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
