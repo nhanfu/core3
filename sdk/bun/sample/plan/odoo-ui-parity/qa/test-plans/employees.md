@@ -873,3 +873,17 @@ Evidence:
 Focused test: `test/employees_language.integration.test.ts` (4 tests, 23
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-LANGUAGE-001/`.
+
+## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo restricted boolean maps to the separate API detail/create/edit contracts and Visa & Work Permit page through `page.id` | pass |
+| Preference CRUD | Create and dedicated guarded edit persist true/false and increment employee row version | pass |
+| Permission and scope | `employees.write`, actor, active/current company, missing, and stale boundaries reject atomically | pass |
+| Persistence | Deterministic fixtures, migration replay, and file-backed restart preserve the boolean without duplicates | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo desktop/mobile | conditional; Core3 captures are authenticated with zero failed requests; Odoo credentials/rate limit block comparison |
+
+Focused test: `test/employees_work_permit_activity.integration.test.ts` (4
+tests, 20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001/`.

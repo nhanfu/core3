@@ -1,0 +1,20 @@
+version: 0.0.84
+kind: data
+description: Persist Odoo employee work permit scheduled activity preference
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_permit_scheduled_activity BOOLEAN;
+      UPDATE employees
+      SET work_permit_scheduled_activity = CASE id
+        WHEN 'employee-demo-001' THEN true
+        WHEN 'employee-demo-002' THEN false
+        WHEN 'employee-demo-003' THEN true
+        WHEN 'employee-demo-004' THEN false
+        ELSE COALESCE(work_permit_scheduled_activity, false) END;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_permit_scheduled_activity;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

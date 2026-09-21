@@ -26,6 +26,21 @@ Candidate commit: current working tree
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-AVATAR-001/`.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-059 | Odoo `work_permit_scheduled_activity` model field to paired page/API contracts | pass; detail read, generic CRUD, dedicated action, and Visa & Work Permit page field use `page.id: employee-detail` |
+| EMP-WF-059 | Create/edit scheduled activity preference | pass; boolean value and employee row version persist durably |
+| EMP-PERM-059 | `employees.write`, actor, current company, missing, and stale guards | pass; invalid requests reject atomically without changing the preference |
+| EMP-DATA-059 | Migration replay and file-backed restart | pass; deterministic preferences survive restart without duplicate effects |
+| EMP-UI-055 | Authenticated Core3 desktop/mobile and Odoo comparison | conditional; Core3 1440x1000 and 390x844 captures have zero failed requests; Odoo rejected `admin/admin` and rate-limited the mobile retry |
+
+Focused test: `test/employees_work_permit_activity.integration.test.ts`
+(4 tests, 20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-RELATED-CONTACTS-001 execution (2026-09-21)
 
 | Case | Scope | Result |

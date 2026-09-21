@@ -105,8 +105,8 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, legal_name, work_email, work_phone, mobile_phone, company_name, department_name, employment_type, employee_type, contract_type_name, hr_responsible_name, pin, coach_name, private_car_plate, employee_properties, hire_date, contract_start, contract_end, trial_date_end, timezone, lang, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, study_school, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display, id_card, id_card_name, driving_license, driving_license_name]
-      boolean_fields: [birthday_public_display, has_work_permit, id_card, driving_license]
+      fields: [employee_number, name, legal_name, work_email, work_phone, mobile_phone, company_name, department_name, employment_type, employee_type, contract_type_name, hr_responsible_name, pin, coach_name, private_car_plate, employee_properties, hire_date, contract_start, contract_end, trial_date_end, timezone, lang, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, study_school, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, work_permit_scheduled_activity, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display, id_card, id_card_name, driving_license, driving_license_name]
+      boolean_fields: [birthday_public_display, has_work_permit, work_permit_scheduled_activity, id_card, driving_license]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0, distance_home_work_unit: kilometers, employee_type: employee, contract_type_name: Permanent, hr_responsible_name: HR Manager }
       generated: [id]
@@ -169,6 +169,7 @@ actions:
       - { field: permit_no, label: Work Permit No, type: text }
       - { field: work_permit_expiration_date, label: Work Permit Expiration, type: date }
       - { field: has_work_permit, label: Work Permit Document, type: checkbox }
+      - { field: work_permit_scheduled_activity, label: Schedule Work Permit Activity, type: checkbox }
       - { field: work_permit_name, label: Document Filename, type: text }
       - { field: id_card, label: ID Card Copy, type: checkbox }
       - { field: id_card_name, label: ID Card Filename, type: text }

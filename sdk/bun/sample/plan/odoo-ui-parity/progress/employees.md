@@ -1218,6 +1218,24 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001 (2026-09-21)
+
+- Selected Odoo's restricted `hr.employee.work_permit_scheduled_activity`
+  boolean as the next uncovered Employee setting after Language, distinct from
+  existing Visa/Work Permit document CRUD.
+- Added migration `20260922300000-084` with a durable boolean and deterministic
+  demo fixtures. API/page YAML remain separate and join through
+  `page.id: employee-detail`; generic employee CRUD and a dedicated guarded
+  `edit_employee_work_permit_activity` action persist the setting.
+- Guards cover `employees.write`, actor, active/current-company, missing, and
+  stale row-version boundaries. Focused verification is **4 tests / 20
+  assertions**, including migration replay and file-backed restart.
+- Authenticated Core3 desktop/mobile evidence has zero failed requests. Odoo
+  desktop/mobile is blocked by rejected `admin/admin` followed by rate
+  limiting. Evidence:
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001/`.
+- No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-LANGUAGE-001 (2026-09-21)
 
 - Selected Odoo `hr.employee.lang` as the smallest uncovered employee setting

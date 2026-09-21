@@ -1942,6 +1942,31 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001: Work Permit scheduled activity preference (2026-09-21)
+
+The next uncovered source-backed employee setting is Odoo's restricted
+`hr.employee.work_permit_scheduled_activity` boolean. It is distinct from the
+completed Visa/Work Permit document metadata CRUD: this slice controls the
+expiry-activity preference itself.
+
+Core3 adds migration `20260922300000-084-employee-work-permit-activity.yaml`
+with a durable boolean and deterministic demo values. The API reads the field,
+adds `edit_employee_work_permit_activity`, and includes the field in generic
+employee create/edit contracts. The page contract remains layout-only, joins
+the API through `page.id: employee-detail`, and renders the checkbox in Visa &
+Work Permit with a permissioned header action.
+
+Guards cover `employees.write`, authenticated actor, active/current-company
+employee, missing employee, and optimistic row-version concurrency. Focused
+verification is **4 tests / 20 assertions**, including create/edit CRUD,
+atomic guard boundaries, migration replay, and file-backed restart.
+
+Authenticated Core3 desktop/mobile captures render the new setting with zero
+failed requests. Odoo desktop/mobile comparison is blocked by rejected
+`admin/admin` credentials followed by Odoo rate limiting. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-PERMIT-ACTIVITY-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-ARCHIVE-RELATION-CLEANUP-001: Archive relation cleanup (2026-09-21)
 
 Odoo's `hr.employee.action_archive()` clears archived employees from the

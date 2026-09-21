@@ -1,0 +1,10 @@
+{
+  "final_url": "http://127.0.0.1:8069/web/login",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "login_rejected": true,
+  "request_failures": [],
+  "body_excerpt": "Skip to Content\nEmail\nPassword\nReset Password\n\nToo many login failures, please wait a bit before trying again.\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+}

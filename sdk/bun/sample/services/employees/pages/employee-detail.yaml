@@ -58,6 +58,7 @@ components:
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: edit_employee_related_user, label: Set Related User, variant: secondary, permission: auth.users.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_study_school, label: Edit School, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_work_permit_activity, label: Work Permit Activity, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_work_contact, label: Set Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: create_employee_work_contact, label: Create Work Contact, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.work_contact_id" }
       - { id: edit_employee_company, label: Change Company, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
@@ -189,7 +190,7 @@ components:
               fields: [{ field: emergency_contact, label: Contact }, { field: emergency_phone, label: Phone }]
             - title: Visa & Work Permit
               permission: employees.read
-              fields: [{ field: visa_no, label: Visa No }, { field: visa_expire, label: Visa Expiration, type: date, show_if: "!!state.employee_detail.visa_no" }, { field: permit_no, label: Work Permit No }, { field: work_permit_expiration_date, label: Work Permit Expiration, type: date, show_if: "!!state.employee_detail.permit_no" }, { field: has_work_permit, label: Document, type: checkbox }, { field: work_permit_name, label: Document Filename, show_if: "!!state.employee_detail.has_work_permit" }]
+              fields: [{ field: visa_no, label: Visa No }, { field: visa_expire, label: Visa Expiration, type: date, show_if: "!!state.employee_detail.visa_no" }, { field: permit_no, label: Work Permit No }, { field: work_permit_expiration_date, label: Work Permit Expiration, type: date, show_if: "!!state.employee_detail.permit_no" }, { field: has_work_permit, label: Document, type: checkbox }, { field: work_permit_name, label: Document Filename, show_if: "!!state.employee_detail.has_work_permit" }, { field: work_permit_scheduled_activity, label: Schedule Work Permit Activity, type: checkbox }]
             - title: Citizenship
               permission: employees.read
               fields: [{ field: country_id, label: Nationality (Country) }, { field: identification_id, label: Identification No }, { field: ssnid, label: SSN No }, { field: passport_id, label: Passport No }, { field: passport_expiration_date, label: Passport Expiration, type: date, show_if: "!!state.employee_detail.passport_id" }]

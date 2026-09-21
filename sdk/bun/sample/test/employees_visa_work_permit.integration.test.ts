@@ -33,7 +33,7 @@ describe('Employees visa and work permit parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(group).toMatchObject({ title: 'Visa & Work Permit', permission: 'employees.read' });
     expect(group.fields.map((field: any) => field.field)).toEqual([
-      'visa_no', 'visa_expire', 'permit_no', 'work_permit_expiration_date', 'has_work_permit', 'work_permit_name',
+      'visa_no', 'visa_expire', 'permit_no', 'work_permit_expiration_date', 'has_work_permit', 'work_permit_name', 'work_permit_scheduled_activity',
     ]);
     expect(datasource.query).toContain('visa_no');
     expect(datasource.query).toContain('work_permit_expiration_date');

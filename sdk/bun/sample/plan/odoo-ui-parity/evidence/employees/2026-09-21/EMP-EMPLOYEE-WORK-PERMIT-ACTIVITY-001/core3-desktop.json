@@ -1,0 +1,13 @@
+{
+  "login_status": 200,
+  "after_login": "http://127.0.0.1:3302/apps",
+  "final_url": "http://127.0.0.1:3302/employees/detail?id=employee-demo-001",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "contains_visa_section": true,
+  "contains_schedule_label": true,
+  "request_failures": [],
+  "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nPrivate Contact\nEmail\n—\nPhone\n—\nPrivate Address\n—\nBirthday\n—\nPersonal Information\nLegal Name\n—\nBirthday\n—\nShow to all employees\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nEmergency Contact\nContact\n—\nPhone\n—\nVisa & Work Permit\nVisa No\n—\nVisa Expiration\n—\nWork Permit No\n—\nWork Permit Expiration\n—\nDocument\n—\nDocument Filename\n—\nSchedule Work Permit Activity\n—\nCitizenship\nNationality (Country)\n—\nIdentification No\n—\nSSN No\n—\nPassport No\n—\nPassport Expiration\n—\nLocation\nPrivate Street\n—\nPrivate Street 2\n—\nPrivate City\n—\nPrivate State\n—\nPrivate ZIP\n—\nPrivate Country\n—\nHome-Work Distance\n—\nDistance Unit\n—\nFamily\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nEducation\nCertificate Level\n—\nField of Study\n—\nSchool\n—\nDocuments\nID Card Copy\n—\nID Card Filename\n—\nDriving License\n—\nDriving License Filename\n—\nSend message\nLog note\nSchedule activity\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\n0\nMessages and activities\n\nNo messages or activities yet."
+}
