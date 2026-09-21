@@ -19,6 +19,24 @@ components:
         label: Cards
         icon: grid
         card: { title: name, subtitle: leave_type_name, fields: [{ field: days, label: Amount }, { field: state, label: Status }] }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: leave_type_name
+        record_date_field: date_from
+        record_end_date_field: date_to
+        schedule_action: schedule_my_allocation_activity
+        empty_cell_action: schedule_my_allocation_activity
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: time_off_approval, label: Time Off Approval, icon: ✓ }
+          - { id: time_off_second_approve, label: Time Off Second Approve, icon: ✓ }
+          - { id: document, label: Document, icon: ▣ }
     columns:
       - { field: name, label: Allocation, type: PrimaryEntityCell }
       - { field: leave_type_name, label: Time Off Type }

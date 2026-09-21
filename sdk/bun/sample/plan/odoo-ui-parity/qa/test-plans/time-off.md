@@ -37,6 +37,7 @@ mutations use isolated databases and deterministic dates.
 | TIMEOFF-ATTACH-001 | Submitted request supporting documents list, upload/download/remove contracts, size/duplicate/state/stale guards, and restart persistence | pass: `time_off_request_attachments.integration.test.ts`; Core3 browser seeded-document capture; Odoo runtime blocked |
 | TIMEOFF-INT-001 | Payroll, calendar, notification and cross-module durable flows use Temporal with retry/replay/restart/compensation coverage | planned |
 | TIMEOFF-ACCRUAL-EMP-001 | Accrual Plan Employees stat filters durable allocation employees, enforces manager read scope, and preserves search/empty/transport/restart behavior | pass: `time_off_accrual_plan_employees.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
+| TIMEOFF-ACTIVITY-MYALLOC-001 | My Allocations exposes the Odoo Activity view, durable slots, scheduling guards, and restart persistence | pass: `time_off_my_allocations_activity.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
 
 ## Exit criteria
 

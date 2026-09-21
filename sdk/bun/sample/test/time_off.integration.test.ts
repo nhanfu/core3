@@ -107,6 +107,12 @@ describe('Time Off Odoo view navigation', () => {
       leave_type_id VARCHAR, leave_type_name VARCHAR, days DECIMAL(18,3), date_from DATE,
       date_to DATE, state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1
     );`);
+    await repository.run(`CREATE TABLE time_off_my_allocation_activities(
+      id VARCHAR PRIMARY KEY, allocation_id VARCHAR UNIQUE, activity_type VARCHAR,
+      activity_summary VARCHAR, activity_date DATE, activity_user VARCHAR,
+      activity_state VARCHAR DEFAULT 'planned', activity_count INTEGER DEFAULT 0,
+      row_version INTEGER DEFAULT 1
+    );`);
     await repository.run("INSERT INTO leave_types VALUES ('leave-type-annual', 'Annual Leave', 'Active'), ('leave-type-archived', 'Legacy Leave', 'Archived')");
     const values = { name: 'ALLOC/REQUEST/TEST', leave_type_id: 'leave-type-annual', leave_type_name: 'Annual Leave', days: 5, date_from: '2026-01-15', date_to: '2026-01-19', reason: 'Annual balance' };
     const created = await repository.executeMutation(create.mutation, { values });

@@ -105,6 +105,28 @@ module sign-off or aggregate progress claim.
   made.
 - Disposition: **conditional bounded PASS**; no full module sign-off.
 
+## 2026-09-22 bounded candidate: My Allocations Activity view
+
+- Source action: Odoo `hr_leave_allocation_action_my`, view modes
+  `list,kanban,form,activity`; activity view
+  `hr_leave_allocation_view_activity`.
+- Core3 route: `/my-allocations`, page/API `page.id: my-allocations`.
+- Focused test: **PASS**, 3 tests / 19 assertions in
+  `test/time_off_my_allocations_activity.integration.test.ts`.
+- Full Time Off regression: **PASS**, 66 tests / 669 assertions across 24
+  integration files. Frontend build, Time Off CSS build, and diff-check pass.
+- Persistence: **PASS**; migration `0.0.23` is replay-safe, seeded slots and
+  scheduled activity survive file-backed close/reopen, and new allocation
+  creation inserts a durable slot.
+- Odoo browser gate: **BLOCKED**; authenticated `core3_reference` has no Time
+  Off menu and `/odoo/my-time-off` resolves to Discuss. Desktop/mobile blocker
+  captures are in the linked evidence README.
+- Core3 browser gate: **BLOCKED**; `agent:module` exits before binding at
+  `yaml-api.ts:259` with `Conflicting declarations for named action:
+  time_off.requests.refuse`.
+- Disposition: **conditional bounded PASS**; no visual parity claim or full
+  Time Off sign-off.
+
 The full Time Off glob was also run after the focused pass: **52 passed, 9
 failed, 449 assertions across 61 tests**. The nine failures are existing
 discovery assertions reporting the shared page-schema error

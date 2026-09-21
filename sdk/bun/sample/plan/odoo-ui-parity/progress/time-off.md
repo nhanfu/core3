@@ -52,3 +52,23 @@ direct Odoo Time Off navigation resolves to Discuss. Core3 browser startup is
 blocked by the unrelated dirty `services/fleet/api/vehicles.yaml` parse error;
 paired visual evidence is not claimed. Time Off remains conditional and
 unsigned-off.
+
+## 2026-09-22 bounded candidate: My Allocations Activity view
+
+Implemented the source-backed `hr_leave_allocation_action_my` Activity mode.
+`/my-allocations` now exposes List, Cards, and desktop-only Activity tabs with
+the seven Odoo activity types. API and page remain joined by
+`page.id: my-allocations`; migration `0.0.23` persists seeded activity slots,
+new-allocation slots, scheduling state, and row versions. The scheduling action
+requires `time_off.write` and rejects invalid types/dates, missing or cancelled
+allocations, and stale rows.
+
+Focused verification passes **3/19**; full Time Off regression passes **66/669**;
+frontend/CSS builds and diff-check pass. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-MY-ALLOCATIONS-ACTIVITY-001/`.
+
+The authenticated `core3_reference` browser has no Time Off menu and resolves
+the requested route to Discuss. Core3 module runtime also exits before binding
+on the existing duplicate `time_off.requests.refuse` named-action declaration.
+No Odoo/Core3 visual parity claim is made; Time Off remains conditional and
+unsigned-off.

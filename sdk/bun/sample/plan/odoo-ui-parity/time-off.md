@@ -946,3 +946,31 @@ in this checkout because the shared discovery pass stops on the unrelated dirty
 `services/fleet/api/vehicles.yaml` YAML parse error before `/api/modules` can
 start. Exact browser and runtime blockers are recorded in the evidence README;
 no visual-parity claim is made.
+
+## My Allocations Activity view (2026-09-22)
+
+The next distinct uncovered source slice after the calendar and accrual work is
+Odoo's `hr_leave_allocation_action_my` Activity mode. Local source
+`views/hr_leave_allocation_views.xml:518-550` defines the `Allocation Requests`
+activity view and the personal action's `list,kanban,form,activity` modes.
+
+Core3 adds the desktop-only Activity tab to `/my-allocations` while retaining
+the existing List/Cards modes. The page and API remain separate and are joined
+by `page.id: my-allocations`; the datasource joins durable
+`time_off_my_allocation_activities` slots, and `schedule_my_allocation_activity`
+requires `time_off.write`, validates the seven Odoo activity types, summary, ISO
+date, personal allocation scope, and row version. Migration `0.0.23` is
+idempotent, seeds deterministic slots, and creates a slot when a new personal
+allocation is inserted.
+
+Focused coverage passes 3 tests / 19 assertions; the full Time Off glob passes
+66 tests / 669 assertions, with frontend/CSS builds and diff-check passing.
+Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-MY-ALLOCATIONS-ACTIVITY-001/`.
+
+The authenticated `core3_reference` database has no Time Off menu and direct
+`/odoo/my-time-off` resolves to Discuss; desktop/mobile blocker captures are
+stored with the evidence. Core3 browser startup is separately blocked before
+binding by the existing duplicate named action
+`time_off.requests.refuse` at `packages/server/src/routes/yaml-api.ts:259`.
+No visual-parity claim is made and no Odoo mutation occurred.

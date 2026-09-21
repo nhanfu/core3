@@ -6,8 +6,37 @@ datasources:
     query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
   - id: my_allocations
     permission: time_off.read
-    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM leave_allocations WHERE employee_name = 'Admin User' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR leave_type_name ILIKE '%' || :q || '%') ORDER BY date_from DESC, name"
+    error_states: { transport_error: { status: 503, code: TIME_OFF_MY_ALLOCATIONS_UNAVAILABLE, message: My allocation data is temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.name, a.employee_name, a.leave_type_name, a.days, CAST(a.date_from AS VARCHAR) AS date_from, CAST(a.date_to AS VARCHAR) AS date_to, a.state, COALESCE(x.id, 'my-allocation-activity-' || a.id) AS activity_id, COALESCE(x.row_version, 1) AS activity_row_version, COALESCE(x.activity_type, CASE a.state WHEN 'Draft' THEN 'todo' WHEN 'Submitted' THEN 'email' WHEN 'Approved' THEN 'time_off_second_approve' WHEN 'Refused' THEN 'call' ELSE 'todo' END) AS activity_type, COALESCE(x.activity_summary, CASE a.state WHEN 'Draft' THEN 'Complete your allocation request' WHEN 'Submitted' THEN 'Await allocation approval' WHEN 'Approved' THEN 'Review approved allocation' WHEN 'Refused' THEN 'Review refused allocation' ELSE 'Review allocation request' END) AS activity_summary, CAST(COALESCE(x.activity_date, a.date_from) AS VARCHAR) AS activity_date, COALESCE(x.activity_user, a.employee_name) AS activity_user, COALESCE(x.activity_state, CASE a.state WHEN 'Refused' THEN 'overdue' WHEN 'Approved' THEN 'done' WHEN 'Draft' THEN 'today' ELSE 'planned' END) AS activity_state, COALESCE(x.activity_count, 0) AS activity_count FROM leave_allocations a LEFT JOIN time_off_my_allocation_activities x ON x.allocation_id = a.id WHERE a.employee_name = 'Admin User' AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.leave_type_name ILIKE '%' || :q || '%' OR COALESCE(x.activity_summary, '') ILIKE '%' || :q || '%') ORDER BY a.date_from DESC, a.name"
 actions:
+  - id: schedule_my_allocation_activity
+    type: server_form
+    permission: time_off.write
+    title: Schedule activity
+    action: time_off.my_allocations.activity
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.activity_id}', expected_row_version: '{row.activity_row_version}' }
+    refresh: [my_allocations]
+    mutation:
+      operation: update
+      table: time_off_my_allocation_activities
+      concurrency: { field: row_version, input: expected_row_version, required: true }
+      fields: [activity_type, activity_summary, activity_date, activity_user, activity_state, activity_count]
+      required: [activity_type, activity_summary, activity_date]
+      guards:
+        - { query: "SELECT x.id FROM time_off_my_allocation_activities x JOIN leave_allocations a ON a.id = x.allocation_id WHERE x.id = :id AND a.employee_name = 'Admin User' AND a.state <> 'Cancelled'", status: 404, code: TIME_OFF_MY_ALLOCATION_ACTIVITY_NOT_FOUND, message: Allocation activity was not found. }
+        - { query: "SELECT 1 AS ok WHERE :activity_type IN ('todo', 'email', 'call', 'meeting', 'time_off_approval', 'time_off_second_approve', 'document')", status: 422, code: TIME_OFF_MY_ALLOCATION_ACTIVITY_TYPE_INVALID, message: Select a valid activity type. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:activity_summary AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: TIME_OFF_MY_ALLOCATION_ACTIVITY_SUMMARY_REQUIRED, message: Activity summary is required. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:activity_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: TIME_OFF_MY_ALLOCATION_ACTIVITY_DATE_INVALID, message: Due date must use YYYY-MM-DD. }
+      defaults: { activity_user: Admin User, activity_state: planned, activity_count: 1 }
+      steps:
+        - query: "UPDATE time_off_my_allocation_activities SET activity_user = 'Admin User', activity_state = 'planned', activity_count = 1 WHERE id = :id"
+      result: { query: "SELECT * FROM time_off_my_allocation_activities WHERE id = :id" }
+    fields:
+      - { field: activity_type, label: Activity Type, type: select, options: [{ value: todo, label: To-Do }, { value: email, label: Email }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: time_off_approval, label: Time Off Approval }, { value: time_off_second_approve, label: Time Off Second Approve }, { value: document, label: Document }], required: true, default: todo }
+      - { field: activity_summary, label: Summary, type: textarea, required: true, placeholder: Describe the activity... }
+      - { field: activity_date, label: Due Date, type: text, required: true, default: '2026-01-15', placeholder: YYYY-MM-DD }
   - id: create_my_allocation
     type: server_form
     permission: time_off.write
@@ -28,6 +57,8 @@ actions:
         - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :leave_type_id AND name = :leave_type_name AND state = 'Active'", status: 422, code: TIME_OFF_ALLOCATION_TYPE_INVALID, message: Select an active Time Off Type. }
         - { query: "SELECT 1 AS ok WHERE CAST(:days AS DECIMAL(18,3)) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_ALLOCATION_DATES_INVALID, message: Allocation must have a positive amount and valid dates. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: TIME_OFF_ALLOCATION_NAME_EXISTS, message: An allocation with this title already exists. }
+      steps:
+        - query: "INSERT INTO time_off_my_allocation_activities(id, allocation_id, activity_date) VALUES ('my-allocation-activity-' || :id, :id, CAST(:date_from AS DATE)) ON CONFLICT(allocation_id) DO NOTHING"
       result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
     fields:
       - { field: name, label: Title, type: text, required: true, placeholder: e.g. Annual leave allocation }
