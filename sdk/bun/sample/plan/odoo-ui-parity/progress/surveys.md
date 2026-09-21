@@ -419,6 +419,29 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-LANGUAGE-001`
+
+Selected the next uncovered source-backed public participant behavior after
+Wave 28: Odoo's survey language selection. Core3 migration `0.0.49` persists
+supported survey language codes and each response's immutable
+`language_code`. The page/API pair remains separate (`page.id: surveys`);
+public start defaults to the first configured language, rejects unsupported
+codes before inserting or mutating a response, and prevents changing a
+language after a response has begun. The admin detail/response contract is
+`surveys.read`, while token-bound start/read remains `surveys.public`.
+
+Focused verification is **2 passed / 25 assertions**. Adjacent public
+response/random-selection/skipped-question regression is **9 passed / 107
+assertions**. Restart and concurrent idempotent start coverage is green.
+Audit, scoped ESLint, and `git diff --check` pass. Core3 ports 3000, 3001,
+3390, and 3391 refused connections. Odoo `/odoo/surveys?` returned 303 to the
+login route and `/survey/check_session_code/5822` returned
+`{"error":"survey_wrong"}`; no authenticated desktop/mobile Odoo comparison
+or parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-RANDOM-SELECTION-001`
 
 Wave 27 selected Odoo's next uncovered public survey setting:

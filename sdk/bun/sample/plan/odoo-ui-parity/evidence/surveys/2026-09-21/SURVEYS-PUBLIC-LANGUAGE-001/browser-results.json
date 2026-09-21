@@ -1,0 +1,50 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-LANGUAGE-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x1000",
+      "status": "blocked",
+      "probe": "http://127.0.0.1:3391/survey/public-language-token-2026",
+      "result": "curl: (7) Failed to connect to 127.0.0.1 port 3391 after 0 ms: Could not connect to server"
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "probe": "http://127.0.0.1:3391/survey/public-language-token-2026",
+      "result": "curl: (7) Failed to connect to 127.0.0.1 port 3391 after 0 ms: Could not connect to server"
+    },
+    "additional_ports": [
+      "3000 refused",
+      "3001 refused",
+      "3390 refused"
+    ],
+    "signoff": false
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x1000",
+      "status": "blocked",
+      "probe": "http://127.0.0.1:8069/odoo/surveys?",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F"
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "probe": "http://127.0.0.1:8069/odoo/surveys?",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F"
+    },
+    "session_fixture_probe": {
+      "endpoint": "/survey/check_session_code/5822",
+      "http_status": 200,
+      "response": { "jsonrpc": "2.0", "id": null, "result": { "error": "survey_wrong" } }
+    },
+    "signoff": false
+  },
+  "blockers": [
+    "Core3 desktop/mobile authenticated browser runtime was unavailable on the checked ports.",
+    "Odoo Surveys requires authentication and no matching installed/reference fixture was available; the synthetic session code returned survey_wrong."
+  ]
+}

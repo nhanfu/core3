@@ -1396,3 +1396,29 @@ proxy 8072 refused. This remains conditional with no visual or Odoo parity
 sign-off claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.
+
+## `SURVEYS-PUBLIC-LANGUAGE-001` — public respondent language
+
+- Source comparison: Odoo `survey.survey.lang_ids` stores supported languages;
+  `survey.user_input.lang_id` stores the participant choice; `/survey/begin`
+  accepts `lang_code` and applies it before the response enters progress.
+- YAML/UI contract: migration `0.0.49` adds `surveys.languages` and
+  `survey_responses.language_code`; the separate `pages/surveys.yaml` and
+  `api/surveys.yaml` contracts expose the fields through `page.id: surveys`.
+  The public renderer provides a selector only when more than one supported
+  language is configured.
+- Persistence/guards: unsupported codes return
+  `SURVEY_PUBLIC_LANGUAGE_INVALID` without a response row; concurrent same-key
+  starts converge on one `fr_FR` response; file-backed reopen preserves it;
+  changing the language on an in-progress response returns
+  `SURVEY_PUBLIC_LANGUAGE_LOCKED`.
+- Verification: **2 focused tests / 25 assertions** and **9 adjacent tests /
+  107 assertions** pass. Audit: **737 pages, 746 routes, 1,449 datasources**;
+  scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, and 3391 refused. Odoo
+  `/odoo/surveys?` returned 303 to login and `/survey/check_session_code/5822`
+  returned `{"error":"survey_wrong"}`. No authenticated desktop/mobile
+  capture, installed Odoo language fixture, or parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.

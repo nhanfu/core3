@@ -2171,3 +2171,33 @@ unavailable; Odoo redirected both probes to login and proxy 8072 refused. No
 parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.
+
+## Wave 29 — `SURVEYS-PUBLIC-LANGUAGE-001`
+
+Odoo stores supported `res.lang` records in `survey.survey.lang_ids`
+(`addons/survey/models/survey_survey.py:46-52`) and the participant choice in
+`survey.user_input.lang_id` (`addons/survey/models/survey_user_input.py:26-35`).
+The public begin route accepts `lang_code` and writes it before marking the
+response in progress (`addons/survey/controllers/main.py:490-505`), then
+renders with that language or a supported-language fallback
+(`addons/survey/controllers/main.py:912-925`).
+
+Core3 migration `0.0.49` adds durable `surveys.languages` and
+`survey_responses.language_code`, with a deterministic published bilingual
+fixture. The separate `pages/surveys.yaml` and `api/surveys.yaml` contracts
+project the supported language list and response language through `page.id:
+surveys`; `surveys.public` validates the code before start, defaults to the
+first configured language, and locks an in-progress response's choice. The
+renderer consumes the API field with a public start selector. This slice
+persists respondent language and does not claim translated catalog parity.
+
+Focused verification is **2 passed / 25 assertions**; adjacent public
+response/random-selection/skipped-question regression is **9 passed / 107
+assertions**. Audit reports **737 pages, 746 routes, and 1,449 datasources**;
+scoped ESLint and `git diff --check` pass. Core3 desktop/mobile probes could
+not connect on ports 3000, 3001, 3390, or 3391. Odoo `/odoo/surveys?` returned
+HTTP 303 to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; the exact JSON-RPC
+session probe returned `{"error":"survey_wrong"}` for code `5822`, so no
+authenticated Surveys fixture or paired visual comparison is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.

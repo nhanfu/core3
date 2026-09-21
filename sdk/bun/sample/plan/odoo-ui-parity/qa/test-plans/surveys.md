@@ -613,3 +613,15 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM
 | SURVEYS-UI-051 | authenticated responsive/reference | Skipped optional question desktop/mobile + Odoo comparison | Capture exact runtime blockers; no sign-off until authenticated Core3 routes and installed Odoo Surveys fixture are available | `browser-results.json` | conditional |
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-LANGUAGE-001`
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-054 | public participant | Supported language metadata and selector | Return durable `languages` through the paired API and bind the page renderer selector | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-051 | restart/idempotency | Invalid code → concurrent keyed start → reopen | Reject unsupported code without mutation; converge one response and preserve `language_code` after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-053 | token/input guard | Wrong language and immutable response language | Keep `surveys.public`, reject unsupported input before mutation, and prevent changing a started response | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-052 | responsive/reference | Language selector desktop/mobile + Odoo comparison | Record exact Core3 connection and Odoo login/session blockers; no sign-off until authenticated routes and installed reference fixture are available | `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.

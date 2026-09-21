@@ -39,6 +39,9 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # Odoo token-mode surveys require a pre-created answer token from the invite
 # flow; the public renderer remains layout-only while the paired API validates
 # the answer token before returning questions or beginning the response.
+# Odoo survey.survey.lang_ids and survey.user_input.lang_id are projected by
+# the paired API as languages/language_code; the public renderer only collects
+# the supported respondent choice and does not claim translation-catalog parity.
 components:
   - type: ListView
     variant: odoo
@@ -104,7 +107,7 @@ actions:
     mutation:
       operation: insert
       table: surveys
-      fields: [name, title, description, owner]
+      fields: [name, title, description, owner, languages]
       required: [name, title]
       result: { query: "SELECT * FROM surveys WHERE id = :id" }
     fields:
@@ -112,6 +115,7 @@ actions:
       - { field: title, label: Title, type: text, required: true }
       - { field: description, label: Description, type: text }
       - { field: owner, label: Owner, type: text }
+      - { field: languages, label: Languages, type: text, placeholder: 'e.g. en_US||fr_FR' }
   - id: create_survey_question
     type: server_form
     permission: surveys.write

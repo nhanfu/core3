@@ -40,7 +40,7 @@ components:
       - title: Survey
         fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: response_count, label: Responses }]
       - title: Participants
-        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
+        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
       - title: Description
         fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
   - type: LineItemGrid
@@ -72,6 +72,7 @@ components:
     columns:
       - { field: respondent_name, label: Respondent, type: PrimaryEntityCell }
       - { field: respondent_email, label: Email }
+      - { field: language_code, label: Language }
       - { field: answer_data, label: Answers }
       - { field: submitted_at, label: Submitted at }
       - { field: state, label: Status, type: StatusChip }

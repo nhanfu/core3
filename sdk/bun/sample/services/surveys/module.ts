@@ -115,6 +115,9 @@ export default class SurveysModule implements ModuleLifecycle {
 
     const body = await request.json().catch(() => ({})) as Record<string, any>;
     if (operation === 'start') {
+      const requestedLanguage = this.normalizeLanguage(body.language_code);
+      const languageError = this.publicLanguageError(detail, requestedLanguage);
+      if (languageError) return languageError;
       const explicitAnswerToken = String(body.answer_token || '');
       const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
       let existingToken = explicitAnswerToken || cookieAnswerToken;
@@ -129,8 +132,12 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!answer && explicitAnswerToken) return this.json({ error: 'Survey response is unavailable' }, 404);
         if (!answer) existingToken = '';
         if (answer && this.publicAttemptExpired(detail, answer)) return this.expiredResponse(detail, answer);
+        if (answer?.language_code && requestedLanguage && answer.language_code !== requestedLanguage) {
+          return this.json({ error: 'The response language is already fixed', code: 'SURVEY_PUBLIC_LANGUAGE_LOCKED' }, 409);
+        }
         if (answer?.state === 'Submitted') return this.withSurveyCookie(this.json({ error: 'This survey response is already submitted' }, 409), token, existingToken);
         if (answer?.state === 'New') {
+          const languageCode = answer.language_code || this.selectedLanguage(detail, requestedLanguage);
           const questionOrder = String(answer?.question_order || '');
           const order = await orderedQuestions(answer?.answer_data || '', questionOrder, existingToken);
           const persistedQuestionOrder = questionOrder || (String(detail.questions_selection || 'all') === 'random' ? order.map((candidate: any) => candidate.id).join('||') : '');
@@ -141,9 +148,10 @@ export default class SurveysModule implements ModuleLifecycle {
               id: answer.id,
               survey_id: detail.id,
               access_token: existingToken,
-              values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, start_datetime: new Date().toISOString() },
+              values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, language_code: languageCode || null, start_datetime: new Date().toISOString() },
               current_question_id: question.id,
               question_order: persistedQuestionOrder || null,
+              language_code: languageCode || null,
               start_datetime: new Date().toISOString(),
             });
             return this.withSurveyCookie(this.json({ survey: detail, answer: begun }), token, existingToken);
@@ -161,9 +169,10 @@ export default class SurveysModule implements ModuleLifecycle {
                   id: answer.id,
                   survey_id: detail.id,
                   access_token: existingToken,
-                  values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, start_datetime: new Date().toISOString() },
+                  values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, language_code: languageCode || null, start_datetime: new Date().toISOString() },
                   current_question_id: question.id,
                   question_order: persistedQuestionOrder || null,
+                  language_code: languageCode || null,
                   start_datetime: new Date().toISOString(),
                 });
                 return this.withSurveyCookie(this.json({ survey: detail, answer: retried }), token, existingToken);
@@ -200,6 +209,7 @@ export default class SurveysModule implements ModuleLifecycle {
             survey_id: detail.id,
             survey_name: detail.name,
             respondent_email: respondentEmail || null,
+            language_code: this.selectedLanguage(detail, requestedLanguage) || null,
             answer_data: '{}',
             current_question_id: question?.id || null,
             access_token: accessToken,
@@ -399,6 +409,7 @@ export default class SurveysModule implements ModuleLifecycle {
             survey_name: detail.name,
             respondent_name: source.respondent_name || null,
             respondent_email: source.respondent_email || null,
+            language_code: source.language_code || this.selectedLanguage(detail, '') || null,
             answer_data: '{}',
             current_question_id: question?.id || null,
             question_order: questionOrder,
@@ -631,6 +642,28 @@ export default class SurveysModule implements ModuleLifecycle {
   private parseSkippedQuestions(value: unknown): string[] {
     if (Array.isArray(value)) return [...new Set(value.map((entry) => String(entry).trim()).filter(Boolean))];
     return [...new Set(String(value || '').split('||').map((entry) => entry.trim()).filter(Boolean))];
+  }
+
+  private normalizeLanguage(value: unknown): string {
+    return typeof value === 'string' ? value.trim().replace(/[^A-Za-z0-9_-]/g, '') : '';
+  }
+
+  private supportedLanguages(detail: any): string[] {
+    return [...new Set(String(detail?.languages || '').split('||').map((entry) => this.normalizeLanguage(entry)).filter(Boolean))];
+  }
+
+  private selectedLanguage(detail: any, requested: string): string {
+    const supported = this.supportedLanguages(detail);
+    return requested || supported[0] || '';
+  }
+
+  private publicLanguageError(detail: any, requested: string): Response | null {
+    if (!requested) return null;
+    const supported = this.supportedLanguages(detail);
+    if (supported.length > 0 && !supported.includes(requested)) {
+      return this.json({ error: 'Choose a language supported by this survey.', code: 'SURVEY_PUBLIC_LANGUAGE_INVALID' }, 422);
+    }
+    return null;
   }
 
   private isQuestionVisible(question: any, answers: Record<string, unknown>): boolean {

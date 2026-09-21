@@ -26,7 +26,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; questions_layout?: string; questions_selection?: string; progression_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; languages?: string | null; access_mode?: string; questions_layout?: string; questions_selection?: string; progression_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -35,6 +35,7 @@ type SurveyPayload = {
     current_question_id?: string | null;
     question_order?: string | null;
     skipped_questions?: string | null;
+    language_code?: string | null;
     test_entry?: boolean;
     answer_data?: string;
     score?: number | null;
@@ -222,6 +223,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   }
 
   const survey = payload.survey;
+  const supportedLanguages = [...new Set(String(survey.languages || '').split('||').map((value) => value.trim()).filter(Boolean))];
+  let selectedLanguage = String(payload.answer?.language_code || supportedLanguages[0] || '');
   let questions = [...payload.questions].sort((left, right) => Number(left.sequence) - Number(right.sequence));
   const applyQuestionOrder = () => {
     if (String(survey.questions_selection || 'all') !== 'random') return;
@@ -318,7 +321,10 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
     const attemptHint = survey.is_attempts_limited && survey.attempts_limit
       ? `<p class="core3-public-survey__description">You have ${escapeHtml(survey.attempts_limit)} attempt${Number(survey.attempts_limit) === 1 ? '' : 's'} for this survey.</p>`
       : '';
-    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p>${attemptHint}${emailInput}<div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
+    const languageInput = supportedLanguages.length > 1
+      ? `<label class="core3-public-survey__comment"><span>Language</span><select class="core3-public-survey__input" data-language>${supportedLanguages.map((language) => `<option value="${escapeHtml(language)}"${language === selectedLanguage ? ' selected' : ''}>${escapeHtml(language)}</option>`).join('')}</select></label>`
+      : '';
+    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p>${attemptHint}${emailInput}${languageInput}<div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
   }
 
   body.querySelector<HTMLButtonElement>('[data-start]')?.addEventListener('click', async (event) => {
@@ -326,8 +332,10 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
     button.disabled = true;
     try {
       const email = body.querySelector<HTMLInputElement>('[data-respondent-email]')?.value.trim().toLowerCase() || '';
+      selectedLanguage = body.querySelector<HTMLSelectElement>('[data-language]')?.value || selectedLanguage;
       if (requiresRespondentEmail && !email) throw new Error('Enter an email address before starting this survey.');
-      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answerToken ? { answer_token: answerToken } : (email ? { respondent_email: email } : {})) });
+      const startBody = { ...(answerToken ? { answer_token: answerToken } : {}), ...(email ? { respondent_email: email } : {}), ...(selectedLanguage ? { language_code: selectedLanguage } : {}) };
+      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(startBody) });
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => ({})) as { error?: string };
         throw new Error(errorPayload.error || `Survey could not be started (${response.status}).`);

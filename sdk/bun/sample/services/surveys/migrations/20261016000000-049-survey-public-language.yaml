@@ -1,0 +1,26 @@
+version: 0.0.49
+description: Durable Odoo-style public survey respondent language
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS languages VARCHAR;
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS language_code VARCHAR;
+      UPDATE surveys SET languages = COALESCE(NULLIF(languages, ''), 'en_US') WHERE languages IS NULL OR languages = '';
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, questions_layout, progression_mode, users_can_go_back, languages, published_at, created_at, updated_at)
+      VALUES ('survey-demo-public-language', 'SURVEY/PUBLIC-LANGUAGE', 'Multilingual Product Survey', 'Choose a supported language before starting.', 'Thanks for completing the multilingual product survey.', 'Mitchell Admin', 0, 'Published', 'public-language-token-2026', 'public', 'page_per_question', 'number', true, 'en_US||fr_FR', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET state = 'Published', access_token = 'public-language-token-2026', access_mode = 'public', languages = 'en_US||fr_FR';
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES
+        ('question-language-first', 'survey-demo-public-language', 'Which language did you choose?', 'Choice', 1, true, 'English,Français'),
+        ('question-language-last', 'survey-demo-public-language', 'What should we improve?', 'Text', 2, false, '')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-public-language';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-public-language';
+      DELETE FROM surveys WHERE id = 'survey-demo-public-language';
+      -- Keep nullable language columns during partial rollback for dependent databases.
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
