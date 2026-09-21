@@ -2,15 +2,26 @@
 
 Module owner: email-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: `54f08872ce52db5c18013430ec694a654a37d2bd`
+Candidate commit: pending Mailing Duplicate commit
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+This module is registered in odoo-parity-plan.md and remains in-progress. The
+2026-09-22 Mailing Duplicate bounded slice is implemented and contract-tested;
+no complete module parity claim is made.
+
+## Mailing Duplicate bounded slice (2026-09-22)
+
+- Odoo source action: `mailing.mailing.action_duplicate`, Sent mailing form.
+- Core3: Sent-only `Duplicate` server form in
+  `services/email-marketing/pages/mailing-detail.yaml` and
+  `services/email-marketing/api/mailing-detail.yaml`.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-DUPLICATE-001/`.
+- Browser: Odoo Email Marketing unavailable in `core3_reference`; Core3
+  authenticated browser proof blocked by the human-help login step.
 
 ## Next bounded task
 

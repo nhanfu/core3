@@ -12,6 +12,72 @@ actions:
     type: navigate
     permission: email_marketing.write
     navigate_to: /email-mailings
+  - id: duplicate_email_mailing
+    type: server_form
+    permission: email_marketing.write
+    title: Duplicate Mailing
+    action: email_marketing.mailings.duplicate
+    handler: yaml_mutation
+    operation: create
+    prefill: state.email_mailing_detail
+    refresh: [email_mailing_detail, email_mailings]
+    success_message: Mailing duplicated.
+    mutation:
+      operation: insert
+      table: email_mailings
+      fields: [subject, preview, email_from, reply_to, recipient_model, recipient_model_label, recipient_domain, responsible, recipient_count, schedule_date, mailing_list_names, campaign_name, body, ab_testing_enabled]
+      required: [subject, email_from, recipient_model, recipient_model_label, responsible, recipient_count, body]
+      defaults:
+        row_version: 1
+        state: Draft
+        schedule_type: now
+        sent_date: null
+        calendar_date: null
+        sent: 0
+        scheduled: 0
+        expected: 0
+        canceled: 0
+        process: 0
+        delivered: 0
+        opened: 0
+        clicked: 0
+        replied: 0
+        bounced: 0
+        failed: 0
+        received_ratio: 0
+        opened_ratio: 0
+        replied_ratio: 0
+        bounced_ratio: 0
+        clicks_ratio: 0
+        link_trackers_count: 0
+        last_test_email: null
+        last_test_recipients: null
+        mail_server_available: true
+        active: true
+        favorite: false
+        created_at: '2026-01-15 11:30:00'
+        updated_at: '2026-01-15 11:30:00'
+      before_steps:
+        - query: "SELECT 'email-mailing-copy-' || CAST(:id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM email_mailings WHERE id LIKE 'email-mailing-copy-' || CAST(:id AS VARCHAR) || '-%'"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Sent' AND active = true AND row_version = :expected_row_version", status: 409, code: EMAIL_MAILING_DUPLICATE_BLOCKED, message: Only an active sent mailing can be duplicated. Reload the mailing and try again. }
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+    fields:
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: preview, label: Preview Text, type: text }
+      - { field: email_from, label: Send From, type: text, required: true }
+      - { field: reply_to, label: Reply To, type: text }
+      - { field: recipient_model, label: Recipients Model, type: text, required: true }
+      - { field: recipient_model_label, label: Recipients, type: text, required: true }
+      - { field: recipient_domain, label: Domain, type: textarea }
+      - { field: responsible, label: Responsible, type: text, required: true }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+      - { field: schedule_date, label: Scheduled for, type: datetime }
+      - { field: mailing_list_names, label: Mailing Lists, type: text }
+      - { field: campaign_name, label: Campaign, type: text }
+      - { field: body, label: Body, type: textarea, required: true }
+      - { field: ab_testing_enabled, label: Allow A/B Testing, type: checkbox }
   - { id: email_mailing_opened, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: opened } }
   - { id: email_mailing_replied, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: replied } }
   - { id: email_mailing_clicked, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: clicked } }

@@ -947,3 +947,25 @@ compare. The isolated Core3 browser runner was blocked before capture by the
 unrelated Live Chat discovery error recorded in the evidence bundle. The
 module remains in-progress and this slice makes no installed-reference visual
 parity claim.
+
+## Mailing Duplicate bounded slice (2026-09-22)
+
+The next independent source-backed workflow after the selected-contact Add
+slice is Odoo `mailing.mailing.action_duplicate`, the completed-mailing
+**Duplicate** form action from `addons/mass_mailing/views/mailing_mailing_views.xml`.
+Core3 adds the conditional detail action at `/email-mailings/detail` and a
+page/API-joined YAML `server_form` insert contract. It copies sender, audience,
+content, and recipient fields into a new durable mailing, resets workflow state
+and delivery metrics to a new Draft, and requires `email_marketing.write`.
+
+The bounded implementation does not send mail, schedule the copy, or add a
+shared runtime navigation primitive. The Core3 server-form success remains on
+the current detail route and refreshes the mailing list; this is documented as
+the deliberate runtime mapping of Odoo's returned new-form action.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-DUPLICATE-001/`.
+The authenticated `core3_reference` browser session was reachable but Email
+Marketing was not installed/exposed in the app menu, so no Odoo duplicate
+screen was available and no visual-parity claim is made. Core3 browser proof
+is recorded separately if its isolated runtime is available.

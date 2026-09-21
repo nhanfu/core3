@@ -12,6 +12,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: new_email_mailing, label: New, variant: primary, permission: email_marketing.write }
+      - { id: duplicate_email_mailing, label: Duplicate, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Sent'" }
       - { id: send_email_mailing, label: Send, variant: primary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Draft'" }
       - { id: schedule_email_mailing, label: Schedule, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Draft'" }
       - { id: test_email_mailing, label: Test, variant: secondary, permission: email_marketing.write }

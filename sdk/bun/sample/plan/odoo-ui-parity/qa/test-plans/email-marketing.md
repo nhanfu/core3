@@ -48,6 +48,7 @@ deterministic and must not depend on current time.
 | EMAIL-WF-003 | Contact import | Named and plain addresses import idempotently and update list counts | pass: focused suite |
 | EMAIL-WF-004 | Tracking/reporting | Link tracker and trace rows remain linked to the owning mailing and report scopes | pass at contract level |
 | EMAIL-WF-005 | Durable/external boundary | Email delivery, scheduling, retries, callbacks and cross-module workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| EMAIL-WF-006 | Completed mailing duplicate | Sent mailing Duplicate creates a new Draft copy without sending or mutating the source; restart preserves the copy | planned |
 
 ## Permission and security cases
 
@@ -68,6 +69,7 @@ deterministic and must not depend on current time.
 | EMAIL-UI-002 | Contact/import/blacklist | both | Contact list, import dialog, opt-out and blacklist states match Odoo | planned |
 | EMAIL-UI-003 | Reports/settings | both | Graph/pivot/list reports, traces, settings and configuration forms match Odoo | planned |
 | EMAIL-UI-004 | Current route regression | all manifest-owned Email Marketing routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
+| EMAIL-UI-005 | Mailing duplicate form | 1440x900, 390x844 | Sent mailing exposes Duplicate and the copy form has no overflow; paired Odoo route is captured or the exact installed-reference blocker is recorded | planned |
 
 ## Exit criteria
 

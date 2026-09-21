@@ -180,3 +180,23 @@ Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-ma
 Disposition: bounded Add branch implemented and test-evidenced; paired
 installed-Odoo visual parity, Core3 browser mutation proof, and the source
 Add-and-Send follow-up remain open. Do not sign off the module.
+
+## Bounded review handoff — Mailing Duplicate (2026-09-22)
+
+- Source comparison: Odoo 19 `mailing.mailing.action_duplicate` from
+  `mass_mailing/views/mailing_mailing_views.xml`; visible only for Sent
+  (`done`) mailings and opens a copied form.
+- Core3 implementation: `pages/mailing-detail.yaml` adds the Sent-only
+  Duplicate action; `api/mailing-detail.yaml` adds the page-bound durable copy
+  mutation with Draft/reset counters, permission, source-state, and version
+  guards.
+- Focused validation: **3 passed, 0 failed, 16 assertions**; existing
+  Mailings regression **5 passed, 69 assertions**; Add branch regression **4
+  passed, 24 assertions**.
+- Audit: **799 pages, 808 routes, 1,646 datasources**; Email Marketing Sass
+  build and diff check passed.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-DUPLICATE-001/`.
+- Blockers: requested `core3_reference` has Email Marketing uninstalled/not
+  exposed; isolated Core3 browser login required a human click and did not
+  complete. No visual-parity claim is made.
