@@ -1898,6 +1898,33 @@ blocked by that same shared-worktree defect. Evidence is under
 Core3 and authenticated Odoo browser capture are blocked, so no visual or
 module sign-off is claimed. Odoo Print/PDF/action-surface blockers remain open.
 
+## Wave 43 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
+
+Odoo's task Timesheets action inherits the source pivot view from
+`timesheet_action_all`: employee rows, date columns, Time Spent as the
+`unit_amount` measure, and Timesheet Costs as the `amount` measure. Core3's
+task action had List, Kanban, Calendar, and Graph but no Pivot; this slice is
+distinct from all completed task action and earlier Timesheets slices.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds a desktop-only
+Pivot tab with employee rows, work-date columns, weekly date ranges, Time
+Spent, and Timesheet Costs measures. The separate durable
+`api/task-timesheets.yaml` contract remains joined by `page.id: task-timesheets`
+and exposes the persisted cost projection with permission, current-company,
+missing, empty, task-scope, guarded-create, stale-write, and concurrency
+boundaries. Migration
+`20260921192000-026-timesheets-task-action-pivot.yaml` adds a replay-safe
+task/company/employee/date/unit-cost lookup index.
+
+Focused coverage is
+`test/timesheets_task_action_pivot_view.integration.test.ts`: 4 tests / 22
+expectations. Related task/action/report coverage is 42 tests / 230
+expectations. Scoped ESLint, UI audit, and Timesheets-owned diff-check are
+recorded with the commit evidence. Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-pivot-view-001/`.
+Core3 and authenticated Odoo browser capture are blocked, so no visual or
+module sign-off is claimed. Odoo Print/PDF/action-surface blockers remain open.
+
 ## Wave 41 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
 
 The next uncovered branch of Odoo `project.task.action_view_subtask_timesheet`

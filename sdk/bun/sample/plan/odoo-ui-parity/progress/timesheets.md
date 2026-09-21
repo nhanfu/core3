@@ -1082,6 +1082,25 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
+
+- Selected the Pivot view inherited from Odoo `timesheet_action_all` by the
+  task Timesheets action: employee rows, date columns, Time Spent, and
+  Timesheet Costs. This does not repeat the completed Calendar, Kanban, graph,
+  project-context, multi-scope, display-name, or earlier slices.
+- Added a desktop-only employee/date Pivot tab and durable `cost` projection
+  to the layout/API pair joined by `page.id: task-timesheets`. Migration
+  `20260921192000-026-timesheets-task-action-pivot.yaml` adds the replay-safe
+  task/company/employee/date/unit-cost lookup index.
+- Focused coverage passed 4/4 tests with 22 expectations. Related task/action/
+  report coverage passed 42/42 tests with 230 expectations. Scoped ESLint and
+  UI audit passed at 757 pages / 766 routes / 1,542 datasources; the
+  Timesheets-owned staged diff-check is recorded in evidence.
+- Core3 port 3001 was unavailable and Odoo 8069/8073 exposed only the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.
+
 ## 2026-09-21 — `TIMESHEET-TASK-ACTION-CALENDAR-VIEW-001`
 
 - Selected the Calendar branch retained by Odoo's

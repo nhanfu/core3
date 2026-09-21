@@ -534,6 +534,28 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 43 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
+
+- Source/action: `timesheet_action_all` supplies the source pivot and
+  `project.task.action_view_subtask_timesheet` retains it for internal users
+  while applying task/subtask scope.
+- Page contract: `pages/task-timesheets.yaml` stays layout-only and adds a
+  desktop-only Pivot with employee rows, work-date columns, weekly ranges,
+  Time Spent, and Timesheet Costs measures.
+- API contract: `api/task-timesheets.yaml` remains separate and joins by
+  `page.id: task-timesheets`; `task_timesheet_entries` exposes durable
+  `hours` and `cost` fields with existing permission, company, missing, empty,
+  stale, and guarded mutation boundaries.
+- Migration: `20260921192000-026-timesheets-task-action-pivot.yaml`, replay-safe
+  task/company/employee/date/unit-cost lookup index.
+- Focused test:
+  `test/timesheets_task_action_pivot_view.integration.test.ts` — 4 tests / 22
+  expectations, including cost, stale edit, and file-backed restart.
+- Related regression: task/action/report suites — 42 tests / 230 expectations.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
+  evidence is blocked; exact probes are in the feature evidence directory.
+
 ## Wave 42 — `TIMESHEET-TASK-ACTION-CALENDAR-VIEW-001`
 
 - Source/action: `timesheet_action_all` declares Calendar and

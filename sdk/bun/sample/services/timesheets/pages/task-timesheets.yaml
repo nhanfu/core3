@@ -30,6 +30,14 @@ components:
         icon: calendar
         date_field: work_date
         card: { title: calendar_display_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: employee_name, label: Employee }, { field: description, label: Description }] }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: employee_name, column: Employee }, { field: work_date, column: Date, type: date }, { field: hours, column: Time Spent }, { field: cost, column: Timesheet Costs }]
+          default: { rows: [employee_name], columns: [work_date], measures: [{ field: hours, aggregate: sum, column: Time Spent }, { field: cost, aggregate: sum, column: Timesheet Costs }] }
+          date_ranges: { work_date: week }
       - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: hours, measure_label: Time Spent, type: bar, mobile: false }
     columns:
       - { field: work_date, label: Date }

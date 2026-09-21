@@ -1142,3 +1142,21 @@ sign-off is claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-calendar-view-001/`.
 The unrelated Employees discovery defect and Odoo Print/PDF/action-surface
 blockers remain open; no visual or module sign-off is claimed.
+
+## Wave 43 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | source pivot with employee rows, date columns, Time Spent, and Timesheet Costs | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page, separate API `page.id` binding, desktop Pivot config | pass |
+| Durable Pivot projection | current-company task rows with persisted hours and cost measures | pass |
+| Permission/company/missing/empty guards | `timesheets.read`, current company, missing task, empty fixture | pass |
+| Guarded CRUD freshness | created row appears with cost; stale edit rejected | pass |
+| Restart | migration replay and file-backed rows survive reopen | pass |
+| Focused regression | new test 4/4 (22 expectations); related task/action/report 42/42 (230 expectations) | pass |
+| Audit/lint/diff | UI audit 757/766/1542, scoped ESLint, Timesheets-owned `git diff --check` | pass after exact-path staging |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task Pivot capture | blocked; Core3 3001 refused and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-pivot-view-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.
