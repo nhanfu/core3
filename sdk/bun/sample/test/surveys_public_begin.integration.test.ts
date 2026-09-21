@@ -45,7 +45,7 @@ describe('Surveys public begin lifecycle', () => {
     expect(begin).toMatchObject({ type: 'server_form', permission: 'surveys.public', action: 'surveys.public.begin', handler: 'yaml_mutation' });
     expect(begin.mutation).toMatchObject({ operation: 'update', table: 'survey_responses', concurrency: false });
     expect(begin.mutation.guards.map((guard: any) => guard.code)).toEqual([
-      'SURVEY_PUBLIC_BEGIN_STATE', 'SURVEY_PUBLIC_RESPONSE_EXPIRED', 'SURVEY_PUBLIC_BEGIN_QUESTION',
+      'SURVEY_PUBLIC_BEGIN_STATE', 'SURVEY_PUBLIC_RESPONSE_EXPIRED', 'SURVEY_PUBLIC_TIME_LIMIT_EXPIRED', 'SURVEY_PUBLIC_BEGIN_QUESTION',
     ]);
   });
 

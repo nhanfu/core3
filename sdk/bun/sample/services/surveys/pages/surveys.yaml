@@ -28,6 +28,9 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # Multiple Choice questions render the paired option list as checkbox controls;
 # option ownership, duplicate rejection, and required completion remain guarded
 # by the token-scoped API mutation.
+# Survey-level time limits consume the paired API's is_time_limited/time_limit
+# and response start_datetime; the public renderer owns only the visible
+# countdown while the API remains authoritative for expiry and mutation guards.
 components:
   - type: ListView
     variant: odoo

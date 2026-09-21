@@ -1938,3 +1938,32 @@ ESLint and diff-check pass. Core3 desktop/mobile probes at 1440x900 and
 8069 reached only the login shell and port 8072 refused, so no authenticated
 Odoo timer comparison or parity sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-SURVEY-TIMER-001`
+
+Wave 20 selects one uncovered source-backed behavior after the completed
+public question slices and live question timer: Odoo's survey-level elapsed
+time limit. Odoo stores `survey.is_time_limited` and `survey.time_limit`, starts
+the attempt `start_datetime` when it enters progress, exposes timer data to the
+public form, and blocks navigation/submission after the survey limit. This is
+separate from Core3's response `deadline` and the existing live-session
+per-question timer.
+
+Core3 migration `0.0.41` adds durable `surveys.is_time_limited`/
+`time_limit` and `survey_responses.start_datetime`, with a fixed published
+one-minute fixture. The page/API YAML remains separated through `page.id:
+surveys`; public detail/response operations project the timer fields, the
+renderer shows a countdown, and `services/surveys/module.ts` applies the
+authoritative token-scoped expiry guard before reads or mutations.
+
+Focused verification passes **9/9 tests with 99 assertions** across the timer,
+deadline, response, and restart suites. The full Surveys glob passes **122
+tests / 1,065 assertions** with **4 existing migration rollback/dependent-entry
+failures**. Audit passes at **722 pages, 731 routes, and 1,400 datasources**;
+scoped ESLint and `git diff --check` pass. Core3 desktop/mobile probes were
+blocked before render because ports 3000/3001/3002 refused connections. Odoo
+8069 redirected to login and the Surveys addon is uninstalled; proxy 8072 was
+unavailable. No visual/reference sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.

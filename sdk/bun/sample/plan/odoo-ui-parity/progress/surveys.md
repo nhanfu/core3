@@ -419,6 +419,28 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-SURVEY-TIMER-001`
+
+Selected the smallest uncovered source-backed behavior after the completed
+public question-type and live-question timer slices: Odoo's survey-level
+elapsed time limit. Core3 now persists survey `is_time_limited`/`time_limit`
+and response `start_datetime`, keeps the authenticated `surveys` page and
+public API fragments separate through `page.id: surveys`, renders a public
+countdown, and rejects expired token-scoped reads/navigation/progress/submit
+with `SURVEY_PUBLIC_TIME_LIMIT_EXPIRED` before mutation. The response deadline
+and live-session question timer remain independent.
+
+Focused verification is **9 passed / 99 assertions**. The full Surveys glob is
+**122 passed / 4 failed / 1,065 assertions**; all failures are the existing
+DuckDB migration rollback/dependent-entry limitation in
+`surveys_migrations.integration.test.ts`. The UI audit passes with **722
+pages, 731 routes, and 1,400 datasources**; scoped ESLint and diff-check pass.
+Core3 desktop/mobile browser probes were blocked by connection refusal on ports
+3000/3001/3002. Odoo 8069 redirected to login and its Surveys addon is
+uninstalled; proxy 8072 was unavailable. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.
+Status remains **qa-in-progress / conditional**; no module sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-LIVE-QUESTION-TIMER-001`
 
 Wave 19 selected the next uncovered source-backed live-session behavior: the

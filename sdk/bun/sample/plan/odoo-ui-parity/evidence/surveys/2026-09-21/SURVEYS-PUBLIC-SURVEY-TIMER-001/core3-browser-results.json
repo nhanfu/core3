@@ -1,0 +1,17 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-SURVEY-TIMER-001",
+  "date": "2026-09-21",
+  "authenticated": true,
+  "viewports": [
+    { "name": "desktop", "width": 1440, "height": 1000 },
+    { "name": "mobile", "width": 390, "height": 844 }
+  ],
+  "endpoint": "/api/pages/surveys",
+  "result": "blocked-before-render",
+  "attempts": [
+    { "port": 3000, "http_status": 0, "error": "connection refused" },
+    { "port": 3001, "http_status": 0, "error": "connection refused" },
+    { "port": 3002, "http_status": 0, "error": "connection refused" }
+  ],
+  "visual_signoff": false
+}

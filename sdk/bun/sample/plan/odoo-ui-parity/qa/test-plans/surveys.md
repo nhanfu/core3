@@ -507,3 +507,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.
+
+## 2026-09-21 public survey-level timer additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-046 | public question/session | Survey timer metadata and countdown | Return durable `is_time_limited`, `time_limit`, and response `start_datetime` through the paired page/API contract and bind the public countdown | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-043 | restart/idempotency | Start → expiry → valid progress → reopen | Reject expired reads/mutations without changing answer data, then preserve the active timer state and token across file-backed restart/replay | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-045 | token/time guard | Public timer boundary | Keep `surveys.public` and matching survey/answer token guards ahead of the authoritative `SURVEY_PUBLIC_TIME_LIMIT_EXPIRED` mutation guard | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-044 | authenticated responsive/reference | Survey timer desktop/mobile + Odoo comparison | Capture both viewports and exact Core3/Odoo blockers; no sign-off until authenticated routes and installed reference fixture are available | `core3-browser-results.json`, `odoo-blocker.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.

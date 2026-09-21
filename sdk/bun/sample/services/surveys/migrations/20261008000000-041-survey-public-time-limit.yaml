@@ -1,0 +1,36 @@
+version: 0.0.41
+description: Durable Odoo-style public survey time limit fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS is_time_limited BOOLEAN;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS time_limit DECIMAL(8,2);
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS start_datetime TIMESTAMP;
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, published_at, created_at, updated_at, is_time_limited, time_limit)
+      VALUES ('survey-demo-public-timer', 'SURVEY/PUBLIC-TIMER', 'Timed Customer Survey', 'Complete this survey before the timer expires.', 'Thanks for completing the timed survey.', 'Mitchell Admin', 0, 'Published', 'public-timer-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', true, 1.00)
+      ON CONFLICT (id) DO UPDATE SET is_time_limited = excluded.is_time_limited, time_limit = excluded.time_limit, state = 'Published';
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-public-timer', 'survey-demo-public-timer', 'How did the timed survey feel?', 'Choice', 1, true, 'Calm,Focused')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-public-timer';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-public-timer';
+      DELETE FROM surveys WHERE id = 'survey-demo-public-timer';
+      DROP INDEX IF EXISTS survey_responses_access_token_idx;
+      DROP INDEX IF EXISTS survey_responses_survey_idx;
+      DROP INDEX IF EXISTS survey_responses_idempotency_key_idx;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS start_datetime;
+      -- DuckDB cannot drop columns from the parent `surveys` table while the
+      -- durable question/response graph depends on it. Keep these nullable
+      -- columns through a partial rollback; the foundation down migration
+      -- removes the whole graph, and replay remains idempotent via ADD IF NOT
+      -- EXISTS. PostgreSQL-compatible adapters still retain the same harmless
+      -- columns until the next full foundation teardown.
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_access_token_idx ON survey_responses(access_token);
+      CREATE INDEX IF NOT EXISTS survey_responses_survey_idx ON survey_responses(survey_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_idempotency_key_idx ON survey_responses(survey_id, idempotency_key);
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1183,3 +1183,39 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-MULTIP
   sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-QUESTION-TIMER-001/`.
+
+## Bounded QA run: Public survey-level timer — `SURVEYS-PUBLIC-SURVEY-TIMER-001`
+
+- Source comparison: Odoo `survey_survey.py:120-121,189-190` stores the
+  survey-level `is_time_limited` and minute `time_limit`; `survey_user_input.py`
+  stores `start_datetime` and computes `survey_time_limit_reached`; controller
+  lines 291-295 and 365/431/545-569 expose the timer and block expired
+  attempts. This is distinct from response `deadline` and the live question
+  timer.
+- YAML/UI contract: migration `0.0.41` adds the durable fields and fixed
+  one-minute fixture. `pages/surveys.yaml` and `api/surveys.yaml` remain
+  separate through `page.id: surveys`; operations project `start_datetime` and
+  timer metadata; the public renderer displays the countdown and the API/module
+  retain `surveys.public` token guards.
+- Focused verification: **9 passed, 0 failed, 99 assertions** across timer,
+  deadline, public response, and response-restart integration tests.
+- Full Surveys glob: **122 passed, 4 failed, 1,065 assertions**. The four
+  failures are the existing DuckDB migration rollback/dependent-entry failures
+  in `surveys_migrations.integration.test.ts`; no new timer failure remains.
+- Persistence/guards: start returns durable `start_datetime`; expired GET and
+  progress return HTTP 410 `SURVEY_PUBLIC_TIME_LIMIT_EXPIRED` without changing
+  response state/data; a future attempt progresses and survives file-backed
+  reopen/token replay.
+- Audit: **722 pages, 731 routes, 1,400 datasources**; scoped ESLint and
+  `git diff --check` pass.
+- Core3 desktop/mobile probes were blocked before render by connection refusal
+  on ports 3000/3001/3002; no visual sign-off is claimed.
+- Odoo 8069 redirected `/odoo/surveys` to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`;
+  the primary Surveys addon is uninstalled and proxy 8072 was unavailable.
+  Desktop/mobile login-shell captures and exact blocker JSON are in the feature
+  evidence directory; no paired Odoo sign-off is claimed.
+
+Disposition: bounded Core3 timer lifecycle passes; Surveys remains
+**qa-in-progress / conditional**.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SURVEY-TIMER-001/`.

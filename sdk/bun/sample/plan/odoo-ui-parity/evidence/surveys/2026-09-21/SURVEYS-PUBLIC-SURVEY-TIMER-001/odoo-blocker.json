@@ -1,0 +1,12 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-SURVEY-TIMER-001",
+  "date": "2026-09-21",
+  "reference_url": "http://127.0.0.1:8069/odoo/surveys",
+  "authenticated": false,
+  "http_status": 303,
+  "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+  "desktop_capture": "odoo-desktop.png",
+  "mobile_capture": "odoo-mobile.png",
+  "blocker": "The primary Odoo reference redirects to login and its Surveys addon is uninstalled; disposable proxy port 8072 was not available. No authenticated survey-level timer fixture could be compared.",
+  "visual_signoff": false
+}

@@ -26,7 +26,7 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
@@ -37,6 +37,7 @@ type SurveyPayload = {
     answer_data?: string;
     score?: number | null;
     quiz_passed?: boolean | null;
+    start_datetime?: string | null;
   };
 };
 
@@ -93,6 +94,7 @@ function installStyles() {
     .core3-public-survey__button:hover { background:#5d3c55; }
     .core3-public-survey__button:disabled { opacity:.55; cursor:wait; }
     .core3-public-survey__error { padding:12px 14px; border:1px solid #e6b9c0; border-radius:4px; color:#8b3041; background:#fff4f5; }
+    .core3-public-survey__timer { margin:0 0 22px; padding:10px 12px; border:1px solid #e3c886; border-radius:5px; color:#705313; background:#fff8df; font-weight:600; }
     .core3-public-survey__test-banner { margin:0 -12px 24px; padding:10px 14px; color:#5b4c12; background:#fff3cd; border:1px solid #f1df9a; font-size:14px; text-align:center; }
     .core3-public-survey__test-banner a { margin-left:8px; color:#684c00; font-weight:600; text-decoration:underline; }
     .core3-public-survey__done { text-align:center; padding:32px 0 16px; }
@@ -227,7 +229,41 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   const frame = () => `<div class="core3-public-survey"${backgroundStyle(survey.background_image_url)}><div class="core3-public-survey__card">${testBanner}<div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
   outlet.innerHTML = frame();
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
+  let timerInterval: ReturnType<typeof setInterval> | null = null;
+  const stopTimer = () => {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+  };
+  const startTimer = () => {
+    stopTimer();
+    if (!survey.is_time_limited || Number(survey.time_limit) <= 0 || !payload.answer?.start_datetime) return;
+    const raw = String(payload.answer.start_datetime);
+    const startedAt = new Date(raw.replace(' ', 'T') + (raw.includes('Z') ? '' : 'Z')).getTime();
+    const deadline = startedAt + Number(survey.time_limit) * 60_000;
+    const timer = document.createElement('div');
+    timer.className = 'core3-public-survey__timer';
+    timer.setAttribute('role', 'timer');
+    timer.setAttribute('data-survey-timer', '');
+    timer.innerHTML = 'Time remaining: <strong data-survey-timer-value>--:--</strong>';
+    body.prepend(timer);
+    const value = timer.querySelector<HTMLElement>('[data-survey-timer-value]')!;
+    const next = body.querySelector<HTMLButtonElement>('[data-next]');
+    const update = () => {
+      const remaining = Math.max(0, deadline - Date.now());
+      if (remaining <= 0) {
+        value.textContent = 'Time expired';
+        if (next) next.disabled = true;
+        stopTimer();
+        return;
+      }
+      const totalSeconds = Math.ceil(remaining / 1000);
+      value.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
+    };
+    update();
+    if (deadline > Date.now()) timerInterval = setInterval(update, 1000);
+  };
   const renderDone = (result: SurveyPayload['answer'] = payload.answer) => {
+    stopTimer();
     const score = typeof result?.score === 'number' ? `<p class="core3-public-survey__description">Score: ${result.score}% · ${result.quiz_passed ? 'Passed' : 'Not passed'}</p>` : '';
     const completionMessage = survey.description_done || 'Your answers have been submitted.';
     body.innerHTML = `<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">${escapeHtml(completionMessage)}</p>${score}</div>`;
@@ -259,6 +295,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       const started = await response.json();
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');
+      payload.answer = { ...(payload.answer || {}), ...(started.answer || {}), access_token: answerToken, state: 'In Progress' };
       currentQuestionId = String(started.answer?.current_question_id || questions[0]?.id || '');
       window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}/${encodeURIComponent(answerToken)}`);
       questionIndex = Math.max(0, questions.findIndex((question) => question.id === currentQuestionId));
@@ -273,12 +310,14 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   });
 
   function renderCurrentQuestion() {
+    stopTimer();
     if (!questions.length) {
       body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>There are no questions in this survey.</h2></div>';
       return;
     }
     const currentQuestion = questions[questionIndex];
     renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''), token, answerToken);
+    startTimer();
     body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', async (event) => {
       const backButton = event.currentTarget as HTMLButtonElement;
       backButton.disabled = true;
