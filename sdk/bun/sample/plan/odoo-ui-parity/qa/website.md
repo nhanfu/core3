@@ -75,6 +75,21 @@ Focused result: `bun test ./test/website_page_tracking.integration.test.ts
 assertions; `git diff --check` passed. This checkpoint advances the bounded
 slice only and does not sign off the Website module.
 
+## 2026-09-22 Theme Manager checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-011 | Odoo Theme Manager kanban/catalog contract and page/API separation | `test/website_themes.integration.test.ts`; `theme_install_kanban_action`, `Pick a Theme`, card actions, route discovery, and matching `page.id` | pass: 1 test / 10 assertions |
+| WEBSITE-DATA-006 | Theme catalog, current-site selection, category/search/empty branches | `test/website_themes.integration.test.ts`; durable `website_themes`, two-site installed state, filters, and empty result | pass |
+| WEBSITE-WF-008 | Use, update, remove, duplicate/stale/not-selected guards, and restart replay | `test/website_themes.integration.test.ts`; `theme_id`, `theme_revision`, row-version guards, file-backed close/reopen | pass |
+| WEBSITE-PERM-008 | Read-only actor cannot choose a theme | `test/website_themes.integration.test.ts`; direct action rejects with 403 and leaves the Website row unchanged | pass |
+| WEBSITE-UI-013 | Authenticated Theme Manager desktop/mobile comparison | Feature evidence browser captures; Odoo desktop/mobile show no Website app, Core3 desktop route rendered, session closed before Core3 mobile capture | blocked; no paired visual sign-off |
+
+Focused result: `bun test ./test/website_themes.integration.test.ts
+--timeout 20000` — 6 tests, 35 assertions. The full Website suite and
+`git diff --check` are recorded in the feature evidence. This checkpoint does
+not sign off the Website module.
+
 ## Reviewer disposition — candidate `760f171f`
 
 - Integrated on the active branch as `b6cda7b6`; the bounded change adds the

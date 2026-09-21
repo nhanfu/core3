@@ -1,14 +1,11 @@
 title: Website
 page: { id: website-detail, breadcrumb: [Website, Websites, Website], auth: { require: [website.read] } }
-datasources:
-  - id: website_detail
-    permission: website.read
-    single: true
-    query: "SELECT * FROM website_websites WHERE id = :id"
 components:
   - type: OdooFormView
     source: website_detail
     title_field: name
+    header_actions:
+      - { id: open_website_themes, label: Pick a Theme, variant: secondary, permission: website.manage }
     fields:
       - { field: name, label: Website name }
       - { field: domain, label: Domain }

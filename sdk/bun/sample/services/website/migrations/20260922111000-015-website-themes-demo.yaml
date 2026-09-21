@@ -1,0 +1,20 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO website_themes (id, name, summary, category_name, author, preview_url, sequence)
+      SELECT 'theme_core', 'theme_core', 'Core3 base theme, clean and adaptable', 'Website', 'Core3', '/website', 10
+      WHERE NOT EXISTS (SELECT 1 FROM website_themes WHERE id = 'theme_core');
+      INSERT INTO website_themes (id, name, summary, category_name, author, preview_url, sequence)
+      SELECT 'theme_docs', 'theme_docs', 'Documentation theme for content-focused sites', 'Documentation', 'Core3', '/website-homepage', 20
+      WHERE NOT EXISTS (SELECT 1 FROM website_themes WHERE id = 'theme_docs');
+      UPDATE website_websites SET theme_id = 'theme_core', theme_revision = GREATEST(COALESCE(theme_revision, 1), 1) WHERE id = 'website-demo-001' AND theme_id IS NULL;
+      UPDATE website_websites SET theme_id = 'theme_docs', theme_revision = GREATEST(COALESCE(theme_revision, 1), 1) WHERE id = 'website-demo-002' AND theme_id IS NULL;
+    down: |
+      UPDATE website_websites SET theme_id = NULL, theme_revision = 1 WHERE theme_id IN ('theme_core', 'theme_docs');
+      DELETE FROM website_themes WHERE id IN ('theme_core', 'theme_docs');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

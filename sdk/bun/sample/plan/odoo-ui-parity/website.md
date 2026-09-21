@@ -175,3 +175,43 @@ public/portal rendering remain open. SEO/tracking filter service/API and Core3
 desktop/mobile rendering are covered by this bounded slice, but Website module
 sign-off remains conditional on Odoo Website availability and the broader open
 gates.
+
+## Wave 6 execution evidence — 2026-09-22 — Theme Manager
+
+The next genuinely uncovered bounded source feature is Odoo's Website Theme
+Manager. Local Odoo 19 source `addons/website/views/website_views.xml` defines
+`theme_install_kanban_action` (`Pick a Theme`) with the `theme_view_kanban`
+cards, Theme and Category search fields, Author and Category grouping, and the
+card actions `Use this theme`, `Update theme`, and `Remove theme`. The action is
+launched from Website settings rather than a standalone Odoo menu. Core3 maps
+that source action to `/website-themes`, adds a Website > Site > Themes entry as
+a deliberate route alias, and adds a `Pick a Theme` action on the existing
+Website detail form.
+
+Core3 now provides page-only `pages/themes.yaml` and API/action-only
+`api/themes.yaml`, joined by `page.id: website-themes`. Migration
+`20260922110000-014-website-themes.yaml` adds the durable Website `theme_id`,
+`theme_revision`, and theme catalog; `20260922111000-015-website-themes-demo.yaml`
+seeds Core3 Storefront/Core3 Docs with distinct installed themes. Choosing,
+updating, and removing a theme require `website.manage`, use Website row
+versions, reject unavailable/duplicate/stale/not-selected transitions, and
+persist through migration replay and file-backed restart.
+
+Focused coverage passes in `test/website_themes.integration.test.ts` (6 tests,
+35 assertions). Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-themes-001/`.
+
+Authenticated Odoo desktop and mobile captures are retained in that folder and
+show Discuss/OdooBot only; the launcher exposes no Website application or
+Theme action for the shared actor, so paired Odoo Theme evidence is blocked.
+Core3 produced one valid authenticated desktop capture. The browser session was
+closed before the mobile capture could be taken; no Core3 mobile or paired
+visual-parity claim is made.
+
+### Updated next slice
+
+Theme preview/form iframe behavior, theme asset installation effects, page
+publish/unpublish browser workflow, import/export, and public/portal rendering
+remain open. Theme catalog/assignment service/API/action persistence is covered
+by this bounded slice only; Website module sign-off remains conditional on the
+Odoo Website actor, Core3 mobile capture, and broader open gates.

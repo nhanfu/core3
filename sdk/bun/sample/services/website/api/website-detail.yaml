@@ -1,0 +1,12 @@
+page: { id: website-detail }
+datasources:
+  - id: website_detail
+    permission: website.read
+    single: true
+    query: "SELECT * FROM website_websites WHERE id = :id"
+actions:
+  - id: open_website_themes
+    type: navigate
+    permission: website.manage
+    navigate_to: /website-themes
+    params: { website_id: '{state.website_detail.id}' }

@@ -16,6 +16,7 @@ menu:
       label: Site
       items:
         - { path: /website-homepage, label: Homepage, icon: home, permission: website.read }
+        - { path: /website-themes, label: Themes, icon: palette, permission: website.read }
     - id: content
       label: Content
       items:

@@ -1,0 +1,65 @@
+page: { id: website-themes }
+datasources:
+  - id: website_theme_categories
+    permission: website.read
+    single: false
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM website_themes ORDER BY category_name"
+  - id: website_themes
+    permission: website.read
+    error_states:
+      forbidden: { status: 403, code: WEBSITE_THEMES_FORBIDDEN, message: You do not have permission to view Website themes. }
+      transport_error: { status: 503, code: WEBSITE_THEMES_UNAVAILABLE, message: Website themes are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.name, REPLACE(REPLACE(t.name, 'theme_', ''), '_', ' ') AS display_name, t.summary, t.category_name, t.author, t.preview_url, w.id AS website_id, w.name AS website_name, w.row_version AS website_row_version, w.theme_id AS current_theme_id, w.theme_revision, CASE WHEN w.theme_id = t.id THEN TRUE ELSE FALSE END AS is_installed_on_current_website, CASE WHEN w.theme_id = t.id THEN 'Installed' ELSE 'Available' END AS theme_status FROM website_themes t JOIN website_websites w ON w.id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001') WHERE t.active = TRUE AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.summary ILIKE '%' || :q || '%' OR t.category_name ILIKE '%' || :q || '%' OR t.author ILIKE '%' || :q || '%') AND (:category_name IS NULL OR t.category_name = :category_name) ORDER BY t.sequence, t.name"
+actions:
+  - id: choose_website_theme
+    type: server
+    permission: website.manage
+    action: website.themes.choose
+    handler: yaml_mutation
+    operation: update
+    refresh: [website_themes, website_detail]
+    params: { id: '{row.website_id}', theme_id: '{row.id}', expected_row_version: '{row.website_row_version}' }
+    mutation:
+      operation: update
+      table: website_websites
+      fields: [theme_id]
+      required: [theme_id]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND row_version = :expected_row_version", status: 409, code: WEBSITE_THEME_STALE_WEBSITE, message: This website changed before the theme could be selected. Reload before trying again. }
+        - { query: "SELECT id FROM website_themes WHERE id = :theme_id AND active = TRUE", status: 404, code: WEBSITE_THEME_NOT_FOUND, message: The selected theme is no longer available. }
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND COALESCE(theme_id, '') <> :theme_id", status: 409, code: WEBSITE_THEME_ALREADY_SELECTED, message: This theme is already selected for the website. }
+      result: { query: "SELECT * FROM website_websites WHERE id = :id" }
+  - id: remove_website_theme
+    type: server
+    permission: website.manage
+    action: website.themes.remove
+    handler: yaml_mutation
+    operation: update
+    refresh: [website_themes, website_detail]
+    params: { id: '{row.website_id}', current_theme_id: '{row.id}', expected_row_version: '{row.website_row_version}', values: { theme_id: null } }
+    mutation:
+      operation: update
+      table: website_websites
+      fields: [theme_id]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND row_version = :expected_row_version", status: 409, code: WEBSITE_THEME_STALE_WEBSITE, message: This website changed before the theme could be removed. Reload before trying again. }
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND theme_id = :current_theme_id", status: 409, code: WEBSITE_THEME_NOT_SELECTED, message: This theme is not selected for the website. }
+      result: { query: "SELECT * FROM website_websites WHERE id = :id" }
+  - id: refresh_website_theme
+    type: server
+    permission: website.manage
+    action: website.themes.refresh
+    handler: yaml_mutation
+    refresh: [website_themes, website_detail]
+    params: { id: '{row.website_id}', current_theme_id: '{row.id}', expected_row_version: '{row.website_row_version}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND row_version = :expected_row_version", status: 409, code: WEBSITE_THEME_STALE_WEBSITE, message: This website changed before the theme could be updated. Reload before trying again. }
+        - { query: "SELECT id FROM website_websites WHERE id = :id AND theme_id = :current_theme_id", status: 409, code: WEBSITE_THEME_NOT_SELECTED, message: This theme is not selected for the website. }
+      steps:
+        - { query: "UPDATE website_websites SET theme_revision = theme_revision + 1, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: WEBSITE_THEME_STALE_WEBSITE, message: This website changed before the theme could be updated. Reload before trying again. }
+      result: { query: "SELECT * FROM website_websites WHERE id = :id" }

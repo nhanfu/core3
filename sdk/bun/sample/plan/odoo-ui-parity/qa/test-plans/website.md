@@ -39,6 +39,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-008 | Menu Editor CRUD | Create/edit menu labels, URL, parent, target, sequence, per-site duplicate URL guards, invalid-site rejection, stale-write protection, and persisted ordering | pass: `website_menus.integration.test.ts`; canonical site naming, restart replay, and authenticated desktop/mobile browser edit/reload pass; paired Odoo comparison remains planned |
 | WEBSITE-FUNC-009 | Website Analytics | Odoo `Website > Reporting > Analytics` maps to `/website-analysis`; Website API owns totals, site lookup and daily traffic; deterministic two-site metrics and empty branch survive idempotent migration replay | pass: `website_analytics.integration.test.ts` (2 tests, 17 assertions); browser route blocked by unrelated startup error |
 | WEBSITE-FUNC-010 | Page tracking and SEO filters | Odoo Page Manager filter labels map to API-owned `track` and `is_seo_optimized` predicates; tracked/untracked/not-optimized results are deterministic | pass: `website_page_tracking.integration.test.ts` |
+| WEBSITE-FUNC-011 | Theme Manager catalog | Odoo `theme_install_kanban_action` maps to `/website-themes`; Theme/Category search, Author/Category grouping, installed state, and card actions are declarative and page/API-separated | pass: `website_themes.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -51,6 +52,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-WF-005 | Durable/external boundary | Publishing jobs, asset processing, callbacks and cross-module integrations use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | WEBSITE-WF-006 | Menu Editor | Menu changes persist through declared YAML mutation contracts and do not permit duplicate routes within a website | pass: focused integration suite, including second-site restart replay |
 | WEBSITE-WF-007 | Page tracking edit | `website.write` editor toggles `track`, row version increments, stale replay returns 409, and migration replay/file-backed restart preserve the value | pass: `website_page_tracking.integration.test.ts` |
+| WEBSITE-WF-008 | Theme selection lifecycle | `website.manage` Use this theme, Update theme, and Remove theme persist `theme_id`/`theme_revision`, reject stale/duplicate/not-selected actions, and recover across restart | pass: `website_themes.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -63,6 +65,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-PERM-005 | Stale/missing/invalid | 409/404/422 leaves the current page/site unchanged | pass at contract level |
 | WEBSITE-PERM-006 | Analytics reader/forbidden/transport failure | `website.read` is required; 403 and 503 contracts are explicit and do not expose metrics | pass for YAML contract; live actor proof blocked by Core3 startup |
 | WEBSITE-PERM-007 | Page tracking editor boundary | `website.read` can list/filter pages but cannot mutate `track`; `website.write` is required at the action endpoint and no row changes on denial | pass: `website_page_tracking.integration.test.ts` |
+| WEBSITE-PERM-008 | Theme manager actor boundary | `website.read` can discover the catalog but `website.manage` is required for theme actions; direct 403 leaves the Website row unchanged | pass: `website_themes.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -74,6 +77,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-UI-004 | Current route regression | all manifest-owned Website routes | Authenticated/public desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 | WEBSITE-UI-005 | Analytics dashboard | 1440x900, 390x844 | Website selector/analytics totals and traffic chart render responsively; compare Odoo dashboard labels and empty Plausible state | blocked: Odoo Website absent in authenticated browser; Core3 startup returns HTTP 502 from unrelated CRM discovery error |
 | WEBSITE-UI-006 | Page Manager tracking/SEO filters | 1440x900, 390x844 | Authenticated Core3 list exposes the Tracking/SEO filter group and stable rows without page/runtime errors; paired Odoo comparison is required when Website is available | pass for Core3 isolated runner; Odoo Website absent in authenticated session, so paired visual comparison blocked |
+| WEBSITE-UI-007 | Theme Manager | 1440x900, 390x844 | Theme cards, status, search/grouping, action visibility, and responsive layout match Odoo; Odoo availability and both Core3 sizes are required | blocked: Odoo Website absent; Core3 session closed before mobile capture |
 
 ## Exit criteria
 

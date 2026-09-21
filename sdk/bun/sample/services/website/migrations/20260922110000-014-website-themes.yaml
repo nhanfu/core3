@@ -1,0 +1,31 @@
+version: 0.0.14
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_websites ADD COLUMN IF NOT EXISTS theme_id VARCHAR;
+      ALTER TABLE website_websites ADD COLUMN IF NOT EXISTS theme_revision BIGINT;
+      UPDATE website_websites SET theme_revision = COALESCE(theme_revision, 1) WHERE theme_revision IS NULL;
+      CREATE TABLE IF NOT EXISTS website_themes (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        summary VARCHAR NOT NULL DEFAULT '',
+        category_name VARCHAR NOT NULL DEFAULT 'Website',
+        author VARCHAR NOT NULL DEFAULT 'Core3',
+        preview_url VARCHAR,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS website_themes_category_idx ON website_themes(category_name, sequence, name);
+    down: |
+      DROP INDEX IF EXISTS website_themes_category_idx;
+      DROP TABLE IF EXISTS website_themes;
+      ALTER TABLE website_websites DROP COLUMN IF EXISTS theme_revision;
+      ALTER TABLE website_websites DROP COLUMN IF EXISTS theme_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -37,6 +37,28 @@ the action endpoint, and second-site persistence after file-backed restart and
 migration replay.
 These are Core3 runtime checks, not paired Odoo visual sign-off.
 
+## 2026-09-22 owner checkpoint — Theme Manager
+
+Implemented the next absent Website source-backed slice from Odoo 19's
+`theme_install_kanban_action`: durable catalog/website theme selection,
+`Use this theme`, `Update theme`, and `Remove theme` actions, page/API YAML
+separation, Website detail route binding, permissions, guards, and restart
+coverage. Candidate files are covered by `website_themes.integration.test.ts`
+(6 tests, 35 assertions).
+
+Odoo desktop/mobile evidence is captured, but both views show the authenticated
+actor in Discuss without a Website application. Core3 desktop evidence was
+captured from the isolated Website runner; the browser session was closed
+before the mobile capture. This is a conditional bounded slice, not module
+sign-off.
+
+## Next bounded task
+
+Implement Theme preview/form behavior and theme asset effects, then return to
+the page publish/unpublish browser workflow, import/export, and public/portal
+rendering. Do not claim paired Odoo visual parity until a Website-enabled
+authenticated actor is available and both Core3 viewports are captured.
+
 ## Next bounded task
 
 Complete authenticated browser permission/site-scope checks for the page

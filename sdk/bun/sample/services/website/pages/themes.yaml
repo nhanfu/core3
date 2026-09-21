@@ -1,0 +1,27 @@
+title: Pick a Theme
+page: { id: website-themes, route: /website-themes, breadcrumb: [Website, Site, Pick a Theme], auth: { require: [website.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: website_themes
+    search: { label: Theme, placeholder: Search Theme... }
+    filters:
+      - { field: category_name, label: Category, options_source: website_theme_categories }
+    group_by:
+      - { field: author, label: Author }
+      - { field: category_name, label: Category }
+    view_navigation: tabs
+    views:
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: true, group_by: '', card: { title: display_name, subtitle: summary, fields: [{ field: category_name, label: Category }, { field: author, label: Author }, { field: theme_status, label: Status }] } }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: display_name, label: Theme, type: PrimaryEntityCell }
+      - { field: summary, label: Summary }
+      - { field: category_name, label: Category }
+      - { field: author, label: Author }
+      - { field: theme_status, label: Status, type: StatusChip }
+      - { field: id, label: '', sortable: false, actions: [{ id: choose_website_theme, label: Use this theme, icon: check, variant: primary, show_if: 'row.is_installed_on_current_website !== true' }, { id: refresh_website_theme, label: Update theme, icon: refresh, variant: primary, show_if: 'row.is_installed_on_current_website === true' }, { id: remove_website_theme, label: Remove theme, icon: trash, variant: secondary, show_if: 'row.is_installed_on_current_website === true' }] }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No themes found, description: No website themes match the current search. }
