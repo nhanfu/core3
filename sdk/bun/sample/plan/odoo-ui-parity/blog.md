@@ -204,3 +204,43 @@ Stable ID: `BLOG-BLOG-ARCHIVE-001`.
   --timeout 20000` passed, 32 tests / 181 assertions. Shared UI audit passed
   with 784 pages, 793 routes, and 1,614 datasources. Blog Sass, targeted Blog
   ESLint, and Blog-scoped `git diff --check` are the final commit gates.
+
+## Blog Post Pages Kanban slice — 2026-09-22
+
+The next genuinely uncovered bounded source behavior is Odoo's Blog Post Pages
+kanban view. In `addons/website_blog/views/website_pages_views.xml`,
+`action_blog_post` exposes `list,kanban,form`, and
+`blog_post_view_kanban` renders the post title, blog, post date, author, and
+Published/Not Published state. Core3 previously exposed only the list view and
+kept its post datasource/actions inside the page contract.
+
+Stable ID: `BLOG-POST-KANBAN-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| Blog Post Pages offers list, kanban, and form modes | Core3 Posts had only a list and no visible view-mode tabs | `pages/posts.yaml` declares List/Kanban tabs and the Odoo-backed kanban card | page contract and Odoo source assertions |
+| Kanban cards show title, blog, post date, author, and publication state | No card projection existed | `api/posts.yaml` adds durable `post_date`, `is_published`, and `publication_status` projections | real datasource query assertions |
+| Page/API contracts remain separate | Posts datasource/actions were page-owned | new `api/posts.yaml` owns datasource/actions and joins `page.id: blog-posts`; page YAML is layout-only | discovery and regression tests |
+
+### Core3 contract
+
+- Presentation is layout-only in `services/blog/pages/posts.yaml`, with
+  visible List and Kanban tabs using the shared responsive ListView.
+- Backend is `services/blog/api/posts.yaml`, joined by matching
+  `page.id`; it owns the post datasource, error states, permissions,
+  import/create actions, and existing workflow action references.
+- No migration is required. Card date/publication labels are derived from
+  existing durable `published_date`, `created_at`, and `state` columns.
+
+### Verification — 2026-09-22
+
+- Focused test passed 3 tests / 18 assertions.
+- Full Blog wildcard passed 35 tests / 199 assertions.
+- Evidence is under
+  `evidence/blog/2026-09-22/BLOG-POST-KANBAN-001/`.
+- The authenticated reference has no Website/Blog installation and
+  `/blog` returns Odoo Error 404 at desktop and 390x844 mobile sizes.
+  Core3 `localhost:3001` returned `net::ERR_CONNECTION_REFUSED`; no paired
+  visual-parity claim is made.

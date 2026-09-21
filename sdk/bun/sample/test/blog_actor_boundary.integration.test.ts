@@ -13,12 +13,13 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'ut
 function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoot = `/tmp/core3-blog-actor-${crypto.randomUUID()}`) {
   const blogsApi = yaml('api/blogs.yaml');
   const postsPage = yaml('pages/posts.yaml');
+  const postsApi = yaml('api/posts.yaml');
   const detailPage = yaml('api/post-detail.yaml');
   const workflow = yaml('pages/blog-workflow.yaml').workflow;
   const blogWorkflow = yaml('pages/blog-blog-workflow.yaml').workflow;
   const sources = [
     ...blogsApi.datasources,
-    ...postsPage.datasources,
+    ...postsApi.datasources,
     ...detailPage.datasources,
   ];
   return createYamlApi({
@@ -66,13 +67,14 @@ describe('Blog site/company actor boundary', () => {
     await repository.run("INSERT INTO blog_post_attachments (id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) VALUES ('blog-attachment-demo-001', 'blog-post-demo-001', 'private.txt', 'text/plain', 18, 'blog-actor-boundary.txt', 'user-admin', 'Core3 Demo Company')");
 
     const postsPage = yaml('pages/posts.yaml');
+    const postsApi = yaml('api/posts.yaml');
     const detailPage = yaml('api/post-detail.yaml');
     const analysisPage = yaml('pages/analysis.yaml');
     const workflow = yaml('pages/blog-workflow.yaml').workflow;
     const blogWorkflow = yaml('pages/blog-blog-workflow.yaml').workflow;
     const sources = [
       ...yaml('api/blogs.yaml').datasources,
-      ...postsPage.datasources,
+      ...postsApi.datasources,
       ...detailPage.datasources,
       ...analysisPage.datasources,
     ];
@@ -135,7 +137,7 @@ describe('Blog site/company actor boundary', () => {
     await repository.run("UPDATE blog_blogs SET company_name = 'Core3 Vietnam Branch' WHERE id = 'blog-demo-001'");
     await repository.run("UPDATE blog_posts SET company_name = 'Core3 Vietnam Branch' WHERE blog_id = 'blog-demo-001'");
 
-    const posts = yaml('pages/posts.yaml').datasources.find((source: any) => source.id === 'blog_posts');
+    const posts = yaml('api/posts.yaml').datasources.find((source: any) => source.id === 'blog_posts');
     expect((await repository.querySource(posts, { q: null, state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(posts, { q: null, state: null, current_company_name: 'Core3 Vietnam Branch' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['blog-post-demo-001', 'blog-post-demo-002']);
 

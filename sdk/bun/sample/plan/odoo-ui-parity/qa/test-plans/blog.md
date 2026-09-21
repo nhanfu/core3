@@ -90,3 +90,13 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-BLOG-ARCHIVE-WF-001 | workflow/security | Blog Manager with stale parent row version and wrong-company context | Guard returns 409 before mutation; no child cascade occurs | pass: stale and company guard contract |
 | BLOG-BLOG-ARCHIVE-RESTART-001 | data/regression | File-backed DuckDB; archive then close/reopen and reapply migrations | Parent and all cascaded child states remain durable after restart | pass: focused slice |
 | BLOG-BLOG-ARCHIVE-UI-001 | responsive/visual | Authenticated Odoo reference, desktop and emulated mobile | Compare Blogs Archived filter and archive actions at 1440x900 and 390x844; record exact blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection |
+
+## BLOG-POST-KANBAN-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-POST-KANBAN-FUNC-001 | functional/visual | Blog reader with `blog.read`; active seeded published and draft posts | Posts page exposes visible List and Kanban tabs; cards show title, Blog, Post date, Author, and Published/Not Published state | pass: focused slice |
+| BLOG-POST-KANBAN-PERM-001 | permission/security | Unauthenticated, forbidden, and Blog reader actors | Post datasource applies declared 401/403/503 contracts and remains bound to guarded `blog_posts` transitions | pass: contract assertions |
+| BLOG-POST-KANBAN-WF-001 | workflow/data | Active and archived post rows | Active is default; Archived filtering excludes inactive rows from active kanban and returns them only under Archived | pass: focused slice |
+| BLOG-POST-KANBAN-RESTART-001 | data/regression | File-backed DuckDB with migrations reapplied | Published card date/state remain identical after close/reopen; no migration is needed | pass: focused slice |
+| BLOG-POST-KANBAN-UI-001 | responsive/visual | Authenticated Odoo reference, 1440x900 and 390x844 | Compare Odoo Blog Post Pages Kanban against Core3; record blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection |

@@ -158,3 +158,14 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 - Current owner context is at `6ae81b4e` with no new product commit after the
   blocked retest. Same-module takeover is required in this exact worktree;
   dispatch remains pending until an owner/takeover handle is available.
+
+## Blog Post Pages Kanban slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-POST-KANBAN-FUNC-001 | Odoo list/kanban/form action and card contract | `test/blog_post_kanban.integration.test.ts` — source-backed action assertion, visible List/Kanban tabs, and title/blog/date/author/publication card fields | pass: 3 tests / 18 assertions |
+| BLOG-POST-KANBAN-PERM-001 | Datasource permission and error boundary | Same focused test verifies `blog.read`, 401, 403, 503 contracts, and existing workflow binding | pass |
+| BLOG-POST-KANBAN-WF-001 | Active/archive and publication state projection | Same focused test verifies active default, Archived filter, and Published/Not Published projections from persisted state | pass |
+| BLOG-POST-KANBAN-RESTART-001 | File-backed restart persistence | Same focused test closes/reopens DuckDB, reapplies migrations, and finds the same published card state/date | pass |
+| BLOG-POST-KANBAN-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-KANBAN-001/browser-check.md` with desktop/mobile 404 captures | blocked: Website/Blog absent in `core3_reference`; Core3 `:3001` refused connection; no visual-parity claim |
+| BLOG-QA-011 | Slice regression/tooling gates | Focused 3/18 and Blog wildcard 35/199; final tooling gates recorded at handoff | pass pending final command output |

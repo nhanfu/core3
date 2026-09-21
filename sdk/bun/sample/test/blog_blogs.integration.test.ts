@@ -83,7 +83,8 @@ describe('Blog Blogs parity slice', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_post_import_test', ['schema', 'data']);
     const page = yaml('pages/posts.yaml');
-    const importer = page.actions.find((action: any) => action.id === 'import_blog_posts');
+    const api = yaml('api/posts.yaml');
+    const importer = api.actions.find((action: any) => action.id === 'import_blog_posts');
     expect(page.components[0].actions).toContainEqual(expect.objectContaining({ id: 'blog_posts.export', label: 'Export' }));
     const values = { post_list: 'Imported launch|Release notes|QA Team|release,qa\nImported guide|How to use it|Docs Team|docs' };
     const first = await repository.executeMutation(importer.mutation, { values });
