@@ -1234,3 +1234,51 @@ are complete for desktop and mobile. Core3 authenticated navigation reached
 the Purchase detail and rendered `Send RFQ`, but the click produced no modal
 or network request in the shared browser runtime; this is recorded as an open
 UI-dispatch blocker rather than a visual pass.
+
+## 2026-09-22 bounded addendum - confirmed Send PO composer
+
+The next distinct order-form workflow after the RFQ composer is Odoo's
+confirmed-order `Send PO` action. The source view at
+`addons/purchase/views/purchase_views.xml:140` reuses
+`purchase.order.action_rfq_send` with `send_rfq=False` when `state ==
+'purchase'`. The model method selects
+`purchase.email_template_edi_purchase_done`, opens `mail.compose.message`,
+keeps the Purchase Order PDF report attachment, and does not transition an
+already confirmed order. The source template at
+`addons/purchase/data/mail_template_data.xml:38-78` includes the vendor,
+Purchase Order reference, total, expected receipt date, acknowledgement link,
+and responsible signature.
+
+The authenticated `core3_reference` audit used `P00012` at desktop and an
+emulated iPhone 14 viewport. The modal showed `Compose Email`, vendor
+recipient, `My Company (San Francisco) Order (Ref P00012)`, the Purchase
+Order body with `$ 6,936.00`, expected receipt, acknowledgement link, the
+`Purchase Order - P00012.pdf` attachment, `Send`, and `Discard`. Captures are
+committed under `evidence/purchase/2026-09-22/PURCHASE-SEND-PO-001/`.
+
+Core3 adds the page/API-matched `send_confirmed_purchase_order_detail` action
+with label `Send PO`, a state-specific
+`purchase_order_po_email_detail` prefill datasource, `purchase.write`, and the
+existing durable `purchase_order_emails` table from migration `0.0.30`.
+Confirmed and Received orders are eligible in Core3; the mutation preserves
+their state and row version while recording the Purchase Order template,
+recipient, editable subject/body, PDF attachment, actor, and history entry.
+RFQs, missing/stale rows, invalid vendor/content, and missing actors are
+guarded atomically. No new migration was necessary because the existing email
+table already stores both template families.
+
+Focused coverage is
+`test/purchase_order_send_po.integration.test.ts`: 4 tests and 27 assertions
+cover the page/API join, exact action/template mapping, prefill, Confirmed and
+Received behavior, invalid state/content/vendor/actor guards, and file-backed
+restart plus migration replay. The existing RFQ email, Print, and Purchase
+regression tests remain green.
+
+Core3 authenticated navigation reached the confirmed order at desktop and
+mobile, and the `Send PO` button rendered. Clicking it produced no modal and
+no `/api/mutate` request in the isolated module runtime; the buffered network
+trace shows the detail page and datasource requests succeeded with HTTP 200,
+while the console has no new application exception. This is recorded as an
+open shared `server_form`/mail-composer dispatch blocker, not visual-parity
+proof. Core3 detail captures and the exact network/console result are stored
+in the feature evidence folder.

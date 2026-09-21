@@ -5,6 +5,21 @@ datasources:
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_DETAIL_UNAVAILABLE, message: Purchase order details are temporarily unavailable. } }
     query: "SELECT id, row_version, name, vendor_name, (SELECT email FROM purchase_vendors v WHERE v.id = purchase_orders.vendor_id) AS recipient_email, vendor_name AS recipient_name, 'Main Company (San Francisco) Order (Ref ' || name || ')' AS subject, '<p>Dear ' || vendor_name || '</p><p>Here is in attachment a request for quotation <strong>' || name || '</strong> from My Company (San Francisco).</p><p>If you have any questions, please do not hesitate to contact us.</p><p>Best regards,<br/>-- Mitchell Admin</p>' AS body_html, 'Request for Quotation - ' || name || '.pdf' AS attachment_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(order_date AS VARCHAR) AS confirmation_date, CAST(expected_date AS VARCHAR) AS expected_date, CAST(expected_date AS VARCHAR) AS expected_arrival, reference, currency, 'Main Company (San Francisco)' AS company_name, buyer_name, CASE WHEN EXISTS (SELECT 1 FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = purchase_orders.id) THEN 'Invoiced' WHEN state IN ('Confirmed', 'Received') THEN 'To Bill' ELSE 'To Bill' END AS billing_status, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, (SELECT COUNT(*) FROM purchase_order_lines l WHERE l.order_id = purchase_orders.id) AS line_count, (SELECT COUNT(*) FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id) AS receipt_count, (SELECT r.id FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id ORDER BY r.id LIMIT 1) AS receipt_id, (SELECT COUNT(*) FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = purchase_orders.id) AS vendor_bill_count, (SELECT vb.accounting_invoice_id FROM purchase_vendor_bills vb WHERE vb.purchase_order_id = purchase_orders.id ORDER BY vb.id LIMIT 1) AS vendor_bill_id, locked, acknowledged, CAST(acknowledged_at AS VARCHAR) AS acknowledged_at, notes FROM purchase_orders WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: purchase_order_po_email_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_PO_EMAIL_DETAIL_UNAVAILABLE, message: Purchase order email details are temporarily unavailable. } }
+    query: >-
+      SELECT id, row_version, name, vendor_name,
+      (SELECT email FROM purchase_vendors v WHERE v.id = purchase_orders.vendor_id) AS recipient_email,
+      vendor_name AS recipient_name,
+      'Main Company (San Francisco) Order (Ref ' || name || ')' AS subject,
+      '<p>Dear ' || vendor_name || '</p><p>Here is in attachment a purchase order <strong>' || name || '</strong> amounting in <strong>' || printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) || '</strong> from Main Company (San Francisco).</p><p>The receipt is expected for <strong>' || CAST(expected_date AS VARCHAR) || '</strong>.</p><p>Could you please acknowledge the receipt of this order?</p><p><a href="/purchase/detail?id=' || id || '">Acknowledge</a></p><p>Best regards,<br/>-- Mitchell Admin</p>' AS body_html,
+      'Purchase Order - ' || name || '.pdf' AS attachment_name,
+      state
+      FROM purchase_orders
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      AND id = :id AND state IN ('Confirmed', 'Received')
   - id: purchase_order_lines
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_LINES_UNAVAILABLE, message: Purchase order lines are temporarily unavailable. } }
@@ -56,6 +71,47 @@ actions:
       steps:
         - { query: "UPDATE purchase_order_emails SET sent_by = :current_user_name WHERE id = :id", expect_changed: true, status: 409, code: PURCHASE_ORDER_EMAIL_FAILED, message: The Request for Quotation email actor could not be recorded. }
         - { query: "UPDATE purchase_orders SET state = 'Sent', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :purchase_order_id AND state IN ('Draft', 'Sent') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_RFQ_SEND_STALE_OR_INVALID, message: This purchase order changed while sending the RFQ. Reload and try again. }
+      result: { query: "SELECT * FROM purchase_order_emails WHERE id = :id" }
+    fields:
+      - { field: purchase_order_id, label: Purchase order, type: hidden, required: true }
+      - { field: recipient_name, label: To, type: mail_recipient, required: true }
+      - { field: recipient_email, label: Recipient email, type: hidden, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, required: true }
+      - { field: attachment_name, label: Attachments, type: mail_attachment, required: true }
+  - id: send_confirmed_purchase_order_detail
+    type: server_form
+    modal_style: mail_composer
+    permission: purchase.write
+    title: Compose Email
+    submit_label: Send
+    cancel_label: Discard
+    success_message: Purchase Order sent.
+    action: purchase.orders.email.send_po
+    handler: yaml_mutation
+    operation: create
+    params: { purchase_order_id: '{state.purchase_order_detail.id}' }
+    prefill: source
+    prefill_source: purchase_order_po_email_detail
+    refresh: [purchase_order_detail, purchase_order_lines, purchase_order_email_history]
+    mutation:
+      operation: insert
+      table: purchase_order_emails
+      generated: [id]
+      fields: [purchase_order_id, recipient_name, recipient_email, subject, body_html, attachment_name, template_label, state, sent_by]
+      required: [purchase_order_id, recipient_name, recipient_email, subject, body_html, attachment_name]
+      defaults: { state: Sent, template_label: Purchase Order }
+      before_steps:
+        - assign: true
+          query: "SELECT 'purchase-email-' || :purchase_order_id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM purchase_order_emails WHERE purchase_order_id = :purchase_order_id"
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :purchase_order_id", status: 404, code: PURCHASE_ORDER_PO_EMAIL_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :purchase_order_id AND state IN ('Confirmed', 'Received') AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_PO_SEND_STALE_OR_INVALID, message: Only a current confirmed purchase order can be sent. Reload the purchase order and try again. }
+        - { query: "SELECT 1 AS ok FROM purchase_vendors v JOIN purchase_orders p ON p.vendor_id = v.id WHERE p.id = :purchase_order_id AND v.email IS NOT NULL AND POSITION('@' IN TRIM(CAST(:recipient_email AS VARCHAR))) > 1 AND POSITION('.' IN split_part(TRIM(CAST(:recipient_email AS VARCHAR)), '@', 2)) > 1", status: 422, code: PURCHASE_ORDER_PO_VENDOR_EMAIL_INVALID, message: The vendor must have a valid email address before sending the purchase order. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(TRIM(CAST(:body_html AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:attachment_name AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: PURCHASE_ORDER_PO_EMAIL_CONTENT_INVALID, message: A subject, message, and attachment are required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: PURCHASE_ORDER_PO_EMAIL_ACTOR_REQUIRED, message: A signed-in Purchase user is required to send the purchase order. }
+      steps:
+        - { query: "UPDATE purchase_order_emails SET sent_by = :current_user_name WHERE id = :id", expect_changed: true, status: 409, code: PURCHASE_ORDER_PO_EMAIL_FAILED, message: The Purchase Order email actor could not be recorded. }
       result: { query: "SELECT * FROM purchase_order_emails WHERE id = :id" }
     fields:
       - { field: purchase_order_id, label: Purchase order, type: hidden, required: true }

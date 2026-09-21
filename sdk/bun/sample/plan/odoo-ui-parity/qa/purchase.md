@@ -238,6 +238,40 @@ not a full PDF-rendering or module sign-off.
 | PURCHASE-RFQ-QA-001 | Core3 authenticated `/purchase/detail?id=po-demo-001` rendered `Send RFQ`, but clicking it produced no `/api/mutate` request, modal, or console error in the shared browser runtime | open UI-dispatch blocker; no Core3 visual pass claimed |
 | PURCHASE-RFQ-QA-002 | `bun run audit:yaml` is not a repository script | tooling limitation; audit and focused tests passed |
 
+## 2026-09-22 candidate QA - confirmed Send PO composer
+
+- Scope: confirmed/received Purchase Order `Send PO` composer only; Draft/Sent
+  `Send RFQ` and state-specific Print remain separate bounded slices.
+- Source/live gate: local Odoo 19 Purchase source and authenticated
+  `core3_reference` `P00012` at `http://localhost:8069`; desktop and emulated
+  iPhone 14 modal captures are committed in
+  `evidence/purchase/2026-09-22/PURCHASE-SEND-PO-001/`.
+- Focused validation: `bun test ./test/purchase_order_send_po.integration.test.ts
+  --timeout 30000` - **PASS**, 4 tests, 27 assertions, 0 failures.
+- Regression validation: RFQ email, Print, and Purchase integration tests
+  passed; `bun run audit` passed with 805 pages, 814 routes, and 1664
+  datasources; `bun run frontend:build` and `git diff --check` passed.
+- Contract coverage: `purchase-detail` page/API join, `Send PO` action and
+  Purchase Order prefill datasource, `purchase.write`, Confirmed/Received
+  state guards, vendor/content/actor/stale/missing guards, durable email
+  history, migration replay, and file-backed restart.
+
+### Browser result and open gate
+
+The isolated Core3 module runtime at `http://127.0.0.1:4015` authenticated
+successfully and loaded `/purchase/detail?id=po-demo-005` at desktop and
+mobile. The `Send PO` button was visible and detail captures were taken, but
+clicking it produced no modal and no `/api/mutate` request. The network buffer
+contained successful HTTP 200 detail/datasource reads, and the console had no
+new application exception. This is the same shared `server_form`/mail-composer
+dispatch blocker observed by the RFQ composer slice. No Core3 composer visual
+parity or send-flow pass is claimed.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-SEND-PO-QA-001 | Core3 `Send PO` click does not dispatch the declared `server_form` action in the authenticated runtime | open shared-runtime blocker |
+| PURCHASE-SEND-PO-QA-002 | Odoo composer modal and desktop/mobile controls are captured; completed external mail/PDF delivery is not exercised | bounded follow-up |
+
 Disposition: **conditional bounded pass** for source-backed YAML contract,
 workflow/permission guards, durable persistence, restart coverage, and Odoo
 desktop/mobile evidence; Core3 composer browser integration remains blocked by
