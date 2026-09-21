@@ -39,7 +39,7 @@ describe('Employees chatter internal note parity', () => {
     const messages = api.datasources.find((entry: any) => entry.id === 'employee_messages');
 
     expect((await repository.querySource(messages, { id: 'employee-demo-001', current_company_name: 'Core3 Vietnam' }, 0, 50)).data)
-      .toEqual([expect.objectContaining({ id: 'employee-message-note-001', action: 'employees.note', action_label: 'Internal note' })]);
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: 'employee-message-note-001', action: 'employees.note', action_label: 'Internal note' })]));
     const created = await repository.executeMutation(note.mutation, {
       note_id: 'employee-message-crud-001', id: 'employee-demo-001', expected_row_version: 1,
       current_company_name: 'Core3 Vietnam', current_user_id: 'user-qa', current_user_name: 'QA User',

@@ -1,0 +1,18 @@
+version: 0.0.77
+kind: data
+description: Add deterministic Employee chatter message fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, created_at)
+      VALUES (
+        'employee-message-public-001', 'employee-demo-001', 'user-hr-manager', 'HR Manager',
+        'employees.message', 'Message', 'Welcome to the Operations team.', TIMESTAMP '2026-01-14 11:20:00'
+      )
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM employee_messages WHERE id = 'employee-message-public-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

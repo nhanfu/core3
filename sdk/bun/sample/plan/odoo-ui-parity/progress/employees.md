@@ -1103,3 +1103,23 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-001/`; fixture/company
   alignment and local Odoo credential limitations remain explicit. No aggregate
   Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-CHATTER-MESSAGE-001 (2026-09-21)
+
+- Selected Odoo's normal `mail.thread` Send message composer as the next
+  uncovered chatter workflow after the completed internal note, followers, and
+  ad-hoc activity slices.
+- Added migration `20260922230000-077` with a replay-safe deterministic public
+  message fixture in the durable `employee_messages` relation.
+- Added the separate company-scoped message datasource binding and guarded
+  `send_employee_message` API action. The page binds the shared
+  `OdooChatter.message_action` through `page.id`.
+- Guards cover `employees.write`, authenticated actor, active/current-company
+  employee, non-empty 1-4000 character content, and optimistic employee
+  row-version concurrency. Focused verification is **4 tests / 21 assertions**,
+  including message CRUD, atomic guards, migration replay, and file-backed
+  restart.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-MESSAGE-001/`; fixture/company
+  alignment and local Odoo credential limitations remain explicit. No aggregate
+  Employees sign-off is claimed.

@@ -773,3 +773,17 @@ assertions). Evidence:
 Focused test: `test/employees_activity.integration.test.ts` (4 tests, 25
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-ACTIVITY-001/`.
+
+## EMP-EMPLOYEE-CHATTER-MESSAGE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `mail.thread` and Employee chatter map to paired API/page message contracts | pass |
+| Send message CRUD | A public chatter message is stored, attributed, returned by the datasource, and increments the employee version | pass |
+| Permission and scope | `employees.write`, actor, current-company, content, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the deterministic and newly-sent messages | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile Send message composer plus Odoo comparison | conditional; exact fixture-company and rejected-credential blockers are recorded |
+
+Focused test: `test/employees_chatter_message.integration.test.ts` (4 tests,
+21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-MESSAGE-001/`.

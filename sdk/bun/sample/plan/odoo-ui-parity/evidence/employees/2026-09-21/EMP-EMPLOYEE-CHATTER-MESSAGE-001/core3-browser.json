@@ -1,0 +1,37 @@
+{
+  "target": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "viewports": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "about:blank",
+      "title": "",
+      "body_excerpt": "This site can’t be reached\n\n127.0.0.1 refused to connect.\n\nTry:\n\nChecking the connection\nChecking the proxy and the firewall\nERR_CONNECTION_REFUSED\nReload\nDetails",
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/employees/detail?id=employee-demo-001\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3002/employees/detail?id=employee-demo-001\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "request_failures": [
+        {
+          "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ]
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "about:blank",
+      "title": "",
+      "body_excerpt": "This site can’t be reached\n\n127.0.0.1 refused to connect.\n\nTry:\n\nChecking the connection\nChecking the proxy and the firewall\nERR_CONNECTION_REFUSED\nReload\nDetails",
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/employees/detail?id=employee-demo-001\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3002/employees/detail?id=employee-demo-001\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "request_failures": [
+        {
+          "url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+          "error": "net::ERR_CONNECTION_REFUSED"
+        }
+      ]
+    }
+  }
+}

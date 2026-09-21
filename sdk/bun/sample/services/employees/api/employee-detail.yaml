@@ -422,6 +422,34 @@ actions:
           code: STALE_RECORD
           message: The employee changed before the note was logged. Reload and try again.
       result: { query: "SELECT id, employee_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM employee_messages WHERE id = :note_id" }
+  - id: send_employee_message
+    type: server_form
+    permission: employees.write
+    title: Send message
+    description: Send a public chatter message to the employee thread.
+    action: employees.records.chatter.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.employee_detail.id}', expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true, placeholder: Write a message… }]
+    mutation:
+      generated: [message_id]
+      before_steps: [{ query: "SELECT 'employee-message-' || CAST(:id AS VARCHAR) || '-' || CAST(COALESCE(:expected_row_version, 1) AS VARCHAR) AS message_id", assign: true }]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_MESSAGE_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the message was sent. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EMPLOYEES_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'HR Manager'), 'employees.message', 'Message', TRIM(CAST(:content AS VARCHAR)))"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the message was sent. Reload and try again.
+      result: { query: "SELECT id, employee_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM employee_messages WHERE id = :message_id" }
   - id: schedule_employee_activity
     type: server_form
     permission: employees.write

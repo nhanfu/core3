@@ -1224,3 +1224,17 @@ Focused test: `test/employees_activity.integration.test.ts` (4 tests, 25
 assertions). Merged API/page validation, scoped lint, UI audit, and staged
 diff-check are recorded with the commit. No aggregate Employees sign-off is
 claimed.
+
+## EMP-EMPLOYEE-CHATTER-MESSAGE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-053 | Employee chatter Send message CRUD and audit event | pass; message is stored and returned by the company-scoped message datasource |
+| EMP-PERM-053 | `employees.write`, actor, current company, content, and row version | pass; actor, stale, wrong-company, and blank-message requests reject atomically |
+| EMP-DATA-053 | Migration replay and file-backed restart | pass; deterministic and newly-sent messages survive restart without duplicate seed rows |
+| EMP-UI-049 | Authenticated Core3/Odoo desktop and mobile | conditional; exact Core3 fixture-company and local Odoo credential blockers are recorded |
+
+Focused test: `test/employees_chatter_message.integration.test.ts` (4 tests,
+21 assertions). Merged API/page validation, scoped lint, UI audit, and staged
+diff-check are recorded with the commit. No aggregate Employees sign-off is
+claimed.
