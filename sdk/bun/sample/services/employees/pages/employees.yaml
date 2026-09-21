@@ -101,6 +101,9 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: create_employee_users_bulk, label: Create Users, permission: auth.users.manage }
     row_actions: menu
     empty_state: { title: Ready to start your experience?, description: Load sample data to explore Employees }
     row_double_click_action: view_employee

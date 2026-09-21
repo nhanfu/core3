@@ -816,3 +816,17 @@ Focused tests: `test/employees_work_contact_provisioning.integration.test.ts`
 and `test/employees_related_contacts.integration.test.ts` (8 tests, 42
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-WORK-CONTACT-PROVISION-001/`.
+
+## EMP-EMPLOYEE-BULK-CREATE-USERS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `action_hr_employee_create_users` maps to the paired Employees list/API contracts | pass |
+| Bulk user CRUD | Selected eligible employees receive durable invite-pending users, employee links, and per-line outcomes | pass |
+| Permission and scope | `auth.users.manage`, actor, current company, active/missing selection, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve run history, lines, and user links; retry is idempotent | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo list action comparison | conditional; exact runtime, fixture-company, and local credential blockers are recorded |
+
+Focused test: `test/employees_bulk_create_users.integration.test.ts` (5 tests,
+28 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-BULK-CREATE-USERS-001/`.

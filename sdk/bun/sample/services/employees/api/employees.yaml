@@ -17,6 +17,14 @@ datasources:
   - id: employee_sample_load_runs
     permission: employees.read
     query: "SELECT id, company_name, requested_by, employee_count, CAST(loaded_at AS VARCHAR) AS loaded_at, row_version FROM employee_sample_load_runs WHERE COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name ORDER BY loaded_at DESC, id DESC"
+  - id: employee_bulk_user_creation_runs
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_BULK_USER_RUNS_UNAVAILABLE, message: Bulk user creation history is temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.company_name, r.requested_by, r.selected_count, r.created_count, r.skipped_count, CAST(r.created_at AS VARCHAR) AS created_at FROM employee_bulk_user_creation_runs r WHERE COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name ORDER BY r.created_at DESC, r.id DESC"
+  - id: employee_bulk_user_creation_lines
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_BULK_USER_LINES_UNAVAILABLE, message: Bulk user creation details are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.run_id, l.employee_id, l.employee_name, l.outcome, l.user_id, l.detail, CAST(l.created_at AS VARCHAR) AS created_at FROM employee_bulk_user_creation_lines l JOIN employee_bulk_user_creation_runs r ON r.id = l.run_id WHERE l.run_id = :run_id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY l.employee_id"
 actions:
   - id: load_sample_employee_data
     type: server
@@ -44,6 +52,45 @@ actions:
     permission: employees.read
     navigate_to: /employees/detail
     params: { id: '{row.id}' }
+  - id: create_employee_users_bulk
+    type: server
+    permission: auth.users.manage
+    action: employees.records.create_users
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [employees, employee_bulk_user_creation_runs]
+    mutation:
+      generated: [run_id]
+      before_steps:
+        - query: "SELECT 'employee-bulk-user-' || LPAD(CAST((SELECT COUNT(*) + 1 FROM employee_bulk_user_creation_runs) AS VARCHAR), 4, '0') AS run_id"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: EMPLOYEES_BULK_USER_SELECTION_REQUIRED, message: Select at least one employee. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_BULK_USER_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_company_name AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_BULK_USER_COMPANY_REQUIRED, message: A current company is required to create employee users. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees e WHERE e.id IN :selectedIds AND e.active = true AND e.company_name <> :current_company_name)", status: 403, code: EMPLOYEES_BULK_USER_COMPANY_FORBIDDEN, message: All selected employees must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM employees e WHERE e.id IN :selectedIds AND e.active = true AND e.company_name = :current_company_name)", status: 404, code: EMPLOYEES_BULK_USER_EMPLOYEE_NOT_FOUND, message: One or more selected employees are missing or inactive. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:expected_row_version, 0) = 0 OR NOT EXISTS (SELECT 1 FROM employees e WHERE e.id IN :selectedIds AND e.row_version <> :expected_row_version)", status: 409, code: STALE_RECORD, message: One or more selected employees changed before users were created. Reload and try again. }
+      steps:
+        - query: "INSERT INTO employee_bulk_user_creation_runs(id, company_name, requested_by, selected_count) VALUES(:run_id, :current_company_name, COALESCE(NULLIF(:current_user_name, ''), :current_user_id), 0)"
+        - for_each:
+            input: selectedIds
+            as: employee_id
+            steps:
+              - query: "UPDATE employees SET updated_at = updated_at WHERE id = :employee_id AND active = true AND company_name = :current_company_name"
+                expect_changed: true
+                status: 404
+                code: EMPLOYEES_BULK_USER_EMPLOYEE_NOT_FOUND
+                message: One or more selected employees are missing or inactive.
+              - query: "SELECT 'employee-user-' || CAST(:employee_id AS VARCHAR) AS new_user_id"
+                assign: true
+              - query: "SELECT EXISTS (SELECT 1 FROM employees WHERE id = :employee_id AND auth_user_id IS NOT NULL) AS was_linked"
+                assign: true
+              - query: "INSERT INTO users(id, email, name, password_hash, preferred_lang, enabled) SELECT :new_user_id, LOWER(TRIM(e.work_email)), TRIM(e.name), 'invite-pending', 'en', false FROM employees e WHERE e.id = :employee_id AND e.active = true AND e.company_name = :current_company_name AND e.auth_user_id IS NULL AND NULLIF(TRIM(e.work_email), '') IS NOT NULL AND regexp_matches(TRIM(e.work_email), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND NOT EXISTS (SELECT 1 FROM users u WHERE LOWER(u.email) = LOWER(TRIM(e.work_email))) ON CONFLICT (id) DO NOTHING"
+              - query: "UPDATE employees SET auth_user_id = :new_user_id, user_name = name, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :employee_id AND active = true AND company_name = :current_company_name AND auth_user_id IS NULL AND NULLIF(TRIM(work_email), '') IS NOT NULL AND regexp_matches(TRIM(work_email), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND NOT EXISTS (SELECT 1 FROM users u WHERE LOWER(u.email) = LOWER(TRIM(employees.work_email)) AND u.id <> :new_user_id)"
+              - query: "INSERT INTO employee_bulk_user_creation_lines(id, run_id, employee_id, employee_name, outcome, user_id, detail) SELECT :run_id || '-' || CAST(e.id AS VARCHAR), :run_id, e.id, e.name, CASE WHEN e.auth_user_id = :new_user_id AND NOT COALESCE(:was_linked, false) THEN 'created' WHEN e.auth_user_id IS NOT NULL THEN 'already_linked' WHEN NULLIF(TRIM(e.work_email), '') IS NULL OR NOT regexp_matches(TRIM(e.work_email), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') THEN 'missing_email' WHEN EXISTS (SELECT 1 FROM users u WHERE LOWER(u.email) = LOWER(TRIM(e.work_email))) THEN 'login_exists' ELSE 'skipped' END, CASE WHEN e.auth_user_id = :new_user_id THEN :new_user_id ELSE e.auth_user_id END, CASE WHEN e.auth_user_id = :new_user_id AND NOT COALESCE(:was_linked, false) THEN 'Invited user created and linked.' WHEN e.auth_user_id IS NOT NULL THEN 'Employee already has a related user.' WHEN NULLIF(TRIM(e.work_email), '') IS NULL OR NOT regexp_matches(TRIM(e.work_email), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') THEN 'Employee has no valid work email.' WHEN EXISTS (SELECT 1 FROM users u WHERE LOWER(u.email) = LOWER(TRIM(e.work_email))) THEN 'A user already exists with this login.' ELSE 'Employee was not eligible for user creation.' END FROM employees e WHERE e.id = :employee_id"
+        - query: "UPDATE employee_bulk_user_creation_runs SET selected_count = (SELECT COUNT(*) FROM employee_bulk_user_creation_lines WHERE run_id = :run_id), created_count = (SELECT COUNT(*) FROM employee_bulk_user_creation_lines WHERE run_id = :run_id AND outcome = 'created'), skipped_count = (SELECT COUNT(*) FROM employee_bulk_user_creation_lines WHERE run_id = :run_id AND outcome <> 'created') WHERE id = :run_id"
+      result: { query: "SELECT id, row_version, company_name, requested_by, selected_count, created_count, skipped_count, CAST(created_at AS VARCHAR) AS created_at FROM employee_bulk_user_creation_runs WHERE id = :run_id" }
   - id: create_employee
     type: server_form
     permission: employees.write

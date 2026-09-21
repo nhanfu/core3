@@ -1,0 +1,12 @@
+{
+  "feature": "EMP-EMPLOYEE-BULK-CREATE-USERS-001",
+  "core3": {
+    "desktop": { "authenticated": true, "route": "/employees", "viewport": "1440x900", "request_failures": 0, "visible_rows": 0, "company_blocker": "Core3 Vietnam fixtures are hidden by the Core3 Demo Company session" },
+    "mobile": { "authenticated": true, "route": "/employees", "viewport": "390x844", "request_failures": 0, "visible_rows": 0, "company_blocker": "Core3 Vietnam fixtures are hidden by the Core3 Demo Company session" }
+  },
+  "odoo": {
+    "desktop": { "route": "/web/login", "authenticated": false, "blocker": "admin/admin rejected as Wrong login/password" },
+    "mobile": { "route": "/web/login", "authenticated": false, "blocker": "credentials unavailable after desktop rejection" }
+  },
+  "signoff": "conditional; no aggregate Employees sign-off"
+}

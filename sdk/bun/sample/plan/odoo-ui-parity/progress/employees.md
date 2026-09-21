@@ -1167,3 +1167,11 @@ Candidate commit: current working tree
   the deterministic Vietnam employee values did not match the demo company
   session. Odoo rejected `admin/admin` and then rate-limited the second
   attempt. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-BULK-CREATE-USERS-001 (2026-09-21)
+
+- Selected Odoo's list-bound `action_hr_employee_create_users` server action as the next uncovered Employee workflow after work-contact provisioning; this is distinct from the existing single-employee Create User modal.
+- Added migration `20260922260000-080` with durable bulk-user run and per-employee outcome tables. The action creates invite-pending auth users for eligible selected employees, links them atomically, and records created/already-linked/missing-email/login-conflict outcomes.
+- Added separate API bulk action/history datasources and a selectable Employees page bulk action joined by `page.id`. Guards cover `auth.users.manage`, actor, current company, selected active employees, and optional expected row-version concurrency; retries are idempotent.
+- Focused verification is **5 tests / 28 assertions**, including Odoo source mapping, CRUD/outcome persistence, permission and guard boundaries, migration replay, and file-backed restart.
+- Browser evidence is recorded under `evidence/employees/2026-09-21/EMP-EMPLOYEE-BULK-CREATE-USERS-001/`; authenticated runtime/Odoo comparison blockers remain explicit and no aggregate Employees sign-off is claimed.

@@ -2377,3 +2377,32 @@ Core3 authenticated captures are conditional because the seeded employee's
 company is not the authenticated demo company; Odoo comparison is blocked by
 the rejected/rate-limited local credentials. No aggregate Employees sign-off
 is claimed.
+
+## EMP-EMPLOYEE-BULK-CREATE-USERS-001: Bulk Create Users from Employees list (2026-09-21)
+
+Odoo's `hr.employee` source exposes `action_create_users_confirmation` and the
+bound `action_hr_employee_create_users` server action for selected Employees.
+The action skips employees that already have a user, lack a valid work email,
+have a conflicting login, or duplicate another selected email, and creates
+invite users for the remaining records. The prior Employees slice only
+implemented the single-record `action_create_user` modal.
+
+Migration `20260922260000-080` adds replay-safe bulk-user run and line outcome
+tables. The API YAML owns the `create_employee_users_bulk` server action and
+company-scoped run/line datasources; the page YAML owns only the selectable list
+bulk action through the shared `page.id`. Eligible selected employees get a
+deterministic `employee-user-<employee-id>` invite-pending auth user and
+`employees.auth_user_id` link in one transaction. Every selected employee is
+recorded as created, already linked, missing email, login conflict, or skipped.
+
+The workflow requires `auth.users.manage`, an authenticated actor, a current
+company, active employees from that company, and optional expected row versions
+for optimistic concurrency. Missing, foreign, stale, and empty selections are
+guarded before writes; replayed migrations and retries remain durable and
+idempotent. Focused verification is **5 tests / 28 assertions**.
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-BULK-CREATE-USERS-001/`. Browser
+comparison is conditional where the authenticated runtime cannot align the
+deterministic Employees company or local Odoo credentials are unavailable. No
+aggregate Employees sign-off is claimed.

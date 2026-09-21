@@ -1,0 +1,41 @@
+version: 0.0.80
+kind: schema
+description: Persist Odoo-style bulk employee user creation runs and line outcomes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_bulk_user_creation_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        selected_count INTEGER NOT NULL DEFAULT 0,
+        created_count INTEGER NOT NULL DEFAULT 0,
+        skipped_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS employee_bulk_user_creation_lines (
+        id VARCHAR PRIMARY KEY,
+        run_id VARCHAR NOT NULL REFERENCES employee_bulk_user_creation_runs(id),
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        outcome VARCHAR NOT NULL,
+        user_id VARCHAR,
+        detail VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(run_id, employee_id)
+      );
+      CREATE INDEX IF NOT EXISTS employee_bulk_user_creation_runs_company_idx
+        ON employee_bulk_user_creation_runs(company_name, created_at);
+      CREATE INDEX IF NOT EXISTS employee_bulk_user_creation_lines_run_idx
+        ON employee_bulk_user_creation_lines(run_id, employee_id);
+    down: |
+      DROP INDEX IF EXISTS employee_bulk_user_creation_lines_run_idx;
+      DROP INDEX IF EXISTS employee_bulk_user_creation_runs_company_idx;
+      DROP TABLE IF EXISTS employee_bulk_user_creation_lines;
+      DROP TABLE IF EXISTS employee_bulk_user_creation_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

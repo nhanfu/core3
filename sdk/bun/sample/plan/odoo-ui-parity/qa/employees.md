@@ -631,6 +631,19 @@ has no live cross-service auth-user/company resolver, so the local catalog
 projection and company-label mismatch are explicit blockers. No aggregate
 Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-BULK-CREATE-USERS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-056 | Odoo list `Create User` action for selected employees | pass; eligible employees receive durable invite-pending users and links, while source-defined skipped outcomes are recorded |
+| EMP-PERM-056 | `auth.users.manage`, actor, company, active selection, and stale row version | pass; permission, actor, company, missing, and stale requests reject atomically |
+| EMP-DATA-056 | Migration replay and file-backed restart | pass; run/line audit and user links survive restart; retries do not duplicate users |
+| EMP-UI-052 | Authenticated Core3/Odoo desktop and mobile | conditional; exact runtime and Odoo credential/fixture blockers are recorded |
+
+Focused test: `test/employees_bulk_create_users.integration.test.ts` (5 tests,
+28 assertions). Scoped audit, ESLint, and diff-check results are recorded with
+the feature commit. No aggregate Employees sign-off is claimed.
+
 ## EMP-BANK-ACCOUNT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |
