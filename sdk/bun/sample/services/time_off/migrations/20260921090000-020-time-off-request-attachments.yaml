@@ -1,0 +1,28 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_request_attachments(
+        id VARCHAR PRIMARY KEY,
+        request_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL DEFAULT 0,
+        storage_key VARCHAR,
+        content_base64 VARCHAR,
+        uploaded_by VARCHAR,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS time_off_request_attachments_request_idx ON time_off_request_attachments(request_id, active, created_at);
+      INSERT OR IGNORE INTO time_off_request_attachments(id, request_id, file_name, mime_type, size_bytes, content_base64, uploaded_by)
+      VALUES ('time-off-attachment-demo-001', 'leave-request-demo-002', 'medical-certificate.pdf', 'application/pdf', 2048, 'UERGIGRlcXVlc3QgZG9jdW1lbnQ=', 'system');
+    down: |
+      DROP INDEX IF EXISTS time_off_request_attachments_request_idx;
+      DROP TABLE IF EXISTS time_off_request_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

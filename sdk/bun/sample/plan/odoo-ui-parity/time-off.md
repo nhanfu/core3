@@ -839,3 +839,40 @@ The full Time Off suite passes 53 tests and 550 assertions; audit passes with
 TypeScript-focused ESLint, and `git diff --check` pass. Authenticated browser,
 paired-Odoo, repository-wide typecheck, and Temporal gates remain open and are
 not claimed by this bounded candidate.
+
+## Supporting documents on submitted requests (2026-09-21)
+
+The next uncovered source-backed request-form feature is the Odoo `hr.leave`
+supporting-document contract. `hr_leave_view_form` renders
+`supported_attachment_ids` with the `many2many_binary` widget while a request
+is in `confirm` (Submitted), and `action_documents` opens the request's
+attachments read-only as `Supporting Documents`. Core3 now adds the matching
+attachment datasource and upload/download/remove actions to the existing
+request-detail form; the page and API remain separate and are joined by
+`page.id: leave-request-detail`.
+
+Migration `0.0.20` adds durable `time_off_request_attachments` metadata and a
+deterministic submitted-request fixture. Uploads require `time_off.write`, an
+authenticated actor, an unchanged Submitted request, non-empty files up to
+5 MB, and unique names; removal uses parent and attachment row versions and
+increments both records. Download/list reads require `time_off.read` and the
+service storage contract exposes the attachment route. The focused suite is
+`time_off_request_attachments.integration.test.ts`; it covers source mapping,
+permission/state/size/duplicate/stale guards, removal, migration replay, and
+file-backed restart persistence.
+
+Authenticated Core3 browser evidence was captured with the shared Odoo browser
+profile through a dedicated `bsk` session at 1440x900 and 390x844 touch/mobile
+viewports. The submitted request detail rendered the seeded
+`medical-certificate.pdf` document, the Supporting documents panel, and the
+download affordance without horizontal overflow. Captures are local-only:
+`/tmp/core3-odoo-parity/timeoff-attachments-20260921/core3-desktop-1440x900.png`
+and `core3-mobile-390x844.png`. Core3 page/API, auth, and stylesheet requests
+returned 200 after login; the browser's only buffered failure was the unrelated
+invalid extension endpoint, and the existing dev warning was the Tailwind CDN
+production warning. No application request failure occurred.
+
+Paired Odoo visual evidence remains blocked. The same authenticated browser
+session reached Discuss in `core3_reference`, but its app menu and direct
+`/odoo` navigation did not expose `hr_holidays`/Time Off. No Odoo mutation or
+credential access was made, so this slice is not claimed as full visual parity.

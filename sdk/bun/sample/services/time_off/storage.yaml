@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${TIME_OFF_UPLOAD_ROOT:-.data/time-off-uploads}
+  credentials: {}
+
+attachments:
+  time_off_request_attachment:
+    download:
+      route: /api/time-off/attachments
+      permission: time_off.read
+      query: SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.content_base64 FROM time_off_request_attachments a JOIN leave_requests r ON r.id = a.request_id WHERE a.id = :attachment_id AND a.active = TRUE

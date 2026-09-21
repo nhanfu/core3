@@ -16,6 +16,18 @@ components:
       - { id: cancel_approved_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Approved'" }
       - { id: delete_leave_request_detail, label: Delete, variant: danger, show_if: "row.state === 'Draft'" }
     group_columns: 2
+    attachment_source: leave_request_attachments
+    attachment_panel_open: true
+    attachment_page_size: 100
+    attachment_label: Supporting documents
+    add_attachment_label: Attach File
+    no_attachments_label: No supporting documents
+    uploading_label: Uploading…
+    upload_failed_label: Upload failed
+    download_label: Download
+    attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
+    attachment_upload_action: upload_leave_request_attachment
+    attachment_download_action: download_leave_request_attachment
     groups:
       - title: Leave
         fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }]

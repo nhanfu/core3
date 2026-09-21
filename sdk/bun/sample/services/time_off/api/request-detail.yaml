@@ -9,6 +9,11 @@ datasources:
     permission: time_off.read
     single: false
     query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: leave_request_attachments
+    permission: time_off.read
+    single: false
+    error_states: { transport_error: { status: 503, code: TIME_OFF_LEAVE_ATTACHMENTS_UNAVAILABLE, message: Supporting documents are temporarily unavailable. } }
+    query: "SELECT id, request_id, row_version, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM time_off_request_attachments WHERE request_id = :id AND active = TRUE ORDER BY created_at DESC, id"
 actions:
   - { id: submit_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.submit, handler: order_transition, workflow: leave_requests, operation: submit, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: approve_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
@@ -58,6 +63,47 @@ actions:
     fields:
       - { field: state, label: Status, type: hidden, default: Refused }
       - { field: refusal_reason, label: Reason, type: textarea, required: true, placeholder: Why is this time off refused? }
+  - id: upload_leave_request_attachment
+    type: upload
+    action: time_off.requests.attachments.upload
+    handler: attachment_metadata
+    permission: time_off.write
+    kind: time_off_request_attachment
+    params: { request_id: '{state.leave_request_detail.id}', expected_row_version: '{state.leave_request_detail.row_version}' }
+    refresh: [leave_request_detail, leave_request_attachments]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: TIME_OFF_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :request_id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Time off request not found. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :request_id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, code: TIME_OFF_ATTACHMENT_STATE_INVALID, message: Supporting documents can only be added to an unchanged submitted request. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 5242880", status: 422, code: TIME_OFF_ATTACHMENT_INVALID, message: Upload a non-empty attachment up to 5 MB. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM time_off_request_attachments WHERE request_id = :request_id AND active = TRUE AND LOWER(file_name) = LOWER(TRIM(CAST(:fileName AS VARCHAR))))", status: 409, code: TIME_OFF_ATTACHMENT_DUPLICATE, message: This supporting document already exists for the request. }
+      steps:
+        - { query: "INSERT INTO time_off_request_attachments(id, request_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :request_id, TRIM(CAST(:fileName AS VARCHAR)), :mimeType, CAST(:sizeBytes AS BIGINT), :storageKey, :current_user_id)", expect_changed: true, status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Time off request not found. }
+        - { query: "UPDATE leave_requests SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :request_id AND row_version = :expected_row_version AND state = 'Submitted'", expect_changed: true, status: 409, code: TIME_OFF_ATTACHMENT_STALE, message: The request changed before the attachment was uploaded. }
+      result: { query: "SELECT id, request_id, row_version, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM time_off_request_attachments WHERE id = :attachment_id" }
+  - id: download_leave_request_attachment
+    type: download
+    permission: time_off.read
+    kind: time_off_request_attachment
+  - id: remove_leave_request_attachment
+    type: server
+    permission: time_off.write
+    action: time_off.requests.attachments.remove
+    handler: line_item
+    operation: delete
+    domain: time_off_request_attachment
+    params: { id: '{state.leave_request_detail.id}', line_id: '{row.id}', parent_expected_row_version: '{state.leave_request_detail.row_version}' }
+    refresh: [leave_request_detail, leave_request_attachments]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :parent_expected_row_version AND state = 'Submitted'", status: 409, code: TIME_OFF_ATTACHMENT_STALE, message: The request changed before the document was removed. Reload and try again. }
+        - { query: "SELECT id FROM time_off_request_attachments WHERE id = :line_id AND request_id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: TIME_OFF_ATTACHMENT_STALE, message: This supporting document changed before it was removed. Reload and try again. }
+      steps:
+        - { query: "UPDATE time_off_request_attachments SET active = FALSE, row_version = row_version + 1 WHERE id = :line_id AND request_id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: TIME_OFF_ATTACHMENT_STALE, message: This supporting document changed before it was removed. Reload and try again. }
+        - { query: "UPDATE leave_requests SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND state = 'Submitted'", expect_changed: true, status: 409, code: TIME_OFF_ATTACHMENT_STALE, message: The request changed before the document was removed. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }
   - { id: cancel_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - id: delete_leave_request_detail
     type: server
