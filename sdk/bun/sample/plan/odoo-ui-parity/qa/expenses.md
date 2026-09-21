@@ -157,3 +157,24 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
   repaired for the expected migration count increase from 12 to 13.
 - Authenticated Odoo reference captures and any Core3 browser blocker are
   recorded in the feature evidence folder. No full module sign-off is claimed.
+
+## Batch 9 - expense category cost propagation (2026-09-22)
+
+- Candidate scope: EXPENSE-FUNC-012, Odoo `product.product.standard_price`
+  behavior used by `hr.expense` categories.
+- Focused evidence: `expenses_category_cost.integration.test.ts` — 4 tests /
+  18 assertions passed. It covers page/API separation, warning metadata,
+  quantity-preserving draft cost updates, category rename relinking, sheet
+  totals, zero-cost behavior, negative-cost rejection, stale replay, and
+  migration replay. The combined category/migration run was 8 tests / 61
+  assertions.
+- `20260922110000-014-expense-category-cost-index.yaml` is idempotent and the
+  migration persistence gate now verifies 14 applied versions with unchanged
+  seeded row counts after replay.
+- Authenticated Odoo desktop/mobile captures are present under the feature
+  evidence folder. Desktop is 1916x833 because the shared Agent Window did not
+  retain the requested resize; mobile is 390x844. Core3 authenticated browser
+  interaction remains blocked by the absent local Core3 listener and is not
+  claimed.
+
+| EXPENSE-FUNC-012 | Expense category cost write | Draft linked expenses update with quantity, category rename relinks, non-draft amounts remain stable, sheet totals persist, and invalid/stale writes are rejected | pass: focused suite |

@@ -1,0 +1,12 @@
+version: 0.0.14
+description: Index draft expenses for Odoo-compatible expense category cost propagation
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_expenses_category_state_company ON expenses(category, state, company_name);
+    down: |
+      DROP INDEX IF EXISTS idx_expenses_category_state_company;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

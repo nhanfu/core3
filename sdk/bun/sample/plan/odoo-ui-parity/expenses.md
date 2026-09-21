@@ -554,3 +554,39 @@ Focused verification is recorded in
 `test/expenses_activities.integration.test.ts`; evidence is under
 `odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-011/`. The paired Odoo
 reference is available at `http://localhost:8069` in `core3_reference`.
+
+## Expense category cost propagation follow-up (2026-09-22)
+
+Status: bounded implementation complete; module sign-off remains conditional.
+
+Batch 9 (EXPENSE-FUNC-012) closes the next source-backed gap in the installed
+`hr_expense` addon. Odoo's
+`/home/nhanjs/projects/odoo/addons/hr_expense/models/product_product.py`
+computes a warning when a category cost affects unsubmitted expenses and, on
+`standard_price` write, updates only linked draft expenses while leaving
+approved/posted/paid amounts unchanged. The live `core3_reference` database
+confirmed the authenticated Expenses list and Expense Categories surfaces,
+including Cost, Reference, Note, Purchase Taxes, and Re-Invoice Costs.
+
+Core3 now exposes draft-linked counts and the Odoo warning text from the
+service-owned `expense_categories` datasource. Editing a category remains a
+manager-only YAML action and now atomically propagates a changed cost to
+current-company draft expenses using their existing quantity, relinks the
+category/product display name across linked expenses, recalculates affected
+sheet totals, and preserves non-draft amounts. Negative costs, stale category
+versions, duplicate names, and company scope are guarded. The page/API split is
+unchanged and joined by `page.id: expense-categories`.
+
+The module migration
+`services/expenses/migrations/20260922110000-014-expense-category-cost-index.yaml`
+adds the supporting category/state/company index. Focused coverage is in
+`test/expenses_category_cost.integration.test.ts`, with the existing migration
+replay assertion updated for fourteen idempotent module migrations. Source,
+functionality, test, and browser records are under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-012/`.
+
+Authenticated Odoo captures are recorded in that evidence folder. The mobile
+capture matches 390x844; the available Agent Window produced a 1916x833 desktop
+viewport, so no pixel-level 1440x900 category-detail comparison is claimed.
+Core3 authenticated browser interaction was not available because no local
+Core3 listener was running; this remains an explicit blocker.

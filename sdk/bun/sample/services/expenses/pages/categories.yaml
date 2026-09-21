@@ -20,6 +20,8 @@ components:
       - { field: name, label: Name, type: PrimaryEntityCell, sortable: true, mobile: true }
       - { field: cost_method, label: Cost Method }
       - { field: unit_cost, label: Cost per Unit, align: right }
+      - { field: draft_expense_count, label: Unsubmitted Expenses, optional: hide }
+      - { field: cost_update_warning, label: Cost update warning, optional: hide }
       - { field: reference, label: Reference }
       - { field: active, label: Active, optional: hide }
       - { field: id, label: '', sortable: false, actions: [{ id: edit_expense_category, label: Edit, icon: edit }, { id: archive_expense_category, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_expense_category, label: Unarchive, icon: archive, show_if: 'row.active === false' }] }
