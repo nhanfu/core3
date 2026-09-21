@@ -3,12 +3,14 @@ import type { ModuleContext, ModuleLifecycle } from '@core3/server/module';
 import { EcommerceTemporalDispatcher } from './temporal-dispatcher';
 
 type EcommerceService = { call(operation: string, request?: Record<string, unknown>): Promise<any> };
+type EcommerceAuthAdapter = { getCurrentUser(request: Request): Promise<unknown> };
 const ANONYMOUS_CART_COOKIE = 'core3_ecommerce_cart';
 const ANONYMOUS_WISHLIST_COOKIE = 'core3_ecommerce_wishlist';
 
 export default class EcommerceModule implements ModuleLifecycle {
   readonly id = 'ecommerce';
   private delegate: YamlServiceModule | null = null;
+  private authAdapter: EcommerceAuthAdapter | null = null;
   private temporalDispatcher = new EcommerceTemporalDispatcher();
 
   private getDelegate(context: ModuleContext): YamlServiceModule {
@@ -21,6 +23,7 @@ export default class EcommerceModule implements ModuleLifecycle {
   async load(context: ModuleContext): Promise<void> {
     const delegate = this.getDelegate(context);
     await delegate.load(context);
+    this.authAdapter = context.resolveService<EcommerceAuthAdapter>('auth.adapter');
     const service = context.resolveService<EcommerceService>('yaml.service.ecommerce');
     const yamlApi = delegate.getRuntimeContext()?.api;
     if (context.env.TEMPORAL_ADDRESS) await this.temporalDispatcher.start(context.eventBus, context.env.TEMPORAL_ADDRESS);
@@ -35,15 +38,34 @@ export default class EcommerceModule implements ModuleLifecycle {
     await this.temporalDispatcher.stop();
     await this.delegate?.unload(context);
     this.delegate = null;
+    this.authAdapter = null;
   }
 
   uninstall(context: ModuleContext): void { this.delegate?.uninstall(context); }
 
   async handlePublicRoute(request: Request, url: URL, service: EcommerceService): Promise<Response | null> {
+    let publicAuthenticated: boolean | undefined;
+    const accessProtected = url.pathname === '/api/public/ecommerce/shop'
+      || url.pathname === '/api/public/ecommerce/cart'
+      || url.pathname === '/api/public/ecommerce/checkout'
+      || url.pathname === '/api/public/ecommerce/wishlist'
+      || url.pathname.startsWith('/api/public/ecommerce/wishlist/');
+    if (accessProtected && this.authAdapter) {
+      publicAuthenticated = false;
+      try {
+        await this.authAdapter.getCurrentUser(request);
+        publicAuthenticated = true;
+      } catch {
+        publicAuthenticated = false;
+      }
+      const accessResult = await service.call('ecommerce.public.access', { authenticated: publicAuthenticated });
+      const access = accessResult?.access?.[0] || accessResult?.data?.[0];
+      if (access?.allowed === false) return this.json({ error: 'Sign in to browse eCommerce', code: 'ECOMMERCE_ACCESS_AUTHENTICATION_REQUIRED' }, 401);
+    }
     if (url.pathname === '/api/public/ecommerce/shop') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
       const q = url.searchParams.get('q')?.trim() || null;
-      const result = await service.call('ecommerce.public.shop', { q });
+      const result = await service.call('ecommerce.public.shop', publicAuthenticated === undefined ? { q } : { q, authenticated: publicAuthenticated });
       return this.json({ products: result?.products || [] });
     }
     if (url.pathname === '/api/public/ecommerce/checkout') return this.handlePublicCheckout(request, service);

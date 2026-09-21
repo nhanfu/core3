@@ -1,0 +1,25 @@
+version: 0.0.120
+kind: schema
+description: durable eCommerce website access policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_access_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        access_mode VARCHAR NOT NULL DEFAULT 'everyone',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (access_mode IN ('everyone', 'logged_in'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_access_policy_company_idx
+        ON ecommerce_access_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_access_policy_company_idx;
+      DROP TABLE IF EXISTS ecommerce_access_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

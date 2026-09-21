@@ -133,3 +133,7 @@ menu:
           label: Orders Assignment
           icon: users
           permission: ecommerce.read
+        - path: /ecommerce/access-policy
+          label: Shop Visibility
+          icon: users
+          permission: ecommerce.read

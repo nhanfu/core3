@@ -37,6 +37,7 @@ actions:
     operation: create
     mutation:
       guards:
+        - { query: "SELECT 1 AS ok WHERE COALESCE((SELECT access_mode FROM ecommerce_access_policies WHERE company_name = 'My Company'), 'everyone') = 'everyone' OR COALESCE(:authenticated, FALSE) = TRUE", status: 401, code: ECOMMERCE_ACCESS_AUTHENTICATION_REQUIRED, message: Sign in to browse this eCommerce shop. }
         - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND is_published = TRUE AND company_name = 'My Company'", status: 404, code: ECOMMERCE_SHOP_PRODUCT_UNAVAILABLE, message: This product is no longer available. }
         - { query: "SELECT p.id FROM ecommerce_products p WHERE p.id = :product_id AND (COALESCE((SELECT prevent_zero_price_sale FROM ecommerce_zero_price_sale_policies WHERE company_name = p.company_name), FALSE) = FALSE OR COALESCE((SELECT v.sales_price FROM ecommerce_product_variants v WHERE v.id = NULLIF(:variant_id, '') AND v.product_id = p.id), p.sales_price) > 0)", status: 422, code: ECOMMERCE_SHOP_ZERO_PRICE_UNAVAILABLE, message: This product is contact-only because its price is zero. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:variant_id, '') = '' OR EXISTS (SELECT 1 FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.id = :variant_id AND v.product_id = :product_id AND v.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND p.company_name = 'My Company')", status: 422, code: ECOMMERCE_SHOP_VARIANT_UNAVAILABLE, message: Select an active variant for this product. }

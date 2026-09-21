@@ -1,0 +1,36 @@
+page: { id: ecommerce-access-policy }
+datasources:
+  - id: ecommerce_access_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ACCESS_UNAUTHENTICATED, message: Sign in to view eCommerce access policy. }
+      forbidden: { status: 403, code: ECOMMERCE_ACCESS_FORBIDDEN, message: You do not have permission to view eCommerce access policy. }
+      missing_record: { status: 404, code: ECOMMERCE_ACCESS_NOT_FOUND, message: eCommerce access policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_ACCESS_UNAVAILABLE, message: eCommerce access policy is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, access_mode, CASE access_mode WHEN 'logged_in' THEN 'Logged in users' ELSE 'All users' END AS access_label, updated_at FROM ecommerce_access_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_access_modes
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('everyone', 'All users'), ('logged_in', 'Logged in users')) modes(value, label)"
+actions:
+  - id: edit_ecommerce_access_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save eCommerce Access
+    action: ecommerce.shop.access_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_access_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, access_mode]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_access_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_ACCESS_STALE, message: This eCommerce access policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :access_mode IN ('everyone', 'logged_in')", status: 422, code: ECOMMERCE_ACCESS_MODE_INVALID, message: Choose All users or Logged in users. }
+      steps:
+        - { query: "UPDATE ecommerce_access_policies SET access_mode = :access_mode, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_ACCESS_STALE, message: This eCommerce access policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, access_mode, CASE access_mode WHEN 'logged_in' THEN 'Logged in users' ELSE 'All users' END AS access_label FROM ecommerce_access_policies WHERE id = :id" }
+    fields:
+      - { field: access_mode, label: Shop Visibility, type: select, options_source: ecommerce_access_modes, required: true }

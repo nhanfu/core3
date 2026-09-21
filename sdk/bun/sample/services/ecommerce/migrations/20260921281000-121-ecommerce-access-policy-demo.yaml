@@ -1,0 +1,14 @@
+version: 0.0.121
+kind: data
+description: deterministic eCommerce website access policy fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_access_policies (id, row_version, company_name, access_mode)
+      VALUES ('ecommerce-access-policy-my-company', 1, 'My Company', 'everyone')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_access_policies WHERE id = 'ecommerce-access-policy-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-ECOMMERCE-ACCESS-001
+
+- ECOM-FUNC-057: trace Website Sale `ecommerce_access`, the settings control,
+  `has_ecommerce_access()`, and public shop/menu/cart/wishlist gates; verify
+  the separate Core3 policy page/API and public operation contract.
+- ECOM-WF-068: migrate the deterministic All users policy, switch to Logged
+  in users, hide public shop results, allow authenticated access, reject guest
+  add-to-cart, and preserve idempotent authenticated/replayed behavior across
+  restart.
+- ECOM-PERM-064: require `ecommerce.read` for policy/options and shop reads
+  and `ecommerce.write` for policy updates; reject invalid, foreign-company,
+  stale, and unauthenticated public requests without mutation.
+- ECOM-UI-050: render Shop Visibility at desktop/mobile and compare the Odoo
+  setting and public redirect behavior; Core3 runtime is unavailable and Odoo
+  `/shop` is HTTP 404 in the supplied references.
+
 ## ECOM-CHECKOUT-ORDER-ASSIGNMENT-001
 
 - ECOM-FUNC-056: trace Website Sale Orders Assignment settings, default team,

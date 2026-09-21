@@ -1,5 +1,32 @@
 # ecommerce QA ledger
 
+## eCommerce Access Policy (`ECOM-CATALOG-ECOMMERCE-ACCESS-001`, 2026-09-21)
+
+- Odoo source/settings/controller: pass. `website.py` defines the required
+  `everyone`/`logged_in` selection and `has_ecommerce_access()`; the settings
+  view exposes Shop, products, cart and wishlist visibility; and the shop,
+  cart, product, menu, and snippet paths consult that boundary.
+- Core3 lifecycle: pass for this bounded contract. Migrations 120/121 add a
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes an `ecommerce.write` optimistic update with explicit mode and stale
+  guards. The public route boundary and shop/add-to-cart contracts enforce
+  logged-in visibility while preserving authenticated access and idempotent
+  cart addition.
+- Focused verification: `bun test
+  test/ecommerce_access_policy.integration.test.ts --timeout 20000` — **3
+  passed, 38 assertions, 0 failures**.
+- Regression: access policy, Shop, and Checkout suites — **18 passed, 129
+  assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **735 pages, 744 routes, and
+  1440 datasources**; focused ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-ecommerce-access-001/`.
+
 ## Online Order Assignment (`ECOM-CHECKOUT-ORDER-ASSIGNMENT-001`, 2026-09-21)
 
 - Odoo source/settings/order boundary: pass. `website.py` defines the default

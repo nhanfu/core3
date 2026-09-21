@@ -2,6 +2,31 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — eCommerce Access Policy (`ECOM-CATALOG-ECOMMERCE-ACCESS-001`)
+
+Wave 28 selected Odoo Website Sale's `ecommerce_access` visibility policy,
+which was not represented in Core3 and is distinct from the completed checkout
+account policy. Odoo's website setting offers All users or Logged in users;
+`has_ecommerce_access()` gates `/shop`, product/cart/wishlist surfaces, and
+website menus for public visitors, while authenticated users retain access.
+
+Core3 migrations 120/121 add a durable company-scoped policy and deterministic
+fixture. Separate `pages/ecommerce-access-policy.yaml` and
+`api/ecommerce-access-policy.yaml` contracts join by `page.id`; the policy
+requires `ecommerce.read`, optimistic updates require `ecommerce.write`, and
+invalid, foreign-company, and stale writes are rejected. The public Ecommerce
+route boundary checks the policy for shop/cart/checkout/wishlist requests, the
+public shop operation filters logged-out access, and anonymous add-to-cart is
+guarded. Migration replay, idempotent anonymous add, and DuckDB restart are
+covered.
+
+Focused verification and source comparison are recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-ecommerce-access-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime. Odoo `/shop` is an exact
+HTTP 404 on 8069 and 8073, so paired rendering remains blocked. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Online Order Assignment (`ECOM-CHECKOUT-ORDER-ASSIGNMENT-001`)
 
 Wave 27 selected the next uncovered company/checkout handoff behavior: Odoo
