@@ -27,7 +27,7 @@ describe('Timesheets task action Calendar view parity', () => {
     expect(page.page).toMatchObject({ id: 'task-timesheets', route: '/task-timesheets' });
     expect(page).not.toHaveProperty('datasources');
     expect(api.page).toEqual({ id: 'task-timesheets' });
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph']);
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'form', 'graph']);
     expect(list.views).toContainEqual(expect.objectContaining({ id: 'calendar', date_field: 'work_date', card: expect.objectContaining({ title: 'calendar_display_name', subtitle: 'time_spent_display' }) }));
     expect(entries).toMatchObject({ id: 'task_timesheet_entries', permission: 'timesheets.read', workflow: 'timesheet_entries' });
     expect(entries.pivot.fields).toContain('calendar_display_name');

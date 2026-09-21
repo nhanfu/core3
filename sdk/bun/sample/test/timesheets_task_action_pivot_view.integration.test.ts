@@ -27,7 +27,7 @@ describe('Timesheets task action Pivot view parity', () => {
     expect(page.page).toMatchObject({ id: 'task-timesheets', route: '/task-timesheets' });
     expect(page).not.toHaveProperty('datasources');
     expect(api.page).toEqual({ id: 'task-timesheets' });
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph']);
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'form', 'graph']);
     expect(list.views).toContainEqual(expect.objectContaining({ id: 'pivot', mobile: false, pivot: expect.objectContaining({ default: expect.objectContaining({ rows: ['employee_name'], columns: ['work_date'] }) }) }));
     expect(entries).toMatchObject({ id: 'task_timesheet_entries', permission: 'timesheets.read', workflow: 'timesheet_entries' });
     expect(entries.pivot.fields).toEqual(expect.arrayContaining(['employee_name', 'work_date', 'hours', 'cost']));

@@ -25,7 +25,7 @@ describe('Timesheets task-context action parity', () => {
     expect(routes.find((route) => route.page === 'task-timesheets')?.path).toBe('/task-timesheets');
     expect(taskPage.components[0].stat_buttons).toContainEqual(expect.objectContaining({ id: 'open_task_timesheets', label: 'Timesheets' }));
     expect(taskApi.actions).toContainEqual(expect.objectContaining({ id: 'open_task_timesheets', navigate_to: '/task-timesheets', params: { task_id: '{state.id}' } }));
-    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph']);
+    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'form', 'graph']);
     expect(api.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'TASK_TIMESHEETS_UNAVAILABLE' });
   });
 

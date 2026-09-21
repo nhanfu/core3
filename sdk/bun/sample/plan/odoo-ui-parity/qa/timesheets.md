@@ -1035,6 +1035,24 @@ Evidence: `evidence/timesheets/2026-09-21/timesheet-project-action-display-name-
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
 
+## Wave 44 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `timesheet_view_form_user` attached by `timesheet_action_view_all_form` | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page, Form tab, detail page/API `page.id` binding | pass |
+| Durable Form detail | current-company task entry fields and existing CRUD actions | pass |
+| Permission/company/actor/missing/empty guards | `timesheets.read`/write, current company, actor, missing entry, empty task fixture | pass |
+| Guarded CRUD freshness | created row opens in Form; valid edit succeeds; stale edit rejected | pass |
+| Restart | migration replay and file-backed detail survives reopen | pass |
+| Focused regression | new test 4/4 (23 expectations); related task/action/report 46/46 (253 expectations) | pass |
+| Audit/lint/diff | UI audit 759/768/1546, scoped ESLint, Timesheets-owned `git diff --check` | pass after exact-path staging |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task Form capture | blocked; Core3 3001 refused and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-form-view-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.
+
 ## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
 
 | Check | Expected evidence | Result |

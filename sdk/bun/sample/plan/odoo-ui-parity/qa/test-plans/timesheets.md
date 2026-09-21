@@ -534,6 +534,26 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 44 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
+
+- Source/action: `timesheet_action_all` registers the Form view
+  `timesheet_view_form_user` through `timesheet_action_view_all_form`; the
+  task Timesheets action retains it for internal users with task/subtask scope.
+- Page contract: `pages/task-timesheets.yaml` stays layout-only and adds a
+  Form tab bound to `apps/services/timesheets/pages/timesheet-detail.yaml`.
+- API contract: task page/API remains joined by `page.id: task-timesheets`;
+  the detail page/API pair is joined by `page.id: timesheet-detail` and
+  exposes the durable `timesheet_detail` source and guarded actions.
+- Migration: `20260921193000-027-timesheets-task-action-form.yaml`, replay-safe
+  task/company/state/date/version lookup index.
+- Focused test:
+  `test/timesheets_task_action_form_view.integration.test.ts` — 4 tests / 23
+  expectations, including actor/company/missing/empty, stale edit, and restart.
+- Related regression: task/action/report suites — 46 tests / 253 expectations.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
+  evidence is blocked; exact probes are in the feature evidence directory.
+
 ## Wave 43 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
 
 - Source/action: `timesheet_action_all` supplies the source pivot and

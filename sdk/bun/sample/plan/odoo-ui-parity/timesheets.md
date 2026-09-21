@@ -1898,6 +1898,34 @@ blocked by that same shared-worktree defect. Evidence is under
 Core3 and authenticated Odoo browser capture are blocked, so no visual or
 module sign-off is claimed. Odoo Print/PDF/action-surface blockers remain open.
 
+## Wave 44 — `TIMESHEET-TASK-ACTION-FORM-VIEW-001`
+
+Odoo registers `timesheet_view_form_user` and attaches it to
+`timesheet_action_all` through `timesheet_action_view_all_form`. The task
+Timesheets action inherits that Form view for internal users. Core3's task
+action had List, Kanban, Calendar, Pivot, and Graph but no Form tab; this
+slice is distinct from every completed task action and earlier Timesheets
+slice.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds a Form tab bound
+to the existing `timesheet-detail` side-panel page. The task page/API pair
+remains joined by `page.id: task-timesheets`; the detail page and
+`api/entry-detail.yaml` remain separately joined by `page.id: timesheet-detail`
+and provide durable entry fields/actions with permission, company, actor,
+missing, empty, guarded-create, stale-write, and concurrency boundaries.
+Migration `20260921193000-027-timesheets-task-action-form.yaml` adds a
+replay-safe task/company/state/date/version lookup index.
+
+Focused coverage is
+`test/timesheets_task_action_form_view.integration.test.ts`: 4 tests / 23
+expectations. Related task/action/report coverage is 46 tests / 253
+expectations. Scoped ESLint and UI audit pass at 759 pages, 768 routes, and
+1,546 datasources; Timesheets-owned diff-check is recorded with commit
+evidence. Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-form-view-001/`.
+Core3 and authenticated Odoo browser capture are blocked, so no visual or
+module sign-off is claimed. Odoo Print/PDF/action-surface blockers remain open.
+
 ## Wave 43 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
 
 Odoo's task Timesheets action inherits the source pivot view from
