@@ -971,3 +971,22 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-OP-TYPE-READY-MOVES-001/`.
 - Full Inventory sign-off remains open; this slice does not claim Odoo CRUD
   mutation parity for the source read/report action.
+
+## `INV-WAREHOUSE-RESUPPLY-001` — Warehouse Resupply From (2026-09-21)
+
+- Selected the next uncovered warehouse behavior after Operation Type Ready
+  Moves: Odoo's same-company `resupply_wh_ids` Warehouse Configuration setting,
+  implemented through `stock_wh_resupply_table`. This does not duplicate the
+  completed Routes configuration slice.
+- Added migration `20260922070000-057-inventory-warehouse-resupply.yaml`, a
+  deterministic Main → Overflow relation, and manager-only Add/Remove line-item
+  actions on the existing warehouse detail API. The page/API remain separated
+  by `page.id: warehouse-detail` and expose a responsive Resupply From list,
+  same-company options, parent/link row-version guards, actor checks, and
+  restart-safe persistence.
+- Focused verification passes 4 tests / 29 assertions. Authenticated Core3
+  desktop/mobile detail and Add form evidence plus the exact Odoo live result
+  are under
+  `evidence/inventory/2026-09-21/INV-WAREHOUSE-RESUPPLY-001/`.
+- Automatic Odoo route generation is intentionally outside this bounded
+  setting slice; full Inventory sign-off remains open.

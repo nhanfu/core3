@@ -1775,6 +1775,34 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Configuration > Warehouses > Resupply From — `INV-WAREHOUSE-RESUPPLY-001` (2026-09-21)
+
+This bounded Wave 20 slice covers Odoo's warehouse `Resupply From` setting,
+distinct from the excluded Warehouse Routes lifecycle. The source form renders
+`resupply_wh_ids` as same-company warehouse checkboxes at
+`addons/stock/views/stock_warehouse_views.xml:40-44`; the model defines the
+many-to-many relation through `stock_wh_resupply_table` at
+`addons/stock/models/stock_warehouse.py:83-88`.
+
+Core3 adds migration `20260922070000-057-inventory-warehouse-resupply.yaml`
+with a deterministic Main Warehouse → Overflow Warehouse relation. The
+existing `pages/warehouse-detail.yaml` and
+`api/warehouse-detail.yaml` remain page-id paired; the API owns the
+same-company options source plus manager-only Add/Remove line-item actions,
+while the page owns the responsive Resupply From list. Parent and link row
+versions, company scope, authenticated actor, same-warehouse, duplicate, and
+permission guards are enforced. This slice models the durable setting only;
+automatic Odoo route generation remains outside this bounded feature.
+
+Focused verification is in
+`test/inventory_warehouse_resupply.integration.test.ts`: 4 tests / 29
+assertions cover source comparison, discovery, deterministic relation/options,
+CRUD, permission/company/actor/concurrency guards, migration replay, and
+restart persistence. Authenticated Core3 desktop/mobile evidence and the
+paired Odoo comparison or exact blocker are under
+`evidence/inventory/2026-09-21/INV-WAREHOUSE-RESUPPLY-001/`.
+Full Inventory sign-off remains open.
+
 ## Reporting > Revert Inventory Adjustment — `INV-MOVE-REVERT-001` (2026-09-21)
 
 This bounded Wave 17 slice covers the previously unimplemented Odoo server

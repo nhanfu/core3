@@ -1,0 +1,37 @@
+{
+  "feature_id": "INV-WAREHOUSE-RESUPPLY-001",
+  "authenticated": true,
+  "desktop": {
+    "url": "http://127.0.0.1:4333/inventory/warehouses/detail?id=warehouse-main",
+    "hasRelation": true,
+    "addCount": 1,
+    "addFormVisible": true,
+    "failures": [],
+    "pageErrors": [],
+    "metrics": {
+      "bodyWidth": 1440,
+      "viewportWidth": 1440,
+      "title": "Warehouse"
+    },
+    "bodySample": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nWarehouses\n›\nWarehouse\nBack to Warehouses\nEdit\nArchive\nDelete\nMain Warehouse\n\nWH\n\nACTIVE\nWarehouse\nWarehouse\nMain Warehouse\nShort Name\nWH\nCompany\nMy Company (San Francisco)\nAddress\nHo Chi Minh City\nWarehouse Configuration\nIncoming Shipments\none_step\nOutgoing Shipments\nship_only\nActive Locations\n13\nResupply From\n1\nAdd warehouse\nSupply Chain / Inventory / Configuration / Warehouses / Warehouse\n1-1 / 1\n‹\n›\nWarehouse\n\tShort Name\n\tCompany\n\t\n\nOverflow Warehouse\n\tWH-OVERFLOW\tMy Company (San Francisco)\tRemove\nAdd resupply warehouse\nResupply From *\nChọn…\nOverflow Warehouse (WH-OVERFLOW)\nCancel\nSave"
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4333/inventory/warehouses/detail?id=warehouse-main",
+    "hasRelation": true,
+    "addCount": 1,
+    "addFormVisible": true,
+    "failures": [],
+    "pageErrors": [],
+    "metrics": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "title": "Warehouse"
+    },
+    "bodySample": "AU\nBack to Warehouses\nEdit\nArchive\nDelete\nMain Warehouse\n\nWH\n\nACTIVE\nWarehouse\nWarehouse\nMain Warehouse\nShort Name\nWH\nCompany\nMy Company (San Francisco)\nAddress\nHo Chi Minh City\nWarehouse Configuration\nIncoming Shipments\none_step\nOutgoing Shipments\nship_only\nActive Locations\n13\nResupply From\n1\nAdd warehouse\nWarehouse\n1-1 / 1\n‹\n›\nWarehouse\n\tShort Name\n\t\n\nOverflow Warehouse\n\tWH-OVERFLOW\tRemove\nAdd resupply warehouse\nResupply From *\nChọn…\nOverflow Warehouse (WH-OVERFLOW)\nCancel\nSave"
+  },
+  "odoo": {
+    "status": 303,
+    "location": "/web/login?redirect=%2Fweb%3F",
+    "blocker": "Odoo redirected to /web/login; authenticated paired warehouse/resupply visual evidence unavailable."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "feature_id": "INV-WAREHOUSE-RESUPPLY-001",
+  "odoo_source": {
+    "view": "addons/stock/views/stock_warehouse_views.xml:40-44",
+    "model": "addons/stock/models/stock_warehouse.py:83-88",
+    "field": "resupply_wh_ids",
+    "relation_table": "stock_wh_resupply_table",
+    "domain": "[('id', '!=', id), ('company_id', '=', company_id)]"
+  },
+  "core3": {
+    "page": "services/inventory/pages/warehouse-detail.yaml",
+    "api": "services/inventory/api/warehouse-detail.yaml",
+    "migration": "services/inventory/migrations/20260922070000-057-inventory-warehouse-resupply.yaml",
+    "page_id": "warehouse-detail",
+    "table": "inventory_warehouse_resupply_links"
+  },
+  "comparison": "Core3 models the same-company Resupply From relation with durable add/remove actions, manager permission, parent/link row versions, and responsive detail rendering."
+}

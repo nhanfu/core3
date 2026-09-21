@@ -1,0 +1,5 @@
+{
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "Odoo redirected to /web/login; authenticated paired warehouse/resupply visual evidence unavailable."
+}

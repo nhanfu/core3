@@ -28,3 +28,22 @@ components:
           - { field: reception_steps, label: Incoming Shipments }
           - { field: delivery_steps, label: Outgoing Shipments }
           - { field: location_count, label: Active Locations }
+          - { field: resupply_count, label: Resupply From }
+  - type: ListView
+    variant: odoo
+    source: inventory_warehouse_resupply_warehouses
+    header_actions:
+      - { id: add_inventory_warehouse_resupply, label: Add warehouse, variant: primary, permission: inventory.manage }
+    columns:
+      - { field: supplier_name, label: Warehouse, type: PrimaryEntityCell, mobile: true }
+      - { field: supplier_code, label: Short Name, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: remove_inventory_warehouse_resupply, label: Remove, icon: trash, variant: danger, permission: inventory.manage }
+    row_key: id
+    row_actions: buttons
+    selectable: false
+    empty_state: { title: No resupply warehouses, description: Select another warehouse in this company to resupply the current warehouse. }

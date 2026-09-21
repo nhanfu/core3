@@ -1,0 +1,24 @@
+version: 0.0.57
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_warehouse_resupply_links (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        supplied_warehouse_id VARCHAR NOT NULL,
+        supplier_warehouse_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(supplied_warehouse_id, supplier_warehouse_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_warehouse_resupply_supplied_idx
+        ON inventory_warehouse_resupply_links(supplied_warehouse_id, company_name, id);
+      INSERT INTO inventory_warehouse_resupply_links(id, supplied_warehouse_id, supplier_warehouse_id, company_name)
+      VALUES ('warehouse-resupply-main-overflow', 'warehouse-main', 'warehouse-overflow', 'My Company (San Francisco)')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_warehouse_resupply_links;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

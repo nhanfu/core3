@@ -1291,3 +1291,29 @@ QA disposition: PASS for the bounded Core3 Ready Moves read/drilldown
 contract and persistence; PARTIAL/BLOCKED for paired live Odoo visual or
 mutation comparison if the supplied Odoo session is unavailable. Full
 Inventory sign-off remains open.
+
+## Inventory Warehouse Resupply From QA — `INV-WAREHOUSE-RESUPPLY-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_warehouse_views.xml:40-44` and
+  `addons/stock/models/stock_warehouse.py:83-88`. The Warehouse Configuration
+  form exposes `resupply_wh_ids` with a different-warehouse, same-company
+  domain and stores the relation in `stock_wh_resupply_table`.
+- Core3 contract: PASS. `pages/warehouse-detail.yaml` owns the visible
+  Resupply From list/Add form and `api/warehouse-detail.yaml` owns options,
+  durable relation actions, and guards; both retain `page.id: warehouse-detail`.
+  Migration 0.0.57 persists the deterministic relation.
+- Focused test: `bun test
+  test/inventory_warehouse_resupply.integration.test.ts` — PASS, 4 tests / 29
+  assertions. Coverage includes source markers, discovery, relation/options,
+  Add/Remove CRUD, manager permission, company/actor/duplicate/stale guards,
+  migration replay, and file-backed restart persistence.
+- Core3 browser evidence: authenticated desktop/mobile warehouse detail and
+  Add form captures, no request/page errors, and no horizontal overflow are
+  under `evidence/inventory/2026-09-21/INV-WAREHOUSE-RESUPPLY-001/`.
+- Odoo comparison: HTTP 303 to `/web/login?redirect=%2Fweb%3F`; authenticated
+  paired Odoo visual/action evidence is blocked and not claimed.
+
+QA disposition: PASS for the bounded Core3 durable Resupply From setting;
+PARTIAL/BLOCKED for paired live Odoo visual/mutation comparison. Automatic
+route generation and full Inventory sign-off remain open.

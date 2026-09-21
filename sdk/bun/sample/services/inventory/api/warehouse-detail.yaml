@@ -4,7 +4,16 @@ datasources:
     single: true
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_WAREHOUSE_DETAIL_UNAVAILABLE, message: Warehouse details are temporarily unavailable. } }
-    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COALESCE(w.reception_steps, 'one_step') AS reception_steps, COALESCE(w.delivery_steps, 'ship_only') AS delivery_steps, COUNT(l.id) AS location_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state, w.reception_steps, w.delivery_steps"
+    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COALESCE(w.reception_steps, 'one_step') AS reception_steps, COALESCE(w.delivery_steps, 'ship_only') AS delivery_steps, COUNT(DISTINCT l.id) AS location_count, COUNT(DISTINCT resupply.id) AS resupply_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' LEFT JOIN inventory_warehouse_resupply_links resupply ON resupply.supplied_warehouse_id = w.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state, w.reception_steps, w.delivery_steps"
+  - id: inventory_warehouse_resupply_warehouses
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_WAREHOUSE_RESUPPLY_UNAVAILABLE, message: Warehouse resupply settings are temporarily unavailable. } }
+    query: "SELECT link.id, link.row_version, link.supplied_warehouse_id, link.supplier_warehouse_id, supplier.name AS supplier_name, supplier.code AS supplier_code, link.company_name FROM inventory_warehouse_resupply_links link JOIN inventory_warehouses supplied ON supplied.id = link.supplied_warehouse_id JOIN inventory_warehouses supplier ON supplier.id = link.supplier_warehouse_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND link.supplied_warehouse_id = :id AND (NULLIF(:current_company_name, '') IS NULL OR link.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND link.company_name = 'My Company (San Francisco)')) ORDER BY supplier.name, supplier.id"
+  - id: inventory_warehouse_resupply_options
+    single: false
+    permission: inventory.manage
+    query: "SELECT w.id AS value, w.name || ' (' || w.code || ')' AS label FROM inventory_warehouses w JOIN inventory_warehouses supplied ON supplied.id = :id WHERE w.id <> :id AND w.company_name = supplied.company_name AND (NULLIF(:current_company_name, '') IS NULL OR w.company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND w.company_name = 'My Company (San Francisco)')) ORDER BY w.name, w.id"
 actions:
   - id: back_to_inventory_warehouses
     type: navigate
@@ -39,6 +48,50 @@ actions:
       - { field: address, label: Address, type: text }
       - { field: reception_steps, label: Incoming Shipments, type: select, options: [{ value: one_step, label: Receive and Store (1 step) }, { value: two_steps, label: Receive then Store (2 steps) }, { value: three_steps, label: 'Receive, Quality Control, then Store (3 steps)' }] }
       - { field: delivery_steps, label: Outgoing Shipments, type: select, options: [{ value: ship_only, label: Deliver (1 step) }, { value: pick_ship, label: Pick then Deliver (2 steps) }, { value: pick_pack_ship, label: 'Pick, Pack, then Deliver (3 steps)' }] }
+  - id: add_inventory_warehouse_resupply
+    type: server_form
+    permission: inventory.manage
+    title: Add resupply warehouse
+    action: inventory.warehouses.resupply.add
+    handler: yaml_mutation
+    operation: create
+    domain: inventory_warehouse_detail
+    params: { id: '{state.inventory_warehouse_detail.id}' }
+    refresh: [inventory_warehouse_detail, inventory_warehouse_resupply_warehouses, inventory_warehouse_resupply_options]
+    mutation:
+      generated: [link_id]
+      before_steps:
+        - query: "SELECT :id AS supplied_warehouse_id, 'warehouse-resupply-' || :id || '-' || :supplier_warehouse_id AS link_id, company_name FROM inventory_warehouses WHERE id = :id"
+          assign: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:current_user_id, ''), NULLIF(:current_user_name, '')) IS NOT NULL", status: 403, code: INVENTORY_WAREHOUSE_RESUPPLY_ACTOR_REQUIRED, message: An authenticated inventory manager is required. }
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :id AND row_version = :parent_expected_row_version AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 409, code: INVENTORY_WAREHOUSE_RESUPPLY_STALE, message: The warehouse changed before its resupply settings could be updated. Reload and try again. }
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :supplier_warehouse_id AND id <> :id AND company_name = (SELECT company_name FROM inventory_warehouses WHERE id = :id)", status: 422, code: INVENTORY_WAREHOUSE_RESUPPLY_SOURCE_INVALID, message: Select a different warehouse in the same company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_warehouse_resupply_links WHERE supplied_warehouse_id = :id AND supplier_warehouse_id = :supplier_warehouse_id)", status: 409, code: INVENTORY_WAREHOUSE_RESUPPLY_EXISTS, message: This warehouse is already a resupply source. }
+      steps:
+        - { query: "INSERT INTO inventory_warehouse_resupply_links(id, supplied_warehouse_id, supplier_warehouse_id, company_name, row_version) VALUES(:link_id, :id, :supplier_warehouse_id, :company_name, 1)" }
+        - { query: "UPDATE inventory_warehouses SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: INVENTORY_WAREHOUSE_RESUPPLY_STALE, message: The warehouse changed before its resupply settings could be updated. }
+      result: { query: "SELECT * FROM inventory_warehouse_resupply_links WHERE id = :link_id" }
+    fields: [{ field: supplier_warehouse_id, label: Resupply From, type: select, options_source: inventory_warehouse_resupply_options, required: true }]
+  - id: remove_inventory_warehouse_resupply
+    type: server
+    permission: inventory.manage
+    action: inventory.warehouses.resupply.remove
+    handler: yaml_mutation
+    operation: delete
+    domain: inventory_warehouse_detail
+    params: { id: '{state.inventory_warehouse_detail.id}', line_id: '{row.id}' }
+    refresh: [inventory_warehouse_detail, inventory_warehouse_resupply_warehouses, inventory_warehouse_resupply_options]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_warehouse_resupply_links WHERE id = :line_id AND supplied_warehouse_id = :id AND row_version = :expected_row_version", status: 409, code: INVENTORY_WAREHOUSE_RESUPPLY_LINK_STALE, message: This resupply link changed before it could be removed. Reload and try again. }
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :id AND row_version = :parent_expected_row_version AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 409, code: INVENTORY_WAREHOUSE_RESUPPLY_STALE, message: The warehouse changed before its resupply settings could be updated. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:current_user_id, ''), NULLIF(:current_user_name, '')) IS NOT NULL", status: 403, code: INVENTORY_WAREHOUSE_RESUPPLY_ACTOR_REQUIRED, message: An authenticated inventory manager is required. }
+      steps:
+        - { query: "DELETE FROM inventory_warehouse_resupply_links WHERE id = :line_id AND supplied_warehouse_id = :id AND row_version = :expected_row_version", expect_changed: true, code: INVENTORY_WAREHOUSE_RESUPPLY_LINK_STALE, message: This resupply link changed before it could be removed. }
+        - { query: "UPDATE inventory_warehouses SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: INVENTORY_WAREHOUSE_RESUPPLY_STALE, message: The warehouse changed before its resupply settings could be updated. }
   - id: archive_inventory_warehouse
     type: server
     permission: inventory.manage
