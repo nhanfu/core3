@@ -512,3 +512,24 @@ pages, 735 routes, and 1,409 datasources.
 | Focused regression | new test 4/4; All Timesheets 58/58 | pass |
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
+
+## Wave 41 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
+
+- Source/action: `project.task.action_view_subtask_timesheet`, including the
+  internal-user branch that preserves the `kanban` view.
+- Page contract: `pages/task-timesheets.yaml` stays layout-only and adds a
+  responsive employee-grouped Kanban view with task, date, time-spent, and
+  status card fields.
+- API contract: `api/task-timesheets.yaml` remains separate and is joined by
+  `page.id: task-timesheets`; durable `task_timesheet_entries` supplies the
+  projection and existing `timesheets.read`, company, missing, empty, stale,
+  and guarded mutation boundaries.
+- Migration: `20260921190000-024-timesheets-task-action-kanban.yaml`, replay-safe
+  task/company/employee/state/date lookup index.
+- Focused test:
+  `test/timesheets_task_action_kanban_view.integration.test.ts` — 4 tests / 17
+  expectations, including durable create and file-backed restart.
+- Related regression: task/action/report suites — 34 tests / 187 expectations.
+- Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
+  the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
+  evidence is blocked; exact probes are in the feature evidence directory.

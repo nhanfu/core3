@@ -1871,6 +1871,38 @@ Core3 refused port 3001 and Odoo 8069/8073 exposed only unauthenticated
 visual sign-off is claimed. Odoo Print/PDF/action-surface blockers remain
 open.
 
+## Wave 41 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
+
+The next uncovered branch of Odoo `project.task.action_view_subtask_timesheet`
+preserves a Kanban view for internal users (`if view[1] == 'kanban'`). This is
+distinct from the completed task graph branch, project context, active_ids
+multi-scope, display-name, and earlier Timesheets slices.
+
+Core3 keeps `pages/task-timesheets.yaml` layout-only and adds a responsive
+Kanban view grouped by employee, with task, date, time-spent, and status card
+fields. It remains joined to the separate durable
+`api/task-timesheets.yaml` contract by `page.id: task-timesheets`; existing
+permission, current-company, missing, empty, guarded-create, stale-context,
+and concurrency boundaries remain enforced by the task entry datasource and
+mutation. Migration
+`20260921190000-024-timesheets-task-action-kanban.yaml` adds a replay-safe
+Kanban lookup index.
+
+Focused coverage is
+`test/timesheets_task_action_kanban_view.integration.test.ts`: 4 tests / 17
+expectations, including source/action mapping, current-company Kanban rows,
+guarded durable create, migration replay, and file-backed restart. Related
+task/action/report coverage is 34 tests / 187 expectations. Scoped ESLint and
+Timesheets-owned `git diff --check` pass; the UI audit passes at 756 pages,
+765 routes, and 1,534 datasources.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-action-kanban-view-001/`.
+Core3 desktop/mobile capture is blocked by the unavailable port 3001 runtime;
+paired Odoo routes reach only unauthenticated `/web/login`. No authenticated
+visual or module sign-off is claimed. Odoo Print/PDF/action-surface blockers
+remain open.
+
 ## Wave 37 — `TIMESHEET-TASK-ACTION-DISPLAY-NAME-001`
 
 The next smallest open source-backed task behavior is Odoo's

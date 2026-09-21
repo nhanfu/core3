@@ -1061,3 +1061,23 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
   unauthenticated `/web/login` boundary, so authenticated desktop/mobile
   evidence is blocked and no visual sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
+
+## 2026-09-21 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
+
+- Selected the Kanban branch of Odoo `project.task.action_view_subtask_timesheet`,
+  which preserves `kanban` for the internal task action. This does not repeat
+  the completed graph, project-context, multi-scope, display-name, or earlier
+  Timesheets slices.
+- Added a responsive employee-grouped Kanban view to the layout-only
+  `task-timesheets` page. It remains paired with the durable
+  `task_timesheet_entries` API by `page.id: task-timesheets`; the replay-safe
+  migration `20260921190000-024-timesheets-task-action-kanban.yaml` adds the
+  task/company/status/date lookup index.
+- Focused coverage passed 4/4 tests with 17 expectations. Related task/action/
+  report coverage passed 34/34 tests with 187 expectations. Scoped ESLint,
+  UI audit passed at 756 pages / 765 routes / 1,534 datasources, and the
+  Timesheets-owned staged diff-check passed.
+- Core3 port 3001 was unavailable and Odoo 8069/8073 exposed only the
+  unauthenticated `/web/login` boundary, so authenticated desktop/mobile
+  evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
+  blockers remain open.

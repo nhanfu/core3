@@ -1106,3 +1106,21 @@ claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-graph-view-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no module sign-off is
 claimed.
+
+## Wave 41 — `TIMESHEET-TASK-ACTION-KANBAN-VIEW-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `action_view_subtask_timesheet`, internal-user `kanban` preservation branch | pass in focused source test |
+| Paired YAML contract | layout-only `task-timesheets` page, separate API `page.id` binding, responsive Kanban cards | pass |
+| Durable Kanban projection | current-company task rows grouped by employee with task/date/time/status fields | pass |
+| Permission/company/missing/empty guards | `timesheets.read`, current company, missing task, empty fixture | pass |
+| Guarded CRUD freshness | persisted task row is visible in the Kanban projection after guarded create | pass |
+| Restart | migration replay and file-backed rows survive reopen | pass |
+| Focused regression | new test 4/4 (17 expectations); related task/action/report 34/34 (187 expectations) | pass |
+| Audit/lint/diff | UI audit 756/765/1534, scoped ESLint, Timesheets-owned `git diff --check` | pass after exact-path staging |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo task Kanban capture | blocked; Core3 3001 refused and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-kanban-view-001/`.
+Odoo Print/PDF/action-surface blockers remain open; no visual or module
+sign-off is claimed.
