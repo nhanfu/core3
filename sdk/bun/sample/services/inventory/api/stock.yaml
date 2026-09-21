@@ -8,7 +8,7 @@ datasources:
     single: false
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_STOCK_UNAVAILABLE, message: On Hand stock is temporarily unavailable. } }
-    query: "SELECT q.id, q.row_version, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, q.quantity, q.reserved_quantity, q.quantity - q.reserved_quantity AS available_quantity, q.unit_cost, q.quantity * q.unit_cost AS stock_value FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') ORDER BY q.product_name, w.name, l.name, q.id"
+    query: "SELECT q.id, q.row_version, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, q.company_name, q.quantity, q.reserved_quantity, q.quantity - q.reserved_quantity AS available_quantity, q.unit_cost, q.quantity * q.unit_cost AS stock_value FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') ORDER BY q.product_name, w.name, l.name, q.id"
   - id: inventory_quant_relocations
     single: false
     permission: inventory.read
@@ -19,6 +19,11 @@ actions:
     permission: inventory.read
     navigate_to: /stock/quant-history
     params: { quant_id: '{row.id}' }
+  - id: view_inventory_quant_replenishment
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /stock/quant-replenishment
+    params: { quant_id: '{row.id}', expected_row_version: '{row.row_version}', current_company_name: '{row.company_name}' }
   - id: relocate_inventory_quant
     type: server_form
     permission: inventory.manage

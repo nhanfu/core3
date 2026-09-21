@@ -1,0 +1,25 @@
+{
+  "feature_id": "INV-QUANT-REPLENISHMENT-001",
+  "odoo": {
+    "view": "addons/stock/views/stock_quant_views.xml:147-148",
+    "model": "addons/stock/models/stock_quant.py:390-393",
+    "product_action": "addons/stock/models/product.py:601-615",
+    "window_action": "addons/stock/views/stock_orderpoint_views.xml:164-179",
+    "behavior": "The On Hand quant row opens Replenishment, carrying the selected location in context while the product action scopes the stock.warehouse.orderpoint window to the selected product and excludes snoozed rules."
+  },
+  "core3": {
+    "page": "services/inventory/pages/quant-replenishment.yaml",
+    "api": "services/inventory/api/quant-replenishment.yaml",
+    "page_id": "quant-replenishment",
+    "entrypoint": "services/inventory/pages/stock.yaml:view_inventory_quant_replenishment",
+    "migration": "services/inventory/migrations/20260922170000-067-inventory-quant-replenishment.yaml",
+    "behavior": "The On Hand row opens a company-scoped quant context, its active orderpoints, and durable refresh history."
+  },
+  "comparison": {
+    "source_mapping": "pass",
+    "page_api_separation": "pass",
+    "durable_context_and_history": "pass",
+    "permission_company_stale_actor_guards": "pass",
+    "live_odoo_execution": "blocked_by_login_redirect"
+  }
+}

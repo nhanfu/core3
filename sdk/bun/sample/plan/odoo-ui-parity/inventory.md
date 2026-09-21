@@ -2208,3 +2208,34 @@ returned HTTP 303 to `/web/login?redirect=%2Fweb%3F`; exact source, browser, and
 Odoo blocker evidence is under
 `evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/`. Full Inventory sign-off
 remains open.
+
+## On Hand > Quant Replenishment — `INV-QUANT-REPLENISHMENT-001` (2026-09-21)
+
+This bounded Wave 30 slice closes Odoo's On Hand quant-row `Replenishment`
+action without duplicating the global Replenishment report or Replenishment
+Information form. Odoo declares the row button in
+`addons/stock/views/stock_quant_views.xml:147-148`; the quant method delegates
+to `product.product.action_view_orderpoints` in
+`addons/stock/models/stock_quant.py:390-393`, which scopes
+`stock.warehouse.orderpoint` using the selected product and context. The
+destination action is `stock.action_orderpoint_replenish` in
+`addons/stock/views/stock_orderpoint_views.xml:164-179`.
+
+Core3 adds migration
+`services/inventory/migrations/20260922170000-067-inventory-quant-replenishment.yaml`
+with a deterministic quant/location orderpoint and durable replenishment-open
+history. Separate `pages/quant-replenishment.yaml` and
+`api/quant-replenishment.yaml` contracts share `page.id: quant-replenishment`;
+the On Hand row action supplies quant and company context. Queries are
+company-scoped and the Refresh report action enforces manager permission,
+actor, company, and quant row-version guards.
+
+Focused verification passes 4 tests / 37 assertions in
+`test/inventory_quant_replenishment.integration.test.ts`, including source
+comparison, discovery/schema separation, deterministic filtering and empty /
+transport states, durable report history, migration replay, restart
+persistence, and permission denial. Core3 desktop/mobile probing reached
+only the sign-in shell, and live Odoo returned HTTP 303 to `/web/login`; exact
+blockers and non-authenticated login-shell captures are under
+`evidence/inventory/2026-09-21/INV-QUANT-REPLENISHMENT-001/`. Full Inventory
+sign-off remains open.

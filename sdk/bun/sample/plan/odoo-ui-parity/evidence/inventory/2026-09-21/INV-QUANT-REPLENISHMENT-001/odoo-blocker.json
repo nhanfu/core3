@@ -1,0 +1,8 @@
+{
+  "feature_id": "INV-QUANT-REPLENISHMENT-001",
+  "status": "blocked",
+  "request": "GET http://127.0.0.1:8069/web",
+  "observed": "HTTP 303 Location: /web/login?redirect=%2Fweb%3F",
+  "impact": "No authenticated Odoo On Hand quant row or Replenishment action screenshot/execution is claimed.",
+  "captured_at": "2026-09-21"
+}

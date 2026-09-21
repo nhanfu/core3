@@ -20,6 +20,7 @@ components:
         sortable: false
         actions:
           - { id: view_inventory_quant_history, label: History, icon: history, permission: inventory.read }
+          - { id: view_inventory_quant_replenishment, label: Replenishment, icon: refresh, variant: secondary, permission: inventory.manage }
           - { id: relocate_inventory_quant, label: Relocate, icon: transfer, variant: secondary, permission: inventory.manage }
     page_size: 50
     row_key: id

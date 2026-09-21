@@ -1,0 +1,46 @@
+page: { id: quant-replenishment, route: /stock/quant-replenishment, breadcrumb: [Supply Chain, Inventory, On Hand, Replenishment], auth: { require: [inventory.manage] } }
+components:
+  - type: StatRow
+    source: inventory_quant_replenishment_context
+    title: Quant Replenishment
+    stats:
+      - { label: Product, field: product_name }
+      - { label: Location, field: location_name }
+      - { label: Rules, field: orderpoint_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_quant_replenishment_orderpoints
+    header_actions:
+      - { id: refresh_inventory_quant_replenishment, label: Refresh Replenishment, variant: secondary, permission: inventory.manage }
+      - { id: back_to_inventory_stock_from_quant_replenishment, label: Back to On Hand, variant: secondary, permission: inventory.manage }
+    search: { label: Search replenishment, placeholder: 'Search product, rule, or location...' }
+    filters:
+      - { field: trigger, label: Trigger, options_source: inventory_quant_replenishment_triggers }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell, sortable: true }
+      - { field: rule_name, label: Rule, sortable: true }
+      - { field: location_name, label: Location }
+      - { field: on_hand, label: On Hand, align: right }
+      - { field: forecast, label: Forecast, align: right }
+      - { field: min_qty, label: Min, align: right }
+      - { field: max_qty, label: Max, align: right }
+      - { field: to_order, label: To Order, align: right }
+      - { field: route, label: Route }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 30
+    row_key: id
+    row_open_action: view_inventory_quant_replenishment_orderpoint
+    row_double_click_action: view_inventory_quant_replenishment_orderpoint
+    empty_state: { title: No replenishment rules, description: No active orderpoint is configured for this quantity and location. }
+  - type: ListView
+    variant: odoo
+    source: inventory_quant_replenishment_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: orderpoint_count, label: Rules, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No replenishment requests, description: Refresh Replenishment records each request for this quantity. }

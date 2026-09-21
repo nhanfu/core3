@@ -1,0 +1,66 @@
+page: { id: quant-replenishment }
+datasources:
+  - id: inventory_quant_replenishment_context
+    single: true
+    permission: inventory.manage
+    error_states:
+      not_found: { status: 404, code: INVENTORY_QUANT_REPLENISHMENT_NOT_FOUND, message: The selected quantity is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_QUANT_REPLENISHMENT_CONTEXT_UNAVAILABLE, message: Quant replenishment is temporarily unavailable. }
+    query: "SELECT q.id, q.row_version, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, q.company_name, CAST(COUNT(o.id) AS BIGINT) AS orderpoint_count FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id LEFT JOIN inventory_orderpoints o ON o.product_id = q.product_id AND o.location_name = l.name AND o.company_name = q.company_name AND o.active = TRUE WHERE q.id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name) GROUP BY q.id, q.row_version, q.product_id, q.product_name, l.name, w.name, q.company_name"
+  - id: inventory_quant_replenishment_orderpoints
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_QUANT_REPLENISHMENT_LINES_UNAVAILABLE, message: Quant replenishment rules are temporarily unavailable. } }
+    query: "SELECT o.id, o.row_version, o.rule_name, o.product_id, o.product_name, o.category_name, o.location_name, o.warehouse_name, CAST(o.on_hand AS DOUBLE) AS on_hand, CAST(o.forecast AS DOUBLE) AS forecast, o.route, CAST(o.min_qty AS DOUBLE) AS min_qty, CAST(o.max_qty AS DOUBLE) AS max_qty, CAST(o.to_order AS DOUBLE) AS to_order, o.unit_name, o.trigger, o.state, CAST(o.snoozed_until AS VARCHAR) AS snoozed_until, COALESCE(o.order_reference, '') AS order_reference, o.company_name, o.lead_days FROM inventory_orderpoints o JOIN inventory_quants q ON q.id = :quant_id AND q.product_id = o.product_id AND q.company_name = o.company_name JOIN inventory_locations l ON l.id = q.location_id AND l.name = o.location_name WHERE o.active = TRUE AND (NULLIF(:current_company_name, '') IS NULL OR q.company_name = :current_company_name) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR o.product_name ILIKE '%' || :q || '%' OR o.rule_name ILIKE '%' || :q || '%' OR o.location_name ILIKE '%' || :q || '%') AND (:trigger IS NULL OR :trigger = '' OR o.trigger = :trigger) ORDER BY o.product_name, o.location_name, o.id"
+  - id: inventory_quant_replenishment_runs
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_QUANT_REPLENISHMENT_RUNS_UNAVAILABLE, message: Quant replenishment history is temporarily unavailable. } }
+    query: "SELECT id, row_version, quant_id, product_name, location_name, requested_by, company_name, orderpoint_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_quant_replenishment_runs WHERE quant_id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name) ORDER BY opened_at DESC, id DESC"
+  - id: inventory_quant_replenishment_triggers
+    single: false
+    permission: inventory.manage
+    query: "SELECT value, label FROM (VALUES ('manual', 'Manual'), ('auto', 'Auto')) triggers(value, label) ORDER BY label"
+actions:
+  - id: refresh_inventory_quant_replenishment
+    type: client
+    permission: inventory.manage
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_quant_replenishment_context;
+        if (!context?.id) throw new Error('Quant replenishment context is unavailable');
+        await request('/api/actions/inventory.quants.replenishment', {
+          method: 'POST',
+          body: { quant_id: context.id, expected_row_version: context.row_version, company_name: context.company_name },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_quant_replenishment
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.replenishment
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_quant_replenishment_context, inventory_quant_replenishment_orderpoints, inventory_quant_replenishment_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'quant-replenishment-' || CAST(:quant_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_quant_replenishment_runs WHERE quant_id = :quant_id) AS VARCHAR) AS id, q.product_id, q.product_name, l.name AS location_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, q.company_name, COUNT(o.id) AS orderpoint_count FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id LEFT JOIN inventory_orderpoints o ON o.product_id = q.product_id AND o.location_name = l.name AND o.company_name = q.company_name AND o.active = TRUE WHERE q.id = :quant_id GROUP BY q.id, q.product_id, q.product_name, l.name, q.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_quants WHERE id = :quant_id AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 404, code: INVENTORY_QUANT_REPLENISHMENT_NOT_FOUND, message: The selected quantity is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :quant_id AND row_version = :expected_row_version AND (NULLIF(:current_company_name, '') IS NULL OR company_name = :current_company_name)", status: 409, code: INVENTORY_QUANT_REPLENISHMENT_STALE, message: The quantity changed before replenishment was opened. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_QUANT_REPLENISHMENT_ACTOR_REQUIRED, message: An authenticated inventory actor is required to open replenishment. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_QUANT_REPLENISHMENT_COMPANY, message: The replenishment company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_quant_replenishment_runs(id, quant_id, product_id, product_name, location_name, requested_by, company_name, orderpoint_count, opened_at, row_version) VALUES(:id, :quant_id, :product_id, :product_name, :location_name, :requested_by, :company_name, :orderpoint_count, TIMESTAMP '2026-01-15 10:20:00', 1)"
+      result: { query: "SELECT id, quant_id, product_id, product_name, location_name, requested_by, company_name, orderpoint_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_quant_replenishment_runs WHERE id = :id" }
+  - id: back_to_inventory_stock_from_quant_replenishment
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /stock
+  - id: view_inventory_quant_replenishment_orderpoint
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /replenishment/info
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }

@@ -1571,11 +1571,40 @@ remains open.
   Playwright probe reached only the login shell and was stopped before the
   authenticated redirect; the captures are not an authenticated visual pass.
   Exact status is in
-  `evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/core3-browser.json`.
+`evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/core3-browser.json`.
 - Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
   303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
   execution or screenshot is claimed.
 
 QA disposition: PASS for the bounded Core3 durable lot-transfer contract and
 integration lifecycle; PARTIAL/BLOCKED for desktop/mobile and live Odoo
+comparison. Full Inventory sign-off remains open.
+
+## Inventory Quant Replenishment QA — `INV-QUANT-REPLENISHMENT-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_quant_views.xml:147-148`,
+  `addons/stock/models/stock_quant.py:390-393`,
+  `addons/stock/models/product.py:601-615`, and
+  `addons/stock/views/stock_orderpoint_views.xml:164-179`. The action carries
+  the selected location context and product-scopes active orderpoints.
+- Core3 contract: PASS. The presentation-only
+  `pages/quant-replenishment.yaml` and backend
+  `api/quant-replenishment.yaml` are joined by `page.id`; the On Hand row
+  exposes the manager-only entry action. Migration 0.0.67 persists a
+  company-scoped orderpoint fixture and durable open-history rows.
+- Focused verification: PASS —
+  `bun test test/inventory_quant_replenishment.integration.test.ts`, 4 tests /
+  37 assertions. Coverage includes source/schema checks, deterministic
+  context/rule/history queries, search/empty/transport states,
+  actor/company/stale guards, restart persistence, and permission denial.
+- Core3 browser evidence: BLOCKED for this wave. Desktop and mobile probes
+  reached `/auth/login`; login-shell captures are explicitly not authenticated
+  page evidence and authenticated overflow was not assessed.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo action
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable quant-replenishment
+lifecycle; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
 comparison. Full Inventory sign-off remains open.

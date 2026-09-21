@@ -1177,3 +1177,23 @@ Full Inventory sign-off remains open.
   blockers are recorded under
   `evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/`. Full Inventory
   sign-off remains open.
+
+## `INV-QUANT-REPLENISHMENT-001` — On Hand Quant Replenishment (2026-09-21)
+
+- Selected Odoo's uncovered On Hand quant-row `Replenishment` action after
+  excluding completed lot transfers, lot locations, quant history, and prior
+  transfer/package/product/warehouse/report slices. Source mapping covers the
+  quant row button, `stock.quant.action_view_orderpoints`, the product
+  orderpoint action, and the `stock.action_orderpoint_replenish` window.
+- Added migration `20260922170000-067-inventory-quant-replenishment.yaml`
+  with deterministic company/location orderpoint data and a durable report-run
+  ledger. Added separate `quant-replenishment` page/API YAML joined by
+  `page.id`; On Hand now passes quant row version and company context.
+- Focused verification passes 4 tests / 37 assertions for source mapping,
+  discovery, deterministic search/empty/transport states,
+  actor/company/stale guards, migration replay, restart persistence, and
+  `inventory.manage` permission denial.
+- Core3 probing reached only the login shell in the bounded desktop/mobile
+  attempt, so no authenticated visual pass is claimed. Odoo returned HTTP 303
+  to `/web/login`; exact blockers and captures are recorded under the feature
+  evidence directory. Full Inventory sign-off remains open.

@@ -1,0 +1,14 @@
+{
+  "feature_id": "INV-QUANT-REPLENISHMENT-001",
+  "status": "blocked_authentication",
+  "target": "/inventory/stock/quant-replenishment?quant_id=quant-box-main&current_company_name=Core3%20Demo%20Company",
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900, "capture": "desktop.png", "authenticated": false },
+    "mobile": { "width": 390, "height": 844, "capture": "mobile.png", "authenticated": false }
+  },
+  "observed": "The Core3 probe redirected to /auth/login and rendered the sign-in shell. The bounded credential submission did not complete, so no authenticated page or action execution is claimed.",
+  "page_errors": [],
+  "failed_responses": [],
+  "horizontal_overflow": "not_assessed_on_authenticated_page",
+  "captured_at": "2026-09-21"
+}

@@ -1,0 +1,33 @@
+version: 0.0.67
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_quant_replenishment_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        quant_id VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        location_name VARCHAR NOT NULL, requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, orderpoint_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_quant_replenishment_runs_quant ON inventory_quant_replenishment_runs(quant_id, opened_at, id);
+      INSERT INTO inventory_orderpoints (id, rule_name, product_id, product_name, category_name, location_name, warehouse_name, on_hand, forecast, route, min_qty, max_qty, to_order, unit_name, trigger, state, active, company_name, lead_days, created_at, updated_at)
+      SELECT 'orderpoint-quant-replenish-0001', 'Quant Replenishment', q.product_id, q.product_name, 'Office Supplies', l.name, w.name, q.quantity, q.quantity - q.reserved_quantity, 'Buy', 20, 40, 2, COALESCE(q.unit_name, 'Units'), 'manual', 'Open', TRUE, q.company_name, 5, TIMESTAMP '2026-01-15 10:10:00', TIMESTAMP '2026-01-15 10:10:00'
+      FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id
+      WHERE q.id = 'quant-box-main'
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_quant_replenishment_runs(id, quant_id, product_id, product_name, location_name, requested_by, company_name, orderpoint_count, opened_at)
+      SELECT 'quant-replenishment-quant-box-main-1', q.id, q.product_id, q.product_name, l.name, 'Seeded Inventory', q.company_name, COUNT(o.id), TIMESTAMP '2026-01-15 10:15:00'
+      FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id
+      LEFT JOIN inventory_orderpoints o ON o.product_id = q.product_id AND o.location_name = l.name AND o.company_name = q.company_name AND o.active = TRUE
+      WHERE q.id = 'quant-box-main'
+      GROUP BY q.id, q.product_id, q.product_name, l.name, q.company_name
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_quant_replenishment_runs WHERE id = 'quant-replenishment-quant-box-main-1';
+      DELETE FROM inventory_orderpoints WHERE id = 'orderpoint-quant-replenish-0001';
+      DROP TABLE IF EXISTS inventory_quant_replenishment_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
