@@ -1,0 +1,14 @@
+version: 0.0.131
+kind: data
+description: deterministic eCommerce product page image spacing fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_page_image_spacing_policies (id, row_version, company_name, image_spacing)
+      VALUES ('ecommerce-product-page-image-spacing-my-company', 1, 'My Company', 'none')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_product_page_image_spacing_policies WHERE id = 'ecommerce-product-page-image-spacing-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

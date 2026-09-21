@@ -129,6 +129,10 @@ menu:
           label: Product Page Image Width
           icon: image
           permission: ecommerce.read
+        - path: /ecommerce/product-page-image-spacing
+          label: Product Page Image Spacing
+          icon: image
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

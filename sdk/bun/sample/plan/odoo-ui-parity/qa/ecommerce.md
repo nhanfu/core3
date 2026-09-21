@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Product Page Image Spacing (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines None, Small, Medium, and
+  Big; the product template applies the selected value to its image-grid data
+  attribute.
+- Core3 lifecycle: focused verification pass. Migrations 130/131 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with explicit spacing validation;
+  Product Detail projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_product_page_image_spacing.integration.test.ts --timeout
+  30000` — **2 passed, 26 assertions, 0 failures**.
+- Regression: image-spacing, image-width, image-layout, image-ratio, and
+  Product Detail suites — **13 passed, 129 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at **744 pages, 753 routes, and 1478
+  datasources**; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- QA decision: bounded slice verified; local implementation commit is
+  `cafc7605` and has not been pushed;
+  Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-image-spacing-001/`.
+
 ## Product Page Image Width (`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines Hidden, 33%, 50%, 66%,

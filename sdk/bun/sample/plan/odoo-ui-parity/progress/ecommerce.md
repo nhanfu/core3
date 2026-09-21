@@ -4,18 +4,36 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 33 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`
+(committed locally as `cafc7605`; not pushed).
 Latest Wave 32 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
-(committed locally as `98e78675`; not pushed).
+(committed locally as `726521e9`; pushed in the current synchronized base).
 Latest Wave 31 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
-(committed locally as `d2eebcfc`; not pushed).
+(committed locally as `a79b02c9`; pushed in the current synchronized base).
 Latest Wave 30 bounded slice: `ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`
-(committed locally as `2115b857`; not pushed).
-Latest committed bounded slice: `98e78675`
-(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`, local and not pushed).
+(committed locally as `c4930038`; pushed in the current synchronized base).
+Latest committed bounded slice: `cafc7605`
+(`ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`, local and not pushed).
 Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001`
+
+Wave 33 selected Odoo Website Sale's four-value product image spacing setting.
+Migrations 130/131 add the durable company policy and fixture; separate
+policy page/API YAML provides the supported options, permissioned optimistic
+update, validation, and company isolation. Product Detail reads the effective
+company spacing and displays it. Focused source, contract, CRUD,
+invalid/foreign/stale, projection, replay, and restart tests pass; the
+image-spacing plus prior image policy and Product Detail regression passes
+13 tests and 129 assertions. The UI audit passes at 744 pages, 753 routes,
+and 1478 datasources; scoped ESLint and diff checks pass. Core3
+desktop/mobile capture is blocked by unavailable ports 3000/4312/4313 and no
+persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and
+8073. This bounded slice is not module sign-off; the implementation commit
+implementation commit: `cafc7605` (local and not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001`
 

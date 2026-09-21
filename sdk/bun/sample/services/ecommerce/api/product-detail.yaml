@@ -33,6 +33,13 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_WIDTH_FORBIDDEN, message: You do not have permission to view product page image width. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_WIDTH_UNAVAILABLE, message: Product page image width is temporarily unavailable. }
     query: "SELECT w.id, w.row_version, w.company_name, w.image_width, CASE w.image_width WHEN 'none' THEN 'Hidden' WHEN '33_pc' THEN '33 %' WHEN '50_pc' THEN '50 %' WHEN '66_pc' THEN '66 %' ELSE '100 %' END AS image_width_label FROM ecommerce_product_page_image_width_policies w JOIN ecommerce_products p ON p.company_name = w.company_name WHERE p.id = :id AND (:company_name IS NULL OR w.company_name = :company_name)"
+  - id: ecommerce_product_page_image_spacing
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_UNAUTHENTICATED, message: Sign in to view product page image spacing. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_FORBIDDEN, message: You do not have permission to view product page image spacing. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_UNAVAILABLE, message: Product page image spacing is temporarily unavailable. }
+    query: "SELECT s.id, s.row_version, s.company_name, s.image_spacing, CASE s.image_spacing WHEN 'none' THEN 'None' WHEN 'small' THEN 'Small' WHEN 'medium' THEN 'Medium' ELSE 'Big' END AS image_spacing_label FROM ecommerce_product_page_image_spacing_policies s JOIN ecommerce_products p ON p.company_name = s.company_name WHERE p.id = :id AND (:company_name IS NULL OR s.company_name = :company_name)"
   - id: ecommerce_product_categories
     permission: ecommerce.read
     error_states:

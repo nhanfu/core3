@@ -1,0 +1,11 @@
+title: Product Page Image Spacing
+page: { id: ecommerce-product-page-image-spacing-policy, route: /ecommerce/product-page-image-spacing, breadcrumb: [eCommerce, Configuration, Product Page Image Spacing], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_product_page_image_spacing_policy
+    editable: true
+    title_field: company_name
+    header_actions:
+      - { id: edit_ecommerce_product_page_image_spacing_policy, label: Save Image Spacing, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Product Page Images, columns: 2, fields: [{ field: company_name, label: Company }, { field: image_spacing, label: Product Page Image Spacing, type: select, options_source: ecommerce_product_page_image_spacing_options }, { field: image_spacing_label, label: Current Spacing, type: StatusChip }, { field: updated_at, label: Last Updated }] }

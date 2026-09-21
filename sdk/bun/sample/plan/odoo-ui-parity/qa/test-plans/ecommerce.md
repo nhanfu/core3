@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-SPACING-001
+
+- ECOM-FUNC-062: trace Website Sale `product_page_image_spacing`, its None,
+  Small, Medium, and Big values, and the product-template `data-image_spacing`
+  boundary; verify separate Core3 policy and Product Detail page/API contracts.
+- ECOM-WF-073: replay the deterministic None policy, switch spacing values,
+  project the effective Product Detail spacing, reject invalid/foreign/stale
+  writes, and preserve the policy across migration replay and DuckDB restart.
+- ECOM-PERM-069: require `ecommerce.read` for policy/options/detail reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards, with safe stale replay behavior.
+- ECOM-UI-055: render the spacing form and Product Detail projection at
+  desktop and mobile and compare the authenticated Odoo image-grid behavior;
+  Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-IMAGE-WIDTH-001
 
 - ECOM-FUNC-061: trace Website Sale `product_page_image_width`, its five

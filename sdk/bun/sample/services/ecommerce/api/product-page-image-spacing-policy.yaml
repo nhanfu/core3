@@ -1,0 +1,36 @@
+page: { id: ecommerce-product-page-image-spacing-policy }
+datasources:
+  - id: ecommerce_product_page_image_spacing_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_UNAUTHENTICATED, message: Sign in to view product page image spacing settings. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_FORBIDDEN, message: You do not have permission to view product page image spacing settings. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_NOT_FOUND, message: Product page image spacing settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_UNAVAILABLE, message: Product page image spacing settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, image_spacing, CASE image_spacing WHEN 'none' THEN 'None' WHEN 'small' THEN 'Small' WHEN 'medium' THEN 'Medium' ELSE 'Big' END AS image_spacing_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_image_spacing_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_product_page_image_spacing_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('none', 'None'), ('small', 'Small'), ('medium', 'Medium'), ('big', 'Big')) spacing(value, label)"
+actions:
+  - id: edit_ecommerce_product_page_image_spacing_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Product Page Image Spacing
+    action: ecommerce.products.page_image_spacing.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_page_image_spacing_policy, ecommerce_product_detail]
+    mutation:
+      required: [id, expected_row_version, image_spacing]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_page_image_spacing_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_STALE, message: These product page image spacing settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :image_spacing IN ('none', 'small', 'medium', 'big')", status: 422, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_INVALID, message: Choose a supported product image spacing. }
+      steps:
+        - { query: "UPDATE ecommerce_product_page_image_spacing_policies SET image_spacing = :image_spacing, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_PAGE_IMAGE_SPACING_STALE, message: These product page image spacing settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, image_spacing, CASE image_spacing WHEN 'none' THEN 'None' WHEN 'small' THEN 'Small' WHEN 'medium' THEN 'Medium' ELSE 'Big' END AS image_spacing_label, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_page_image_spacing_policies WHERE id = :id" }
+    fields:
+      - { field: image_spacing, label: Product Page Image Spacing, type: select, options_source: ecommerce_product_page_image_spacing_options, required: true }
