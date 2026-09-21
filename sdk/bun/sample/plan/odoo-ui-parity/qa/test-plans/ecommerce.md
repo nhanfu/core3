@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-WISHLIST-ADD-TO-CART-001
+
+- ECOM-FUNC-091: compare Odoo's Wishlist Page `o_wish_add` button and
+  `ProductWishlist.addToCart` interaction with the separate Core3 Wishlist
+  page/API contracts; verify the visible Add to Cart row action and Cart
+  refresh/redirect intent.
+- ECOM-WF-091: add a saved customer product and variant to the owned open cart,
+  merge quantity with an existing line, remove the wishlist item only after a
+  successful cart mutation, create a missing customer cart, and preserve both
+  durable records across DuckDB restart.
+- ECOM-PERM-091: require `ecommerce.write`; reject wrong customer, wrong
+  company, missing/stale wishlist rows, closed or foreign carts, unavailable
+  products/variants, and zero-price products when the source policy blocks
+  sale.
+- ECOM-UI-091: exercise the Wishlist row Add to Cart action and refreshed Cart
+  state at desktop/mobile. The authenticated Odoo reference returns exact
+  `/shop/wishlist` HTTP 404 at both viewports and Core3 ports 3000/4312/4313
+  have no listener, so paired rendered UI sign-off is blocked.
+
 ## ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001
 
 - ECOM-FUNC-090: trace Odoo `website_sale_wishlist.models.website`, the

@@ -4,6 +4,11 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 52 bounded slice: `ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`
+(implementation and focused verification complete; authenticated Odoo
+`/shop/wishlist` is an exact 404 because Website Sale/Wishlist is absent, and
+Core3 runtime ports 3000/4312/4313 are unavailable; module sign-off remains
+open).
 Latest Wave 51 bounded slice: `ECOM-CATALOG-WISHLIST-PAGE-LAYOUT-001`
 (implementation and focused/adjacent verification complete; authenticated Odoo
 visual comparison blocked by exact `/shop/wishlist` 404 and Core3 runtime

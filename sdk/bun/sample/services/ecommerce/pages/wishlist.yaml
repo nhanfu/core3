@@ -14,6 +14,7 @@ components:
       - { field: added_at, label: Added }
     row_actions: menu
     actions:
+      - { id: add_to_cart_ecommerce_wishlist_item, label: Add to Cart, permission: ecommerce.write, variant: primary }
       - { id: remove_ecommerce_wishlist_item, label: Remove, permission: ecommerce.write, variant: danger }
     page_size: 50
     row_key: id
