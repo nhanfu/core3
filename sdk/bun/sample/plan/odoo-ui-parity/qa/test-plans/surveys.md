@@ -780,3 +780,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.
+
+## `SURVEYS-SUGGESTED-VALUE-DELETE-001` — Suggested Value deletion
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-068 | authenticated form | Suggested Values → row menu → Delete | Separate API/page YAML exposes Odoo suggested-value deletion joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-067 | permission/actor/state | Missing actor/answer, archived or stale relation, unsupported question type | Reject before deletion with explicit 403/404/409 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-065 | persistence/concurrency/restart | Delete → parent/question version advance → stale/replay → reopen | Answer is durably removed, parent versions advance, and replay cannot delete twice | test-results.md, focused test | pass |
+| SURVEYS-UI-066 | authenticated responsive/reference | Suggested Values delete menu desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.

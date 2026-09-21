@@ -2567,3 +2567,35 @@ authenticated desktop/mobile browser capture and paired Odoo comparison were
 unavailable. No visual or paired Odoo sign-off is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.
+
+## Wave 43 — `SURVEYS-SUGGESTED-VALUE-DELETE-001`
+
+The next uncovered source-backed Suggested Values action is deleting an
+existing `survey.question.answer`. Odoo exposes `survey_question_answer_action`
+as a `list,form` action for `survey.question.answer`; standard record deletion
+removes the answer relation, whose `question_id` and `matrix_question_id` use
+`ondelete='cascade'` (`addons/survey/views/survey_question_views.xml:335-408`,
+`addons/survey/models/survey_question.py:844-869`). The model's stable order
+remains `question_id, sequence, id`.
+
+Core3 adds the API-owned `delete_survey_suggested_value` action and a dangerous
+row-menu action on the existing Suggested Values page, joined by
+`page.id: survey-suggested-values`. Migration `0.0.67` adds the durable
+`(question_id, sequence, id)` lookup index. The hard-delete transaction
+requires `surveys.write` and an authenticated actor, rejects missing,
+archived/stale survey, stale question/answer, and unsupported question-type
+rows, then advances question and survey versions after deleting the answer.
+The inspected Odoo Survey source has no `company_id`, so company scoping is
+not applicable.
+
+Focused verification is **3 passed / 25 assertions**; the adjacent
+question/suggested-value regression is **18 passed / 134 assertions**; and
+`test/surveys.integration.test.ts` is **23 passed / 220 assertions**. The UI
+audit passes with **758 pages, 767 routes, and 1,544 datasources**; scoped
+ESLint and `git diff --check` pass.
+
+Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. No visual or paired Odoo sign-off is claimed.
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.

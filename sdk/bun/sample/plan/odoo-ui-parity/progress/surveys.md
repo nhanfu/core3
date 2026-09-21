@@ -1300,3 +1300,27 @@ desktop/mobile and paired Odoo evidence; no visual sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.
+
+## 2026-09-21 — `SURVEYS-SUGGESTED-VALUE-DELETE-001`
+
+Selected the next uncovered Odoo `survey.question.answer` lifecycle action:
+delete an existing Suggested Value from the `list,form` action. Core3 now
+owns `delete_survey_suggested_value` in `api/suggested-values.yaml` and binds
+it to the Suggested Values row menu in `pages/suggested-values.yaml`, joined
+by `page.id: survey-suggested-values`.
+
+Migration `0.0.67` adds the durable suggested-value ordering index. The
+transaction requires `surveys.write` and an actor, rejects missing/archived
+or stale survey, question, and answer rows plus unsupported question types,
+hard-deletes the answer, and advances question and survey versions. Odoo's
+Survey source has no `company_id`, so company scope is not applicable.
+
+Verification: **3 focused tests / 25 assertions**, **18 adjacent question and
+suggested-value tests / 134 assertions**, and **23 broader Surveys integration
+tests / 220 assertions** pass. Audit reports **758 pages, 767 routes, and
+1,544 datasources**; scoped ESLint and diff-check pass. Core3 and Odoo ports
+3000/3001/3390/3391/8072 are closed, blocking authenticated desktop/mobile and
+paired Odoo evidence; no visual or parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-DELETE-001/`.

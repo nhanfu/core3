@@ -1,0 +1,19 @@
+{
+  "feature_id": "SURVEYS-SUGGESTED-VALUE-DELETE-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": { "status": "blocked", "ports": [3000, 3001], "http_status": 0, "reason": "No Core3 listener was available for an authenticated browser session." },
+    "mobile": { "status": "blocked", "ports": [3390, 3391], "http_status": 0, "reason": "No Core3 listener was available for an authenticated browser session." }
+  },
+  "odoo": {
+    "status": "blocked",
+    "port": 8072,
+    "http_status": 0,
+    "reason": "The Odoo reference listener was unavailable; no authenticated comparison or visual sign-off was claimed."
+  },
+  "observed": [
+    "ss reported ports 3000, 3001, 3390, 3391, and 8072 closed.",
+    "curl to Core3 suggested-values routes and Odoo /web/login returned connection failure (HTTP status 000)."
+  ],
+  "signoff": false
+}

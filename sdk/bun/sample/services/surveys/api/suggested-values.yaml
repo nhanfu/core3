@@ -47,3 +47,31 @@ actions:
         - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_PARENT_CHANGED, message: This survey changed while the suggested value was being edited. }
       result:
         query: "SELECT sv.id, sv.row_version, sv.updated_at, sv.question_id, sv.question_text, q.question_type, q.row_version AS question_row_version, q.survey_id, s.row_version AS survey_row_version, sv.value, sv.sequence, sv.score, sv.matrix_row, sv.matrix_column FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id"
+  - id: delete_survey_suggested_value
+    type: server
+    permission: surveys.write
+    action: surveys.suggested_values.delete
+    handler: yaml_mutation
+    operation: delete
+    params:
+      id: '{row.id}'
+      expected_row_version: '{row.row_version}'
+      expected_question_row_version: '{row.question_row_version}'
+      expected_survey_row_version: '{row.survey_row_version}'
+    refresh: [survey_suggested_values]
+    mutation:
+      before_steps:
+        - query: "SELECT sv.question_id AS question_id, q.survey_id AS survey_id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT sv.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id", status: 404, code: SURVEY_SUGGESTED_VALUE_DELETE_NOT_FOUND, message: Suggested value not found. }
+        - { query: "SELECT s.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id JOIN surveys s ON s.id = q.survey_id WHERE sv.id = :id AND s.state <> 'Archived' AND s.row_version = :expected_survey_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_PARENT_CHANGED, message: This survey changed or is archived. Reload before deleting the suggested value. }
+        - { query: "SELECT q.id FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id AND q.row_version = :expected_question_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_QUESTION_CHANGED, message: This question changed before the suggested value could be deleted. Reload it and try again. }
+        - { query: "SELECT id FROM survey_suggested_values WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_STALE, message: This suggested value changed or was removed. Reload it and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_SUGGESTED_VALUE_DELETE_ACTOR_REQUIRED, message: An authenticated survey actor is required to delete a suggested value. }
+        - { query: "SELECT 1 AS ok FROM survey_suggested_values sv JOIN survey_questions q ON q.id = sv.question_id WHERE sv.id = :id AND q.question_type IN ('Choice', 'Multiple Choice', 'Matrix')", status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_TYPE_INVALID, message: Suggested values can only be deleted from choice or matrix questions. }
+      steps:
+        - { query: "DELETE FROM survey_suggested_values WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_STALE, message: This suggested value changed or was removed. Reload it and try again. }
+        - { query: "UPDATE survey_questions SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :question_id AND row_version = :expected_question_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_QUESTION_CHANGED, message: This question changed while the suggested value was being deleted. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_survey_row_version", expect_changed: true, status: 409, code: SURVEY_SUGGESTED_VALUE_DELETE_PARENT_CHANGED, message: This survey changed while the suggested value was being deleted. }
+      result: { query: "SELECT true AS deleted, :id AS id" }

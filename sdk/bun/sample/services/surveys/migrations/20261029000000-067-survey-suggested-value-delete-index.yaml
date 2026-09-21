@@ -1,0 +1,13 @@
+version: 0.0.67
+description: Durable ordered index for Odoo Survey suggested-value deletion and listing
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS survey_suggested_values_question_order_idx ON survey_suggested_values(question_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS survey_suggested_values_question_order_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
