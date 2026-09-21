@@ -1695,3 +1695,28 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-REORDER-001/.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.
+
+## Bounded QA run: `SURVEYS-SUGGESTED-VALUE-EDIT-001` — 2026-09-21
+
+- Source/UI: Odoo's Suggested Values action is a grouped `list,form` for
+  `survey.question.answer`; the form edits value, sequence, score, and
+  matrix metadata, while the model orders rows by `question_id, sequence, id`
+  and limits labels to 90 characters.
+- Persistence/contracts: migration `0.0.66` adds `updated_at`.
+  `api/suggested-values.yaml` owns the edit server form and
+  `pages/suggested-values.yaml` binds list open/double-click/menu actions;
+  both join at `page.id: survey-suggested-values`.
+- Guards: `surveys.write`, actor, missing answer, archived or stale survey,
+  stale question/answer, supported question type, value length, sequence, and
+  score guards execute before mutation. The Odoo source has no Survey
+  `company_id`, so company scoping is not applicable.
+- Verification: **3 focused tests / 27 assertions**, **15 adjacent question
+  and suggested-value tests / 109 assertions**, and **23 broader Surveys
+  integration tests / 220 assertions** pass. Audit reports **757 pages, 766
+  routes, and 1,541 datasources**; scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072
+  were closed. Authenticated Core3 desktop/mobile and paired Odoo captures are
+  unavailable; no visual or Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.

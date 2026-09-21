@@ -2534,3 +2534,36 @@ unavailable. The primary Odoo Surveys app is also recorded as uninstalled in
 the live limitation above. No visual or paired Odoo sign-off is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.
+
+## Wave 42 — `SURVEYS-SUGGESTED-VALUE-EDIT-001`
+
+The next uncovered source-backed Questions & Answers behavior is editing an
+existing `survey.question.answer`. Odoo exposes the Suggested Values action
+as a grouped `list,form` over `survey.question.answer`; its form edits the
+question relation, value, sequence, score, and matrix row/column fields
+(`addons/survey/views/survey_question_views.xml:335-398`). The model uses
+stable `question_id, sequence, id` ordering and caps answer labels at 90
+characters (`addons/survey/models/survey_question.py:844-869`).
+
+Core3 adds the API-owned `edit_survey_suggested_value` form to
+`api/suggested-values.yaml` and binds list open, double-click, and row-menu
+actions in `pages/suggested-values.yaml` through matching
+`page.id: survey-suggested-values`. Migration `0.0.66` adds durable
+`updated_at` audit storage. The transaction edits value/sequence/score and
+matrix metadata, advances the suggested-value, question, and parent survey
+versions, and guards `surveys.write`, actor, missing, archived/stale survey,
+stale question/answer, supported question type, value length, sequence, and
+score boundaries. The inspected Odoo Survey source has no `company_id`, so
+company scoping is not applicable.
+
+Focused verification is **3 passed / 27 assertions**; the adjacent
+question/suggested-value regression is **15 passed / 109 assertions**, and
+`test/surveys.integration.test.ts` is **23 passed / 220 assertions**. The UI
+audit passes with **757 pages, 766 routes, and 1,541 datasources**; scoped
+ESLint and `git diff --check` pass.
+
+Core3 ports 3000, 3001, 3390, 3391 and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. No visual or paired Odoo sign-off is claimed.
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.

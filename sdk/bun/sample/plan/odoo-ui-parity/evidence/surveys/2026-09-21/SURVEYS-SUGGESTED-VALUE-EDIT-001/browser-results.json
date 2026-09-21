@@ -1,0 +1,28 @@
+{
+  "feature_id": "SURVEYS-SUGGESTED-VALUE-EDIT-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "status": "blocked",
+      "ports": { "3000": "closed", "3001": "closed", "3390": "closed", "3391": "closed" },
+      "result": "No authenticated Core3 desktop render was available."
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "ports": { "3000": "closed", "3001": "closed", "3390": "closed", "3391": "closed" },
+      "result": "No authenticated Core3 mobile render was available."
+    }
+  },
+  "odoo": {
+    "desktop": { "status": "blocked", "port": 8072, "result": "Reference port closed; no authenticated comparison." },
+    "mobile": { "status": "blocked", "port": 8072, "result": "Reference port closed; no authenticated comparison." }
+  },
+  "signoff": "conditional",
+  "blockers": [
+    "Core3 runtime ports were closed.",
+    "Odoo reference port 8072 was closed.",
+    "No authenticated desktop/mobile or paired Odoo visual evidence can be claimed."
+  ]
+}

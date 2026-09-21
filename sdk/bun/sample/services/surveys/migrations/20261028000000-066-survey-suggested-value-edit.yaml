@@ -1,0 +1,14 @@
+version: 0.0.66
+description: Durable audit timestamp for Odoo Survey suggested-value edits
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_suggested_values ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      UPDATE survey_suggested_values SET updated_at = COALESCE(updated_at, TIMESTAMP '2026-01-15 09:00:00');
+    down: |
+      ALTER TABLE survey_suggested_values DROP COLUMN IF EXISTS updated_at;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

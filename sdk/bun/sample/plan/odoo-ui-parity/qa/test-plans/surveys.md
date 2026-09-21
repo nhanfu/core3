@@ -768,3 +768,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.
+
+## `SURVEYS-SUGGESTED-VALUE-EDIT-001` — Suggested Value edit
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-067 | authenticated form | Suggested Values → open/edit answer | Separate API/page YAML exposes Odoo suggested-value editing joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-066 | permission/actor/state/validation | Missing actor/answer, unsupported type, archived or stale relation, invalid value/sequence/score | Reject before mutation with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-064 | persistence/concurrency/restart | Edit → stale replay → file-backed reopen | Answer, question, and survey versions advance atomically; edit survives restart and replay cannot mutate twice | test-results.md, focused test | pass |
+| SURVEYS-UI-065 | authenticated responsive/reference | Suggested Values list/form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.

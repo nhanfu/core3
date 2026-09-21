@@ -1275,3 +1275,28 @@ desktop/mobile and paired Odoo evidence; no visual sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-QUESTION-EDIT-001/`.
+
+## 2026-09-21 — `SURVEYS-SUGGESTED-VALUE-EDIT-001`
+
+Selected the next uncovered Odoo `survey.question.answer` behavior: edit an
+existing Suggested Value. The API-owned `edit_survey_suggested_value` action
+is joined to the Suggested Values list's open, double-click, and row-menu
+bindings by `page.id: survey-suggested-values`.
+
+Migration `0.0.66` adds durable `updated_at` audit storage. The guarded
+transaction updates value, sequence, score, and matrix metadata; it requires
+`surveys.write` and an actor, rejects missing or archived records, stale
+answer/question/survey versions, unsupported question types, invalid values,
+and invalid sequence/score, then advances all three durable versions. Odoo
+Surveys has no `company_id` in the inspected model/view/security source, so
+company scope is not applicable.
+
+Verification: **3 focused tests / 27 assertions**, **15 adjacent question and
+suggested-value tests / 109 assertions**, and **23 broader Surveys integration
+tests / 220 assertions** pass. UI audit passes with **757 pages, 766 routes,
+and 1,541 datasources**; scoped ESLint and diff-check pass. Core3 ports
+3000/3001/3390/3391 and Odoo port 8072 are closed, blocking authenticated
+desktop/mobile and paired Odoo evidence; no visual sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-EDIT-001/`.
