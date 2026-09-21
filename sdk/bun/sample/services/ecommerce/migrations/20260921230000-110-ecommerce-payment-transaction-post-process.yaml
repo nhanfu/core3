@@ -1,0 +1,23 @@
+version: 0.0.110
+kind: schema
+description: durable eCommerce payment transaction post-processing state
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_payment_transactions
+        ADD COLUMN IF NOT EXISTS is_post_processed BOOLEAN;
+      ALTER TABLE ecommerce_payment_transactions
+        ADD COLUMN IF NOT EXISTS post_processed_at TIMESTAMP;
+      UPDATE ecommerce_payment_transactions
+        SET is_post_processed = FALSE
+        WHERE is_post_processed IS NULL;
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_transactions_post_process_idx
+        ON ecommerce_payment_transactions(is_post_processed, company_name, last_state_change);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_payment_transactions_post_process_idx;
+      ALTER TABLE ecommerce_payment_transactions DROP COLUMN IF EXISTS post_processed_at;
+      ALTER TABLE ecommerce_payment_transactions DROP COLUMN IF EXISTS is_post_processed;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

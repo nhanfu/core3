@@ -1,0 +1,14 @@
+version: 0.0.111
+kind: data
+description: deterministic eCommerce payment post-processing fixture state
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_payment_transactions
+      SET is_post_processed = COALESCE(is_post_processed, FALSE)
+      WHERE id = 'ecommerce-payment-tx-001';
+    down: "UPDATE ecommerce_payment_transactions SET is_post_processed = FALSE, post_processed_at = NULL WHERE id = 'ecommerce-payment-tx-001';"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

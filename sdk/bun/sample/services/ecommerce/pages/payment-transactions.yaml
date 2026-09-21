@@ -16,6 +16,7 @@ components:
       - { field: customer_name, label: Customer }
       - { field: amount, label: Amount, align: right }
       - { field: state, label: Status, type: StatusChip }
+      - { field: is_post_processed, label: Post-processed, type: Boolean }
       - { field: company_name, label: Company }
       - field: actions
         label: ''
@@ -23,6 +24,7 @@ components:
         width: 160
         actions:
           - { id: set_ecommerce_payment_transaction_state, label: Update Status, permission: ecommerce.write }
+          - { id: post_process_ecommerce_payment_transaction, label: Post-process, permission: ecommerce.write, show_if: "row.is_post_processed !== true" }
     row_actions: menu
     page_size: 50
     row_key: id

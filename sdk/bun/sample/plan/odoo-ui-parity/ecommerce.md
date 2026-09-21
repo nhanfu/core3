@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded add-to-cart redirect slice; module sign-off remains open)
+Status: qa-in-progress (bounded payment transaction post-processing slice; module sign-off remains open)
+
+## Bounded feature — Payment Transaction Post-processing (`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`)
+
+Wave 23 selected the remaining Odoo Payment/Website eCommerce transaction
+post-processing action. Odoo's Website eCommerce menu opens
+`payment.action_payment_transaction`; the transaction form exposes a technical
+Post-process button while `is_post_processed` is false, and
+`action_post_process` calls `_post_process`, whose generic behavior durably
+marks the transaction processed before soft-reloading the view.
+
+Core3 migrations 110/111 add durable `is_post_processed` and
+`post_processed_at` state plus deterministic fixture backfill. The existing
+Payment Transactions API/page remain separate and now expose the state and a
+permissioned `ecommerce.write` post-process action. Optimistic company/version
+guards make the action one-shot; ordinary state transitions clear the flag so a
+new terminal state can be post-processed again. Checkout-created transactions
+initialize the new state explicitly, and migration replay/DuckDB restart
+preserve it.
+
+Focused source/contract, transaction workflow, company/idempotency/concurrency,
+checkout regression, migration replay, restart, scoped YAML audit, lint, and
+diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-payment-transaction-post-process-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Add to Cart Redirect Policy (`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`)
 

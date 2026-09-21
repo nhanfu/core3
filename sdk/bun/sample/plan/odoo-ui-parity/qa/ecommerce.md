@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Payment Transaction Post-processing (`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`, 2026-09-21)
+
+- Odoo source/menu: pass. `menu_ecommerce_payment_transactions` opens
+  `payment.action_payment_transaction`; the transaction form exposes
+  `action_post_process` while `is_post_processed` is false, and the generic
+  `_post_process` sets the durable flag before `soft_reload`.
+- Core3 lifecycle: pass for this bounded contract. Migrations 110/111 add the
+  durable flag/timestamp and fixture backfill. The separate Payment
+  Transactions page/API exposes the state and an `ecommerce.write` one-shot
+  action with company/version guards; checkout initializes it and state
+  transitions clear it for a later terminal-state processing pass.
+- Focused verification: `bun test
+  test/ecommerce_payment_transaction_post_process.integration.test.ts` — **3
+  passed, 29 assertions, 0 failures**. Payment transaction, checkout, and
+  saved-token regression — **22 passed, 136 assertions, 0 failures**.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` passed. Full UI audit passed at 726 pages, 735 routes,
+  and 1409 datasources.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-payment-transaction-post-process-001/`.
+
 ## Add to Cart Redirect Policy (`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`, 2026-09-21)
 
 - Odoo source/settings: pass. `website.add_to_cart_action` defines `stay` and

@@ -10,6 +10,22 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001
+
+- ECOM-FUNC-052: trace the Website eCommerce Payment Transactions menu/action,
+  Odoo `is_post_processed`, `action_post_process`, `_post_process`, and form
+  visibility; verify the Core3 page/API pairing.
+- ECOM-WF-063: replay the deterministic transaction, post-process it once,
+  return the durable timestamp, reject repeat/stale requests, reset the flag
+  on a later state transition, and preserve state across migration replay and
+  restart.
+- ECOM-PERM-059: require `ecommerce.read` for transaction reads and
+  `ecommerce.write` for post-processing; reject wrong-company and concurrent
+  writes without changing transaction state.
+- ECOM-UI-045: render transaction post-processing status/action at desktop and
+  mobile; Core3 browser and Odoo comparison remain blocked by runtime
+  availability and `/shop` HTTP 404.
+
 ## ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001
 
 - ECOM-FUNC-051: trace Odoo `website.add_to_cart_action`, the
