@@ -1,0 +1,22 @@
+title: Certification badge
+page: { id: survey-certification-badge, route: /surveys/certification-badge, breadcrumb: [Marketing, Surveys, Participants, Certification badge], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_certification_badge
+    title_field: badge_name
+    subtitle_field: survey_name
+    editable: false
+    header_actions:
+      - { id: award_certification_badge, label: Award badge, permission: surveys.manage, variant: primary, show_if: "record.badge_status === 'Ready'" }
+    groups:
+      - title: Certification badge
+        fields: [{ field: badge_name, label: Badge }, { field: badge_description, label: Description }, { field: participant_name, label: Participant }, { field: participant_email, label: Email }, { field: survey_name, label: Survey }, { field: score, label: Score (%) }, { field: badge_status, label: Status, type: StatusChip }]
+  - type: ContactGrid
+    source: survey_certification_badge_awards
+    row_key: id
+    columns:
+      - { field: badge_name, label: Badge, type: PrimaryEntityCell }
+      - { field: participant_name, label: Participant }
+      - { field: awarded_by, label: Awarded by }
+      - { field: awarded_at, label: Awarded at }
+    empty_state: { title: No badge award, description: A passed certification can receive its badge award. }

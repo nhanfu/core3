@@ -1466,3 +1466,23 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.
+
+## Bounded QA run: SURVEYS-CERTIFICATION-BADGE-001 — 2026-09-21
+
+- Source/UI: Odoo's certification badge configuration and success trigger are
+  represented by the separate authenticated survey-certification-badge
+  page/API pair and passed participant-detail entry point.
+- Persistence/guards: survey_certification_badges has one deterministic row
+  per participant. Failed/in-progress participants return
+  SURVEY_CERTIFICATION_BADGE_NOT_PASSED; actor mismatch returns
+  SURVEY_CERTIFICATION_BADGE_ACTOR; replay and same-key concurrency do not
+  create a second award.
+- Verification: 4 focused tests / 22 assertions and 31 adjacent tests /
+  264 assertions pass. Audit, scoped lint, and diff-check pass.
+- Runtime/reference: Core3 desktop/mobile probes were refused on ports 3000,
+  3001, 3390, and 3391. Odoo /odoo/surveys? returned 303 to login and the
+  session probe returned 415 for missing JSON-RPC content type. No visual,
+  public-renderer, or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.

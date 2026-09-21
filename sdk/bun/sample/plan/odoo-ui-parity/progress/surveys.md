@@ -419,6 +419,25 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — SURVEYS-CERTIFICATION-BADGE-001
+
+Selected the smallest open certification behavior after the Wave 31 report:
+Odoo awards a configured gamification badge when a certification succeeds.
+Core3 adds a separate authenticated survey-certification-badge page/API pair,
+passed-participant filtering, and a durable one-award ledger keyed by
+participant. The surveys.manage mutation enforces passed state and actor
+identity, then replays safely across concurrent calls and file-backed restart.
+Participant detail exposes the badge surface only for passed attempts.
+
+Focused verification passes 4 tests / 22 assertions; the adjacent badge,
+report, and Surveys catalog regression passes 31 tests / 264 assertions.
+Audit, scoped lint, and diff-check pass. Desktop/mobile and Odoo comparison
+remain conditional because Core3 ports were unavailable and Odoo Surveys was
+behind the login/session boundary. No sign-off is claimed.
+
+Evidence is under
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.
+
 ## 2026-09-21 — `SURVEYS-CERTIFICATION-REPORT-001`
 
 Selected the smallest remaining authenticated certification behavior after the

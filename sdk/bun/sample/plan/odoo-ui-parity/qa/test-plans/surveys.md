@@ -649,3 +649,15 @@ Execution evidence is under
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.
+
+## SURVEYS-CERTIFICATION-BADGE-001 — authenticated certification badge
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-057 | authenticated badge | Passed participant → badge detail | Expose a passed-only badge page/API pair and award surface | source-comparison.md, focused test | pass |
+| SURVEYS-WF-054 | restart/idempotency | Award → concurrent replay → file-backed reopen | Persist one participant-keyed award and preserve it after restart | test-results.md, focused test | pass |
+| SURVEYS-PERM-056 | permission/actor | Failed participant and spoofed actor | Reject before mutation with explicit badge guard codes | source-comparison.md, focused test | pass |
+| SURVEYS-UI-055 | authenticated responsive/reference | Badge detail desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.

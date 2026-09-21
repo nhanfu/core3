@@ -1,0 +1,44 @@
+page: { id: survey-certification-badge }
+datasources:
+  - id: survey_certification_badge
+    single: true
+    permission: surveys.read
+    query: "SELECT p.id AS participant_id, p.survey_id, p.survey_name, p.contact AS participant_name, p.email AS participant_email, 'Ready' AS badge_status, p.survey_name AS badge_name, 'Certification passed' AS badge_description, p.quiz_passed, p.score FROM survey_participants p WHERE p.id = :id AND p.state = 'Completed' AND p.quiz_passed = true"
+  - id: survey_certification_badge_awards
+    permission: surveys.read
+    query: "SELECT id, participant_id, survey_id, survey_name, participant_name, participant_email, badge_name, badge_description, awarded_by, CAST(awarded_at AS VARCHAR) AS awarded_at, row_version FROM survey_certification_badges WHERE participant_id = :id ORDER BY awarded_at DESC, id DESC"
+actions:
+  - id: award_certification_badge
+    type: client
+    permission: surveys.manage
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/surveys.certification.badge', {
+          method: 'POST',
+          body: { participant_id: row.participant_id, awarded_by: 'Admin User', current_user_name: 'Admin User' },
+        });
+        window.location.reload();
+      }
+  - id: record_certification_badge
+    type: server
+    permission: surveys.manage
+    action: surveys.certification.badge
+    handler: yaml_mutation
+    operation: award
+    refresh: [survey_certification_badge, survey_certification_badge_awards]
+    mutation:
+      operation: update
+      table: survey_certification_badges
+      fields: [awarded_by]
+      concurrency: false
+      guards:
+        - { query: "SELECT p.id FROM survey_participants p WHERE p.id = :participant_id AND p.state = 'Completed' AND p.quiz_passed = true", status: 404, code: SURVEY_CERTIFICATION_BADGE_NOT_PASSED, message: Only a passed certification can receive a badge. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:awarded_by, ''), 'Admin User') = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: SURVEY_CERTIFICATION_BADGE_ACTOR, message: The badge actor must match the signed-in user. }
+      before_steps:
+        - query: "SELECT 'survey-certification-badge-' || CAST(p.id AS VARCHAR) AS id, p.id AS participant_id, p.survey_id, p.survey_name, p.contact AS participant_name, p.email AS participant_email, p.survey_name AS badge_name, 'Certification passed' AS badge_description, COALESCE(NULLIF(TRIM(CAST(:awarded_by AS VARCHAR)), ''), 'Admin User') AS awarded_by FROM survey_participants p WHERE p.id = :participant_id"
+          assign: true
+        - query: "INSERT INTO survey_certification_badges(id, participant_id, survey_id, survey_name, participant_name, participant_email, badge_name, badge_description, awarded_by, awarded_at, row_version) VALUES (:id, :participant_id, :survey_id, :survey_name, :participant_name, :participant_email, :badge_name, :badge_description, :awarded_by, TIMESTAMP '2026-01-15 00:00:00', 1) ON CONFLICT (id) DO NOTHING"
+      steps:
+        - { query: "UPDATE survey_certification_badges SET awarded_by = :awarded_by, row_version = row_version + 1 WHERE id = :id", expect_changed: true, status: 409, code: SURVEY_CERTIFICATION_BADGE_CHANGED, message: The certification badge changed before it was recorded. }
+      result: { query: "SELECT id, participant_id, survey_id, survey_name, participant_name, participant_email, badge_name, badge_description, awarded_by, CAST(awarded_at AS VARCHAR) AS awarded_at, row_version, 'Awarded' AS badge_status FROM survey_certification_badges WHERE id = :id" }

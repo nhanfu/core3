@@ -1,0 +1,13 @@
+{
+  "feature_id": "SURVEYS-CERTIFICATION-BADGE-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "probe": "127.0.0.1:3000,3001,3390,3391 /api/modules -> curl connection refused", "blocker": "The authenticated Core3 service ports were unavailable for the bounded browser probe." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "probe": "127.0.0.1:3000,3001,3390,3391 /api/modules -> curl connection refused", "blocker": "The authenticated Core3 service ports were unavailable for the bounded browser probe." }
+  },
+  "odoo": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "probe": "GET /odoo/surveys? -> HTTP 303 /odoo/surveys; GET /survey/check_session_code/5822 -> HTTP 415 jsonrpc Content-Type required", "blocker": "The authenticated Surveys badge fixture/session was unavailable." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "probe": "GET /odoo/surveys? -> HTTP 303 /odoo/surveys; GET /survey/check_session_code/5822 -> HTTP 415 jsonrpc Content-Type required", "blocker": "The authenticated Surveys badge fixture/session was unavailable." }
+  },
+  "sign_off": false
+}

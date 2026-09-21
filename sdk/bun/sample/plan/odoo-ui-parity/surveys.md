@@ -2258,3 +2258,31 @@ service ports and Odoo's login/session/fixture blocker. No certification
 parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.
+
+## Wave 32 — `SURVEYS-CERTIFICATION-BADGE-001`
+
+Odoo's authenticated certification model configures a gamification badge at
+addons/survey/models/survey_survey.py:137-145; on certification success its
+badge trigger is created by _create_certification_badge_trigger (lines
+1228-1252). The public completion template displays the awarded badge at
+addons/survey/views/survey_templates.xml:324-326.
+
+Core3 adds an authenticated survey-certification-badge page/API pair and a
+durable survey_certification_badges award ledger. Only completed passed
+participants are disclosed; the award mutation requires surveys.manage,
+checks the signed-in actor, uses the participant ID as an idempotent key, and
+survives migration replay, concurrent calls, and file-backed restart. The
+participant detail page exposes the badge surface only for passed attempts.
+Because the shared public renderer is outside Surveys-owned paths, this
+bounded slice records the authenticated award/detail surface and does not
+claim Odoo's public completion-image rendering or gamification byte parity.
+
+Focused verification is 4 passed / 22 assertions for the new badge test and
+31 passed / 264 assertions across the badge, report, and Surveys catalog
+regression. The UI audit reports 743 pages, 752 routes, and 1,473 datasources;
+scoped ESLint and git diff --check pass. Core3 desktop/mobile ports were
+unavailable; Odoo redirected /odoo/surveys? with HTTP 303 and the session probe
+returned HTTP 415 because the authenticated JSON-RPC content type/session was
+unavailable. No badge parity sign-off is claimed.
+
+Evidence: plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/.

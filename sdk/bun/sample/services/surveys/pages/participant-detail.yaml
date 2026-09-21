@@ -13,6 +13,7 @@ components:
       - { id: send_survey_invitation_detail, label: Send invitation, permission: surveys.write, variant: secondary, show_if: "record.state === 'New'" }
       - { id: resend_survey_invitation_detail, label: Resend invitation, permission: surveys.write, variant: secondary, show_if: "record.state === 'In Progress'" }
       - { id: view_certification_report, label: Print certification, permission: surveys.read, variant: primary, show_if: "record.state === 'Completed' && record.quiz_passed === 'Passed'" }
+      - { id: view_certification_badge, label: Certification badge, permission: surveys.read, variant: secondary, show_if: "record.state === 'Completed' && record.quiz_passed === 'Passed'" }
       - { id: print_completed_answers, label: Print completed answers, permission: surveys.read, variant: primary, show_if: "record.state === 'Completed' && record.answer_count > 0" }
     statusbar: [{ value: New, label: New }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }]
     status_colors: { New: neutral, 'In Progress': blue, Completed: green }
@@ -58,4 +59,9 @@ actions:
     type: navigate
     permission: surveys.read
     navigate_to: /surveys/certification-report
+    params: { id: '{row.id}' }
+  - id: view_certification_badge
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/certification-badge
     params: { id: '{row.id}' }

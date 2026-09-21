@@ -1,0 +1,36 @@
+version: 0.0.51
+description: Durable certification badge awards
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_certification_badges (
+        id VARCHAR PRIMARY KEY,
+        participant_id VARCHAR NOT NULL UNIQUE,
+        survey_id VARCHAR NOT NULL,
+        survey_name VARCHAR NOT NULL,
+        participant_name VARCHAR,
+        participant_email VARCHAR,
+        badge_name VARCHAR NOT NULL,
+        badge_description VARCHAR NOT NULL,
+        awarded_by VARCHAR NOT NULL,
+        awarded_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS survey_certification_badges_survey_idx ON survey_certification_badges(survey_id, awarded_at, id);
+      INSERT INTO survey_certification_badges(
+        id, participant_id, survey_id, survey_name, participant_name, participant_email,
+        badge_name, badge_description, awarded_by, awarded_at, row_version
+      ) VALUES (
+        'survey-certification-badge-participant-certification-2',
+        'participant-certification-2', 'survey-demo-certification', 'MyCompany Vendor Certification',
+        'Gemini Furniture', 'gemini@example.com', 'MyCompany Vendor Certification',
+        'Certification passed', 'Admin User', TIMESTAMP '2026-01-15 00:00:00', 1
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS survey_certification_badges_survey_idx;
+      DROP TABLE IF EXISTS survey_certification_badges;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

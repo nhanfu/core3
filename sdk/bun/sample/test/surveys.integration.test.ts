@@ -279,7 +279,7 @@ describe('Surveys parity catalog and workflow', () => {
       'send_survey_invitation', 'resend_survey_invitation', 'print_completed_answers',
     ]);
     expect(detailPage.components[0].header_actions.map((action: any) => action.id)).toEqual([
-      'complete_survey_participant', 'send_survey_invitation_detail', 'resend_survey_invitation_detail', 'view_certification_report', 'print_completed_answers',
+      'complete_survey_participant', 'send_survey_invitation_detail', 'resend_survey_invitation_detail', 'view_certification_report', 'view_certification_badge', 'print_completed_answers',
     ]);
     const printContract = detail.actions.find((candidate: any) => candidate.id === 'validate_print_completed_answers');
     expect(printContract).toMatchObject({ type: 'server', permission: 'surveys.read', action: 'surveys.participants.print_completed_answers', handler: 'yaml_mutation' });
