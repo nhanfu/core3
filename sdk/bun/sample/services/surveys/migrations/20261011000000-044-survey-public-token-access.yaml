@@ -1,0 +1,29 @@
+version: 0.0.44
+description: Durable Odoo-style token-only public survey access fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS access_mode VARCHAR DEFAULT 'public';
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS access_token VARCHAR;
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS current_question_id VARCHAR;
+      UPDATE surveys SET access_mode = COALESCE(NULLIF(access_mode, ''), 'public');
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, published_at, created_at, updated_at)
+      VALUES ('survey-demo-token-access', 'SURVEY/TOKEN-ACCESS', 'Invitation Only Customer Survey', 'Use the answer link from your invitation to begin this survey.', 'Thanks for completing the invitation-only survey.', 'Mitchell Admin', 0, 'Published', 'token-access-token-2026', 'token', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET access_mode = 'token', state = 'Published', access_token = 'token-access-token-2026';
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-token-access', 'survey-demo-token-access', 'Which invitation benefit matters most?', 'Choice', 1, true, 'Guidance,Flexibility')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+      INSERT INTO survey_responses(id, survey_id, survey_name, answer_data, submitted_at, state, access_token, current_question_id)
+      VALUES ('token-access-answer-2026', 'survey-demo-token-access', 'Invitation Only Customer Survey', '{}', TIMESTAMP '2026-01-15 09:00:00', 'New', 'token-access-answer-2026', 'question-token-access')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, survey_name = excluded.survey_name, answer_data = '{}', state = 'New', access_token = excluded.access_token, current_question_id = excluded.current_question_id;
+    down: |
+      DELETE FROM survey_responses WHERE id = 'token-access-answer-2026';
+      DELETE FROM survey_questions WHERE id = 'question-token-access';
+      DELETE FROM surveys WHERE id = 'survey-demo-token-access';
+      -- Keep the nullable access columns during partial rollback: the parent
+      -- survey/response graph may still have dependent DuckDB entries.
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -97,6 +97,18 @@ and the published public survey token.
 - Full module sign-off still requires paired Odoo comparison, public-flow
   interaction evidence, mutation actor matrix, and persistence after restart.
 
+## 2026-09-21 token-only public access additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-022 | public access | Published token-mode survey → answer token | Existing scoped answer token returns the question graph; survey-only or wrong answer token does not disclose it | pass |
+| SURVEYS-WF-019 | recovery/idempotency | New invited answer → concurrent Start → restart | One durable New → In Progress row survives reopen and both starts converge on the same answer token | pass |
+| SURVEYS-PERM-021 | permission/guards | Public token access boundary | `surveys.public`, survey/answer token matching, and YAML start guard reject missing/wrong access without mutation | pass |
+| SURVEYS-UI-020 | responsive/reference | Token-only public entry desktop/mobile + Odoo | Capture both viewports and exact host/runtime blockers; do not infer visual parity from service tests | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TOKEN-ACCESS-001/`.
+
 ## 2026-09-20 actor-matrix execution
 
 `SURVEYS-ACTOR-MATRIX-001` completes the Core3 actor mutation/read boundary

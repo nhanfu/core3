@@ -2052,3 +2052,32 @@ sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-TOKEN-ACCESS-001`
+
+Wave 24 selects the next uncovered public access behavior after the completed
+back-navigation and attempt-limit settings: Odoo's `access_mode='token'`
+boundary. Odoo's public controller refuses `survey/start/<survey_token>`
+without an existing `survey.user_input.access_token`, and scopes that answer
+token to the survey (`addons/survey/controllers/main.py:25-75`).
+
+Core3 migration `0.0.44` adds a deterministic published invitation-only
+survey plus a pre-created `New` answer row. The new `survey.public.access`
+operation scopes `token-access-answer-2026` to the survey token; the route
+rejects missing/wrong answer tokens before returning questions or starting the
+response. The paired `pages/surveys.yaml` / `api/surveys.yaml` contract keeps
+`page.id: surveys`, `surveys.public`, and the YAML start guard explicit. A
+concurrent start converges on the same durable answer and a file-backed reopen
+resumes its `In Progress` state.
+
+Focused verification is **3 passed / 25 assertions**; the public/catalog
+regression is **94 passed / 882 assertions across 31 files**. Audit passes at
+**727 pages, 736 routes, and 1,413 datasources**; scoped ESLint and
+`git diff --check` pass. Core3 screenshots at 1440x1000 and 390x844 are
+captured, but the bounded runtime returned 401 Unauthorized before the public
+API loaded. Odoo 8069 redirected the synthetic route to `/`, proxy 8072
+refused, and no authenticated installed Surveys fixture was available. No
+visual or module sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TOKEN-ACCESS-001/`.

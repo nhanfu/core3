@@ -49,7 +49,7 @@ describe('Surveys public per-respondent attempt limit', () => {
     expect(yaml('operations.yaml').operations['survey.public.attempts'].query).toContain("state = 'Submitted'");
     expect(start).toMatchObject({ permission: 'surveys.public', action: 'surveys.public.start', handler: 'yaml_mutation' });
     expect(start.mutation.fields).toContain('respondent_email');
-    expect(start.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_LOGIN_REQUIRED', 'SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED']);
+    expect(start.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_LOGIN_REQUIRED', 'SURVEY_PUBLIC_TOKEN_REQUIRED', 'SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED']);
     expect(retry.mutation.guards.map((guard: any) => guard.code)).toContain('SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED');
     expect(submit.mutation.guards.map((guard: any) => guard.code)).toContain('SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED');
     expect(yaml('migrations/20261009000000-042-survey-public-attempt-limit.yaml').version).toBe('0.0.42');

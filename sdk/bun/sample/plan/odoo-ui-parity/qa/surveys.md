@@ -76,6 +76,23 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 - Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: bounded candidate QA recorded; not signed off. Full regression, rollback/replay-down, complete actor mutation matrix, and full paired Odoo visual comparison remain open.
 
+## Wave 24 — token-only public access (`SURVEYS-PUBLIC-TOKEN-ACCESS-001`)
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| SURVEYS-FUNC-022 | Token-only survey requires a matching durable answer token | `surveys_public_token_access.integration.test.ts` — 3 tests / 25 assertions | pass |
+| SURVEYS-WF-019 | Answer token begins once, converges under concurrent start, and resumes after file-backed reopen | same focused test; deterministic `token-access-answer-2026` fixture | pass |
+| SURVEYS-PERM-021 | `surveys.public` plus missing/wrong token no-disclosure boundary | paired API guard and route assertions | pass |
+| SURVEYS-UI-020 | Public token-only route at desktop/mobile and paired Odoo comparison | `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TOKEN-ACCESS-001/` | conditional |
+
+Wave 24 focused and public/catalog regressions pass (**94 tests / 882
+assertions**); audit, scoped lint, and diff-check pass. The runtime's backend
+returned `401 Unauthorized` before the public renderer loaded, so the Core3
+screenshots are recorded as blocked rather than authenticated visual evidence.
+Odoo 8069 redirected the synthetic token route to `/` and port 8072 refused;
+there is no authenticated installed Surveys reference fixture. No sign-off is
+claimed.
+
 ## Reviewer disposition — candidate `78a4142f`
 
 - Integrated on the active branch as `5b7dd7e5`; scope is limited to Surveys

@@ -1,0 +1,32 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-TOKEN-ACCESS-001",
+  "date": "2026-09-21",
+  "viewports": ["1440x1000", "390x844"],
+  "core3": {
+    "frontend": "http://127.0.0.1:3002",
+    "desktop": {
+      "url": "http://127.0.0.1:3002/survey/start/token-access-token-2026",
+      "screenshot": "core3-desktop.png",
+      "http_status": 200,
+      "render_result": "blank_shell",
+      "backend_probe": "Authenticated admin login and /api/auth/me returned 200; the authenticated public route returned 404 API route not found"
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:3002/survey/start/token-access-token-2026?answer_token=token-access-answer-2026",
+      "screenshot": "core3-mobile.png",
+      "http_status": 200,
+      "render_result": "blank_shell",
+      "backend_probe": "Authenticated admin login and /api/auth/me returned 200; the authenticated public route returned 404 API route not found"
+    },
+    "authenticated_actor": "admin@tms.local authenticated over HTTP (login/me 200); browser renderer could not bind the public API route",
+    "overflow": "not measured because the public API route returned 404 before renderer data loaded"
+  },
+  "odoo": {
+    "desktop": { "url": "http://127.0.0.1:8069/survey/start/token-access-token-2026", "result": "303 -> /" , "screenshot": "odoo-desktop.png" },
+    "mobile": { "url": "http://127.0.0.1:8069/survey/start/token-access-token-2026?answer_token=token-access-answer-2026", "result": "303 -> /", "screenshot": "odoo-mobile.png" },
+    "proxy_8072": "connection refused",
+    "installed_reference": "not available; 8069 rendered the Odoo database selector rather than an authenticated Surveys fixture",
+    "blocker": "No authenticated Odoo database/session was available for paired token-only access comparison"
+  },
+  "signoff": "conditional; no desktop/mobile visual or Odoo parity sign-off claimed"
+}

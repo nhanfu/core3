@@ -36,6 +36,9 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # completed non-test attempt counting and start/retry/submit guards.
 # Odoo users_can_go_back is projected by the API and consumed by the public
 # renderer; the cursor mutation remains server-guarded for direct callers.
+# Odoo token-mode surveys require a pre-created answer token from the invite
+# flow; the public renderer remains layout-only while the paired API validates
+# the answer token before returning questions or beginning the response.
 components:
   - type: ListView
     variant: odoo

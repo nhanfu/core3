@@ -2,6 +2,9 @@ operations:
   survey.public.detail:
     result_key: survey
     query: "SELECT id, access_token, name, title, description, description_done, background_image_url, state, COALESCE(access_mode, 'public') AS access_mode, COALESCE(users_login_required, false) AS users_login_required, COALESCE(is_attempts_limited, false) AS is_attempts_limited, COALESCE(attempts_limit, 1) AS attempts_limit, COALESCE(users_can_go_back, false) AS users_can_go_back, COALESCE(is_time_limited, false) AS is_time_limited, time_limit FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
+  survey.public.access:
+    result_key: response
+    query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.current_question_id, r.respondent_name, r.respondent_email, r.idempotency_key FROM surveys s JOIN survey_responses r ON r.survey_id = s.id AND r.access_token = :answer_token WHERE s.access_token = :survey_token AND s.state = 'Published' LIMIT 1"
   survey.public.background:
     result_key: background
     query: "SELECT id, access_token, background_image_url, background_image_content FROM surveys WHERE access_token = :access_token AND state = 'Published' AND background_image_url IS NOT NULL AND LENGTH(TRIM(background_image_url)) > 0 AND background_image_content IS NOT NULL LIMIT 1"

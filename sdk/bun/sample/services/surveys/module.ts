@@ -78,6 +78,18 @@ export default class SurveysModule implements ModuleLifecycle {
       access_token: answerToken,
       survey_id: detail.id,
     }))?.response?.[0];
+    const publicAccessError = async (answerToken: string): Promise<Response | null> => {
+      if (String(detail.access_mode || 'public') !== 'token') return null;
+      if (!answerToken || !this.isToken(answerToken)) {
+        return this.json({ error: 'An invitation answer token is required to access this survey.', code: 'SURVEY_PUBLIC_TOKEN_REQUIRED' }, 403);
+      }
+      const response = (await service.call('survey.public.access', {
+        survey_token: token,
+        answer_token: answerToken,
+      }))?.response?.[0];
+      if (!response) return this.json({ error: 'This survey invitation is no longer available.', code: 'SURVEY_PUBLIC_TOKEN_WRONG' }, 404);
+      return null;
+    };
     const firstQuestion = async () => (await service.call('survey.public.first_question', {
       survey_id: detail.id,
     }))?.question?.[0] || null;
@@ -87,6 +99,8 @@ export default class SurveysModule implements ModuleLifecycle {
       const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
       const answerToken = explicitAnswerToken || cookieAnswerToken;
       if (explicitAnswerToken && !this.isToken(explicitAnswerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const accessError = await publicAccessError(answerToken);
+      if (accessError) return accessError;
       const answer = answerToken ? await readResponse(answerToken) : undefined;
       if (explicitAnswerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
       if (answer && this.publicAttemptExpired(detail, answer)) return this.expiredResponse(detail, answer);
@@ -101,6 +115,8 @@ export default class SurveysModule implements ModuleLifecycle {
       const explicitAnswerToken = String(body.answer_token || '');
       const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
       let existingToken = explicitAnswerToken || cookieAnswerToken;
+      const accessError = await publicAccessError(existingToken);
+      if (accessError) return accessError;
       if (existingToken) {
         if (!this.isToken(existingToken)) {
           if (explicitAnswerToken) return this.json({ error: 'A valid answer token is required' }, 400);

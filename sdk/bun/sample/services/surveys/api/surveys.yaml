@@ -80,6 +80,9 @@ actions:
   # Odoo counts only completed non-test attempts for the respondent identity
   # when login is required or the survey uses invited access. Anonymous public
   # surveys keep their source behavior and do not consume a global attempt.
+  # Odoo token-mode surveys require an existing survey.user_input answer token;
+  # the paired public route validates that durable answer before exposing the
+  # question graph or allowing the New response to begin.
   - id: public_survey_start
     type: server_form
     permission: surveys.public
@@ -95,6 +98,7 @@ actions:
       generated: [access_token]
       guards:
         - { query: "SELECT 1 AS ok FROM surveys WHERE id = :survey_id AND (COALESCE(users_login_required, false) = false OR LENGTH(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), ''))) > 0)", status: 401, code: SURVEY_PUBLIC_LOGIN_REQUIRED, message: Enter an email address before starting this survey. }
+        - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.access_mode, 'public') <> 'token' OR EXISTS (SELECT 1 FROM survey_responses r WHERE r.survey_id = s.id AND r.access_token = :answer_token AND r.state = 'New'))", status: 403, code: SURVEY_PUBLIC_TOKEN_REQUIRED, message: An invitation answer token is required to start this survey. }
         - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.is_attempts_limited, false) = false OR (s.access_mode = 'public' AND COALESCE(s.users_login_required, false) = false) OR (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id AND r.state = 'Submitted' AND COALESCE(r.test_entry, false) = false AND LOWER(TRIM(COALESCE(r.respondent_email, ''))) = LOWER(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), '')))) < COALESCE(s.attempts_limit, 1))", status: 409, code: SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED, message: You have no attempts left for this survey. }
       result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
     fields:

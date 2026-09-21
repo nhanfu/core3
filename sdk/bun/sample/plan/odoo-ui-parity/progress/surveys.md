@@ -442,6 +442,32 @@ Odoo parity sign-off is claimed.
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACK-GUARD-001/`.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-TOKEN-ACCESS-001`
+
+Wave 24 selects the next uncovered source-backed public access behavior after
+back-navigation: Odoo's `access_mode='token'` guard. Core3 previously exposed
+the setting but allowed a published token-only survey to create an anonymous
+response from only the survey token. Migration `0.0.44` adds a deterministic
+invitation-only survey and pre-created `New` answer token. The separate
+`survey.public.access` operation scopes the answer token to the survey token;
+the public route rejects missing/wrong tokens before question disclosure or
+the New → In Progress transition. The paired `pages/surveys.yaml` /
+`api/surveys.yaml` contract retains `page.id: surveys`, `surveys.public`, and
+the YAML start guard.
+
+Focused verification is **3 passed / 25 assertions**; the public/catalog
+regression is **94 passed / 882 assertions across 31 files**. Scoped ESLint,
+audit (**727 pages, 736 routes, 1,413 datasources**), and diff-check pass.
+The file-backed DuckDB test proves concurrent start convergence and resumed
+answer-token state. Browser screenshots were captured at 1440x1000 and
+390x844, but the bounded runtime returned 401 Unauthorized for the public API
+before rendering data. Odoo 8069 redirected the synthetic route to `/` and
+the 8072 proxy refused; no authenticated paired reference fixture exists.
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TOKEN-ACCESS-001/`.
+Status remains **qa-in-progress / conditional**; no module sign-off is
+claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-ATTEMPT-LIMIT-001`
 
 Selected the next uncovered Odoo-backed participant behavior: per-respondent
