@@ -3,6 +3,17 @@ page: { id: contract-detail, route: /fleet/contracts/detail, breadcrumb: [Human 
 components:
   - type: OdooFormView
     source: fleet_contract_detail
+    message_source: fleet_contract_activities
+    activity_action: schedule_fleet_contract_activity
+    activity_label: Schedule renewal activity
+    schedule_label: Schedule
+    activity_placeholder: Describe the renewal activity…
+    activity_complete_action: complete_fleet_contract_activity
+    activity_complete_label: Mark done
+    message_action_field: action_label
+    message_action_labels: { fleet.contract.activity.schedule: Scheduled activity, fleet.contract.activity.complete: Completed activity }
+    chatter_label: Messages and activities
+    chatter_empty: No contract messages or activities yet.
     title_field: name
     subtitle_field: vehicle_name
     status_field: status

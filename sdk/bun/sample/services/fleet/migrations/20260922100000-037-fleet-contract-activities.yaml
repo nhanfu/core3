@@ -1,0 +1,40 @@
+version: 0.0.37
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_contract_activities (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        contract_id VARCHAR NOT NULL,
+        activity_type VARCHAR NOT NULL DEFAULT 'Contract to Renew',
+        summary VARCHAR NOT NULL,
+        due_date DATE NOT NULL,
+        assigned_user VARCHAR NOT NULL,
+        note VARCHAR NOT NULL DEFAULT '',
+        state VARCHAR NOT NULL DEFAULT 'Planned',
+        created_by VARCHAR NOT NULL,
+        action VARCHAR NOT NULL DEFAULT 'fleet.contract.activity.schedule',
+        action_label VARCHAR NOT NULL DEFAULT 'Scheduled activity',
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00',
+        completed_by VARCHAR,
+        completed_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_contract_activities_contract_idx
+        ON fleet_contract_activities(contract_id, state, due_date, id);
+      INSERT INTO fleet_contract_activities(
+        id, contract_id, activity_type, summary, due_date, assigned_user, note,
+        state, created_by, action, action_label, detail, created_at
+      ) VALUES (
+        'fleet-contract-activity-002-001', 'fleet-contract-002', 'Contract to Renew',
+        'Review weekly leasing renewal', DATE '2026-09-30', 'Admin User',
+        '', 'Planned', 'Admin User', 'fleet.contract.activity.schedule',
+        'Scheduled activity', 'Review weekly leasing renewal', TIMESTAMP '2026-01-15 09:30:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS fleet_contract_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

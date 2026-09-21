@@ -8,6 +8,10 @@ datasources:
     permission: fleet.read
     error_states: { transport_error: { status: 503, code: FLEET_CONTRACT_DETAIL_UNAVAILABLE, message: Fleet contract detail is temporarily unavailable } }
     query: "SELECT c.id, c.row_version, c.name, c.vehicle_id, v.name AS vehicle_name, COALESCE(c.vendor, '—') AS vendor, COALESCE(c.driver_name, v.driver_name, 'Unassigned') AS driver_name, c.contract_type, CAST(c.start_date AS VARCHAR) AS start_date, CAST(c.expiration_date AS VARCHAR) AS expiration_date, c.recurring_cost, c.recurring_cost_frequency, c.cost_generated, c.status, c.renewal_status, c.active, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, COALESCE(c.notes, '') AS notes FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
+  - id: fleet_contract_activities
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_CONTRACT_ACTIVITIES_UNAVAILABLE, message: Contract activities are temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.contract_id, a.activity_type, a.summary, CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_user, a.note, a.state, a.created_by AS actor_name, a.action, a.action_label, a.detail, CAST(a.created_at AS VARCHAR) AS created_at, COALESCE(a.completed_by, '') AS completed_by, CAST(a.completed_at AS VARCHAR) AS completed_at FROM fleet_contract_activities a JOIN fleet_vehicle_contracts c ON c.id = a.contract_id JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND a.contract_id = :id AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name) ORDER BY CASE WHEN a.state = 'Planned' THEN 0 ELSE 1 END, a.due_date, a.id"
 actions:
   - id: edit_fleet_contract
     type: server_form
@@ -129,3 +133,58 @@ actions:
       table: fleet_vehicle_contracts
       concurrency: { required: true }
       guards: [{ query: "SELECT id FROM fleet_vehicle_contracts WHERE id = :id", status: 404, code: FLEET_CONTRACT_NOT_FOUND, message: Contract was not found. }]
+  - id: schedule_fleet_contract_activity
+    type: server_form
+    permission: fleet.write
+    title: Schedule activity
+    description: Schedule a renewal activity on this Fleet contract.
+    action: fleet.contracts.activity.schedule
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [fleet_contract_detail, fleet_contract_activities]
+    mutation:
+      generated: [activity_id]
+      before_steps: [{ query: "SELECT 'fleet-contract-activity-' || CAST(:id AS VARCHAR) || '-' || CAST(:expected_row_version AS VARCHAR) AS activity_id", assign: activity_id }]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_CONTRACT_ACTIVITY_ACTOR_REQUIRED, message: A signed-in Fleet user is required to schedule an activity. }
+        - { query: "SELECT c.id FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE c.id = :id AND c.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)", status: 404, code: FLEET_CONTRACT_ACTIVITY_CONTRACT_NOT_FOUND, message: Active contract was not found in the current company. }
+        - { query: "SELECT c.id FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE c.id = :id AND c.row_version = :expected_row_version AND c.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The contract changed before the activity was scheduled. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FLEET_CONTRACT_ACTIVITY_SUMMARY_INVALID, message: Activity summary must be between 1 and 4000 characters. }
+      steps:
+        - query: "INSERT INTO fleet_contract_activities(id, contract_id, activity_type, summary, due_date, assigned_user, note, state, created_by, action, action_label, detail, created_at) SELECT :activity_id, c.id, 'Contract to Renew', TRIM(CAST(:content AS VARCHAR)), c.expiration_date, COALESCE(NULLIF(TRIM(CAST(:activity_user AS VARCHAR)), ''), :current_user_name), '', 'Planned', :current_user_name, 'fleet.contract.activity.schedule', 'Scheduled activity', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 09:30:00' FROM fleet_vehicle_contracts c WHERE c.id = :id"
+          expect_changed: true
+          status: 409
+          code: FLEET_CONTRACT_ACTIVITY_CREATE_FAILED
+          message: The contract activity could not be scheduled.
+        - query: "UPDATE fleet_vehicle_contracts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The contract changed before the activity was scheduled. Reload and try again.
+      result: { query: "SELECT id, row_version, contract_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user, note, state, created_by AS actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM fleet_contract_activities WHERE id = :activity_id" }
+    fields:
+      - { field: content, label: Activity, type: textarea, required: true, placeholder: Describe the renewal activity… }
+      - { field: activity_user, label: Assigned to, type: text }
+  - id: complete_fleet_contract_activity
+    type: server
+    permission: fleet.write
+    action: fleet.contracts.activity.complete
+    handler: yaml_mutation
+    operation: complete_activity
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [fleet_contract_detail, fleet_contract_activities]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_CONTRACT_ACTIVITY_ACTOR_REQUIRED, message: A signed-in Fleet user is required to complete an activity. }
+        - { query: "SELECT a.id FROM fleet_contract_activities a JOIN fleet_vehicle_contracts c ON c.id = a.contract_id JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE a.id = :id AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)", status: 404, code: FLEET_CONTRACT_ACTIVITY_NOT_FOUND, message: Contract activity was not found in the current company. }
+        - { query: "SELECT id FROM fleet_contract_activities WHERE id = :id AND state = 'Planned' AND row_version = :expected_row_version", status: 409, code: FLEET_CONTRACT_ACTIVITY_STALE, message: The contract activity is already complete or has changed. Reload before completing it. }
+      steps:
+        - query: "UPDATE fleet_contract_activities SET state = 'Done', completed_by = :current_user_name, completed_at = TIMESTAMP '2026-01-15 10:00:00', row_version = row_version + 1, action = 'fleet.contract.activity.complete', action_label = 'Completed activity' WHERE id = :id AND state = 'Planned' AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: FLEET_CONTRACT_ACTIVITY_STALE
+          message: The contract activity changed before completion was saved.
+      result: { query: "SELECT id, row_version, contract_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user, note, state, completed_by, CAST(completed_at AS VARCHAR) AS completed_at, created_by AS actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM fleet_contract_activities WHERE id = :id" }

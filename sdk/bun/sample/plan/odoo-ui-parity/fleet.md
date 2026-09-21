@@ -1009,3 +1009,39 @@ descriptor exhaustion. Blocker captures and the exact omitted visual claims
 are recorded under
 `odoo-ui-parity/evidence/fleet/2026-09-21/fleet-contract-crud-20260921/`;
 this checkpoint does not claim desktop/mobile parity.
+
+## Contract renewal activities bounded slice (2026-09-22)
+
+The next genuinely uncovered Fleet feature is the contract renewal activity
+lifecycle. Odoo 19 defines `fleet.vehicle.log.contract` with
+`mail.activity.mixin`, registers the `Contract to Renew` activity type, and
+reschedules that activity when expiration date or responsible user changes.
+Its expiration scheduler uses `delay_alert_contract` to schedule renewal
+reminders for nearly expired open contracts. The contract form also contains
+the native chatter, so this slice is distinct from prior contract CRUD.
+
+Core3 adds durable `fleet_contract_activities` storage in
+`20260922100000-037-fleet-contract-activities.yaml`. The existing
+`contract-detail` page/API `page.id` seam now exposes a read-scoped activity
+stream and shared Odoo chatter actions to schedule and complete a renewal
+activity. Scheduling is `fleet.write`, requires an active in-company contract,
+an authenticated actor, a non-empty summary, and the current contract row
+version; the due date is derived from the expiration date. Completion is
+`fleet.write`, scoped to the contract vehicle company, and requires the planned
+activity row version. Missing contracts, blank summaries, missing actors,
+wrong-company access, repeated completion, and stale rows have explicit
+404/403/409/422 contracts. The migration seeds one fixed renewal activity and
+replays idempotently.
+
+Feature evidence is under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-contract-renewal-activities-20260922/`.
+Focused coverage is **3 tests / 31 assertions**; the affected Fleet set is
+**21 tests / 242 assertions**; the complete Fleet corpus is **78 tests / 822
+assertions** across 23 files. Audit passes with **782 pages / 791 routes /
+1,606 datasources**, Fleet Sass passes, and `git diff --check` passes.
+
+Authenticated visual parity is blocked honestly: browser instance `245ea108`
+with `core3_reference` has no Fleet application and remains on Discuss. The
+isolated Core3 runtime started on port 4322, but its fresh tab required
+protected QA sign-in and the authorized human-help login did not complete.
+No authenticated Core3 desktop/mobile parity claim is made.

@@ -297,3 +297,24 @@ or duplicate QA was created.
 
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
+
+## 2026-09-22 — Contract renewal activities bounded slice
+
+- Feature `fleet-contract-renewal-activities-20260922` adds durable
+  `Contract to Renew` schedule/complete activity actions to the contract
+  detail page/API seam.
+- Focused test: **3 passed / 31 assertions**. Affected Fleet set: **21 / 242**;
+  complete Fleet corpus: **78 / 822** across 23 files.
+- Coverage includes page/API separation, source mapping, deterministic seed,
+  empty/transport states, actor/company/row-version guards, schedule → Done,
+  and file-backed restart/migration replay.
+- Static gates pass: audit **782 / 791 / 1,606**, Fleet Sass, and diff-check.
+- Odoo blocker: authenticated instance `245ea108` on `core3_reference` has no
+  Fleet app/menu; desktop/mobile blocker captures are linked from the feature
+  evidence folder.
+- Core3 blocker: port 4322 reached protected sign-in, but authorized
+  human-help login did not complete. No authenticated browser workflow or
+  visual parity pass is claimed.
+
+QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
+Fleet remains unsigned-off.

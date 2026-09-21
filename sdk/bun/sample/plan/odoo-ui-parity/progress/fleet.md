@@ -115,3 +115,18 @@ build/lint, responsive browser, CRUD, permission, widening, and same-process
 persistence evidence. Fleet is conditionally accepted for this bounded slice.
 Process restart on duckdb-memory and fresh paired authenticated Odoo comparison
 remain open; no full Fleet sign-off is claimed.
+
+## Current wave: contract renewal activities `fleet-contract-renewal-activities-20260922`
+
+- Implemented the next source-backed gap after Contract Logs CRUD: durable
+  `Contract to Renew` activity schedule/complete lifecycle on contract detail.
+- Focused: 3 passed / 31 assertions; affected Fleet set 21 / 242; complete
+  Fleet corpus 78 / 822 across 23 files.
+- Static: audit 782 pages / 791 routes / 1,606 datasources; Fleet Sass and
+  diff-check pass.
+- Evidence:
+  `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-contract-renewal-activities-20260922/`.
+- Browser blockers: authenticated `core3_reference` Odoo instance `245ea108`
+  has no Fleet app/menu; isolated Core3 port 4322 reached protected login but
+  the authorized human-help login did not complete. No visual parity claim is
+  made; Fleet remains conditionally accepted, not signed off.
