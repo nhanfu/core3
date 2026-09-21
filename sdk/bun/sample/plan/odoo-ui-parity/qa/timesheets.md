@@ -937,3 +937,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_project_task_dependency.integration.test.ts` passes 4/4 tests / 20 expectations, including source mapping, company/empty option guards, valid/no-task creation, stale relation rejection, and file-backed restart.
 - Regression/static gates: full Timesheets passes 219/219 tests / 1,355 expectations across 58 files; UI audit passes 737 pages / 746 routes / 1,449 datasources; scoped ESLint and `git diff --check` pass.
 - Evidence: `evidence/timesheets/2026-09-21/timesheet-my-project-task-dependency-001/`. Core3 port 3001 is unavailable and Odoo 8069/8073 redirect to `/web/login`; authenticated desktop/mobile captures are blocked and no sign-off is claimed. Existing Odoo Print/PDF/action blockers remain open.
+
+## Wave 30 — `TIMESHEET-MY-CALENDAR-DISPLAY-NAME-001`
+
+- Source gate: `hr_timesheet` `_compute_calendar_display_name` and `view_calendar_account_analytic_line` `create_name_field="calendar_display_name"`.
+- Core3 gate: the `timesheets` page/API pair exposes a durable company-encoded calendar label (`Project (8h)`, `Project (2h30)`, or `Project (1d)`) on the My Timesheets calendar card.
+- Focused gate: `test/timesheets_calendar_display_name.integration.test.ts` passes 4/4 tests / 17 expectations, including source mapping, hour/day labels, actor/company/empty guards, and file-backed restart.
+- Regression/static gates: relevant My/UoM/calendar regression passes 11/11 tests / 73 expectations; UI audit passes 737 pages / 746 routes / 1,450 datasources; scoped ESLint and `git diff --check` pass.
+- Evidence: `evidence/timesheets/2026-09-21/timesheet-my-calendar-display-name-001/`. Core3 port 3001 is unavailable and Odoo 8069/8073 redirect to `/web/login`; authenticated desktop/mobile evidence is blocked and no sign-off is claimed. Existing Odoo Print/PDF/action blockers remain open.

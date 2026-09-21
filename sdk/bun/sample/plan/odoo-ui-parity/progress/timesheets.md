@@ -696,6 +696,13 @@ viewports with no page errors or horizontal overflow. Only aborted background
 prefetches for unrelated All Timesheets surfaces are recorded. Existing Odoo
 Print/PDF/action blockers remain open; no sign-off is claimed.
 
+## Wave 30 — `TIMESHEET-MY-CALENDAR-DISPLAY-NAME-001` (2026-09-21)
+
+- Selected Odoo `hr_timesheet`'s calendar-specific `calendar_display_name`, distinct from the completed calendar multi-create and UoM settings slices. The source computes project plus encoded duration and sets the calendar `create_name_field` to that label.
+- Added `calendar_display_name` to the durable `timesheet_entries` API projection and bound the My Timesheets calendar card title to it; page/API remain separate through `page.id: timesheets`. Existing actor/company and empty guards remain enforced, so no migration was needed.
+- Focused coverage passed 4/4 tests with 17 expectations; relevant My/UoM/calendar regression passed 11/11 with 73 expectations. UI audit passed 737 pages / 746 routes / 1,450 datasources; ESLint and Timesheets-owned diff-check passed.
+- Evidence is under `evidence/timesheets/2026-09-21/timesheet-my-calendar-display-name-001/`. Core3 port 3001 was unavailable and Odoo 8069/8073 redirected `/odoo/timesheets` to `/web/login`; authenticated desktop/mobile captures are not claimed. Existing Odoo Print/PDF/action blockers remain open.
+
 ## Wave 29 — `TIMESHEET-MY-PROJECT-TASK-DEPENDENCY-001` (2026-09-21)
 
 - Selected the smallest distinct open source-backed behavior after the Wave 28 favorite-project prefill: Odoo's New Timesheet project-scoped open-task dependency and `_onchange_project_id` stale-task reset contract.

@@ -1119,6 +1119,34 @@ was available, so visual company switching is not claimed; repository tests
 prove the boundary. Existing Print/PDF/action and broader route comparison
 blockers remain open.
 
+## Wave 30 — `TIMESHEET-MY-CALENDAR-DISPLAY-NAME-001`
+
+The next smallest uncovered source-backed behavior is Odoo's calendar-specific
+`calendar_display_name`. `hr_timesheet` computes a project label with the
+encoded duration (`8h`, `2h30`, or day encoding) and sets the calendar
+`create_name_field` to that value. This is distinct from the completed calendar
+multi-create and company UoM settings slices.
+
+Core3 keeps `pages/entries.yaml` layout-only and `api/entries.yaml` data-only,
+joined by `page.id: timesheets`. The durable `timesheet_entries` source now
+projects `calendar_display_name` from persisted entry hours and the active
+company's persisted encoding setting; the My Timesheets calendar card uses that
+field as its title. Existing actor/company and deterministic empty guards remain
+the read boundary, so no migration was needed.
+
+Focused coverage is
+`test/timesheets_calendar_display_name.integration.test.ts` — 4 tests / 17
+expectations. Relevant regression coverage passes 11 tests / 73 expectations;
+the full Timesheets run includes the new suite. UI audit passes 737 pages / 746
+routes / 1450 datasources; scoped ESLint and Timesheets-owned diff-check pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-calendar-display-name-001/`.
+Core3 was not listening on port 3001 and Odoo 8069/8073 redirected to
+`/web/login`, so authenticated desktop/mobile captures and paired Odoo captures
+are blocked; no sign-off is claimed. Existing Odoo Print/PDF/action blockers
+remain open.
+
 ## 2026-09-21 `TIMESHEET-PORTAL-SORTING`
 
 The next uncovered portal behavior after the date filters is Odoo's

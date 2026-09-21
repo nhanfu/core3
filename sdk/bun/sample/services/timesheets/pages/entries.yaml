@@ -45,7 +45,7 @@ components:
         label: Calendar
         icon: calendar
         date_field: work_date
-        card: { title: project_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: description, label: Description }] }
+        card: { title: calendar_display_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: description, label: Description }] }
       - id: kanban
         label: Kanban
         icon: dashboard
