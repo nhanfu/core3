@@ -8,6 +8,9 @@ operations:
   ecommerce.public.wishlist:
     result_key: items
     query: "SELECT i.id, i.row_version, i.wishlist_id, i.product_id, i.variant_id, i.variant_name, i.product_name, i.price, i.company_name, CAST(i.added_at AS VARCHAR) AS added_at FROM ecommerce_wishlist_items i JOIN ecommerce_wishlists w ON w.id = i.wishlist_id JOIN ecommerce_products p ON p.id = i.product_id WHERE w.id = :wishlist_id AND w.owner_type = 'anonymous' AND w.active = TRUE AND i.active = TRUE AND p.active = TRUE AND p.is_published = TRUE ORDER BY i.added_at DESC, i.id"
+  ecommerce.public.product_feed:
+    result_key: feed
+    query: "SELECT id, name, target, cache_xml, CAST(cache_expiry AS VARCHAR) AS cache_expiry FROM ecommerce_product_feeds WHERE id = :feed_id AND access_token = :access_token AND active = TRUE AND cache_xml IS NOT NULL AND (cache_expiry IS NULL OR cache_expiry > CURRENT_TIMESTAMP) LIMIT 1"
   ecommerce.sales.handoffs.pending:
     result_key: handoffs
     query: "SELECT id, ecommerce_order_id, order_number, customer_name, customer_email, amount_total, currency, company_name, state, sales_order_id, attempt_count, last_error, row_version, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_sales_handoffs WHERE state IN ('Pending', 'Failed') AND attempt_count < 5 ORDER BY created_at, id"

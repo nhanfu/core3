@@ -1,0 +1,24 @@
+version: 0.0.101
+kind: data
+description: deterministic Website Sale Google Merchant feed fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_feeds
+        (id, row_version, name, target, language_code, pricelist_id, category_id, company_name, access_token, active)
+      VALUES
+        ('ecommerce-feed-gmc-my-company', 1, 'GMC 1', 'gmc', 'en_US', NULL, NULL, 'My Company', 'feed-token-gmc-2026', TRUE)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        target = EXCLUDED.target,
+        language_code = EXCLUDED.language_code,
+        pricelist_id = EXCLUDED.pricelist_id,
+        category_id = EXCLUDED.category_id,
+        company_name = EXCLUDED.company_name,
+        access_token = EXCLUDED.access_token,
+        active = EXCLUDED.active;
+    down: DELETE FROM ecommerce_product_feeds WHERE id = 'ecommerce-feed-gmc-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

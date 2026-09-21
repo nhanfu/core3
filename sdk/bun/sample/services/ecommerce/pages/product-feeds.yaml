@@ -1,0 +1,26 @@
+title: Product Feeds
+page: { id: ecommerce-product-feeds, route: /ecommerce/product-feeds, breadcrumb: [eCommerce, Configuration, Product Feeds], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_feeds
+    create_action: create_ecommerce_product_feed
+    create_label: New Product Feed
+    search: { label: Search feeds, placeholder: Search feed name or target... }
+    filters: [{ field: active, label: Archived, options_source: ecommerce_product_feed_active }]
+    responsive_card: true
+    columns:
+      - { field: name, label: Feed, type: PrimaryEntityCell }
+      - { field: target, label: Target }
+      - { field: language_code, label: Language }
+      - { field: product_count, label: Products, align: right }
+      - { field: cache_status, label: Cache, type: StatusChip }
+      - { field: feed_url, label: Feed URL }
+    row_actions: menu
+    page_size: 40
+    row_key: id
+    actions:
+      - { id: edit_ecommerce_product_feed, label: Edit, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: generate_ecommerce_product_feed, label: Generate Feed, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: delete_ecommerce_product_feed, label: Delete, permission: ecommerce.write, variant: danger, show_if: "row.active === true" }
+    empty_state: { title: No product feeds, description: Configure a Google Merchant Center feed for the current company. }

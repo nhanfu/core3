@@ -1,5 +1,28 @@
 # ecommerce QA ledger
 
+## Product Feed Configuration and Generation (`ECOM-CATALOG-PRODUCT-FEED-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product.feed` owns target, language, pricelist,
+  category, token, URL, and cache fields; `/gmc.xml` requires the feed token;
+  list/form CRUD is bound to `action_product_feeds` and the Product Feed group.
+- Core3 lifecycle: pass for this bounded contract. Migrations 100/101 add
+  durable feed configuration and GMC 1 fixture. Separate Product Feeds
+  page/API YAML provides permissioned CRUD, XML generation, cache invalidation,
+  category filtering, token validation, and a public operation.
+- Focused verification: `bun test
+  test/ecommerce_product_feeds.integration.test.ts` — **3 passed, 40
+  assertions, 0 failures**.
+- Audit/lint/diff: audit passed at **719 pages, 728 routes, 1391
+  datasources**; scoped ESLint and `git diff --check` are required before
+  commit.
+- Browser: authenticated Core3 desktop/mobile capture remains blocked by the
+  unavailable persistent `js_repl` runtime and local ports 3000/4312/4313.
+  No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 remain HTTP 404, blocking
+  authenticated paired comparison.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-feed-001/`.
+
 ## Product Website Sequence Reordering (`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`, 2026-09-21)
 
 - Odoo source/page: pass. Website Sale provides top/bottom/up/down sequence

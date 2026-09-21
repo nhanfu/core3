@@ -97,3 +97,7 @@ menu:
           label: Payment Tokens
           icon: credit-card
           permission: ecommerce.read
+        - path: /ecommerce/product-feeds
+          label: Product Feeds
+          icon: download
+          permission: ecommerce.read

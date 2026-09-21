@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product website sequence reorder slice; module sign-off remains open)
+Status: qa-in-progress (bounded product feed slice; module sign-off remains open)
+
+## Bounded feature — Product Feed Configuration and Generation (`ECOM-CATALOG-PRODUCT-FEED-001`)
+
+Wave 18 selected the still-uncovered Website Sale product feed surface. Odoo
+defines the `product.feed` model with Google Merchant Center target, website,
+language, pricelist, category filters, access token, generated URL, and cached
+feed output. `product_feed.py` exposes the token-protected `/gmc.xml` route;
+`product_feed_views.xml` provides list/form CRUD and `action_product_feeds`,
+and `website_sale_menus.xml` binds Product Feeds to the Website eCommerce menu
+through the Product Feed security group.
+
+Core3 migrations 100/101 add durable company-scoped feed configurations,
+tokens, cache expiry, and deterministic GMC 1 data. Separate Product Feeds
+page/API YAML provides permissioned create/edit/generate/delete actions,
+active category/pricelist selectors, generated XML with published same-company
+products, and a token-checked public `ecommerce.public.product_feed`
+operation. Re-generation uses optimistic row versions; edits invalidate the
+cache, and migration replay plus DuckDB restart preserve the configuration and
+generated output.
+
+Focused source, paired-contract, CRUD/filter/generation, token, company,
+stale, cache invalidation, deletion, migration replay, restart, audit, lint,
+and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-feed-001/`. Authenticated
+Core3 desktop/mobile capture remains subject to the browser/runtime blocker;
+Odoo `/shop` remains an exact HTTP 404 blocker. This slice is not module
+sign-off.
 
 ## Bounded feature — Product Website Sequence Reordering (`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`)
 

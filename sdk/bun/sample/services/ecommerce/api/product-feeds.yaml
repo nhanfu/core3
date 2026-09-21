@@ -1,0 +1,156 @@
+page: { id: ecommerce-product-feeds }
+datasources:
+  - id: ecommerce_product_feeds
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_FEEDS_UNAUTHENTICATED, message: Sign in to view product feeds. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_FEEDS_FORBIDDEN, message: You do not have permission to view product feeds. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_FEEDS_UNAVAILABLE, message: Product feeds are temporarily unavailable. }
+    query: |
+      SELECT f.id, f.row_version, f.name, f.target, f.language_code, f.pricelist_id, f.category_id,
+        f.company_name, f.access_token,
+        '/gmc.xml?feed_id=' || f.id || '&access_token=' || f.access_token AS feed_url,
+        f.active, CAST(f.cache_expiry AS VARCHAR) AS cache_expiry,
+        CASE WHEN f.cache_xml IS NULL THEN 'Not generated' ELSE 'Generated' END AS cache_status,
+        (SELECT COUNT(*) FROM ecommerce_products p WHERE p.active = TRUE AND p.is_published = TRUE
+          AND p.company_name = f.company_name
+          AND (f.category_id IS NULL OR EXISTS (
+            SELECT 1 FROM ecommerce_product_category_assignments a
+            WHERE a.product_id = p.id AND a.category_id = f.category_id AND a.active = TRUE
+          ))) AS product_count
+      FROM ecommerce_product_feeds f
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR f.name ILIKE '%' || :q || '%' OR f.target ILIKE '%' || :q || '%')
+        AND (:active IS NULL OR f.active = :active)
+        AND (COALESCE(:company_name, '') = '' OR f.company_name = :company_name)
+      ORDER BY f.name, f.id
+  - id: ecommerce_product_feed_targets
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('gmc', 'Google Merchant Center')) targets(value, label)"
+  - id: ecommerce_product_feed_languages
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('en_US', 'English (US)'), ('vi_VN', 'Vietnamese')) languages(value, label)"
+  - id: ecommerce_product_feed_categories
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_categories WHERE active = TRUE AND (COALESCE(:company_name, '') = '' OR company_name IS NULL OR company_name = :company_name) ORDER BY sequence, name"
+  - id: ecommerce_product_feed_pricelists
+    permission: ecommerce.read
+    query: "SELECT id AS value, name || ' (' || currency || ')' AS label FROM ecommerce_pricelists WHERE active = TRUE AND (company IS NULL OR COALESCE(:company_name, '') = '' OR company = :company_name) ORDER BY sequence, name"
+  - id: ecommerce_product_feed_active
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+actions:
+  - id: create_ecommerce_product_feed
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Feed
+    action: ecommerce.product_feeds.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_product_feeds]
+    mutation:
+      operation: insert
+      table: ecommerce_product_feeds
+      generated: [id, access_token]
+      fields: [name, target, language_code, pricelist_id, category_id, company_name, access_token, active]
+      required: [name]
+      defaults: { target: gmc, language_code: en_US, company_name: 'My Company', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: ECOMMERCE_PRODUCT_FEED_NAME_INVALID, message: Feed name must be between 1 and 120 characters. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:target, 'gmc') = 'gmc' AND COALESCE(:language_code, 'en_US') IN ('en_US', 'vi_VN')", status: 422, code: ECOMMERCE_PRODUCT_FEED_CONFIGURATION_INVALID, message: Choose a supported feed target and language. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_feeds WHERE company_name = COALESCE(:company_name, 'My Company') AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ECOMMERCE_PRODUCT_FEED_NAME_EXISTS, message: A feed with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, 'My Company') = :current_company_name", status: 403, code: ECOMMERCE_PRODUCT_FEED_COMPANY_SCOPE_REQUIRED, message: Feed belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE :category_id IS NULL OR EXISTS (SELECT 1 FROM ecommerce_categories WHERE id = :category_id AND active = TRUE AND (company_name IS NULL OR company_name = COALESCE(:company_name, 'My Company')))", status: 422, code: ECOMMERCE_PRODUCT_FEED_CATEGORY_INVALID, message: Select an active category for the feed company. }
+        - { query: "SELECT 1 AS ok WHERE :pricelist_id IS NULL OR EXISTS (SELECT 1 FROM ecommerce_pricelists WHERE id = :pricelist_id AND active = TRUE AND (company IS NULL OR company = COALESCE(:company_name, 'My Company')))", status: 422, code: ECOMMERCE_PRODUCT_FEED_PRICELIST_INVALID, message: Select an active pricelist for the feed company. }
+      result: { query: "SELECT id, row_version, name, target, language_code, pricelist_id, category_id, company_name, access_token, active FROM ecommerce_product_feeds WHERE id = :id" }
+    fields:
+      - { field: name, label: Feed Name, type: text, required: true }
+      - { field: target, label: Target, type: select, options_source: ecommerce_product_feed_targets, default: gmc }
+      - { field: language_code, label: Language, type: select, options_source: ecommerce_product_feed_languages, default: en_US }
+      - { field: pricelist_id, label: Pricelist, type: select, options_source: ecommerce_product_feed_pricelists }
+      - { field: category_id, label: eCommerce Category, type: select, options_source: ecommerce_product_feed_categories }
+      - { field: company_name, label: Company, type: text, default: 'My Company' }
+      - { field: access_token, label: Access Token, type: hidden }
+  - id: edit_ecommerce_product_feed
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Feed
+    action: ecommerce.product_feeds.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_feeds]
+    mutation:
+      operation: update
+      table: ecommerce_product_feeds
+      fields: [name, target, language_code, pricelist_id, category_id]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_feeds WHERE id = :id AND row_version = :expected_row_version AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_FEED_STALE, message: This feed changed or is inactive. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND COALESCE(:target, 'gmc') = 'gmc' AND COALESCE(:language_code, 'en_US') IN ('en_US', 'vi_VN')", status: 422, code: ECOMMERCE_PRODUCT_FEED_CONFIGURATION_INVALID, message: Enter a valid feed name, target, and language. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_feeds WHERE company_name = (SELECT company_name FROM ecommerce_product_feeds WHERE id = :id) AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ECOMMERCE_PRODUCT_FEED_NAME_EXISTS, message: A feed with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE :category_id IS NULL OR EXISTS (SELECT 1 FROM ecommerce_categories WHERE id = :category_id AND active = TRUE AND (company_name IS NULL OR company_name = (SELECT company_name FROM ecommerce_product_feeds WHERE id = :id)))", status: 422, code: ECOMMERCE_PRODUCT_FEED_CATEGORY_INVALID, message: Select an active category for the feed company. }
+        - { query: "SELECT 1 AS ok WHERE :pricelist_id IS NULL OR EXISTS (SELECT 1 FROM ecommerce_pricelists WHERE id = :pricelist_id AND active = TRUE AND (company IS NULL OR company = (SELECT company_name FROM ecommerce_product_feeds WHERE id = :id)))", status: 422, code: ECOMMERCE_PRODUCT_FEED_PRICELIST_INVALID, message: Select an active pricelist for the feed company. }
+      before_steps:
+        - { query: "UPDATE ecommerce_product_feeds SET cache_xml = NULL, cache_expiry = NULL WHERE id = :id AND row_version = :expected_row_version" }
+      result: { query: "SELECT id, row_version, name, target, language_code, pricelist_id, category_id, company_name, access_token, active, cache_expiry FROM ecommerce_product_feeds WHERE id = :id" }
+    fields:
+      - { field: name, label: Feed Name, type: text, required: true }
+      - { field: target, label: Target, type: select, options_source: ecommerce_product_feed_targets }
+      - { field: language_code, label: Language, type: select, options_source: ecommerce_product_feed_languages }
+      - { field: pricelist_id, label: Pricelist, type: select, options_source: ecommerce_product_feed_pricelists }
+      - { field: category_id, label: eCommerce Category, type: select, options_source: ecommerce_product_feed_categories }
+  - id: generate_ecommerce_product_feed
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_feeds.generate
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_feeds]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_feeds WHERE id = :id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_FEED_COMPANY_SCOPE_REQUIRED, message: Feed belongs to another company. }
+        - { query: "SELECT id FROM ecommerce_product_feeds WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_FEED_STALE, message: This feed changed before it could be generated. Reload before retrying. }
+      steps:
+        - query: |
+            UPDATE ecommerce_product_feeds
+            SET cache_xml =
+              '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns' || chr(58) || 'g="http://base.google.com/ns/1.0"><channel><title>' ||
+              replace(replace(replace(COALESCE((SELECT name FROM ecommerce_product_feeds WHERE id = :id), ''), '&', '&amp;'), '<', '&lt;'), '>', '&gt;') ||
+              '</title><link>/shop</link><description>Core3 Website Sale product feed</description>' ||
+              COALESCE((SELECT string_agg(
+                '<item><g' || chr(58) || 'id>' || replace(replace(replace(COALESCE(NULLIF(p.internal_reference, ''), p.id), '&', '&amp;'), '<', '&lt;'), '>', '&gt;') ||
+                '</g' || chr(58) || 'id><g' || chr(58) || 'title>' || replace(replace(replace(p.name, '&', '&amp;'), '<', '&lt;'), '>', '&gt;') ||
+                '</g' || chr(58) || 'title><g' || chr(58) || 'description>' || replace(replace(replace(COALESCE(NULLIF(p.website_description, ''), p.name), '&', '&amp;'), '<', '&lt;'), '>', '&gt;') ||
+                '</g' || chr(58) || 'description><link>/shop/product/' || p.id || '</link><g' || chr(58) || 'price>' || CAST(p.sales_price AS VARCHAR) || ' USD</g' || chr(58) || 'price><g' || chr(58) || 'availability>in stock</g' || chr(58) || 'availability></item>', '' ORDER BY p.website_sequence, p.name, p.id)
+                FROM ecommerce_products p
+                WHERE p.active = TRUE AND p.is_published = TRUE
+                  AND p.company_name = (SELECT company_name FROM ecommerce_product_feeds WHERE id = :id)
+                  AND ((SELECT category_id FROM ecommerce_product_feeds WHERE id = :id) IS NULL OR EXISTS (
+                    SELECT 1 FROM ecommerce_product_category_assignments a
+                    WHERE a.product_id = p.id AND a.category_id = (SELECT category_id FROM ecommerce_product_feeds WHERE id = :id) AND a.active = TRUE
+                  ))), '') ||
+              '</channel></rss>',
+              cache_expiry = CURRENT_TIMESTAMP + INTERVAL '1 day',
+              row_version = row_version + 1,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id AND row_version = :expected_row_version AND active = TRUE
+      result: { query: "SELECT id, row_version, name, target, language_code, category_id, company_name, access_token, cache_xml, cache_expiry FROM ecommerce_product_feeds WHERE id = :id" }
+  - id: delete_ecommerce_product_feed
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_feeds.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_feeds]
+    mutation:
+      operation: delete
+      table: ecommerce_product_feeds
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_feeds WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_FEED_STALE, message: This feed changed or was deleted. Reload before retrying. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }

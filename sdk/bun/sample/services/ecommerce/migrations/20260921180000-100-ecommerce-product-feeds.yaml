@@ -1,0 +1,31 @@
+version: 0.0.100
+kind: schema
+description: durable Website Sale Google Merchant product feeds
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_feeds (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        target VARCHAR NOT NULL DEFAULT 'gmc',
+        language_code VARCHAR NOT NULL DEFAULT 'en_US',
+        pricelist_id VARCHAR,
+        category_id VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        access_token VARCHAR NOT NULL DEFAULT gen_random_uuid(),
+        cache_xml TEXT,
+        cache_expiry TIMESTAMP,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_feeds_access_token_idx ON ecommerce_product_feeds(access_token);
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_feeds_company_name_idx ON ecommerce_product_feeds(company_name, name);
+      CREATE INDEX IF NOT EXISTS ecommerce_product_feeds_scope_idx ON ecommerce_product_feeds(company_name, active, target);
+    down: |
+      DROP TABLE IF EXISTS ecommerce_product_feeds;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

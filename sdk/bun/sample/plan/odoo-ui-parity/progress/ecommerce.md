@@ -4,8 +4,26 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `81b7038a4dfc9ef151714206942d6e05d5cf93de`
-(`ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`, not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-PRODUCT-FEED-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-FEED-001`
+
+Wave 18 selected Odoo Website Sale's Product Feed configuration and GMC XML
+generation, a source-backed surface not covered by the excluded catalog and
+checkout slices. Core3 migrations 100/101 add durable feed records with
+company scope, generated access tokens, category/pricelist filters, cache XML,
+and expiry. Product Feeds uses separate page/API YAML; create/edit/generate/
+delete actions enforce Ecommerce permissions, supported target/language,
+active selector references, duplicate names, company scope, optimistic
+concurrency, cache invalidation, and token-checked public feed reads.
+
+Focused verification passed **3 tests, 40 assertions, 0 failures**. The
+focused Ecommerce regression, audit, scoped ESLint, and `git diff --check`
+will be recorded with the local commit. Core3 authenticated desktop/mobile
+capture is blocked by the unavailable persistent browser runtime and local
+ports; Odoo `/shop` remains an exact HTTP 404 blocker. Ecommerce module
+sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-WEBSITE-SEQUENCE-REORDER-001`
 
