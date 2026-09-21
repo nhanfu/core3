@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { mkdtemp, mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -53,6 +53,29 @@ describe('Manufacturing Work Center Work Orders parity slice', () => {
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'MRP_WORKCENTER_WORKORDERS_UNAVAILABLE' });
     database.close();
+  });
+
+  test('retains the scoped rows across a file-backed database restart', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-manufacturing-workcenter-workorders-'));
+    const databasePath = join(directory, 'manufacturing.duckdb');
+    const migrations = join(service, 'migrations');
+    const source = yaml('api/work-center-workorders.yaml').datasources.find((candidate: any) => candidate.id === 'mrp_workcenter_workorders');
+    const params = { workcenter_id: 'workcenter-assembly-1', workcenter: 'Assembly 1', q: null, state: null, late: null, fixture_state: null };
+    try {
+      const first = await DuckDbDatabase.open(databasePath);
+      const repository = new YamlRepository(first);
+      await migrateDatabase(repository, migrations, undefined, 'manufacturing_work_center_workorders_restart', ['schema', 'data']);
+      expect((await repository.querySource(source, params, 0, 50)).data.map((row: any) => row.id)).toEqual(['wo-progress-001']);
+      first.close();
+
+      const second = await DuckDbDatabase.open(databasePath);
+      const reopened = new YamlRepository(second);
+      await migrateDatabase(reopened, migrations, undefined, 'manufacturing_work_center_workorders_restart', ['schema', 'data']);
+      expect((await reopened.querySource(source, params, 0, 50)).data.map((row: any) => row.id)).toEqual(['wo-progress-001']);
+      second.close();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('keeps workflow actions permissioned and guarded by the existing durable workflow', () => {

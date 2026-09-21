@@ -13,11 +13,12 @@
   durable index migration
   `services/manufacturing/migrations/20260921100000-021-work-center-workorders-index.yaml`;
   focused test `test/manufacturing_work_center_workorders.integration.test.ts`.
-- Functional/data result: PASS, 3 tests / 22 assertions. Isolated discovery
+- Functional/data result: PASS, 4 tests / 24 assertions. Isolated discovery
   finds the page/API pair and route. Replaying the Manufacturing migration
   chain twice remains idempotent; Assembly 1 returns only its persisted
   non-terminal row, Assembly 2 returns its waiting row, terminal rows are
-  excluded, and search/empty/503 states are covered.
+  excluded, search/empty/503 states are covered, and the scoped row survives
+  a file-backed close/reopen restart.
 - Workflow/permission result: PASS at contract level. The six scoped actions
   require `manufacturing.write`, reuse the durable `mrp_workorders` workflow,
   and expose no create/delete action. Read and 401/403/503 declarations are

@@ -10,9 +10,9 @@
   workflow, and the existing Work Order detail page; no duplicate form,
   fixture table, or workflow was added. Migration 021 adds an idempotent query
   index only.
-- Focused suite passes 3 tests / 22 assertions; the related Work Center
-  Overview and global Work Orders regression tests pass. Manufacturing CSS and
-  `git diff --check` pass.
+- Focused suite passes 4 tests / 24 assertions, including file-backed restart
+  persistence; the related Work Center Overview and global Work Orders
+  regression tests pass. Manufacturing CSS and `git diff --check` pass.
 - Authenticated Odoo desktop/mobile evidence is blocked: browser instance
   `245ea108` and database URL `http://localhost:8069` redirect the shared QA
   profile from `/odoo/work-centers` to Discuss/OdooBot with no Manufacturing

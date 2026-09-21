@@ -26,13 +26,13 @@ work-center/state/planned-date index to the durable Work Order table; it adds
 no fixture-only rows.
 
 Focused coverage is
-`test/manufacturing_work_center_workorders.integration.test.ts`: 3 tests / 22
+`test/manufacturing_work_center_workorders.integration.test.ts`: 4 tests / 24
 assertions pass. It verifies source modes, page/API separation, isolated
 Manufacturing discovery, route binding, idempotent migration replay, durable
-work-center scoping, terminal exclusion, empty/transport states, and
-permissioned guarded workflow actions. The existing Work Center Overview and
-global Work Orders regression tests also pass after their expected navigation
-contract update.
+work-center scoping, terminal exclusion, empty/transport states, file-backed
+restart persistence, and permissioned guarded workflow actions. The existing
+Work Center Overview and global Work Orders regression tests also pass after
+their expected navigation contract update.
 
 The authenticated Odoo reference probe used browser instance `245ea108`,
 database URL `http://localhost:8069/odoo/work-centers`, and the shared QA

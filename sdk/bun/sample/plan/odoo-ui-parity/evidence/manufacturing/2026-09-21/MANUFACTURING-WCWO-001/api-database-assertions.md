@@ -9,6 +9,7 @@
   rows.
 - Migration `0.0.21` is idempotent and creates only
   `idx_mrp_workorders_workcenter_state_plan`; it does not insert fixture rows.
-- Full Manufacturing migration chain replayed twice in the focused test. The
-  persisted Assembly 1 and Assembly 2 rows were returned in scope, while
-  terminal rows and empty fixtures returned no rows.
+- Full Manufacturing migration chain replayed twice in the focused test and
+  reopened from a file-backed DuckDB database. The persisted Assembly 1 and
+  Assembly 2 rows were returned in scope, while terminal rows and empty
+  fixtures returned no rows.
