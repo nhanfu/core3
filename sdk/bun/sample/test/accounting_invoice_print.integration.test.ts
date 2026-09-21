@@ -38,7 +38,7 @@ describe('Accounting invoice Print report parity', () => {
     expect(discovered.pageDatasources.get('invoice-detail')).toEqual(expect.arrayContaining(['accounting_invoice_detail', 'accounting_invoice_print_runs']));
     expect(() => validatePageDefinition(api, { allowExternalSources: true })).not.toThrow();
     expect(() => validatePageDefinition({ ...page, actions: api.actions }, { allowExternalSources: true })).not.toThrow();
-    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'print_accounting_invoice', label: 'Print', permission: 'accounting.read' }));
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'download_accounting_invoice_pdf', label: 'Print', permission: 'accounting.read' }));
     expect(action(api, 'print_accounting_invoice')).toMatchObject({ type: 'server', permission: 'accounting.read', operation: 'print_report', action: 'accounting.invoices.print', handler: 'yaml_mutation' });
     expect(sourceView).toContain('name="action_print_pdf"');
     expect(sourceModel).toContain("def action_print_pdf(self):");
@@ -46,6 +46,8 @@ describe('Accounting invoice Print report parity', () => {
     expect(sourceSend).toContain("self.env.ref('account.account_invoices')");
     expect(reports).toContain('<record id="account_invoices" model="ir.actions.report">');
     expect(reports).toContain('<field name="report_name">account.report_invoice_with_payments</field>');
+    expect(action(api, 'download_accounting_invoice_pdf')).toMatchObject({ type: 'client', permission: 'accounting.read' });
+    expect(action(api, 'download_accounting_invoice_pdf').script).toContain("/api/query");
   });
 
   test('records a posted customer invoice PDF run and exposes durable history', async () => {

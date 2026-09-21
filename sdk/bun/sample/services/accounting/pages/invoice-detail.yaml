@@ -18,7 +18,7 @@ components:
       - { id: register_accounting_invoice_payment, label: Register payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.amount_residual > 0" }
       - { id: reverse_accounting_invoice, label: Credit Note, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Vendor Bill') && !state.accounting_invoice_detail.reversal_id" }
       - { id: send_accounting_invoice, label: Send, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.invoice_type !== 'Journal Entry'" }
-      - { id: print_accounting_invoice, label: Print, variant: secondary, permission: accounting.read, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Customer Credit Note')" }
+      - { id: download_accounting_invoice_pdf, label: Print, variant: secondary, permission: accounting.read, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Customer Credit Note')" }
     group_columns: 2
     groups:
       - title: Invoice

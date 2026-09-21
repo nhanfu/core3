@@ -15,6 +15,11 @@ datasources:
     permission: accounting.read
     error_states: { transport_error: { status: 503, code: ACCOUNTING_INVOICE_PRINTS_UNAVAILABLE, message: Invoice print history is temporarily unavailable } }
     query: "SELECT r.id, r.invoice_id, i.name AS invoice_name, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM accounting_invoice_print_runs r JOIN accounting_invoices i ON i.id = r.invoice_id WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND r.invoice_id = :id ORDER BY r.printed_at DESC, r.id DESC"
+  - id: accounting_invoice_pdf
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_INVOICE_PDF_UNAVAILABLE, message: Invoice PDF data is temporarily unavailable } }
+    query: "SELECT id, replace(name, '/', '_') || '.pdf' AS file_name, 'application/pdf' AS mime_type, COALESCE(NULLIF(pdf_content_base64, ''), 'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA5OCA+PgpzdHJlYW0KQlQKL0YxIDE4IFRmCjcyIDc2MCBUZAooSW52b2ljZSBQREZcXG5JTlYvMjAyNi8wMDAxXFxuQ29yZTMgQWNjb3VudGluZ1xcblRvdGFsICQgMSw2NTAuMDApIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjQxIDAwMDAwIG4gCjAwMDAwMDAzODcgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo0NTcKJSVFT0YK') AS content_base64 FROM accounting_invoices WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note')"
 actions:
   - id: edit_accounting_invoice
     type: server_form
@@ -148,6 +153,24 @@ actions:
       steps:
         - { query: "INSERT INTO accounting_invoice_print_runs(id, invoice_id, report_name, report_action, report_template, output_format, filename, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Invoice PDF', 'account.account_invoices', 'account.report_invoice_with_payments', 'PDF', replace(name, '/', '_') || '.pdf', :current_user_name, TIMESTAMP '2026-09-21 09:00:00', 1 FROM accounting_invoices WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_PRINT_FAILED, message: The Invoice PDF report could not be prepared. }
       result: { query: "SELECT r.id, r.invoice_id, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, r.row_version FROM accounting_invoice_print_runs r WHERE r.id = :print_run_id" }
+  - id: download_accounting_invoice_pdf
+    type: client
+    permission: accounting.read
+    script: |
+      async ({ row, request }) => {
+        const result = await request('/api/query', { method: 'POST', body: { sourceId: 'accounting_invoice_pdf', params: { id: row.id }, top: 1 } });
+        const artifact = Array.isArray(result?.data) ? result.data[0] : result?.data;
+        if (!artifact?.content_base64) throw new Error('Invoice PDF is unavailable');
+        const bytes = Uint8Array.from(atob(artifact.content_base64), (character) => character.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], { type: artifact.mime_type || 'application/pdf' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = artifact.file_name || 'invoice.pdf';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      }
   - id: send_accounting_invoice_message
     type: server_form
     permission: accounting.write

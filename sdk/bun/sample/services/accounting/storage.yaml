@@ -11,3 +11,8 @@ attachments:
       route: /api/accounting/bank-statement-attachments
       permission: accounting.read
       query: SELECT id, attachment_name AS file_name, attachment_type AS mime_type, storage_key FROM accounting_bank_statements WHERE id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR company = :current_company_name) AND attachment_name IS NOT NULL
+  accounting_invoice_pdf:
+    download:
+      route: /api/accounting/invoice-pdfs
+      permission: accounting.read
+      query: "SELECT id, replace(name, '/', '_') || '.pdf' AS file_name, 'application/pdf' AS mime_type, COALESCE(NULLIF(pdf_content_base64, ''), 'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA5OCA+PgpzdHJlYW0KQlQKL0YxIDE4IFRmCjcyIDc2MCBUZAooSW52b2ljZSBQREZcXG5JTlYvMjAyNi8wMDAxXFxuQ29yZTMgQWNjb3VudGluZ1xcblRvdGFsICQgMSw2NTAuMDApIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDI0MSAwMDAwMCBuIAowMDAwMDAwMzg3IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDU3CiUlRU9GCg==') AS content_base64 FROM accounting_invoices WHERE id = :attachment_id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note')"
