@@ -1319,3 +1319,30 @@ reference exists and was captured. Core3 browser completion is not claimed:
 the isolated runtime repeatedly returned 502 during backend startup/migration,
 and the later authenticated probe had no reusable QA session and returned
 401 before the POS page could render. Screenshots remain outside Git.
+
+## Current bounded batch: Orders > Delete action
+
+Odoo 19 exposes Delete from the `pos.order` form Actions menu in
+`addons/point_of_sale/views/pos_order_view.xml`. The model guard in
+`addons/point_of_sale/models/pos_order.py` permits deletion only for draft or
+cancelled orders, cancelling a draft before deletion. The live authenticated
+reference showed the same form-level Delete and Cancel Order actions on an
+order detail.
+
+Core3 adds Delete to the existing `pos-order-detail` page/API pair. The
+`pos.write` mutation requires current company, current `row_version`, and
+state `New` or `Cancelled`; it removes dependent lines, payments, operations,
+email runs, and invoice-run links before durably deleting the order. Migration
+`20260922100000-049-pos-order-delete.yaml` provides a deterministic New-order
+fixture for browser and restart coverage. Page and API remain separate and are
+joined by `page.id: pos-order-detail`.
+
+Focused coverage is `test/pos_order_delete.integration.test.ts`: contract
+separation, permission/action metadata, company/state/stale guards, child
+cleanup, durable deletion, and close/reopen persistence pass. Authenticated
+Core3 desktop/mobile captures and the live Odoo reference inspection are
+recorded at
+`evidence/point_of_sale/2026-09-22/POS-ORDER-DELETE-001/browser-evidence.md`.
+The Core3 direct backend rendered successfully; the all-module runtime and
+Vite proxy remain blocked by the unrelated duplicate `time_off.requests.refuse`
+action / first-request 502, so no all-module startup claim is made.

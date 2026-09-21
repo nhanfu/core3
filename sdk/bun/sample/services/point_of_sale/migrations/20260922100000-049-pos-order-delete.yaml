@@ -1,0 +1,24 @@
+version: 0.0.49
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_orders(
+        id, row_version, name, session_id, partner_name, state, amount_total,
+        amount_paid, payment_method, date_order, company
+      ) VALUES (
+        'pos-order-delete-draft-001', 1, 'POS/2026/09/22/DELETE-DRAFT',
+        'pos-session-demo-001', 'Delete Fixture Customer', 'New', 0, 0, NULL,
+        TIMESTAMP '2026-01-15 13:00:00', 'Core3 Demo Company'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_order_lines WHERE order_id = 'pos-order-delete-draft-001';
+      DELETE FROM pos_payments WHERE order_id = 'pos-order-delete-draft-001';
+      DELETE FROM pos_operations WHERE order_id = 'pos-order-delete-draft-001';
+      DELETE FROM pos_order_email_runs WHERE order_id = 'pos-order-delete-draft-001';
+      DELETE FROM pos_invoice_run_orders WHERE order_id = 'pos-order-delete-draft-001';
+      DELETE FROM pos_orders WHERE id = 'pos-order-delete-draft-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

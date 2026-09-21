@@ -71,3 +71,27 @@ actions:
           code: POS_ORDER_STALE
           message: POS order changed; reload before returning products.
       result: { query: "SELECT * FROM pos_orders WHERE id = :refund_order_id" }
+  - id: delete_pos_order_detail
+    type: server
+    permission: pos.write
+    action: pos.orders.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: Delete this POS order?
+    refresh: [pos_orders]
+    mutation:
+      operation: delete
+      table: pos_orders
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_orders WHERE id = :id", status: 404, code: POS_ORDER_NOT_FOUND, message: POS order not found. }
+        - { query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name", status: 403, code: POS_ORDER_COMPANY_FORBIDDEN, message: POS order belongs to another company. }
+        - { query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_ORDER_DELETE_STALE, message: POS order changed; reload before deleting. }
+        - { query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Cancelled')", status: 409, code: POS_ORDER_DELETE_STATE, message: Only new or cancelled POS orders can be deleted. }
+      before_steps:
+        - query: "DELETE FROM pos_order_lines WHERE order_id = :id"
+        - query: "DELETE FROM pos_payments WHERE order_id = :id"
+        - query: "DELETE FROM pos_operations WHERE order_id = :id"
+        - query: "DELETE FROM pos_order_email_runs WHERE order_id = :id"
+        - query: "DELETE FROM pos_invoice_run_orders WHERE order_id = :id"
+      result: { query: "SELECT true AS deleted" }
