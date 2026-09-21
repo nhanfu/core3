@@ -1447,3 +1447,36 @@ Focused coverage proves YAML separation, permission ownership, persistence
 after DuckDB close/reopen, duplicate/stale/type/date guards, and no partial
 write. Posting the generated credit note and multi-document reversal remain
 outside this bounded slice.
+
+## Current batch: invoice Send workflow (2026-09-21)
+
+Odoo 19 exposes `Send` on posted customer invoices and vendor bills through
+`addons/account/views/account_move_views.xml`, backed by
+`account.move.action_invoice_sent` and the send wizard in
+`addons/account/wizard/account_move_send_wizard.xml`. The live reference at
+`http://localhost:8069/odoo/invoicing` was checked on `INV/2026/00008`: its
+composer offers Email/Post, recipient, subject, message, the generated PDF
+attachment, and Send/Discard.
+
+Core3 now adds the bounded, page/API-separated `send_accounting_invoice`
+workflow to `invoice-detail`. It is limited to unchanged posted non-journal
+invoices, requires `accounting.write`, validates delivery method, recipient,
+subject, and message, and uses optimistic concurrency. Migration
+`20260921100000-049-accounting-invoice-send.yaml` adds durable send counters,
+last-sent timestamp, and `accounting_invoice_messages`; the API also exposes
+the persisted records through the page-ID-matched chatter source. Email/Post
+records are queued locally with status `Queued`; SMTP delivery, PDF rendering,
+attachment generation, and outbound transport remain integration work outside
+this slice.
+
+Focused integration coverage passes 2 tests and 15 assertions, including YAML
+separation, permission/action contracts, stale/paid/invalid-recipient guards,
+DuckDB close/reopen persistence, and the durable message row. Authenticated
+Core3 browser evidence from the isolated runner at
+`http://127.0.0.1:4011/accounting/invoice-detail?id=accounting-invoice-demo-001`
+shows the composer, a saved `Times sent 1` record, and the persisted chatter
+message after reload at desktop 1901x833 and mobile 390x844. Captures are
+under `/tmp/core3-odoo-parity/accounting-invoice-send-20260921/` and remain
+outside Git. Odoo desktop evidence is captured at 1916x833; the Odoo mobile
+capture was blocked when the shared browser session stopped, so no mobile Odoo
+parity claim is made.
