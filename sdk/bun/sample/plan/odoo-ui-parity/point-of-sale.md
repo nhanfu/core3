@@ -1256,3 +1256,32 @@ banner but Vite exited before `/api/modules` with
 authenticated render, screenshot, or visual-parity claim is made for this
 batch. Screenshots remain outside Git; residuals are the unavailable browser
 evidence and the Odoo purple shell/medium-dialog visual differences.
+
+## Current bounded batch: Orders > Send Email action
+
+The local Odoo 19 source exposes `model_pos_order_send_mail` in
+`addons/point_of_sale/views/pos_order_view.xml`. It binds the `Send Email`
+server action to `pos.order` list, kanban, and form views and opens the Odoo
+mail composer in mass-mail mode with the selected order records and the first
+`pos.order` mail template. The live authenticated Point of Sale menu exposes
+Orders as the owning action family; this is a row action on that existing
+surface, not a new menu.
+
+Core3 adds the row-prefilled `Send Email` server form to the existing
+`/point-of-sale/orders` page/API pair. The service-owned migration adds
+`customer_email` to orders and the durable `pos_order_email_runs` queue. The
+mutation requires `pos.write`, current company scope, a current order version,
+a signed-in actor, a valid recipient, and non-empty subject/body; it persists a
+Queued run and an `email_queued` operation record. The order list remains
+read-only for `pos.read` users, and page/API contracts remain separate and
+joined by `page.id: pos-orders`.
+
+Focused coverage is `test/pos_order_email.integration.test.ts`: page/API join,
+source-backed Odoo action mapping, row prefill, durable queue persistence,
+operation audit, and company/actor/recipient/content/version/permission guards.
+
+Browser evidence is recorded at
+`evidence/point_of_sale/2026-09-21/pos-order-send-email/browser-evidence.md`.
+The authenticated Odoo desktop reference menu was captured, but Core3 backend
+startup failed before the final composer interaction; no desktop completion or
+mobile parity claim is made.

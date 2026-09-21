@@ -17,6 +17,7 @@ components:
       - { id: post_accounting_invoice_detail, label: Post, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft'" }
       - { id: register_accounting_invoice_payment, label: Register payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.amount_residual > 0" }
       - { id: reverse_accounting_invoice, label: Credit Note, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Vendor Bill') && !state.accounting_invoice_detail.reversal_id" }
+      - { id: send_accounting_invoice, label: Send, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.invoice_type !== 'Journal Entry'" }
     group_columns: 2
     groups:
       - title: Invoice
@@ -45,6 +46,8 @@ components:
           - { field: reversal_id, label: Credit note }
           - { field: reversal_of_id, label: Reversal of }
           - { field: reversal_reason, label: Reversal reason }
+          - { field: send_count, label: Times sent }
+          - { field: last_sent_at, label: Last sent }
     notebook:
       active: invoice-lines
       tabs:
@@ -67,3 +70,17 @@ components:
             - { field: reversal_id, label: Credit note }
             - { field: reversal_of_id, label: Reversal of }
             - { field: reversal_reason, label: Reversal reason }
+            - { field: send_count, label: Times sent }
+            - { field: last_sent_at, label: Last sent }
+    message_source: accounting_invoice_messages
+    chatter_label: Messages and activities
+    chatter_empty: No messages or activities yet.
+    message_label: Send message
+    note_label: Log note
+    activity_label: Activity
+    message_action: send_accounting_invoice_message
+    note_action: log_accounting_invoice_note
+    activity_action: schedule_accounting_invoice_activity
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at

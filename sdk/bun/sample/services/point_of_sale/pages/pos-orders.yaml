@@ -92,3 +92,4 @@ components:
       - { id: pay_pos_order, label: Register payment, permission: pos.write, variant: primary }
       - { id: invoice_pos_order, label: Create invoice, permission: pos.write, variant: secondary, show_if: "row.state === 'Paid' && row.to_invoice === true && !row.invoice_id" }
       - { id: cancel_pos_order, label: Cancel, permission: pos.write, variant: danger }
+      - { id: send_pos_order_email, label: Send Email, permission: pos.write, variant: secondary }

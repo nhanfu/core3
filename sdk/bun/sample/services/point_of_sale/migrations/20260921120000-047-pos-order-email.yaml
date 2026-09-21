@@ -1,0 +1,36 @@
+version: 0.0.47
+kind: data
+description: Durable POS order email queue for the Odoo Send Email action
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR;
+      UPDATE pos_orders SET customer_email = CASE partner_name
+        WHEN 'Acme Corporation' THEN 'info@acme.example'
+        WHEN 'Wayne Industries' THEN 'contact@wayne.example'
+        WHEN 'Touch Demo Customer' THEN 'touch@example.test'
+        WHEN 'Refund Fixture Customer' THEN 'refund@example.test'
+        WHEN 'Vietnam Customer' THEN 'vietnam@example.test'
+        ELSE customer_email
+      END WHERE customer_email IS NULL;
+      CREATE TABLE IF NOT EXISTS pos_order_email_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        order_id VARCHAR NOT NULL,
+        company VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body VARCHAR NOT NULL,
+        queued_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Queued',
+        queued_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(order_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_order_email_runs_order ON pos_order_email_runs(order_id, queued_at, id);
+    down: |
+      DROP TABLE IF EXISTS pos_order_email_runs;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS customer_email;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

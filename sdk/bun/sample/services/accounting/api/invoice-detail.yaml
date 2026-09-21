@@ -5,7 +5,11 @@ datasources:
     permission: accounting.read
     workflow: accounting_invoices
     error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, COALESCE(send_count, 0) AS send_count, CAST(last_sent_at AS VARCHAR) AS last_sent_at, CASE partner_name WHEN 'Gemini Furniture' THEN 'gemini@example.com' WHEN 'LightsUp' THEN 'lightsup@example.com' WHEN 'Azure Interior' THEN 'azure@example.com' WHEN 'Lumber Inc' THEN 'lumber@example.com' ELSE 'billing@example.com' END AS recipient_email, 'Invoice ' || name AS subject, 'Please find your invoice ' || name || ' attached.' AS body, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
+  - id: accounting_invoice_messages
+    single: false
+    permission: accounting.read
+    query: "SELECT id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status, CAST(created_at AS VARCHAR) AS created_at FROM accounting_invoice_messages WHERE invoice_id = :id ORDER BY created_at DESC"
 actions:
   - id: edit_accounting_invoice
     type: server_form
@@ -90,3 +94,70 @@ actions:
     fields:
       - { field: reversal_date, label: Reversal date, type: date, required: true, default: '2026-01-15' }
       - { field: reason, label: Reason, type: text, default: Correction of posted document }
+  - id: send_accounting_invoice
+    type: server_form
+    permission: accounting.write
+    title: Send invoice
+    action: accounting.invoices.send
+    handler: yaml_mutation
+    operation: send
+    params: { id: '{state.id}' }
+    prefill: state.accounting_invoice_detail
+    refresh: [accounting_invoice_detail, accounting_invoice_messages]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND invoice_type <> 'Journal Entry' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_SEND_UNAVAILABLE, message: Only an unchanged posted invoice can be sent. Reload before sending. }
+        - { query: "SELECT 1 AS ok WHERE :delivery_method IN ('Email', 'Post')", status: 422, code: ACCOUNTING_INVOICE_SEND_METHOD_INVALID, message: Choose Email or Post. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:recipient_email AS VARCHAR))) BETWEEN 3 AND 320", status: 422, code: ACCOUNTING_INVOICE_SEND_RECIPIENT_INVALID, message: A recipient is required. }
+        - { query: "SELECT 1 AS ok WHERE :delivery_method = 'Post' OR regexp_matches(TRIM(CAST(:recipient_email AS VARCHAR)), '^[^ @]+@[^ @]+\\.[^ @]+$')", status: 422, code: ACCOUNTING_INVOICE_SEND_RECIPIENT_INVALID, message: Enter a valid email recipient. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 255 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) BETWEEN 1 AND 10000", status: 422, code: ACCOUNTING_INVOICE_SEND_CONTENT_INVALID, message: Subject and message are required. }
+      steps:
+        - { query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'send', 'Sent by ' || :delivery_method, CAST(:body AS VARCHAR), :delivery_method, CAST(:recipient_email AS VARCHAR), CAST(:subject AS VARCHAR), 'Queued')" }
+        - { query: "UPDATE accounting_invoices SET send_count = COALESCE(send_count, 0) + 1, last_sent_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_SEND_STALE, message: The invoice changed; reload before sending. }
+      result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" }
+    fields:
+      - { field: row_version, label: Row version, type: hidden, default: 1 }
+      - { field: delivery_method, label: Delivery method, type: select, options: [Email, Post], default: Email, required: true }
+      - { field: recipient_email, label: To, type: text, default: billing@example.com, required: true }
+      - { field: subject, label: Subject, type: text, default: Invoice, required: true }
+      - { field: body, label: Message, type: textarea, default: Please find the invoice attached., required: true }
+  - id: send_accounting_invoice_message
+    type: server_form
+    permission: accounting.write
+    title: Send message
+    action: accounting.invoices.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [accounting_invoice_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INVOICE_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'message', 'Message', :content, NULL, NULL, NULL, 'Posted')" }]
+  - id: log_accounting_invoice_note
+    type: server_form
+    permission: accounting.write
+    title: Log note
+    action: accounting.invoices.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [accounting_invoice_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INVOICE_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'note', 'Note', :content, NULL, NULL, NULL, 'Posted')" }]
+  - id: schedule_accounting_invoice_activity
+    type: server_form
+    permission: accounting.write
+    title: Schedule activity
+    action: accounting.invoices.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    refresh: [accounting_invoice_messages]
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INVOICE_ACTIVITY_INVALID, message: Activity content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'activity', 'Activity', :content, NULL, NULL, NULL, 'Posted')" }]

@@ -1,0 +1,23 @@
+version: 0.0.49
+kind: data
+description: Add durable invoice send queue and chatter records
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS send_count INTEGER DEFAULT 0;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS last_sent_at TIMESTAMP;
+      CREATE TABLE IF NOT EXISTS accounting_invoice_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), invoice_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL, action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL, delivery_method VARCHAR, recipient VARCHAR, subject VARCHAR,
+        status VARCHAR NOT NULL DEFAULT 'Posted', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_invoice_messages_invoice ON accounting_invoice_messages(invoice_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS accounting_invoice_messages;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS last_sent_at;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS send_count;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
