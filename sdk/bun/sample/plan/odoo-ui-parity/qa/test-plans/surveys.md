@@ -591,3 +591,14 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.
+
+## `SURVEYS-PUBLIC-RANDOM-SELECTION-001` — per-response randomized questions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-052 | public workflow | Randomized published survey start and cursor | Persist one complete question ID order per response and expose the Odoo setting through the paired page/API contracts | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-049 | restart/concurrency | Start → Next/Previous → reopen → same-key concurrent navigation | Preserve `question_order` across file-backed restart and converge both callers on one cursor | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-051 | token/permission | Foreign token and public navigation guard | Keep `surveys.public`, reject foreign response disclosure, and validate random order before mutation | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-050 | authenticated responsive/reference | Randomized public question desktop/mobile + Odoo comparison | Capture exact runtime blockers; no sign-off until authenticated Core3 routes and installed Odoo Surveys fixture are available | `browser-results.json` | conditional |
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.

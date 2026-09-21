@@ -90,9 +90,13 @@ export default class SurveysModule implements ModuleLifecycle {
       if (!response) return this.json({ error: 'This survey invitation is no longer available.', code: 'SURVEY_PUBLIC_TOKEN_WRONG' }, 404);
       return null;
     };
-    const firstQuestion = async () => (await service.call('survey.public.first_question', {
-      survey_id: detail.id,
-    }))?.question?.[0] || null;
+    const orderedQuestions = async (answerData = '', questionOrder = '', seed = token) => {
+      const allQuestions = await this.questionSettings(service, detail.id, (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || []);
+      const visible = this.visibleQuestions(allQuestions, answerData);
+      return String(detail.questions_selection || 'all') === 'random'
+        ? this.orderPublicQuestions(visible, questionOrder, seed)
+        : visible;
+    };
 
     if (request.method === 'GET' && !operation) {
       const explicitAnswerToken = url.searchParams.get('answer_token') || '';
@@ -104,8 +108,7 @@ export default class SurveysModule implements ModuleLifecycle {
       const answer = answerToken ? await readResponse(answerToken) : undefined;
       if (explicitAnswerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
       if (answer && this.publicAttemptExpired(detail, answer)) return this.expiredResponse(detail, answer);
-      const allQuestions = await this.questionSettings(service, detail.id, (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || []);
-      const questions = this.visibleQuestions(allQuestions, answer?.answer_data);
+      const questions = await orderedQuestions(answer?.answer_data, answer?.question_order || '', answer?.access_token || token);
       return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
     if (request.method !== 'POST' || !operation) return this.json({ error: 'Method not allowed' }, 405);
@@ -128,15 +131,19 @@ export default class SurveysModule implements ModuleLifecycle {
         if (answer && this.publicAttemptExpired(detail, answer)) return this.expiredResponse(detail, answer);
         if (answer?.state === 'Submitted') return this.withSurveyCookie(this.json({ error: 'This survey response is already submitted' }, 409), token, existingToken);
         if (answer?.state === 'New') {
-          const question = await firstQuestion();
+          const questionOrder = String(answer?.question_order || '');
+          const order = await orderedQuestions(answer?.answer_data || '', questionOrder, existingToken);
+          const persistedQuestionOrder = questionOrder || (String(detail.questions_selection || 'all') === 'random' ? order.map((candidate: any) => candidate.id).join('||') : '');
+          const question = order[0] || null;
           if (!question) return this.json({ error: 'The first survey question is unavailable', code: 'SURVEY_PUBLIC_BEGIN_QUESTION' }, 422);
           try {
             const begun = await service.call('surveys.public.begin', {
               id: answer.id,
               survey_id: detail.id,
               access_token: existingToken,
-              values: { state: 'In Progress', current_question_id: question.id, start_datetime: new Date().toISOString() },
+              values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, start_datetime: new Date().toISOString() },
               current_question_id: question.id,
+              question_order: persistedQuestionOrder || null,
               start_datetime: new Date().toISOString(),
             });
             return this.withSurveyCookie(this.json({ survey: detail, answer: begun }), token, existingToken);
@@ -154,8 +161,9 @@ export default class SurveysModule implements ModuleLifecycle {
                   id: answer.id,
                   survey_id: detail.id,
                   access_token: existingToken,
-                  values: { state: 'In Progress', current_question_id: question.id, start_datetime: new Date().toISOString() },
+                  values: { state: 'In Progress', current_question_id: question.id, question_order: persistedQuestionOrder || null, start_datetime: new Date().toISOString() },
                   current_question_id: question.id,
+                  question_order: persistedQuestionOrder || null,
                   start_datetime: new Date().toISOString(),
                 });
                 return this.withSurveyCookie(this.json({ survey: detail, answer: retried }), token, existingToken);
@@ -183,7 +191,10 @@ export default class SurveysModule implements ModuleLifecycle {
       if (attemptError) return attemptError;
       let result;
       try {
-        const question = await firstQuestion();
+        const accessToken = crypto.randomUUID();
+        const order = await orderedQuestions('', '', accessToken);
+        const questionOrder = String(detail.questions_selection || 'all') === 'random' ? order.map((candidate: any) => candidate.id).join('||') : null;
+        const question = order[0] || null;
         result = await service.call('surveys.public.start', {
           values: {
             survey_id: detail.id,
@@ -191,7 +202,8 @@ export default class SurveysModule implements ModuleLifecycle {
             respondent_email: respondentEmail || null,
             answer_data: '{}',
             current_question_id: question?.id || null,
-            access_token: crypto.randomUUID(),
+            access_token: accessToken,
+            question_order: questionOrder,
             idempotency_key: idempotencyKey || null,
             start_datetime: new Date().toISOString(),
           },
@@ -229,16 +241,23 @@ export default class SurveysModule implements ModuleLifecycle {
         }))?.response?.[0];
         if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
       }
-      let next = (await service.call('survey.public.next_question', {
-        survey_id: detail.id,
-        current_question_id: expectedQuestionId,
-      }))?.question?.[0];
       const answers = this.parseAnswerData(response.answer_data);
-      while (next && !this.isQuestionVisible(next, answers)) {
+      let next;
+      if (String(detail.questions_selection || 'all') === 'random') {
+        const order = await orderedQuestions(response.answer_data, response.question_order || '', answerToken);
+        const currentIndex = order.findIndex((candidate: any) => candidate.id === expectedQuestionId);
+        next = currentIndex >= 0 ? order[currentIndex + 1] : null;
+      } else {
         next = (await service.call('survey.public.next_question', {
           survey_id: detail.id,
-          current_question_id: next.id,
+          current_question_id: expectedQuestionId,
         }))?.question?.[0];
+        while (next && !this.isQuestionVisible(next, answers)) {
+          next = (await service.call('survey.public.next_question', {
+            survey_id: detail.id,
+            current_question_id: next.id,
+          }))?.question?.[0];
+        }
       }
       if (!next) return this.json({ error: 'The survey has reached the final question', code: 'SURVEY_PUBLIC_NEXT_EXHAUSTED' }, 409);
       try {
@@ -292,16 +311,23 @@ export default class SurveysModule implements ModuleLifecycle {
         }))?.response?.[0];
         if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
       }
-      let previous = (await service.call('survey.public.previous_question', {
-        survey_id: detail.id,
-        current_question_id: expectedQuestionId,
-      }))?.question?.[0];
       const answers = this.parseAnswerData(response.answer_data);
-      while (previous && !this.isQuestionVisible(previous, answers)) {
+      let previous;
+      if (String(detail.questions_selection || 'all') === 'random') {
+        const order = await orderedQuestions(response.answer_data, response.question_order || '', answerToken);
+        const currentIndex = order.findIndex((candidate: any) => candidate.id === expectedQuestionId);
+        previous = currentIndex > 0 ? order[currentIndex - 1] : null;
+      } else {
         previous = (await service.call('survey.public.previous_question', {
           survey_id: detail.id,
-          current_question_id: previous.id,
+          current_question_id: expectedQuestionId,
         }))?.question?.[0];
+        while (previous && !this.isQuestionVisible(previous, answers)) {
+          previous = (await service.call('survey.public.previous_question', {
+            survey_id: detail.id,
+            current_question_id: previous.id,
+          }))?.question?.[0];
+        }
       }
       if (!previous) return this.json({ error: 'The survey is already at its first question', code: 'SURVEY_PUBLIC_PREVIOUS_EXHAUSTED' }, 409);
       try {
@@ -360,7 +386,9 @@ export default class SurveysModule implements ModuleLifecycle {
       const retryId = `retry-response-${source.id}-${attempt}`;
       const retryToken = `retry-answer-${source.access_token}-${attempt}`;
       try {
-        const question = await firstQuestion();
+        const retryOrder = await orderedQuestions('', '', retryToken);
+        const questionOrder = String(detail.questions_selection || 'all') === 'random' ? retryOrder.map((candidate: any) => candidate.id).join('||') : null;
+        const question = retryOrder[0] || null;
         const answer = await service.call('surveys.public.retry', {
           values: {
             source_id: source.id,
@@ -373,6 +401,7 @@ export default class SurveysModule implements ModuleLifecycle {
             respondent_email: source.respondent_email || null,
             answer_data: '{}',
             current_question_id: question?.id || null,
+            question_order: questionOrder,
             access_token: retryToken,
             test_entry: source.test_entry || false,
             idempotency_key: idempotencyKey || null,
@@ -594,6 +623,35 @@ export default class SurveysModule implements ModuleLifecycle {
   private visibleQuestions(questions: any[], answerData: unknown): any[] {
     const answers = this.parseAnswerData(answerData);
     return questions.filter((question) => this.isQuestionVisible(question, answers));
+  }
+
+  private orderPublicQuestions(questions: any[], questionOrder: string, seed: string): any[] {
+    const byId = new Map(questions.map((question) => [String(question.id), question]));
+    const orderedIds = String(questionOrder || '').split('||').map((id) => id.trim()).filter(Boolean);
+    if (orderedIds.length) {
+      const used = new Set<string>();
+      const ordered = orderedIds.map((id) => {
+        const question = byId.get(id);
+        if (!question || used.has(id)) return null;
+        used.add(id);
+        return question;
+      }).filter(Boolean);
+      return [...ordered, ...questions.filter((question) => !used.has(String(question.id)))];
+    }
+    return [...questions].sort((left, right) => {
+      const leftHash = this.publicQuestionHash(`${seed}:${left.id}`);
+      const rightHash = this.publicQuestionHash(`${seed}:${right.id}`);
+      return leftHash - rightHash || String(left.id).localeCompare(String(right.id));
+    });
+  }
+
+  private publicQuestionHash(value: string): number {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
   }
 
   private async questionSettings(service: PublicService, surveyId: string, questions: any[]): Promise<any[]> {

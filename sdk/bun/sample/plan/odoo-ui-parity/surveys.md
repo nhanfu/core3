@@ -2135,3 +2135,22 @@ available. No parity sign-off is claimed.
 
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.
+
+## Wave 27 — `SURVEYS-PUBLIC-RANDOM-SELECTION-001`
+
+Odoo's `survey_survey.questions_selection` supports `all` and randomized
+per-section selection (`addons/survey/models/survey_survey.py:80-84`); the
+public controller consumes a response-specific predefined question list for
+random page-per-question surveys (`addons/survey/controllers/main.py:395-402`).
+Core3 migration `0.0.47` persists `questions_selection` and each response's
+`question_order`. The page/API pair exposes the setting, public token/state
+guards remain authoritative, and the renderer consumes the same durable order
+used by next/previous navigation and retry.
+
+Focused verification: **2 passed / 26 assertions**; adjacent public
+progression/next/previous regression: **9 passed / 62 assertions**. Audit,
+scoped lint, and diff-check are recorded at commit time. Core3 desktop/mobile
+runtime was unavailable; Odoo redirected both probes to login and proxy 8072
+refused. No parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.

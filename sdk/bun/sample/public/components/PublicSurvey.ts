@@ -26,13 +26,14 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; questions_layout?: string; progression_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
+  survey: { id?: string; title: string; name: string; description?: string; description_done?: string; background_image_url?: string | null; access_mode?: string; questions_layout?: string; questions_selection?: string; progression_mode?: string; users_login_required?: boolean; is_attempts_limited?: boolean; attempts_limit?: number | null; users_can_go_back?: boolean; is_time_limited?: boolean; time_limit?: number | null };
   questions: SurveyQuestion[];
   answer?: {
     id: string;
     access_token: string;
     state: string;
     current_question_id?: string | null;
+    question_order?: string | null;
     test_entry?: boolean;
     answer_data?: string;
     score?: number | null;
@@ -220,7 +221,22 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   }
 
   const survey = payload.survey;
-  const questions = [...payload.questions].sort((left, right) => Number(left.sequence) - Number(right.sequence));
+  let questions = [...payload.questions].sort((left, right) => Number(left.sequence) - Number(right.sequence));
+  const applyQuestionOrder = () => {
+    if (String(survey.questions_selection || 'all') !== 'random') return;
+    const order = String(payload.answer?.question_order || '').split('||').map((id) => id.trim()).filter(Boolean);
+    if (!order.length) return;
+    const byId = new Map(questions.map((question) => [question.id, question]));
+    const used = new Set<string>();
+    const ordered = order.map((id) => {
+      const question = byId.get(id);
+      if (!question || used.has(id)) return null;
+      used.add(id);
+      return question;
+    }).filter((question): question is SurveyQuestion => Boolean(question));
+    questions = [...ordered, ...questions.filter((question) => !used.has(question.id))];
+  };
+  applyQuestionOrder();
   let answerToken = String(payload.answer?.access_token || initialAnswerToken || '');
   let currentQuestionId = String(payload.answer?.current_question_id || '');
   let questionIndex = 0;
@@ -318,6 +334,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');
       payload.answer = { ...(payload.answer || {}), ...(started.answer || {}), access_token: answerToken, state: 'In Progress' };
+      applyQuestionOrder();
       currentQuestionId = String(started.answer?.current_question_id || questions[0]?.id || '');
       window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}/${encodeURIComponent(answerToken)}`);
       questionIndex = Math.max(0, questions.findIndex((question) => question.id === currentQuestionId));

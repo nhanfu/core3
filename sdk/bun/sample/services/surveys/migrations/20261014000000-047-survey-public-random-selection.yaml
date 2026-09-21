@@ -1,0 +1,27 @@
+version: 0.0.47
+description: Durable Odoo-style per-response randomized public question selection
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS questions_selection VARCHAR DEFAULT 'all';
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS question_order VARCHAR;
+      UPDATE surveys SET questions_selection = CASE WHEN questions_selection = 'random' THEN 'random' ELSE 'all' END;
+      INSERT INTO surveys(id, name, title, description, description_done, owner, response_count, state, access_token, access_mode, questions_layout, questions_selection, progression_mode, users_can_go_back, published_at, created_at, updated_at)
+      VALUES ('survey-demo-random-selection', 'SURVEY/RANDOM-SELECTION', 'Randomized Product Survey', 'Answer the questions in your own randomized order.', 'Thanks for completing the randomized product survey.', 'Mitchell Admin', 0, 'Published', 'random-selection-token-2026', 'public', 'page_per_question', 'random', 'number', true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET state = 'Published', access_token = 'random-selection-token-2026', access_mode = 'public', questions_layout = 'page_per_question', questions_selection = 'random', progression_mode = 'number', users_can_go_back = true;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES
+        ('question-random-first', 'survey-demo-random-selection', 'Which channel do you prefer?', 'Choice', 1, true, 'Email,Chat'),
+        ('question-random-second', 'survey-demo-random-selection', 'Which plan fits you?', 'Choice', 2, true, 'Basic,Pro'),
+        ('question-random-third', 'survey-demo-random-selection', 'Which support time works?', 'Choice', 3, true, 'Morning,Afternoon')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-random-selection';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-random-selection';
+      DELETE FROM surveys WHERE id = 'survey-demo-random-selection';
+      -- Keep nullable random-selection columns during partial rollback for dependent databases.
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

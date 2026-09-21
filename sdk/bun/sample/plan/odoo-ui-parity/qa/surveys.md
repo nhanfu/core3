@@ -1358,3 +1358,22 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ONE-PA
   claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-PROGRESSION-MODE-001/`.
+
+## Bounded QA run: `SURVEYS-PUBLIC-RANDOM-SELECTION-001` — 2026-09-21
+
+Wave 27 implements Odoo's `questions_selection=random` public workflow. The
+response stores a deterministic token-seeded `question_order`; public start,
+begin, retry, next, previous, and the rendered page use that same order. The
+page/API pair remains separate (`page.id: surveys`), with `surveys.read` for
+the authenticated admin contract and `surveys.public` for token-bound public
+mutations.
+
+Focused random-selection tests pass **2/2 with 26 assertions**. Adjacent public
+progression and next/previous tests pass **9/9 with 62 assertions**. Restart
+and concurrent same-key navigation replay are covered. Core3 authenticated
+desktop/mobile probes could not start because ports 3000, 3001, 3390, and 3391
+were unavailable. Odoo `/odoo/surveys?` returned 303 to the login route at
+both requested viewport probes; proxy 8072 refused. This remains conditional,
+with no authenticated visual or Odoo parity sign-off claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.

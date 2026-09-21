@@ -419,6 +419,27 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-RANDOM-SELECTION-001`
+
+Wave 27 selected Odoo's next uncovered public survey setting:
+`questions_selection=random`. Core3 migration `0.0.47` adds durable survey
+selection metadata and a per-response `question_order`; start, begin, retry,
+next, previous, and the renderer consume the same persisted order. The paired
+page/API contracts expose the setting and keep public mutations under
+`surveys.public`, while authenticated detail inspection remains under
+`surveys.read`.
+
+Focused verification is **2 passed / 26 assertions**; adjacent progression and
+next/previous regressions are **9 passed / 62 assertions**. Coverage includes
+foreign-token rejection, restart persistence, and concurrent navigation replay.
+Core3 authenticated desktop/mobile capture was blocked because ports
+3000/3001/3390/3391 were not listening. Odoo desktop/mobile both returned
+303 to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; proxy 8072 refused, so no
+authenticated reference comparison or sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-BACK-GUARD-001`
 
 Selected the next uncovered Odoo public setting after per-respondent attempt
