@@ -22,7 +22,7 @@ components:
     group_columns: 2
     groups:
       - title: Session
-        fields: [{ field: survey_name, label: Survey }, { field: session_code, label: Session code }, { field: session_state, label: Session state }, { field: join_state, label: Access status }, { field: current_question_text, label: Current question, wide: true }]
+        fields: [{ field: survey_name, label: Survey }, { field: session_code, label: Session code }, { field: session_state, label: Session state }, { field: join_state, label: Access status }, { field: speed_rating, label: Reward quick answers }, { field: speed_rating_time_limit, label: Reward window (seconds) }, { field: current_question_text, label: Current question, wide: true }]
       - title: Attendee
         fields: [{ field: attendee_name, label: Your name, type: text, required: true, placeholder: 'e.g. Alex Morgan' }]
       - title: Current answer

@@ -1,0 +1,19 @@
+version: 0.0.63
+description: Deterministic Odoo Live Session speed-rating fixture
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE surveys
+      SET session_speed_rating = TRUE, session_speed_rating_time_limit = 90
+      WHERE id = 'survey-demo-001';
+      UPDATE survey_questions
+      SET is_time_limited = TRUE, time_limit = 90
+      WHERE id = 'question-burger-6';
+    down: |
+      UPDATE survey_questions SET is_time_limited = FALSE, time_limit = NULL WHERE id = 'question-burger-6';
+      UPDATE surveys SET session_speed_rating = FALSE, session_speed_rating_time_limit = NULL WHERE id = 'survey-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

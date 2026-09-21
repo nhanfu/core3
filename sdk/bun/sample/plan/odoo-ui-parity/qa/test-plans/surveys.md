@@ -733,3 +733,14 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/`.
+## `SURVEYS-LIVE-SPEED-RATING-001` — Live Session quick-answer rewards
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-064 | authenticated configuration | Survey detail → configure quick-answer rewards | Separate API/page YAML exposes the Odoo setting and live-session metadata | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-063 | permission/actor/validation | Missing survey/actor, invalid window, archived or stale row | Reject before mutation with explicit 404/403/422/409 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-061 | live answer/restart/idempotency | Fast answer → slower answer → replay → file-backed reopen | Durable scores apply Odoo timing semantics and replay cannot duplicate an answer | test-results.md, focused test | pass |
+| SURVEYS-UI-062 | authenticated responsive/reference | Live Session setting/join desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.

@@ -2440,3 +2440,36 @@ Core3 ports 3000, 3001, 3390, 3391, and Odoo port 8072 were closed during
 the probe, so authenticated desktop/mobile capture and paired Odoo evidence
 are unavailable. No visual or paired Odoo sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/`.
+
+## Wave 39 — `SURVEYS-LIVE-SPEED-RATING-001`
+
+The next uncovered source-backed Live Session behavior is Odoo's
+`session_speed_rating` setting and its default reward window. Odoo renders
+these fields in the Survey form Live Session group
+(`addons/survey/views/survey_survey_views.xml:182-187`), constrains an enabled
+window to a positive value (`addons/survey/models/survey_survey.py:201-203`),
+and adjusts a correct session answer's score from elapsed response time
+(`addons/survey/models/survey_user_input.py:766-808`).
+
+Core3 adds durable migrations `0.0.62`/`0.0.63`, a deterministic Burger Quiz
+speed-rated fixture, and the permissioned `update_survey_speed_rating` form
+action to the existing separate `survey-detail` API/page pair. The existing
+separate `survey-live-session-join` API/page pair exposes speed metadata; its
+answer mutation applies the source's two-second full-credit floor and linear
+50%-to-100% reward window. Missing surveys, missing actors, invalid windows,
+archived/current-row stale writes, foreign attendees, expired questions, and
+duplicate answer replays are guarded before mutation. Config, scores, and
+answer rows survive file-backed restart.
+
+The inspected Odoo Survey model has no `company_id` field in its model, view,
+or security source, so company scoping is not applicable and no synthetic
+company predicate was added. Focused verification is **3 passed / 23
+assertions**; the adjacent live-session, chatter, follower, activity, and
+results regression is **22 passed / 168 assertions**. Scoped ESLint and
+`git diff --check` pass. The final UI audit passes with **754 pages, 763
+routes, and 1,525 datasources**. Full repository regression was not run.
+
+Core3 ports 3000, 3001, 3390, 3391, and Odoo port 8072 were closed, so
+authenticated desktop/mobile browser capture and paired Odoo comparison were
+unavailable. No visual or module sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.

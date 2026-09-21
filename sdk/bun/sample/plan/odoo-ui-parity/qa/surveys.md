@@ -1621,3 +1621,27 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CHATTER-NOTE-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-FOLLOWERS-001/.
+## Bounded QA run: `SURVEYS-LIVE-SPEED-RATING-001` — 2026-09-21
+
+- Source/UI: Odoo renders `session_speed_rating` and
+  `session_speed_rating_time_limit` in the Live Session group and applies
+  elapsed-time scoring to correct timed session answers.
+- Persistence/contracts: migrations `0.0.62`/`0.0.63` add and seed the
+  setting. The authenticated update action is bound through the separate
+  `survey-detail` API/page pair; the public answer behavior remains in the
+  separate `survey-live-session-join` API/page pair.
+- Guards: `surveys.write` and actor checks protect configuration; missing,
+  invalid-window, archived/stale, token/attendee, question-time, and duplicate
+  replay guards preserve no-mutation behavior. The Odoo Survey source has no
+  `company_id`, so company scope is not applicable to this slice.
+- Verification: **3 focused tests / 23 assertions**; adjacent live-session,
+  chatter, follower, activity, and results regression **22 passed / 168
+  assertions**. Scoped ESLint and diff-check pass.
+- Audit: final `bun run audit` passes with **754 pages, 763 routes, and 1,525
+  datasources**. No full repository regression was run.
+- Runtime/reference: ports 3000, 3001, 3390, 3391, and 8072 were closed;
+  authenticated Core3 desktop/mobile and paired Odoo captures are unavailable.
+  No visual or Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/.

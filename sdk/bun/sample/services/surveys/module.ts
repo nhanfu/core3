@@ -600,11 +600,12 @@ export default class SurveysModule implements ModuleLifecycle {
       const existing = (await service.call('survey.public.session.answer', { session_code: sessionCode, attendee_id: attendee.id }))?.answer?.[0];
       if (existing) return this.json({ session, question, attendee, answer: existing, replayed: true });
       try {
-        const answer = await service.call('surveys.sessions.answer', {
-          session_code: sessionCode,
-          attendee_token: token,
-          answer_value: answerValue,
-        });
+      const answer = await service.call('surveys.sessions.answer', {
+        session_code: sessionCode,
+        attendee_token: token,
+        answer_value: answerValue,
+        submitted_at: typeof body.submitted_at === 'string' ? body.submitted_at : '2026-01-15 10:07:00',
+      });
         return this.json({ session, question, attendee, answer, replayed: false });
       } catch (error: any) {
         return this.publicMutationError(error);

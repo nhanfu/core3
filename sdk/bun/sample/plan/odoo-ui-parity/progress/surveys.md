@@ -1205,3 +1205,27 @@ regression passes **83/83 with 780 assertions**. Audit passes with **719 pages,
 Core3 desktop/mobile connection refusal before render and Odoo login redirects
 plus unavailable proxy 8072; no visual or paired Odoo sign-off is claimed.
 Surveys remains **qa-in-progress / conditional**.
+## 2026-09-21 — `SURVEYS-LIVE-SPEED-RATING-001`
+
+Selected Odoo's next open Live Session setting/action after followers:
+`session_speed_rating` and `session_speed_rating_time_limit`. The source
+renders the setting in the Survey Live Session form, requires a positive
+window when enabled, and adjusts correct session answer scores by elapsed
+time. Core3 migrations `0.0.62`/`0.0.63` add and seed durable configuration;
+`survey-detail` exposes an authenticated `surveys.write` update action, while
+the separate live-session join API/page exposes speed metadata and applies
+deterministic two-second full-credit plus linear reward scoring.
+
+The mutation rejects missing survey, missing actor, invalid window, archived
+or stale rows; public answer guards retain token/attendee/session/question
+boundaries and idempotent replay. The Odoo source has no Survey `company_id`,
+so no company predicate was invented. Verification: **3 focused tests / 23
+assertions** and **22 adjacent live-session/chatter/follower/activity/results
+tests / 168 assertions** pass. Scoped ESLint and diff-check pass. The final
+UI audit passes with **754 pages, 763 routes, and 1,525 datasources**; full
+repository regression was not run.
+Runtime ports 3000/3001/3390/3391/8072 were closed, blocking authenticated
+desktop/mobile and paired Odoo evidence.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-LIVE-SPEED-RATING-001/`.

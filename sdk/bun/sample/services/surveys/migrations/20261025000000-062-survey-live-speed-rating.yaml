@@ -1,0 +1,16 @@
+version: 0.0.62
+description: Durable Odoo Live Session speed-rating configuration
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS session_speed_rating BOOLEAN DEFAULT FALSE;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS session_speed_rating_time_limit INTEGER;
+      UPDATE surveys SET session_speed_rating = COALESCE(session_speed_rating, FALSE);
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS session_speed_rating_time_limit;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS session_speed_rating;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
