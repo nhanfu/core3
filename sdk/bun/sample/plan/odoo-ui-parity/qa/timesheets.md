@@ -861,3 +861,12 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Odoo browser gate: authenticated desktop selects Billed on Milestones and renders `1-13 / 13`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-on-milestones-filter/`.
 - Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
 - Repository audit blocker: unrelated page discovery rejects the shared schema boundary; exact output is in `audit-blocker.txt`.
+
+## `TIMESHEET-ALL-BILLED-MANUALLY-FILTER-001` — All Timesheets Billed Manually filter (2026-09-21)
+
+- Source gate: `sale_timesheet` inserts `<filter name="billable_manual" string="Billed Manually" domain="[('timesheet_invoice_type', '=', 'billable_manual')]"/>` into the inherited All Timesheets search view.
+- Core3 gate: the paired `all-timesheets` page/API search contract adds a manager-scoped Billed Manually option, records the durable `billing_type` filter contract, exposes pivot billing type, and applies current-company and empty-fixture guards.
+- Focused gate: `test/timesheets_all_billed_manually_filter.integration.test.ts` passes 4/4 tests / 21 expectations, including relation-update freshness and file-backed restart.
+- Odoo browser gate: authenticated desktop selects Billed Manually and renders `1-13 / 13`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-billed-manually-filter/`.
+- Core3 browser blocker: bounded startup did not expose backend `127.0.0.1:3001/api/modules` before timeout; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.
+- Repository UI audit passed with 726 pages, 735 routes, and 1,409 datasources; no audit blocker was introduced by this slice.

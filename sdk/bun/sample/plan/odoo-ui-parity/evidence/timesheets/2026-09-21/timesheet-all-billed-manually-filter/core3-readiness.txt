@@ -1,0 +1,6 @@
+Core3 authenticated desktop/mobile capture blocker (2026-09-21)
+
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit 124 after the bounded startup window; frontend Vite reached readiness, but backend 127.0.0.1:3001 did not expose /api/modules before timeout.
+Endpoint probe after termination: http://127.0.0.1:3001/api/modules unavailable.
+No Timesheets or other owner files were changed to bypass the runtime blocker.
