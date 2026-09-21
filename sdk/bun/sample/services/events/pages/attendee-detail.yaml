@@ -24,12 +24,37 @@ components:
         fields: [{ field: attendee_name, label: Attendee Name }, { field: attendee_email, label: Email }, { field: attendee_phone, label: Phone }, { field: company_name, label: Company Name }]
       - title: Event Information
         fields: [{ field: event_name, label: Event }, { field: ticket_type, label: Ticket Type }, { field: booked_by, label: Booked by }, { field: registered_at, label: Registration Date }]
-  - type: ContactGrid
+  - type: LineItemGrid
+    variant: odoo_x2many
     source: event_attendee_answers
+    parent_source: event_attendee_detail
+    title: Questions
+    description: Registration questions and answers
     row_key: id
+    actions:
+      - { id: add_event_attendee_answer, label: Add a question, variant: primary, permission: events.write }
+    empty_state: { title: No questions, description: Registration questions and answers will appear here. }
+    children:
+      - { type: LineItemField, id: question_id, field: question_id, label: Question, input_type: select, required: true }
+      - { type: LineItemField, id: question_type, field: question_type, label: Type, readonly: true }
+      - { type: LineItemField, id: suggested_answer, field: suggested_answer, label: Suggested answer, input_type: text }
+      - { type: LineItemField, id: text_answer, field: text_answer, label: Text answer, input_type: text }
+      - type: LineItemActions
+        id: attendee_answer_actions
+        edit_action: edit_event_attendee_answer
+        create_action: add_event_attendee_answer
+        actions:
+          - { id: edit_event_attendee_answer, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_attendee_answer, label: Delete, icon: trash, variant: danger, permission: events.write }
     columns:
       - { field: question, label: Question, type: PrimaryEntityCell }
       - { field: question_type, label: Type }
       - { field: suggested_answer, label: Suggested answer }
       - { field: text_answer, label: Text answer }
-    empty_state: { title: No questions, description: Registration questions and answers will appear here. }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_event_attendee_answer, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_attendee_answer, label: Delete, icon: trash, variant: danger, permission: events.write }

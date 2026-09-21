@@ -1,5 +1,30 @@
 # events QA ledger
 
+## Bounded QA - attendee registration answer editor (2026-09-21)
+
+- Source contract: **PASS**. Odoo's `event.registration.answer` model and
+  `event_registration_views.xml` expose the Questions one-to-many editor with
+  Question, Type, Suggested answer, Text answer, and Add a line.
+- YAML ownership and permissions: **PASS**. `attendee-detail.yaml` owns only
+  the `LineItemGrid`; `api/attendee-detail.yaml` owns the datasource, lookup
+  datasources, and line mutations. All three mutations require `events.write`.
+- Durable data and guards: **PASS**. Migration 033 adds row versions and the
+  suggested-answer relation; create/edit/delete persist and reject duplicate,
+  invalid-choice, missing-value, missing-registration, and stale-line cases.
+- Focused tests: **PASS**, 2 tests / 15 assertions.
+- Audit/lint/diff: **PASS**. UI audit 772 pages / 781 routes / 1,582
+  datasources; targeted ESLint and `git diff --check` pass.
+- Odoo browser evidence: **PASS**, authenticated desktop and mobile captures
+  from the Events menu are recorded in the feature evidence folder and local
+  `/tmp` paths.
+- Core3 browser evidence: **NOT RUN IN THIS CHECKPOINT**. The previously
+  reported CRM discovery issue is not reproducible: direct discovery binds one
+  owner for `crm_lead_mining_request_detail`, Core3 startup reaches Vite, and
+  the CRM focused test passes. No new Core3 screenshot or visual-parity claim
+  is made.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-21/event-attendee-answer-editor/`.
+
 ## Bounded QA — event question attendee answers stat action (2026-09-20)
 
 - Source contract: **PASS**. Odoo `event_question_views.xml` exposes

@@ -1,5 +1,59 @@
 # Events UI parity
 
+## Current bounded batch: Attendee registration answer editor (2026-09-21)
+
+The next source-backed gap after the question answer-choice and question-scoped
+answer-stat work was the attendee form's `Questions` one-to-many editor. Odoo
+19 defines `event.registration.answer` with `question_id`, `question_type`,
+`value_answer_id`, and `value_text_box`; the authenticated
+`Events > Reporting > Attendees` form renders the editable columns `Question`,
+`Type`, `Suggested answer`, and `Text answer`, plus `Add a line`. The mobile
+form keeps the Questions table and disables create/delete in its kanban
+projection. The source view is
+`/home/nhanjs/projects/odoo/addons/event/views/event_registration_views.xml`
+(the `registration_answer_ids` notebook page), and the source model is
+`addons/event/models/event_registration_answer.py`.
+
+Core3 replaces the attendee detail read-only `ContactGrid` with a page-owned
+`LineItemGrid` using the `odoo_x2many` variant. The API remains separate in
+`api/attendee-detail.yaml`: it owns the answer datasource, question/choice
+lookups, and permissioned create/update/delete line actions. Migration
+`20260921120000-033-event-attendee-answers.yaml` adds durable choice relation
+and row-version columns and backfills the existing fixed dietary answer. The
+mutations require `events.write`, enforce registration and question ownership,
+prevent duplicate questions per registration, require a value, validate a
+choice against its question, and reject stale line versions.
+
+Focused validation is 2 tests and 15 assertions in
+`test/events_attendee_answers.integration.test.ts`; it covers page/API
+separation, durable create/edit/delete, reload projection, duplicate and
+invalid-choice guards, and stale writes. The shared UI audit passes with 772
+pages, 781 routes, and 1,582 datasources. Targeted ESLint and
+`git diff --check` pass.
+
+Authenticated Odoo evidence was captured through the required shared browser
+instance 245ea108 against `http://localhost:8069` / `core3_reference`, after
+navigating through the Events menu as `codex@core3.local`:
+
+| Surface | Viewport | Capture | SHA-256 | Result |
+| --- | --- | --- | --- | --- |
+| Odoo attendee form | desktop 1916x833 | `/tmp/core3-odoo-parity/events-attendee-answers-20260921/odoo-desktop.png` | `292abb6da7e3a3a99a8518fcc4a30297fdd81c57c20328cc86839d80c5a65b7e` | Questions table and Add a line visible |
+| Odoo attendee form | mobile 390x844 | `/tmp/core3-odoo-parity/events-attendee-answers-20260921/odoo-mobile.png` | `dcb8ee2e9927bc14ac2f58445b778900a8e5891cf47aebfef2882c03b6b04263` | Questions table retained at mobile width |
+
+The CRM discovery issue present during the first validation attempt is no
+longer reproducible in the current tree: direct discovery binds one owner for
+each lead-mining datasource, Core3 startup reaches Vite, and the CRM focused
+test passes. Core3 authenticated desktop/mobile captures were not rerun in
+this checkpoint, so this slice makes no new Core3 visual-parity claim.
+
+Core3 desktop/mobile captures were not possible: `bun run dev --db=ddb
+--memory` exits during global discovery with the pre-existing CRM error
+`crm_lead_mining_request_detail` referencing missing datasource/actions. That
+error is outside Events scope and prevents an authenticated Core3 runtime;
+therefore this batch records no Core3 visual-parity sign-off. The browser
+session was stopped cleanly after the Odoo captures. Evidence details are in
+`odoo-ui-parity/evidence/events/2026-09-21/event-attendee-answer-editor/`.
+
 ## Current bounded batch: Event question attendee answers stat action (2026-09-20)
 
 Odoo's `event.question.action_view_question_answers` is exposed by the

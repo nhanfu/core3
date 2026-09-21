@@ -7,7 +7,14 @@ datasources:
     query: "SELECT r.id, COALESCE(r.row_version, 1) AS row_version, r.attendee_name, COALESCE(r.attendee_email, '') AS attendee_email, COALESCE(r.attendee_phone, '') AS attendee_phone, COALESCE(r.company_name, '') AS company_name, r.event_name, COALESCE(r.ticket_type, '') AS ticket_type, COALESCE(r.booked_by, '') AS booked_by, r.state, CAST(r.registered_at AS VARCHAR) AS registered_at, COALESCE(strftime(e.start_at, '%d %b %Y %H:%M'), '') || ' - ' || COALESCE(strftime(e.end_at, '%H:%M'), '') AS event_schedule, COALESCE(e.venue, '') AS event_venue FROM event_registrations r LEFT JOIN events e ON e.id = r.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
   - id: event_attendee_answers
     permission: events.read
-    query: "SELECT id, question, question_type, COALESCE(suggested_answer, '') AS suggested_answer, COALESCE(text_answer, '') AS text_answer FROM event_registration_answers WHERE registration_id = :id ORDER BY id"
+    error_states: { transport_error: { status: 503, code: EVENT_ATTENDEE_ANSWERS_UNAVAILABLE, message: Registration questions are temporarily unavailable. } }
+    query: "SELECT a.id, COALESCE(a.row_version, 1) AS row_version, a.registration_id, a.question_id, COALESCE(q.title, a.question) AS question, COALESCE(q.question_type, a.question_type) AS question_type, COALESCE(qa.name, a.suggested_answer, '') AS suggested_answer, COALESCE(a.suggested_answer_id, '') AS suggested_answer_id, COALESCE(a.text_answer, '') AS text_answer FROM event_registration_answers a LEFT JOIN event_questions q ON q.id = a.question_id LEFT JOIN event_question_answers qa ON qa.id = a.suggested_answer_id WHERE a.registration_id = :id ORDER BY a.id"
+  - id: event_attendee_question_options
+    permission: events.write
+    query: "SELECT id AS value, title AS label FROM event_questions ORDER BY title, id"
+  - id: event_attendee_answer_options
+    permission: events.write
+    query: "SELECT id AS value, name AS label FROM event_question_answers ORDER BY question_id, sequence, id"
 actions:
   - id: print_attendee_badge
     type: client
@@ -52,6 +59,78 @@ actions:
       - { field: attendee_phone, label: Phone, type: text }
       - { field: company_name, label: Company Name, type: text }
       - { field: ticket_type, label: Ticket Type, type: text }
+  - id: add_event_attendee_answer
+    type: server_form
+    permission: events.write
+    title: Add registration answer
+    action: events.registrations.answers.create
+    handler: line_item
+    operation: create
+    domain: event_attendee
+    params: { id: '{state.id}' }
+    refresh: [event_attendee_detail, event_attendee_answers]
+    fields:
+      - { field: question_id, label: Question, type: select, options_source: event_attendee_question_options, required: true }
+      - { field: suggested_answer_id, label: Suggested answer, type: select, options_source: event_attendee_answer_options }
+      - { field: text_answer, label: Text answer, type: text }
+    mutation:
+      generated: [answer_id]
+      before_steps:
+        - { query: "SELECT q.title AS question, q.question_type AS question_type, 'registration-answer-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS answer_id FROM event_questions q JOIN event_registrations r ON r.id = :id LEFT JOIN event_registration_answers a ON a.registration_id = r.id WHERE q.id = :question_id GROUP BY q.title, q.question_type", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT id FROM event_questions WHERE id = :question_id", status: 422, code: EVENT_ATTENDEE_QUESTION_INVALID, message: Select a valid event question. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_registration_answers WHERE registration_id = :id AND question_id = :question_id)", status: 409, code: EVENT_ATTENDEE_ANSWER_EXISTS, message: This question already has an answer for the attendee. }
+        - { query: "SELECT 1 AS ok FROM event_questions q WHERE q.id = :question_id AND (q.question_type <> 'Selection' OR :suggested_answer_id IS NOT NULL OR LENGTH(TRIM(COALESCE(CAST(:text_answer AS VARCHAR), ''))) > 0)", status: 422, code: EVENT_ATTENDEE_ANSWER_VALUE_REQUIRED, message: Enter an answer for the selected question. }
+        - { query: "SELECT 1 AS ok FROM event_questions q WHERE q.id = :question_id AND (q.question_type <> 'Selection' OR EXISTS (SELECT 1 FROM event_question_answers a WHERE a.id = :suggested_answer_id AND a.question_id = q.id))", status: 422, code: EVENT_ATTENDEE_ANSWER_CHOICE_INVALID, message: Select an answer choice for this question. }
+      steps:
+        - { query: "INSERT INTO event_registration_answers(id, registration_id, question_id, question, question_type, suggested_answer_id, suggested_answer, text_answer, row_version) SELECT :answer_id, :id, q.id, q.title, q.question_type, CASE WHEN q.question_type = 'Selection' THEN :suggested_answer_id ELSE NULL END, COALESCE((SELECT name FROM event_question_answers WHERE id = :suggested_answer_id AND question_id = q.id), ''), CASE WHEN q.question_type = 'Selection' THEN '' ELSE TRIM(COALESCE(CAST(:text_answer AS VARCHAR), '')) END, 1 FROM event_questions q WHERE q.id = :question_id", expect_changed: true, code: EVENT_ATTENDEE_ANSWER_NOT_CREATED, message: Registration answer could not be created. }
+      result: { query: "SELECT * FROM event_registration_answers WHERE id = :answer_id" }
+  - id: edit_event_attendee_answer
+    type: server_form
+    permission: events.write
+    title: Edit registration answer
+    action: events.registrations.answers.update
+    handler: line_item
+    operation: update
+    domain: event_attendee
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [event_attendee_detail, event_attendee_answers]
+    fields:
+      - { field: question_id, label: Question, type: select, options_source: event_attendee_question_options, required: true }
+      - { field: suggested_answer_id, label: Suggested answer, type: select, options_source: event_attendee_answer_options }
+      - { field: text_answer, label: Text answer, type: text }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT id FROM event_registration_answers WHERE id = :line_id AND registration_id = :id AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_ANSWER_STALE, message: This registration answer changed or was deleted. Reload before saving. }
+        - { query: "SELECT id FROM event_questions WHERE id = :question_id", status: 422, code: EVENT_ATTENDEE_QUESTION_INVALID, message: Select a valid event question. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_registration_answers WHERE registration_id = :id AND question_id = :question_id AND id <> :line_id)", status: 409, code: EVENT_ATTENDEE_ANSWER_EXISTS, message: This question already has an answer for the attendee. }
+        - { query: "SELECT 1 AS ok FROM event_questions q WHERE q.id = :question_id AND (q.question_type <> 'Selection' OR :suggested_answer_id IS NOT NULL OR LENGTH(TRIM(COALESCE(CAST(:text_answer AS VARCHAR), ''))) > 0)", status: 422, code: EVENT_ATTENDEE_ANSWER_VALUE_REQUIRED, message: Enter an answer for the selected question. }
+        - { query: "SELECT 1 AS ok FROM event_questions q WHERE q.id = :question_id AND (q.question_type <> 'Selection' OR EXISTS (SELECT 1 FROM event_question_answers a WHERE a.id = :suggested_answer_id AND a.question_id = q.id))", status: 422, code: EVENT_ATTENDEE_ANSWER_CHOICE_INVALID, message: Select an answer choice for this question. }
+      steps:
+        - { query: "UPDATE event_registration_answers SET question_id = q.id, question = q.title, question_type = q.question_type, suggested_answer_id = CASE WHEN q.question_type = 'Selection' THEN :suggested_answer_id ELSE NULL END, suggested_answer = COALESCE((SELECT name FROM event_question_answers WHERE id = :suggested_answer_id AND question_id = q.id), ''), text_answer = CASE WHEN q.question_type = 'Selection' THEN '' ELSE TRIM(COALESCE(CAST(:text_answer AS VARCHAR), '')) END, row_version = COALESCE(event_registration_answers.row_version, 1) + 1 FROM event_questions q WHERE event_registration_answers.id = :line_id AND event_registration_answers.registration_id = :id AND q.id = :question_id AND COALESCE(event_registration_answers.row_version, 1) = :expected_row_version", expect_changed: true, code: EVENT_ATTENDEE_ANSWER_STALE, message: This registration answer changed or was deleted. Reload before saving. }
+      result: { query: "SELECT * FROM event_registration_answers WHERE id = :line_id" }
+  - id: delete_event_attendee_answer
+    type: server
+    permission: events.write
+    action: events.registrations.answers.delete
+    handler: line_item
+    operation: delete
+    domain: event_attendee
+    confirm: 'Delete registration answer {{row.question}}?'
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [event_attendee_detail, event_attendee_answers]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT id FROM event_registration_answers WHERE id = :line_id AND registration_id = :id AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_ANSWER_STALE, message: This registration answer changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM event_registration_answers WHERE id = :line_id AND registration_id = :id AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, code: EVENT_ATTENDEE_ANSWER_STALE, message: This registration answer changed or was deleted. Reload before deleting. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: send_attendee_email
     type: server_form
     modal_style: mail_composer

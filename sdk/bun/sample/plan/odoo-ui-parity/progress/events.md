@@ -6,6 +6,16 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
 
+## Bounded feature - attendee registration answer editor (2026-09-21)
+
+The attendee detail Questions surface now has page/API-separated line-item
+CRUD for registration answers. Focused validation passes 2 tests / 15
+assertions, the UI audit passes at 772/781/1,582, and authenticated Odoo
+desktop/mobile source captures are recorded. The previously reported CRM
+page-discovery error is not reproducible in the current tree; Core3
+authenticated browser capture was not rerun in this checkpoint, so this
+feature is not a full Events visual-parity sign-off.
+
 ## Bounded QA result — 2026-09-13
 
 Candidate `650be026` was tested in `/home/nhanjs/projects/core3` without product-code changes. The attendee edit test passed 2/2 with 10 assertions, covering editable page/API ownership, persisted update and reload-source data, blank-name 422 `EVENT_ATTENDEE_NAME_REQUIRED`, missing-record 404 `EVENT_ATTENDEE_NOT_FOUND`, and stale-write 409 `STALE_RECORD`. The complete Events suite passed 84/84 tests with 618 assertions across 30 files.

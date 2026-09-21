@@ -1,0 +1,18 @@
+version: 0.0.33
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_registration_answers ADD COLUMN IF NOT EXISTS suggested_answer_id VARCHAR;
+      ALTER TABLE event_registration_answers ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE event_registration_answers SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE event_registration_answers
+      SET suggested_answer_id = 'question-dietary-answer-03'
+      WHERE id = 'registration-answer-dietary-demo-001';
+    down: |
+      ALTER TABLE event_registration_answers DROP COLUMN IF EXISTS suggested_answer_id;
+      ALTER TABLE event_registration_answers DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
