@@ -1,0 +1,19 @@
+{
+  "base": "http://127.0.0.1:3002",
+  "route": "/employees/detail?id=employee-demo-001",
+  "captures": [
+    {
+      "name": "desktop",
+      "authenticated": false,
+      "status": "blocked",
+      "blocker": "Core3 discovery failed before the browser route could load: PageSchemaError: Invalid page definition: components[4].title is not allowed"
+    },
+    {
+      "name": "mobile",
+      "authenticated": false,
+      "status": "blocked",
+      "blocker": "Core3 discovery failed before the browser route could load: PageSchemaError: Invalid page definition: components[4].title is not allowed"
+    }
+  ],
+  "signoff": "conditional; no Core3 UI sign-off claimed"
+}

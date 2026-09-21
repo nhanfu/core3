@@ -1073,3 +1073,20 @@ Focused test: `test/employees_job_position_assignment.integration.test.ts` (4
 tests, 23 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`. No aggregate Employees
 sign-off is claimed.
+
+## EMP-DEPARTMENT-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-045 | Employee Department assign/read/clear | pass; relation and display projections update on employee and active Payroll records |
+| EMP-PERM-045 | `employees.write`, actor, current company, active department/version, row version | pass; actor, stale, wrong-company, unsupported-department, and missing-version requests reject atomically |
+| EMP-DATA-045 | Migration replay and file-backed restart | pass; deterministic Department relation survives replay/restart |
+| EMP-UI-041 | Authenticated Core3/Odoo desktop and mobile | conditional; authenticated Odoo desktop/mobile show Department, Core3 discovery is blocked by unrelated `components[4].title is not allowed` |
+
+Focused test: `test/employees_department_assignment.integration.test.ts` (4
+tests, 23 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-DEPARTMENT-001/`. No aggregate Employees
+sign-off is claimed.
+The global UI audit is conditional because shared page discovery currently
+fails on `components[0].views[1].group_by is required for kanban`; this is
+outside the Employees slice.

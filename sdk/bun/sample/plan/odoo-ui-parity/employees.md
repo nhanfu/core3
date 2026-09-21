@@ -2029,3 +2029,26 @@ are under `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/` and show Job
 Position. Core3 browser evidence is conditional: the bounded runtime exited
 before the route completed and the exact connection-refused blocker is in
 `verification.md`. No aggregate Employees sign-off is claimed.
+
+## EMP-DEPARTMENT-001: Employee Department relation (2026-09-21)
+
+Odoo renders the company-checked `hr.version.department_id` relation as
+Department in the employee Work tab and employee list/search views. Core3
+previously exposed only the employee-level `department_name`/`department_id`
+projection and had no dedicated employee assignment action or active
+Payroll-version synchronization.
+
+Migration `20260922120000-066` adds durable `department_id` to employee
+versions and replay-safely backfills existing version projections. The paired
+employee-detail API/page contracts add company-scoped active Department
+options and guarded `edit_employee_department`; assignment updates both the
+employee and active Payroll record, while clearing the nullable relation is
+supported.
+
+Focused verification is **4 tests / 23 assertions**, covering source mapping,
+assign/clear CRUD, actor/company/invalid/stale guards, migration replay, and
+file-backed restart. Authenticated Odoo desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-DEPARTMENT-001/` and show Department.
+Core3 browser evidence is conditional because shared page discovery fails on
+`components[4].title is not allowed`; no aggregate Employees sign-off is
+claimed.

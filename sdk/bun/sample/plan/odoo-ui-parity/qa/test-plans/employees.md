@@ -616,3 +616,19 @@ assertions). Evidence:
 Focused test: `test/employees_job_position_assignment.integration.test.ts` (4
 tests, 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`.
+
+## EMP-DEPARTMENT-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.department_id` and Work > Department map to paired employee page/API contracts | pass |
+| Department CRUD | Same-company assignment, read projection, active Payroll synchronization, and clearing persist durably | pass |
+| Permission and scope | Employees write, actor, current company, active department/version, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the Department relation | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Work desktop/mobile captures | conditional; Odoo Department visible at both viewports, Core3 discovery blocked by unrelated page schema |
+
+Focused test: `test/employees_department_assignment.integration.test.ts` (4
+tests, 23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-DEPARTMENT-001/`.
+Global audit is conditional on the unrelated shared page-schema error
+`components[0].views[1].group_by is required for kanban`.

@@ -1,0 +1,18 @@
+version: 0.0.66
+kind: data
+description: Persist the Odoo employee Department relation
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS department_id VARCHAR;
+      UPDATE employee_versions v
+      SET department_id = e.department_id,
+          department_name = e.department_name
+      FROM employees e
+      WHERE v.employee_id = e.id AND v.department_id IS NULL;
+    down: |
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS department_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -884,3 +884,22 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-JOB-POSITION-001/`. Core3 route evidence
   is conditional because the bounded runtime exited before port 3002 could
   complete the route; no aggregate sign-off is claimed.
+
+## EMP-DEPARTMENT-001 (2026-09-21)
+
+- Selected Odoo's source-visible `hr.version.department_id` Department
+  relation as the next uncovered Work-tab behavior; it is distinct from the
+  completed Departments catalog and existing display projection.
+- Added migration `20260922120000-066` with durable employee-version
+  `department_id` persistence and replay-safe backfill from the employee
+  relation.
+- Added separate API options/action YAML and the employee-detail page action;
+  assignment and clearing synchronize the employee, active Payroll version,
+  and display projection.
+- Guards cover actor, active/current company, supported active department,
+  active Payroll version, and stale row version. Focused verification is **4
+  tests / 23 assertions**, including restart.
+- Authenticated Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-DEPARTMENT-001/`. Core3 discovery is
+  conditionally blocked by unrelated `components[4].title is not allowed`;
+  no aggregate sign-off is claimed.
