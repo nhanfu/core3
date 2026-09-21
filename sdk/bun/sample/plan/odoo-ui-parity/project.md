@@ -961,3 +961,41 @@ concurrent Employees owner has an unrelated malformed
 non-empty array`). The Project-focused test remains green, and the Core3
 desktop/mobile browser gate is an explicit follow-up after that shared
 worktree blocker is repaired.
+
+## Bounded slice: Project Task Sub-tasks / child_ids (2026-09-21)
+
+This is the next uncovered bounded Project feature after the completed task
+dependency slice. Odoo 19 declares `project.task.parent_id` and
+`project.task.child_ids` in `/home/nhanjs/projects/odoo/addons/project/models/project_task.py`;
+the task form notebook in `/home/nhanjs/projects/odoo/addons/project/views/project_task_views.xml`
+renders a `Sub-tasks` one-to-many list with Title, Assignees, Add a line, and
+open/delete row actions. The authenticated live reference at
+`http://localhost:8069`, database `core3_reference`, showed the same tab and
+inline Add a line interaction on desktop and 390x844 mobile.
+
+Core3 implements the relation in the Project-owned
+`20260921120000-018-project-task-subtasks.yaml` migration with stable child
+fixtures, `parent_task_id`, an index, and idempotent down/replay behavior.
+`services/project/pages/project-task-detail.yaml` owns the responsive
+`LineItemGrid`; `services/project/api/task-detail.yaml` owns the matching
+`page.id: project-task-detail` datasource and add/edit/delete/open actions.
+The API enforces `project.read` for reads, `project.write` for mutations,
+current-company and active-parent/child scope, title/hours/state validation,
+parent and child row-version guards, descendant-delete protection, deterministic
+empty/503 contracts, and derives task summary data from persisted children.
+
+Focused coverage is `test/project_task_subtasks.integration.test.ts`: 3 tests
+and 27 assertions pass, including page/API separation, schema/discovery,
+migration replay, search/empty/company scope, CRUD guards, stale writes,
+delete guards, and file-backed close/reopen persistence. Authenticated Odoo
+evidence is committed under
+`evidence/project/2026-09-21/project-task-subtasks-001/` (desktop 1440x833
+and mobile 390x844). Core3's module-scoped browser runtime reached the Projects
+list and task table, including the seeded child rows, with matching
+desktop/mobile captures. Opening task detail is blocked because the Project-only
+server prefetches the existing `project_task_timesheets` datasource but does
+not register `yaml.service.timesheets`, returning `Module service is not
+registered: yaml.service.timesheets`. This is recorded as a topology blocker,
+not hidden by removing the existing Timesheets surface. Full shared startup
+also remains separately blocked by the unrelated Employees YAML validation
+error documented above. This slice is not full Project sign-off.

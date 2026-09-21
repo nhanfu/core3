@@ -1,0 +1,59 @@
+version: 0.0.18
+kind: schema
+description: Persist Odoo Project task child_ids with deterministic subtask fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS parent_task_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS project_tasks_parent_idx ON project_tasks(parent_task_id);
+      INSERT INTO project_tasks(
+        id, project_id, project_name, name, assignee, milestone_name, priority,
+        planned_hours, spent_hours, state, stage, due_date, row_version, created_at,
+        customer_name, company_name, tags, subtask_summary, subtask_names,
+        blocked_by_summary, blocked_by_names, active, description, parent_task_id
+      )
+      SELECT
+        'task-subtask-001', parent.project_id, parent.project_name,
+        'Prepare migration checklist', 'Project Team', parent.milestone_name,
+        'Normal', 6, 0, 'Todo', 'In progress', DATE '2026-01-22', 1,
+        TIMESTAMP '2026-01-15 00:00:00', parent.customer_name, parent.company_name,
+        parent.tags, '0 / 0 (0%)', '', 'None', '', TRUE,
+        'Break the parent task into verifiable migration steps.', parent.id
+      FROM project_tasks parent
+      WHERE parent.id = 'task-demo-001'
+        AND NOT EXISTS (SELECT 1 FROM project_tasks WHERE id = 'task-subtask-001');
+      INSERT INTO project_tasks(
+        id, project_id, project_name, name, assignee, milestone_name, priority,
+        planned_hours, spent_hours, state, stage, due_date, row_version, created_at,
+        customer_name, company_name, tags, subtask_summary, subtask_names,
+        blocked_by_summary, blocked_by_names, active, description, parent_task_id
+      )
+      SELECT
+        'task-subtask-002', parent.project_id, parent.project_name,
+        'Record migration evidence', 'Mitchell Admin', parent.milestone_name,
+        'High', 4, 4, 'Done', 'Done', DATE '2026-01-24', 1,
+        TIMESTAMP '2026-01-15 00:00:00', parent.customer_name, parent.company_name,
+        parent.tags, '0 / 0 (0%)', '', 'None', '', TRUE,
+        'Capture the desktop and mobile verification results.', parent.id
+      FROM project_tasks parent
+      WHERE parent.id = 'task-demo-001'
+        AND NOT EXISTS (SELECT 1 FROM project_tasks WHERE id = 'task-subtask-002');
+      UPDATE project_tasks parent
+      SET subtask_summary =
+            CAST((SELECT COUNT(*) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE AND child.state IN ('Done', 'Cancelled')) AS VARCHAR)
+            || ' / ' ||
+            CAST((SELECT COUNT(*) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE) AS VARCHAR)
+            || ' (' ||
+            CAST(CASE WHEN (SELECT COUNT(*) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE) = 0 THEN 0 ELSE CAST(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE AND child.state IN ('Done', 'Cancelled')) / (SELECT COUNT(*) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE)) AS INTEGER) END AS VARCHAR)
+            || '%)',
+          subtask_names = COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = parent.id AND COALESCE(child.active, TRUE) = TRUE), '')
+      WHERE parent.id = 'task-demo-001';
+    down: |
+      DELETE FROM project_tasks WHERE id IN ('task-subtask-001', 'task-subtask-002');
+      UPDATE project_tasks SET subtask_summary = '0 / 0 (0%)', subtask_names = '' WHERE id = 'task-demo-001';
+      DROP INDEX IF EXISTS project_tasks_parent_idx;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS parent_task_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

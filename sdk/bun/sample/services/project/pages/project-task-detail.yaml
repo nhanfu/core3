@@ -38,13 +38,48 @@ components:
           fields: [{ field: description, label: Description, type: textarea, wide: true }]
         - id: subtasks
           label: Sub-tasks
-          fields: [{ field: subtask_summary, label: Sub-tasks }, { field: subtask_names, label: Tasks, type: textarea, wide: true }]
+          content_slot: true
         - id: blocked_by
           label: Blocked By
           fields: [{ field: blocked_by_summary, label: Blocked By }, { field: blocked_by_names, label: Dependencies, type: textarea, wide: true }]
         - id: timesheets
           label: Timesheets
           content_slot: true
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: project_task_subtasks
+    parent_source: project_task_detail
+    title: Sub-tasks
+    description: Break this task into smaller pieces of work.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_project_task_subtask, label: Add a line, variant: primary, permission: project.write }
+    empty_state: { title: No sub-tasks, description: Add a line to break this task into smaller pieces of work. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Title, readonly: true }
+      - { type: LineItemField, id: assignee, field: assignee, label: Assignees, readonly: true }
+      - { type: LineItemField, id: state, field: state, label: State, readonly: true }
+      - { type: LineItemField, id: due_date, field: due_date, label: Deadline, readonly: true }
+      - type: LineItemActions
+        id: project_task_subtask_actions
+        actions:
+          - { id: edit_project_task_subtask, label: Edit, icon: edit, variant: ghost, permission: project.write }
+          - { id: view_project_task_subtask, label: Open, icon: external-link, variant: ghost, permission: project.read }
+          - { id: delete_project_task_subtask, label: Delete, icon: trash, variant: danger, permission: project.write }
+    columns:
+      - { field: name, label: Title, type: PrimaryEntityCell, mobile: true }
+      - { field: assignee, label: Assignees, mobile: true }
+      - { field: state, label: State, type: StatusChip, mobile: true }
+      - { field: due_date, label: Deadline, mobile: false }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_project_task_subtask, label: Edit, icon: edit, variant: ghost, permission: project.write }
+          - { id: delete_project_task_subtask, label: Delete, icon: trash, variant: danger, permission: project.write }
   - type: LineItemGrid
     mount_in: previous-panel
     source: project_task_dependencies

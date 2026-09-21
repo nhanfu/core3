@@ -5,7 +5,7 @@ QA owner: project-qa
 Developer owner: project module owner  
 Reference addon/version: project, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-21
 
 This plan follows [`project.md`](../../project.md); executed evidence is in
 [`../project.md`](../project.md).
@@ -14,7 +14,7 @@ This plan follows [`project.md`](../../project.md); executed evidence is in
 
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
-| Projects/tasks | `/project/projects`, `/project/my/projects`, `/project/projects/detail*`, `/project/tasks`, `/project/tasks/detail` | List/grouped stages, project dashboard, task detail, milestones, updates and Timesheets tab |
+| Projects/tasks | `/project/projects`, `/project/my/projects`, `/project/projects/detail*`, `/project/tasks`, `/project/tasks/detail` | List/grouped stages, project dashboard, task detail, milestones, updates, Sub-tasks/child_ids and Timesheets tab |
 | Reporting/portal | `/project/analysis`, `/project/tasks-analysis`, `/project/customer-ratings`, `/project/*/detail`, `/project/my/projects/task/detail` | Graph/pivot/list reports, ratings, customer portal project/task read-only views |
 | Configuration | stages, roles, tags, activity types/plans, settings routes | List/form CRUD, archive, manager settings and guards |
 
@@ -37,6 +37,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-FUNC-007 | data | Empty/error/not-found | Every route has deterministic empty, missing, forbidden and transport-error states | focused suites; matrix | pass at contract level |
 | PROJECT-FUNC-008 | data | Migrations/seeds | Reapply schema/demo fixtures without duplicates, random IDs or moving dates | focused suite | pass |
 | PROJECT-FUNC-009 | functional | Import/export/attachments | Exercise task/project file, attachment, import/export and print actions where exposed | browser interaction gate | planned |
+| PROJECT-FUNC-010 | functional | Task detail Sub-tasks | Add, edit, search, open and delete child tasks; reload preserves relation and parent completion summary | `PROJECT-TASK-SUBTASKS-001`; focused suite; Odoo/Core3 captures | conditional pass |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-WF-003 | integration | Timesheets | Task detail calls Timesheets service and displays task-scoped hours/approval state | missing dependency/downstream failure is visible and source unchanged | pass at route level |
 | PROJECT-WF-004 | integration | Portal/customer rating | Portal actions and rating data remain scoped to project/task and read-only where declared | unauthorized or stale token returns safe denial | planned |
 | PROJECT-WF-005 | integration | Durable/external boundary | Mail, timers, customer callbacks and cross-module workflows use Temporal when long-running | retry/timeout/compensation/replay/restart/shutdown required | planned |
+| PROJECT-WF-006 | workflow | Sub-task lifecycle | Child states accept Todo/In Progress/Done/Cancelled; stale parent/child versions and active descendants block unsafe writes | 409/422 with unchanged rows; restart query remains durable | pass at contract level |
 
 ## Permission and security cases
 
@@ -59,6 +61,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-PERM-005 | Wrong company/branch | No project/task/timesheet leakage or update | planned |
 | PROJECT-PERM-006 | Unauthenticated/expired | Redirect/401/403 without data leakage | planned |
 | PROJECT-PERM-007 | Stale/missing | 409/404/422 with unchanged current row | pass at contract level |
+| PROJECT-PERM-008 | Sub-task relation | `project.read` lists/opens; `project.write` adds/edits/deletes; wrong-company and inactive records are denied or empty | focused suite and API guards | pass at contract level |
 
 ## Visual, responsive, and regression cases
 
@@ -68,6 +71,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-UI-002 | Task detail/Timesheets | both | Form sections, status/actions, embedded Timesheets and responsive behavior match | partial |
 | PROJECT-UI-003 | Portal/report/configuration | both | Read-only portal, graph/pivot/list, settings and permission states match | partial |
 | PROJECT-UI-004 | Current route regression | all 27 manifest routes | 54 dependency-aware authenticated checks with no errors, blank states or overflow | pass |
+| PROJECT-UI-005 | Task detail/Sub-tasks | 1440x833, 390x844 | Odoo tab/grid labels, Add a line affordance, child rows and responsive no-overflow state match | Odoo and Core3 evidence; task-detail gate blocked by missing Timesheets service | conditional |
 
 ## Exit criteria
 

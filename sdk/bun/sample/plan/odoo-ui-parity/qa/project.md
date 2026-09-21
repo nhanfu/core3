@@ -196,3 +196,31 @@ reload retest passes. Preserve lint, restart, and Odoo blockers.
 - The combined Project/Timesheets run has four unrelated pre-existing
   Timesheets contract failures; authenticated Odoo comparison remains open.
   No Project attachment defect remains in this bounded slice.
+
+## QA execution — Project Task Sub-tasks — 2026-09-21
+
+- Feature: `PROJECT-TASK-SUBTASKS-001`; evidence:
+  `../evidence/project/2026-09-21/project-task-subtasks-001/`.
+- `bun test ./test/project_task_subtasks.integration.test.ts --timeout 30000`
+  — 3 passed, 0 failed, 27 assertions. Coverage includes page/API binding,
+  migration/replay, search and company scope, create/edit/delete, state and
+  row-version guards, descendant protection, and file-backed reopen persistence.
+- Authenticated Odoo evidence: `odoo-subtasks-1440x833.png` and
+  `odoo-subtasks-390x844.png`. Core3 authenticated Projects/task-table
+  evidence: `core3-project-tasks-1440x833.png` and
+  `core3-project-tasks-390x844.png`; seeded child rows are visible at both
+  sizes without horizontal overflow.
+- Open blocker: Project-only task detail fails because the existing Timesheets
+  datasource resolves `yaml.service.timesheets`, which is not registered in a
+  Project-only topology. Shared all-module startup also remains blocked by the
+  pre-existing Employees `employee-detail.yaml` validation error. No Project
+  file was changed to conceal either blocker; task-detail browser CRUD/sign-off
+  is pending a dependency/topology repair.
+
+### QA decision
+
+Contract, persistence, permission, workflow-guard, and Odoo reference checks
+are green for this bounded slice. Browser evidence is partial and the slice
+remains conditionally accepted, not full Project sign-off, until the exact
+Timesheets dependency blocker is cleared and task-detail desktop/mobile CRUD
+is rerun.

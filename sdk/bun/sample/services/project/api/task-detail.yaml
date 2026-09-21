@@ -5,7 +5,7 @@ datasources:
     permission: project.read
     workflow: project_tasks
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_DETAIL_UNAVAILABLE, message: Task details are temporarily unavailable. } }
-    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE(t.subtask_summary, '0 / 0 (0%)') AS subtask_summary, COALESCE(t.subtask_names, '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN '0 / 0 (0%)' ELSE CAST(SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) AS VARCHAR) || ' / ' || CAST(COUNT(*) AS VARCHAR) || ' (' || CAST(ROUND(100.0 * SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) / COUNT(*)) AS INTEGER) || '%)' END FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '0 / 0 (0%)') AS subtask_summary, COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
   - id: project_task_timesheets
     type: service
     service: yaml.service.timesheets
@@ -22,6 +22,10 @@ datasources:
   - id: project_task_dependency_lookup
     permission: project.read
     query: "SELECT t.id AS value, t.name || ' · ' || t.project_name AS label FROM project_tasks t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id <> :id AND COALESCE(t.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(t.company_name, :current_company_name) = :current_company_name) AND NOT EXISTS (SELECT 1 FROM project_task_dependencies d WHERE d.task_id = :id AND d.depends_on_id = t.id) ORDER BY t.name, t.id"
+  - id: project_task_subtasks
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_SUBTASKS_UNAVAILABLE, message: Task subtasks are temporarily unavailable. } }
+    query: "SELECT child.id, child.row_version, child.parent_task_id, child.project_id, child.project_name, child.name, COALESCE(child.assignee, 'Unassigned') AS assignee, child.priority, child.state, child.stage, CAST(child.due_date AS VARCHAR) AS due_date, child.planned_hours, child.spent_hours, COALESCE(child.active, TRUE) AS active FROM project_tasks child JOIN project_tasks parent ON parent.id = child.parent_task_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND child.parent_task_id = :id AND COALESCE(child.active, TRUE) = TRUE AND COALESCE(parent.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(child.company_name, :current_company_name) = :current_company_name) AND (COALESCE(:current_company_name, '') = '' OR COALESCE(parent.company_name, :current_company_name) = :current_company_name) AND (:q IS NULL OR child.name ILIKE '%' || :q || '%' OR child.assignee ILIKE '%' || :q || '%' OR child.state ILIKE '%' || :q || '%') ORDER BY child.name, child.id"
 actions:
   - id: open_task_timesheets
     type: navigate
@@ -122,6 +126,82 @@ actions:
         - { query: "DELETE FROM project_task_dependencies WHERE id = :line_id AND task_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PROJECT_TASK_DEPENDENCY_STALE, message: This dependency changed or was removed; reload before deleting. }
         - { query: "UPDATE project_tasks SET blocked_by_summary = CASE WHEN (SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) = 0 THEN 'None' ELSE CAST((SELECT COUNT(*) FROM project_task_dependencies WHERE task_id = :id) AS VARCHAR) || ' task(s)' END, blocked_by_names = COALESCE((SELECT STRING_AGG(t.name, ', ' ORDER BY t.name, t.id) FROM project_task_dependencies d JOIN project_tasks t ON t.id = d.depends_on_id WHERE d.task_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The task changed while removing the dependency. Reload before continuing. }
       result: { query: "SELECT true AS deleted, :line_id AS id" }
+  - id: add_project_task_subtask
+    type: server_form
+    permission: project.write
+    title: Add Sub-task
+    action: project.tasks.subtasks.create
+    handler: line_item
+    operation: create
+    domain: project_task
+    params: { parent_id: '{state.project_task_detail.id}' }
+    refresh: [project_task_detail, project_task_subtasks]
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: assignee, label: Assignees, type: text }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Medium }, { value: High, label: High }, { value: Urgent, label: Urgent }] }
+      - { field: due_date, label: Deadline, type: date }
+      - { field: planned_hours, label: Allocated Time, type: number, min: 0 }
+    mutation:
+      generated: [subtask_id]
+      before_steps:
+        - { query: "SELECT id AS parent_id, project_id, project_name, customer_name, company_name, milestone_name, tags, row_version AS parent_row_version FROM project_tasks WHERE id = :parent_id", assign: true }
+      guards:
+        - { query: "SELECT id FROM project_tasks WHERE id = :parent_id AND COALESCE(active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, company_name)) AND (COALESCE(:parent_expected_row_version, row_version) = row_version)", status: 409, code: PROJECT_TASK_SUBTASK_PARENT_STALE, message: The parent task changed; reload before adding a sub-task. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_TASK_SUBTASK_TITLE_REQUIRED, message: A sub-task title is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:planned_hours, 0) >= 0", status: 422, code: PROJECT_TASK_SUBTASK_HOURS_INVALID, message: Allocated Time cannot be negative. }
+      steps:
+        - { query: "INSERT INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, stage, due_date, row_version, created_at, customer_name, company_name, tags, subtask_summary, subtask_names, blocked_by_summary, blocked_by_names, active, description, parent_task_id) VALUES(:subtask_id, :project_id, :project_name, :name, COALESCE(:assignee, ''), :milestone_name, COALESCE(:priority, 'Normal'), COALESCE(:planned_hours, 0), 0, 'Todo', 'Planning', :due_date, 1, TIMESTAMP '2026-01-15 00:00:00', :customer_name, :company_name, COALESCE(:tags, ''), '0 / 0 (0%)', '', 'None', '', TRUE, '', :parent_id)" }
+      result: { query: "SELECT id, row_version, parent_task_id, project_id, project_name, name, assignee, priority, state, stage, CAST(due_date AS VARCHAR) AS due_date, planned_hours, spent_hours, active FROM project_tasks WHERE id = :subtask_id" }
+  - id: edit_project_task_subtask
+    type: server_form
+    permission: project.write
+    title: Edit Sub-task
+    action: project.tasks.subtasks.update
+    handler: line_item
+    operation: update
+    params: { id: '{row.id}', parent_id: '{state.project_task_detail.id}' }
+    prefill: row
+    refresh: [project_task_detail, project_task_subtasks]
+    mutation:
+      operation: update
+      table: project_tasks
+      fields: [name, assignee, priority, state, due_date, planned_hours]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_tasks WHERE id = :id AND parent_task_id = :parent_id AND COALESCE(active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, company_name))", status: 404, code: PROJECT_TASK_SUBTASK_NOT_FOUND, message: Sub-task was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:planned_hours, 0) >= 0", status: 422, code: PROJECT_TASK_SUBTASK_HOURS_INVALID, message: Allocated Time cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE :state IN ('Todo', 'In Progress', 'Done', 'Cancelled')", status: 422, code: PROJECT_TASK_SUBTASK_STATE_INVALID, message: Select a valid sub-task state. }
+      result: { query: "SELECT id, row_version, parent_task_id, project_id, project_name, name, assignee, priority, state, stage, CAST(due_date AS VARCHAR) AS due_date, planned_hours, spent_hours, active FROM project_tasks WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: assignee, label: Assignees, type: text }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Medium }, { value: High, label: High }, { value: Urgent, label: Urgent }] }
+      - { field: state, label: State, type: select, options: [{ value: Todo, label: To do }, { value: In Progress, label: In progress }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }] }
+      - { field: due_date, label: Deadline, type: date }
+      - { field: planned_hours, label: Allocated Time, type: number, min: 0 }
+  - id: delete_project_task_subtask
+    type: server
+    permission: project.write
+    action: project.tasks.subtasks.delete
+    handler: line_item
+    operation: delete
+    params: { id: '{row.id}', parent_id: '{state.project_task_detail.id}' }
+    confirm: Delete this sub-task?
+    refresh: [project_task_detail, project_task_subtasks]
+    mutation:
+      operation: delete
+      table: project_tasks
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_tasks WHERE id = :id AND parent_task_id = :parent_id AND COALESCE(active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, company_name))", status: 404, code: PROJECT_TASK_SUBTASK_NOT_FOUND, message: Sub-task was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_tasks WHERE parent_task_id = :id AND COALESCE(active, TRUE) = TRUE)", status: 409, code: PROJECT_TASK_SUBTASK_HAS_CHILDREN, message: A sub-task with child tasks cannot be deleted. }
+  - id: view_project_task_subtask
+    type: navigate
+    permission: project.read
+    navigate_to: /tasks/detail
+    params: { id: '{row.id}' }
   - id: start_task
     type: server
     permission: project.write
