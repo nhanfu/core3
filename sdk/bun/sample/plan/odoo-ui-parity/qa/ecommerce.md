@@ -21,8 +21,8 @@
   ratio, and Product Detail suites — **19 passed, 204 assertions, 0 failures**.
 - Audit/lint/diff: `bun run audit` passed at **749 pages, 758 routes, and 1499
   datasources**; scoped ESLint and `git diff --check` passed.
-- QA decision: bounded slice verified; local implementation commit is
-  `8514fadf` and has not been pushed;
+- QA decision: bounded slice verified; implementation commit `8514fadf` is
+  pushed;
   Ecommerce module sign-off remains open.
   Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-page-container-001/`.
 

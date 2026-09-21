@@ -21,4 +21,4 @@ bun test test/ecommerce_product_page_container.integration.test.ts test/ecommerc
 
 Audit: `bun run audit` passed with 749 pages, 758 routes, and 1499
 datasources. Scoped ESLint passed. Commit and diff checks are recorded in the
-Ecommerce QA ledger. Local commit: `8514fadf` (not pushed).
+Ecommerce QA ledger. Implementation commit `8514fadf` is pushed.

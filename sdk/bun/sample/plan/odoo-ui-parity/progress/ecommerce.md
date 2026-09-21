@@ -5,7 +5,7 @@ QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
 Latest Wave 36 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`
-(committed locally as `8514fadf`; not pushed).
+(committed and pushed as `8514fadf`).
 Latest Wave 35 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`
 (committed locally as `f88b6af4`; not pushed).
 Latest Wave 34 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-ROUNDNESS-001`
