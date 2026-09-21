@@ -41,8 +41,10 @@ mobile probes redirected to Discuss/OdooBot and the launcher exposed no
 Manufacturing menu, so no Odoo Manufacturing visual claim is made. Blocker
 captures and exact hashes are under
 `plan/odoo-ui-parity/evidence/manufacturing/2026-09-21/MANUFACTURING-WCWO-001/`.
-The shared repository audit remains blocked by an unrelated malformed
-`services/surveys/api/survey-detail.yaml`; this module slice does not edit it.
+An initial shared audit attempt was blocked by an unrelated malformed
+`services/surveys/api/survey-detail.yaml`; after that concurrent Surveys change
+landed, the final audit rerun passed at 778 pages, 787 routes, and 1,600
+datasources. This module slice did not edit Surveys.
 
 ## 2026-09-21 Work Centers Overview bounded slice
 

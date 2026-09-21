@@ -35,9 +35,12 @@
   `odoo-mobile-blocker.png`. Core3 browser visual evidence is not claimed from
   this bsk session because the available authenticated profile was the Odoo
   reference profile and no Core3 login was supplied through the browser skill.
-- Regression: the global `bun run audit` remains blocked by unrelated
-  malformed `services/surveys/api/survey-detail.yaml`; no Surveys file was
-  modified. Manufacturing-only focused tests, CSS build, and diff-check pass.
+- Regression: the initial global `bun run audit` was blocked by the unrelated
+  malformed `services/surveys/api/survey-detail.yaml`; after the concurrent
+  Surveys change landed, the final audit rerun passed at 778 pages, 787 routes,
+  and 1,600 datasources. No Surveys file was modified by this owner.
+  Manufacturing-only focused tests, CSS build, targeted ESLint, and diff-check
+  pass.
 
 ## MANUFACTURING-WORA-001 retest — candidate `63b8d712` (2026-09-13)
 

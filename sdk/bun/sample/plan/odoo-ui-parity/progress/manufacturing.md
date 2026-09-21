@@ -18,9 +18,11 @@
   profile from `/odoo/work-centers` to Discuss/OdooBot with no Manufacturing
   menu. Exact blocker screenshots and hashes are recorded in the feature
   evidence folder. No visual sign-off is claimed.
-- Global audit is blocked by the unrelated malformed Surveys API YAML; the
-  active checkout also contains pre-existing untracked Surveys screenshots,
-  which are preserved and excluded from this module commit.
+- The first global audit attempt was blocked by an unrelated malformed Surveys
+  API YAML. A final rerun after the concurrent Surveys commit passed at 778
+  pages, 787 routes, and 1,600 datasources. The active checkout still has
+  unrelated Accounting and Project changes, which are preserved and excluded
+  from this module commit.
 
 ## 2026-09-13 retest — `MANUFACTURING-WORA-001` / `63b8d712`
 

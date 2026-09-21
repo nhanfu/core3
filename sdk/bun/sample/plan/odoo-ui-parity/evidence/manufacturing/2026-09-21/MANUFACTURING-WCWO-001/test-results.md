@@ -18,5 +18,7 @@ Additional checks:
 
 - `bun run css:build:manufacturing` — pass.
 - `git diff --check` — pass.
-- `bun run audit` — blocked before audit output by the unrelated malformed
-  `services/surveys/api/survey-detail.yaml`; no Surveys path was changed.
+- `bun run audit` — final rerun passed: 778 pages, 787 routes, and 1,600
+  datasources. An earlier run was blocked by the unrelated malformed
+  `services/surveys/api/survey-detail.yaml`; no Surveys path was changed by
+  this owner.
