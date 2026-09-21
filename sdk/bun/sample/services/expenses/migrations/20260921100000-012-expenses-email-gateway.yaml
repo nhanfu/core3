@@ -1,0 +1,44 @@
+version: 0.0.12
+description: Persisted Expenses incoming email alias and mail-gateway imports
+type:
+  postgres:
+    up: |
+      ALTER TABLE expense_settings ADD COLUMN IF NOT EXISTS incoming_email_alias VARCHAR;
+      ALTER TABLE expense_settings ADD COLUMN IF NOT EXISTS incoming_email_domain VARCHAR;
+      UPDATE expense_settings SET incoming_email_alias = 'expenses' WHERE incoming_email_alias IS NULL;
+      UPDATE expense_settings SET incoming_email_domain = 'core3.local' WHERE incoming_email_domain IS NULL;
+      CREATE TABLE IF NOT EXISTS expense_email_identities (
+        id VARCHAR PRIMARY KEY,
+        email VARCHAR NOT NULL UNIQUE,
+        employee_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS expense_inbound_messages (
+        id VARCHAR PRIMARY KEY,
+        message_id VARCHAR NOT NULL UNIQUE,
+        sender_email VARCHAR NOT NULL,
+        sender_name VARCHAR,
+        recipient VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body VARCHAR,
+        attachment_file_name VARCHAR,
+        expense_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'received'
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_inbound_messages_expense ON expense_inbound_messages(expense_id);
+      INSERT INTO expense_email_identities(id, email, employee_name, company_name) VALUES
+        ('expense-email-identity-admin', 'admin@core3.local', 'Admin User', 'Core3 Demo Company'),
+        ('expense-email-identity-operations', 'operations.lead@core3.local', 'Operations Lead', 'Core3 Demo Company'),
+        ('expense-email-identity-brandon', 'brandon.freeman@core3.local', 'Brandon Freeman', 'Core3 Demo Company')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_inbound_messages;
+      DROP TABLE IF EXISTS expense_email_identities;
+      ALTER TABLE expense_settings DROP COLUMN IF EXISTS incoming_email_alias;
+      ALTER TABLE expense_settings DROP COLUMN IF EXISTS incoming_email_domain;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

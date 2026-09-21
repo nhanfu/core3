@@ -45,6 +45,27 @@ QA state: qa-in-progress
 QA slot: dispatchable expenses assignment (pending wave dispatch)
 Module owner: expenses module owner
 Verification trigger: feature-complete
+
+## Batch 7 - incoming email gateway (2026-09-21)
+
+- Candidate scope: EXPENSE-FUNC-010, Odoo hr_expense Incoming Emails alias
+  configuration and message_new-style draft creation.
+- Focused evidence: expenses_email_gateway.integration.test.ts - 3 tests /
+  19 assertions passed. It covers page/API separation, alias persistence,
+  sender identity resolution, category/amount parsing, receipt/activity and
+  sheet-total persistence, idempotent replay, conflicting replay, disabled
+  gateway, alias mismatch, company scope, and invalid alias validation.
+- bun run css:build:expenses and git diff --check passed.
+- bun run audit now passes after the existing workspace discovery changes were
+  present. No CRM or other module files are part of this candidate.
+- The full Expenses corpus now passes 42 tests / 248 assertions across 12
+  files. The migration replay expectation was updated from 11 to 12 versions
+  to include the idempotent email-gateway migration.
+- Authenticated Odoo shared-browser refresh succeeded for /odoo -> Expenses ->
+  My Expenses on browser instance 245ea108. Core3 desktop/mobile refresh was
+  attempted at 4029/4030. The backend eventually bound after delayed startup,
+  but the shared browser profile had no Core3 authentication and
+  `/api/pages/dashboard` returned 401; no Core3 visual parity claim is made.
 Candidate commit: `1d9df642`
 
 Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). It is the module-level source for expense CRUD, workflows, actors, persistence, Temporal, and paired Odoo gates.

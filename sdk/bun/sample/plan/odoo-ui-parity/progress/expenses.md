@@ -75,3 +75,21 @@ permissions/company scope, CRUD/workflow, attachment/activity, idempotency, and
 migration/replay evidence. Temporal is not applicable to the synchronous
 provider boundary. File-backed live restart and fresh authenticated Odoo
 comparison remain open; no full Expenses sign-off.
+
+## Batch 7 - incoming email gateway (2026-09-21)
+
+Implemented EXPENSE-FUNC-010 in the Expenses service. The source-backed
+configuration and mail-import path now persists alias/domain settings, sender
+identity mapping, inbound message idempotency, Draft expense creation from
+Odoo-style subject tokens, receipt attachment metadata, activity history, and
+sheet totals. Guards cover disabled gateway, recipient alias, company scope,
+required input, and conflicting message replay.
+
+Focused evidence: bun test
+test/expenses_email_gateway.integration.test.ts --timeout 20000 - 3 tests /
+19 assertions passed; the full Expenses corpus is 42 tests / 248 assertions
+across 12 files, audit and Expenses CSS passed, and the migration replay gate
+now includes 12 versions. The Core3 backend eventually bound after delayed
+startup, but the shared browser profile had no Core3 authentication and
+`/api/pages/dashboard` returned 401, so no new Core3 desktop/mobile parity
+claim is made.

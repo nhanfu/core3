@@ -506,3 +506,25 @@ preview path.
 The focused contract/persistence test and full Expenses corpus pass. Fresh
 authenticated interaction capture, actor matrix, and paired Odoo comparison
 remain open for the QA wave.
+
+## Incoming email gateway follow-up (2026-09-21)
+
+Batch 7 (EXPENSE-FUNC-010) implements the next uncovered source-backed
+hr_expense integration: Incoming Emails. Odoo's settings source stores an
+enabled mail gateway, alias prefix, and alias domain, and its message_new
+mail hook creates a draft expense from the sender and subject while retaining
+attachments. Core3 previously exposed only the boolean toggle.
+
+Core3 now persists alias/domain settings, seeded sender identities, inbound
+message records, deterministic email-created expenses, receipt metadata, and a
+mail-received activity. The permissioned server-form action validates the
+gateway state, exact recipient alias, company scope, required input, and
+idempotent replay. Subject parsing supports Odoo-style category reference/name
+and amount tokens; the resulting expense is Draft and retains the existing
+receipt-gated workflow.
+
+The page/API split remains intact (pages/settings.yaml and api/settings.yaml,
+joined by expenses-settings). Migration
+20260921100000-012-expenses-email-gateway.yaml is idempotent and uses
+deterministic dates. See expenses-batch-7.md for source paths, contract, tests,
+and the honest browser blocker.

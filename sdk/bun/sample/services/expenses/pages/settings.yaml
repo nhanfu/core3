@@ -15,6 +15,8 @@ components:
           - title: Expense Management
             fields:
               - { field: incoming_email, label: Incoming Emails, description: Create expenses from incoming email aliases., type: checkbox }
+              - { field: incoming_email_alias, label: Alias, description: Email alias that receives expense receipts., type: text }
+              - { field: incoming_email_domain, label: Alias Domain, description: Domain used by the expense email alias., type: text }
               - { field: reimburse_in_payslip, label: Reimburse in Payslip, description: Include approved expenses in employee payslips., type: checkbox }
               - { field: digitalization_ocr, label: Expense Digitalization, description: Extract expense data from uploaded receipts., type: checkbox }
           - title: Payments

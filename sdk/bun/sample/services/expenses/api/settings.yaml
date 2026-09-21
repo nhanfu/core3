@@ -3,7 +3,7 @@ datasources:
   - id: expenses_settings
     single: true
     permission: expenses.read
-    query: "SELECT id, incoming_email, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods FROM expense_settings WHERE id = 'expenses-settings'"
+    query: "SELECT id, incoming_email, incoming_email_alias, incoming_email_domain, incoming_email_alias || '@' || incoming_email_domain AS incoming_email_address, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods FROM expense_settings WHERE id = 'expenses-settings'"
 actions:
   - id: save_expenses_settings
     type: server_form
@@ -14,5 +14,83 @@ actions:
     operation: update
     prefill: row
     refresh: [expenses_settings]
-    mutation: { operation: update, table: expense_settings, key_field: id, fields: [incoming_email, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods], required: [id], result: { query: "SELECT * FROM expense_settings WHERE id = :id" } }
-    fields: [{ field: incoming_email, label: Incoming Emails, type: checkbox }, { field: reimburse_in_payslip, label: Reimburse in Payslip, type: checkbox }, { field: digitalization_ocr, label: Expense Digitalization (OCR), type: checkbox }, { field: expense_card, label: Expense Card, type: checkbox }, { field: employee_journal, label: Employee Expense Journal, type: text }, { field: company_payment_methods, label: Company-paid Payment Methods, type: text }]
+    mutation:
+      operation: update
+      table: expense_settings
+      key_field: id
+      concurrency: false
+      fields: [incoming_email, incoming_email_alias, incoming_email_domain, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods]
+      required: [id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT CAST(COALESCE(:incoming_email, false) AS BOOLEAN) OR regexp_matches(lower(trim(CAST(:incoming_email_alias AS VARCHAR))), '^[a-z0-9][a-z0-9._-]*$')", status: 422, code: EXPENSE_EMAIL_ALIAS_INVALID, message: Enter a valid expense email alias. }
+        - { query: "SELECT 1 AS ok WHERE NOT CAST(COALESCE(:incoming_email, false) AS BOOLEAN) OR regexp_matches(lower(trim(CAST(:incoming_email_domain AS VARCHAR))), '^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\\.[a-z]{2,}$')", status: 422, code: EXPENSE_EMAIL_DOMAIN_INVALID, message: Enter a valid expense email domain. }
+      result: { query: "SELECT * FROM expense_settings WHERE id = :id" }
+    fields: [{ field: incoming_email, label: Incoming Emails, type: checkbox }, { field: incoming_email_alias, label: Alias, type: text, required: true }, { field: incoming_email_domain, label: Alias Domain, type: text, required: true }, { field: reimburse_in_payslip, label: Reimburse in Payslip, type: checkbox }, { field: digitalization_ocr, label: Expense Digitalization (OCR), type: checkbox }, { field: expense_card, label: Expense Card, type: checkbox }, { field: employee_journal, label: Employee Expense Journal, type: text }, { field: company_payment_methods, label: Company-paid Payment Methods, type: text }]
+  - id: receive_expense_email
+    type: server_form
+    permission: expenses.write
+    title: Receive Expense Email
+    action: expenses.email.receive
+    handler: yaml_mutation
+    operation: create
+    submit_label: Receive Email
+    mutation:
+      guards:
+        - { query: "SELECT 1 FROM expense_settings WHERE id = 'expenses-settings' AND incoming_email = true", status: 409, code: EXPENSE_EMAIL_GATEWAY_DISABLED, message: Enable Incoming Emails before receiving an expense email. }
+        - { query: "SELECT 1 FROM expense_settings WHERE id = 'expenses-settings' AND lower(trim(:recipient)) = lower(trim(incoming_email_alias || '@' || incoming_email_domain))", status: 422, code: EXPENSE_EMAIL_ALIAS_MISMATCH, message: The recipient does not match the configured expense email alias. }
+        - { query: "SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM expense_inbound_messages WHERE message_id = :message_id) OR EXISTS (SELECT 1 FROM expense_inbound_messages WHERE message_id = :message_id AND sender_email = :sender_email AND recipient = :recipient AND subject = :subject)", status: 409, code: EXPENSE_EMAIL_IDEMPOTENCY_CONFLICT, message: This message ID was already received with different message content. }
+        - { query: "SELECT 1 WHERE COALESCE(:current_company_name, '') = COALESCE(:company_name, :current_company_name)", status: 403, code: EXPENSE_EMAIL_COMPANY_FORBIDDEN, message: Expense emails must belong to the current company. }
+        - { query: "SELECT 1 WHERE LENGTH(TRIM(CAST(:message_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:sender_email AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:subject AS VARCHAR))) > 0 AND regexp_matches(CAST(:expense_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EXPENSE_EMAIL_INPUT_INVALID, message: Message ID, sender, subject, and expense date are required. }
+      steps:
+        - query: |
+            INSERT INTO expense_sheets(id, row_version, name, employee_name, manager_name, state, expense_date, amount_total, amount_reimbursed, note)
+            SELECT 'expense-sheet-email-' || regexp_replace(trim(lower(COALESCE(identity.employee_name, NULLIF(TRIM(:sender_name), ''), :sender_email))), '[^a-z0-9]+', '-', 'g'), 1,
+              COALESCE(identity.employee_name, NULLIF(TRIM(:sender_name), ''), :sender_email) || ' - Email expenses',
+              COALESCE(identity.employee_name, NULLIF(TRIM(:sender_name), ''), :sender_email), 'Operations Lead', 'Draft', CAST(:expense_date AS DATE), 0, 0, 'Created from incoming expense email'
+            FROM (SELECT 1) seed
+            LEFT JOIN expense_email_identities identity ON lower(identity.email) = lower(:sender_email)
+            ON CONFLICT (id) DO NOTHING
+        - query: |
+            INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name, tax_amount, analytic_distribution, journal_entry, duplicate_candidate, reimbursement_status, product_name, quantity, unit_name, manager_name, vendor_name, receipt_checksum)
+            SELECT 'expense-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), 1,
+              'expense-sheet-email-' || regexp_replace(trim(lower(COALESCE(identity.employee_name, NULLIF(TRIM(:sender_name), ''), :sender_email))), '[^a-z0-9]+', '-', 'g'),
+              trim(:subject),
+              COALESCE((SELECT name FROM expense_categories WHERE lower(reference) = lower(split_part(trim(:subject), ' ', 1)) OR lower(name) = lower(split_part(trim(:subject), ' ', 1)) LIMIT 1), 'Other'),
+              CAST(:expense_date AS DATE), COALESCE(identity.employee_name, NULLIF(TRIM(:sender_name), ''), :sender_email),
+              COALESCE(try_cast(NULLIF(regexp_extract(CAST(:subject AS VARCHAR), '[0-9]+\.[0-9]{1,2}'), '') AS DECIMAL(18,2)), try_cast(NULLIF(regexp_extract(CAST(:subject AS VARCHAR), '[0-9]+'), '') AS DECIMAL(18,2)), 0), 'Employee', NULLIF(TRIM(:body), ''),
+              NULLIF(TRIM(:attachment_file_name), ''), 'Draft', CASE WHEN NULLIF(TRIM(:attachment_file_name), '') IS NULL THEN 'Missing receipt' ELSE 'Receipt received by email' END,
+              COALESCE(:company_name, :current_company_name), NULL, 0, NULL, NULL, NULL, 'Not reimbursed',
+              COALESCE((SELECT name FROM expense_categories WHERE lower(reference) = lower(split_part(trim(:subject), ' ', 1)) OR lower(name) = lower(split_part(trim(:subject), ' ', 1)) LIMIT 1), 'Other'), 1, 'Units', 'Operations Lead', NULL,
+              CASE WHEN NULLIF(TRIM(:attachment_file_name), '') IS NULL THEN NULL ELSE 'email:' || :message_id END
+            FROM (SELECT 1) seed
+            LEFT JOIN expense_email_identities identity ON lower(identity.email) = lower(:sender_email)
+            ON CONFLICT (id) DO NOTHING
+        - query: |
+            INSERT INTO expense_inbound_messages(id, message_id, sender_email, sender_name, recipient, subject, body, attachment_file_name, expense_id, company_name, created_at, state)
+            VALUES ('expense-inbound-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), :message_id, :sender_email, NULLIF(TRIM(:sender_name), ''), :recipient, :subject, :body, NULLIF(TRIM(:attachment_file_name), ''), 'expense-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), COALESCE(:company_name, :current_company_name), TIMESTAMP '2026-09-21 10:00:00', 'received')
+            ON CONFLICT (message_id) DO UPDATE SET state = 'received'
+        - query: |
+            INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, created_at)
+            SELECT 'expense-email-attachment-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), 'expense-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), :attachment_file_name, COALESCE(NULLIF(:attachment_mime_type, ''), 'application/octet-stream'), COALESCE(try_cast(:attachment_size_bytes AS BIGINT), 0), 'email/' || :message_id || '/' || :attachment_file_name, :sender_name, TIMESTAMP '2026-09-21 10:00:00'
+            WHERE NULLIF(TRIM(:attachment_file_name), '') IS NOT NULL
+            ON CONFLICT (id) DO NOTHING
+        - query: |
+            INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail, created_at)
+            VALUES ('expense-activity-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), 'expense-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'), COALESCE(NULLIF(TRIM(:sender_name), ''), :sender_email), 'expenses.email_received', 'Received by email', 'Expense created from ' || :sender_email, TIMESTAMP '2026-09-21 10:00:00')
+            ON CONFLICT (id) DO NOTHING
+        - query: |
+            UPDATE expense_sheets SET amount_total = (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE sheet_id = expense_sheets.id)
+            WHERE id = (SELECT sheet_id FROM expenses WHERE id = 'expense-email-' || trim(regexp_replace(lower(:message_id), '[^a-z0-9]+', '-', 'g'), '-'))
+      result: { query: "SELECT e.id, e.row_version, e.name, e.employee_name, e.category, e.amount, e.expense_date, e.state, e.receipt_reference, e.receipt_label, m.message_id FROM expenses e JOIN expense_inbound_messages m ON m.expense_id = e.id WHERE m.message_id = :message_id" }
+    fields:
+      - { field: message_id, label: Message ID, type: text, required: true }
+      - { field: sender_email, label: Sender Email, type: text, required: true }
+      - { field: sender_name, label: Sender Name, type: text }
+      - { field: recipient, label: Recipient, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body, label: Body, type: textarea }
+      - { field: expense_date, label: Expense Date, type: text, required: true }
+      - { field: attachment_file_name, label: Receipt Filename, type: text }
+      - { field: attachment_mime_type, label: Receipt MIME Type, type: text, default: application/pdf }
+      - { field: attachment_size_bytes, label: Receipt Size, type: number, default: 0 }
+      - { field: company_name, label: Company, type: text, default: Core3 Demo Company }
