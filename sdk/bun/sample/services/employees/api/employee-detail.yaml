@@ -56,6 +56,19 @@ datasources:
       FROM employees e
       WHERE e.id = :id
         AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_related_user_options
+    single: false
+    permission: auth.users.manage
+    query: |
+      SELECT u.id AS value, u.name || ' · ' || u.email AS label
+      FROM employee_related_user_catalog u
+      JOIN employees target ON target.id = :id
+      WHERE u.enabled = true
+        AND (u.id = target.auth_user_id OR NOT EXISTS (
+          SELECT 1 FROM employees linked WHERE linked.auth_user_id = u.id
+        ))
+        AND (COALESCE(:current_company_name, '') = '' OR target.company_name = :current_company_name)
+      ORDER BY u.name, u.id
   - id: employee_launch_plan_wizard
     single: true
     permission: employees.read
@@ -265,6 +278,36 @@ actions:
       - { field: name, label: Name, type: text, required: true }
       - { field: login, label: Login, type: text, required: true }
       - { field: phone, label: Phone, type: text }
+  - id: edit_employee_related_user
+    type: server_form
+    permission: auth.users.manage
+    title: Set Related User
+    description: Link this employee to an existing enabled user or clear the relationship.
+    action: employees.records.set_related_user
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.employee_detail.row_version}', current_user_id: '{current_user_id}' }
+    prefill: state.employee_detail
+    refresh: [employee_detail, employee_related_user_options]
+    mutation:
+      concurrency: { required: true }
+      fields: [auth_user_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RELATED_USER_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the related user was updated. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :auth_user_id IS NULL OR LENGTH(TRIM(CAST(:auth_user_id AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_RELATED_USER_INVALID, message: Select an enabled related user or clear the field. }
+        - { query: "SELECT 1 AS ok WHERE :auth_user_id IS NULL OR EXISTS (SELECT 1 FROM employee_related_user_catalog WHERE id = TRIM(CAST(:auth_user_id AS VARCHAR)) AND enabled = true)", status: 422, code: EMPLOYEES_RELATED_USER_INVALID, message: Select an enabled related user or clear the field. }
+        - { query: "SELECT 1 AS ok WHERE :auth_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM employees WHERE auth_user_id = TRIM(CAST(:auth_user_id AS VARCHAR)) AND id <> :id)", status: 409, code: EMPLOYEES_RELATED_USER_ALREADY_LINKED, message: This user is already linked to another employee. }
+      steps:
+        - query: "UPDATE employees SET auth_user_id = NULLIF(TRIM(CAST(:auth_user_id AS VARCHAR)), ''), user_name = (SELECT u.name FROM employee_related_user_catalog u WHERE u.id = NULLIF(TRIM(CAST(:auth_user_id AS VARCHAR)), '')), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the related user was updated. Reload and try again.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: auth_user_id, label: Related User, type: select, options_source: employee_related_user_options }
   - id: print_employee_badge
     type: client
     permission: employees.read

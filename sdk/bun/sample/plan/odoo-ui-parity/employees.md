@@ -1260,6 +1260,28 @@ bank_account_ids, so a populated allocation comparison is unavailable. These
 are exact fixture/reference-data blockers; no aggregate Employees sign-off is
 claimed.
 
+## EMP-RELATED-USER-001: Existing Related User assignment (2026-09-21)
+
+Odoo exposes `hr.employee.user_id` as an editable `res.users` relationship in
+the employee Settings form and as a related-user list field. Core3 supported
+creating a new invited user, but had no action for selecting or clearing an
+existing user. This slice adds the bounded `edit_employee_related_user` action
+and `employee_related_user_options` datasource with separate page/API YAML.
+
+Migration `20260922090000-063` adds a unique employee relationship index and a
+replay-safe Employees-local projection of deterministic `user-admin` and
+`user-disp` identities. Assignment/clear updates `auth_user_id`, `user_name`,
+and employee `row_version` durably. Guards cover actor, active current-company
+employee, enabled catalog identity, duplicate linkage, and stale row version.
+Focused verification is **4 tests / 24 assertions**, including restart.
+
+Authenticated Odoo desktop/mobile captures and Core3 desktop/mobile attempts
+are under `evidence/employees/2026-09-21/EMP-RELATED-USER-001/`. Core3 evidence
+is conditional because the session company (`Core3 Demo Company`) does not
+match the fixtures (`Core3 Vietnam`). The separate auth/Employees database
+also leaves dynamic cross-service user search and normalized user-company
+membership as explicit blockers. No aggregate Employees sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001: Employee Personal emergency contact (2026-09-20)
 
 The smallest remaining source-backed employee behavior is Odoo's HR-user-only

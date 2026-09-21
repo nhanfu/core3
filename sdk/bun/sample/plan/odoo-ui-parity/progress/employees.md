@@ -797,6 +797,25 @@ Candidate commit: current working tree
   `Adding columns with constraints not yet supported`; the exact output is in
   `verification.md`. No aggregate Employees sign-off is claimed.
 
+## EMP-RELATED-USER-001 (2026-09-21)
+
+- Selected Odoo's `hr.employee.user_id` relationship as the smallest uncovered
+  user-visible behavior after the completed contract-period slice.
+- Added migration `20260922090000-063` with an Employees-local deterministic
+  related-user projection and unique `auth_user_id` relationship index.
+- Added separate API options/action YAML and the employee-detail page action;
+  assignment and clearing update the durable employee relation/display and row
+  version.
+- Guards cover actor, active/current-company employee, enabled identity,
+  duplicate linkage, and stale concurrency. Focused verification is **4 tests /
+  24 assertions**, including replay and file-backed restart.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-RELATED-USER-001/`. Authenticated Odoo
+  desktop/mobile captures succeeded. Authenticated Core3 desktop/mobile
+  captures reached the route but are conditional on the fixture-company
+  mismatch; the separate auth/Employees database also blocks dynamic
+  user-company lookup. No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-TYPE-001 (2026-09-21)
 
 - Selected Odoo's uncovered `hr.version.employee_type` Payroll selection.

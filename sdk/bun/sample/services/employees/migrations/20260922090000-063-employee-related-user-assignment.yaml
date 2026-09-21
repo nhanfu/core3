@@ -1,0 +1,24 @@
+version: 0.0.63
+kind: schema
+description: Persist the employee related-user relationship and repair its display projection
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_related_user_catalog (
+        id VARCHAR PRIMARY KEY,
+        email VARCHAR NOT NULL UNIQUE,
+        name VARCHAR NOT NULL,
+        enabled BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO employee_related_user_catalog(id, email, name, enabled) VALUES
+        ('user-admin', 'admin@tms.local', 'Admin User', true),
+        ('user-disp', 'dispatcher@tms.local', 'Dispatcher User', true)
+        ON CONFLICT (id) DO NOTHING;
+      CREATE UNIQUE INDEX IF NOT EXISTS employees_auth_user_unique_idx ON employees(auth_user_id);
+    down: |
+      DROP INDEX IF EXISTS employees_auth_user_unique_idx;
+      DROP TABLE IF EXISTS employee_related_user_catalog;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

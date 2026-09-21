@@ -579,6 +579,22 @@ Inventory changes reference missing actions during global discovery; this is
 not an Employees failure. The repository audit has the same external blocker.
 No aggregate Employees sign-off is claimed.
 
+## EMP-RELATED-USER-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-042 | Existing Related User options, assignment, clear, and read projection | pass; `user-disp` assignment and clear persist `auth_user_id`, `user_name`, and row version |
+| EMP-PERM-042 | `auth.users.manage`, actor, active/current company, enabled identity, duplicate-link, and row version | pass; missing actor, stale, wrong-company, invalid, and duplicate requests reject atomically |
+| EMP-DATA-042 | Migration replay and file-backed restart | pass; local deterministic auth-identity projection and employee relation survive restart without duplicates |
+| EMP-UI-038 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo Settings > User is visible at both viewports; Core3 route is authenticated but fixture-company blocked |
+
+Focused test: `test/employees_related_user.integration.test.ts` (4 tests,
+24 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-RELATED-USER-001/`. The Employees service
+has no live cross-service auth-user/company resolver, so the local catalog
+projection and company-label mismatch are explicit blockers. No aggregate
+Employees sign-off is claimed.
+
 ## EMP-BANK-ACCOUNT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

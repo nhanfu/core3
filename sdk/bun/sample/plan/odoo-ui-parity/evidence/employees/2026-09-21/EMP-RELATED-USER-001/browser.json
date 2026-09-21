@@ -1,0 +1,15 @@
+{
+  "feature_id": "EMP-RELATED-USER-001",
+  "odoo": {
+    "route": "/odoo/employees/1",
+    "desktop": { "authenticated": true, "viewport": "1440x1100", "settings_user_control": true, "label_observed": "User?" },
+    "mobile": { "authenticated": true, "viewport": "390x844", "settings_user_control": true, "label_observed": "User?" },
+    "shell_noise": "Seven 404 console messages were observed on both captures."
+  },
+  "core3": {
+    "route": "/employees/detail?id=employee-demo-001",
+    "desktop": { "authenticated": true, "viewport": "1440x1100", "http_errors": [], "fixture_company_blocker": true },
+    "mobile": { "authenticated": true, "viewport": "390x844", "http_errors": [], "fixture_company_blocker": true },
+    "blocker": "Core3 session company Core3 Demo Company does not match employee fixture company Core3 Vietnam."
+  }
+}

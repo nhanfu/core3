@@ -573,3 +573,18 @@ Focused test: `test/employees_contract_period.integration.test.ts` (4 tests,
 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-CONTRACT-PERIOD-001/`. Scoped lint and
 diff-check pass; global audit is blocked by unrelated Inventory action fields.
+
+## EMP-RELATED-USER-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `user_id` Settings relationship maps to paired employee page/API contracts | pass |
+| Related User CRUD | Enabled catalog user can be assigned, read, and cleared durably | pass |
+| Permission and scope | `auth.users.manage`, actor, active/current company, enabled identity, duplicate-link, and stale guards reject atomically | pass |
+| Persistence | Unique relation projection, migration replay, and file-backed restart preserve deterministic state | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Settings desktop/mobile captures | conditional; Odoo control visible, Core3 fixture-company mismatch recorded |
+
+Focused test: `test/employees_related_user.integration.test.ts` (4 tests,
+24 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-RELATED-USER-001/`. Dynamic cross-service
+auth-user search/company normalization remains a documented blocker.
