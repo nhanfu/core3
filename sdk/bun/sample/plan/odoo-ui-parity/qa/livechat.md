@@ -126,3 +126,12 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   --timeout 20000` — 73 passed, 0 failed across 21 files.
 - No authenticated browser or paired Odoo visual evidence is claimed for this
   API-bound slice. Full Live Chat sign-off remains open.
+
+## 2026-09-21 bounded review: public visitor feedback and leave session
+
+- Focused: `bun test test/livechat_visitor_feedback.integration.test.ts --timeout 20000` — **3 passed, 21 assertions, 0 failed**. It covers Odoo route tracing, matching page/API IDs, token ownership, rating validation/upsert, leave-state guards, idempotent migration replay, and file-backed restart recovery.
+- Full explicit Live Chat corpus: **76 passed, 762 assertions, 0 failed across 22 files**.
+- UI audit: `bun run audit` — **776 pages, 785 routes, 1,593 datasources**, passed.
+- Focused lint: `bunx eslint test/livechat_visitor_feedback.integration.test.ts` — passed. `git diff --check` — passed.
+- Odoo browser evidence is a blocker, not a sign-off: authenticated `/odoo/apps` shows Live Chat as `Request Access`, and authenticated `/im_livechat/support/1` returns Odoo 404 at both captured desktop/mobile states. Captures are recorded outside Git under `/tmp/odoo-livechat-visitor-feedback-*20260921.png`.
+- Core3 authenticated visitor desktop/mobile evidence remains pending because the local Core3 runtime/browser pass was not available in this execution. Functional parity and full-module sign-off remain open.

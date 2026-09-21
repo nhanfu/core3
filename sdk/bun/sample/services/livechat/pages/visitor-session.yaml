@@ -1,0 +1,37 @@
+title: Live Chat
+page: { id: livechat-visitor-session, route: /livechat/visitor-session, breadcrumb: [Website, Live Chat, Conversation], auth: { require: [livechat.public] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_public_session
+    title_field: visitor_display
+    subtitle_field: channel_name
+    status_field: status
+    editable: false
+    labels: { workflowStatus: Conversation state }
+    status_colors: { In Progress: blue, 'Waiting for Customer': amber, Closed: neutral, 'Looking for Help': violet }
+    header_actions:
+      - { id: submit_livechat_feedback, label: Rate Conversation, variant: secondary, permission: livechat.public, show_if: "record.status === 'Closed' || record.feedback_submitted === true" }
+      - { id: leave_livechat_session, label: Leave Conversation, variant: danger, permission: livechat.public, show_if: "record.status !== 'Closed'" }
+    group_columns: 2
+    groups:
+      - title: Conversation
+        fields:
+          - { field: visitor_display, label: Visitor }
+          - { field: channel_name, label: Channel }
+          - { field: operator_name, label: Operator }
+          - { field: status, label: Status, type: StatusChip }
+          - { field: outcome, label: Outcome }
+          - { field: message_count, label: Messages }
+          - { field: started_label, label: Started }
+          - { field: ended_label, label: Ended }
+      - title: Feedback
+        fields:
+          - { field: feedback_rating, label: Rating }
+          - { field: feedback_reason, label: Reason, wide: true }
+          - { field: feedback_submitted, label: Submitted, type: Boolean }
+    message_source: livechat_public_messages
+    chatter_label: Conversation
+    chatter_empty: No messages in this conversation yet.
+    message_detail_field: detail
+    message_timestamp_field: created_at

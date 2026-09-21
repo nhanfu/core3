@@ -49,6 +49,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-WF-004 | Help/escalation queues | Looking-for-help and technical escalation actions preserve queue state and manager scope | pass at contract level |
 | LIVECHAT-WF-005 | Durable/external boundary | Realtime reconnect, bot calls, notifications, transcript delivery and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | LIVECHAT-WF-006 | Conversation tag assignment | Operator Add Tag/Remove Tag persists the source-backed relation, preserves session versions, scopes assigned sessions, and rejects duplicate, stale, missing, and unassigned mutations | pass: `livechat_session_tags.integration.test.ts`; browser comparison remains planned |
+| LIVECHAT-WF-007 | Visitor feedback and leave session | Public token-scoped feedback persists one rating per session; visitor leave closes the session, appends a timeline event, rejects replay, and survives restart | pass: `livechat_visitor_feedback.integration.test.ts`; Odoo widget blocked because addon is not installed |
 
 ## Permission and security cases
 
@@ -61,6 +62,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-PERM-005 | Wrong company | Sessions, partners, channels, transcripts and reports are not leaked or mutable | planned |
 | LIVECHAT-PERM-006 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | LIVECHAT-PERM-007 | Stale/missing/invalid | 409/404/422 leaves the current session/channel/configuration unchanged | pass at contract level |
+| LIVECHAT-PERM-008 | Visitor token | Wrong visitor token returns 404 without disclosing or mutating another conversation | pass: `livechat_visitor_feedback.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 

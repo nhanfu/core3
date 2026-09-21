@@ -32,7 +32,32 @@ regression was interrupted (exit 130) before completion. No browser/Odoo probe,
 restart persistence check, or new capture was run; authenticated desktop/mobile
 actor evidence and paired Odoo comparison remain open.
 
+## Bounded implementation slice: public visitor feedback and leave session (2026-09-21)
+
+The next uncovered Odoo `im_livechat` controller pair is now represented in
+Core3. `services/livechat/api/visitor-session.yaml` and
+`services/livechat/pages/visitor-session.yaml` join through
+`livechat-visitor-session`; the API retains `/im_livechat/feedback` and
+`/im_livechat/visitor_leave_session`, while the page exposes token-scoped
+visitor feedback and leave actions. Migration
+`20260921120000-051-livechat-visitor-feedback.yaml` persists visitor tokens,
+one feedback row per session, and the leave timeline event.
+
+Focused validation passed: 3 tests, 21 assertions. The explicit Live Chat
+corpus passed 76 tests and 762 assertions across 22 files. Audit passed with
+776 pages, 785 routes, and 1,593 datasources; focused lint and diff-check
+passed.
+
+The authenticated Odoo reference remains blocked because Live Chat is shown as
+`Request Access` in `/odoo/apps` and `/im_livechat/support/1` returns 404;
+desktop/mobile blocker captures are recorded in the bounded evidence folder.
+The attempted Core3 browser pass is also blocked by the shared local runtime:
+the Vite proxy reports `EMFILE`, and a standalone backend attempt fails while
+replaying `coredb/accounting.duckdb.wal` with DuckDB's missing-default-database
+internal error. No Core3 visual sign-off is claimed.
+
 ## Next bounded task
 
 Exercise the authenticated visitor/operator/manager browser matrix and restart
-persistence, then continue with the next uncovered module-plan slice.
+persistence when the reference addon and local runtime are available, then
+continue with the next uncovered public-widget or transcript surface.

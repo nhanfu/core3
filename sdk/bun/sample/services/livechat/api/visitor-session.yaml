@@ -1,0 +1,87 @@
+page: { id: livechat-visitor-session }
+
+datasources:
+  - id: livechat_public_session
+    single: true
+    permission: livechat.public
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_PUBLIC_SESSION_UNAUTHORIZED, message: A visitor session is required to view this conversation. }
+      forbidden: { status: 403, code: LIVECHAT_PUBLIC_SESSION_FORBIDDEN, message: This visitor session is not available. }
+      transport_error: { status: 503, code: LIVECHAT_PUBLIC_SESSION_UNAVAILABLE, message: The visitor chat is temporarily unavailable. }
+    query: |
+      SELECT s.id, s.row_version, s.channel_name, s.visitor_name,
+        COALESCE(NULLIF(s.visitor_name, ''), 'Visitor') AS visitor_display,
+        s.operator_name, s.status, s.outcome, COALESCE(s.message_count, 0) AS message_count,
+        s.rating, COALESCE(f.rating, s.rating) AS feedback_rating,
+        COALESCE(f.reason, '') AS feedback_reason,
+        CASE WHEN f.session_id IS NULL THEN FALSE ELSE TRUE END AS feedback_submitted,
+        CAST(s.started_at AS VARCHAR) AS started_label,
+        CAST(s.ended_at AS VARCHAR) AS ended_label,
+        s.visitor_token
+      FROM livechat_sessions s
+      LEFT JOIN livechat_session_feedback f ON f.session_id = s.id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND s.id = :id AND s.visitor_token = :visitor_token
+  - id: livechat_public_messages
+    single: false
+    permission: livechat.public
+    query: |
+      SELECT m.id, m.author_name, m.author_type, m.body AS detail,
+        m.action, m.action_label, CAST(m.created_at AS VARCHAR) AS created_at
+      FROM livechat_session_messages m
+      JOIN livechat_sessions s ON s.id = m.session_id
+      WHERE m.session_id = :id AND s.visitor_token = :visitor_token
+      ORDER BY m.created_at, m.id
+  - id: livechat_public_feedback
+    single: true
+    permission: livechat.public
+    query: |
+      SELECT session_id, rating, reason, CAST(submitted_at AS VARCHAR) AS submitted_at
+      FROM livechat_session_feedback
+      WHERE session_id = :id
+        AND EXISTS (SELECT 1 FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token)
+
+actions:
+  - id: leave_livechat_session
+    type: server_form
+    permission: livechat.public
+    title: Leave conversation
+    action: /im_livechat/visitor_leave_session
+    handler: yaml_mutation
+    operation: leave
+    params: { id: '{state.id}', visitor_token: '{state.visitor_token}' }
+    refresh: [livechat_public_session, livechat_public_messages]
+    fields: [{ field: expected_row_version, label: Session version, type: number, readonly: true }]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token", status: 404, code: LIVECHAT_PUBLIC_SESSION_NOT_FOUND, message: The visitor session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token AND row_version = :expected_row_version AND status <> 'Closed'", status: 409, code: LIVECHAT_PUBLIC_SESSION_ALREADY_CLOSED, message: This visitor session is already closed. }
+      steps:
+        - { query: "UPDATE livechat_sessions SET status = 'Closed', ended_at = CURRENT_TIMESTAMP, outcome = 'Visitor Left', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND visitor_token = :visitor_token AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_PUBLIC_SESSION_ALREADY_CLOSED, message: This visitor session changed before it was closed. }
+        - { query: "INSERT INTO livechat_session_messages(id, session_id, author_id, author_name, author_type, body, action, action_label, created_at) VALUES(gen_random_uuid(), :id, 'visitor', 'Visitor', 'visitor', 'The visitor left the conversation.', 'leave', 'Visitor left', CURRENT_TIMESTAMP)" }
+      result: { query: "SELECT id, status, outcome, row_version, CAST(ended_at AS VARCHAR) AS ended_at FROM livechat_sessions WHERE id = :id" }
+  - id: submit_livechat_feedback
+    type: server_form
+    permission: livechat.public
+    title: Submit rating
+    action: /im_livechat/feedback
+    handler: yaml_mutation
+    operation: feedback
+    params: { id: '{state.id}', visitor_token: '{state.visitor_token}' }
+    refresh: [livechat_public_session, livechat_public_feedback]
+    fields:
+      - { field: rating, label: Rating, type: select, options: [{ value: 1, label: Unhappy }, { value: 3, label: Neutral }, { value: 5, label: Happy }], required: true }
+      - { field: reason, label: Reason, type: textarea, required: false }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token", status: 404, code: LIVECHAT_PUBLIC_SESSION_NOT_FOUND, message: The visitor session was not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:rating AS INTEGER) IN (1, 2, 3, 4, 5)", status: 422, code: LIVECHAT_PUBLIC_RATING_INVALID, message: Choose a rating from 1 to 5. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(COALESCE(CAST(:reason AS VARCHAR), '')) <= 2000", status: 422, code: LIVECHAT_PUBLIC_FEEDBACK_INVALID, message: Feedback must be 2000 characters or fewer. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token AND row_version = :expected_row_version", status: 409, code: LIVECHAT_PUBLIC_FEEDBACK_STALE, message: This visitor session changed before the rating was saved. Reload and try again. }
+      steps:
+        - { query: "DELETE FROM livechat_session_feedback WHERE session_id = :id" }
+        - { query: "INSERT INTO livechat_session_feedback(session_id, rating, reason, submitted_at) VALUES(:id, CAST(:rating AS INTEGER), COALESCE(CAST(:reason AS VARCHAR), ''), CURRENT_TIMESTAMP)" }
+        - { query: "UPDATE livechat_sessions SET rating = CAST(:rating AS INTEGER), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND visitor_token = :visitor_token AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_PUBLIC_FEEDBACK_STALE, message: This visitor session changed before the rating was saved. Reload and try again. }
+      result: { query: "SELECT session_id, rating, reason, CAST(submitted_at AS VARCHAR) AS submitted_at FROM livechat_session_feedback WHERE session_id = :id" }

@@ -3,3 +3,4 @@ permissions:
   - livechat.write
   - livechat.manage
   - livechat.technical
+  - livechat.public

@@ -1,0 +1,52 @@
+version: 0.0.51
+kind: data
+description: Persist Odoo Live Chat visitor feedback and leave-session state
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS visitor_id VARCHAR;
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS visitor_token VARCHAR;
+      UPDATE livechat_sessions
+      SET visitor_id = CASE id
+            WHEN 'livechat-session-demo-001' THEN 'visitor-demo-a'
+            WHEN 'livechat-session-demo-002' THEN 'visitor-demo-b'
+            WHEN 'livechat-session-demo-003' THEN 'visitor-demo-c'
+            WHEN 'livechat-session-demo-004' THEN 'visitor-demo-d'
+            WHEN 'livechat-session-demo-005' THEN 'visitor-demo-e'
+            WHEN 'livechat-session-demo-006' THEN 'visitor-demo-f'
+            ELSE visitor_id
+          END,
+          visitor_token = CASE id
+            WHEN 'livechat-session-demo-001' THEN 'livechat-visitor-token-001'
+            WHEN 'livechat-session-demo-002' THEN 'livechat-visitor-token-002'
+            WHEN 'livechat-session-demo-003' THEN 'livechat-visitor-token-003'
+            WHEN 'livechat-session-demo-004' THEN 'livechat-visitor-token-004'
+            WHEN 'livechat-session-demo-005' THEN 'livechat-visitor-token-005'
+            WHEN 'livechat-session-demo-006' THEN 'livechat-visitor-token-006'
+            ELSE visitor_token
+          END
+      WHERE id IN ('livechat-session-demo-001', 'livechat-session-demo-002', 'livechat-session-demo-003', 'livechat-session-demo-004', 'livechat-session-demo-005', 'livechat-session-demo-006');
+      CREATE UNIQUE INDEX IF NOT EXISTS livechat_sessions_visitor_token_idx ON livechat_sessions(visitor_token);
+      CREATE TABLE IF NOT EXISTS livechat_session_feedback (
+        session_id VARCHAR PRIMARY KEY,
+        rating INTEGER NOT NULL,
+        reason VARCHAR NOT NULL DEFAULT '',
+        submitted_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO livechat_session_feedback(session_id, rating, reason, submitted_at)
+      SELECT 'livechat-session-demo-003', 5, 'Resolved quickly.', CURRENT_TIMESTAMP - INTERVAL '1' DAY
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-003')
+        AND NOT EXISTS (SELECT 1 FROM livechat_session_feedback WHERE session_id = 'livechat-session-demo-003');
+      UPDATE livechat_sessions
+      SET rating = 5
+      WHERE id = 'livechat-session-demo-003' AND COALESCE(rating, 0) <> 5;
+    down: |
+      DELETE FROM livechat_session_feedback WHERE session_id = 'livechat-session-demo-003';
+      DROP TABLE IF EXISTS livechat_session_feedback;
+      DROP INDEX IF EXISTS livechat_sessions_visitor_token_idx;
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS visitor_token;
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS visitor_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

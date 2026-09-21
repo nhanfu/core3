@@ -1168,3 +1168,38 @@ operator scope, duplicate/unassigned/missing/stale guards, atomic versioning,
 and restart persistence. Existing session detail/message regressions remain
 covered. Authenticated Odoo/Core3 browser comparison was not claimed for this
 API-bound slice; captures, if produced later, remain outside Git.
+
+## Bounded implementation slice: Public visitor feedback and leave session (2026-09-21)
+
+The next uncovered public controller behavior is Odoo's visitor feedback and
+leave-session pair in
+`/home/nhanjs/projects/odoo/addons/im_livechat/controllers/main.py`:
+`/im_livechat/feedback` creates or updates the single `rating.rating` row for a
+conversation, while `/im_livechat/visitor_leave_session` closes the live-chat
+conversation for the visitor. The reference database currently blocks live
+verification: its Apps screen shows Live Chat as `Request Access` and
+`/im_livechat/support/1` returns Odoo 404, so no installed visitor widget or
+session id can be exercised there.
+
+Core3 adds the public-permission visitor session page
+`/livechat/visitor-session` (`livechat-visitor-session`) and its separate API
+fragment, joined through the same `page.id`. The token-scoped datasources
+expose only the visitor's conversation and messages; the API actions retain
+the exact Odoo controller route strings and implement feedback upsert, 1–5
+validation, reason length validation, visitor-token ownership, optimistic
+row-version guards, and the closed-session state guard. Leaving persists
+`Closed` / `Visitor Left` and a durable timeline event.
+
+Migration `20260921120000-051-livechat-visitor-feedback.yaml` adds stable
+visitor tokens and `livechat_session_feedback` with an idempotent rated demo
+row. `test/livechat_visitor_feedback.integration.test.ts` covers source-route
+tracing, page/API/action contracts, cross-session denial, validation,
+feedback persistence, leave-state guards, idempotent migration, and file-backed
+restart recovery.
+
+Evidence is recorded under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-21/livechat-visitor-feedback-001/`.
+The Odoo desktop/mobile captures there document the exact uninstall/404
+blocker; Core3 authenticated visitor captures remain pending until the local
+runtime is available. This slice does not claim public-widget or full-module
+parity.
