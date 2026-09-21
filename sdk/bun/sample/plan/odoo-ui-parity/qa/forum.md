@@ -96,6 +96,22 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
 
+## Wave 8 developer handoff — Reverse accepted answer (2026-09-22)
+
+- Added `unaccept_forum_answer` to the question-detail answer relation and
+  separated its backend contract into `api/question-detail.yaml`.
+- Focused suite: `bun test ./test/forum_answer_moderation.integration.test.ts
+  ./test/forum_post_pages.integration.test.ts` — 11 tests, 101 assertions,
+  passed.
+- Coverage includes accept→unaccept, stale/replay guards, direct authenticated
+  permission denial, atomic parent/answer version updates, reload, and
+  file-backed restart/migration replay.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-ANSWER-UNACCEPT-001/`.
+- Blockers: `website_forum` is not installed in `core3_reference`, so Odoo has
+  no Forum route/menu to compare; Core3 runtime reached readiness but the
+  authenticated BrowserSkill detail session stopped before capture. No visual
+  parity claim is made.
+
 ## Wave 7 developer handoff — Post Close Reasons (2026-09-22)
 
 - Odoo source-backed Close Reasons list completed from

@@ -14,7 +14,7 @@ This plan follows [`project.md`](../../project.md); executed evidence is in
 
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
-| Projects/tasks | `/project/projects`, `/project/my/projects`, `/project/projects/detail*`, `/project/tasks`, `/project/tasks/detail` | List/grouped stages, project dashboard, task detail, milestones, updates, Sub-tasks/child_ids and Timesheets tab |
+| Projects/tasks | `/project/projects`, `/project/my/projects`, `/project/projects/detail*`, `/project/tasks`, `/project/all-tasks`, `/project/tasks/detail` | List/grouped stages, My Tasks/All Tasks actions, project dashboard, task detail, milestones, updates, Sub-tasks/child_ids and Timesheets tab |
 | Reporting/portal | `/project/analysis`, `/project/tasks-analysis`, `/project/customer-ratings`, `/project/*/detail`, `/project/my/projects/task/detail` | Graph/pivot/list reports, ratings, customer portal project/task read-only views |
 | Configuration | stages, roles, tags, activity types/plans, settings routes | List/form CRUD, archive, manager settings and guards |
 
@@ -38,6 +38,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-FUNC-008 | data | Migrations/seeds | Reapply schema/demo fixtures without duplicates, random IDs or moving dates | focused suite | pass |
 | PROJECT-FUNC-009 | functional | Import/export/attachments | Exercise task/project file, attachment, import/export and print actions where exposed | browser interaction gate | planned |
 | PROJECT-FUNC-010 | functional | Task detail Sub-tasks | Add, edit, search, open and delete child tasks; reload preserves relation and parent completion summary | `PROJECT-TASK-SUBTASKS-001`; focused suite; Odoo/Core3 captures | conditional pass |
+| PROJECT-FUNC-011 | functional | Tasks > All Tasks | Open-task default, source view order, search/filter/group, row navigation, empty/error, and durable results | `PROJECT-ALL-TASKS-001`; focused suite | pass at contract level |
 
 ## Workflow and integration cases
 
@@ -49,6 +50,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-WF-004 | integration | Portal/customer rating | Portal actions and rating data remain scoped to project/task and read-only where declared | unauthorized or stale token returns safe denial | planned |
 | PROJECT-WF-005 | integration | Durable/external boundary | Mail, timers, customer callbacks and cross-module workflows use Temporal when long-running | retry/timeout/compensation/replay/restart/shutdown required | planned |
 | PROJECT-WF-006 | workflow | Sub-task lifecycle | Child states accept Todo/In Progress/Done/Cancelled; stale parent/child versions and active descendants block unsafe writes | 409/422 with unchanged rows; restart query remains durable | pass at contract level |
+| PROJECT-WF-007 | workflow | My Tasks vs All Tasks scope | My Tasks limits open rows to the authenticated assignee; All Tasks keeps all open project rows without bypassing `project.read` | scope mismatch is empty; source data is unchanged | pass at contract level |
 
 ## Permission and security cases
 
@@ -72,6 +74,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-UI-003 | Portal/report/configuration | both | Read-only portal, graph/pivot/list, settings and permission states match | partial |
 | PROJECT-UI-004 | Current route regression | all 27 manifest routes | 54 dependency-aware authenticated checks with no errors, blank states or overflow | pass |
 | PROJECT-UI-005 | Task detail/Sub-tasks | 1440x833, 390x844 | Odoo tab/grid labels, Add a line affordance, child rows and responsive no-overflow state match | Odoo and Core3 evidence; task-detail gate blocked by missing Timesheets service | conditional |
+| PROJECT-UI-006 | All Tasks action | 1440x900, 390x844 | Tasks submenu, open default, List/Kanban/Calendar/Activity/Pivot/Graph labels, row navigation and no-overflow state match | authenticated captures required; currently blocked | pending |
 
 ## Exit criteria
 

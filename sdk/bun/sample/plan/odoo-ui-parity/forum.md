@@ -118,6 +118,31 @@ website object actions.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
 
+## Wave 8 source-backed feature — Reverse accepted answer — 2026-09-22
+
+The next uncovered workflow after the existing answer create/edit/accept/flag
+slice is Odoo's `toggle_correct` reverse transition. Odoo's
+`website_forum.controllers.website_forum.post_toggle_correct` toggles the
+answer's `is_correct` value while ensuring one accepted answer per question.
+Core3 now exposes the bounded equivalent as `unaccept_forum_answer` on the
+question detail answer relation. It requires `forum.manage`, the current
+parent and answer row versions, changes `Accepted` back to `Active`, and
+increments both versions atomically.
+
+`pages/question-detail.yaml` is presentation-only and
+`api/question-detail.yaml` owns the matching datasources/actions joined by
+`page.id: forum-question-detail`. No migration was required because the
+existing durable answer state and row-version columns already support the
+transition.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-ANSWER-UNACCEPT-001/`.
+Focused answer/post regression tests passed 11/11 with 101 assertions,
+including restart, stale/replay, and authenticated permission checks. The live
+Odoo reference remains blocked because `website_forum` is not installed in
+`core3_reference`; Core3 runtime readiness was reached, but the BrowserSkill
+session stopped before an authenticated Core3 detail capture. No visual parity
+claim is made.
+
 ## Wave 5 developer evidence — 2026-09-21
 
 - Focused Forum corpus: `bun test ./test/forum*.integration.test.ts` — 17

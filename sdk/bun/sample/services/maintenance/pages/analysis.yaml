@@ -14,7 +14,35 @@ components:
   - type: ListView
     variant: odoo
     source: maintenance_analysis_requests
+    default_filters: { active: active }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Cancelled }] }]
     view_navigation: tabs
-    views: [{ id: list, label: List, icon: table, mobile: false }, { id: pivot, label: Pivot, icon: pivot, mobile: false }, { id: graph, label: Graph, icon: chart, category_field: state, measure_field: id, mobile: false }, { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: state, label: Status }, { field: duration, label: Duration }] } }]
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: state
+        series_field: assigned_to
+        measure_field: duration
+        measure_label: Duration
+        type: bar
+        measures:
+          - { field: duration, label: Duration, aggregate: sum }
+          - { field: repeat_interval, label: Repeat Every, aggregate: sum }
+          - { field: record_count, label: Count, aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: assigned_to, column: Responsible }
+            - { field: state, column: Stage }
+            - { field: duration, column: Duration }
+            - { field: repeat_interval, column: Repeat Every }
+            - { field: record_count, column: Count }
+          default: { rows: [], columns: [], measures: [{ field: record_count, aggregate: sum, column: Count }] }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: state, label: Status }, { field: duration, label: Duration }] } }
     search: { label: Search, placeholder: Search maintenance requests... }
     columns: [{ field: name, label: Request, type: PrimaryEntityCell }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: assigned_to, label: Responsible }, { field: state, label: Status, type: StatusChip }, { field: duration, label: Duration }]

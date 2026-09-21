@@ -69,8 +69,25 @@ not completed before finalization. No visual sign-off is claimed.
 
 ## Next bounded task
 
-QA should verify the committed edit/archive candidate in authenticated desktop
-and mobile browsers, then run the remaining Forum actor and persistence gates.
+QA should verify the committed answer toggle and remaining Forum actor and
+persistence gates in authenticated desktop and mobile browsers when the Odoo
+addon and stable Core3 browser session are available.
+
+## Wave 8 — Reverse accepted answer (2026-09-22)
+
+The next genuinely uncovered Odoo workflow was `toggle_correct`: reversing an
+accepted answer. Core3 now adds `unaccept_forum_answer` to the answer relation,
+with a separate `api/question-detail.yaml` backend fragment joined to the
+presentation page by `page.id`. The transition requires `forum.manage`, checks
+both parent and answer row versions, atomically changes `Accepted` to `Active`,
+and increments both versions.
+
+Focused suite: `bun test ./test/forum_answer_moderation.integration.test.ts
+./test/forum_post_pages.integration.test.ts` — 11 tests, 101 assertions,
+passed. Evidence: `evidence/forum/2026-09-22/FORUM-ANSWER-UNACCEPT-001/`.
+Odoo desktop/mobile captures record the exact missing `website_forum` addon and
+`/forum` 404; Core3 runtime reached readiness but the authenticated BrowserSkill
+detail capture stopped before a stable page screenshot. No visual parity sign-off.
 
 ## Wave 5 — Forum configuration form (2026-09-21)
 

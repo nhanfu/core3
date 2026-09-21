@@ -42,10 +42,11 @@ unauthenticated user, and wrong-company scope. Stable fixtures include
 | MAINT-FUNC-006 | functional | Equipment list/detail | Maintenance User | Search, edit, archive/reopen, open maintenance-request stat action | equipment lifecycle/stat tests | pass |
 | MAINT-FUNC-007 | functional | Teams and categories | Manager | Create/edit/delete and linked-record protection work with deterministic counts | team/category tests | pass |
 | MAINT-FUNC-008 | functional | Stages/activity types | Manager/group-gated user | Search, detail, create/update/delete where allowed; standard rows protected | stages/activity tests | pass |
-| MAINT-FUNC-009 | functional | Calendar/reporting | Admin | Calendar facets and report graph/pivot measures match request scope | route matrix; report contracts | planned |
+| MAINT-FUNC-009 | functional | Calendar/reporting | Admin | Calendar facets and report graph/pivot measures match request scope | route matrix; report contracts | pass for report contract; paired visual remains open |
 | MAINT-FUNC-010 | functional | Settings | Manager | Update custom worksheets setting and reload persisted value | settings contract | planned |
 | MAINT-FUNC-011 | data | Migrations/demo | Clean and existing development DB | Rerun schema/demo migrations; fixed IDs and dates produce no duplicates | focused suite | pass |
 | MAINT-FUNC-012 | data | Empty/not-found/error | All list/detail routes | Explicit empty, missing, transport-error and invalid-input states contain no fabricated data | focused suites; matrix | pass |
+| MAINT-FUNC-013 | functional/data | Maintenance Requests Analysis Graph/Pivot | Admin, persisted maintenance fixtures | Active default and Cancelled filter scope real rows; Graph exposes Duration, Repeat Every, Count and Responsible/Stage dimensions; Pivot exposes source-aligned fields; empty and restart results remain deterministic | `evidence/maintenance/2026-09-22/MAINT-ANALYSIS-REPORT-001/`; `maintenance_analysis_reporting.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -79,7 +80,7 @@ unauthenticated user, and wrong-company scope. Stable fixtures include
 | MAINT-UI-001 | Dashboard and request list | 1440x900, 390x844 | Odoo menu order, view tabs, cards, filters, labels, spacing and no overflow | fresh 32-check matrix | partial |
 | MAINT-UI-002 | Request detail normal/cancelled | both | Statusbar, actions, fields, chatter and responsive forms match | browser cancel/reload smoke; paired captures pending | partial |
 | MAINT-UI-003 | Equipment/team/category forms | both | Stats, sections, actions, list/kanban/card layout and empty states match | route matrix; Odoo captures pending | partial |
-| MAINT-UI-004 | Reporting/settings/restricted forms | both | Graph/pivot/settings/full-width behavior, loading/error and permission states match | route matrix; paired comparison pending | partial |
+| MAINT-UI-004 | Reporting/settings/restricted forms | both | Graph/pivot/settings/full-width behavior, loading/error and permission states match | Odoo reference captures in `MAINT-ANALYSIS-REPORT-001`; authenticated Core3 capture blocked | partial |
 | MAINT-UI-005 | Browser regression | all 16 registered routes | No page/request errors, blank/redirect states or horizontal overflow | fresh 32-check matrix | pass |
 
 ## Exit criteria

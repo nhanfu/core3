@@ -311,3 +311,17 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
 - QA disposition: **bounded slice pass; module remains conditional** pending a
   clean global discovery/runtime for full Core3 desktop/mobile action-click and
   broader Maintenance actor/company gates.
+
+## 2026-09-22 bounded developer verification: `MAINT-ANALYSIS-REPORT-001`
+
+- Added the source-backed Maintenance Requests Analysis Graph/Pivot report
+  slice with Active default, Cancelled filter, persisted Duration/Repeat
+  Every/Count measures, and Responsible/Stage dimensions.
+- `bun test ./test/maintenance*.integration.test.ts --timeout 20000` — **46
+  passed, 418 assertions, 0 failed** across 19 files; the new report test is
+  3 passed with restart and empty-state coverage.
+- Audit, targeted ESLint, Maintenance CSS build, and diff check passed.
+- Odoo authenticated Graph/Pivot and mobile fallback captures are in the
+  feature evidence folder. Core3 authentication was blocked by the task tab
+  showing the login page and pending borrow confirmation for the existing
+  authenticated tab; no Core3 visual parity claim is made.

@@ -1024,3 +1024,45 @@ mobile recurrence capture is claimed: shared startup remains blocked by the
 unrelated Employees malformed action definition, and Project-only task detail
 still depends on the unregistered Timesheets service. This is conditional
 acceptance, not full Project visual sign-off.
+
+## Bounded slice: All Tasks action (2026-09-22)
+
+The next distinct uncovered Project menu action after task detail relations and
+recurrence is Odoo's Tasks > All Tasks entry:
+`menu_project_management_all_tasks` -> `action_view_all_task`, defined in
+`/home/nhanjs/projects/odoo/addons/project/views/project_menus.xml` and
+`project_task_views.xml`. The source action uses `/odoo/all-tasks`, model
+`project.task`, excludes template descendants, defaults to open tasks, and
+orders its views `list,kanban,form,calendar,activity,pivot,graph`. It is
+distinct from My Tasks, whose source domain limits rows to the current user's
+assignees. The source search contract includes task, project, assignee, stage,
+priority, deadline, open/closed, and grouping facets.
+
+Core3 adds the missing nested Project > Tasks > All Tasks menu item at
+`/all-tasks`, with a layout-only `pages/all-tasks.yaml` and matching
+service-owned `api/all-tasks.yaml` joined by `page.id:
+project-all-tasks`. The page exposes List, Kanban, Cards, Calendar, Activity,
+Pivot, and Graph tabs, uses the existing task detail side panel, defaults to
+open tasks, and keeps the responsive Cards mode separate from the desktop list
+view. The existing My Tasks page now declares its source `task_scope: my` and
+open-task default; its API applies the current authenticated assignee while
+retaining backward-compatible unscoped repository queries.
+
+No schema migration is needed: both actions read the durable Project task table,
+retain `project.read` and the `project_tasks` workflow contract, and expose a
+stable `PROJECT_ALL_TASKS_UNAVAILABLE` 503 state. Focused coverage is
+`test/project_all_tasks.integration.test.ts`; it verifies source menu/action
+identity, page/API separation, exact view order, open-task filtering, My Tasks
+assignee scope, deterministic search/empty/error behavior, and file-backed
+restart-equivalent results.
+
+### Verification limitation
+
+Local Odoo source comparison passed. The required authenticated live comparison
+could not proceed: BrowserSkill status showed browser instance `245ea108`
+connected, but borrowing the existing Odoo tab `1770662590` timed out during
+the extension confirmation window. No credentials, cookies, tokens, or
+alternate browser session were used. The Core3 runtime was not started for a
+visual check in this bounded batch, so no desktop/mobile capture or visual
+parity claim is made. Evidence is under
+`evidence/project/2026-09-22/project-all-tasks-001/`.

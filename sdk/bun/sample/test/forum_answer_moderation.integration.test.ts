@@ -9,9 +9,21 @@ import { discoverForumPages } from './forum_test_support';
 
 const root = join(import.meta.dir, '../services/forum');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
-const actions = () => yaml('pages/question-detail.yaml').actions;
+const actions = () => yaml('api/question-detail.yaml').actions;
 
 describe('Forum answer creation and moderation', () => {
+  test('keeps the question detail presentation/API contract joined by page id and exposes the reverse accepted transition', () => {
+    const page = yaml('pages/question-detail.yaml');
+    const api = yaml('api/question-detail.yaml');
+    expect(page.datasources).toBeUndefined();
+    expect(page.actions).toBeUndefined();
+    expect(api.page.id).toBe(page.page.id);
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['forum_post_detail', 'forum_post_answers']);
+    expect(api.actions.find((action: any) => action.id === 'unaccept_forum_answer')).toMatchObject({
+      permission: 'forum.manage', action: 'forum.answers.unaccept', operation: 'update',
+    });
+  });
+
   test('creates through the authenticated HTTP contract and renders the author after reload', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
@@ -66,10 +78,12 @@ describe('Forum answer creation and moderation', () => {
     const add = actions().find((action: any) => action.id === 'add_forum_answer');
     const edit = actions().find((action: any) => action.id === 'edit_forum_answer');
     const accept = actions().find((action: any) => action.id === 'accept_forum_answer');
+    const unaccept = actions().find((action: any) => action.id === 'unaccept_forum_answer');
     const flag = actions().find((action: any) => action.id === 'flag_forum_answer');
     expect(add.permission).toBe('forum.write');
     expect(edit.permission).toBe('forum.write');
     expect(accept.permission).toBe('forum.manage');
+    expect(unaccept.permission).toBe('forum.manage');
     expect(flag.permission).toBe('forum.manage');
 
     const answer = await repository.executeMutation(add.mutation, {
@@ -123,11 +137,43 @@ describe('Forum answer creation and moderation', () => {
     database.close();
   });
 
-  test('preserves answer moderation across a file-backed restart and rejects replay', async () => {
+  test('unaccepts an accepted answer atomically and rejects replay or stale parent versions', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, root + '/migrations', undefined, 'forum_answer_unaccept', ['schema', 'data']);
+    const add = actions().find((action: any) => action.id === 'add_forum_answer');
+    const accept = actions().find((action: any) => action.id === 'accept_forum_answer');
+    const unaccept = actions().find((action: any) => action.id === 'unaccept_forum_answer');
+
+    await repository.executeMutation(add.mutation, {
+      id: 'forum-post-demo-001', line_id: 'forum-answer-unaccept-001', parent_expected_row_version: 1,
+      current_user_name: 'Forum Manager', values: { content: 'A reversible accepted answer.' },
+    });
+    await repository.executeMutation(accept.mutation, {
+      id: 'forum-post-demo-001', line_id: 'forum-answer-unaccept-001', parent_expected_row_version: 2, expected_row_version: 1,
+    });
+    const reopened = await repository.executeMutation(unaccept.mutation, {
+      id: 'forum-post-demo-001', line_id: 'forum-answer-unaccept-001', parent_expected_row_version: 3, expected_row_version: 2,
+    });
+    expect(reopened).toMatchObject({ state: 'Active', row_version: 3 });
+    expect((await repository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', ['forum-answer-unaccept-001']))[0])
+      .toEqual({ state: 'Active', row_version: 3 });
+    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
+      .toEqual({ row_version: 4 });
+    await expect(repository.executeMutation(unaccept.mutation, {
+      id: 'forum-post-demo-001', line_id: 'forum-answer-unaccept-001', parent_expected_row_version: 3, expected_row_version: 3,
+    })).rejects.toMatchObject({ status: 409, code: 'FORUM_POST_STALE' });
+    expect((await repository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', ['forum-answer-unaccept-001']))[0])
+      .toEqual({ state: 'Active', row_version: 3 });
+    database.close();
+  });
+
+  test('preserves answer moderation across a file-backed restart, reverses acceptance, and rejects replay', async () => {
     const databasePath = `/tmp/core3-forum-answer-moderation-restart-${crypto.randomUUID()}.duckdb`;
     const migrationName = `forum_answer_moderation_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
     const add = actions().find((action: any) => action.id === 'add_forum_answer');
     const accept = actions().find((action: any) => action.id === 'accept_forum_answer');
+    const unaccept = actions().find((action: any) => action.id === 'unaccept_forum_answer');
 
     const first = await DuckDbDatabase.open(databasePath);
     const firstRepository = new YamlRepository(first);
@@ -160,21 +206,28 @@ describe('Forum answer creation and moderation', () => {
     expect((await secondRepository.query('SELECT answer_count, row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
       .toEqual({ answer_count: 3, row_version: 3 });
 
-    await expect(secondRepository.executeMutation(accept.mutation, {
+    const unaccepted = await secondRepository.executeMutation(unaccept.mutation, {
       id: 'forum-post-demo-001',
       line_id: 'forum-answer-restart-001',
       parent_expected_row_version: 3,
       expected_row_version: 2,
-    })).rejects.toMatchObject({ status: 409, code: 'FORUM_ANSWER_STALE' });
+    });
+    expect(unaccepted).toMatchObject({ id: 'forum-answer-restart-001', state: 'Active', row_version: 3 });
     expect((await secondRepository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', ['forum-answer-restart-001']))[0])
-      .toEqual({ state: 'Accepted', row_version: 2 });
+      .toEqual({ state: 'Active', row_version: 3 });
     expect((await secondRepository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0])
-      .toEqual({ row_version: 3 });
+      .toEqual({ row_version: 4 });
+    await expect(secondRepository.executeMutation(unaccept.mutation, {
+      id: 'forum-post-demo-001',
+      line_id: 'forum-answer-restart-001',
+      parent_expected_row_version: 4,
+      expected_row_version: 3,
+    })).rejects.toMatchObject({ status: 409, code: 'FORUM_ANSWER_STALE' });
     second.close();
     rmSync(databasePath, { force: true });
   });
 
-  test('binds parent versions for live authenticated accept and flag actions', async () => {
+  test('binds parent versions for live authenticated accept, unaccept, and flag actions', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, root + '/migrations', undefined, 'forum_answer_moderation_http', ['schema', 'data']);
@@ -200,7 +253,7 @@ describe('Forum answer creation and moderation', () => {
       id: 'forum-post-demo-001', line_id: id, parent_expected_row_version: parentExpected,
       values: { content: `Live answer ${id}`, author_name: 'Spoofed browser author' },
     });
-    const moderate = (action: 'accept' | 'flag', lineId: string, parentExpected: number, expected: number) => request(`forum.answers.${action}`, {
+    const moderate = (action: 'accept' | 'unaccept' | 'flag', lineId: string, parentExpected: number, expected: number) => request(`forum.answers.${action}`, {
       id: 'forum-post-demo-001', line_id: lineId, parent_expected_row_version: parentExpected, expected_row_version: expected, values: {},
     });
 
@@ -212,6 +265,8 @@ describe('Forum answer creation and moderation', () => {
       .toMatchObject({ parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' });
     expect(config.actions.find((action: any) => action.id === 'flag_forum_answer').params)
       .toMatchObject({ parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' });
+    expect(config.actions.find((action: any) => action.id === 'unaccept_forum_answer').params)
+      .toMatchObject({ parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' });
 
     const first = await (await create('forum-answer-live-accept', 1)).json() as any;
     const second = await (await create('forum-answer-live-flag', 2)).json() as any;
@@ -222,11 +277,15 @@ describe('Forum answer creation and moderation', () => {
     expect(accepted).toMatchObject({ id: first.id, state: 'Accepted', row_version: 2 });
     expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 4 });
 
+    const unaccepted = await (await moderate('unaccept', first.id, 4, accepted.row_version)).json() as any;
+    expect(unaccepted).toMatchObject({ id: first.id, state: 'Active', row_version: 3 });
+    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 5 });
+
     await expect(moderate('flag', second.id, 3, second.row_version)).rejects.toMatchObject({ status: 409, code: 'FORUM_POST_STALE' });
     expect((await repository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', [second.id]))[0]).toEqual({ state: 'Active', row_version: 1 });
-    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 4 });
+    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 5 });
 
-    const flagged = await (await moderate('flag', second.id, 4, second.row_version)).json() as any;
+    const flagged = await (await moderate('flag', second.id, 5, second.row_version)).json() as any;
     expect(flagged).toMatchObject({ id: second.id, state: 'Flagged', row_version: 2 });
     user.permissions.splice(user.permissions.indexOf('forum.manage'), 1);
     await expect(moderate('flag', second.id, 5, flagged.row_version)).rejects.toMatchObject({ status: 403 });
@@ -236,7 +295,7 @@ describe('Forum answer creation and moderation', () => {
       headers: { Authorization: 'Bearer test-token' },
     }), new URL('http://forum.test/api/pages/forum-question-detail?id=forum-post-demo-001'));
     expect((await reloaded.json()).datasources.find((source: any) => source.id === 'forum_post_answers').data)
-      .toEqual(expect.arrayContaining([expect.objectContaining({ id: first.id, state: 'Accepted' }), expect.objectContaining({ id: second.id, state: 'Flagged' })]));
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: first.id, state: 'Active' }), expect.objectContaining({ id: second.id, state: 'Flagged' })]));
     database.close();
   });
 });

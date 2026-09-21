@@ -239,3 +239,36 @@ are green for this bounded slice. Browser evidence is partial and the slice
 remains conditionally accepted, not full Project sign-off, until the exact
 Timesheets dependency blocker is cleared and task-detail desktop/mobile CRUD
 is rerun.
+
+## QA execution — PROJECT-ALL-TASKS-001 — 2026-09-22
+
+- Feature: missing Odoo Tasks > All Tasks action; evidence:
+  `../evidence/project/2026-09-22/project-all-tasks-001/`.
+- Source comparison: Odoo 19 menu `menu_project_management_all_tasks`, action
+  `action_view_all_task`, path `/odoo/all-tasks`, and view order
+  `list,kanban,form,calendar,activity,pivot,graph` verified in the local
+  `project` addon source.
+- Focused checks:
+  `bun test ./test/project_all_tasks.integration.test.ts
+  ./test/project.integration.test.ts ./test/project_task_detail.integration.test.ts
+  ./test/project_task_subtasks.integration.test.ts
+  ./test/project_task_recurrence.integration.test.ts --timeout 30000` — 15
+  passed, 0 failed, 161 assertions.
+- Audit/build hygiene: `bun run audit` passed with 808 pages, 817 routes, and
+  1,673 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: `bsk status --json` reported connected instance
+  `245ea108`; `bsk tab list --scope user` showed the authenticated Odoo tab
+  `1770662590` at `http://localhost:8069/odoo/contacts/9`; borrowing that tab
+  timed out at the extension confirmation boundary. No authenticated Odoo or
+  Core3 desktop/mobile screenshots were produced or claimed.
+- Pending: authenticated menu navigation, 1440x900 and 390x844 captures,
+  browser request/error checks, and runtime restart through the real route.
+
+### QA decision
+
+Contract, permission, deterministic query, and restart-equivalent persistence
+checks pass. The slice is conditionally accepted only; visual and authenticated
+runtime parity remain blocked by the unavailable borrowed tab and were not
+represented as passes.

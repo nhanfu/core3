@@ -1,0 +1,69 @@
+title: All Tasks
+page: { id: project-all-tasks, route: /all-tasks, breadcrumb: [Services, Project, Tasks, All Tasks], auth: { require: [project.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_all_tasks
+    search: { label: Search tasks, placeholder: 'Search task, project, or assignee...' }
+    filters: [{ field: state, label: Status, options_source: project_all_task_states }, { field: priority, label: Priority, options: [Low, Normal, High] }, { field: stage, label: Stage, options_source: project_stages }]
+    default_filters: { state: open }
+    group_by: [{ field: stage, label: Stage }, { field: project_name, label: Project }, { field: assignee, label: Assignees }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        groups_source: project_all_task_states
+        card: { title: name, subtitle: project_name, fields: [{ field: assignee, label: Assignees }, { field: priority, label: Priority }, { field: due_date, label: Deadline }, { field: state, label: Stage }] }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: project_name, fields: [{ field: assignee, label: Assignees }, { field: priority, label: Priority }, { field: due_date, label: Deadline }, { field: state, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: due_date
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: project_name
+        record_date_field: due_date
+        activity_types: [{ id: task, label: Task, icon: checklist }]
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+      - id: graph
+        label: Graph
+        icon: chart
+        mobile: false
+        category_field: stage
+        measure_field: planned_hours
+        measure_label: Allocated Hours
+        type: bar
+    page_size: 25
+    column_chooser: true
+    selectable: true
+    row_key: id
+    row_open_action: view_all_task
+    row_double_click_action: view_all_task
+    form_view: { page: apps/services/project/pages/project-task-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state: { title: No tasks, description: No tasks match the current filters. }
+    columns:
+      - { field: name, label: Title, type: PrimaryEntityCell, sortable: true }
+      - { field: project_name, label: Project }
+      - { field: assignee, label: Assignees }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: due_date, label: Deadline, sortable: true }
+      - { field: state, label: Stage, type: StatusChip }
+actions:
+  - { id: view_all_task, type: navigate, permission: project.read, navigate_to: /tasks/detail, params: { id: '{row.id}' } }

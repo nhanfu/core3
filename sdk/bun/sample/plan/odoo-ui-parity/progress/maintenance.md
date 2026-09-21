@@ -6,6 +6,20 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: b09df475 (request-create validation)
 
+## 2026-09-22 bounded implementation: `MAINT-ANALYSIS-REPORT-001`
+
+Implemented the next uncovered source-backed Maintenance report slice after
+the completed dashboard drilldowns: Graph/Pivot reporting with Active default,
+real persisted Duration/Repeat Every/Count fields, source-aligned dimensions,
+and file-backed restart coverage.
+
+- Maintenance corpus: **46 passed, 418 assertions, 0 failures**.
+- Audit: **808 pages / 817 routes / 1673 datasources**, passed.
+- Targeted ESLint, Maintenance CSS build, and `git diff --check`: passed.
+- Evidence: `odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-ANALYSIS-REPORT-001/`.
+- Odoo captures are present; authenticated Core3 capture was blocked by tab
+  borrow confirmation, so no visual parity claim is made.
+
 ## Current state
 
 The current candidate adds a permissioned Maintenance Request detail edit

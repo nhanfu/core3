@@ -32,10 +32,14 @@ describe('Forum Posts website-content slice', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'forum_post_edit_test_migrations', ['schema', 'data']);
     const list = yaml('pages/questions.yaml');
-    const detail = yaml('pages/question-detail.yaml');
+    const detail = yaml('api/question-detail.yaml');
+    const detailPage = yaml('pages/question-detail.yaml');
     const edit = list.actions.find((action: any) => action.id === 'edit_forum_post');
 
     expect(edit).toMatchObject({ type: 'server_form', permission: 'forum.write', operation: 'update', handler: 'yaml_mutation', prefill: 'row' });
+    expect(detailPage.datasources).toBeUndefined();
+    expect(detailPage.actions).toBeUndefined();
+    expect(detail.page.id).toBe(detailPage.page.id);
     expect(detail.actions.find((action: any) => action.id === 'edit_forum_post_detail')).toMatchObject({
       type: 'server_form', permission: 'forum.write', operation: 'update', prefill: 'state.forum_post_detail',
     });

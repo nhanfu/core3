@@ -669,3 +669,32 @@ Focused verification:
   on an unrelated global discovery error in dirty Order paths (duplicate
   `sale_quotation_templates` datasource), so no Core3 filtered-route success
   is claimed. See `maintenance-dashboard-state-evidence-20260921.md`.
+
+## Bounded batch: Maintenance Requests Analysis Graph/Pivot report (2026-09-22)
+
+Feature ID: `MAINT-ANALYSIS-REPORT-001`.
+
+The live Odoo 19 `maintenance_request_action_reports` action defaults to the
+Active filter, opens Graph/Pivot first, groups by responsible user and stage,
+and exposes Duration, Repeat Every, and Count measures. Core3’s existing
+analysis route had Graph/Pivot tabs but measured a constant `0 AS duration`,
+had no repeat/count report fields, and had no source-aligned datasource pivot
+declaration. The dashboard drilldowns were already complete, so this is a
+distinct report UI/data slice rather than another dashboard action.
+
+Core3 now keeps the page/API boundary on `maintenance-analysis`, defaults the
+report to active requests, adds a Cancelled filter, returns persisted
+responsible/stage/duration/repeat/count fields, and configures source-aligned
+Graph and Pivot views. Duration follows Odoo’s one-hour scheduled-end default
+for scheduled requests and remains zero for unscheduled requests. The report
+is read-only; request workflow guards remain in the existing request APIs.
+
+Implementation and evidence are in `api/analysis.yaml`, `pages/analysis.yaml`,
+`test/maintenance_analysis_reporting.integration.test.ts`, and
+`odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-ANALYSIS-REPORT-001/`.
+The Maintenance suite passed **46 tests / 418 assertions**; audit, targeted
+ESLint, CSS build, and diff check passed. Authenticated Odoo reference
+captures are present. Core3 runtime startup succeeded, but its task-created
+tab showed the login page and the existing authenticated user tab could not be
+borrowed after confirmation remained pending; no authenticated Core3 visual
+parity claim is made.
