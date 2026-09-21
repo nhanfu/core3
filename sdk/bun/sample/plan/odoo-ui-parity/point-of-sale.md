@@ -1377,3 +1377,32 @@ smart button and cannot exercise the filtered picking list; this is recorded as
 an exact reference blocker. Core3 authenticated captures were not claimed
 because the all-module dev backend exited before `http://127.0.0.1:3001/api/modules`
 became available while Vite alone reached port 3002.
+
+## Current bounded batch: Orders > Refund relationship smart buttons
+
+The local Odoo 19 source exposes `action_view_refund_orders()` and
+`action_view_refunded_order()` on `pos.order`. The form renders a `Refunds`
+smart button when `refund_orders_count` is nonzero and a `Refunded Orders`
+smart button on a refund order when `refunded_order_id` is set. The related
+action is a filtered `Refund Orders` list/form, while the reverse action opens
+the original order form. This is distinct from Return Products creation,
+bulk invoice creation, deletion, and Pickings.
+
+Core3 adds the page/API-separated `pos-order-refund-orders` action at
+`/point-of-sale/refund-orders`, with a current-company/source-order scoped
+datasource, search/status filtering, explicit empty and transport/permission
+metadata, and row navigation to the existing order detail. The existing order
+detail page now exposes both read-only smart-button navigations through the
+matching `page.id: pos-order-detail` API contract. Migration `0.0.51` adds an
+idempotent linked refund fixture using the existing `original_order_id` and
+`is_refund` relationship columns.
+
+Focused coverage passes 3 tests and 24 assertions for source mapping, page/API
+joins, smart-button projections, search/empty/company boundaries, and
+file-backed migration replay. The POS-only runtime discovered the new route
+and returned `/api/modules` 200. Authenticated Core3 browser verification is
+blocked because browser instance `245ea108` had no reusable local QA Core3
+login session; the exact 401 and capture path are recorded in
+`evidence/point_of_sale/2026-09-22/POS-ORDER-REFUND-LINKS-001/verification.md`.
+Authenticated Odoo captures of the positive source, refund detail, and related
+list are retained under `/tmp`; the temporary reference refund was deleted.

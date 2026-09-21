@@ -100,3 +100,18 @@ configuration, and reporting surfaces before sign-off.
   reload/persistence (**100 tests / 787 assertions**).
 - POS remains conditional. Restart durability, restricted-actor breadth, and
   paired Odoo comparison remain open.
+
+## Current bounded task: Orders refund relationship smart buttons (2026-09-22)
+
+- Implemented Odoo's source-order `Refunds` and refund-order `Refunded Orders`
+  smart-button navigation as `POS-ORDER-REFUND-LINKS-001`.
+- Added the service-owned filtered `/point-of-sale/refund-orders` list/API,
+  idempotent linked refund fixture, current-company/source-order scoping, and
+  read-only row/reverse navigation.
+- Focused validation passes 3 tests and 24 assertions; audit, frontend build,
+  and diff-check pass.
+- Authenticated Odoo positive-state captures were obtained and the temporary
+  reference refund was removed. Core3 route discovery is healthy, but paired
+  authenticated Core3 desktop/mobile proof is blocked by the missing reusable
+  local QA login session on browser instance `245ea108`; see the feature
+  evidence verification file for the exact 401 and capture path.

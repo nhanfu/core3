@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: pos.read
     error_states: { unauthorized: { status: 401, code: POS_ORDER_DETAIL_UNAUTHORIZED, message: Sign in to view this POS order. }, forbidden: { status: 403, code: POS_ORDER_DETAIL_FORBIDDEN, message: You do not have access to this POS order. }, not_found: { status: 404, code: POS_ORDER_NOT_FOUND, message: POS order not found. }, transport_error: { status: 503, code: POS_ORDER_DETAIL_UNAVAILABLE, message: POS order details are temporarily unavailable. } }
-    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.actor_id, o.company, o.receipt_number, COALESCE(o.is_refund, false) AS is_refund, o.original_order_id, original.name AS original_order_name, (SELECT COUNT(*) FROM pos_orders refunds WHERE refunds.original_order_id = o.id AND refunds.state <> 'Cancelled' AND refunds.company = :current_company_name) AS refund_orders_count, (SELECT COUNT(*) FROM pos_order_pickings pickings WHERE pickings.order_id = o.id AND pickings.company = :current_company_name AND pickings.state = 'Ready') AS picking_count, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id LEFT JOIN pos_orders original ON original.id = o.original_order_id AND original.company = :current_company_name WHERE o.id = :id AND o.company = :current_company_name AND s.company = :current_company_name"
+    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.actor_id, o.company, o.receipt_number, COALESCE(o.is_refund, false) AS is_refund, o.original_order_id, original.name AS original_order_name, (SELECT COUNT(*) FROM pos_orders refunds WHERE refunds.original_order_id = o.id AND refunds.company = :current_company_name) AS refund_orders_count, (SELECT COUNT(*) FROM pos_order_pickings pickings WHERE pickings.order_id = o.id AND pickings.company = :current_company_name AND pickings.state = 'Ready') AS picking_count, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id LEFT JOIN pos_orders original ON original.id = o.original_order_id AND original.company = :current_company_name WHERE o.id = :id AND o.company = :current_company_name AND s.company = :current_company_name"
   - id: pos_order_detail_lines
     single: false
     permission: pos.read
@@ -18,6 +18,16 @@ datasources:
     permission: pos.read
     query: "SELECT operation_type, operation_id, expected_row_version, actor_id, CAST(created_at AS VARCHAR) AS created_at FROM pos_operations WHERE order_id = :id AND EXISTS (SELECT 1 FROM pos_orders o WHERE o.id = :id AND o.company = :current_company_name) ORDER BY created_at DESC"
 actions:
+  - id: open_pos_order_refunds
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/refund-orders
+    params: { order_id: '{state.id}' }
+  - id: open_pos_order_refunded_order
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/order-detail
+    params: { id: '{state.original_order_id}' }
   - id: open_pos_order_pickings
     type: navigate
     permission: pos.read

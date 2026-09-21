@@ -1,0 +1,55 @@
+version: 0.0.51
+kind: data
+description: Durable POS refund relationship fixture for smart-button navigation
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_orders(
+        id, row_version, name, session_id, partner_name, state, amount_total,
+        amount_tax, amount_paid, payment_method, date_order, company, is_refund
+      ) VALUES (
+        'pos-order-refund-links-source-001', 1, 'POS/2026/09/22/REFUND-LINKS-SOURCE',
+        'pos-session-demo-001', 'Refund Links Customer', 'Paid', 12.10, 1.10, 12.10,
+        'Cash', TIMESTAMP '2026-01-15 12:20:00', 'Core3 Demo Company', false
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_order_lines(
+        id, order_id, product_name, quantity, price_unit, tax_rate, discount,
+        price_subtotal, price_tax, price_total, row_version, created_at
+      ) VALUES (
+        'pos-line-refund-links-source-001', 'pos-order-refund-links-source-001',
+        'Refund links fixture product', 2, 5.50, 10, 0, 11.00, 1.10, 12.10, 1,
+        TIMESTAMP '2026-01-15 12:20:00'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_orders(
+        id, row_version, name, session_id, partner_name, state, amount_total,
+        amount_tax, amount_paid, payment_method, date_order, config_id, company,
+        original_order_id, is_refund
+      )
+      SELECT
+        'pos-order-refund-linked-001', 1, source.name || ' REFUND', source.session_id,
+        source.partner_name, 'New', -source.amount_total, -COALESCE(source.amount_tax, 0),
+        0, NULL, TIMESTAMP '2026-01-15 12:30:00', source.config_id,
+        source.company, source.id, true
+      FROM pos_orders source
+      WHERE source.id = 'pos-order-refund-links-source-001'
+        AND source.company = 'Core3 Demo Company'
+        AND NOT EXISTS (SELECT 1 FROM pos_orders WHERE id = 'pos-order-refund-linked-001');
+      INSERT INTO pos_order_lines(
+        id, order_id, product_name, quantity, price_unit, tax_rate, discount,
+        price_subtotal, price_tax, price_total, row_version, created_at
+      )
+      SELECT
+        'pos-line-refund-linked-001', 'pos-order-refund-linked-001', product_name,
+        -quantity, price_unit, tax_rate, discount, -price_subtotal, -price_tax,
+        -price_total, 1, TIMESTAMP '2026-01-15 12:30:00'
+      FROM pos_order_lines source_line
+      WHERE source_line.id = 'pos-line-refund-links-source-001'
+        AND NOT EXISTS (SELECT 1 FROM pos_order_lines WHERE id = 'pos-line-refund-linked-001');
+    down: |
+      DELETE FROM pos_order_lines WHERE id IN ('pos-line-refund-linked-001', 'pos-line-refund-links-source-001');
+      DELETE FROM pos_orders WHERE id = 'pos-order-refund-linked-001';
+      DELETE FROM pos_orders WHERE id = 'pos-order-refund-links-source-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

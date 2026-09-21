@@ -40,6 +40,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-FUNC-009 | Attachments/import/export/print | Exercise receipts, attachments, product import/export and exposed report/print actions | planned browser interaction gate |
 | POS-FUNC-011 | Orders bulk Create Invoices | Select eligible Orders, open Create Invoice(s), choose consolidated/separate mode, persist invoice links, and reject invalid/company/read-only selections atomically | pass: `pos_order_bulk_invoice.integration.test.ts`; Core3 browser blocked |
 | POS-FUNC-010 | Return Products | Paid/Invoiced order action creates a linked negative-line return in the active same-configuration session and survives restart | pass: focused contract/restart suite; browser action pending |
+| POS-FUNC-012 | Refund relationship smart buttons | Source order opens filtered Refund Orders and refund order opens its original order with company-scoped read access | planned: `pos_order_refund_links.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -52,6 +53,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-WF-005 | Durable/external boundary | Payment, receipt delivery, printer callbacks and cross-module flows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | POS-WF-006 | Order return | Return Products links a draft return to its source, copies refundable lines negatively, and rejects stale, duplicate, closed-session, or invalid-state replay | pass: focused mutation/restart suite; browser workflow pending |
 | POS-WF-007 | Bulk invoicing | Paid/to-invoice Orders create one grouped or one-per-order invoice run, mark orders Invoiced, and preserve run/order links after migration replay | pass: focused restart suite; authenticated Core3 browser blocked |
+| POS-WF-008 | Refund relationship navigation | Existing Return Products relationship is projected durably; related-list and reverse navigation remain read-only and reject missing/cross-company records | planned: focused restart and scope suite |
 
 ## Permission and security cases
 
@@ -75,6 +77,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-UI-003 | Configuration/reporting | both | Settings, payment methods, floor/table, printer, graph/pivot/list and empty states match Odoo | planned paired capture |
 | POS-UI-004 | Current route regression | all manifest-owned POS routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | planned |
 | POS-UI-005 | Orders bulk invoice wizard | Odoo desktop shows selection, Create Invoices, Order Count, Create/Cancel; Odoo mobile hides bulk selection; Core3 paired capture remains blocked by runtime startup/auth | Odoo reference captured; Core3 pending |
+| POS-UI-006 | Refund relationship smart buttons | Odoo paid source shows Refunds and refund draft shows Refunded Orders; related list/detail fit desktop/mobile with no overflow | planned: paired authenticated captures or exact runtime blocker |
 
 ## Exit criteria
 

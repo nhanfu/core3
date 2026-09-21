@@ -1,0 +1,41 @@
+title: POS Refund Orders
+page: { id: pos-order-refund-orders, route: /point-of-sale/refund-orders, breadcrumb: [Sales, Point of Sale, Order, Refund Orders], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_order_refund_orders
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: session_name, label: Session }
+            - { field: amount_total, label: Total }
+            - { field: state, label: Status }
+    search: { label: Search refund orders, placeholder: Search order number or customer... }
+    filters:
+      - { field: state, label: Status, options_source: pos_refund_order_states }
+    columns:
+      - { field: name, label: Order Ref, type: PrimaryEntityCell }
+      - { field: session_name, label: Session }
+      - { field: date_order, label: Date }
+      - { field: partner_name, label: Customer }
+      - { field: amount_total, label: Total, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_pos_refund_order
+    row_double_click_action: view_pos_refund_order
+    empty_state: { title: No refund orders, description: This POS order has no related refund orders. }
+actions:
+  - id: back_to_pos_order_from_refunds
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/order-detail
+    params: { id: '{query.order_id}' }
