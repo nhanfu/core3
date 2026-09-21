@@ -1410,3 +1410,31 @@ sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Next Transfers read/context
 slice; PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full
 Inventory sign-off remains open.
+
+## Inventory Transfer Lot/SN Labels QA — `INV-TRANSFER-LOT-LABELS-001`
+
+- Odoo source/action: PASS from
+  `addons/stock/views/stock_picking_views.xml:477-487`,
+  `addons/stock/wizard/stock_label_type.py:7-29`, and
+  `addons/stock/wizard/stock_lot_label_layout.py:8-43`. The Labels action
+  branches to Lot/SN Labels, then chooses One per lot/SN or One per unit and
+  4 x 12 or ZPL output.
+- Core3 contract: PASS. The existing `transfer-detail` page/API pair remains
+  separated and joined by `page.id`; the API owns Lot/SN fields, durable lot
+  lines, label-run output, and guards while the page retains the Labels form
+  and history presentation. Migration 0.0.61 provides deterministic data.
+- Focused verification: PASS — 4 new tests / 27 assertions in
+  `inventory_transfer_lot_labels.integration.test.ts` plus 4 Product Labels
+  regression tests / 23 assertions. CRUD, quantity/output modes, permission,
+  company, actor, stale, no-lot, replay, and restart cases are covered.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844. The Lot/SN form values and saved `lots` / `4X12` history are
+  captured with empty page-error and HTTP >=400 lists in
+  `evidence/inventory/2026-09-21/INV-TRANSFER-LOT-LABELS-001/`.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo wizard
+  or report execution is claimed.
+
+QA disposition: PASS for the bounded Core3 durable Lot/SN Labels lifecycle;
+PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full Inventory
+sign-off remains open.

@@ -1,0 +1,83 @@
+{
+  "feature_id": "INV-TRANSFER-LOT-LABELS-001",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:4336/inventory/transfer/detail?id=delivery-labels-0001",
+    "form_text": "Print Labels\nLabels to print *\nOutput *\nQuantity to print *\nFormat *\nCancel\nSave",
+    "form_values": {
+      "label_type": "lots",
+      "label_quantity": "lots",
+      "print_format": "4x12"
+    },
+    "body_text": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nOperations\n›\nTransfers\n›\nTransfer\nEdit details\nPut in Pack\nUnreserve\nValidate\nLock / Unlock\nLabels\nPrint\nScrap\nCancel\nDraft\nWaiting\nReady\nDone\nCancelled\nWH/OUT/LABEL/0001\n\nDeliveries\n\n1\nMoves\nTransfer\nReference\nWH/OUT/LABEL/0001\nOperation Type\nDeliveries\nContact\nCore3 Demo Customer\nCompany\nCore3 Demo Company\nScheduling\nScheduled Date\n2026-01-15\nSource Document\nSO/LABEL/0001\nSource Location\nStock\nDestination Location\nCustomers\nProduct Availability\nWaiting\nOperations\nAdditional Info\nNote\nProduct\n\tDemand\n\tQuantity\n\tReserved\n\tUnit of Measure\n\tAvailability\n\t\n[E-COM08] Storage Box\t3\t0\t0\tUnit(s)\tAvailable\t\nSend message\nLog note\n0\nDocuments\nAdd document\n\nNo documents attached\n\nMessages and activities\nAU\nAdmin User\nSep 21, 2026, 09:37 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nAU\nAdmin User\nSep 21, 2026, 09:36 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nAU\nAdmin User\nSep 21, 2026, 09:36 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nSupply Chain / Inventory / Operations / Transfers / Transfer\n1-3 / 3\n‹\n›\nLabels\n\tOutput\n\tQuantity\n\tRequested by\n\tCreated at\n\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nSupply Chain / Inventory / Operations / Transfers / Transfer\n0-0 / 0\n‹\n›\nTo\n\tSubject\n\tStatus\n\tQueued by\n\tQueued at\n\n\nNo email history\n\nMessages queued from this transfer will appear here.\n\nSupply Chain / Inventory / Operations / Transfers / Transfer\n0-0 / 0\n‹\n›\nProduct\n\tQuantity\n\tSource\n\tScrap Location\n\tRequested by\n\tCreated at\n\n\nNo scrap orders\n\nScrap orders created from this transfer will appear here.\n\nSupply Chain / Inventory / Operations / Transfers / Transfer\n0-0 / 0\n‹\n›\nReport\n\tOutput\n\tPrinted by\n\tPrinted at\n\n\nNo print history\n\nPrinted transfer reports will appear here.\n\nHello, Admin User\nSaved\nProduct labels prepared for printing.",
+    "expected_text": [
+      {
+        "text": "label_type=lots",
+        "present": true
+      },
+      {
+        "text": "label_quantity=lots",
+        "present": true
+      },
+      {
+        "text": "print_format=4x12",
+        "present": true
+      },
+      {
+        "text": "Lot/SN labels prepared for printing",
+        "present": true
+      },
+      {
+        "text": "4X12",
+        "present": true
+      }
+    ],
+    "body_width": 1440,
+    "viewport_width": 1440,
+    "bad_responses": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:4336/inventory/transfer/detail?id=delivery-labels-0001",
+    "form_text": "Print Labels\nLabels to print *\nOutput *\nQuantity to print *\nFormat *\nCancel\nSave",
+    "form_values": {
+      "label_type": "lots",
+      "label_quantity": "lots",
+      "print_format": "4x12"
+    },
+    "body_text": "AU\nEdit details\nPut in Pack\nUnreserve\nValidate\nLock / Unlock\nLabels\nPrint\nScrap\nCancel\nDraft\nWaiting\nReady\nDone\nCancelled\nWH/OUT/LABEL/0001\n\nDeliveries\n\n1\nMoves\nTransfer\nReference\nWH/OUT/LABEL/0001\nOperation Type\nDeliveries\nContact\nCore3 Demo Customer\nCompany\nCore3 Demo Company\nScheduling\nScheduled Date\n2026-01-15\nSource Document\nSO/LABEL/0001\nSource Location\nStock\nDestination Location\nCustomers\nProduct Availability\nWaiting\nOperations\nAdditional Info\nNote\nProduct\n\tDemand\n\tQuantity\n\tReserved\n\tUnit of Measure\n\tAvailability\n\t\n[E-COM08] Storage Box\t3\t0\t0\tUnit(s)\tAvailable\t\nSend message\nLog note\n0\nDocuments\nAdd document\n\nNo documents attached\n\nMessages and activities\nAU\nAdmin User\nSep 21, 2026, 09:37 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nAU\nAdmin User\nSep 21, 2026, 09:36 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nAU\nAdmin User\nSep 21, 2026, 09:36 AM\n\nLabels prepared\n\nLot/SN labels prepared for printing\nTransfer\n1-3 / 3\n‹\n›\nLabels\n\tOutput\n\tQuantity\n\tRequested by\n\tCreated at\n\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nlots\t4X12\t1\tAdmin User\t2026-01-15 08:00:00\nTransfer\n0-0 / 0\n‹\n›\nTo\n\tSubject\n\tStatus\n\tQueued by\n\tQueued at\n\n\nNo email history\n\nMessages queued from this transfer will appear here.\n\nTransfer\n0-0 / 0\n‹\n›\nProduct\n\tQuantity\n\tSource\n\tScrap Location\n\tRequested by\n\tCreated at\n\n\nNo scrap orders\n\nScrap orders created from this transfer will appear here.\n\nTransfer\n0-0 / 0\n‹\n›\nReport\n\tOutput\n\tPrinted by\n\tPrinted at\n\n\nNo print history\n\nPrinted transfer reports will appear here.\n\nHello, Admin User\nPrint Labels\nLabels to print *\nOutput *\nQuantity to print *\nFormat *\nCancel\nSave",
+    "expected_text": [
+      {
+        "text": "label_type=lots",
+        "present": true
+      },
+      {
+        "text": "label_quantity=lots",
+        "present": true
+      },
+      {
+        "text": "print_format=4x12",
+        "present": true
+      },
+      {
+        "text": "Lot/SN labels prepared for printing",
+        "present": true
+      },
+      {
+        "text": "4X12",
+        "present": true
+      }
+    ],
+    "body_width": 390,
+    "viewport_width": 390,
+    "bad_responses": [],
+    "page_errors": []
+  }
+}

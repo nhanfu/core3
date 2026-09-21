@@ -1,0 +1,29 @@
+version: 0.0.61
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_label_lot_lines (
+        id VARCHAR PRIMARY KEY,
+        picking_id VARCHAR NOT NULL,
+        move_id VARCHAR NOT NULL,
+        lot_id VARCHAR NOT NULL,
+        lot_name VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL,
+        unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        company_name VARCHAR NOT NULL,
+        UNIQUE(picking_id, move_id, lot_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_label_lot_lines_picking_idx
+        ON inventory_transfer_label_lot_lines(picking_id, lot_name, id);
+      INSERT INTO inventory_transfer_label_lot_lines(id, picking_id, move_id, lot_id, lot_name, product_name, quantity, unit_name, company_name)
+      VALUES ('delivery-labels-0001-lot-line-001', 'delivery-labels-0001', 'delivery-labels-0001-move-001', 'lot-traceable-0001', 'TRACE-LOT-0001', '[E-COM08] Storage Box', 3, 'Units', 'Core3 Demo Company')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_label_lot_lines WHERE id = 'delivery-labels-0001-lot-line-001';
+      DROP TABLE IF EXISTS inventory_transfer_label_lot_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,11 @@
+{
+  "feature_id": "INV-TRANSFER-LOT-LABELS-001",
+  "attempt": "GET http://127.0.0.1:8069/web",
+  "observed": {
+    "status": 303,
+    "location": "/web/login?redirect=%2Fweb%3F",
+    "authenticated_comparison": false
+  },
+  "blocker": "The local Odoo runtime redirected the probe to its login page; no authenticated Odoo session was available for a paired Lot/SN wizard screenshot or mutation run.",
+  "source_comparison": "Completed against the checked-out Odoo stock wizard/view source in source-comparison.json."
+}

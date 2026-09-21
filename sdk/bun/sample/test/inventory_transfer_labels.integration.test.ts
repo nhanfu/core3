@@ -28,9 +28,7 @@ describe('Inventory transfer Product Labels parity', () => {
     expect(api.page.id).toBe('transfer-detail');
     expect(detail.header_actions).toContainEqual(expect.objectContaining({ id: 'print_inventory_transfer_labels', label: 'Labels', permission: 'inventory.write' }));
     expect(action).toMatchObject({ type: 'server_form', permission: 'inventory.write', action: 'stock.picking.action_print_labels', operation: 'print_labels', handler: 'yaml_mutation' });
-    expect(action.fields).toEqual(expect.arrayContaining([
-      expect.objectContaining({ field: 'label_type', options: [expect.objectContaining({ value: 'products', label: 'Product Labels' })] }),
-    ]));
+    expect(action.fields.find((field: any) => field.field === 'label_type')).toMatchObject({ options: expect.arrayContaining([expect.objectContaining({ value: 'products', label: 'Product Labels' })]) });
     expect(source('inventory_transfer_label_runs').query).toContain('inventory_transfer_label_runs');
   });
 
@@ -51,13 +49,13 @@ describe('Inventory transfer Product Labels parity', () => {
     expect(await db.query('SELECT COUNT(*) AS count FROM inventory_transfer_label_runs')).toEqual([{ count: 1 }]);
   });
 
-  test('rejects wrong company, missing actor, stale rows, cancelled rows, and unsupported Lot/SN labels', async () => {
+  test('rejects wrong company, missing actor, stale rows, invalid label type, and cancelled rows', async () => {
     const db = await repository('inventory_transfer_labels_guards_test');
     const base = { id: 'delivery-labels-0001', expected_row_version: 1, current_company_name: 'Core3 Demo Company', current_user_name: 'Inventory Operator', label_type: 'products', output_format: 'PDF' };
     await expect(db.executeMutation(action.mutation, { ...base, current_company_name: 'Other Company' })).rejects.toMatchObject({ status: 403, code: 'INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED' });
     await expect(db.executeMutation(action.mutation, { ...base, current_user_name: '' })).rejects.toMatchObject({ status: 403, code: 'INVENTORY_TRANSFER_ACTOR_REQUIRED' });
     await expect(db.executeMutation(action.mutation, { ...base, expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_TRANSFER_LABELS_NOT_ALLOWED' });
-    await expect(db.executeMutation(action.mutation, { ...base, label_type: 'lots' })).rejects.toMatchObject({ status: 422, code: 'INVENTORY_TRANSFER_LABEL_TYPE_UNSUPPORTED' });
+    await expect(db.executeMutation(action.mutation, { ...base, label_type: 'invalid' })).rejects.toMatchObject({ status: 422, code: 'INVENTORY_TRANSFER_LABEL_TYPE_UNSUPPORTED' });
     await db.run("UPDATE inventory_pickings SET state = 'Cancelled' WHERE id = ?", ['delivery-labels-0001']);
     await expect(db.executeMutation(action.mutation, base)).rejects.toMatchObject({ status: 409, code: 'INVENTORY_TRANSFER_LABELS_NOT_ALLOWED' });
     expect(await db.query('SELECT COUNT(*) AS count FROM inventory_transfer_label_runs')).toEqual([{ count: 0 }]);

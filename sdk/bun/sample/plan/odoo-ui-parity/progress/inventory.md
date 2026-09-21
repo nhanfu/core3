@@ -1059,3 +1059,22 @@ Inventory sign-off remains open.
 - Odoo live comparison is blocked by HTTP 303 to `/web/login`; the exact
   response is recorded in `odoo-blocker.json`. Full Inventory sign-off remains
   open.
+
+## `INV-TRANSFER-LOT-LABELS-001` — Transfer Lot/SN Labels (2026-09-21)
+
+- Selected the smallest explicit residual after Product Labels: Odoo's
+  `action_print_labels` Lot/SN wizard branch. Source comparison covers
+  `stock_label_type.py` and `stock_lot_label_layout.py`, including one-per-lot,
+  one-per-unit, 4 x 12, and ZPL choices.
+- Added migration `20260922110000-061-inventory-transfer-lot-labels.yaml`
+  with durable tracked-lot lines linked to `delivery-labels-0001`. The existing
+  paired `transfer-detail` page/API contracts now expose Lot/SN mode, quantity,
+  and output format; label history records the resulting mode/count/output.
+- Focused verification passes 4 new tests / 27 assertions and 4 Product Labels
+  regression tests / 23 assertions. Coverage includes source/schema checks,
+  one-per-lot and one-per-unit CRUD, company/actor/format/stale/no-lot guards,
+  permission, migration replay, and restart persistence.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-LOT-LABELS-001/`. Odoo runtime
+  comparison is blocked by HTTP 303 to `/web/login`; the exact response is
+  recorded. Full Inventory sign-off remains open.

@@ -1,0 +1,27 @@
+{
+  "feature_id": "INV-TRANSFER-LOT-LABELS-001",
+  "odoo": {
+    "transfer_action": "odoo/addons/stock/views/stock_picking_views.xml:477-487",
+    "label_type_wizard": "odoo/addons/stock/wizard/stock_label_type.py:7-29",
+    "lot_layout_wizard": "odoo/addons/stock/wizard/stock_lot_label_layout.py:8-43",
+    "lot_layout_view": "odoo/addons/stock/wizard/stock_lot_label_layout.xml:3-18",
+    "semantics": [
+      "Labels opens a Product Labels or Lot/SN Labels choice.",
+      "Lot/SN Labels then choose One per lot/SN or One per unit.",
+      "Lot/SN output supports 4 x 12 or ZPL Labels and confirms a report action."
+    ]
+  },
+  "core3": {
+    "page_id": "transfer-detail",
+    "page_contract": "services/inventory/pages/transfer-detail.yaml",
+    "api_contract": "services/inventory/api/transfer-detail.yaml",
+    "migration": "services/inventory/migrations/20260922110000-061-inventory-transfer-lot-labels.yaml",
+    "implementation": [
+      "The existing page/API pair remains joined by page.id: transfer-detail.",
+      "The Labels server form now supports Lot/SN Labels, per-lot/per-unit quantity, and 4x12/ZPL output.",
+      "Tracked lot lines are durable, company-scoped, and seeded from the traceable lot fixture.",
+      "Label runs and timeline messages persist the selected label mode and output."
+    ]
+  },
+  "status": "matched_for_bounded_slice"
+}

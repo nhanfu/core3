@@ -2030,3 +2030,31 @@ persistence. Core3 desktop/mobile captures and the paired Odoo comparison or
 exact live blocker are under
 `evidence/inventory/2026-09-21/INV-OP-TYPE-READY-MOVES-001/`.
 Full Inventory sign-off remains open.
+
+## Operations > Transfer Lot/SN Labels — `INV-TRANSFER-LOT-LABELS-001` (2026-09-21)
+
+This bounded Wave 24 slice closes the explicitly deferred Lot/SN branch of the
+transfer `Labels` action. Odoo binds `action_print_labels` in
+`addons/stock/views/stock_picking_views.xml:477-487`; the first wizard offers
+Product Labels or Lot/SN Labels in
+`addons/stock/wizard/stock_label_type.py:7-29`, and the Lot/SN wizard offers
+One per lot/SN or One per unit plus 4 x 12 or ZPL output in
+`addons/stock/wizard/stock_lot_label_layout.py:8-43` and
+`stock_lot_label_layout.xml:3-18`.
+
+Core3 keeps the existing `transfer-detail` page/API pair joined by
+`page.id`. The Labels server form now supports Lot/SN mode, quantity mode, and
+format selection. Migration
+`20260922110000-061-inventory-transfer-lot-labels.yaml` adds durable,
+company-scoped tracked-lot lines linked to the deterministic transfer fixture.
+The mutation calculates one-per-lot or one-per-unit counts, persists 4X12/ZPL
+label history and timeline attribution, and enforces actor, company, state,
+format, tracked-lot, and row-version guards.
+
+Focused verification is in
+`test/inventory_transfer_lot_labels.integration.test.ts`; Product Labels
+regression remains covered by
+`test/inventory_transfer_labels.integration.test.ts`. Authenticated Core3
+desktop/mobile form and saved-history evidence plus the source/Odoo blocker are
+under `evidence/inventory/2026-09-21/INV-TRANSFER-LOT-LABELS-001/`. Full
+Inventory sign-off remains open.
