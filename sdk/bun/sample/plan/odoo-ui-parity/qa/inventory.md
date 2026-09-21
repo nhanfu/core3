@@ -1933,3 +1933,30 @@ PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-of
 
 QA disposition: PASS for the bounded Core3 durable transfer split lifecycle;
 PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory sign-off remains open.
+
+## Inventory Open-Transfer Packages QA — `INV-TRANSFER-PACKAGES-CONTEXT-001`
+
+- Odoo source/action: PASS. `stock.picking.action_see_packages` is mapped from
+  `stock_picking.py:1927-1942`; the open-transfer stat button is in
+  `stock_picking_views.xml:147-153`. Exact source references and the
+  list/kanban/form, picking-domain, context, and main-package behavior are in
+  `source-comparison.json`.
+- Core3 contract: PASS. Presentation-only `pages/transfer-packages.yaml` and
+  backend `api/transfer-packages.yaml` share `page.id: transfer-packages`;
+  the transfer stat/action is tracking-gated and package rows are read-only.
+  Migration 0.0.81 persists the deterministic transfer/package relation.
+- Focused verification: PASS — 3 tests / 28 assertions in
+  `test/inventory_transfer_packages_context.integration.test.ts`; the package
+  history, Add Entire Package, and Split regression subset passes 12 tests /
+  91 assertions. Coverage includes source/schema mapping, CRUD-style reads,
+  search/main filters, missing/company/503 boundaries, permission denial, and
+  restart persistence.
+- Core3 browser evidence: BLOCKED for authenticated desktop/mobile workflow;
+  probes reach `/auth/login` only. Odoo comparison: BLOCKED by HTTP 303 to
+  `/web/login`; no authenticated paired sign-off is claimed. Exact captures,
+  source comparison, and blockers are under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGES-CONTEXT-001/`.
+
+QA disposition: PASS for the bounded Core3 durable open-transfer Packages read
+workflow; PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full
+Inventory sign-off remains open.

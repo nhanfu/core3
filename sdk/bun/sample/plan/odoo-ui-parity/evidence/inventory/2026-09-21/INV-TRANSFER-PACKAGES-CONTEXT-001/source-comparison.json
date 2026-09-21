@@ -1,0 +1,28 @@
+{
+  "feature": "INV-TRANSFER-PACKAGES-CONTEXT-001",
+  "odoo": {
+    "method_source": "../../../../../odoo/addons/stock/models/stock_picking.py",
+    "method_lines": "1927-1942",
+    "method": "stock.picking.action_see_packages",
+    "view_source": "../../../../../odoo/addons/stock/views/stock_picking_views.xml",
+    "view_lines": "147-153",
+    "behavior": [
+      "opens stock.package in list, kanban, and form modes",
+      "filters packages by picking_ids containing the current transfer",
+      "passes picking_ids and location_id in context",
+      "allows entire-pack selection for non-incoming operations",
+      "defaults the list to main packages"
+    ]
+  },
+  "core3": {
+    "page": "services/inventory/pages/transfer-packages.yaml",
+    "api": "services/inventory/api/transfer-packages.yaml",
+    "page_id": "transfer-packages",
+    "transfer_page": "services/inventory/pages/transfer-detail.yaml",
+    "transfer_api": "services/inventory/api/transfer-detail.yaml",
+    "action": "view_inventory_transfer_packages",
+    "migration": "services/inventory/migrations/20260922310000-081-inventory-transfer-packages-context.yaml",
+    "mapping": "A tracking-permission contextual page reads durable package-to-move relations for one non-cancelled transfer, scopes rows to the current company, supports package search/main-package filtering, and links back to transfer/package detail."
+  },
+  "comparison_scope": "Core3 implements the bounded open-transfer Packages read workflow; authenticated visual parity and Odoo execution could not be reached without credentials."
+}

@@ -1,0 +1,28 @@
+page: { id: transfer-packages }
+datasources:
+  - id: inventory_transfer_package_context
+    single: true
+    permission: inventory.tracking
+    error_states:
+      not_found: { status: 404, code: INVENTORY_TRANSFER_PACKAGES_NOT_FOUND, message: Transfer packages were not found. }
+      forbidden: { status: 403, code: INVENTORY_TRANSFER_PACKAGES_FORBIDDEN, message: You do not have permission to view transfer packages. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_PACKAGES_UNAVAILABLE, message: Transfer package context is temporarily unavailable. }
+    query: "SELECT p.id AS picking_id, p.row_version, p.name AS transfer_name, p.state, p.company_name, sl.name AS source_location, dl.name AS destination_location, CAST(COUNT(DISTINCT l.package_id) AS BIGINT) AS package_count FROM inventory_pickings p JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id LEFT JOIN inventory_picking_moves m ON m.picking_id = p.id LEFT JOIN inventory_package_move_lines l ON l.move_id = m.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :picking_id AND p.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name) GROUP BY p.id, p.row_version, p.name, p.state, p.company_name, sl.name, dl.name"
+  - id: inventory_transfer_packages
+    single: false
+    permission: inventory.tracking
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_TRANSFER_PACKAGES_FORBIDDEN, message: You do not have permission to view transfer packages. }
+      transport_error: { status: 503, code: INVENTORY_TRANSFER_PACKAGES_UNAVAILABLE, message: Transfer packages are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, COALESCE(p.parent_package_name, '') AS parent_package_name, COALESCE(p.package_type_name, '') AS package_type_name, COALESCE(p.location_name, '') AS location_name, COALESCE(p.owner_name, '') AS owner_name, p.company_name, p.state, p.content_count, CAST(COUNT(DISTINCT l.move_id) AS BIGINT) AS move_count FROM inventory_packages p JOIN inventory_package_move_lines l ON l.package_id = p.id JOIN inventory_picking_moves m ON m.id = l.move_id JOIN inventory_pickings k ON k.id = m.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND k.id = :picking_id AND k.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR k.company_name = :current_company_name) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.package_type_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.location_name, '') ILIKE '%' || :q || '%') AND (:main_packages IS NULL OR :main_packages <> 'main' OR p.parent_package_name IS NULL) GROUP BY p.id, p.row_version, p.name, p.parent_package_name, p.package_type_name, p.location_name, p.owner_name, p.company_name, p.state, p.content_count ORDER BY p.name, p.id"
+actions:
+  - id: back_to_inventory_transfer_from_packages
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{query.picking_id}' }
+  - id: view_inventory_transfer_package
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /packages/detail
+    params: { id: '{row.id}' }

@@ -2588,3 +2588,29 @@ desktop/mobile and authenticated Odoo comparison remain login-blocked; exact
 evidence is under
 `evidence/inventory/2026-09-21/INV-TRANSFER-SPLIT-001/`. Full Inventory
 sign-off remains open.
+
+## Operations > Open-transfer Packages context — `INV-TRANSFER-PACKAGES-CONTEXT-001` (2026-09-21)
+
+This bounded Wave 44 slice covers Odoo `stock.picking.action_see_packages()`
+at `addons/stock/models/stock_picking.py:1927-1942` and its open-transfer
+Packages stat button at `addons/stock/views/stock_picking_views.xml:147-153`.
+Odoo opens package list/kanban/form views for packages linked to the current
+picking, passes picking/location context, permits entire-pack selection for
+non-incoming operations, and defaults Main Packages.
+
+Core3 keeps `pages/transfer-packages.yaml` presentation-only and adds
+`api/transfer-packages.yaml`, joined by `page.id: transfer-packages`; the
+transfer detail page/API gains a tracking-gated Packages stat/action. Migration
+`services/inventory/migrations/20260922310000-081-inventory-transfer-packages-context.yaml`
+seeds a durable open transfer, package contents, and package-to-move relation.
+The read API enforces tracking permission, current-company scope,
+cancelled-transfer exclusion, missing/empty/503 states, deterministic search
+and Main Packages filters, and restart persistence.
+
+Focused verification passes 3 tests / 28 assertions; the package history, Add
+Entire Package, and Split regression subset passes 12 tests / 91 assertions.
+YAML schema/discovery audit, `bun run audit`, scoped ESLint, and `git diff
+--check` pass. Core3 desktop/mobile and authenticated Odoo comparison remain
+login-blocked; exact evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-PACKAGES-CONTEXT-001/`. Full
+Inventory sign-off remains open.

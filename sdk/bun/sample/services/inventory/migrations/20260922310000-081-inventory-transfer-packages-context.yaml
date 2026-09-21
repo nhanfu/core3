@@ -1,0 +1,30 @@
+version: 0.0.81
+description: Inventory open-transfer package context fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state)
+      VALUES ('delivery-package-context-0001', 'operation-deliveries', 'WH/OUT/PACKAGECTX/0001', 'Package Context Customer', DATE '2026-01-15', 'SO/PACKAGECTX/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-package-context-0001-move-001', 'delivery-package-context-0001', '[E-COM08] Storage Box', 4, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_packages(id, row_version, name, parent_package_name, package_type_name, location_name, owner_name, company_name, pack_date, state, content_count)
+      VALUES ('package-context-0005', 1, 'PACK/CONTEXT/0001', NULL, 'Pallet', 'WH/Stock', 'Package Context Customer', 'Core3 Demo Company', DATE '2026-01-15', 'In internal locations', 1)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_contents(id, package_id, product_name, lot_name, quantity, unit_name)
+      VALUES ('package-context-content-0001', 'package-context-0005', '[E-COM08] Storage Box', NULL, 4, 'Units')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_move_lines(id, package_id, move_id, relation_type)
+      VALUES ('package-context-move-0001', 'package-context-0005', 'delivery-package-context-0001-move-001', 'source')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_package_move_lines WHERE id = 'package-context-move-0001';
+      DELETE FROM inventory_package_contents WHERE id = 'package-context-content-0001';
+      DELETE FROM inventory_packages WHERE id = 'package-context-0005';
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-package-context-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-package-context-0001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
