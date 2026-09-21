@@ -5,7 +5,7 @@ QA owner: recruitment-qa
 Developer owner: recruitment module owner  
 Reference addon/version: hr_recruitment, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This plan follows [`recruitment.md`](../../recruitment.md); executed evidence
 is recorded in [`../recruitment.md`](../recruitment.md).
@@ -16,7 +16,7 @@ is recorded in [`../recruitment.md`](../recruitment.md).
 | --- | --- | --- |
 | Applicants | `/recruitment/applicants`, `/recruitment/applicants/detail` | Search/filter, applicant CRUD, activities, stage transitions and hiring data |
 | Job positions and reporting | `/recruitment/openings`, `/recruitment/recruitment-analysis` | Position CRUD, published/open state, grouped analysis and empty/error states |
-| Configuration | `/recruitment/contract-types`, `/recruitment/degrees`, `/recruitment/emails`, `/recruitment/refuse-reasons`, `/recruitment/settings`, `/recruitment/stages`, `/recruitment/stages/detail`, `/recruitment/tags` | Catalog CRUD, archive/restore, validation and manager-only settings |
+| Configuration | `/recruitment/contract-types`, `/recruitment/degrees`, `/recruitment/emails`, `/recruitment/refuse-reasons`, `/recruitment/settings`, `/recruitment/stages`, `/recruitment/stages/detail`, `/recruitment/tags`, `/recruitment/activity-types`, `/recruitment/activity-plans` | Catalog CRUD, archive/restore, validation, activity configuration, and manager-only settings |
 | Talent pools | `/recruitment/talent-pools`, `/recruitment/talent-pools/detail`, `/recruitment/talent-pools/talents` | Pool CRUD, talent membership, scoped reads and removal |
 
 The authenticated topology is the Recruitment module process. Actors are
@@ -38,6 +38,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-FUNC-007 | Empty/error/not-found | Missing, forbidden, empty and transport-error states are deterministic and leak no data | pass at contract level; browser boundary planned |
 | RECRUITMENT-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures without duplicate business rows or moving dates | planned migration gate |
 | RECRUITMENT-FUNC-009 | Import/export/attachments | Exercise exposed applicant file, attachment, import/export and print actions | planned browser interaction gate |
+| RECRUITMENT-FUNC-010 | Activity Plans | Create, edit, search, archive/restore, delete, validate model/step shape, and reload ordered activity steps | pass: focused Activity Plans suite; Odoo browser blocked |
 
 ## Workflow and integration cases
 
@@ -59,6 +60,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-PERM-004 | Wrong company | No applicant, position or talent-pool leakage or update | planned |
 | RECRUITMENT-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected data in the response | planned |
 | RECRUITMENT-PERM-006 | Stale/missing input | 409/404/422 responses leave the current row unchanged | pass at contract level |
+| RECRUITMENT-PERM-007 | Activity Plans manager boundary | Manager mutations work; non-manager/anonymous access is rejected without data | pass: contract declaration; live actor/browser gate pending |
 
 ## Visual, responsive, and regression cases
 
@@ -68,6 +70,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-UI-002 | Applicant lifecycle/detail | both | Stage/status actions, forms, activities and refusal states match Odoo | partial |
 | RECRUITMENT-UI-003 | Configuration/talent pools/analysis | both | Catalog forms, analysis, pool membership and permission states match Odoo | partial |
 | RECRUITMENT-UI-004 | Current route regression | all 15 unique registered routes | 30 authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | pass |
+| RECRUITMENT-UI-005 | Activity Plans list/form | 1440x900, 390x844 | Recruitment Plans menu, List/Kanban tabs, empty/form labels and responsive state match Odoo | blocked: live reference has no Recruitment action |
 
 ## Exit criteria
 

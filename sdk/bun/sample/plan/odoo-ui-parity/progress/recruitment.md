@@ -4,9 +4,22 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: current working tree
+Candidate commit: pending Activity Plans commit
 
 ## Current state
+
+Batch 12 implements the next uncovered Recruitment configuration action,
+Activity Plans. Its focused suite passes 4 tests / 49 assertions with restart
+coverage for archived plans and ordered activity steps; audit, targeted ESLint,
+and diff-check are green. Authenticated Odoo desktop/mobile feature evidence is
+blocked because the shared `core3_reference` launcher has no Recruitment entry
+and the direct Recruitment URL returns Discuss. No visual parity sign-off is
+claimed.
+
+The full Recruitment regression passes 51 tests / 485 assertions across 14
+files. It also reconciled one stale Recruitment-owned Applicants view assertion
+to include the already implemented Calendar view; this was a test-only repair,
+not a new feature slice.
 
 Bounded QA finalization on candidate `d1b2cb6615b421ac3235943e2389f366690b2ff1`
 completed on 2026-09-13. The focused suite passed 37 tests / 346 assertions

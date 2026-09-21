@@ -1,0 +1,30 @@
+version: 0.0.16
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_activity_plans (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        res_model VARCHAR NOT NULL DEFAULT 'hr.applicant',
+        company_name VARCHAR NOT NULL DEFAULT 'Visible to all',
+        steps_json VARCHAR NOT NULL DEFAULT '[]',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        CONSTRAINT recruitment_activity_plans_model_check CHECK (res_model = 'hr.applicant'),
+        CONSTRAINT recruitment_activity_plans_steps_check CHECK (json_type(TRY_CAST(steps_json AS JSON)) = 'ARRAY')
+      );
+      INSERT OR IGNORE INTO recruitment_activity_plans (id, name, res_model, company_name, steps_json, active) VALUES
+        ('activity-plan-onboarding', 'Onboarding', 'hr.applicant', 'Visible to all', '[{"sequence":1,"activity_type":"Email","summary":"Send application acknowledgment","responsible_type":"on_demand","delay_count":0,"delay_unit":"days","delay_from":"before_plan_date"},{"sequence":2,"activity_type":"Interview","summary":"Schedule the first interview","responsible_type":"other","responsible_id":"Recruitment Manager","delay_count":2,"delay_unit":"after_plan_date"},{"sequence":3,"activity_type":"To Do","summary":"Prepare offer checklist","responsible_type":"on_demand","delay_count":5,"delay_unit":"after_plan_date"}]', TRUE),
+        ('activity-plan-interview-loop', 'Interview Loop', 'hr.applicant', 'Visible to all', '[{"sequence":1,"activity_type":"Call","summary":"Confirm interview availability","responsible_type":"on_demand","delay_count":1,"delay_unit":"days","delay_from":"before_plan_date"},{"sequence":2,"activity_type":"Interview","summary":"Record interview outcome","responsible_type":"other","responsible_id":"Recruitment Officer","delay_count":0,"delay_unit":"days","delay_from":"after_plan_date"}]', TRUE),
+        ('activity-plan-archived-screening', 'Candidate Screening', 'hr.applicant', 'Visible to all', '[{"sequence":1,"activity_type":"To Do","summary":"Review application and CV","responsible_type":"on_demand","delay_count":1,"delay_unit":"days","delay_from":"before_plan_date"}]', FALSE);
+      CREATE INDEX IF NOT EXISTS recruitment_activity_plans_active_idx ON recruitment_activity_plans(active, name);
+      CREATE INDEX IF NOT EXISTS recruitment_activity_plans_name_idx ON recruitment_activity_plans(name);
+    down: |
+      DROP TABLE IF EXISTS recruitment_activity_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

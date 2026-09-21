@@ -1,0 +1,105 @@
+page: { id: recruitment-activity-plans }
+datasources:
+  - id: recruitment_activity_plans
+    permission: recruitment.manage
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_ACTIVITY_PLANS_UNAUTHORIZED, message: Sign in to view Recruitment activity plans. }
+      forbidden: { status: 403, code: RECRUITMENT_ACTIVITY_PLANS_FORBIDDEN, message: You do not have permission to manage Recruitment activity plans. }
+      transport_error: { status: 503, code: RECRUITMENT_ACTIVITY_PLANS_UNAVAILABLE, message: Recruitment activity plans are temporarily unavailable. }
+    query: "SELECT id, row_version, name, res_model, CASE WHEN res_model = 'hr.applicant' THEN 'Applicants' ELSE res_model END AS res_model_label, company_name, json_array_length(COALESCE(steps_json, '[]')) AS steps_count, steps_json, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM recruitment_activity_plans WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND ((:active IS NULL AND active = TRUE) OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company_name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_recruitment_activity_plan
+    type: server_form
+    permission: recruitment.manage
+    title: New Recruitment Activity Plan
+    action: recruitment.activity_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_activity_plans]
+    mutation:
+      operation: insert
+      table: recruitment_activity_plans
+      generated: [id]
+      before_steps: [{ query: "SELECT 'activity-plan-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, res_model, company_name, steps_json, active]
+      required: [name, res_model, steps_json]
+      defaults: { res_model: hr.applicant, company_name: Visible to all, steps_json: '[]', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_NAME_REQUIRED, message: A plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(TRIM(CAST(:res_model AS VARCHAR))) = 'hr.applicant'", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_MODEL_INVALID, message: Recruitment plans must apply to Applicants. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_activity_plans WHERE LOWER(name) = LOWER(TRIM(:name)))", status: 409, code: RECRUITMENT_ACTIVITY_PLAN_NAME_EXISTS, message: An activity plan with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:steps_json AS JSON) IS NOT NULL AND json_type(TRY_CAST(:steps_json AS JSON)) = 'ARRAY'", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_STEPS_INVALID, message: Activities To Create must be a JSON array. }
+      result: { query: "SELECT * FROM recruitment_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true, placeholder: e.g. Onboarding }
+      - { field: res_model, label: Applies to, type: text, required: true, readonly: true, default: hr.applicant }
+      - { field: company_name, label: Company, type: text, placeholder: Visible to all }
+      - { field: steps_json, label: Activities To Create, type: textarea, required: true, placeholder: '[{"activity_type":"Email","summary":"Send application acknowledgment","delay_count":0,"delay_unit":"days","delay_from":"before_plan_date"}]' }
+  - id: edit_recruitment_activity_plan
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Recruitment Activity Plan
+    action: recruitment.activity_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_activity_plans]
+    mutation:
+      operation: update
+      table: recruitment_activity_plans
+      fields: [name, res_model, company_name, steps_json]
+      required: [name, res_model, steps_json]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_activity_plans WHERE id = :id", status: 404, code: RECRUITMENT_ACTIVITY_PLAN_NOT_FOUND, message: Recruitment activity plan not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_NAME_REQUIRED, message: A plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(TRIM(CAST(:res_model AS VARCHAR))) = 'hr.applicant'", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_MODEL_INVALID, message: Recruitment plans must apply to Applicants. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_activity_plans WHERE LOWER(name) = LOWER(TRIM(:name)) AND id <> :id)", status: 409, code: RECRUITMENT_ACTIVITY_PLAN_NAME_EXISTS, message: An activity plan with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:steps_json AS JSON) IS NOT NULL AND json_type(TRY_CAST(:steps_json AS JSON)) = 'ARRAY'", status: 422, code: RECRUITMENT_ACTIVITY_PLAN_STEPS_INVALID, message: Activities To Create must be a JSON array. }
+      result: { query: "SELECT * FROM recruitment_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true, placeholder: e.g. Onboarding }
+      - { field: res_model, label: Applies to, type: text, required: true, readonly: true }
+      - { field: company_name, label: Company, type: text, placeholder: Visible to all }
+      - { field: steps_json, label: Activities To Create, type: textarea, required: true }
+  - id: archive_recruitment_activity_plan
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_plans.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_activity_plans]
+    mutation:
+      operation: update
+      table: recruitment_activity_plans
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_activity_plans WHERE id = :id AND active = TRUE", status: 404, code: RECRUITMENT_ACTIVITY_PLAN_NOT_FOUND, message: Active recruitment activity plan not found. }]
+      result: { query: "SELECT * FROM recruitment_activity_plans WHERE id = :id" }
+  - id: restore_recruitment_activity_plan
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_plans.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_activity_plans]
+    mutation:
+      operation: update
+      table: recruitment_activity_plans
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_activity_plans WHERE id = :id AND active = FALSE", status: 404, code: RECRUITMENT_ACTIVITY_PLAN_NOT_FOUND, message: Archived recruitment activity plan not found. }]
+      result: { query: "SELECT * FROM recruitment_activity_plans WHERE id = :id" }
+  - id: delete_recruitment_activity_plan
+    type: server
+    permission: recruitment.manage
+    action: recruitment.activity_plans.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete activity plan {{row.name}}?'
+    refresh: [recruitment_activity_plans]
+    mutation:
+      operation: delete
+      table: recruitment_activity_plans
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_activity_plans WHERE id = :id", status: 404, code: RECRUITMENT_ACTIVITY_PLAN_NOT_FOUND, message: Recruitment activity plan not found. }]

@@ -1,6 +1,67 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-11-implemented-activity-types-odoo-reference-blocked`
+Status: `batch-12-implemented-activity-plans-odoo-reference-blocked`
+
+## Batch 12 — Configuration → Activities → Activity Plans
+
+The next genuinely uncovered bounded action is Odoo's Recruitment-specific
+Activity Plans configuration. Local Odoo 19 source revision
+`659759969d535d286b656c96b675e4612b925ddd` defines menu
+`hr_recruitment_menu_config_activity_plan` under Recruitment → Configuration →
+Activities, action `mail_activity_plan_action_config_hr_applicant`, model
+`mail.activity.plan`, view modes `list,kanban,form`, fixed context
+`default_res_model = hr.applicant`, and domain `res_model = hr.applicant`.
+The source list displays Plan Name, Applies to, Activities/steps count, and
+Company. The form exposes Plan Name, the fixed Applicants model, Company, and
+an Activities To Create one-to-many list whose rows contain sequence, Activity
+Type, Summary, Assignment, Assigned to, delay count/unit/trigger, and next
+activities. Recruitment grants managers full CRUD on both the plan and plan
+template models; ordinary users do not receive this configuration action.
+
+Core3 adds `/recruitment/activity-plans` with page id
+`recruitment-activity-plans`, visible List/Kanban tabs, the Odoo empty-state
+copy, and a page-local API fragment joined by the same `page.id`. The durable
+service table stores each ordered Activity To Create row in validated JSON so
+the existing YAML server-form contract can persist the one-to-many content
+without introducing a cross-module component. The API limits plans to
+`hr.applicant`, seeds Onboarding, Interview Loop, and an archived Candidate
+Screening plan, and provides manager-only create/update/delete plus guarded
+archive/restore transitions. Names, model scope, JSON-array step shape, stale
+row versions, missing rows, empty results, and unauthorized/forbidden/transport
+states are explicit. No applicant workflow or activity record is mutated by
+this configuration slice.
+
+Source/gap matrix for `RECRUITMENT-ACTIVITY-PLANS-001`:
+
+| Odoo contract | Previous Core3 state | Batch 12 change | Verification |
+| --- | --- | --- | --- |
+| Activities → Activity Plans menu/action | Missing; Activity Types was the last Activities slice | Recruitment manifest item and route/action contract | page/API binding assertion |
+| `list,kanban,form` plan surface | Missing | Odoo List/Kanban tabs with row form actions | page contract and UI audit |
+| `res_model = hr.applicant` context/domain | Missing | fixed model default and create/update guard | invalid-model 422 assertion |
+| Plan + ordered activity templates | Missing | durable plan table with validated ordered `steps_json` and step count | seed/create/reload assertions |
+| Manager CRUD and active state | Missing | `recruitment.manage`, CRUD, archive/restore, stale guards | permission and mutation assertions |
+
+Focused verification:
+
+- `bun test test/recruitment_activity_plans.integration.test.ts` — 4 passed,
+  0 failed, 49 assertions.
+- `bun run audit` — passed: 789 pages, 798 routes, 1626 datasources.
+- `bunx eslint test/recruitment_activity_plans.integration.test.ts` — passed.
+- `git diff --check` — passed.
+- File-backed restart coverage verifies archived Onboarding remains archived,
+  retains three ordered activity steps, and has row version 2 after reopen.
+- Full Recruitment regression `bun test ./test/recruitment*.integration.test.ts
+  --timeout 20000` — 51 passed, 0 failed, 485 assertions across 14 files;
+  this run also reconciled the pre-existing Applicants Calendar expectation.
+
+Browser/reference evidence is blocked. In the authenticated BrowserSkill
+session on browser instance `245ea108`, the `core3_reference` launcher exposed
+no Recruitment application and direct navigation to
+`http://localhost:8069/odoo/recruitment?db=core3_reference` returned the
+Discuss shell. Desktop and mobile blocker captures, viewport observations,
+hashes, and the stopped session are recorded under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-ACTIVITY-PLANS-001/`.
+No Activity Plans visual-parity claim is made.
 
 ## Batch 11 — Configuration → Activities → Activity Types
 

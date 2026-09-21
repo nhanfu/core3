@@ -1,5 +1,34 @@
 # recruitment QA ledger
 
+## Batch 12 QA — Activity Plans — 2026-09-22
+
+- Candidate scope: Recruitment Activity Plans only.
+- Source boundary: Odoo 19 `mail_activity_plan_action_config_hr_applicant`,
+  fixed `hr.applicant` domain/context, manager CRUD access, and nested
+  Activities To Create templates were compared in local Odoo source revision
+  `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_activity_plans.integration.test.ts` —
+  4 passed, 0 failed, 49 assertions.
+- Static gates: `bun run audit` passed (789 pages, 798 routes, 1626
+  datasources); targeted ESLint passed; `git diff --check` passed.
+- Recruitment regression: `bun test ./test/recruitment*.integration.test.ts
+  --timeout 20000` — 51 passed, 0 failed, 485 assertions across 14 files.
+  The run corrected one stale Recruitment-owned Applicants view assertion that
+  omitted the already implemented Calendar view; no product failure remained.
+- Functional coverage: page/API `page.id` join, List/Kanban/form contract,
+  deterministic migration and idempotent rerun, search, active/archived
+  filtering, empty results, durable ordered activity steps, create/update/delete,
+  duplicate/name/model/step validation, archive/restore state guards, missing
+  and stale row conflicts, manager permission declarations, and file-backed
+  restart persistence.
+- Odoo blocker: the authenticated `core3_reference` BrowserSkill session on
+  browser instance `245ea108` had no Recruitment launcher entry; direct
+  `/odoo/recruitment?db=core3_reference` returned Discuss. Desktop and mobile
+  blocker captures are recorded in the batch evidence directory. No paired Odoo
+  visual comparison or Activity Plans parity sign-off is claimed.
+- QA decision: functional batch complete; live-reference visual and actor gates
+  blocked by the environment. Broader Recruitment sign-off remains pending.
+
 ## Batch 11 QA — Activity Types — 2026-09-22
 
 - Candidate scope: Recruitment Activity Types only.
