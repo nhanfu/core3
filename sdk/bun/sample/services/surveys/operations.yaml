@@ -71,6 +71,12 @@ operations:
   survey.public.session:
     result_key: session
     query: "SELECT ls.id, ls.survey_id, ls.survey_name, ls.state AS session_state, ls.session_code, ls.session_link, ls.current_question_id, COALESCE(ls.current_question_text, 'Waiting for the host to start the first question') AS current_question_text, CAST(ls.question_started_at AS VARCHAR) AS question_started_at, q.question_type AS current_question_type, q.required AS current_question_required, COALESCE(q.is_time_limited, false) AS current_question_time_limited, q.time_limit AS current_question_time_limit FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id LEFT JOIN survey_questions q ON q.id = ls.current_question_id WHERE ls.session_code = :session_code AND COALESCE(s.title, '') NOT ILIKE '%certification%' LIMIT 1"
+  # Odoo's live attendee page receives a next_question bus event. Core3 keeps
+  # the same durable state observable to a public fallback poll, with the
+  # session row_version acting as the replay-stable poll revision.
+  survey.public.session.poll:
+    result_key: session
+    query: "SELECT ls.id, ls.row_version AS poll_revision, ls.survey_id, ls.survey_name, ls.state AS session_state, ls.session_code, ls.session_link, ls.current_question_id, COALESCE(ls.current_question_text, 'Waiting for the host to start the first question') AS current_question_text, CAST(ls.question_started_at AS VARCHAR) AS question_started_at, q.question_type AS current_question_type, q.required AS current_question_required, COALESCE(q.is_time_limited, false) AS current_question_time_limited, q.time_limit AS current_question_time_limit FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id LEFT JOIN survey_questions q ON q.id = ls.current_question_id WHERE ls.session_code = :session_code AND COALESCE(s.title, '') NOT ILIKE '%certification%' LIMIT 1"
   survey.public.session.question:
     result_key: question
     query: "SELECT q.id, q.question_text, q.question_type, q.required, q.answer_options, q.sequence, COALESCE(q.is_time_limited, false) AS is_time_limited, q.time_limit, CAST(ls.question_started_at AS VARCHAR) AS question_started_at FROM survey_live_sessions ls JOIN survey_questions q ON q.id = ls.current_question_id WHERE ls.session_code = :session_code AND ls.state = 'In Progress' LIMIT 1"

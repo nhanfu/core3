@@ -625,3 +625,15 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPE
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.
+
+## `SURVEYS-PUBLIC-LIVE-POLL-001` — live-session attendee polling
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-055 | live-session public | Current question poll and durable revision | Return the current question through the paired API and expose the durable session revision | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-052 | restart/concurrency | Host question change → concurrent poll → file-backed reopen | Converge callers on one current question/revision and preserve it after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-054 | token/session guard | Missing, foreign, and non-GET poll requests | Require the attendee token and reject foreign or invalid poll access without disclosure | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-053 | responsive/reference | Waiting/submitted polling desktop/mobile + Odoo comparison | Record exact Core3 connection and Odoo login/session blockers; no sign-off until authenticated routes and an installed reference fixture are available | `browser-results.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.

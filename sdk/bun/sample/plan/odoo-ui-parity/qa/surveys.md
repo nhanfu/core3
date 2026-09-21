@@ -1422,3 +1422,29 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPE
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.
+
+## `SURVEYS-PUBLIC-LIVE-POLL-001` — live-session attendee polling
+
+- Source comparison: Odoo's host `next_question` route publishes a
+  token-scoped `next_question` event; the public session-code helper rejects
+  invalid, certification, and non-launched sessions.
+- YAML/UI contract: the existing `survey-live-session-join` page/API pair
+  remains joined by `page.id`; the public route calls the paired
+  `survey.public.session.poll` operation and exposes durable `poll_revision`.
+- Persistence/guards: polling requires an attendee token, scopes the current
+  question and answer to that attendee/session, returns 404 for foreign
+  tokens and 405 for non-GET calls, and uses durable `row_version` to observe
+  host question changes across concurrent reads and restart.
+- Renderer: waiting and already-answered attendee states poll every three
+  seconds; active unanswered forms are not replaced while being edited.
+- Verification: **2 focused tests / 20 assertions** and **10 adjacent tests /
+  93 assertions** pass. Audit: **737 pages, 746 routes, 1,450 datasources**;
+  scoped ESLint and diff-check pass.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, and 3391 refused. Odoo
+  `/odoo/surveys?` returned 303 to login and `/survey/check_session_code/5822`
+  returned `{"error":"survey_wrong"}`. No authenticated desktop/mobile
+  capture or paired Odoo live-session fixture is available; no sign-off is
+  claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.

@@ -3,6 +3,8 @@ page: { id: survey-live-session-join, route: /surveys/live-session-join, breadcr
 # The paired API returns the durable question start and limit; the
 # attendee renderer displays that timer while server-side answer guards remain
 # authoritative.
+# Waiting and already-answered attendee states consume the paired public poll
+# operation so host question changes arrive without a manual refresh.
 components:
   - type: OdooFormView
     source: survey_live_session_join

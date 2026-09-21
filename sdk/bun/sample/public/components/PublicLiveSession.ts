@@ -11,6 +11,7 @@ type SessionQuestion = {
 
 type SessionPayload = {
   session: {
+    poll_revision?: number;
     session_code: string;
     survey_name: string;
     session_state: string;
@@ -88,12 +89,20 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
   let sessionCode = String(initialSessionCode || '').trim();
   let attendeeToken = String(initialAttendeeToken || '').trim();
   let timerInterval: ReturnType<typeof setInterval> | null = null;
+  let pollInterval: ReturnType<typeof setInterval> | null = null;
   outlet.className = '';
 
   const render = (content: string) => {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = null;
     outlet.innerHTML = `<main class="core3-live-session"><section class="core3-live-session__card">${content}</section></main>`;
+  };
+
+  const schedulePoll = () => {
+    if (!attendeeToken || pollInterval) return;
+    pollInterval = setInterval(() => void load(true), 3000);
   };
 
   const timerMarkup = (question: SessionQuestion) => question.is_time_limited && Number(question.time_limit) > 0 && question.question_started_at
@@ -122,7 +131,7 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
     if (deadline > Date.now()) timerInterval = setInterval(update, 1000);
   };
 
-  const load = async () => {
+  const load = async (poll = false) => {
     if (!sessionCode) {
       render(`<p class="core3-live-session__eyebrow">Surveys</p><h1 class="core3-live-session__title">Join a live session</h1><p class="core3-live-session__copy">Enter the session code from your host to participate.</p><form data-code-form><label class="core3-live-session__label" for="session-code">Session code</label><input id="session-code" class="core3-live-session__input" name="session_code" inputmode="numeric" autocomplete="off" required><div class="core3-live-session__actions"><button class="core3-live-session__button" type="submit">Continue</button></div></form>`);
       outlet.querySelector<HTMLFormElement>('[data-code-form]')?.addEventListener('submit', (event) => {
@@ -137,7 +146,8 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
     }
     try {
       const query = attendeeToken ? `?attendee_token=${encodeURIComponent(attendeeToken)}` : '';
-      const response = await fetch(`/api/public/surveys/session/${encodeURIComponent(sessionCode)}${query}`, { cache: 'no-store' });
+      const path = poll ? `/api/public/surveys/session/${encodeURIComponent(sessionCode)}/poll` : `/api/public/surveys/session/${encodeURIComponent(sessionCode)}`;
+      const response = await fetch(`${path}${query}`, { cache: 'no-store' });
       const payload = await response.json().catch(() => ({})) as SessionPayload & { error?: string };
       if (!response.ok) throw new Error(payload.error || `The live session could not be loaded (${response.status}).`);
       if (payload.attendee?.attendee_token) attendeeToken = payload.attendee.attendee_token;
@@ -166,8 +176,10 @@ export async function mount(outlet: HTMLElement, initialSessionCode = '', initia
         });
       } else if (session.session_state !== 'In Progress' || !question) {
         render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}. The host has not started the next question yet.</p><div class="core3-live-session__actions"><button class="core3-live-session__button" type="button" data-refresh>Refresh</button></div>`);
+        schedulePoll();
       } else if (payload.answer) {
         render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}.</p><h2 class="core3-live-session__question">${escapeHtml(question.question_text)}</h2><div class="core3-live-session__answer">Answer submitted: <strong>${escapeHtml(payload.answer.answer_value)}</strong></div><div class="core3-live-session__actions"><button class="core3-live-session__button" type="button" data-refresh>Refresh</button></div>`);
+        schedulePoll();
       } else {
         render(`${header}<p class="core3-live-session__copy">Hi ${escapeHtml(payload.attendee.attendee_name)}. Submit one answer for the current question.</p><h2 class="core3-live-session__question">${escapeHtml(question.question_text)}${question.required ? ' *' : ''}</h2>${timerMarkup(question)}<form data-answer-form>${answerInput(question)}<div class="core3-live-session__actions"><button class="core3-live-session__button" type="submit">Submit answer</button><button class="core3-live-session__button core3-live-session__secondary" type="button" data-refresh>Refresh</button></div></form>`);
         startTimer(question);

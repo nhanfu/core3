@@ -419,6 +419,30 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-LIVE-POLL-001`
+
+Selected the next uncovered source-backed live-session behavior after the
+completed join, answer, results, leaderboard, timer, and navigation slices:
+Odoo's attendee question update delivered by the host's `next_question` bus
+event. Core3 adds an explicit token-scoped
+`GET /api/public/surveys/session/<session_code>/poll` operation to the existing
+`survey-live-session-join` page/API pair. It returns the current question,
+attendee answer, and durable session `row_version` as `poll_revision`; missing
+or foreign attendee tokens are rejected without disclosure.
+
+The public renderer polls every three seconds while an attendee is waiting or
+has already answered, while leaving an unanswered form intact during typing.
+Focused verification is **2 passed / 20 assertions**; adjacent live-session
+join/answer/results regression is **10 passed / 93 assertions**. Restart and
+concurrent-poll revision convergence are green. Audit, scoped ESLint, and
+`git diff --check` pass. Core3 ports 3000, 3001, 3390, and 3391 refused
+connections. Odoo `/odoo/surveys?` returned 303 to login and
+`/survey/check_session_code/5822` returned `{"error":"survey_wrong"}`; no
+authenticated desktop/mobile comparison or parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-LANGUAGE-001`
 
 Selected the next uncovered source-backed public participant behavior after

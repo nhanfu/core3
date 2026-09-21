@@ -48,8 +48,8 @@ export default class SurveysModule implements ModuleLifecycle {
     if (questionImageMatch) return this.handlePublicQuestionImageRoute(request, questionImageMatch[1], questionImageMatch[2], questionImageMatch[3], questionImageMatch[4], service);
     const backgroundMatch = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)\/background$/);
     if (backgroundMatch) return this.handlePublicBackgroundRoute(request, backgroundMatch[1], service);
-    const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
-    if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
+    const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/(answer|poll))?$/);
+    if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, sessionMatch[3] === 'answer', sessionMatch[3] === 'poll');
     const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|next_question|previous_question|print))?$/);
     if (!match) return null;
     const token = match[1];
@@ -566,8 +566,10 @@ export default class SurveysModule implements ModuleLifecycle {
     });
   }
 
-  private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService, answerRoute = false): Promise<Response> {
-    const session = (await service.call('survey.public.session', { session_code: sessionCode }))?.session?.[0];
+  private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService, answerRoute = false, pollRoute = false): Promise<Response> {
+    if (pollRoute && request.method !== 'GET') return this.json({ error: 'Method not allowed' }, 405);
+    const sessionOperation = pollRoute ? 'survey.public.session.poll' : 'survey.public.session';
+    const session = (await service.call(sessionOperation, { session_code: sessionCode }))?.session?.[0];
     if (!session) return this.json({ error: 'The live session is unavailable', code: 'SURVEY_SESSION_NOT_FOUND' }, 404);
     if (session.session_state === 'Closed') return this.json({ error: 'The live session is no longer open', code: 'SURVEY_SESSION_CLOSED' }, 409);
     const question = session.session_state === 'In Progress'
@@ -575,6 +577,7 @@ export default class SurveysModule implements ModuleLifecycle {
       : null;
     const attendeeToken = urlSearchToken(request.url);
     if (request.method === 'GET') {
+      if (pollRoute && !attendeeToken) return this.json({ error: 'An attendee token is required to poll this live session', code: 'SURVEY_SESSION_ATTENDEE_TOKEN_REQUIRED' }, 401);
       if (!attendeeToken) return this.json({ session, question });
       const attendee = (await service.call('survey.public.session.attendee_by_token', { session_code: sessionCode, attendee_token: attendeeToken }))?.attendee?.[0];
       if (!attendee) return this.json({ error: 'This attendee session is no longer available', code: 'SURVEY_SESSION_ATTENDEE_NOT_FOUND' }, 404);

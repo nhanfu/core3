@@ -2201,3 +2201,32 @@ session probe returned `{"error":"survey_wrong"}` for code `5822`, so no
 authenticated Surveys fixture or paired visual comparison is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LANGUAGE-001/`.
+
+## Wave 30 — `SURVEYS-PUBLIC-LIVE-POLL-001`
+
+Odoo's authenticated live-session manager advances the current question and
+publishes a token-scoped `next_question` bus event
+(`addons/survey/controllers/survey_session_manage.py:68-119`). The public
+short-code flow remains token/session validated by `_fetch_from_session_code`
+(`survey_session_manage.py:173-193`).
+
+Core3 adds the paired public polling seam
+`GET /api/public/surveys/session/<session_code>/poll` through the existing
+`survey-live-session-join` page/API pair. It requires an attendee token,
+returns the current question and answer plus durable session `row_version` as
+`poll_revision`, and rejects missing or foreign attendees. The public
+renderer polls every three seconds while waiting or after submitting an
+answer; it leaves an unanswered form intact while a respondent is typing.
+The durable join/answer state and row-version revision survive restart and
+concurrent reads converge on the same revision.
+
+Focused verification is **2 passed / 20 assertions**; adjacent live-session
+join/answer/results regression is **10 passed / 93 assertions**. Audit reports
+**737 pages, 746 routes, and 1,450 datasources**; scoped ESLint and
+`git diff --check` pass. Core3 desktop/mobile probes could not connect on
+ports 3000, 3001, 3390, or 3391. Odoo `/odoo/surveys?` returned HTTP 303 to
+`/web/login?redirect=%2Fodoo%2Fsurveys%3F`; `/survey/check_session_code/5822`
+returned `{"error":"survey_wrong"}`. No authenticated visual or paired Odoo
+session comparison is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.

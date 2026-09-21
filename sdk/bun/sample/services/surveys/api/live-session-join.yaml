@@ -1,4 +1,7 @@
 page: { id: survey-live-session-join }
+# The public renderer calls the paired `survey.public.session.poll` operation
+# through `/api/public/surveys/session/<code>/poll`; its durable poll_revision
+# is the live-session row_version, and the attendee token remains mandatory.
 # Odoo's attendee form exposes the current question timer from the host's
 # question start timestamp. The browser display is advisory; the answer
 # mutation below repeats the expiry guard against durable session state.
