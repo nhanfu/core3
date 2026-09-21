@@ -1808,3 +1808,37 @@ Core3 was not listening on port 3001 and Odoo 8069/8073 redirected to
 `/web/login`, so authenticated desktop/mobile captures and Odoo comparison
 captures are blocked; no sign-off is claimed. Existing Odoo Print/PDF/action
 blockers remain open.
+
+## Wave 31 — `TIMESHEET-DEPARTMENT-REPORT-CONTEXT-001`
+
+The next smallest open source-backed behavior is the Timesheets action exposed
+from Odoo's Department Kanban. `hr_timesheet/views/hr_department_views.xml`
+opens `act_hr_timesheet_report` with `search_default_department_id` and
+`default_department_id`, so the By Employee report retains the selected
+department context rather than only offering an unrelated grouping.
+
+Core3 keeps `pages/timesheets-by-employee.yaml` layout-only and
+`api/timesheets-by-employee.yaml` data/action-only, joined by
+`page.id: timesheets-by-employee`. The page adds a manager-scoped Department
+filter and department column; the API adds a company-scoped department option
+source and joins durable `timesheet_employees.department_id` and
+`department_name` into the report query. Empty, missing-department,
+current-company, manager-permission, relation-refresh, migration replay, and
+file-backed restart boundaries remain explicit. No duplicate migration was
+needed because the existing durable department relation is reused.
+
+Focused coverage is
+`test/timesheets_department_report_context.integration.test.ts`: 4 tests /
+30 expectations. Full Timesheets regression passes 227 tests / 1,402
+expectations across 60 files. Scoped ESLint and Timesheets-owned
+`git diff --check` pass. The repository UI audit is blocked by the unrelated
+shared eCommerce page-schema error `actions[1].fields is not allowed`; the
+exact output is recorded in the Wave 31 evidence and no eCommerce file was
+edited.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-department-report-context-001/`.
+Core3 was not listening on port 3001 and Odoo 8069/8073 served only the
+unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
+and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
+open blockers; no module sign-off is claimed.

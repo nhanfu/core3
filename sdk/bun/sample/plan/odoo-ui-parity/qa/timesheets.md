@@ -945,3 +945,13 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_calendar_display_name.integration.test.ts` passes 4/4 tests / 17 expectations, including source mapping, hour/day labels, actor/company/empty guards, and file-backed restart.
 - Regression/static gates: relevant My/UoM/calendar regression passes 11/11 tests / 73 expectations; UI audit passes 737 pages / 746 routes / 1,450 datasources; scoped ESLint and `git diff --check` pass.
 - Evidence: `evidence/timesheets/2026-09-21/timesheet-my-calendar-display-name-001/`. Core3 port 3001 is unavailable and Odoo 8069/8073 redirect to `/web/login`; authenticated desktop/mobile evidence is blocked and no sign-off is claimed. Existing Odoo Print/PDF/action blockers remain open.
+
+## Wave 31 — `TIMESHEET-DEPARTMENT-REPORT-CONTEXT-001`
+
+- Source gate: `hr_department_views.xml` Department Kanban action targets `act_hr_timesheet_report` with `search_default_department_id` and `default_department_id`; the report action path is `timesheets-by-employee`.
+- Core3 contract gate: separate `timesheets-by-employee` page/API contracts expose a manager-scoped Department filter, company-scoped department options, durable department fields, and a guarded query predicate.
+- Focused gate: `bun test test/timesheets_department_report_context.integration.test.ts --timeout 20000` — 4 passed / 30 expectations.
+- Persistence/security gate: deterministic option values, current-company and empty guards, relation-update freshness, migration replay, and file-backed restart pass; page/API and datasource permissions require `timesheets.manage`.
+- Regression/static gates: full Timesheets 227 passed / 1,402 expectations across 60 files; scoped ESLint passed; Timesheets-owned `git diff --check` passed.
+- Browser gate: blocked. Core3 `127.0.0.1:3001` refused connections; Odoo 8069/8073 returned unauthenticated `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-department-report-context-001/`; no authenticated desktop/mobile sign-off is claimed.
+- Audit blocker: `bun scripts/audit-order-ui.ts` stops on unrelated shared eCommerce schema error `actions[1].fields is not allowed`; no eCommerce file was staged or edited. Existing Odoo Print/PDF/action surfaces remain blockers.

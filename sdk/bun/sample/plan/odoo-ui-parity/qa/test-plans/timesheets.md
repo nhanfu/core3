@@ -305,6 +305,19 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 31 — `TIMESHEET-DEPARTMENT-REPORT-CONTEXT-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo Department action comparison | `act_hr_timesheet_report`, `search_default_department_id`, `default_department_id` | pass in focused source test |
+| Paired YAML contract | `page.id: timesheets-by-employee`, Department filter, API options source | pass |
+| Durable department context | persisted employee department relation and filtered report rows | pass |
+| Permission/company/empty guards | `timesheets.manage`, current company, missing department, empty fixture | pass |
+| Freshness/restart | relation update, migration replay, and file-backed restart | pass |
+| Focused/full regression | new test 4/4; full Timesheets 227/227 | pass |
+| Audit/lint/diff | audit blocked by unrelated eCommerce schema; ESLint and scoped `git diff --check` pass | partial; blocker recorded |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo route/action capture | blocked; exact runtime blockers recorded, no sign-off |
+
 ## Wave 30 — `TIMESHEET-MY-CALENDAR-DISPLAY-NAME-001`
 
 | Check | Expected evidence | Result |

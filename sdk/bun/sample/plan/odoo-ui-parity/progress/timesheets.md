@@ -907,3 +907,12 @@ Evidence is under
 Core3 port 3001 was unavailable and Odoo 8069/8073 redirected to `/web/login`,
 so authenticated desktop/mobile captures are not claimed. Existing Odoo
 Print/PDF/action blockers remain open; no sign-off is claimed.
+
+## 2026-09-21 — `TIMESHEET-DEPARTMENT-REPORT-CONTEXT-001`
+
+- Selected the smallest uncovered report-context behavior after Wave 30: the Odoo Department Kanban Timesheets action, which opens `act_hr_timesheet_report` with `search_default_department_id` and `default_department_id`.
+- Added the manager-scoped Department filter and optional Department column to `pages/timesheets-by-employee.yaml`; added the company-scoped department options source and durable employee-department join/filter to `api/timesheets-by-employee.yaml`. Page/API remain joined by `page.id: timesheets-by-employee`; no new migration was needed.
+- Focused coverage passed 4/4 tests with 30 expectations, including source/action mapping, deterministic options, department filtering, permission/company/empty guards, relation-update freshness, migration replay, and file-backed restart.
+- Full Timesheets regression passed 227/227 tests with 1,402 expectations across 60 files. Scoped ESLint and Timesheets-owned `git diff --check` passed.
+- Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused connections. Odoo 8069/8073 are reachable but expose only `/web/login`; authenticated desktop/mobile comparison is not claimed. Exact probes are under `evidence/timesheets/2026-09-21/timesheet-department-report-context-001/`.
+- Repository audit is blocked by the unrelated shared eCommerce schema error `actions[1].fields is not allowed`; no other-owner file was edited. Odoo Print/PDF/action blockers remain open; no sign-off is claimed.
