@@ -9,6 +9,7 @@ components:
     labels: { save: Close, discard: Close, editDetails: Timesheet, workflowStatus: Status }
     group_columns: 2
     header_actions:
+      - { id: view_portal_task_timesheet_report, label: View Details, permission: project.portal, variant: primary }
       - { id: back_to_portal_task_timesheets, label: Back to task timesheets, permission: project.portal, variant: secondary }
     groups:
       - title: Work

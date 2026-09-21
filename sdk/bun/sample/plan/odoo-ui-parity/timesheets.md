@@ -2366,3 +2366,11 @@ capture is blocked: the module runtime fails discovery before port 4001 with
 three unrelated invalid page-view fields (`graph.category_field`,
 `activity.title_field`, and `activity.activity_types`). No visual parity or
 module sign-off is claimed while that shared discovery error remains.
+
+## Wave 49 — `TIMESHEET-PORTAL-TASK-REPORT-001`
+
+Odoo source and reference behavior were compared for the portal task `View Details` workflow: `addons/hr_timesheet/controllers/portal.py:175-180` scopes the task report to the portal actor and task, `views/project_task_portal_templates.xml:8-11` exposes the `View Details` link, and `report/report_timesheet_templates.xml:215-222` defines the `timesheet_report_task_timesheets` report. Authenticated Odoo observation confirmed task 107's `Furniture Delivery` report heading, Date/Employee/Description/Time Spent columns, and `Total (Hours) 45:00`.
+
+Core3 implements the distinct workflow through separate `portal-task-timesheet-detail` page/API contracts joined by `page.id`, a guarded durable `timesheet_portal_task_report_runs` migration, and a report-preview page/API rendering persisted lines with Print and Back actions. The mutation enforces portal task/company/actor scope, non-empty data, expected entry count, and task row-version guards; restart and migration replay are covered.
+
+Focused coverage is `test/timesheets_portal_task_report.integration.test.ts`: 4 tests / 32 expectations. The related portal regression is 22 tests / 174 expectations. UI audit (807 pages, 816 routes, 1671 datasources), frontend build, Timesheets CSS build, and diff checks passed. BrowserSkill captured the authenticated Odoo desktop flow, but the session closed before Core3 navigation/capture export; the exact `session not registered or already stopped` blocker is recorded in `evidence/timesheets/2026-09-22/timesheet-portal-task-report-001/`. No Core3 desktop/mobile or Odoo mobile capture, visual-parity claim, or QWeb/PDF equivalence claim is made.

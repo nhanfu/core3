@@ -5,7 +5,47 @@ datasources:
     single: true
     error_states: { transport_error: { status: 503, code: PORTAL_TASK_TIMESHEET_DETAIL_UNAVAILABLE, message: Shared task timesheet detail is temporarily unavailable. } }
     query: "SELECT e.id, e.row_version, e.employee_name, e.company_name, e.project_id, e.project_name, e.task_id, e.task_name, CAST(e.work_date AS VARCHAR) AS work_date, e.description, e.hours, printf('%02d:%02d', CAST(FLOOR(e.hours) AS INTEGER), CAST(ROUND((e.hours - FLOOR(e.hours)) * 60) AS INTEGER)) AS time_spent_display, e.state FROM timesheet_entries e JOIN timesheet_tasks child ON child.id = e.task_id JOIN timesheet_task_portal_access access ON access.task_id = :task_id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND child.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND (e.task_id = :task_id OR child.parent_task_id = :task_id) AND (COALESCE(:expected_task_row_version, '') = '' OR child.row_version = TRY_CAST(:expected_task_row_version AS BIGINT))"
+  - id: portal_task_timesheet_report_context
+    permission: project.portal
+    single: true
+    error_states: { transport_error: { status: 503, code: PORTAL_TASK_TIMESHEET_REPORT_CONTEXT_UNAVAILABLE, message: The portal Timesheets report context is temporarily unavailable. } }
+    query: "SELECT task.id AS task_id, task.name AS task_name, project.id AS project_id, project.name AS project_name, COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours, task.row_version AS task_row_version FROM timesheet_tasks task JOIN timesheet_projects project ON project.id = task.project_id JOIN timesheet_task_portal_access access ON access.task_id = task.id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active LEFT JOIN timesheet_entries e ON e.task_id = task.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND task.id = :task_id AND task.allow_timesheets AND project.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND project.active AND project.allow_timesheets AND project.has_analytic_account AND project.privacy_visibility IN ('invited_users', 'portal') GROUP BY task.id, task.name, project.id, project.name, task.row_version"
 actions:
+  - id: view_portal_task_timesheet_report
+    type: client
+    permission: project.portal
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.portal_task_timesheet_report_context;
+        if (!context?.task_id || !context.entry_count) throw new Error('Portal Timesheets report context is unavailable');
+        await request('/api/actions/timesheets.portal_task_entries.print_report', {
+          method: 'POST',
+          body: { task_id: context.task_id, expected_entry_count: context.entry_count, expected_task_row_version: context.task_row_version },
+        });
+        window.location.assign(`/my/projects/task/timesheet/report-preview?task_id=${encodeURIComponent(String(context.task_id))}`);
+      }
+  - id: record_portal_task_timesheet_report_run
+    type: server
+    permission: project.portal
+    action: timesheets.portal_task_entries.print_report
+    handler: yaml_mutation
+    operation: report
+    refresh: [portal_task_timesheet_detail, portal_task_timesheet_report_context, portal_task_timesheet_report_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'timesheet-portal-task-report-run-' || CAST(task.id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM timesheet_portal_task_report_runs WHERE task_id = task.id AND requested_by = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) AS VARCHAR) AS id, task.name AS task_name, project.id AS project_id, project.name AS project_name, COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AS requested_by, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours, task.row_version AS task_row_version FROM timesheet_tasks task JOIN timesheet_projects project ON project.id = task.project_id JOIN timesheet_task_portal_access access ON access.task_id = task.id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active LEFT JOIN timesheet_entries e ON e.task_id = task.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE task.id = :task_id AND task.allow_timesheets AND project.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND project.active AND project.allow_timesheets AND project.has_analytic_account AND project.privacy_visibility IN ('invited_users', 'portal') GROUP BY task.id, task.name, project.id, project.name, task.row_version"
+          assign: true
+      guards:
+        - { query: "SELECT task.id FROM timesheet_tasks task JOIN timesheet_projects project ON project.id = task.project_id JOIN timesheet_task_portal_access access ON access.task_id = task.id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active WHERE task.id = :task_id AND task.allow_timesheets AND project.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND project.active AND project.allow_timesheets AND project.has_analytic_account AND project.privacy_visibility IN ('invited_users', 'portal')", status: 404, code: PORTAL_TASK_TIMESHEET_REPORT_TASK_NOT_FOUND, message: The portal task Timesheets report is not available. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM timesheet_entries e WHERE e.task_id = :task_id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 404, code: PORTAL_TASK_TIMESHEET_REPORT_EMPTY, message: This task has no timesheets to show. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:expected_entry_count AS INTEGER) = (SELECT COUNT(*) FROM timesheet_entries WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 409, code: PORTAL_TASK_TIMESHEET_REPORT_STALE, message: Task timesheets changed; reload before viewing details. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:expected_task_row_version AS BIGINT) = (SELECT row_version FROM timesheet_tasks WHERE id = :task_id)", status: 409, code: PORTAL_TASK_TIMESHEET_REPORT_TASK_STALE, message: The portal task changed; reload before viewing details. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:requested_by, COALESCE(NULLIF(:current_user_name, ''), 'Portal User')) = COALESCE(NULLIF(:current_user_name, ''), 'Portal User')", status: 403, code: PORTAL_TASK_TIMESHEET_REPORT_ACTOR, message: The report actor must match the signed-in portal user. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: PORTAL_TASK_TIMESHEET_REPORT_COMPANY, message: The report company must match the signed-in company. }
+      steps:
+        - query: "INSERT INTO timesheet_portal_task_report_runs(id, task_id, task_name, project_id, project_name, requested_by, company_name, entry_count, total_hours, generated_at, row_version) VALUES(:id, :task_id, :task_name, :project_id, :project_name, :requested_by, :company_name, :entry_count, :total_hours, TIMESTAMP '2026-01-15 00:00:00', 1)"
+      result: { query: "SELECT id, task_id, task_name, project_id, project_name, requested_by, company_name, entry_count, total_hours, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM timesheet_portal_task_report_runs WHERE id = :id" }
   - id: back_to_portal_task_timesheets
     type: navigate
     permission: project.portal

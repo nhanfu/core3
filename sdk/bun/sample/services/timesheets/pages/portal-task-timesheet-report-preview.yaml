@@ -1,0 +1,28 @@
+title: Portal Task Timesheets
+page: { id: portal-task-timesheet-report-preview, route: /my/projects/task/timesheet/report-preview, breadcrumb: [Project, Portal, Task, Timesheets, View Details], auth: { require: [project.portal] } }
+components:
+  - type: OdooFormView
+    source: portal_task_timesheet_report_preview
+    title_field: report_title
+    editable: false
+    labels: { save: Close, discard: Close, editDetails: Report, workflowStatus: Report }
+    group_columns: 2
+    header_actions:
+      - { id: print_portal_task_timesheet_report_preview, label: Print, permission: project.portal, variant: primary }
+      - { id: back_to_portal_task_timesheets_report, label: Back to task timesheets, permission: project.portal, variant: secondary }
+    groups:
+      - title: Timesheets
+        fields: [{ field: report_title, label: Report }, { field: task_name, label: Task }, { field: project_name, label: Project }, { field: requested_by, label: Requested by }]
+      - title: Summary
+        fields: [{ field: entry_count, label: Entries }, { field: total_time_spent, label: Total Time Spent }, { field: generated_at, label: Generated at }]
+  - type: ListView
+    variant: odoo
+    source: portal_task_timesheet_report_lines
+    columns:
+      - { field: work_date, label: Date }
+      - { field: employee_name, label: Employee }
+      - { field: description, label: Description }
+      - { field: time_spent_display, label: Time Spent, align: right }
+    row_key: id
+    page_size: 100
+    empty_state: { title: There are no timesheets., description: This task report has no persisted lines. }

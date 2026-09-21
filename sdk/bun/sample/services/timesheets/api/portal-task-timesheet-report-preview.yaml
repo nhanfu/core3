@@ -1,0 +1,26 @@
+page: { id: portal-task-timesheet-report-preview }
+datasources:
+  - id: portal_task_timesheet_report_preview
+    permission: project.portal
+    single: true
+    error_states:
+      missing_record: { status: 404, code: PORTAL_TASK_TIMESHEET_REPORT_PREVIEW_NOT_FOUND, message: The portal Timesheets report is no longer available. }
+      transport_error: { status: 503, code: PORTAL_TASK_TIMESHEET_REPORT_PREVIEW_UNAVAILABLE, message: The portal Timesheets report is temporarily unavailable. }
+    query: "SELECT r.id AS report_run_id, 'Timesheets for ' || r.task_name AS report_title, r.task_id, r.task_name, r.project_id, r.project_name, r.requested_by, r.entry_count, printf('%02d:%02d', CAST(FLOOR(r.total_hours) AS INTEGER), CAST(ROUND((r.total_hours - FLOOR(r.total_hours)) * 60) AS INTEGER)) AS total_time_spent, CAST(r.generated_at AS VARCHAR) AS generated_at FROM timesheet_portal_task_report_runs r JOIN timesheet_tasks task ON task.id = r.task_id JOIN timesheet_projects project ON project.id = r.project_id JOIN timesheet_task_portal_access access ON access.task_id = r.task_id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active WHERE r.task_id = :task_id AND r.requested_by = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND r.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND task.allow_timesheets AND project.active AND project.allow_timesheets AND project.has_analytic_account AND project.privacy_visibility IN ('invited_users', 'portal') ORDER BY r.generated_at DESC, r.id DESC LIMIT 1"
+  - id: portal_task_timesheet_report_lines
+    permission: project.portal
+    pivot: { fields: [id, row_version, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, time_spent_display, state] }
+    error_states: { transport_error: { status: 503, code: PORTAL_TASK_TIMESHEET_REPORT_LINES_UNAVAILABLE, message: Portal Timesheets report lines are temporarily unavailable. } }
+    query: "SELECT e.id, e.row_version, e.employee_name, e.project_id, e.project_name, e.task_id, e.task_name, CAST(e.work_date AS VARCHAR) AS work_date, e.description, e.hours, printf('%02d:%02d', CAST(FLOOR(e.hours) AS INTEGER), CAST(ROUND((e.hours - FLOOR(e.hours)) * 60) AS INTEGER)) AS time_spent_display, e.state FROM timesheet_entries e JOIN timesheet_tasks task ON task.id = e.task_id JOIN timesheet_projects project ON project.id = e.project_id JOIN timesheet_task_portal_access access ON access.task_id = e.task_id AND access.portal_user_name = COALESCE(NULLIF(:current_user_name, ''), 'Portal User') AND access.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND access.active WHERE e.task_id = :task_id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND task.allow_timesheets AND project.active AND project.allow_timesheets AND project.has_analytic_account AND project.privacy_visibility IN ('invited_users', 'portal') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY e.work_date DESC, e.id"
+actions:
+  - id: print_portal_task_timesheet_report_preview
+    type: client
+    permission: project.portal
+    script: |
+      // js
+      async () => { window.print(); }
+  - id: back_to_portal_task_timesheets_report
+    type: navigate
+    permission: project.portal
+    navigate_to: /my/projects/task/timesheets
+    params: { task_id: '{query.task_id}' }

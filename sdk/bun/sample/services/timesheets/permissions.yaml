@@ -3,3 +3,4 @@ permissions:
   - timesheets.write
   - timesheets.manage
   - timesheets.settings
+  - project.portal

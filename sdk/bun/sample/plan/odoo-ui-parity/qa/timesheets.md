@@ -1251,3 +1251,12 @@ No visual parity or module sign-off is claimed without Core3 captures.
 The full wildcard Timesheets regression was started but stopped after it
 continued beyond the bounded verification window without producing a failure
 summary; the focused and related portal regression completed successfully.
+
+## 2026-09-22 `TIMESHEET-PORTAL-TASK-REPORT-001`
+
+- Source contract: Odoo `TimesheetProjectCustomerPortal._show_task_report`, the task portal `View Details` link, and the `timesheet_report_task_timesheets` QWeb report were compared against the local Odoo 19 source and authenticated reference.
+- Core3 contract: separate task-detail page/API contracts now record a durable task/actor/company-scoped report run; the preview page/API renders persisted task lines with Print and Back actions.
+- Verification: focused test 4/4 with 32 expectations; related portal regression 22/22 with 174 expectations; UI audit 807 pages / 816 routes / 1671 datasources; frontend, Timesheets CSS build, and diff checks passed.
+- Odoo evidence: BrowserSkill observed authenticated task 107 `Furniture Delivery`, its `View Details` workflow, the HTML report heading `Timesheets for Furniture Delivery`, and `Total (Hours) 45:00`. No screenshot is claimed because the browser session closed before capture export.
+- Core3 blocker: runtime readiness at `http://127.0.0.1:4012/api/modules` passed, but the BrowserSkill session then returned `error: requested resource does not exist` / `details: session not registered or already stopped` before authenticated Core3 navigation. Core3 desktop/mobile and Odoo mobile captures are unavailable; QWeb/PDF equivalence remains open.
+- Disposition: bounded implementation and contract verification pass; visual parity and module sign-off remain open. The BrowserSkill session is closed.
