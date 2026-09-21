@@ -1,5 +1,33 @@
 # Events UI parity
 
+## Current bounded batch: Event activity scheduling and completion (2026-09-22)
+
+The next distinct source-backed gap was the event form activity workflow.
+Odoo 19 inherits `mail.activity.mixin` on `event.event`, renders `<chatter/>`,
+and exposes a Schedule Activity dialog with activity type, summary, due date,
+assignee, Save, and Mark Done controls. The local source references are
+`addons/event/models/event_event.py` and `addons/event/views/event_event_views.xml`;
+the authenticated reference was checked on `Design Fair Los Angeles` at desktop
+and mobile widths.
+
+Core3 keeps the page/API layers separate through the matching `event-detail`
+page id. The page owns the activity/chatter presentation and header action;
+`api/event-detail.yaml` owns the datasource and permissioned schedule/complete
+actions. Migration `20260922140000-036-event-activities.yaml` adds durable
+activities and a fixed seeded activity. Schedule and completion require
+`events.write`, validate actor, type, content, date, event state, and expected
+row versions, and refresh both the event and activity datasource. The focused
+integration test covers source mapping, guards, and file-backed restart/replay.
+
+Focused validation passes 3 tests / 20 assertions; the related Events regression
+passes 15 tests / 113 assertions. Authenticated Odoo desktop/mobile captures and
+Core3 authenticated desktop workflow evidence are recorded in
+`evidence/events/2026-09-22/event-activities/`. Core3 mobile CSS checks passed
+at 390px with no horizontal overflow, but no Core3 mobile screenshot claim is
+made because the bsk screenshot endpoint returned 1916px captures despite the
+390px emulated viewport. Full Events sign-off remains conditional on the
+broader actor matrix and complete route-level visual coverage.
+
 ## Current bounded batch: Event Questions relation editor (2026-09-22)
 
 The next genuinely uncovered source-backed feature was the event form's

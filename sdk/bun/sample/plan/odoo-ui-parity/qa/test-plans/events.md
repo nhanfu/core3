@@ -11,6 +11,14 @@ This checklist follows the current 33-route inventory and the bounded batches
 in [`events.md`](../../events.md). Executed evidence remains in
 [`../events.md`](../events.md).
 
+## Latest bounded cases — event activities (2026-09-22)
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-014 | functional | Event detail activity scheduling/completion | Schedule an activity with type, summary, due date, and assignee; Mark Done appends a durable completed activity | pass: `events_activity.integration.test.ts` and authenticated module-browser flow |
+| EVENTS-WF-009 | workflow | Activity actor/state/concurrency/restart | Missing actor, invalid type, cancelled event, stale event/activity versions, and replay are guarded without partial writes | pass: `events_activity.integration.test.ts` |
+| EVENTS-UI-007 | visual/responsive | Event detail activity dialog/chatter | Odoo desktop/mobile captures; Core3 desktop workflow and 390px mobile DOM check have no overflow | conditional: Core3 mobile screenshot blocked by bsk capture-size mismatch |
+
 ## Coverage inventory
 
 | Menu/action family | Core3 routes | Required state coverage |

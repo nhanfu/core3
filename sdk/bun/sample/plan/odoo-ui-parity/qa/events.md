@@ -1,5 +1,40 @@
 # events QA ledger
 
+## Bounded QA - Event activity scheduling and completion (2026-09-22)
+
+- Source contract: **PASS**. Odoo 19 `event.event` inherits
+  `mail.activity.mixin`; `event_event_views.xml` renders `<chatter/>` and the
+  authenticated dialog exposes activity type, summary, due date, assignee,
+  Save, and Mark Done.
+- YAML ownership and permissions: **PASS**. The `event-detail` page owns the
+  chatter/activity presentation; matching `api/event-detail` owns the scoped
+  datasource and schedule/complete mutations. Reads require `events.read` and
+  mutations require `events.write`.
+- Durable data and guards: **PASS**. Migration 036 creates and seeds
+  `event_activities`; schedule and completion validate actor, content, type,
+  due date, parent state, and expected parent/activity row versions.
+- Focused tests: **PASS**, 3 tests / 20 assertions. The restart test reopens
+  file-backed DuckDB and verifies the completed activity.
+- Regression/audit: **PASS**. The related Events regression passes 15 tests /
+  113 assertions; the UI audit passes 797 pages, 806 routes, and 1,644
+  datasources.
+- Odoo browser evidence: **PASS**, authenticated desktop and mobile captures
+  from `http://localhost:8069` / `core3_reference` using browser instance
+  `245ea108` are recorded in the feature evidence folder.
+- Core3 browser evidence: **CONDITIONAL PASS**. The module runner on port 4025
+  passed authenticated schedule and Mark Done actions on desktop. Mobile DOM
+  evaluation at 390px reported `innerWidth=390`, `clientWidth=390`,
+  `scrollWidth=390`; no Core3 mobile screenshot is claimed because bsk returned
+  1916px output while mobile emulation was active.
+- Runtime blocker: the shared `bun run dev --db=ddb --memory` backend did not
+  open port 3001 during the bounded readiness window; the initial Vite route
+  returned 502 / `ECONNREFUSED 127.0.0.1:3001`. The module-scoped runner was
+  available and was stopped after verification.
+- Full module sign-off: **OPEN**. Broader Events actor coverage and complete
+  route-level paired visual coverage remain outstanding.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-22/event-activities/`.
+
 ## Bounded QA - Event Questions relation editor (2026-09-22)
 
 - Source contract: **PASS**. Odoo 19 \`event.event.question_ids\` renders the

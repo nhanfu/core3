@@ -24,6 +24,7 @@ components:
       - { id: print_event_badge_example, label: Badge Example, variant: secondary, permission: events.read }
       - { id: print_event_full_page_ticket_example, label: Full Page Ticket Example, variant: secondary, permission: events.read }
       - { id: edit_event_detail, label: Edit, variant: secondary, permission: events.write }
+      - { id: schedule_event_detail_activity, label: Schedule activity, variant: secondary, permission: events.write, show_if: "record.state !== 'Cancelled'" }
       - { id: delete_event_detail, label: Delete, variant: danger, permission: events.write, confirm: Delete this event? }
       - { id: publish_event_detail, label: Publish, variant: primary, permission: events.write, show_if: "record.state === 'Draft'" }
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
@@ -68,6 +69,18 @@ components:
       - title: Schedule and attendance
         wide: true
         fields: [{ field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
+    message_source: event_detail_activities
+    activity_action: schedule_event_detail_activity
+    activity_complete_action: complete_event_detail_activity
+    activity_complete_label: Mark Done
+    activity_label: Activity
+    activity_placeholder: Describe the activity…
+    chatter_label: Activities
+    chatter_empty: No activities yet.
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
   - type: TabGroup
     mount_in: previous-panel
     tabs:

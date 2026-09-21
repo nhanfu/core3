@@ -4,7 +4,23 @@ Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: bounded batch implemented; QA conditional
 Verification trigger: feature-complete
-Candidate commit: Events Notes & Documents commit pending
+Candidate commit: pending Events activity scheduling commit
+
+## Bounded feature - event activity scheduling and completion (2026-09-22)
+
+The event detail form now supports a durable source-backed activity workflow:
+schedule To-Do/Email/Call/Meeting/Document activities, assign an actor, set a
+due date, and mark a planned activity done. Page/API YAML is joined by
+`event-detail`; actions require `events.write`, validate actor/state/type/date,
+and use event and activity optimistic row-version guards. Migration 036 seeds a
+stable planned activity and the restart test verifies completion persistence.
+Focused validation passes 3 tests / 20 assertions; the related Events regression
+passes 15 tests / 113 assertions; the UI audit passes 797 pages, 806 routes,
+and 1,644 datasources. Odoo desktop/mobile and Core3 authenticated desktop
+captures are recorded. Core3 mobile CSS evaluation passed at 390px with no
+overflow, but the bsk screenshot endpoint produced 1916px output under mobile
+emulation, so no Core3 mobile screenshot or visual-parity claim is made.
+Full Events sign-off remains open.
 
 ## Bounded feature - event Questions relation editor (2026-09-22)
 
