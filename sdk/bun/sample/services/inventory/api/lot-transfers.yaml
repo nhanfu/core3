@@ -1,0 +1,67 @@
+page: { id: lot-transfers }
+
+datasources:
+  - id: inventory_lot_transfers_context
+    single: true
+    permission: inventory.tracking
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_LOT_TRANSFERS_LOT_NOT_FOUND, message: The lot or serial number is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_LOT_TRANSFERS_CONTEXT_UNAVAILABLE, message: Lot transfer context is temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.name AS lot_name, l.product_id, l.product_name, COALESCE(l.company_name, 'Visible to all companies') AS company_name, COUNT(DISTINCT p.id) AS delivery_count, 'Transfers' AS action_name FROM inventory_lots l LEFT JOIN inventory_move_lines m ON m.lot_serial_number = l.name AND m.movement_type = 'outgoing' AND m.state <> 'Cancelled' LEFT JOIN inventory_pickings p ON p.id = m.picking_id LEFT JOIN inventory_operation_types t ON t.id = p.operation_type_id AND t.operation_kind = 'delivery' WHERE l.id = :id AND (COALESCE(:current_company_name, '') = '' OR l.company_name = :current_company_name OR l.company_name IS NULL) AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name OR p.id IS NULL) AND (t.id IS NOT NULL OR p.id IS NULL) GROUP BY l.id, l.row_version, l.name, l.product_id, l.product_name, l.company_name"
+  - id: inventory_lot_transfers
+    single: false
+    permission: inventory.tracking
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_LOT_TRANSFERS_LINES_UNAVAILABLE, message: Lot transfers are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, p.contact_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.company_name, p.state, t.name AS operation_type_name, t.operation_kind, m.id AS move_line_id, CAST(m.quantity_product_uom AS DOUBLE) AS quantity, m.unit_name, m.reference, m.lot_serial_number AS lot_name FROM inventory_move_lines m JOIN inventory_lots l ON l.id = :id AND m.lot_serial_number = l.name JOIN inventory_pickings p ON p.id = m.picking_id JOIN inventory_operation_types t ON t.id = p.operation_type_id AND t.operation_kind = 'delivery' WHERE m.movement_type = 'outgoing' AND m.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR (l.company_name = :current_company_name OR l.company_name IS NULL) AND p.company_name = :current_company_name) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%') ORDER BY p.scheduled_date, p.name, m.id"
+  - id: inventory_lot_transfers_runs
+    single: false
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_LOT_TRANSFERS_RUNS_UNAVAILABLE, message: Lot transfer history is temporarily unavailable. } }
+    query: "SELECT id, row_version, lot_id, lot_name, requested_by, company_name, transfer_count, CAST(opened_at AS VARCHAR) AS opened_at FROM inventory_lot_transfer_runs WHERE lot_id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY opened_at DESC, id DESC"
+
+actions:
+  - id: refresh_inventory_lot_transfers
+    type: client
+    permission: inventory.tracking
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.inventory_lot_transfers_context;
+        if (!context?.id) throw new Error('Lot transfer context is unavailable');
+        await request('/api/actions/inventory.lots.transfers', {
+          method: 'POST',
+          body: { lot_id: context.id, expected_row_version: context.row_version },
+        });
+        window.location.reload();
+      }
+  - id: record_inventory_lot_transfers
+    type: server
+    permission: inventory.tracking
+    action: inventory.lots.transfers
+    handler: yaml_mutation
+    operation: report
+    refresh: [inventory_lot_transfers_context, inventory_lot_transfers, inventory_lot_transfers_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'lot-transfers-' || CAST(:lot_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_lot_transfer_runs WHERE lot_id = :lot_id) AS VARCHAR) AS id, l.name AS lot_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), l.company_name, 'Core3 Demo Company') AS company_name, COUNT(DISTINCT p.id) AS transfer_count FROM inventory_lots l LEFT JOIN inventory_move_lines m ON m.lot_serial_number = l.name AND m.movement_type = 'outgoing' AND m.state <> 'Cancelled' LEFT JOIN inventory_pickings p ON p.id = m.picking_id JOIN inventory_operation_types t ON t.id = p.operation_type_id AND t.operation_kind = 'delivery' WHERE l.id = :lot_id GROUP BY l.id, l.name, l.company_name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM inventory_lots WHERE id = :lot_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name OR company_name IS NULL)", status: 404, code: INVENTORY_LOT_TRANSFERS_LOT_NOT_FOUND, message: The lot or serial number is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_lots WHERE id = :lot_id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name OR company_name IS NULL)", status: 409, code: INVENTORY_LOT_TRANSFERS_STALE, message: The lot changed before transfers were requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_move_lines m JOIN inventory_lots l ON l.id = :lot_id AND m.lot_serial_number = l.name JOIN inventory_pickings p ON p.id = m.picking_id JOIN inventory_operation_types t ON t.id = p.operation_type_id AND t.operation_kind = 'delivery' WHERE m.movement_type = 'outgoing' AND m.state <> 'Cancelled' AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name))", status: 404, code: INVENTORY_LOT_TRANSFERS_EMPTY, message: This lot or serial number has no outgoing transfers in the current company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_LOT_TRANSFERS_ACTOR_REQUIRED, message: An authenticated inventory actor is required to open transfers. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_LOT_TRANSFERS_COMPANY, message: The transfer company must match the current company. }
+      steps:
+        - query: "INSERT INTO inventory_lot_transfer_runs(id, lot_id, lot_name, requested_by, company_name, transfer_count, opened_at, row_version) VALUES(:id, :lot_id, :lot_name, :requested_by, :company_name, :transfer_count, TIMESTAMP '2026-01-15 09:10:00', 1)"
+      result: { query: "SELECT id, lot_id, lot_name, requested_by, company_name, transfer_count, CAST(opened_at AS VARCHAR) AS opened_at, row_version FROM inventory_lot_transfer_runs WHERE id = :id" }
+  - id: back_to_inventory_lot_detail_from_transfers
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /lots/detail
+    params: { id: '{state.inventory_lot_transfers_context.id}' }
+  - id: view_inventory_lot_transfer
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{row.id}' }

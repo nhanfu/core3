@@ -1548,3 +1548,34 @@ remains open.
 QA disposition: PASS for the bounded Core3 durable Lot Locations lifecycle;
 PARTIAL/BLOCKED for paired live Odoo comparison. Full Inventory sign-off
 remains open.
+
+## Inventory Lot Transfers QA — `INV-LOT-TRANSFERS-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_lot_views.xml:12-18` and
+  `addons/stock/models/stock_lot.py:299-327`. The Lot / Serial Number
+  Transfers stat invokes `stock.lot.action_lot_open_transfers`, derives
+  outgoing delivery pickings from lot move lines, and chooses one form versus
+  a list/form action based on delivery count.
+- Core3 contract: PASS. `pages/lot-transfers.yaml` is presentation-only and
+  `api/lot-transfers.yaml` owns the datasources/actions, joined by
+  `page.id: lot-transfers`; `lot-detail` exposes the entry action. Migration
+  0.0.66 persists the deterministic serial-lot delivery and transfer-open
+  history. Guards enforce tracking permission, company, actor, lot row version,
+  and a completed outgoing transfer.
+- Focused verification: PASS —
+  `bun test test/inventory_lot_transfers.integration.test.ts`, 4 tests / 30
+  assertions. Adjacent lot/locations/traceability regressions pass with 15
+  tests / 128 assertions.
+- Core3 browser evidence: BLOCKED for this wave. The desktop/mobile
+  Playwright probe reached only the login shell and was stopped before the
+  authenticated redirect; the captures are not an authenticated visual pass.
+  Exact status is in
+  `evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/core3-browser.json`.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable lot-transfer contract and
+integration lifecycle; PARTIAL/BLOCKED for desktop/mobile and live Odoo
+comparison. Full Inventory sign-off remains open.

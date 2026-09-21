@@ -2178,3 +2178,33 @@ mobile evidence is under
 `evidence/inventory/2026-09-21/INV-QUANT-MOVE-HISTORY-001/`. The supplied
 Odoo runtime redirected HTTP 303 to `/web/login`; paired live Odoo evidence is
 blocked and not claimed. Full Inventory sign-off remains open.
+
+## Products > Lot / Serial Number Transfers — `INV-LOT-TRANSFERS-001` (2026-09-21)
+
+This bounded Wave 29 slice closes the Lot / Serial Number form's uncovered
+Transfers stat action without duplicating Lot Locations, Traceability, Quant
+Move History, or global transfer reports. Odoo declares the stat button in
+`addons/stock/views/stock_lot_views.xml:12-18`; the action implementation in
+`addons/stock/models/stock_lot.py:299-317` derives outgoing delivery pickings
+and opens a single delivery form or a multi-delivery list/form action.
+
+Core3 adds migration
+`services/inventory/migrations/20260922160000-066-inventory-lot-transfers.yaml`
+with a deterministic outgoing serial-lot delivery and durable transfer-open
+history. The separate `pages/lot-transfers.yaml` and
+`api/lot-transfers.yaml` contracts share `page.id: lot-transfers`; the lot
+detail page/API pair exposes the tracking-permission Transfers action, and
+transfer rows navigate to the existing transfer-detail page. Context/list
+queries are company-scoped and the refresh report action guards actor, company,
+lot row version, and the presence of an outgoing transfer.
+
+Focused verification is in
+`test/inventory_lot_transfers.integration.test.ts`: 4 tests / 30 assertions;
+adjacent lot, location, and traceability regressions pass with 15 tests / 128
+assertions. Core3 browser probing reached only the login shell within the
+bounded runtime window, so its desktop/mobile captures are not an
+authenticated visual pass. The supplied Odoo runtime
+returned HTTP 303 to `/web/login?redirect=%2Fweb%3F`; exact source, browser, and
+Odoo blocker evidence is under
+`evidence/inventory/2026-09-21/INV-LOT-TRANSFERS-001/`. Full Inventory sign-off
+remains open.

@@ -1,0 +1,64 @@
+version: 0.0.66
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_lot_transfer_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        lot_id VARCHAR NOT NULL, lot_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        transfer_count BIGINT NOT NULL DEFAULT 0,
+        opened_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_lot_transfer_runs_lot
+        ON inventory_lot_transfer_runs(lot_id, opened_at, id);
+      INSERT INTO inventory_pickings(
+        id, operation_type_id, name, contact_name, scheduled_date,
+        source_document, company_name, source_location_id,
+        destination_location_id, state
+      ) VALUES (
+        'delivery-lot-transfer-0001', 'operation-deliveries',
+        'WH/OUT/LOT/0001', 'Wood Corner', DATE '2026-01-15',
+        'SO/LOT/0001', 'My Company (San Francisco)', 'location-stock',
+        'location-customer', 'Done'
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES (
+        'delivery-lot-transfer-0001-move-001', 'delivery-lot-transfer-0001',
+        '[FURN_0269] Office Chair Black', 1, 1
+      ) ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_move_lines(
+        id, row_version, date, reference, product_id, product_name,
+        product_category_name, lot_serial_number, source_package,
+        result_package, source_location_id, destination_location_id,
+        picking_partner_name, company_name, quantity, quantity_product_uom,
+        unit_name, state, done_by, origin, movement_type, created_at, picking_id
+      ) VALUES (
+        'lot-transfer-move-line-0001', 1, TIMESTAMP '2026-01-15 09:00:00',
+        'WH/OUT/LOT/0001', 'product-cable-a',
+        '[FURN_0269] Office Chair Black', 'Furniture', 'SN-NEW-0001',
+        NULL, NULL, 'location-stock', 'location-customer', 'Wood Corner',
+        'My Company (San Francisco)', 1, 1, 'Units', 'Done', 'Mitchell Admin',
+        'SO/LOT/0001', 'outgoing', TIMESTAMP '2026-01-15 09:00:00',
+        'delivery-lot-transfer-0001'
+      ) ON CONFLICT(id) DO NOTHING;
+      UPDATE inventory_lots
+      SET transfer_count = 1
+      WHERE id = 'serial-unused-0001' AND transfer_count = 0;
+      INSERT INTO inventory_lot_transfer_runs(
+        id, lot_id, lot_name, requested_by, company_name, transfer_count, opened_at
+      ) VALUES (
+        'lot-transfers-serial-unused-0001-1', 'serial-unused-0001', 'SN-NEW-0001',
+        'Seeded Inventory', 'My Company (San Francisco)', 1, TIMESTAMP '2026-01-15 09:05:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_lot_transfer_runs WHERE id = 'lot-transfers-serial-unused-0001-1';
+      UPDATE inventory_lots SET transfer_count = 0 WHERE id = 'serial-unused-0001';
+      DELETE FROM inventory_move_lines WHERE id = 'lot-transfer-move-line-0001';
+      DELETE FROM inventory_picking_moves WHERE id = 'delivery-lot-transfer-0001-move-001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-lot-transfer-0001';
+      DROP TABLE IF EXISTS inventory_lot_transfer_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

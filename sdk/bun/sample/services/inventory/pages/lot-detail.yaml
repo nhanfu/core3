@@ -29,4 +29,5 @@ components:
     header_actions:
       - { id: view_inventory_lot_locations, label: Location, variant: secondary, permission: inventory.multi_location }
       - { id: view_inventory_lot_traceability, label: Traceability, variant: secondary, permission: inventory.tracking }
+      - { id: view_inventory_lot_transfers, label: Transfers, variant: secondary, permission: inventory.tracking, show_if: "state.inventory_lot_detail.transfer_count > 0" }
       - { id: save_inventory_lot, label: Edit, variant: primary, permission: inventory.manage }

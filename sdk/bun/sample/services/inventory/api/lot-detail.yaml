@@ -16,6 +16,11 @@ actions:
     permission: inventory.tracking
     navigate_to: /lots/traceability
     params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+  - id: view_inventory_lot_transfers
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /lots/transfers
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', current_company_name: '{row.company_name}' }
   - id: save_inventory_lot
     type: server_form
     permission: inventory.manage

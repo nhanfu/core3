@@ -1,0 +1,48 @@
+title: Lot Transfers
+page: { id: lot-transfers, route: /lots/transfers, breadcrumb: [Supply Chain, Inventory, Products, Lots / Serial Numbers, Transfers], auth: { require: [inventory.tracking] } }
+components:
+  - type: StatRow
+    source: inventory_lot_transfers_context
+    title: Transfers
+    stats:
+      - { label: Lot/Serial Number, field: lot_name }
+      - { label: Product, field: product_name }
+      - { label: Transfers, field: delivery_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_lot_transfers
+    search: { label: Search transfers, placeholder: 'Search reference, contact, or source document...' }
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: operation_type_name, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date, sortable: true }
+      - { field: contact_name, label: Contact }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: state, label: Status, type: StatusChip, colors: { Ready: teal, Draft: neutral, Waiting: amber, Done: green, Cancelled: red } }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_lot_transfer
+    row_double_click_action: view_inventory_lot_transfer
+    form_view: { page: apps/services/inventory/pages/transfer-detail.yaml, side_panel: true }
+    empty_state: { title: No transfers for this lot or serial number, description: Outgoing transfers that contain this lot or serial number will appear here. }
+    header_actions:
+      - { id: refresh_inventory_lot_transfers, label: Refresh Transfers, variant: primary, permission: inventory.tracking }
+      - { id: back_to_inventory_lot_detail_from_transfers, label: Back to Lot, variant: secondary, permission: inventory.tracking }
+  - type: ListView
+    variant: odoo
+    source: inventory_lot_transfers_runs
+    columns:
+      - { field: opened_at, label: Opened At, type: PrimaryEntityCell, sortable: true }
+      - { field: requested_by, label: Requested By }
+      - { field: company_name, label: Company }
+      - { field: transfer_count, label: Transfers, align: right }
+    page_size: 10
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No transfer history, description: Refresh Transfers records the request for this lot or serial number. }

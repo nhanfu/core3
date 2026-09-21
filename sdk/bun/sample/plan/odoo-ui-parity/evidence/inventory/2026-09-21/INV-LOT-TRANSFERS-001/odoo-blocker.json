@@ -1,0 +1,8 @@
+{
+  "feature_id": "INV-LOT-TRANSFERS-001",
+  "request": "GET http://127.0.0.1:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "The supplied Odoo runtime redirected to login; no authenticated Odoo account/session was available for paired Lot Transfers desktop/mobile execution or screenshots.",
+  "claim": "The Odoo source/menu/action comparison is recorded; paired live Odoo evidence is not claimed."
+}

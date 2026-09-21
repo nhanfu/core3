@@ -1,0 +1,9 @@
+{
+  "feature_id": "INV-LOT-TRANSFERS-001",
+  "status": "blocked_authentication",
+  "target": "/inventory/lots/transfers?id=serial-unused-0001&current_company_name=My%20Company%20(San%20Francisco)",
+  "attempt": "The Playwright probe reached the Core3 login shell and filled the supplied demo credentials, but did not complete the authenticated redirect within the bounded probe window; the stale headless browser was stopped.",
+  "desktop": { "viewport": "1440x900", "screenshot": "desktop.png", "status": "login_screen_only" },
+  "mobile": { "viewport": "390x844", "screenshot": "mobile.png", "status": "login_screen_only" },
+  "claim": "The captures show only the unauthenticated login shell; no authenticated Core3 desktop/mobile visual pass is claimed."
+}

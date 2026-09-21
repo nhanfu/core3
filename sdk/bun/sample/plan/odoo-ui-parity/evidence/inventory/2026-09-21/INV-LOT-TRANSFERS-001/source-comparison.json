@@ -1,0 +1,18 @@
+{
+  "feature_id": "INV-LOT-TRANSFERS-001",
+  "odoo": {
+    "entry": "Lot / Serial Number form Transfers stat button",
+    "action": "stock.lot.action_lot_open_transfers",
+    "source": ["addons/stock/views/stock_lot_views.xml:12-18", "addons/stock/models/stock_lot.py:299-317", "addons/stock/models/stock_lot.py:319-327"],
+    "semantics": ["show the Transfers stat only when delivery_count is non-zero", "derive deliveries from outgoing completed move lines linked to the lot", "open one delivery as a form and multiple deliveries as a list/form action"]
+  },
+  "core3": {
+    "page": "services/inventory/pages/lot-transfers.yaml",
+    "api": "services/inventory/api/lot-transfers.yaml",
+    "page_id": "lot-transfers",
+    "entry_binding": "services/inventory/pages/lot-detail.yaml + services/inventory/api/lot-detail.yaml",
+    "migration": "services/inventory/migrations/20260922160000-066-inventory-lot-transfers.yaml",
+    "guards": ["inventory.tracking", "current company", "authenticated actor", "lot row version", "outgoing transfer exists"],
+    "single_transfer_behavior": "The deterministic one-row list navigates to the existing transfer-detail form; the API keeps the source-shaped delivery context and transfer list separate from the lot form."
+  }
+}
