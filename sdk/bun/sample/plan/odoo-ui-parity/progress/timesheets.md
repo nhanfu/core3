@@ -6,6 +6,36 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## Wave 27 — `TIMESHEET-MY-IMPORT-TEMPLATE-001` (2026-09-21)
+
+The smallest uncovered source-backed behavior after the prior billing-type
+grouping and All/My filters, groups, actions, and report slices is Odoo's
+Timesheets import-template utility. `hr_timesheet/models/hr_timesheet.py:549-555`
+implements `account.analytic.line.get_import_templates()` and returns the
+`Import Template for Timesheets` XLSX asset when `is_timesheet` is present.
+
+Core3 adds a page-owned `Download import template` action to My Timesheets and
+an API-owned action joined by `page.id: timesheets`. The API persists a
+request-keyed download record in `timesheet_import_template_downloads`, derives
+actor/company/template metadata server-side, requires `timesheets.write`, and
+enforces active employee/company plus stale replay guards. The client action
+downloads a deterministic CSV containing the source import columns and sample
+row; the XLSX-versus-CSV difference remains an explicit blocker.
+
+Focused coverage is `test/timesheets_import_template.integration.test.ts`:
+4 tests / 23 expectations, including source comparison, YAML separation,
+idempotent durable persistence, actor/company and stale guards, migration
+replay, and file-backed restart. The full Timesheets regression passes 212
+tests / 1318 expectations. UI audit passes at 733 pages / 742 routes / 1434
+datasources; scoped ESLint and diff-check pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-import-template/`. The bounded
+Core3 probe found no listener on port 3001 and both supplied Odoo endpoints
+redirected to `/web/login`, so authenticated desktop/mobile captures are not
+claimed. Existing Odoo Print/PDF/report-action blockers and module sign-off
+remain open.
+
 ## Current state
 
 The focused Timesheets suite passes 49 tests across 14 files with 396

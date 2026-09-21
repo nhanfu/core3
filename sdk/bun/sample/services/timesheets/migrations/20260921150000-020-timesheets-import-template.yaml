@@ -1,0 +1,25 @@
+version: 0.0.20
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_import_template_downloads (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        source_template VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        request_key VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        UNIQUE(company_name, employee_name, request_key)
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_import_template_downloads_scope_idx ON timesheet_import_template_downloads(company_name, employee_name, created_at);
+    down: |
+      DROP TABLE IF EXISTS timesheet_import_template_downloads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

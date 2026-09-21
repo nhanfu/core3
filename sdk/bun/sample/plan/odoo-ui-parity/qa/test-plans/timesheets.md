@@ -10,6 +10,21 @@ Last reviewed: 2026-09-12
 This plan follows [`timesheets.md`](../../timesheets.md); executed evidence is
 recorded in [`../timesheets.md`](../timesheets.md).
 
+## Wave 27 — `TIMESHEET-MY-IMPORT-TEMPLATE-001`
+
+| Gate | Coverage | Result |
+| --- | --- | --- |
+| Source/YAML | Odoo `get_import_templates()` comparison; page/API join through `page.id: timesheets`; deterministic client download | pass |
+| Persistence | Request-keyed durable download audit, migration replay, idempotent retry, file-backed restart | pass |
+| Security/concurrency | `timesheets.write`, active actor/company guard, invalid request guard, stale row-version replay guard | pass |
+| Focused regression | `test/timesheets_import_template.integration.test.ts` — 4 tests / 23 expectations | pass |
+| Module regression | `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 212 tests / 1318 expectations | pass |
+| Static checks | UI audit 733/742/1434; scoped ESLint; Timesheets-owned diff-check | pass |
+| Authenticated browser/Odoo pair | Core3 3001 unavailable; Odoo 8069/8073 redirected to `/web/login` | blocked; exact blocker recorded |
+
+This slice is bounded and not module sign-off. The source XLSX asset versus
+Core3 CSV output is retained as an explicit parity blocker.
+
 ## Coverage inventory
 
 | Menu/action family | Core3 route families | Scope |

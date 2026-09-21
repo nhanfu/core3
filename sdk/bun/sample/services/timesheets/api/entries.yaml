@@ -13,6 +13,10 @@ datasources:
     permission: timesheets.read
     meta: { mock_data_justification: Durable calendar multi-create audit records are created by the YAML action and seeded only as a deterministic demo fixture. }
     query: "SELECT id, employee_name, company_name, project_name, task_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, description, hours, entry_count, state, CAST(created_at AS VARCHAR) AS created_at, row_version FROM timesheet_entry_batches WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') ORDER BY date_from DESC, id"
+  - id: timesheet_import_template_downloads
+    permission: timesheets.read
+    meta: { mock_data_justification: Durable import-template download audit rows are created by the permissioned YAML action and are never static fixtures. }
+    query: "SELECT id, employee_name, company_name, source_template, file_name, mime_type, request_key, CAST(created_at AS VARCHAR) AS created_at, row_version FROM timesheet_import_template_downloads WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') ORDER BY created_at DESC, id"
   - id: timesheet_states
     permission: timesheets.read
     single: false
@@ -31,6 +35,46 @@ datasources:
     meta: { mock_data_justification: Runtime-only persisted entry totals; a static total would make CRUD, filters, and permission scope unverifiable. }
     query: "SELECT COUNT(t.id) AS entry_count, COALESCE(SUM(t.hours), 0) AS total_hours, CASE WHEN COALESCE(MAX(s.timesheet_encode_method), 'hours') = 'days' THEN printf('%g d', ROUND(COALESCE(SUM(t.hours), 0) / 8, 2)) ELSE printf('%02d:%02d', CAST(FLOOR(COALESCE(SUM(t.hours), 0)) AS INTEGER), CAST(ROUND((COALESCE(SUM(t.hours), 0) - FLOOR(COALESCE(SUM(t.hours), 0))) * 60) AS INTEGER)) END AS total_time_spent_display, COALESCE(MAX(s.timesheet_encode_method), 'hours') AS time_encoding_method FROM timesheet_entries t LEFT JOIN timesheet_settings s ON s.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.parent_task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11'))"
 actions:
+  - id: download_timesheet_import_template
+    type: client
+    permission: timesheets.write
+    script: |
+      // js
+      async ({ request }) => {
+        const requestKey = `timesheet-template:${crypto.randomUUID()}`;
+        await request('/api/actions/timesheets.entries.record_import_template_download', {
+          method: 'POST',
+          body: { values: { request_key: requestKey } },
+        });
+        const columns = ['Date', 'Project ID', 'Task ID', 'Time Spent', 'Description', 'Billable'];
+        const csv = `${columns.join(',')}\n2026-01-15,project-demo-001,task-demo-001,8,Example activity,true\n`;
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'timesheets_import_template.csv';
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+  - id: record_timesheet_import_template_download
+    type: server
+    permission: timesheets.write
+    action: timesheets.entries.record_import_template_download
+    handler: yaml_mutation
+    operation: create
+    refresh: [timesheet_import_template_downloads]
+    mutation:
+      before_steps:
+        - query: "SELECT 'timesheet-import-template-' || regexp_replace(lower(COALESCE(NULLIF(:request_key, ''), 'missing-request')), '[^a-z0-9]+', '-', 'g') AS id, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, '/hr_timesheet/static/xls/timesheets_import_template.xlsx' AS source_template, 'timesheets_import_template.csv' AS file_name, 'text/csv' AS mime_type, 1 AS row_version"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:request_key AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: TIMESHEET_IMPORT_TEMPLATE_REQUEST_INVALID, message: A template download request key is required. }
+        - query: "SELECT 'timesheet-import-template-' || regexp_replace(lower(COALESCE(NULLIF(:request_key, ''), 'missing-request')), '[^a-z0-9]+', '-', 'g') AS id, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Demo Employee' THEN 'employee-demo-002' WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, '/hr_timesheet/static/xls/timesheets_import_template.xlsx' AS source_template, 'timesheets_import_template.csv' AS file_name, 'text/csv' AS mime_type, 1 AS row_version"
+          assign: true
+        - { query: "SELECT id FROM timesheet_employees WHERE id = :employee_id AND name = :employee_name AND company_name = :company_name AND active", status: 403, code: TIMESHEET_IMPORT_TEMPLATE_EMPLOYEE_SCOPE, message: The current employee is not active in this company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM timesheet_import_template_downloads WHERE id = :id) OR EXISTS (SELECT 1 FROM timesheet_import_template_downloads WHERE id = :id AND row_version = COALESCE(TRY_CAST(:expected_row_version AS BIGINT), row_version))", status: 409, code: TIMESHEET_IMPORT_TEMPLATE_STALE, message: This template download request changed. Retry with a fresh request. }
+      steps:
+        - query: "INSERT INTO timesheet_import_template_downloads(id, employee_id, employee_name, company_name, source_template, file_name, mime_type, request_key, created_at, row_version) VALUES(:id, :employee_id, :employee_name, :company_name, :source_template, :file_name, :mime_type, :request_key, TIMESTAMP '2026-01-15 00:00:00', 1) ON CONFLICT (id) DO NOTHING"
+      result: { query: "SELECT id, employee_id, employee_name, company_name, source_template, file_name, mime_type, request_key, CAST(created_at AS VARCHAR) AS created_at, row_version FROM timesheet_import_template_downloads WHERE id = :id" }
   - id: create_timesheet_entry_inline
     type: server_form
     permission: timesheets.write

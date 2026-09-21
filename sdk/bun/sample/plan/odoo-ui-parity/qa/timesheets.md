@@ -53,6 +53,30 @@ Module owner: timesheets module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## Wave 27 — `TIMESHEET-MY-IMPORT-TEMPLATE-001`
+
+- Source gate: `hr_timesheet/models/hr_timesheet.py:549-555`, where Odoo's
+  `get_import_templates()` returns the Timesheets XLSX template only for the
+  `is_timesheet` context.
+- Core3 gate: My Timesheets page/API remain separate by `page.id: timesheets`.
+  `Download import template` requires `timesheets.write`; its API mutation
+  persists actor/company/template metadata in
+  `timesheet_import_template_downloads` and enforces active employee, company,
+  request-key, idempotency, and stale replay guards. The client action emits a
+  deterministic CSV template.
+- Focused gate: `bun test test/timesheets_import_template.integration.test.ts
+  --timeout 20000` — 4 passed / 23 expectations.
+- Regression/static gates: full Timesheets 212 passed / 1318 expectations;
+  UI audit 733 pages / 742 routes / 1434 datasources; scoped ESLint passed;
+  Timesheets-owned `git diff --check` passed.
+- Browser gate: blocked for this run. Core3 port 3001 was not listening;
+  Odoo 8069 and 8073 both redirected `/odoo/timesheets` to `/web/login`.
+  Evidence records the exact responses; no authenticated desktop/mobile or
+  visual sign-off is claimed.
+- Blockers: Odoo's source asset is XLSX while the bounded Core3 download is
+  deterministic CSV; authenticated runtime evidence and existing Odoo
+  Print/PDF/action parity remain open.
+
 ## 2026-09-21 `TIMESHEET-MY-INLINE-EDIT-001`
 
 - Source gate: `hr_timesheet/views/hr_timesheet_views.xml:4-22` declares the

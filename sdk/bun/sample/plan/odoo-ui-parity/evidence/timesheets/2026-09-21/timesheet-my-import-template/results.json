@@ -1,0 +1,26 @@
+{
+  "feature_id": "TIMESHEET-MY-IMPORT-TEMPLATE-001",
+  "source": {
+    "file": "/home/nhanjs/projects/odoo/addons/hr_timesheet/models/hr_timesheet.py",
+    "method": "account.analytic.line.get_import_templates",
+    "template": "/hr_timesheet/static/xls/timesheets_import_template.xlsx",
+    "label": "Import Template for Timesheets"
+  },
+  "core3": {
+    "authenticated_desktop": "blocked",
+    "authenticated_mobile": "blocked",
+    "endpoint": "http://127.0.0.1:3001/api/pages/timesheets",
+    "http_status": 0,
+    "blocker": "No Core3 listener was available on port 3001 during the bounded probe; no authenticated screenshots are claimed."
+  },
+  "odoo": {
+    "authenticated_desktop": "blocked",
+    "authenticated_mobile": "blocked",
+    "endpoints": [
+      { "url": "http://127.0.0.1:8069/odoo/timesheets", "http_status": 303, "location": "/web/login" },
+      { "url": "http://127.0.0.1:8073/odoo/timesheets", "http_status": 303, "location": "/web/login" }
+    ],
+    "blocker": "The supplied Odoo endpoints redirected to /web/login during the bounded probe; no authenticated desktop/mobile captures are claimed."
+  },
+  "disposition": "bounded contract and persistence verified; browser evidence blocked; Odoo XLSX asset versus Core3 deterministic CSV download remains an explicit parity blocker; no sign-off"
+}
