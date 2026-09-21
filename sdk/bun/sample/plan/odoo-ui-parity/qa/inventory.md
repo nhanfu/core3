@@ -1438,3 +1438,32 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Lot/SN Labels lifecycle;
 PARTIAL/BLOCKED for paired live Odoo visual/action comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Package Barcode QA — `INV-PACKAGE-BARCODE-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_package_views.xml:145-164`,
+  `addons/stock/report/stock_report_views.xml:45-53`, and
+  `addons/stock/report/report_package_barcode.xml:4-45`. The bound report is
+  `stock.action_report_package_barcode`, named Package Barcode with Contents,
+  and renders package barcode plus contained products/lots/quantities/units.
+- Core3 contract: PASS. `pages/package-detail.yaml` owns the visible Print
+  Barcode action and responsive history list while `api/package-detail.yaml`
+  owns the action/datasource, joined by `page.id: package-detail`.
+  Migration 0.0.62 persists report history and guards company, actor,
+  non-empty state, and row version.
+- Focused test: `bun test test/inventory_package_barcode.integration.test.ts` —
+  PASS, 4 tests / 27 assertions. Coverage includes source/schema checks,
+  durable PDF run, migration replay, company/actor/current-row/non-empty
+  guards, restart persistence, and tracking permission.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  package-detail captures show the action, contents, and saved PDF report
+  history; `core3-browser.json` records empty bad-response/page-error arrays
+  and no horizontal overflow.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired Odoo
+  report execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 package barcode report lifecycle;
+PARTIAL/BLOCKED for unavailable live Odoo comparison. Full Inventory sign-off
+remains open.

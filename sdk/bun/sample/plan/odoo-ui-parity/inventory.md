@@ -2058,3 +2058,35 @@ regression remains covered by
 desktop/mobile form and saved-history evidence plus the source/Odoo blocker are
 under `evidence/inventory/2026-09-21/INV-TRANSFER-LOT-LABELS-001/`. Full
 Inventory sign-off remains open.
+
+## Products > Package Barcode with Contents — `INV-PACKAGE-BARCODE-001` (2026-09-21)
+
+This bounded Wave 25 slice closes the next uncovered package report behavior
+without duplicating package relocation, package removal, or package transfer
+workflows. Odoo exposes `stock.menu_package` / `stock.action_package_view` from
+`addons/stock/views/stock_package_views.xml:145-164`, and binds the
+`stock.action_report_package_barcode` PDF report to `stock.package` in
+`addons/stock/report/stock_report_views.xml:45-53`. The report template at
+`addons/stock/report/report_package_barcode.xml:4-45` renders the package
+reference/barcode, pack date/type, and contained product, lot, quantity, and
+unit values.
+
+Core3 keeps `pages/package-detail.yaml` presentation-only and extends the
+paired `api/package-detail.yaml` contract by `page.id: package-detail`. The
+tracking-permission `Print Barcode` action prepares the source-shaped
+`stock.action_report_package_barcode` PDF report and renders a durable barcode
+report history list. Migration
+`20260922120000-062-inventory-package-barcode.yaml` adds
+`inventory_package_barcode_runs`, recording package/company/report/output,
+content count, actor, timestamp, and row-version state.
+
+The action enforces current-company scope, an authenticated actor, a current
+non-empty package, and row-version concurrency. Focused verification passes
+4 tests / 27 assertions, including source comparison, schema/discovery,
+durable execution, migration replay, restart persistence, and tracking
+permission boundaries. Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-PACKAGE-BARCODE-001/`, with no browser
+errors, failed responses, or horizontal overflow. The supplied Odoo runtime
+returned HTTP 303 to `/web/login?redirect=%2Fweb%3F`; the exact blocker is
+recorded and no paired live Odoo execution or full Inventory sign-off is
+claimed.

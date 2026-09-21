@@ -1,0 +1,27 @@
+version: 0.0.62
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_package_barcode_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        package_id VARCHAR NOT NULL,
+        package_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        report_action VARCHAR NOT NULL,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF',
+        content_count BIGINT NOT NULL DEFAULT 0,
+        printed_by VARCHAR NOT NULL,
+        printed_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(package_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_package_barcode_runs_package_idx
+        ON inventory_package_barcode_runs(package_id, printed_at, id);
+    down: |
+      DROP TABLE IF EXISTS inventory_package_barcode_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

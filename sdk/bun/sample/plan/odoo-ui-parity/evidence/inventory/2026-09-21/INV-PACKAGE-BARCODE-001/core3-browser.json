@@ -1,0 +1,52 @@
+{
+  "feature": "INV-PACKAGE-BARCODE-001",
+  "authenticated_user": "admin@tms.local",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:4337/inventory/packages/detail?id=package-relocate-0005",
+    "form_checks": {
+      "package_reference": true,
+      "print_barcode_action": true,
+      "package_contents": true
+    },
+    "result_checks": {
+      "report_name": true,
+      "pdf": true,
+      "printed_by": true
+    },
+    "overflow": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false
+    },
+    "bad_responses": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:4337/inventory/packages/detail?id=package-relocate-0005",
+    "form_checks": {
+      "package_reference": true,
+      "print_barcode_action": true,
+      "package_contents": true
+    },
+    "result_checks": {
+      "report_name": true,
+      "pdf": true,
+      "printed_by": true
+    },
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "horizontalOverflow": false
+    },
+    "bad_responses": [],
+    "page_errors": []
+  }
+}

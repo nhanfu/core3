@@ -1,0 +1,23 @@
+{
+  "feature": "INV-PACKAGE-BARCODE-001",
+  "odoo": {
+    "menu": "stock.menu_package",
+    "menu_source": "/home/nhanjs/projects/odoo/addons/stock/views/stock_package_views.xml",
+    "action": "stock.action_report_package_barcode",
+    "action_source": "/home/nhanjs/projects/odoo/addons/stock/report/stock_report_views.xml",
+    "report_name": "Package Barcode with Contents",
+    "report_type": "qweb-pdf",
+    "template_source": "/home/nhanjs/projects/odoo/addons/stock/report/report_package_barcode.xml",
+    "semantics": "bound stock.package PDF report renders the package barcode and contained products, lots, quantities, and units"
+  },
+  "core3": {
+    "page_id": "package-detail",
+    "page_contract": "services/inventory/pages/package-detail.yaml",
+    "api_contract": "services/inventory/api/package-detail.yaml",
+    "migration": "services/inventory/migrations/20260922120000-062-inventory-package-barcode.yaml",
+    "action": "stock.action_report_package_barcode",
+    "durability": "inventory_package_barcode_runs stores package, company, report, PDF, content count, actor, timestamp, and row version",
+    "guards": ["inventory.tracking", "current company", "authenticated actor", "current non-empty package", "row version"]
+  },
+  "status": "matched_for_bounded_slice"
+}

@@ -1,0 +1,8 @@
+{
+  "feature": "INV-PACKAGE-BARCODE-001",
+  "request": "GET http://127.0.0.1:8069/web",
+  "status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "The supplied Odoo runtime did not provide an authenticated session, so paired live package-form/report execution and screenshots were not captured.",
+  "source_comparison": "completed from checked-in Odoo XML report/menu/template sources"
+}

@@ -11,6 +11,7 @@ components:
     header_actions:
       - { id: back_to_inventory_packages, label: Back to Packages, icon: arrow-left, permission: inventory.tracking }
       - { id: edit_inventory_package, label: Edit, variant: primary, permission: inventory.tracking }
+      - { id: print_inventory_package_barcode, label: Print Barcode, variant: secondary, permission: inventory.tracking, show_if: "record.state !== 'Empty'" }
       - { id: relocate_inventory_package, label: Relocate, variant: secondary, permission: inventory.write, show_if: "record.state !== 'Empty'" }
       - { id: remove_inventory_package_from_transfer, label: Remove from Transfer, variant: secondary, permission: inventory.write, show_if: "record.state !== 'Empty'" }
       - { id: unpack_inventory_package, label: Unpack, variant: secondary, permission: inventory.tracking, show_if: "record.state !== 'Empty'" }
@@ -70,3 +71,17 @@ components:
     row_key: id
     selectable: false
     empty_state: { title: No removal history, description: Package removals from open transfers will appear here. }
+  - type: ListView
+    variant: odoo
+    source: inventory_package_barcode_runs
+    columns:
+      - { field: package_name, label: Package }
+      - { field: report_name, label: Report }
+      - { field: content_count, label: Contents, align: right }
+      - { field: output_format, label: Format }
+      - { field: printed_by, label: Printed by }
+      - { field: printed_at, label: Printed at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No barcode reports, description: Package barcode reports will appear here. }

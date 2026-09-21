@@ -852,7 +852,8 @@ Inventory sign-off remains open.
   `actions[11].result is not allowed` error; no other owner file was changed.
   Odoo source/menu comparison is complete, but live Odoo returned HTTP 303 to
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
-  Full Inventory sign-off remains open.
+Full Inventory sign-off remains open.
+
 ## `INV-PRODUCT-ATTRIBUTES-001` — Inventory Product Attributes (2026-09-21)
 
 - Selected the next uncovered source-backed Inventory configuration workflow
@@ -1078,3 +1079,22 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-TRANSFER-LOT-LABELS-001/`. Odoo runtime
   comparison is blocked by HTTP 303 to `/web/login`; the exact response is
   recorded. Full Inventory sign-off remains open.
+
+## `INV-PACKAGE-BARCODE-001` — Package Barcode with Contents (2026-09-21)
+
+- Selected the next genuinely uncovered source-backed package behavior after
+  transfer Lot/SN Labels: Odoo's `stock.action_report_package_barcode` bound
+  PDF report on `stock.package`. The source comparison covers the Packages
+  menu/action, report binding, and barcode-with-contents template.
+- Extended the existing separated `package-detail` page/API pair with a
+  tracking-permission `Print Barcode` action and barcode report history list.
+  Migration `20260922120000-062-inventory-package-barcode.yaml` persists
+  company-scoped report runs, content count, actor, PDF action/name, and
+  row-version state.
+- Guards cover current company, authenticated actor, non-empty current package,
+  and stale row versions. Focused verification passes 4 tests / 27 assertions,
+  including migration replay, restart persistence, and permission boundary.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PACKAGE-BARCODE-001/`; Odoo live
+  comparison is blocked by HTTP 303 to `/web/login?redirect=%2Fweb%3F` and is
+  recorded in the paired blocker file. Full Inventory sign-off remains open.

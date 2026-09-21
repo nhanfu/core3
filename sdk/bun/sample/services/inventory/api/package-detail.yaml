@@ -27,6 +27,11 @@ datasources:
     permission: inventory.tracking
     error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_REMOVALS_UNAVAILABLE, message: Package removal history is temporarily unavailable. } }
     query: "SELECT r.id, r.package_id, r.picking_id, r.company_name, r.package_name, r.removed_count, r.requested_by, COALESCE(r.reason, '') AS reason, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_package_removal_runs r JOIN inventory_packages p ON p.id = r.package_id WHERE r.package_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
+  - id: inventory_package_barcode_runs
+    single: false
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_BARCODES_UNAVAILABLE, message: Package barcode report history is temporarily unavailable. } }
+    query: "SELECT r.id, r.package_id, r.package_name, r.company_name, r.report_name, r.report_action, r.output_format, r.content_count, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM inventory_package_barcode_runs r JOIN inventory_packages p ON p.id = r.package_id WHERE r.package_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.printed_at DESC, r.id DESC"
 actions:
   - id: back_to_inventory_packages
     type: navigate
@@ -37,6 +42,29 @@ actions:
     permission: inventory.tracking
     navigate_to: /packages/transfers
     params: { package_id: '{state.inventory_package_detail.id}' }
+  - id: print_inventory_package_barcode
+    type: server
+    permission: inventory.tracking
+    action: stock.action_report_package_barcode
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.inventory_package_detail.id}', expected_row_version: '{state.inventory_package_detail.row_version}' }
+    refresh: [inventory_package_detail, inventory_package_barcode_runs]
+    mutation:
+      generated: [barcode_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'package-barcode-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS barcode_run_id FROM inventory_package_barcode_runs WHERE package_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id", status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package not found. }
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: INVENTORY_PACKAGE_BARCODE_COMPANY, message: Package is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id AND row_version = :expected_row_version AND state <> 'Empty' AND content_count > 0", status: 409, code: INVENTORY_PACKAGE_BARCODE_NOT_ALLOWED, message: Only a current non-empty package can print a barcode report. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: INVENTORY_PACKAGE_BARCODE_ACTOR_REQUIRED, message: A signed-in inventory operator is required to print a package barcode. }
+      steps:
+        - { query: "INSERT INTO inventory_package_barcode_runs(id, package_id, package_name, company_name, report_name, report_action, output_format, content_count, printed_by, printed_at, row_version) SELECT :barcode_run_id, p.id, p.name, p.company_name, 'Package Barcode with Contents', 'stock.action_report_package_barcode', 'PDF', p.content_count, :current_user_name, TIMESTAMP '2026-01-15 08:00:00', 1 FROM inventory_packages p WHERE p.id = :id AND p.row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_PACKAGE_BARCODE_FAILED, message: The package barcode report could not be prepared. }
+        - { query: "UPDATE inventory_packages SET row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The package changed before its barcode report could be prepared. }
+      result: { query: "SELECT r.id, r.package_id, r.package_name, r.report_name, r.report_action, r.output_format, r.content_count, r.printed_by, r.row_version FROM inventory_package_barcode_runs r WHERE r.id = :barcode_run_id" }
   - id: edit_inventory_package
     type: server_form
     permission: inventory.tracking

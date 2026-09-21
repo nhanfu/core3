@@ -43,16 +43,17 @@ describe('Inventory package transfers parity', () => {
     const context = parsed('api/package-transfers.yaml').datasources[0];
     const source = parsed('api/package-transfers.yaml').datasources[1];
     expect((await repository.querySource(context, { package_id: 'package-main-0001', fixture_state: null }, 0, 1)).data).toMatchObject({
-      id: 'package-main-0001', name: 'PACK0000001', transfer_count: 2,
+      id: 'package-main-0001', name: 'PACK0000001', transfer_count: 3,
     });
     expect((await repository.querySource(source, { package_id: 'package-main-0001', q: null, state: null, fixture_state: null }, 0, 50)).data).toEqual([
       expect.objectContaining({ id: 'delivery-00001', name: 'WH/OUT/00001', package_relation: 'source' }),
       expect.objectContaining({ id: 'receipt-00001', name: 'WH/IN/00001', package_relation: 'result' }),
+      expect.objectContaining({ id: 'delivery-package-remove-0001', name: 'WH/OUT/PACKREMOVE/0001', package_relation: 'source' }),
     ]);
-    expect((await repository.querySource(source, { package_id: 'package-main-0001', q: 'WH/OUT', state: null, fixture_state: null }, 0, 50)).data).toHaveLength(1);
+    expect((await repository.querySource(source, { package_id: 'package-main-0001', q: 'WH/OUT/00001', state: null, fixture_state: null }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(source, { package_id: 'package-main-0001', q: null, state: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { package_id: 'package-main-0001', q: null, state: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_PACKAGE_TRANSFERS_UNAVAILABLE' });
-    expect((await repository.query('SELECT COUNT(*) AS count FROM inventory_package_move_lines', []) )[0].count).toBe(4);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM inventory_package_move_lines', []) )[0].count).toBe(5);
     database.close();
   });
 
