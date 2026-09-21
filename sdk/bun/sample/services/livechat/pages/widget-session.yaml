@@ -1,0 +1,37 @@
+title: Live Chat
+page: { id: livechat-widget-session, route: /livechat/widget, breadcrumb: [Website, Live Chat, Widget], auth: { require: [livechat.public] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_widget_session
+    title_field: channel_name
+    subtitle_field: visitor_name
+    status_field: state_label
+    editable: false
+    labels: { workflowStatus: Widget state }
+    status_colors: { Connected: blue, Active: blue, Closed: neutral, Unavailable: danger }
+    header_actions:
+      - { id: get_livechat_widget_session, label: Start or Resume Live Chat, variant: primary, permission: livechat.public }
+    group_columns: 2
+    groups:
+      - title: Visitor session
+        fields:
+          - { field: channel_name, label: Channel }
+          - { field: visitor_name, label: Visitor }
+          - { field: operator_name, label: Operator }
+          - { field: state_label, label: Status, type: StatusChip }
+          - { field: persistence_label, label: Persistence }
+          - { field: started_label, label: Started }
+          - { field: updated_label, label: Updated }
+      - title: Widget configuration
+        fields:
+          - { field: button_text, label: Button text }
+          - { field: welcome_message, label: Welcome message, wide: true }
+          - { field: notification_text, label: Notification text }
+          - { field: button_color, label: Button color }
+          - { field: window_color, label: Window color }
+    message_source: livechat_widget_messages
+    chatter_label: Live Chat
+    chatter_empty: No messages in this conversation yet.
+    message_detail_field: detail
+    message_timestamp_field: created_at

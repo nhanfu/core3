@@ -61,3 +61,11 @@ internal error. No Core3 visual sign-off is claimed.
 Exercise the authenticated visitor/operator/manager browser matrix and restart
 persistence when the reference addon and local runtime are available, then
 continue with the next uncovered public-widget or transcript surface.
+
+## Bounded implementation slice: public widget session bootstrap and resume (2026-09-22)
+
+`services/livechat/api/widget-session.yaml` and `services/livechat/pages/widget-session.yaml` add the source-backed public `/im_livechat/get_session` contract as `/livechat/widget`, joined through `livechat-widget-session`. Migration `20260922100000-052-livechat-widget-session.yaml` persists the visitor token, selected operator, durable session id, widget state, and idempotent welcome message. Repeated calls with the same token resume the active widget session; closed sessions, unavailable channels, invalid identity, and unsupported temporary mode are rejected before mutation.
+
+Focused validation passed: 3 tests, 24 assertions; paired visitor-feedback and widget regression passed 6 tests, 44 assertions. Focused ESLint and scoped diff-check passed. Odoo `/im_livechat/support/1` returned authenticated 404 at desktop/mobile viewports; Core3 browser evidence was blocked by the local frontend 502/backend discovery failure and subsequent connection refusal. No visual-parity or full-module sign-off is claimed.
+
+Evidence is recorded under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-widget-session-001/`.

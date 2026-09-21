@@ -1203,3 +1203,17 @@ The Odoo desktop/mobile captures there document the exact uninstall/404
 blocker; Core3 authenticated visitor captures remain pending until the local
 runtime is available. This slice does not claim public-widget or full-module
 parity.
+
+## Bounded implementation slice: Public widget session bootstrap and resume (2026-09-22)
+
+The next uncovered public controller behavior is Odoo's `/im_livechat/get_session` POST JSON-RPC route in `/home/nhanjs/projects/odoo/addons/im_livechat/controllers/main.py`. Odoo accepts `channel_id`, optional previous operator and chatbot ids, and `persisted=True`, selects an available operator, creates a persisted `discuss.channel` for durable sessions, and returns channel/store bootstrap data. The CORS controller preserves the same contract at `/im_livechat/cors/get_session`.
+
+The requested authenticated `core3_reference` live reference is not serving this addon: `/im_livechat/support/1` returned Odoo Error 404 at desktop and mobile viewport sizes. Blocker captures are outside Git at `/tmp/odoo-livechat-get-session-blocker-desktop-20260922-final.png` and `/tmp/odoo-livechat-get-session-blocker-mobile-20260922-final.png`.
+
+Core3 adds `/livechat/widget` with page id `livechat-widget-session` and a separate API fragment joined by that same `page.id`. Migration `20260922100000-052-livechat-widget-session.yaml` adds durable widget/session records and an idempotent seeded operator-backed session. The `/im_livechat/get_session` action persists a visitor token, channel, operator assignment, welcome message, and session state; repeating the same token resumes the durable widget session. Guards cover unavailable channels, missing visitor identity, the bounded durable-only contract, and closed-session replay. Public reads and the action require `livechat.public`; no authenticated menu item or operator CRUD is added.
+
+Focused validation is `test/livechat_widget_session.integration.test.ts`: 3 tests passed with 24 assertions. It covers source/CORS route tracing, page/API separation, operator selection, durable bootstrap/resume, welcome-message idempotence, invalid channel/token/name, closed-state and temporary mode guards, idempotent migration, and file-backed restart recovery. The paired visitor-feedback and widget tests passed 6 tests with 44 assertions. Focused ESLint and scoped `git diff --check` passed.
+
+Core3 browser evidence could not be completed because the shared local runtime returned 502 and then stopped: the Vite proxy could not reach the backend, while the backend was blocked by an unrelated dirty-worktree Blog YAML parse failure. The desktop 502 capture is outside Git at `/tmp/core3-livechat-widget-session-blocker-desktop-20260922.png`; the mobile navigation ended with `ERR_CONNECTION_REFUSED`, so no Core3 mobile visual sign-off is claimed. The Odoo addon absence and local runtime blockers are recorded in the bounded evidence folder.
+
+Evidence is recorded under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-widget-session-001/`. Full Live Chat parity remains planned.

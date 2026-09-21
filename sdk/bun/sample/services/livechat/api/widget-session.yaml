@@ -1,0 +1,121 @@
+page: { id: livechat-widget-session }
+
+datasources:
+  - id: livechat_widget_session
+    single: true
+    permission: livechat.public
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_WIDGET_SESSION_UNAUTHORIZED, message: A public Live Chat session is required. }
+      forbidden: { status: 403, code: LIVECHAT_WIDGET_SESSION_FORBIDDEN, message: This Live Chat channel is not available. }
+      transport_error: { status: 503, code: LIVECHAT_WIDGET_SESSION_UNAVAILABLE, message: The Live Chat widget is temporarily unavailable. }
+    query: |
+      SELECT w.id, w.row_version, w.channel_id, w.session_id, w.visitor_token,
+        w.visitor_name, w.operator_id, w.operator_name, w.chatbot_script_id,
+        w.chatbot_script_name, w.persisted, w.state,
+        c.name AS channel_name, c.button_text, c.welcome_message,
+        c.notification_text, c.button_color, c.window_color,
+        CASE WHEN w.state = 'Active' THEN 'Connected' ELSE w.state END AS state_label,
+        CASE WHEN w.persisted THEN 'Persisted' ELSE 'Temporary' END AS persistence_label,
+        CAST(w.created_at AS VARCHAR) AS started_label,
+        CAST(w.updated_at AS VARCHAR) AS updated_label
+      FROM livechat_widget_sessions w
+      JOIN livechat_channels c ON c.id = w.channel_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (w.id = :id OR (w.channel_id = :channel_id AND w.visitor_token = :visitor_token)
+          OR (COALESCE(:id, '') = '' AND COALESCE(:channel_id, '') = ''
+            AND COALESCE(:visitor_token, '') = '' AND w.id = 'livechat-widget-demo-001'))
+      ORDER BY w.updated_at DESC, w.id
+      LIMIT 1
+  - id: livechat_widget_messages
+    single: false
+    permission: livechat.public
+    error_states:
+      transport_error: { status: 503, code: LIVECHAT_WIDGET_MESSAGES_UNAVAILABLE, message: Widget messages are temporarily unavailable. }
+    query: |
+      SELECT m.id, m.session_id, m.author_name, m.author_type,
+        m.body AS detail, m.action, m.action_label, CAST(m.created_at AS VARCHAR) AS created_at
+      FROM livechat_session_messages m
+      JOIN livechat_widget_sessions w ON w.session_id = m.session_id
+      WHERE m.session_id = :session_id AND w.visitor_token = :visitor_token
+      ORDER BY m.created_at, m.id
+
+actions:
+  - id: get_livechat_widget_session
+    type: server_form
+    permission: livechat.public
+    title: Start Live Chat
+    action: /im_livechat/get_session
+    handler: yaml_mutation
+    operation: get_session
+    refresh: [livechat_widget_session, livechat_widget_messages]
+    fields:
+      - { field: channel_id, label: Channel, type: text, required: true }
+      - { field: visitor_token, label: Visitor token, type: text, required: true }
+      - { field: visitor_name, label: Visitor name, type: text, required: true }
+      - { field: persisted, label: Persist session, type: checkbox, default: true }
+      - { field: previous_operator_id, label: Previous operator, type: text }
+      - { field: chatbot_script_id, label: Chatbot script, type: text }
+    mutation:
+      before_steps:
+        - query: |
+            SELECT 'livechat-widget-' || CAST(:channel_id AS VARCHAR) || '-' ||
+              regexp_replace(lower(trim(CAST(:visitor_token AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id,
+              'livechat-session-widget-' || CAST(:channel_id AS VARCHAR) || '-' ||
+              regexp_replace(lower(trim(CAST(:visitor_token AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS session_id,
+              c.name AS channel_name,
+              trim(split_part(c.operator_names, ',', 1)) AS operator_name,
+              'operator-' || regexp_replace(lower(trim(split_part(c.operator_names, ',', 1))), '[^a-z0-9]+', '-', 'g') AS operator_id
+            FROM livechat_channels c
+            WHERE c.id = :channel_id
+          assign: true
+      guards:
+        - { query: "SELECT id FROM livechat_channels WHERE id = :channel_id AND active = TRUE AND LENGTH(TRIM(COALESCE(operator_names, ''))) > 0", status: 404, code: LIVECHAT_WIDGET_CHANNEL_NOT_FOUND, message: The Live Chat channel is not available. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:visitor_token AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: LIVECHAT_WIDGET_TOKEN_INVALID, message: A visitor token is required to start Live Chat. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:visitor_name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: LIVECHAT_WIDGET_NAME_INVALID, message: A visitor name is required to start Live Chat. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:persisted AS BOOLEAN), TRUE) = TRUE", status: 422, code: LIVECHAT_WIDGET_TEMPORARY_UNSUPPORTED, message: A durable Live Chat session is required for this widget contract. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_widget_sessions WHERE channel_id = :channel_id AND visitor_token = :visitor_token AND state = 'Closed')", status: 409, code: LIVECHAT_WIDGET_SESSION_CLOSED, message: This visitor session is closed; start a new visitor session. }
+      steps:
+        - query: |
+            INSERT INTO livechat_sessions
+              (id, channel_id, channel_name, visitor_name, visitor_token, operator_id,
+               operator_name, status, outcome, duration_minutes, message_count, started_at, updated_at)
+            VALUES (:session_id, :channel_id, :channel_name, :visitor_name, :visitor_token,
+              :operator_id, :operator_name, 'In Progress', NULL, 0, 1,
+              TIMESTAMP '2026-01-15 09:00:00', CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+              visitor_name = EXCLUDED.visitor_name,
+              updated_at = now()
+        - query: |
+            INSERT INTO livechat_widget_sessions
+              (id, row_version, channel_id, session_id, visitor_token, visitor_name,
+               operator_id, operator_name, chatbot_script_id, chatbot_script_name,
+               persisted, state, created_at, updated_at)
+            VALUES (:id, 1, :channel_id, :session_id, :visitor_token, :visitor_name,
+              :operator_id, :operator_name, NULLIF(:chatbot_script_id, ''),
+              CASE WHEN NULLIF(:chatbot_script_id, '') IS NULL THEN '' ELSE 'Requested chatbot' END,
+              TRUE, 'Active', TIMESTAMP '2026-01-15 09:00:00', CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+              visitor_name = EXCLUDED.visitor_name,
+              chatbot_script_id = COALESCE(EXCLUDED.chatbot_script_id, livechat_widget_sessions.chatbot_script_id),
+              state = livechat_widget_sessions.state,
+              updated_at = now()
+        - query: |
+            INSERT INTO livechat_session_messages
+              (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+            SELECT 'livechat-widget-welcome-' || :id, :session_id, 'operator-' || :operator_id,
+              :operator_name, 'operator', c.welcome_message, 'welcome', 'Welcome',
+              TIMESTAMP '2026-01-15 09:00:00'
+            FROM livechat_channels c
+            WHERE c.id = :channel_id
+              AND NOT EXISTS (SELECT 1 FROM livechat_session_messages WHERE id = 'livechat-widget-welcome-' || :id)
+      result:
+        query: |
+          SELECT w.id, w.row_version, w.channel_id, w.session_id, w.visitor_token,
+            w.visitor_name, w.operator_id, w.operator_name, w.chatbot_script_id,
+            w.chatbot_script_name, w.persisted, w.state, c.name AS channel_name,
+            c.button_text, c.welcome_message, c.notification_text,
+            c.button_color, c.window_color, TRUE AS resumed,
+            CASE WHEN w.state = 'Active' THEN 'Connected' ELSE w.state END AS state_label
+          FROM livechat_widget_sessions w
+          JOIN livechat_channels c ON c.id = w.channel_id
+          WHERE w.id = :id

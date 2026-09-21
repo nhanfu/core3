@@ -135,3 +135,11 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Focused lint: `bunx eslint test/livechat_visitor_feedback.integration.test.ts` — passed. `git diff --check` — passed.
 - Odoo browser evidence is a blocker, not a sign-off: authenticated `/odoo/apps` shows Live Chat as `Request Access`, and authenticated `/im_livechat/support/1` returns Odoo 404 at both captured desktop/mobile states. Captures are recorded outside Git under `/tmp/odoo-livechat-visitor-feedback-*20260921.png`.
 - Core3 authenticated visitor desktop/mobile evidence remains pending because the local Core3 runtime/browser pass was not available in this execution. Functional parity and full-module sign-off remain open.
+
+## 2026-09-22 bounded review: public widget session bootstrap/resume
+
+- Focused: `bun test test/livechat_widget_session.integration.test.ts --timeout 20000` — **3 passed, 24 assertions, 0 failed**. It covers Odoo route/CORS tracing, matching page/API ids, operator-backed durable bootstrap, same-token resume, welcome-message idempotence, invalid channel/token/name, closed-state and temporary-mode guards, idempotent migration, and file-backed restart recovery.
+- Paired focused regression: `bun test test/livechat_visitor_feedback.integration.test.ts test/livechat_widget_session.integration.test.ts --timeout 20000` — **6 passed, 44 assertions, 0 failed**.
+- Focused ESLint and scoped `git diff --check` passed. Repository-wide audit remains blocked by the unrelated dirty-worktree `services/blog/api/posts.yaml` YAML parse error; no Live Chat file was changed to bypass that blocker.
+- Odoo browser evidence is a blocker, not a sign-off: authenticated `core3_reference` `/im_livechat/support/1` returned Error 404 at observed 390x844 and 1916x833 browser viewports. Core3 browser evidence is also blocked by the local frontend/backend failure (desktop 502, then mobile `ERR_CONNECTION_REFUSED`).
+- Evidence: [`livechat-widget-session-001`](evidence/livechat/2026-09-22/livechat-widget-session-001/). Full Live Chat sign-off remains open.

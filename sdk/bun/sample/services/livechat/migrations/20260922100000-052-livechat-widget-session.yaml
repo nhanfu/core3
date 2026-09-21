@@ -1,0 +1,56 @@
+version: 0.0.52
+kind: data
+description: Persist Odoo Live Chat public widget session bootstrap and resume state
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_widget_sessions (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        channel_id VARCHAR NOT NULL,
+        session_id VARCHAR NOT NULL UNIQUE,
+        visitor_token VARCHAR NOT NULL UNIQUE,
+        visitor_name VARCHAR NOT NULL,
+        operator_id VARCHAR NOT NULL,
+        operator_name VARCHAR NOT NULL,
+        chatbot_script_id VARCHAR,
+        chatbot_script_name VARCHAR NOT NULL DEFAULT '',
+        persisted BOOLEAN NOT NULL DEFAULT TRUE,
+        state VARCHAR NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO livechat_sessions
+        (id, channel_id, channel_name, visitor_name, visitor_token, operator_id,
+         operator_name, status, duration_minutes, message_count, started_at, updated_at)
+      SELECT 'livechat-session-widget-001', c.id, c.name, 'Widget Visitor',
+        'livechat-widget-token-001', 'operator-marc-demo', 'Marc Demo',
+        'In Progress', 0, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'
+      FROM livechat_channels c
+      WHERE c.id = 'livechat-channel-demo-002'
+        AND NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-widget-001');
+      INSERT INTO livechat_widget_sessions
+        (id, channel_id, session_id, visitor_token, visitor_name, operator_id,
+         operator_name, persisted, state, created_at, updated_at)
+      SELECT 'livechat-widget-demo-001', c.id, 'livechat-session-widget-001',
+        'livechat-widget-token-001', 'Widget Visitor', 'operator-marc-demo', 'Marc Demo',
+        TRUE, 'Active', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'
+      FROM livechat_channels c
+      WHERE c.id = 'livechat-channel-demo-002'
+        AND NOT EXISTS (SELECT 1 FROM livechat_widget_sessions WHERE id = 'livechat-widget-demo-001');
+      INSERT INTO livechat_session_messages
+        (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+      SELECT 'livechat-widget-demo-welcome', 'livechat-session-widget-001', 'operator-marc-demo',
+        'Marc Demo', 'operator', c.welcome_message, 'welcome', 'Welcome', TIMESTAMP '2026-01-15 09:00:00'
+      FROM livechat_channels c
+      WHERE c.id = 'livechat-channel-demo-002'
+        AND NOT EXISTS (SELECT 1 FROM livechat_session_messages WHERE id = 'livechat-widget-demo-welcome');
+    down: |
+      DELETE FROM livechat_session_messages WHERE id = 'livechat-widget-demo-welcome';
+      DELETE FROM livechat_widget_sessions WHERE id = 'livechat-widget-demo-001';
+      DELETE FROM livechat_sessions WHERE id = 'livechat-session-widget-001';
+      DROP TABLE IF EXISTS livechat_widget_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
