@@ -2,6 +2,30 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Shop Page Container (`ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`)
+
+Wave 37 selects Website Sale's `shop_page_container` setting. The supplied
+Odoo `website` model supports `regular` (Regular) and `fluid` (Full-width),
+and the shop template branches on `website.shop_page_container == 'fluid'`.
+This is distinct from the completed product-page container and prior Shop
+visibility/sort slices.
+
+Core3 migrations 138/139 add a durable company-scoped policy and deterministic
+My Company fixture. Separate `api/shop-page-container-policy.yaml` and
+`pages/shop-page-container-policy.yaml` contracts join by
+`ecommerce-shop-page-container-policy`; the update requires `ecommerce.write`,
+validates the two source values, and uses company and row-version guards.
+The Shop API projects the effective value onto products and the Shop page
+shows the current read-only projection. Migration replay, stale/invalid and
+foreign-company rejection, idempotent update behavior, and DuckDB restart
+persistence are covered by focused integration tests.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-page-container-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313; Odoo `/shop` is an exact HTTP 404 on 8069/8073. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Product Page Container (`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`)
 
 Wave 36 selected Odoo Website Sale's still-open product-page container

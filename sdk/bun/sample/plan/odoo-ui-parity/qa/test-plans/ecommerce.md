@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-PAGE-CONTAINER-001
+
+- ECOM-FUNC-066: trace Website Sale `shop_page_container`, its Regular and
+  Full-width values, and the `website.shop_page_container == 'fluid'` shop
+  template boundary; verify separate Core3 policy and Shop page/API contracts.
+- ECOM-WF-077: replay the deterministic Regular policy, switch to Full-width,
+  project the effective Shop container, reject invalid/foreign/stale writes,
+  and preserve the policy across migration replay and DuckDB restart.
+- ECOM-PERM-073: require `ecommerce.read` for policy/options/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards with idempotent fixture/update behavior.
+- ECOM-UI-059: render the configuration form and Shop projection at desktop
+  and mobile and compare the authenticated Odoo Shop container behavior;
+  Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001
 
 - ECOM-FUNC-065: trace Website Sale `product_page_container`, its Unset,

@@ -4,6 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 37 bounded slice: `ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`
+(committed locally; not pushed).
 Latest Wave 36 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`
 (committed and pushed as `8514fadf`).
 Latest Wave 35 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-COLUMNS-ORDER-001`
@@ -18,12 +20,25 @@ Latest Wave 31 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-LAYOUT-001`
 (committed locally as `a79b02c9`; pushed in the current synchronized base).
 Latest Wave 30 bounded slice: `ECOM-CATALOG-PRODUCT-DOCUMENT-URL-001`
 (committed locally as `c4930038`; pushed in the current synchronized base).
-Latest committed bounded slice: `8514fadf`
-(`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`, local and not pushed).
+Latest committed bounded slice: `ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`
+(local and not pushed).
 Latest Wave 29 bounded slice: `ECOM-CATALOG-PRODUCT-PAGE-IMAGE-RATIO-001`
 (committed locally as `18450233`; not pushed).
 The prior add-to-cart redirect commit remains
 `d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+Wave 37 verification: the focused suite passes 2 tests and 24 assertions; the
+bounded regression passes 24 tests and 253 assertions. Scoped ESLint and
+`git diff --check` pass. The global UI audit is currently blocked by an
+unrelated unstaged Employees page action (`actions[11].title` and
+`actions[11].fields` are not allowed); no non-Ecommerce file was changed to
+repair that boundary. The Shop page-container suite preserves the existing Shop product datasource
+contract while covering Odoo source comparison, separate page/API YAML,
+permissioned CRUD, company/invalid/stale guards, Shop projection, migration
+replay, idempotent fixture loading, and DuckDB restart persistence. Core3
+desktop/mobile capture is blocked by unavailable ports 3000/4312/4313 and no
+persistent browser runtime; Odoo `/shop` is exact HTTP 404 on ports 8069 and
+8073. Ecommerce module sign-off remains open.
 
 Wave 36 verification: the focused suite passes 2 tests and 25 assertions; the
 container plus prior columns-order, image policy, and Product Detail

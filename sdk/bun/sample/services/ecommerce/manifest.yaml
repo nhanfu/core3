@@ -145,6 +145,10 @@ menu:
           label: Product Page Container
           icon: layout
           permission: ecommerce.read
+        - path: /ecommerce/shop-page-container
+          label: Shop Page Container
+          icon: layout
+          permission: ecommerce.read
         - path: /ecommerce/tax-display-policy
           label: Tax Display Policy
           icon: invoice

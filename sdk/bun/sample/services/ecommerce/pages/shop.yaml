@@ -24,3 +24,9 @@ components:
     page_size: 50
     row_key: id
     empty_state: { title: No products available, description: Published products will appear here. }
+  - type: OdooFormView
+    source: ecommerce_shop_page_container
+    editable: false
+    title_field: company_name
+    groups:
+      - { title: Shop Layout, columns: 2, fields: [{ field: company_name, label: Company }, { field: page_container_label, label: Current Container, type: StatusChip }] }

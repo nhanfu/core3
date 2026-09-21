@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Shop Page Container (`ECOM-CATALOG-SHOP-PAGE-CONTAINER-001`, 2026-09-21)
+
+- Odoo source/template: pass. `website.py` defines Regular and Full-width;
+  `templates.xml` branches on `website.shop_page_container == 'fluid'`.
+- Core3 lifecycle: focused verification pass. Migrations 138/139 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with exact source-value validation;
+  Shop projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_shop_page_container.integration.test.ts --timeout 30000` —
+  **2 passed, 24 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: the bounded suite passes **24 tests, 253 assertions, 0
+  failures**.
+- Audit: blocked by an unrelated unstaged Employees page action because the
+  global audit reports `actions[11].title` and `actions[11].fields` are not
+  allowed; the Ecommerce owner did not alter that boundary.
+- Scoped ESLint and `git diff --check`: pass. Ecommerce module sign-off
+  remains open.
+- Local commit: recorded in the final handoff (not pushed).
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-page-container-001/`.
+
 ## Product Page Container (`ECOM-CATALOG-PRODUCT-PAGE-CONTAINER-001`, 2026-09-21)
 
 - Odoo source/template: pass. `website.py` defines Unset, Regular, and

@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Page Container](ecom-catalog-shop-page-container-001/README.md)
+
 - [Product Page Container](ecom-catalog-product-page-container-001/README.md)
 - [Product Page Columns Order](ecom-catalog-product-page-columns-order-001/README.md)
 - [Product Page Image Roundness](ecom-catalog-product-page-image-roundness-001/README.md)
