@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-SHOP-GRID-GAP-001
+
+- ECOM-FUNC-069: trace Website Sale `shop_gap`, its `setGap` builder action,
+  0–28px range, CSS custom property, and persistence boundary; verify
+  separate Core3 Shop grid-gap policy page/API contracts.
+- ECOM-WF-080: replay the deterministic 16px policy, change supported gaps,
+  project the effective Shop setting, reject invalid, foreign, and stale
+  writes, and preserve it across migration replay and DuckDB restart.
+- ECOM-PERM-076: require `ecommerce.read` for policy/options/Shop reads and
+  `ecommerce.write` for updates; enforce company scope and optimistic
+  row-version guards with safe missing-record and fixture replay behavior.
+- ECOM-UI-062: render the grid-gap form and Shop projection at desktop and
+  mobile and compare the authenticated Odoo Products Design Panel behavior;
+  Core3 runtime is unavailable and Odoo `/shop` is HTTP 404 in the supplied
+  references.
+
 ## ECOM-CATALOG-SHOP-PAGE-SIZE-001
 
 - ECOM-FUNC-068: trace Website Sale `shop_ppg`, its default 21 and

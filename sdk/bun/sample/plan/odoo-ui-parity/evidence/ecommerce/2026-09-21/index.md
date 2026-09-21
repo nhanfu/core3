@@ -1,5 +1,7 @@
 # eCommerce evidence index — 2026-09-21
 
+- [Shop Grid Gap](ecom-catalog-shop-grid-gap-001/README.md)
+
 - [Shop Page Size](ecom-catalog-shop-page-size-001/README.md)
 
 - [Shop Grid Columns](ecom-catalog-shop-grid-columns-001/README.md)

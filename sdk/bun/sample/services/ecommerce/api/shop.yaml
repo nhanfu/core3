@@ -31,6 +31,14 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_SHOP_PAGE_SIZE_FORBIDDEN, message: You do not have permission to view Shop page size settings. }
       transport_error: { status: 503, code: ECOMMERCE_SHOP_PAGE_SIZE_UNAVAILABLE, message: Shop page size settings are temporarily unavailable. }
     query: "SELECT id, row_version, company_name, page_size, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_page_size_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company')"
+  - id: ecommerce_shop_grid_gap
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_GRID_GAP_UNAUTHENTICATED, message: Sign in to view Shop grid gap settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_GRID_GAP_FORBIDDEN, message: You do not have permission to view Shop grid gap settings. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_GRID_GAP_UNAVAILABLE, message: Shop grid gap settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, grid_gap, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_gap_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company')"
 actions:
   - id: shop_add_to_cart
     type: server

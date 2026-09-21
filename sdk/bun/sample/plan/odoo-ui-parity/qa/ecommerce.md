@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Shop Grid Gap (`ECOM-CATALOG-SHOP-GRID-GAP-001`, 2026-09-21)
+
+- Odoo source/builder: pass. `website.py` defines `shop_gap`; `setGap` applies
+  the CSS value and the Products Design Panel exposes a 0–28px range before
+  persisting `shop_gap` through `/shop/config/website`.
+- Core3 lifecycle: focused verification pass. Migrations 144/145 add the
+  durable company policy and deterministic fixture. Separate page/API YAML
+  exposes a permissioned optimistic update with exact source-range
+  validation; Shop projects the effective company policy.
+- Focused verification: `bun test
+  test/ecommerce_shop_grid_gap.integration.test.ts --timeout 30000` —
+  **2 passed, 30 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is blocked because
+  ports 3000/4312/4313 refuse connections and no persistent browser runtime
+  is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 return HTTP 404, so the
+  paired authenticated comparison is blocked.
+- Regression: the bounded Shop suite passes **14 tests, 160 assertions, 0
+  failures**.
+- Audit: `bun run audit` passes at **755 pages, 764 routes, and 1528
+  datasources**.
+- Scoped ESLint and `git diff --check`: pass. Ecommerce module sign-off
+  remains open.
+- Local commit: recorded in the final handoff (not pushed).
+- Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-shop-grid-gap-001/`.
+
 ## Shop Page Size (`ECOM-CATALOG-SHOP-PAGE-SIZE-001`, 2026-09-21)
 
 - Odoo source/builder: pass. `website.py` defines `shop_ppg` with default 21;

@@ -1,0 +1,14 @@
+version: 0.0.145
+kind: data
+description: deterministic eCommerce shop grid gap fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_shop_grid_gap_policies (id, row_version, company_name, grid_gap)
+      VALUES ('ecommerce-shop-grid-gap-my-company', 1, 'My Company', '16px')
+      ON CONFLICT (company_name) DO NOTHING;
+    down: DELETE FROM ecommerce_shop_grid_gap_policies WHERE id = 'ecommerce-shop-grid-gap-my-company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

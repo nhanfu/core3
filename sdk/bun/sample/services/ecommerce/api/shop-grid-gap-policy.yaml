@@ -1,0 +1,36 @@
+page: { id: ecommerce-shop-grid-gap-policy }
+datasources:
+  - id: ecommerce_shop_grid_gap_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_SHOP_GRID_GAP_UNAUTHENTICATED, message: Sign in to view Shop grid gap settings. }
+      forbidden: { status: 403, code: ECOMMERCE_SHOP_GRID_GAP_FORBIDDEN, message: You do not have permission to view Shop grid gap settings. }
+      missing_record: { status: 404, code: ECOMMERCE_SHOP_GRID_GAP_NOT_FOUND, message: Shop grid gap settings were not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_SHOP_GRID_GAP_UNAVAILABLE, message: Shop grid gap settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, grid_gap, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_gap_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_shop_grid_gap_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('0px', '0 px'), ('4px', '4 px'), ('8px', '8 px'), ('16px', '16 px'), ('24px', '24 px'), ('28px', '28 px')) gaps(value, label)"
+actions:
+  - id: edit_ecommerce_shop_grid_gap_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Shop Grid Gap
+    action: ecommerce.shop.grid_gap.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_shop_grid_gap_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, grid_gap]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_shop_grid_gap_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_SHOP_GRID_GAP_STALE, message: These Shop grid gap settings changed or belong to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:grid_gap AS VARCHAR) ~ '^(0|[1-9]|1[0-9]|2[0-8])px$'", status: 422, code: ECOMMERCE_SHOP_GRID_GAP_INVALID, message: Shop grid gap must be between 0px and 28px. }
+      steps:
+        - { query: "UPDATE ecommerce_shop_grid_gap_policies SET grid_gap = CAST(:grid_gap AS VARCHAR), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_SHOP_GRID_GAP_STALE, message: These Shop grid gap settings changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, grid_gap, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_shop_grid_gap_policies WHERE id = :id" }
+    fields:
+      - { field: grid_gap, label: Shop Grid Gap, type: select, options_source: ecommerce_shop_grid_gap_options, required: true }

@@ -1,0 +1,25 @@
+version: 0.0.144
+kind: schema
+description: durable eCommerce shop grid gap policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_shop_grid_gap_policies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        grid_gap VARCHAR NOT NULL DEFAULT '16px',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(company_name),
+        CHECK (grid_gap ~ '^(0|[1-9]|1[0-9]|2[0-8])px$')
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_shop_grid_gap_company_idx
+        ON ecommerce_shop_grid_gap_policies(company_name);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_shop_grid_gap_company_idx;
+      DROP TABLE IF EXISTS ecommerce_shop_grid_gap_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

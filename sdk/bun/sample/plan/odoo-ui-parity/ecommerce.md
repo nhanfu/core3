@@ -2,6 +2,31 @@
 
 Status: qa-in-progress (bounded abandoned-cart recovery slice; module sign-off remains open)
 
+## Bounded feature — Shop Grid Gap (`ECOM-CATALOG-SHOP-GRID-GAP-001`)
+
+Wave 40 selects Website Sale's `website.shop_gap` setting. Odoo defines the
+Shop grid gap as a CSS length, and the supplied `setGap` builder action applies
+the value to `--o-wsale-products-grid-gap`; the Products Design Panel exposes a
+0–28px range and persists the value through `/shop/config/website`. This is
+distinct from the completed Shop page size, grid-column, page-container,
+visibility, and default-sort slices.
+
+Core3 migrations 144/145 add a durable company-scoped grid-gap policy and
+deterministic My Company fixture. Separate
+`api/shop-grid-gap-policy.yaml` and `pages/shop-grid-gap-policy.yaml`
+contracts join by `ecommerce-shop-grid-gap-policy`; the update requires
+`ecommerce.write`, validates the source 0–28px CSS range, and uses company and
+row-version guards. The Shop API/page expose the effective company setting and
+the configuration route is manifest-owned. Focused integration tests cover
+missing fixture reads, permission declarations, invalid/foreign/stale writes,
+idempotent migration/fixture replay, and DuckDB restart persistence.
+
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-shop-grid-gap-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313; Odoo `/shop` is an exact HTTP 404 on 8069/8073. This bounded
+slice is not Ecommerce module sign-off.
+
 ## Bounded feature — Shop Page Size (`ECOM-CATALOG-SHOP-PAGE-SIZE-001`)
 
 Wave 39 selects Website Sale's `website.shop_ppg` setting. Odoo defines the
