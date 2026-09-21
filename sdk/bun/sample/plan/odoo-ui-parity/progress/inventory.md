@@ -1521,22 +1521,3 @@ Full Inventory sign-off remains open.
   Odoo is login-blocked. Exact evidence is under
   `evidence/inventory/2026-09-21/INV-TRANSFER-OPERATIONS-001/`. Full Inventory
   sign-off remains open.
-
-## `INV-TRANSFER-READY-QUEUE-001` — To Do transfer queue (2026-09-21)
-
-- Selected Odoo `stock.action_picking_tree_ready` from
-  `addons/stock/views/stock_picking_views.xml:569-577`; the action is named
-  To Do, opens list/kanban/form/calendar views, and applies the
-  `search_default_available` context.
-- Added presentation-only `pages/transfer-ready-queue.yaml` and backend
-  `api/transfer-ready-queue.yaml`, joined by `page.id: transfer-ready-queue`.
-  Migration `20260922330000-083-inventory-transfer-ready-queue.yaml` adds a
-  durable queue context, refresh ledger, and deterministic Ready transfer.
-- The queue is company-scoped and read-permissioned, supports operation/search
-  filters and missing/empty/503 states, and has a Refresh action guarded by an
-  authenticated actor and optimistic queue row version. Focused verification
-  passes 3 tests / 28 assertions, including restart persistence and permission
-  denial. Core3 desktop/mobile reached the login shell; Odoo is login-blocked.
-  Exact evidence is under
-  `evidence/inventory/2026-09-21/INV-TRANSFER-READY-QUEUE-001/`. Full
-  Inventory sign-off remains open.

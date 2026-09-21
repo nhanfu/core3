@@ -1988,29 +1988,3 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Transfer Operations read
 workflow; PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full
 Inventory sign-off remains open.
-
-## Inventory To Do Transfer Queue QA — `INV-TRANSFER-READY-QUEUE-001`
-
-- Odoo source/action: PASS. `stock.action_picking_tree_ready` is mapped from
-  `stock_picking_views.xml:569-577`; it is the To Do list/kanban/form/calendar
-  action with `search_default_available` context. Exact references are in
-  `source-comparison.json`.
-- Core3 contract: PASS. Presentation-only `pages/transfer-ready-queue.yaml`
-  and backend `api/transfer-ready-queue.yaml` share
-  `page.id: transfer-ready-queue`; the list is read-gated and Refresh writes a
-  durable queue-run ledger. Migration 0.0.83 persists the queue context and
-  deterministic Ready transfer.
-- Focused verification: PASS — 3 tests / 28 assertions in
-  `test/inventory_transfer_ready_queue.integration.test.ts`. Coverage includes
-  source/schema mapping, Ready rows, search/type/company filters,
-  missing/empty/503 boundaries, refresh CRUD, actor/company/stale guards,
-  permission denial, and restart persistence.
-- Core3 browser evidence: login-shell captures were obtained for desktop and
-  390x844 mobile, but no authenticated queue view is claimed. Odoo comparison
-  is blocked by HTTP 303 to `/web/login`; exact captures, source comparison,
-  and blockers are under
-  `evidence/inventory/2026-09-21/INV-TRANSFER-READY-QUEUE-001/`.
-
-QA disposition: PASS for the bounded Core3 durable To Do queue lifecycle;
-PARTIAL/BLOCKED for authenticated visual/Odoo comparison. Full Inventory
-sign-off remains open.

@@ -2640,26 +2640,3 @@ page discovery error, so no other owner files were changed. Core3 browser
 startup and authenticated Odoo comparison are blocked; exact evidence is
 under `evidence/inventory/2026-09-21/INV-TRANSFER-OPERATIONS-001/`. Full
 Inventory sign-off remains open.
-
-## Operations > To Do transfer queue — `INV-TRANSFER-READY-QUEUE-001` (2026-09-21)
-
-This bounded Wave 46 slice covers Odoo's `stock.action_picking_tree_ready`
-action at `addons/stock/views/stock_picking_views.xml:569-577`. Odoo names it
-To Do, opens `stock.picking` in list/kanban/form/calendar views, and applies
-`search_default_available` to show available transfers.
-
-Core3 keeps `pages/transfer-ready-queue.yaml` presentation-only and adds
-`api/transfer-ready-queue.yaml`, joined by `page.id: transfer-ready-queue`.
-Migration
-`services/inventory/migrations/20260922330000-083-inventory-transfer-ready-queue.yaml`
-adds a durable queue context, refresh ledger, and deterministic Ready transfer.
-The API provides company-scoped Ready rows, operation/search filters,
-missing/empty/503 states, transfer navigation, and a Refresh action guarded by
-actor, company, and queue row-version checks.
-
-Focused verification passes 3 tests / 28 assertions. YAML schema/discovery
-audit, `bun run audit`, scoped ESLint, and `git diff --check` pass. Core3
-desktop/mobile captured the login shell only; Odoo returned HTTP 303 to
-`/web/login`. Exact evidence is under
-`evidence/inventory/2026-09-21/INV-TRANSFER-READY-QUEUE-001/`. Full Inventory
-sign-off remains open.
