@@ -2335,3 +2335,34 @@ remain blockers; no sign-off is claimed.
 
 Evidence is under
 `evidence/timesheets/2026-09-21/timesheet-portal-visibility-domain-001/`.
+
+## Wave 48 — `TIMESHEET-PORTAL-GROUPING-001`
+
+The next distinct uncovered portal behavior is Odoo's authenticated
+`/my/timesheets` group-by workflow. `addons/hr_timesheet/controllers/portal.py`
+exposes Date, Project, Parent Task, Task, and Employee groups, while
+`hr_timesheet_portal_templates.xml` renders group headers, hides the grouped
+column, and displays a summed `Total:` value. The existing Core3 portal list
+already had four local group options but lacked Parent Task, the durable parent
+projection, and the explicit API group contracts.
+
+Core3 keeps `pages/portal-timesheets.yaml` layout-only and
+`api/portal-timesheets.yaml` data/action-only, joined by `page.id:
+timesheets-portal`. The page adds Parent Task to the group menu and expands the
+search placeholder. The API adds durable `parent_task_id` and normalized
+`parent_task_name` to the pivot/query, searches the parent label, and declares
+all five group contracts. Existing migration `0.0.17` supplies replay-safe
+parent-task values; no duplicate migration was needed.
+
+Focused coverage is
+`test/timesheets_portal_grouping.integration.test.ts`: 3 tests / 27
+expectations. It verifies Odoo source/template mapping, all group totals,
+actor/company/empty guards, migration replay, and file-backed restart. The
+related portal regression is 19 tests / 153 expectations. Evidence is under
+`evidence/timesheets/2026-09-22/timesheet-portal-grouping-001/`.
+
+Authenticated Odoo desktop and iPhone 14 captures are included. Core3 browser
+capture is blocked: the module runtime fails discovery before port 4001 with
+three unrelated invalid page-view fields (`graph.category_field`,
+`activity.title_field`, and `activity.activity_types`). No visual parity or
+module sign-off is claimed while that shared discovery error remains.

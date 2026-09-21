@@ -1231,3 +1231,23 @@ sign-off is claimed.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-portal-visibility-domain-001/`.
 Odoo Print/PDF/action-surface blockers remain open; no visual or module
 sign-off is claimed.
+
+## Wave 48 — `TIMESHEET-PORTAL-GROUPING-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/controller/template comparison | Portal group choices, Parent Task branch, hidden grouped column, grouped total | pass in focused source test |
+| Paired YAML contract | Portal page/API remain separate and joined by `timesheets-portal` | pass |
+| Durable group projection | Persisted parent-task id/name, normalized `No Parent Task`, five group contracts | pass |
+| Permission/company/empty guards | `timesheets.read`, current company/actor relation, empty fixture | pass |
+| Restart | Migration replay and file-backed portal group values | pass |
+| Focused regression | 3 tests / 27 expectations; related portal suites 19 tests / 153 expectations | pass |
+| Scoped lint/build | ESLint focused test; `bun run css:build:timesheets` | pass |
+| Authenticated Odoo desktop/mobile evidence | `groupby=project_id` desktop; `groupby=parent_task_id` desktop/mobile | pass; PNGs included |
+| Authenticated Core3 desktop/mobile evidence | `/my/timesheets` | blocked; discovery fails before port 4001 with unrelated graph/activity schema errors |
+
+No visual parity or module sign-off is claimed without Core3 captures.
+
+The full wildcard Timesheets regression was started but stopped after it
+continued beyond the bounded verification window without producing a failure
+summary; the focused and related portal regression completed successfully.

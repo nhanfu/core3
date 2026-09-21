@@ -534,6 +534,18 @@ pages, 735 routes, and 1,409 datasources.
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
 
+## Wave 48 — `TIMESHEET-PORTAL-GROUPING-001`
+
+| Case | Expected result |
+| --- | --- |
+| Odoo portal group-by source mapping | Date, Project, Parent Task, Task, Employee and grouped-total template behavior are asserted |
+| Paired page/API contract | `timesheets-portal` page id matches; page remains layout-only; API exposes group contracts |
+| Durable grouped reads | Parent-task fields and normalized `No Parent Task` are returned from persisted rows |
+| Group-total reconciliation | Each supported group partitions the returned rows and sums exactly to portal hours |
+| Guard boundaries | Wrong actor, empty fixture, and current-company isolation fail closed |
+| Restart | Migration replay and file-backed reopen preserve grouped parent values and row order |
+| Browser evidence | Odoo desktop/mobile captures required; Core3 captures blocked by shared page-schema discovery error |
+
 ## Wave 47 — `TIMESHEET-PORTAL-VISIBILITY-DOMAIN-001`
 
 - Source/action: Odoo `hr_timesheet` applies `_timesheet_get_portal_domain` to

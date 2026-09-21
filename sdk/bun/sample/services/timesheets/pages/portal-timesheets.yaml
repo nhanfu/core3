@@ -4,13 +4,14 @@ components:
   - type: ListView
     variant: odoo
     source: portal_timesheet_entries
-    search: { label: Search, placeholder: 'Search description, employee, project, or task...' }
+    search: { label: Search, placeholder: 'Search description, employee, project, task, or parent task...' }
     filters:
       - { field: work_date, label: Date, options: [{ id: all, label: All }, { id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }, { id: this_month, label: This Month }, { id: last_month, label: Last Month }, { id: this_quarter, label: This Quarter }, { id: last_quarter, label: Last Quarter }, { id: this_year, label: This Year }, { id: last_year, label: Last Year }] }
       - { field: sortby, label: Sort By, options: [{ id: date_desc, label: Newest }, { id: employee, label: Employee }, { id: project, label: Project }, { id: task, label: Task }, { id: description, label: Description }] }
     group_by:
       - { field: work_date, label: Date }
       - { field: project_name, label: Project }
+      - { field: parent_task_name, label: Parent Task }
       - { field: task_name, label: Task }
       - { field: employee_name, label: Employee }
     view_navigation: tabs
