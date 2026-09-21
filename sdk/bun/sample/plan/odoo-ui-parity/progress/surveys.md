@@ -440,6 +440,26 @@ authenticated reference comparison or sign-off is claimed.
 Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-SKIPPED-QUESTION-001`
+
+Wave 28 selected Odoo's durable optional-question skip behavior. Odoo stores
+`survey.user_input.line.skipped` and creates a skipped line when an empty
+answer is submitted (`survey_user_input.py:354-363,700-708`). Core3 migration
+`0.0.48` adds `survey_responses.skipped_questions` and a deterministic public
+fixture with required/optional/required questions. The paired `page.id:
+surveys` API contract projects the state; token-scoped progress/submit rejects
+required or foreign skipped IDs before mutation and preserves the set across
+restart and idempotent submit. The renderer sends and restores the set.
+
+Focused verification is **2 passed / 21 assertions**; adjacent public
+regression is **13 passed / 126 assertions**. Core3 desktop/mobile capture was
+blocked because ports 3000/3001/3390/3391 were unavailable. Odoo redirected
+both viewport probes to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; proxy 8072
+refused. No authenticated reference comparison or parity sign-off is claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-BACK-GUARD-001`
 
 Selected the next uncovered Odoo public setting after per-respondent attempt

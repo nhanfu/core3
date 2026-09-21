@@ -14,7 +14,7 @@ datasources:
     query: "SELECT id, question_text, question_type, sequence, required, answer_options, is_page FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"
   - id: survey_responses
     permission: surveys.read
-    query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
+    query: "SELECT id, respondent_name, respondent_email, answer_data, skipped_questions, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
 actions:
   - id: add_survey_question
     type: server_form

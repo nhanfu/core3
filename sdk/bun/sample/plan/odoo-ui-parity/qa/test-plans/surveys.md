@@ -602,3 +602,14 @@ Execution evidence is under
 | SURVEYS-UI-050 | authenticated responsive/reference | Randomized public question desktop/mobile + Odoo comparison | Capture exact runtime blockers; no sign-off until authenticated Core3 routes and installed Odoo Surveys fixture are available | `browser-results.json` | conditional |
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.
+
+## `SURVEYS-PUBLIC-SKIPPED-QUESTION-001` — optional public question skip
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-053 | public workflow | Optional question left blank | Persist the Odoo-style skipped state through the paired page/API contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-050 | restart/idempotency | Start → answer required → skip optional → reopen → submit | Preserve the skipped set across restart and converge concurrent keyed submit to one response/count | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-052 | token/permission | Required-question skip and foreign token | Reject invalid skip requests before mutation and keep the `surveys.public` token boundary | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-051 | authenticated responsive/reference | Skipped optional question desktop/mobile + Odoo comparison | Capture exact runtime blockers; no sign-off until authenticated Core3 routes and installed Odoo Surveys fixture are available | `browser-results.json` | conditional |
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.

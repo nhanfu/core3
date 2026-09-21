@@ -1,0 +1,34 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-SKIPPED-QUESTION-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x1000",
+      "status": "blocked",
+      "result": "No Core3 service was listening on ports 3000, 3001, 3390, or 3391; authenticated desktop capture could not start."
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "result": "No Core3 service was listening on ports 3000, 3001, 3390, or 3391; authenticated mobile capture could not start."
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x1000",
+      "status": "blocked",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "result": "The Surveys route redirected to the unauthenticated login shell; no authenticated installed Surveys fixture was available."
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "status": "blocked",
+      "http_status": 303,
+      "location": "/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "result": "The Surveys route redirected to the unauthenticated login shell; no authenticated installed Surveys fixture was available."
+    },
+    "proxy_8072": "connection refused"
+  },
+  "signoff": "conditional; no authenticated visual or paired Odoo sign-off claimed"
+}

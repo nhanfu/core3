@@ -34,6 +34,7 @@ type SurveyPayload = {
     state: string;
     current_question_id?: string | null;
     question_order?: string | null;
+    skipped_questions?: string | null;
     test_entry?: boolean;
     answer_data?: string;
     score?: number | null;
@@ -241,6 +242,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   let currentQuestionId = String(payload.answer?.current_question_id || '');
   let questionIndex = 0;
   const answers: Record<string, string | string[] | Record<string, string[]>> = {};
+  const skippedQuestions = new Set(String(payload.answer?.skipped_questions || '').split('||').map((id) => id.trim()).filter(Boolean));
   try {
     const persisted = payload.answer?.answer_data ? JSON.parse(payload.answer.answer_data) : {};
     if (persisted && typeof persisted === 'object' && !Array.isArray(persisted)) Object.assign(answers, persisted);
@@ -334,6 +336,8 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');
       payload.answer = { ...(payload.answer || {}), ...(started.answer || {}), access_token: answerToken, state: 'In Progress' };
+      skippedQuestions.clear();
+      for (const id of String(payload.answer.skipped_questions || '').split('||').map((entry) => entry.trim()).filter(Boolean)) skippedQuestions.add(id);
       applyQuestionOrder();
       currentQuestionId = String(started.answer?.current_question_id || questions[0]?.id || '');
       window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}/${encodeURIComponent(answerToken)}`);
@@ -378,7 +382,13 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
           ? Object.values(value).every((selection) => selection.length === 0)
           : Array.isArray(value) ? value.length === 0 : !String(value).trim();
         if (question.required && empty) missing.push(question.question_text || question.id);
-        if (!empty) answers[question.id] = value;
+        if (!empty) {
+          answers[question.id] = value;
+          skippedQuestions.delete(question.id);
+        } else if (!question.required) {
+          skippedQuestions.add(question.id);
+          delete answers[question.id];
+        }
         const comment = container.querySelector<HTMLTextAreaElement>('[data-comment]')?.value.trim() || '';
         if (question.comments_allowed && comment) answers[`${question.id}__comment`] = comment;
         else delete answers[`${question.id}__comment`];
@@ -392,7 +402,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         return;
       }
       try {
-        const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+        const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers, skipped_questions: [...skippedQuestions] }) });
         if (!response.ok) {
           const errorPayload = await response.json().catch(() => ({})) as { error?: string };
           throw new Error(errorPayload.error || `Survey could not be submitted (${response.status}).`);
@@ -426,7 +436,11 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       const backButton = event.currentTarget as HTMLButtonElement;
       backButton.disabled = true;
       const question = questions[questionIndex];
-      const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+      const currentValue = answers[question.id];
+      const currentEmpty = currentValue === undefined || currentValue === null || (Array.isArray(currentValue) ? currentValue.length === 0 : !String(currentValue).trim());
+      if (currentEmpty && !question.required) skippedQuestions.add(question.id);
+      else if (!currentEmpty) skippedQuestions.delete(question.id);
+      const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers, skipped_questions: [...skippedQuestions] }) });
       if (!progressResponse.ok) {
         backButton.disabled = false;
         const message = document.createElement('div');
@@ -531,12 +545,14 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
           return;
         }
       }
+      if (empty && !question.required) skippedQuestions.add(question.id);
+      else if (!empty) skippedQuestions.delete(question.id);
       answers[question.id] = value;
       const comment = body.querySelector<HTMLTextAreaElement>('[data-comment]')?.value.trim() || '';
       if (question.comments_allowed && comment) answers[`${question.id}__comment`] = comment;
       else delete answers[`${question.id}__comment`];
       if (questionIndex < questions.length - 1) {
-        const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+        const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers, skipped_questions: [...skippedQuestions] }) });
         if (!progressResponse.ok) {
           actionButton.disabled = false;
           const message = document.createElement('div');

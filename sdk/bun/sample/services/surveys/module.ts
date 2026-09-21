@@ -443,6 +443,22 @@ export default class SurveysModule implements ModuleLifecycle {
     if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
     const allQuestions = await this.questionSettings(service, detail.id, (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || []);
+    const skippedFieldProvided = Object.prototype.hasOwnProperty.call(body, 'skipped_questions');
+    const requestedSkippedQuestions = skippedFieldProvided
+      ? this.parseSkippedQuestions(body.skipped_questions)
+      : this.parseSkippedQuestions(response.skipped_questions);
+    const questionById = new Map(allQuestions.map((question: any) => [String(question.id), question]));
+    const invalidSkippedQuestion = requestedSkippedQuestions.find((questionId) => {
+      const question = questionById.get(questionId);
+      return !question || Boolean(question.required);
+    });
+    if (invalidSkippedQuestion) {
+      return this.json({ error: 'Only existing optional questions can be skipped', code: 'SURVEY_PUBLIC_SKIP_INVALID' }, 422);
+    }
+    const skippedQuestions = requestedSkippedQuestions.filter((questionId) => {
+      const value = answers[questionId];
+      return value === undefined || value === null || (Array.isArray(value) ? value.length === 0 : !String(value).trim());
+    });
     const questions = this.visibleQuestions(allQuestions, JSON.stringify(answers));
     const invalidAnswers = this.invalidPublicAnswers(questions, answers);
     if (invalidAnswers.length) {
@@ -455,7 +471,7 @@ export default class SurveysModule implements ModuleLifecycle {
           id: response.id,
           survey_id: detail.id,
           access_token: answerToken,
-          values: { answer_data: JSON.stringify(answers), ...identity },
+          values: { answer_data: JSON.stringify(answers), skipped_questions: skippedQuestions.join('||'), ...identity },
         });
         return this.json({ survey: detail, answer: result });
       } catch (error: any) {
@@ -481,6 +497,7 @@ export default class SurveysModule implements ModuleLifecycle {
         access_token: answerToken,
         values: {
           answer_data: JSON.stringify(answers),
+          skipped_questions: skippedQuestions.join('||'),
           ...(typeof body.respondent_name === 'string' ? { respondent_name: body.respondent_name.trim() } : {}),
           ...(typeof body.respondent_email === 'string' ? { respondent_email: body.respondent_email.trim() } : {}),
           ...identity,
@@ -609,6 +626,11 @@ export default class SurveysModule implements ModuleLifecycle {
     } catch {
       return {};
     }
+  }
+
+  private parseSkippedQuestions(value: unknown): string[] {
+    if (Array.isArray(value)) return [...new Set(value.map((entry) => String(entry).trim()).filter(Boolean))];
+    return [...new Set(String(value || '').split('||').map((entry) => entry.trim()).filter(Boolean))];
   }
 
   private isQuestionVisible(question: any, answers: Record<string, unknown>): boolean {

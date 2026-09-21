@@ -2154,3 +2154,20 @@ runtime was unavailable; Odoo redirected both probes to login and proxy 8072
 refused. No parity sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.
+
+## Wave 28 — `SURVEYS-PUBLIC-SKIPPED-QUESTION-001`
+
+Odoo's `survey.user_input.line.skipped` records empty answers separately from
+answered lines (`addons/survey/models/survey_user_input.py:354-363,700-708`),
+and the public controller exposes skipped questions while preparing the survey
+state (`addons/survey/controllers/main.py:259-264`). Core3 migration `0.0.48`
+adds durable `survey_responses.skipped_questions`, with public progress/submit
+guards for required and foreign IDs. The separate page/API contracts and
+renderer use the same token-scoped durable state across restart/idempotency.
+
+Focused verification: **2 passed / 21 assertions**; adjacent public
+regression: **13 passed / 126 assertions**. Core3 desktop/mobile runtime was
+unavailable; Odoo redirected both probes to login and proxy 8072 refused. No
+parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.

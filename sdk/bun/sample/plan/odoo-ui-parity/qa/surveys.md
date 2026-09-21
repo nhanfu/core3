@@ -1377,3 +1377,22 @@ both requested viewport probes; proxy 8072 refused. This remains conditional,
 with no authenticated visual or Odoo parity sign-off claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-RANDOM-SELECTION-001/`.
+
+## Bounded QA run: `SURVEYS-PUBLIC-SKIPPED-QUESTION-001` — 2026-09-21
+
+Wave 28 implements Odoo's optional public-question skipped state. Core3
+persists a validated delimiter-safe skipped-question ID set, keeps required
+questions from being skipped, and restores the state in the public renderer
+after restart. The page/API pair remains separate (`page.id: surveys`), with
+`surveys.public` for token-bound mutations and `surveys.read` for authenticated
+response inspection.
+
+Focused skipped-question tests pass **2/2 with 21 assertions**. The adjacent
+public regression passes **13/13 with 126 assertions**, including restart and
+concurrent idempotent submit. Core3 authenticated desktop/mobile probes could
+not start because ports 3000, 3001, 3390, and 3391 were unavailable. Odoo
+`/odoo/surveys?` returned 303 to login at both requested viewport probes;
+proxy 8072 refused. This remains conditional with no visual or Odoo parity
+sign-off claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SKIPPED-QUESTION-001/`.

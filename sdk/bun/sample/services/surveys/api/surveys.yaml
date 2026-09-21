@@ -92,7 +92,7 @@ actions:
     mutation:
       operation: insert
       table: survey_responses
-      fields: [survey_id, survey_name, respondent_email, answer_data, access_token, current_question_id, question_order, idempotency_key, start_datetime]
+      fields: [survey_id, survey_name, respondent_email, answer_data, access_token, current_question_id, question_order, skipped_questions, idempotency_key, start_datetime]
       required: [survey_id, survey_name, answer_data]
       defaults: { state: In Progress }
       generated: [access_token]
@@ -100,7 +100,7 @@ actions:
         - { query: "SELECT 1 AS ok FROM surveys WHERE id = :survey_id AND (COALESCE(users_login_required, false) = false OR LENGTH(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), ''))) > 0)", status: 401, code: SURVEY_PUBLIC_LOGIN_REQUIRED, message: Enter an email address before starting this survey. }
         - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.access_mode, 'public') <> 'token' OR EXISTS (SELECT 1 FROM survey_responses r WHERE r.survey_id = s.id AND r.access_token = :answer_token AND r.state = 'New'))", status: 403, code: SURVEY_PUBLIC_TOKEN_REQUIRED, message: An invitation answer token is required to start this survey. }
         - { query: "SELECT 1 AS ok FROM surveys s WHERE s.id = :survey_id AND (COALESCE(s.is_attempts_limited, false) = false OR (s.access_mode = 'public' AND COALESCE(s.users_login_required, false) = false) OR (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id AND r.state = 'Submitted' AND COALESCE(r.test_entry, false) = false AND LOWER(TRIM(COALESCE(r.respondent_email, ''))) = LOWER(TRIM(COALESCE(CAST(:respondent_email AS VARCHAR), '')))) < COALESCE(s.attempts_limit, 1))", status: 409, code: SURVEY_PUBLIC_ATTEMPTS_EXHAUSTED, message: You have no attempts left for this survey. }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, question_order, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, question_order, skipped_questions, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
     fields:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
@@ -108,6 +108,7 @@ actions:
       - { field: answer_data, label: 'Answers (Date/Datetime: ISO)', type: text, required: true }
       - { field: answer_token, label: Existing response token, type: text }
       - { field: question_order, label: Persisted question order, type: text }
+      - { field: skipped_questions, label: Skipped optional questions, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
   - id: public_survey_background
     type: server_form
@@ -138,7 +139,7 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [state, current_question_id, question_order, start_datetime]
+      fields: [state, current_question_id, question_order, skipped_questions, start_datetime]
       required: [current_question_id]
       concurrency: false
       guards:
@@ -146,10 +147,11 @@ actions:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT 1 AS ok FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id AND r.survey_id = :survey_id AND r.access_token = :access_token AND (COALESCE(s.is_time_limited, false) = false OR r.start_datetime IS NULL OR CURRENT_TIMESTAMP < r.start_datetime + s.time_limit * INTERVAL '1 minute')", status: 410, code: SURVEY_PUBLIC_TIME_LIMIT_EXPIRED, message: "This survey's time limit has expired." }
         - { query: "SELECT id FROM survey_questions WHERE id = :current_question_id AND survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_BEGIN_QUESTION, message: The first survey question is unavailable. }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, question_order, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, question_order, skipped_questions, CAST(start_datetime AS VARCHAR) AS start_datetime FROM survey_responses WHERE id = :id" }
     fields:
       - { field: current_question_id, label: First question, type: text, required: true }
       - { field: question_order, label: Persisted question order, type: text }
+      - { field: skipped_questions, label: Skipped optional questions, type: text }
   - id: public_survey_submit
     type: server_form
     permission: surveys.public
@@ -159,7 +161,7 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [answer_data, respondent_name, respondent_email, idempotency_key, score, quiz_passed]
+      fields: [answer_data, respondent_name, respondent_email, skipped_questions, idempotency_key, score, quiz_passed]
       required: [answer_data]
       concurrency: false
       guards:
@@ -170,7 +172,7 @@ actions:
       steps:
         - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id" }
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
-      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.score, r.quiz_passed, s.description_done, CAST(r.submitted_at AS VARCHAR) AS submitted_at FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id" }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.skipped_questions, r.score, r.quiz_passed, s.description_done, CAST(r.submitted_at AS VARCHAR) AS submitted_at FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id" }
     fields:
       - { field: answer_data, label: 'Answers (Date/Datetime: ISO)', type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
@@ -187,18 +189,19 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [answer_data, respondent_name, respondent_email]
+      fields: [answer_data, respondent_name, respondent_email, skipped_questions]
       required: [answer_data]
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP)", status: 410, code: SURVEY_PUBLIC_RESPONSE_EXPIRED, message: This survey response has expired }
         - { query: "SELECT 1 AS ok FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id AND r.survey_id = :survey_id AND r.access_token = :access_token AND (COALESCE(s.is_time_limited, false) = false OR r.start_datetime IS NULL OR CURRENT_TIMESTAMP < r.start_datetime + s.time_limit * INTERVAL '1 minute')", status: 410, code: SURVEY_PUBLIC_TIME_LIMIT_EXPIRED, message: "This survey's time limit has expired." }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, current_question_id, skipped_questions FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
+      - { field: skipped_questions, label: Skipped optional questions, type: text }
   - id: public_survey_next_question
     type: server_form
     permission: surveys.public
