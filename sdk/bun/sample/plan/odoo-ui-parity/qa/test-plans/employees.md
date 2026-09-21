@@ -717,3 +717,17 @@ assertions). Evidence:
 Focused test: `test/employees_related_contacts.integration.test.ts` (4 tests,
 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-RELATED-CONTACTS-001/`.
+
+## EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `company_id` Work-tab field maps to paired employee page/API contracts | pass |
+| Company assignment CRUD | Active catalog company assignment updates the employee and active Payroll projections durably | pass |
+| Permission and scope | `employees.manage`, actor, current company, active company, Payroll version, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve company IDs and display names | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile plus Odoo Work-tab desktop/mobile | conditional; exact fixture-company and rejected-credential blockers are recorded |
+
+Focused test: `test/employees_company_assignment.integration.test.ts` (4
+tests, 22 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001/`.

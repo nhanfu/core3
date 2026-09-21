@@ -1,0 +1,46 @@
+version: 0.0.73
+kind: data
+description: Add durable Employee company relation and deterministic company catalog
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS company_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS company_id VARCHAR;
+      CREATE TABLE IF NOT EXISTS employee_companies (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        short_name VARCHAR,
+        country_code VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO employee_companies(id, row_version, name, short_name, country_code, active)
+      VALUES
+        ('company-demo', 1, 'Core3 Demo Company', 'Core3', 'US', true),
+        ('company-vietnam', 1, 'Core3 Vietnam', 'Core3 VN', 'VN', true),
+        ('company-vietnam-branch', 1, 'Core3 Vietnam Branch', 'Core3 VN Branch', 'VN', true),
+        ('company-other', 1, 'Other Company', 'Other', 'VN', true)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, short_name = EXCLUDED.short_name, country_code = EXCLUDED.country_code, active = EXCLUDED.active;
+      UPDATE employees
+      SET company_id = CASE company_name
+        WHEN 'Core3 Demo Company' THEN 'company-demo'
+        WHEN 'Core3 Vietnam' THEN 'company-vietnam'
+        WHEN 'Core3 Vietnam Branch' THEN 'company-vietnam-branch'
+        WHEN 'Other Company' THEN 'company-other'
+        ELSE company_id
+      END
+      WHERE company_id IS NULL OR company_id = '';
+      UPDATE employee_versions v
+      SET company_id = e.company_id
+      FROM employees e
+      WHERE v.employee_id = e.id AND (v.company_id IS NULL OR v.company_id = '');
+    down: |
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS company_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS company_id;
+      DROP TABLE IF EXISTS employee_companies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

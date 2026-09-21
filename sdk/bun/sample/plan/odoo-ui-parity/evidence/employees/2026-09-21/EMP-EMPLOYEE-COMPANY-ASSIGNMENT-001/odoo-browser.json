@@ -1,0 +1,76 @@
+{
+  "name": "odoo",
+  "loginUrl": "http://127.0.0.1:8069/web/login",
+  "targetUrl": "http://127.0.0.1:8069/web",
+  "loginAttempted": true,
+  "loginSucceeded": false,
+  "authenticated": false,
+  "requestFailures": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "viewportChecks": [
+    {
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "bodyWidth": 1440,
+      "hasCompanyField": false,
+      "hasChangeCompany": false,
+      "hasSignIn": true,
+      "noHorizontalOverflow": true
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "bodyWidth": 390,
+      "hasCompanyField": false,
+      "hasChangeCompany": false,
+      "hasSignIn": true,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "loginFormInputs": [
+    {
+      "type": "hidden",
+      "name": "csrf_token",
+      "placeholder": ""
+    },
+    {
+      "type": "text",
+      "name": "login",
+      "placeholder": "Enter your email"
+    },
+    {
+      "type": "password",
+      "name": "password",
+      "placeholder": "Enter your password"
+    },
+    {
+      "type": "hidden",
+      "name": "type",
+      "placeholder": ""
+    },
+    {
+      "type": "hidden",
+      "name": "webauthn_response",
+      "placeholder": ""
+    },
+    {
+      "type": "hidden",
+      "name": "redirect",
+      "placeholder": ""
+    }
+  ],
+  "afterLoginUrl": "http://127.0.0.1:8069/web/login",
+  "afterLoginText": "Skip to Content\nEmail\nPassword\nReset Password\n\nWrong login/password\n\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+  "viewUrl": "http://127.0.0.1:8069/web/login?redirect=%2Fweb%3F",
+  "viewTitle": "Odoo",
+  "bodyText": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo"
+}

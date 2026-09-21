@@ -1023,3 +1023,25 @@ Candidate commit: current working tree
   `services/surveys/api/certification-report.yaml` because
   `actions[1].fields` is not allowed. Employees contracts validate independently;
   no aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001 (2026-09-21)
+
+- Selected Odoo's source-visible Work-tab `company_id` assignment as the
+  smallest uncovered employee relation after related contacts. Core3 only
+  exposed a display-only `company_name` and did not persist the employee's
+  company relation or synchronize the active Payroll record.
+- Added migration `20260922190000-073` with a replay-safe employee-company
+  catalog, `employees.company_id`, and `employee_versions.company_id`; the
+  existing deterministic company names are backfilled to stable IDs.
+- Added separate API options/action YAML and the employee-detail Change
+  Company action. The guarded workflow updates the employee and active
+  Payroll company/name projections atomically.
+- Guards cover `employees.manage`, actor, active/current-company employee,
+  active company selection, active Payroll version, and stale row version.
+  Focused verification is **4 tests / 22 assertions**, including replay and
+  file-backed restart.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001/`. The Core3
+  deterministic Employee fixtures do not match the authenticated company;
+  the Odoo local credential is rejected. Evidence is conditional and no
+  aggregate Employees sign-off is claimed.

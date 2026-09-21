@@ -2198,3 +2198,27 @@ is **4 tests / 23 assertions**, including migration replay and file-backed
 restart. Odoo credentials were rejected at both viewports. Core3 browser
 discovery is blocked by the unrelated committed Surveys schema error; no
 aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001: Employee company assignment (2026-09-21)
+
+Odoo renders the required `hr.employee.company_id` Many2one in the Work-tab
+Work group at `/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml`.
+Core3 previously projected only `company_name`; this slice adds the missing
+durable relation and assignment action without duplicating the existing
+company-scope read guards.
+
+Migration `20260922190000-073` adds `employees.company_id` and the active
+Payroll-version `company_id`, seeds the Employees-owned company catalog, and
+backfills stable IDs from existing deterministic names. The API YAML owns the
+company options datasource and guarded `edit_employee_company` mutation; the
+page YAML owns only the Change Company action binding by `page.id`.
+
+The manager-scoped mutation requires an authenticated actor, an active
+employee visible in the current company, an active catalog company, an active
+Payroll version, and the expected employee row version. It synchronizes the
+employee and active Payroll company IDs/names in one transaction.
+
+Focused verification is **4 tests / 22 assertions**. Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001/`; Core3 fixture/company
+alignment and local Odoo credentials remain explicit comparison blockers. No
+aggregate Employees sign-off is claimed.

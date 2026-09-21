@@ -1168,3 +1168,17 @@ Focused test: `test/employees_trial_period.integration.test.ts` (4 tests,
 21 assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-TRIAL-PERIOD-001/`. No aggregate Employees
 sign-off is claimed.
+
+## EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-049 | Employee Work-tab Company assignment and Payroll projection | pass; employee and active Payroll company IDs/names update together |
+| EMP-PERM-049 | `employees.manage`, actor, current company, active company, active Payroll version, and row version | pass; actor, stale, wrong-company, invalid-company, and missing-version requests reject atomically |
+| EMP-DATA-049 | Migration replay and file-backed restart | pass; deterministic company catalog and assignments survive restart without duplicates |
+| EMP-UI-045 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture-company mismatch and rejected local Odoo credential are recorded |
+
+Focused test: `test/employees_company_assignment.integration.test.ts` (4
+tests, 22 assertions). Adjacent Employees, Work-tab, Employee Type, scoped
+lint, merged API/page validation, UI audit, and staged diff-check are tracked
+with the commit. No aggregate Employees sign-off is claimed.

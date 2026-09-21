@@ -1,0 +1,56 @@
+{
+  "name": "core3",
+  "loginUrl": "http://127.0.0.1:3002/auth/login",
+  "targetUrl": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "loginAttempted": true,
+  "loginSucceeded": true,
+  "authenticated": true,
+  "requestFailures": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "viewportChecks": [
+    {
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "bodyWidth": 1440,
+      "hasCompanyField": true,
+      "hasChangeCompany": false,
+      "hasSignIn": false,
+      "noHorizontalOverflow": true
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "bodyWidth": 390,
+      "hasCompanyField": true,
+      "hasChangeCompany": false,
+      "hasSignIn": false,
+      "noHorizontalOverflow": true
+    }
+  ],
+  "loginFormInputs": [
+    {
+      "type": "email",
+      "name": "",
+      "placeholder": "you@company.com"
+    },
+    {
+      "type": "password",
+      "name": "",
+      "placeholder": "••••••••"
+    }
+  ],
+  "afterLoginUrl": "http://127.0.0.1:3002/apps",
+  "afterLoginText": "⌘ K\nAU\nAsk Core3\nPinned\nContacts\nOrders\nChat\nCore3 Agent\nCRM\nPoint of Sale\nAll applications\nContacts\nOrders\nChat\nCore3 Agent\nCRM\nPoint of Sale\nSubscriptions\nRental\nAccounting\nExpenses\nDocuments\nApprovals\nSpreadsheet / Dashboards\nInventory\nManufacturing\nPurchase\nMaintenance\nField Service\nHelpdesk\nQuality\nPLM\nEmployees\nRecruitment\nTime Off\nAppraisals\nReferrals\nFleet\nEmail Marketing\nSMS Marketing\nEvents\nSurveys\nMarketing Automation\nProject\nTimesheets\nWebsite\neCommerce\nBlog\nForum\nLive Chat\nHello, Admin User",
+  "viewUrl": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "viewTitle": "Employee",
+  "bodyText": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n?\n—\n0\nTimesheets\n0\nHistory\nProperties\nProperties\n—\nWork\nTags\nResume\nPersonal\nPayroll\nSettings\nWork\nCompany\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Mobile\n—\nWork Contact\n—\nTags\n—\nLocation\nAddress\n—\nWork Location\n—\nNote\nNote\n—\n0\nAttachments\nAdd attachment\n\nNo attachments yet\n\nMessages and activities\n\nNo messages or activities yet"
+}
