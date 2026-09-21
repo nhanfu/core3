@@ -1,0 +1,44 @@
+page: { id: survey-certification-report }
+datasources:
+  - id: survey_certification_report
+    single: true
+    permission: surveys.read
+    query: "SELECT p.id AS participant_id, p.survey_id, p.survey_name, p.contact AS participant_name, p.email AS participant_email, p.score, 'Passed' AS certification_status, 'Ready' AS report_status, 'modern_purple' AS report_layout, 'Certification' AS report_type FROM survey_participants p WHERE p.id = :id AND p.state = 'Completed' AND p.quiz_passed = true"
+  - id: survey_certification_report_runs
+    permission: surveys.read
+    query: "SELECT id, participant_id, survey_id, survey_name, participant_name, participant_email, requested_by, certificate_title, score, report_layout, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM survey_certification_reports WHERE participant_id = :id ORDER BY generated_at DESC, id DESC"
+actions:
+  - id: print_certification_report
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/surveys.certification.report', {
+          method: 'POST',
+          body: { participant_id: row.participant_id, requested_by: 'Admin User', current_user_name: 'Admin User' },
+        });
+        window.print();
+      }
+  - id: record_certification_report
+    type: server
+    permission: surveys.read
+    action: surveys.certification.report
+    handler: yaml_mutation
+    operation: report
+    refresh: [survey_certification_report, survey_certification_report_runs]
+    mutation:
+      operation: update
+      table: survey_certification_reports
+      fields: [requested_by]
+      concurrency: false
+      guards:
+        - { query: "SELECT p.id FROM survey_participants p WHERE p.id = :participant_id AND p.state = 'Completed' AND p.quiz_passed = true", status: 404, code: SURVEY_CERTIFICATION_NOT_PASSED, message: Only a passed certification can be printed. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:requested_by, ''), 'Admin User') = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: SURVEY_CERTIFICATION_REPORT_ACTOR, message: The report actor must match the signed-in user. }
+      before_steps:
+        - query: "SELECT 'survey-certification-report-' || CAST(p.id AS VARCHAR) || '-' || regexp_replace(lower(COALESCE(NULLIF(TRIM(CAST(:requested_by AS VARCHAR)), ''), 'Admin User')), '[^a-z0-9]+', '-', 'g') AS id, p.id AS participant_id, p.survey_id, p.survey_name, p.contact AS participant_name, p.email AS participant_email, COALESCE(NULLIF(TRIM(CAST(:requested_by AS VARCHAR)), ''), 'Admin User') AS requested_by, p.survey_name AS certificate_title, COALESCE(p.score, 0) AS score, 'modern_purple' AS report_layout FROM survey_participants p WHERE p.id = :participant_id"
+          assign: true
+        - query: "INSERT INTO survey_certification_reports(id, participant_id, survey_id, survey_name, participant_name, participant_email, requested_by, certificate_title, score, report_layout, generated_at, row_version) VALUES (:id, :participant_id, :survey_id, :survey_name, :participant_name, :participant_email, :requested_by, :certificate_title, :score, :report_layout, TIMESTAMP '2026-01-15 00:00:00', 1) ON CONFLICT (id) DO NOTHING"
+      steps:
+        - { query: "UPDATE survey_certification_reports SET requested_by = :requested_by, row_version = row_version + 1 WHERE id = :id", expect_changed: true, status: 409, code: SURVEY_CERTIFICATION_REPORT_CHANGED, message: The certification report changed before it was recorded. }
+      result: { query: "SELECT id, participant_id, survey_id, survey_name, participant_name, participant_email, requested_by, certificate_title, score, report_layout, CAST(generated_at AS VARCHAR) AS generated_at, row_version, 'Ready' AS report_status FROM survey_certification_reports WHERE id = :id" }

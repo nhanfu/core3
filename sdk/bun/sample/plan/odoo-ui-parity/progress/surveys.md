@@ -419,6 +419,26 @@ redirected both viewports to `/web/login?redirect=%2Fodoo%3F` because that
 fixture is unavailable. No browser or paired Odoo sign-off is claimed;
 Surveys remains **qa-in-progress / conditional**.
 
+## 2026-09-21 — `SURVEYS-CERTIFICATION-REPORT-001`
+
+Selected the smallest remaining authenticated certification behavior after the
+public live-poll slice. Odoo's `/survey/<survey_id>/get_certification` route
+requires a succeeded certification attempt and renders the certification
+report. Core3 adds the `survey-certification-report` page/API pair, a passed
+participant-only datasource, and a `surveys.read` print action reached from
+participant detail. Report runs persist under a deterministic participant and
+actor key; actor mismatch and failed/in-progress attempts are rejected before
+mutation. File-backed reopen and concurrent replay retain one report history
+row.
+
+Focused verification passes **4 tests / 22 assertions**. Browser and Odoo
+comparison are conditional: Core3 service ports were unavailable and Odoo did
+not expose an authenticated Surveys certification fixture. No sign-off is
+claimed.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-LIVE-POLL-001`
 
 Selected the next uncovered source-backed live-session behavior after the

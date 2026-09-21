@@ -1,0 +1,37 @@
+version: 0.0.50
+description: Durable authenticated certification report runs
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_certification_reports (
+        id VARCHAR PRIMARY KEY,
+        participant_id VARCHAR NOT NULL,
+        survey_id VARCHAR NOT NULL,
+        survey_name VARCHAR NOT NULL,
+        participant_name VARCHAR,
+        participant_email VARCHAR,
+        requested_by VARCHAR NOT NULL,
+        certificate_title VARCHAR NOT NULL,
+        score DECIMAL(8,2) NOT NULL DEFAULT 0,
+        report_layout VARCHAR NOT NULL DEFAULT 'modern_purple',
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS survey_certification_reports_participant_idx ON survey_certification_reports(participant_id, generated_at, id);
+      INSERT INTO survey_certification_reports(
+        id, participant_id, survey_id, survey_name, participant_name, participant_email,
+        requested_by, certificate_title, score, report_layout, generated_at, row_version
+      ) VALUES (
+        'survey-certification-report-participant-certification-2-admin-user',
+        'participant-certification-2', 'survey-demo-certification', 'MyCompany Vendor Certification',
+        'Gemini Furniture', 'gemini@example.com', 'Admin User',
+        'MyCompany Vendor Certification', 100, 'modern_purple', TIMESTAMP '2026-01-15 00:00:00', 1
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS survey_certification_reports_participant_idx;
+      DROP TABLE IF EXISTS survey_certification_reports;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

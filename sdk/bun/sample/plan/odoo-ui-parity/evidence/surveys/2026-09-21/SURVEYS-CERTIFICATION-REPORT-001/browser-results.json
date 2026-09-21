@@ -1,0 +1,13 @@
+{
+  "feature_id": "SURVEYS-CERTIFICATION-REPORT-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "probe": "127.0.0.1:3000,3001,3390,3391 /api/modules -> curl connection refused", "blocker": "The bounded browser probe could not connect because the configured Core3 service ports 3000, 3001, 3390, and 3391 were unavailable." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "probe": "127.0.0.1:3000,3001,3390,3391 /api/modules -> curl connection refused", "blocker": "The bounded browser probe could not connect because the configured Core3 service ports 3000, 3001, 3390, and 3391 were unavailable." }
+  },
+  "odoo": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "probe": "GET /odoo/surveys? -> HTTP 303 /odoo/surveys; GET /survey/check_session_code/5822 -> HTTP 415 jsonrpc Content-Type required", "blocker": "The authenticated Surveys certification fixture was not available; the route remained behind the Odoo login/session boundary." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "probe": "GET /odoo/surveys? -> HTTP 303 /odoo/surveys; GET /survey/check_session_code/5822 -> HTTP 415 jsonrpc Content-Type required", "blocker": "The authenticated Surveys certification fixture was not available; the route remained behind the Odoo login/session boundary." }
+  },
+  "sign_off": false
+}

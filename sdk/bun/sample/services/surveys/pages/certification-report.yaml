@@ -1,0 +1,23 @@
+title: Certification report
+page: { id: survey-certification-report, route: /surveys/certification-report, breadcrumb: [Marketing, Surveys, Participants, Certification report], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_certification_report
+    title_field: certificate_title
+    subtitle_field: survey_name
+    editable: false
+    header_actions:
+      - { id: print_certification_report, label: Print certification, permission: surveys.read, variant: primary, show_if: "record.report_status === 'Ready'" }
+    groups:
+      - title: Certification
+        fields: [{ field: certificate_title, label: Certificate }, { field: participant_name, label: Participant }, { field: participant_email, label: Email }, { field: survey_name, label: Survey }, { field: score, label: Score (%) }, { field: certification_status, label: Status, type: StatusChip }, { field: report_layout, label: Template }]
+  - type: ContactGrid
+    source: survey_certification_report_runs
+    row_key: id
+    columns:
+      - { field: certificate_title, label: Certificate, type: PrimaryEntityCell }
+      - { field: requested_by, label: Requested by }
+      - { field: score, label: Score, align: right }
+      - { field: report_layout, label: Template }
+      - { field: generated_at, label: Generated at }
+    empty_state: { title: No report history, description: Printed certification reports are recorded here. }

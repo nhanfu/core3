@@ -2230,3 +2230,31 @@ returned `{"error":"survey_wrong"}`. No authenticated visual or paired Odoo
 session comparison is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.
+
+## Wave 31 — `SURVEYS-CERTIFICATION-REPORT-001`
+
+Odoo's authenticated `addons/survey/controllers/main.py:704-723` route
+`/survey/<int:survey_id>/get_certification` only serves a user who has a
+succeeded certification attempt; `_generate_report` at lines 762-767 renders
+the `survey.certification_report` PDF. The survey model's certification
+settings and report layout are defined in `addons/survey/models/survey_survey.py:122-153`.
+
+Core3 adds the authenticated `survey-certification-report` page/API pair. The
+passed-participant datasource is read-protected and cannot disclose a failed
+or in-progress participant. The participant detail page exposes the report
+entry point only for a completed passed attempt. Printing records a durable,
+deterministic report run in `survey_certification_reports`; the report action
+requires `surveys.read`, checks the signed-in actor, uses a deterministic
+participant/actor key for replay, and seeds the record before the print action
+so concurrent calls converge to one history row. The migration is replay-safe
+and file-backed reopen preserves the report.
+
+Focused verification is **4 passed / 22 assertions** in
+`test/surveys_certification_report.integration.test.ts`, including page/API
+joining, passed-only access, actor rejection, deterministic replay, concurrent
+calls, and file-backed restart. Authenticated Core3 desktop/mobile and paired
+Odoo evidence remain conditional: the bounded probe recorded unavailable Core3
+service ports and Odoo's login/session/fixture blocker. No certification
+parity sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.

@@ -1448,3 +1448,21 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.
+
+## Bounded QA run: `SURVEYS-CERTIFICATION-REPORT-001` — 2026-09-21
+
+- Source/UI: Odoo's authenticated `get_certification` route is represented by
+  the separate `survey-certification-report` page/API pair; participant detail
+  exposes it only for completed passed attempts.
+- Persistence/guards: the deterministic report history row survives migration
+  replay and file-backed DuckDB reopen. Failed/in-progress participants return
+  `SURVEY_CERTIFICATION_NOT_PASSED`; requested-by/current-user mismatch returns
+  `SURVEY_CERTIFICATION_REPORT_ACTOR`; same-key concurrent calls converge.
+- Verification: **4 focused tests / 22 assertions** pass. No full-repository
+  sign-off is claimed.
+- Runtime/reference: Core3 desktop/mobile probes were blocked by unavailable
+  service ports. Odoo's authenticated certification fixture was unavailable;
+  no desktop/mobile visual or paired Odoo sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.

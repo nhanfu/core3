@@ -637,3 +637,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-POLL-001/`.
+
+## `SURVEYS-CERTIFICATION-REPORT-001` — authenticated certification report
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-056 | authenticated report | Passed participant → certification report | Expose a passed-only report page/API pair and print action | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-053 | restart/idempotency | Print → concurrent replay → file-backed reopen | Persist one deterministic report-run row and preserve it after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-055 | permission/actor | Failed participant and spoofed actor | Reject before mutation with explicit report guard codes | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-054 | authenticated responsive/reference | Certification report desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | `browser-results.json` | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-REPORT-001/`.
