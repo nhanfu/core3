@@ -2364,3 +2364,25 @@ and paired Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and
 8072 were unavailable. No authenticated visual or paired Odoo sign-off is
 claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/`.
+
+## Wave 36 — `SURVEYS-ACTIVITY-001`
+
+The next smallest open source-backed behavior is Odoo Survey activity
+management. `survey.survey` inherits `mail.activity.mixin`
+(`addons/survey/models/survey_survey.py:23`), renders `activity_ids` in the
+Survey kanban (`survey_survey_views.xml:333`), and exposes activity filters in
+the search view (`survey_survey_views.xml:373-385`).
+
+Core3 adds durable `survey_activities` storage with a deterministic planned
+fixture, and binds schedule/mark-done actions to the existing authenticated
+`survey-detail` page/API pair. Scheduling requires `surveys.write`, an actor,
+an active survey/current parent row version, valid type/summary/date, and
+increments the parent version. Completion requires `surveys.write`, an actor,
+and the current activity row version. Replay and restart preserve one durable
+activity lifecycle.
+
+Focused verification is **3 passed / 18 assertions**. Core3 desktop/mobile
+and paired Odoo probes were blocked because ports 3000, 3001, 3390, 3391, and
+8072 were unavailable. No authenticated visual or paired Odoo sign-off is
+claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/`.

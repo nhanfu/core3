@@ -435,6 +435,21 @@ Core3 ports 3000/3001/3390/3391 and Odoo port 8072 unavailable, so no
 authenticated desktop/mobile or paired Odoo sign-off is claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/`.
 
+## 2026-09-21 — `SURVEYS-ACTIVITY-001`
+
+Selected the smallest open authenticated behavior after responsible-user
+assignment: Odoo Survey activities from `mail.activity.mixin`. Core3 now
+persists `survey_activities`, exposes separate API schedule/complete actions,
+and binds them to the existing `survey-detail` page through the activity
+source/action contract. Actor, `surveys.write`, active-survey, type/date/
+summary, parent row-version, activity row-version, replay, and restart guards
+are covered.
+
+Focused verification: **3 passed / 18 assertions**. Runtime evidence records
+Core3 ports 3000/3001/3390/3391 and Odoo port 8072 unavailable; no
+authenticated desktop/mobile or paired Odoo sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/`.
+
 ## 2026-09-21 — `SURVEYS-INVITE-ATTACHMENT-001`
 
 Selected the next smallest open source-backed invite behavior: Odoo's

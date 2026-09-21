@@ -697,3 +697,15 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.
+
+## `SURVEYS-ACTIVITY-001` — Survey activity lifecycle
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-061 | authenticated activity | Survey detail → schedule activity | Existing page/API pair creates a durable planned activity | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-060 | permission/actor | Missing actor, invalid type/date/summary | Reject before mutation with explicit guard codes | test-results.md, focused test | pass |
+| SURVEYS-WF-058 | restart/idempotency | Schedule → mark done → stale replay → reopen | One activity lifecycle survives restart and stale replay cannot mutate it | test-results.md, focused test | pass |
+| SURVEYS-UI-059 | authenticated responsive/reference | Activity form/stream desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/.

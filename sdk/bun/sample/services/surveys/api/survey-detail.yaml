@@ -18,7 +18,62 @@ datasources:
   - id: survey_responses
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, language_code, answer_data, skipped_questions, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
+  - id: survey_activities
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_ACTIVITIES_UNAVAILABLE, message: Survey activities are temporarily unavailable. } }
+    query: "SELECT id, row_version, survey_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user_id, assigned_user_name, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, CAST(created_at AS VARCHAR) AS created_at FROM survey_activities WHERE survey_id = :id ORDER BY due_date NULLS LAST, created_at DESC, id"
 actions:
+  - id: schedule_survey_activity
+    type: server_form
+    permission: surveys.write
+    title: Schedule activity
+    action: surveys.records.activity.schedule
+    handler: yaml_mutation
+    operation: create
+    params: { survey_id: '{state.survey_detail.id}', expected_row_version: '{state.survey_detail.row_version}' }
+    refresh: [survey_detail, survey_activities]
+    mutation:
+      operation: insert
+      table: survey_activities
+      fields: [survey_id, activity_type, summary, due_date, assigned_user_id, assigned_user_name, actor_name]
+      required: [survey_id, activity_type, summary]
+      defaults: { state: planned, actor_name: Admin User, created_at: '2026-01-15 09:00:00', updated_at: '2026-01-15 09:00:00' }
+      generated: [id]
+      before_steps:
+        - query: "SELECT :survey_id || '-activity-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM survey_activities WHERE survey_id = :survey_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :survey_id AND state <> 'Archived' AND row_version = :expected_row_version", status: 409, code: SURVEY_ACTIVITY_PARENT_CHANGED, message: This survey changed or is archived. Reload before scheduling an activity. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_ACTIVITY_ACTOR_REQUIRED, message: An authenticated survey actor is required to schedule an activity. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:activity_type AS VARCHAR) IN ('todo', 'email', 'call', 'meeting', 'document')", status: 422, code: SURVEY_ACTIVITY_TYPE_INVALID, message: Choose a valid activity type. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:summary AS VARCHAR), ''))) BETWEEN 1 AND 4000", status: 422, code: SURVEY_ACTIVITY_SUMMARY_REQUIRED, message: Activity summary is required. }
+        - { query: "SELECT 1 AS ok WHERE :due_date IS NULL OR LENGTH(TRIM(CAST(:due_date AS VARCHAR))) = 0 OR TRY_CAST(:due_date AS DATE) IS NOT NULL", status: 422, code: SURVEY_ACTIVITY_DATE_INVALID, message: Due date must be a valid ISO date. }
+      steps:
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_ACTIVITY_PARENT_CHANGED, message: This survey changed while the activity was being scheduled. }
+      result: { query: "SELECT * FROM survey_activities WHERE id = :id" }
+    fields:
+      - { field: activity_type, label: Activity type, type: select, options: [{ value: todo, label: To-Do }, { value: email, label: Email }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: document, label: Document }], required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: text, placeholder: YYYY-MM-DD }
+      - { field: assigned_user_id, label: Assigned user ID, type: text }
+      - { field: assigned_user_name, label: Assigned to, type: text }
+  - id: complete_survey_activity
+    type: server
+    permission: surveys.write
+    action: surveys.records.activity.complete
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', values: { state: done, completed_at: '2026-01-15 10:00:00' } }
+    refresh: [survey_detail, survey_activities]
+    mutation:
+      operation: update
+      table: survey_activities
+      fields: [state, completed_at]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM survey_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: SURVEY_ACTIVITY_STALE, message: This activity is already complete or changed. Reload before completing it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_ACTIVITY_ACTOR_REQUIRED, message: An authenticated survey actor is required to complete an activity. }
+      result: { query: "SELECT * FROM survey_activities WHERE id = :id" }
   - id: update_survey_responsible_user
     type: server_form
     permission: surveys.write

@@ -1553,3 +1553,23 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESPONSIBLE-USER-001/.
+
+## Bounded QA run: `SURVEYS-ACTIVITY-001` — 2026-09-21
+
+- Source/UI: Odoo `survey.survey` inherits `mail.activity.mixin`, renders
+  `activity_ids` in the Survey kanban, and defines activity search filters.
+- Persistence/guards: Core3 migrations `0.0.56`/`0.0.57` add and seed durable
+  activities. Schedule/complete actions are joined to `survey-detail` through
+  the API/page `page.id`, require `surveys.write` and an actor, and enforce
+  parent/activity optimistic versions plus valid type/date/summary/state.
+- Verification: **3 focused tests / 18 assertions** pass; adjacent catalog,
+  responsible-user, and activity regression is **29 passed / 255 assertions**.
+  This includes durable schedule/complete, stale replay rejection, and
+  file-backed restart. Scoped diff-check passes; full repository regression
+  was not run.
+- Runtime/reference: Core3 ports 3000, 3001, 3390, and 3391 were unavailable
+  for authenticated desktop/mobile capture. Odoo port 8072 was unavailable.
+  No authenticated visual or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-ACTIVITY-001/.

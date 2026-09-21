@@ -1,0 +1,21 @@
+version: 0.0.57
+description: Deterministic Survey activity fixture
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_activities(
+        id, row_version, survey_id, activity_type, summary, due_date,
+        assigned_user_id, assigned_user_name, state, actor_name, created_at, updated_at
+      ) VALUES (
+        'survey-activity-demo-001', 1, 'survey-demo-001', 'todo',
+        'Review customer survey configuration', DATE '2026-01-16',
+        'user-admin', 'Admin User', 'planned', 'Admin User',
+        TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_activities WHERE id = 'survey-activity-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

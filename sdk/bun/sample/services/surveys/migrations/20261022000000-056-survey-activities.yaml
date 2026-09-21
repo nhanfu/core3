@@ -1,0 +1,30 @@
+version: 0.0.56
+description: Durable Odoo-style Survey activity lifecycle
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_activities (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        survey_id VARCHAR NOT NULL,
+        activity_type VARCHAR NOT NULL DEFAULT 'todo',
+        summary VARCHAR NOT NULL,
+        due_date DATE,
+        assigned_user_id VARCHAR,
+        assigned_user_name VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'planned',
+        completed_at TIMESTAMP,
+        actor_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE (survey_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS survey_activities_survey_idx ON survey_activities(survey_id, due_date, id);
+    down: |
+      DROP INDEX IF EXISTS survey_activities_survey_idx;
+      DROP TABLE IF EXISTS survey_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

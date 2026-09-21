@@ -1,0 +1,14 @@
+{
+  "feature_id": "SURVEYS-ACTIVITY-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "blocker": "Ports 3000, 3001, 3390, and 3391 were not listening; no authenticated Survey activity surface rendered." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "blocker": "Ports 3000, 3001, 3390, and 3391 were not listening; no authenticated Survey activity surface rendered." }
+  },
+  "odoo": {
+    "desktop": { "viewport": "1440x900", "status": "blocked", "blocker": "Odoo reference port 8072 was not listening; authenticated activity comparison was unavailable." },
+    "mobile": { "viewport": "390x844", "status": "blocked", "blocker": "Odoo reference port 8072 was not listening; authenticated activity comparison was unavailable." },
+    "reference_fixture": "Odoo Surveys activity fixture could not be authenticated or compared because the reference service was unavailable."
+  },
+  "signoff": "conditional; tests do not constitute desktop/mobile or paired Odoo sign-off"
+}
