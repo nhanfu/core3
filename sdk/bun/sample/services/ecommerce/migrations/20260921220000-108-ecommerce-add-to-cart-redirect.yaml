@@ -1,0 +1,23 @@
+version: 0.0.108
+kind: schema
+description: durable Website Sale add-to-cart redirect policy
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_add_to_cart_policies (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        add_to_cart_action VARCHAR NOT NULL DEFAULT 'stay',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (company_name),
+        CHECK (add_to_cart_action IN ('stay', 'go_to_cart'))
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_add_to_cart_policies_scope_idx
+        ON ecommerce_add_to_cart_policies(company_name, add_to_cart_action);
+    down: DROP TABLE IF EXISTS ecommerce_add_to_cart_policies;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Add to Cart Redirect Policy (`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`, 2026-09-21)
+
+- Odoo source/settings: pass. `website.add_to_cart_action` defines `stay` and
+  `go_to_cart`; `cart_redirect_setting` binds the settings field,
+  `ir_http` exposes it in the session, `cart_service.js` redirects to
+  `/shop/cart`, and `/shop/cart/add` is the public add-to-cart controller.
+- Core3 lifecycle: pass for this bounded contract. Migrations 108/109 add the
+  durable company-scoped policy and deterministic fixture. Separate page/API
+  YAML provides the configuration form, options, `ecommerce.write` optimistic
+  update, company/validation/stale guards, and authenticated/anonymous cart
+  redirect intent while preserving line persistence.
+- Focused verification: `bun test
+  test/ecommerce_add_to_cart_redirect.integration.test.ts` — **3 passed, 31
+  assertions, 0 failures**. Shop regression plus focused suite — **6 passed,
+  56 assertions, 0 failures**.
+- Audit/lint/diff: scoped Ecommerce YAML validation, scoped ESLint, and
+  `git diff --check` passed. Full `bun run audit` passed at 725 pages, 734
+  routes, and 1407 datasources.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 refuse
+  connections. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-checkout-add-to-cart-redirect-001/`.
+
 ## Zero-Price Sale Policy (`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`, 2026-09-21)
 
 - Odoo source/settings: pass. `website.prevent_zero_price_sale` and

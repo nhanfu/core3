@@ -1,6 +1,30 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded zero-price sale-policy slice; module sign-off remains open)
+Status: qa-in-progress (bounded add-to-cart redirect slice; module sign-off remains open)
+
+## Bounded feature — Add to Cart Redirect Policy (`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`)
+
+Wave 22 selected Odoo Website Sale's `website.add_to_cart_action` setting,
+which is not present in Core3. Odoo's `cart_redirect_setting` exposes Stay on
+Product Page and Go to cart; `ir_http` places the value in the website
+session, `cart_service.js` redirects to `/shop/cart` for the latter, and the
+public `/shop/cart/add` controller owns the add-to-cart workflow.
+
+Core3 migrations 108/109 add a durable company-scoped policy and deterministic
+fixture. Separate Add to Cart Redirect page/API YAML exposes the read datasource,
+supported options, Configuration menu entry, and an `ecommerce.write`
+optimistic update. Authenticated and anonymous Shop add-to-cart mutations now
+return deterministic redirect intent (`/ecommerce/shop` or `/ecommerce/cart`)
+while preserving cart persistence and company scope. Migration replay and
+DuckDB restart preserve the selected policy.
+
+Focused source/contract, policy CRUD, company/validation/concurrency, both cart
+workflows, migration replay, restart, scoped YAML audit, lint, and diff-check
+evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-checkout-add-to-cart-redirect-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+3000/4312/4313 and no persistent browser runtime; Odoo `/shop` remains an
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Zero-Price Sale Policy (`ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001`)
 

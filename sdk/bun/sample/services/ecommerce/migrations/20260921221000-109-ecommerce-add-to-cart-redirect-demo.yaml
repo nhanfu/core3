@@ -1,0 +1,17 @@
+version: 0.0.109
+kind: data
+description: deterministic Website Sale add-to-cart redirect fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_add_to_cart_policies
+        (id, row_version, company_name, add_to_cart_action)
+      VALUES
+        ('ecommerce-add-to-cart-policy-my-company', 1, 'My Company', 'stay')
+      ON CONFLICT (company_name) DO UPDATE SET
+        add_to_cart_action = EXCLUDED.add_to_cart_action;
+    down: DELETE FROM ecommerce_add_to_cart_policies WHERE company_name = 'My Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,36 @@
+page: { id: ecommerce-add-to-cart-policy }
+datasources:
+  - id: ecommerce_add_to_cart_policy
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ADD_TO_CART_POLICY_UNAUTHENTICATED, message: Sign in to view add-to-cart redirect policy. }
+      forbidden: { status: 403, code: ECOMMERCE_ADD_TO_CART_POLICY_FORBIDDEN, message: You do not have permission to view add-to-cart redirect policy. }
+      missing_record: { status: 404, code: ECOMMERCE_ADD_TO_CART_POLICY_NOT_FOUND, message: Add-to-cart redirect policy not found for this company. }
+      transport_error: { status: 503, code: ECOMMERCE_ADD_TO_CART_POLICY_UNAVAILABLE, message: Add-to-cart redirect policy is temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, add_to_cart_action, CASE add_to_cart_action WHEN 'go_to_cart' THEN 'Go to cart' ELSE 'Stay on Product Page' END AS action_label, CASE add_to_cart_action WHEN 'go_to_cart' THEN '/ecommerce/cart' ELSE '/ecommerce/shop' END AS redirect_path, updated_at FROM ecommerce_add_to_cart_policies WHERE company_name = COALESCE(NULLIF(:company_name, ''), 'My Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: ecommerce_add_to_cart_policy_options
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('stay', 'Stay on Product Page'), ('go_to_cart', 'Go to cart')) modes(value, label)"
+actions:
+  - id: edit_ecommerce_add_to_cart_policy
+    type: server_form
+    permission: ecommerce.write
+    title: Save Add to Cart Redirect
+    action: ecommerce.shop.add_to_cart_policy.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_add_to_cart_policy, ecommerce_shop_products]
+    mutation:
+      required: [id, expected_row_version, add_to_cart_action]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_add_to_cart_policies WHERE id = :id AND row_version = :expected_row_version AND company_name = COALESCE(NULLIF(:current_company_name, ''), company_name)", status: 409, code: ECOMMERCE_ADD_TO_CART_POLICY_STALE, message: This add-to-cart redirect policy changed or belongs to another company. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE :add_to_cart_action IN ('stay', 'go_to_cart')", status: 422, code: ECOMMERCE_ADD_TO_CART_POLICY_INVALID, message: Choose Stay on Product Page or Go to cart. }
+      steps:
+        - { query: "UPDATE ecommerce_add_to_cart_policies SET add_to_cart_action = :add_to_cart_action, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_ADD_TO_CART_POLICY_STALE, message: This add-to-cart redirect policy changed before saving. Reload before retrying. }
+      result: { query: "SELECT id, row_version, company_name, add_to_cart_action, CASE add_to_cart_action WHEN 'go_to_cart' THEN 'Go to cart' ELSE 'Stay on Product Page' END AS action_label, CASE add_to_cart_action WHEN 'go_to_cart' THEN '/ecommerce/cart' ELSE '/ecommerce/shop' END AS redirect_path FROM ecommerce_add_to_cart_policies WHERE id = :id" }
+    fields:
+      - { field: add_to_cart_action, label: Add to Cart Action, type: select, options_source: ecommerce_add_to_cart_policy_options, required: true }

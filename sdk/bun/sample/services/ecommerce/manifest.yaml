@@ -113,3 +113,7 @@ menu:
           label: Zero-Price Sale Policy
           icon: phone
           permission: ecommerce.read
+        - path: /ecommerce/add-to-cart-policy
+          label: Add to Cart Redirect
+          icon: cart
+          permission: ecommerce.read

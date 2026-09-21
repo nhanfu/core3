@@ -10,6 +10,21 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001
+
+- ECOM-FUNC-051: trace Odoo `website.add_to_cart_action`, the
+  `cart_redirect_setting`, website session, cart service, and `/shop/cart/add`
+  controller; verify the Core3 page/API pairing.
+- ECOM-WF-062: replay the deterministic policy, switch Stay on Product Page to
+  Go to cart and back, return redirect intent from authenticated and anonymous
+  add-to-cart, and preserve the policy across migration replay and restart.
+- ECOM-PERM-058: require `ecommerce.read` for policy reads and
+  `ecommerce.write` for updates; reject wrong-company, unsupported-mode, and
+  stale-row updates without changing policy state.
+- ECOM-UI-044: render the Add to Cart Redirect form and resulting shop/cart
+  intent at desktop and mobile; Core3 browser and Odoo comparison remain
+  blocked by runtime availability and `/shop` HTTP 404.
+
 ## ECOM-CATALOG-ZERO-PRICE-SALE-POLICY-001
 
 - ECOM-FUNC-050: trace Odoo zero-price setting, website fields,
