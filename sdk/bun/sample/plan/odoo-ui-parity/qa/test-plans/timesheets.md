@@ -305,6 +305,20 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 35 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
+
+- Source: `hr_timesheet/views/hr_timesheet_views.xml`,
+  `timesheet_action_project`, domain `project_id in active_ids`, context
+  `is_timesheet: 1`.
+- Core3: project page remains layout-only; API accepts `project_ids`, exposes a
+  durable `project_timesheet_scope` aggregate, and guards selected project
+  membership, company, active state, timesheetability, and analytic account.
+- Focused test: `test/timesheets_project_multi_scope.integration.test.ts`,
+  4/4 tests and 21 expectations.
+- Required restart/permission/empty/stale checks are covered in the same
+  suite. Browser capture is required when Core3 and authenticated Odoo are
+  available; current exact blockers are in the feature evidence directory.
+
 ## Wave 34 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
 
 - Source gate: `hr_timesheet/models/project_project.py` `action_project_timesheets`; `hr_timesheet/views/hr_timesheet_views.xml` `act_hr_timesheet_line_by_project` uses `project_id = active_id` and `default_project_id = active_id`.

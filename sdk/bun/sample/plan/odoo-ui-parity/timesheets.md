@@ -1843,6 +1843,40 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 35 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
+
+The next smallest uncovered project action behavior is Odoo's separate
+`timesheet_action_project` record-context action in
+`addons/hr_timesheet/views/hr_timesheet_views.xml`. Unlike the completed
+single-project `act_hr_timesheet_line_by_project` context-default action, this
+action uses `('project_id', 'in', active_ids)` and preserves a multi-project
+selection. Its context still marks the form as a Timesheet with `is_timesheet:
+1`; it does not supply the Wave 34 single-project `default_project_id`.
+
+Core3 keeps `pages/project-timesheets.yaml` layout-only and extends the paired
+`api/project-timesheets.yaml` contract, joined by `page.id:
+project-timesheets`. The project list query accepts a deterministic comma-
+separated `project_ids` context, joins durable `timesheet_projects`, and
+returns only active, timesheetable, analytic-account-backed projects in the
+current company. A scope datasource aggregates selected project IDs, names,
+entry count, and hours from durable rows. The existing create action accepts a
+selected project from the multi-context set and fails closed for a stale
+selection; no migration was needed because existing durable project and entry
+relations are reused.
+
+Focused coverage is
+`test/timesheets_project_multi_scope.integration.test.ts`: 4 tests / 21
+expectations, including source/action mapping, page/API separation,
+multi-project reads, current-company/active-project/empty guards, durable
+multi-context create, stale selection rejection, and file-backed restart.
+Authenticated Core3 desktop/mobile capture was blocked because port 3001 had
+no listener. Odoo 8069 and 8073 returned HTTP 200 only for `/web/login`, so
+authenticated desktop/mobile comparison is not claimed. Exact probes are
+recorded under
+`evidence/timesheets/2026-09-21/timesheet-project-action-multi-scope-001/`.
+Existing Odoo Print/PDF/action surfaces remain open; no module sign-off is
+claimed.
+
 ## Wave 34 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
 
 The smallest open source-backed project-context behavior after the prior

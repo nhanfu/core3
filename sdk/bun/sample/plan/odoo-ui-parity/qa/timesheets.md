@@ -983,6 +983,24 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 Evidence: `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`.
 Odoo Print/PDF/action parity remains a separate blocker.
 
+## Wave 35 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo action comparison | `timesheet_action_project`, `project_id in active_ids`, `is_timesheet` context | pass in focused source test |
+| Paired YAML contract | layout-only `project-timesheets` page and API `page.id` binding | pass |
+| Durable multi-project scope | current-company project relation, stable IDs/names/counts/hours, persisted entries | pass |
+| Permission/company/active guards | `timesheets.read` scope, current company, active/timesheetable/analytic-account project joins | pass |
+| Multi-context create boundary | selected project must belong to the supplied project set; stale selection rejected | pass |
+| Restart | migration replay and file-backed multi-project scope read | pass |
+| Focused regression | 4/4 tests, 21 expectations | pass |
+| Audit/lint/diff | UI audit 748/757/1496, scoped ESLint, `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo multi-project action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login` |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-project-action-multi-scope-001/`.
+Odoo Print/PDF/action parity remains a separate blocker; no module sign-off is
+claimed.
+
 ## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 | Check | Expected evidence | Result |

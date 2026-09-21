@@ -935,6 +935,25 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Core3 desktop/mobile evidence is blocked because port 3001 refused `/api/modules` and `/project-timesheets`; Odoo 8069/8073 returned HTTP 200 only for unauthenticated `/web/login`. Exact probes and paired source comparison are under `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`. No authenticated browser sign-off is claimed.
 - Odoo Print/PDF/action surfaces remain open blockers; no module sign-off is claimed.
 
+## 2026-09-21 — `TIMESHEET-PROJECT-ACTION-MULTI-SCOPE-001`
+
+- Selected Odoo `timesheet_action_project`, whose source domain is
+  `project_id in active_ids`; this is distinct from Wave 34's single-project
+  `act_hr_timesheet_line_by_project` `default_project_id` context.
+- Kept `pages/project-timesheets.yaml` layout-only and extended the API pair
+  joined by `page.id: project-timesheets` with comma-separated multi-project
+  scope reads, a durable aggregate scope datasource, current-company active
+  timesheetable project guards, and a selected-project-in-context create guard.
+- No migration was added; existing durable project and timesheet entry tables
+  supply deterministic data. Focused coverage passed 4/4 tests with 21
+  expectations, including durable create, stale selection rejection, empty /
+  foreign-company / inactive-project guards, and file-backed restart.
+- Core3 port 3001 refused `/api/modules` and `/project-timesheets`; Odoo 8069
+  and 8073 returned only unauthenticated `/web/login`. Authenticated desktop /
+  mobile evidence is therefore blocked and no visual sign-off is claimed.
+- Odoo Print/PDF/action surfaces remain separate blockers. Evidence is under
+  `evidence/timesheets/2026-09-21/timesheet-project-action-multi-scope-001/`.
+
 ## 2026-09-21 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 - Selected Odoo `timesheet_action_from_employee`, whose form context carries `default_employee_id: active_id` while its domain stays scoped to the active employee. This is distinct from the completed employee report action/preview and the My Timesheets favorite-project prefill.

@@ -5,13 +5,18 @@ datasources:
     workflow: timesheet_entries
     pivot: { fields: [id, row_version, name, employee_name, project_id, project_name, task_name, work_date, description, hours, time_spent_display, billable, unit_amount, state] }
     error_states: { transport_error: { status: 503, code: PROJECT_TIMESHEETS_UNAVAILABLE, message: Project timesheets are temporarily unavailable. } }
-    query: "SELECT t.id, t.row_version, t.name, t.employee_name, t.project_id, t.project_name, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.billable, t.unit_amount, t.state FROM timesheet_entries t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.project_id = :project_id AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
+    query: "SELECT t.id, t.row_version, t.name, t.employee_name, t.project_id, t.project_name, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.billable, t.unit_amount, t.state FROM timesheet_entries t JOIN timesheet_projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account AND t.company_name = p.company_name AND t.project_id IN (SELECT UNNEST(string_split(COALESCE(NULLIF(:project_ids, ''), :project_id), ','))) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
   - id: project_timesheet_entry_defaults
     single: true
     permission: timesheets.write
     error_states: { transport_error: { status: 503, code: PROJECT_TIMESHEET_DEFAULTS_UNAVAILABLE, message: Project timesheet defaults are temporarily unavailable. } }
     meta: { mock_data_justification: The project context is resolved from the durable timesheetable project relation; no static form default is used. }
     query: "SELECT id AS project_id, name AS project_name, company_name FROM timesheet_projects WHERE id = :project_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+  - id: project_timesheet_scope
+    single: true
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: PROJECT_TIMESHEET_SCOPE_UNAVAILABLE, message: Project timesheet scope is temporarily unavailable. } }
+    query: "WITH selected_projects AS (SELECT p.id, p.name, p.company_name FROM timesheet_projects p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND p.active AND p.allow_timesheets AND p.has_analytic_account AND p.id IN (SELECT UNNEST(string_split(COALESCE(NULLIF(:project_ids, ''), :project_id), ',')))), selected_scope AS (SELECT STRING_AGG(id, ',' ORDER BY id) AS project_ids, STRING_AGG(name, ', ' ORDER BY id) AS project_names, COUNT(*) AS project_count FROM selected_projects), entry_totals AS (SELECT COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_entries e JOIN selected_projects p ON p.id = e.project_id AND p.company_name = e.company_name) SELECT s.project_ids, s.project_names, s.project_count, e.entry_count, e.total_hours FROM selected_scope s CROSS JOIN entry_totals e WHERE s.project_count > 0"
   - id: project_timesheet_context
     single: true
     permission: timesheets.read
@@ -61,7 +66,7 @@ actions:
     permission: timesheets.write
     title: New project timesheet
     action: timesheets.project_entries.create
-    params: { context_project_id: '{state.project_id}' }
+    params: { context_project_id: '{state.project_id}', context_project_ids: '{state.project_ids}' }
     handler: yaml_mutation
     operation: create
     prefill: source
@@ -79,7 +84,8 @@ actions:
       steps:
         - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE id = :id"
       guards:
-        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:context_project_id, ''), :project_id) = :project_id", status: 403, code: PROJECT_TIMESHEET_CONTEXT_SCOPE, message: The new entry must stay within the selected project context. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:context_project_ids, ''), '') <> '' OR COALESCE(NULLIF(:context_project_id, ''), :project_id) = :project_id", status: 403, code: PROJECT_TIMESHEET_CONTEXT_SCOPE, message: The new entry must stay within the selected project context. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(:context_project_ids, ''), :project_id) = :project_id OR EXISTS (SELECT 1 FROM timesheet_projects WHERE id = :project_id AND id IN (SELECT UNNEST(string_split(:context_project_ids, ','))))", status: 403, code: PROJECT_TIMESHEET_MULTI_CONTEXT_SCOPE, message: The new entry must stay within one of the selected project contexts. }
         - { query: "SELECT id FROM timesheet_projects WHERE id = :project_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND active AND allow_timesheets AND has_analytic_account", status: 403, code: PROJECT_TIMESHEET_PROJECT_SCOPE, message: Select an active timesheetable project in the current company. }
         - { query: "SELECT id FROM timesheet_entries WHERE project_id = :project_id LIMIT 1", status: 404, code: PROJECT_TIMESHEET_NOT_FOUND, message: Project not found or has no timesheet entries. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
