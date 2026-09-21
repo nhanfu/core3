@@ -1,0 +1,36 @@
+version: 0.0.31
+kind: schema
+description: Persist Purchase receipt-reminder preview messages and order reminder settings
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS receipt_reminder_email BOOLEAN;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS reminder_date_before_receipt INTEGER;
+      UPDATE purchase_orders SET receipt_reminder_email = FALSE WHERE receipt_reminder_email IS NULL;
+      UPDATE purchase_orders SET reminder_date_before_receipt = 1 WHERE reminder_date_before_receipt IS NULL;
+      UPDATE purchase_orders SET receipt_reminder_email = TRUE, reminder_date_before_receipt = 3
+        WHERE id IN ('po-demo-005', 'po-demo-006');
+      CREATE TABLE IF NOT EXISTS purchase_order_reminder_previews (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        recipient_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL,
+        template_label VARCHAR NOT NULL DEFAULT 'Purchase: Vendor Reminder',
+        sent_by VARCHAR NOT NULL,
+        sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_reminder_previews_order_idx
+        ON purchase_order_reminder_previews(purchase_order_id, sent_at DESC, id DESC);
+    down: |
+      DROP INDEX IF EXISTS purchase_order_reminder_previews_order_idx;
+      DROP TABLE IF EXISTS purchase_order_reminder_previews;
+      ALTER TABLE purchase_orders DROP COLUMN IF EXISTS reminder_date_before_receipt;
+      ALTER TABLE purchase_orders DROP COLUMN IF EXISTS receipt_reminder_email;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

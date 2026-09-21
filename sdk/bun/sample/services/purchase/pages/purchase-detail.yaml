@@ -16,6 +16,7 @@ components:
     header_actions:
       - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
       - { id: send_confirmed_purchase_order_detail, label: Send PO, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received'" }
+      - { id: preview_purchase_reminder_detail, label: Send Reminder, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.receipt_reminder_email && state.purchase_order_detail.state !== 'Cancelled'" }
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
       - { id: approve_purchase_order_detail, label: Approve Order, variant: primary, permission: purchase.manage, show_if: "state.purchase_order_detail.state === 'To Approve'" }
       - { id: receive_purchase_order_detail, label: Receive, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed'" }
@@ -32,7 +33,7 @@ components:
       - title: Vendor
         fields: [{ field: vendor_name, label: Vendor }, { field: contact_name, label: Contact }, { field: reference, label: Vendor reference }, { field: currency, label: Currency }, { field: company_name, label: Company }]
       - title: Order details
-        fields: [{ field: name, label: Purchase order }, { field: buyer_name, label: Buyer }, { field: confirmation_date, label: Confirmation date }, { field: expected_arrival, label: Expected arrival }, { field: billing_status, label: Billing status }, { field: state, label: Status }]
+        fields: [{ field: name, label: Purchase order }, { field: buyer_name, label: Buyer }, { field: confirmation_date, label: Confirmation date }, { field: expected_arrival, label: Expected arrival }, { field: billing_status, label: Billing status }, { field: state, label: Status }, { field: receipt_reminder_email, label: Ask confirmation, type: checkbox, readonly: true }, { field: reminder_date_before_receipt, label: Days before receipt, type: number, readonly: true }]
     notebook:
       active: products
       tabs:
