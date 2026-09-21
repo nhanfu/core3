@@ -113,3 +113,42 @@ Verification for this slice: `bun test ./test/blog*.integration.test.ts
 665 pages, 674 routes, and 1,182 datasources; targeted Blog ESLint and
 `git diff --check` passed. Authenticated paired Odoo desktop/mobile comparison
 remains open; no visual-parity claim is made for this backend/relation slice.
+
+## Post archive/unarchive slice — 2026-09-21
+
+The next uncovered source-backed `blog.post` behavior is Odoo's durable
+`active` archive flag. `views/website_pages_views.xml` exposes the Blog Post
+Pages action with an Archived search filter, while `models/website_blog.py`
+sets `is_published` false when a post is archived. The existing Core3 workflow
+had an `Archived` label but no persisted active flag, no unarchive transition,
+and public reads did not guard archived rows.
+
+Stable ID: `BLOG-POST-ARCHIVE-001`.
+
+- Schema: `services/blog/migrations/20260921100000-009-blog-post-archive.yaml`
+  adds and backfills `blog_posts.active` and its index idempotently.
+- Presentation: `services/blog/pages/posts.yaml` stays layout-only and adds the
+  Odoo-style Active/Archived record filter, active-only default, hidden active
+  status column, and Archive/Unarchive row actions.
+- Backend: `services/blog/pages/blog-workflow.yaml` owns the permissioned
+  archive/unarchive transitions; archive clears `published_date`, sets
+  `active = false`, and unarchive returns the post to Draft without republishing.
+  `services/blog/operations.yaml` excludes inactive posts from public list and
+  detail routes.
+- Permissions: reads remain `blog.read`; archive and unarchive require
+  `blog.manage`.
+- Test: `test/blog_post_archive.integration.test.ts` verifies persistence,
+  published-post unpublication, default active filtering, archived filtering,
+  and the manage permission boundary.
+
+The authenticated reference database does not have `website_blog` installed:
+the launcher has no Website/Blog menu and `/blog` returns Odoo Error 404. Core3
+also had no backend listener on `localhost:3001` during the browser probe. The
+desktop/mobile captures therefore document the exact reference blocker only;
+they are not visual-parity evidence.
+
+Verification: isolated focused test passed 3 tests / 13 assertions; Blog Sass
+build and Blog-scoped diff-check passed. The full Blog wildcard run was blocked
+by the concurrent unrelated duplicate datasource `sale_quotation_templates` in
+`services/order`; `bun run audit` stops on the same duplicate before producing
+an audit count. No full Blog sign-off is made.

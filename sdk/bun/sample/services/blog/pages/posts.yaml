@@ -5,6 +5,10 @@ datasources:
     permission: blog.read
     single: false
     query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Archived','Archived')) states(value, label)"
+  - id: blog_post_active_states
+    permission: blog.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('active','Active'), ('archived','Archived')) states(value, label)"
   - id: blog_lookup
     permission: blog.read
     single: false
@@ -12,7 +16,7 @@ datasources:
   - id: blog_posts
     permission: blog.read
     workflow: blog_posts
-    query: "SELECT p.id, p.row_version, p.blog_id, p.blog_name, p.company_name, p.name, p.subtitle, p.author_name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) AS tags, p.visits, CAST(p.published_date AS VARCHAR) AS published_date, p.state FROM blog_posts p WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.subtitle ILIKE '%' || :q || '%' OR COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) ORDER BY p.published_date NULLS LAST, p.created_at DESC"
+    query: "SELECT p.id, p.row_version, p.blog_id, p.blog_name, p.company_name, p.name, p.subtitle, p.author_name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) AS tags, p.visits, CAST(p.published_date AS VARCHAR) AS published_date, p.active, p.state FROM blog_posts p WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) AND ((CAST(:active AS VARCHAR) IS NULL AND p.active = TRUE) OR CAST(:active AS VARCHAR) = 'active' AND p.active = TRUE OR CAST(:active AS VARCHAR) = 'archived' AND p.active = FALSE) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.subtitle ILIKE '%' || :q || '%' OR COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) ORDER BY p.published_date NULLS LAST, p.created_at DESC"
 components:
   - type: ListView
     variant: odoo
@@ -20,7 +24,10 @@ components:
     create_action: create_blog_post
     create_label: New blog post
     search: { label: Search blog posts, placeholder: 'Search title, subtitle, or tag...' }
-    filters: [{ field: state, label: Status, options_source: blog_post_states }]
+    default_filters: { active: active }
+    filters:
+      - { field: active, label: Records, options_source: blog_post_active_states }
+      - { field: state, label: Status, options_source: blog_post_states }
     columns:
       - { field: name, label: Post, type: PrimaryEntityCell, secondary: subtitle }
       - { field: blog_name, label: Blog }
@@ -28,6 +35,7 @@ components:
       - { field: tags, label: Tags }
       - { field: visits, label: Views, align: right }
       - { field: published_date, label: Published on }
+      - { field: active, label: Active, type: StatusChip, optional: hide }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
@@ -38,7 +46,8 @@ components:
       - { id: blog_posts.export, label: Export, title: Export, icon: download }
       - { id: publish_blog_post, label: Publish, permission: blog.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: unpublish_blog_post, label: Unpublish, permission: blog.write, variant: secondary, show_if: "row.state === 'Published'" }
-      - { id: archive_blog_post, label: Archive, permission: blog.manage, variant: danger, show_if: "row.state !== 'Archived'" }
+      - { id: archive_blog_post, label: Archive, permission: blog.manage, variant: danger, show_if: "row.active === true" }
+      - { id: unarchive_blog_post, label: Unarchive, permission: blog.manage, variant: secondary, show_if: "row.active === false" }
 actions:
   - id: import_blog_posts
     type: server_form
@@ -54,7 +63,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:post_list AS VARCHAR))) > 0", status: 422, code: BLOG_POST_IMPORT_REQUIRED, message: Add at least one post row. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:post_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(line, '^[^|]+\\|[^|]+\\|[^|]+\\|[^|]+$'))", status: 422, code: BLOG_POST_IMPORT_INVALID, message: Each row must use Title|Subtitle|Author|Tags format. }
       steps:
-        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:post_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS subtitle, trim(split_part(line, '|', 3)) AS author_name, trim(split_part(line, '|', 4)) AS tags FROM lines WHERE line <> '') INSERT INTO blog_posts(id, row_version, blog_id, blog_name, company_name, name, subtitle, author_name, tags, state) SELECT 'blog-post-import-' || regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g'), 1, 'blog-demo-001', 'Core3 Engineering', COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), name, subtitle, author_name, tags, 'Draft' FROM parsed ON CONFLICT (id) DO UPDATE SET subtitle = EXCLUDED.subtitle, author_name = EXCLUDED.author_name, tags = EXCLUDED.tags, company_name = EXCLUDED.company_name, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:post_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS subtitle, trim(split_part(line, '|', 3)) AS author_name, trim(split_part(line, '|', 4)) AS tags FROM lines WHERE line <> '') INSERT INTO blog_posts(id, row_version, blog_id, blog_name, company_name, name, subtitle, author_name, tags, active, state) SELECT 'blog-post-import-' || regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g'), 1, 'blog-demo-001', 'Core3 Engineering', COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), name, subtitle, author_name, tags, TRUE, 'Draft' FROM parsed ON CONFLICT (id) DO UPDATE SET subtitle = EXCLUDED.subtitle, author_name = EXCLUDED.author_name, tags = EXCLUDED.tags, active = TRUE, state = 'Draft', company_name = EXCLUDED.company_name, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
       result: { query: "SELECT COUNT(*) AS imported FROM blog_posts WHERE id LIKE 'blog-post-import-%'" }
     fields: [{ field: post_list, label: Post List, type: textarea, required: true, placeholder: 'Title|Subtitle|Author|tag' }]
   - id: create_blog_post
@@ -68,8 +77,9 @@ actions:
     mutation:
       operation: insert
       table: blog_posts
-      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags]
+      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags, active]
       required: [blog_id, blog_name, name]
+      defaults: { active: true }
       guards:
         - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
@@ -92,3 +102,4 @@ actions:
   - { id: publish_blog_post, type: server, permission: blog.write, action: blog.posts.publish, handler: order_transition, workflow: blog_posts, operation: publish, refresh: [blog_posts] }
   - { id: unpublish_blog_post, type: server, permission: blog.write, action: blog.posts.unpublish, handler: order_transition, workflow: blog_posts, operation: unpublish, refresh: [blog_posts] }
   - { id: archive_blog_post, type: server, permission: blog.manage, action: blog.posts.archive, handler: order_transition, workflow: blog_posts, operation: archive, refresh: [blog_posts] }
+  - { id: unarchive_blog_post, type: server, permission: blog.manage, action: blog.posts.unarchive, handler: order_transition, workflow: blog_posts, operation: unarchive, refresh: [blog_posts] }

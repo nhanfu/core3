@@ -1,0 +1,16 @@
+version: 0.0.9
+kind: schema
+description: Durable Blog post archive state
+type:
+  postgres:
+    up: |
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      UPDATE blog_posts SET active = CASE WHEN state = 'Archived' THEN FALSE ELSE TRUE END;
+      CREATE INDEX IF NOT EXISTS blog_posts_active_idx ON blog_posts(active, state);
+    down: |
+      DROP INDEX IF EXISTS blog_posts_active_idx;
+      ALTER TABLE blog_posts DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

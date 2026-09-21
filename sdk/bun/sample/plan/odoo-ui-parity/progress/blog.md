@@ -60,3 +60,20 @@ diff-check passing. Vietnam read isolation, detail prefetch, and query-widening
 resistance are covered. Live process-restart upload persistence is limited by
 the memory-mode runner; authenticated Odoo comparison and full menu/workflow
 gates remain open.
+
+## BLOG-POST-ARCHIVE-001 — 2026-09-21
+
+Implemented the next source-backed Blog post slice from Odoo's
+`website_pages_views.xml` and `models/website_blog.py`: durable post archive
+state with active-only reads, Archived filtering, permissioned Archive and
+Unarchive actions, and archive-to-unpublished semantics. The page remains
+layout-only; workflow/API contracts own persistence and guards.
+
+- Focused isolated test: `bun test ./test/blog_post_archive.integration.test.ts
+  --timeout 20000` — 3 pass, 13 assertions.
+- Blog Sass build and Blog-scoped `git diff --check` passed.
+- Authenticated Odoo browser probe captured desktop/mobile 404 blockers under
+  `/tmp/core3-odoo-parity/blog/2026-09-21/`; Core3 `:3001` refused connection.
+- Full Blog wildcard regression was attempted but shared discovery was blocked
+  by unrelated concurrent Sales duplicate datasource `sale_quotation_templates`;
+  no full-suite claim is made.

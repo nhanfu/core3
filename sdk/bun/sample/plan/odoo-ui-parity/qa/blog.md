@@ -48,6 +48,20 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 | BLOG-FUNC-012 | Post tag restart durability | The focused slice closes and reopens DuckDB, reapplies migrations, and finds both relation rows and synchronized post tag names/version | pass for file-backed restart contract |
 | BLOG-QA-008 | Blog regression/tooling gates | Full Blog suite: 25 tests / 142 assertions; UI audit: 665 pages / 674 routes / 1,182 datasources; targeted Blog ESLint and `git diff --check` passed | pass; no full Blog sign-off implied |
 
+## Post archive/unarchive slice — 2026-09-21
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-ARCHIVE-FUNC-001 | Durable Odoo `blog.post.active` archive state | `test/blog_post_archive.integration.test.ts` — published demo post archives to `active=false`, `Archived`, `published_date=NULL`, then unarchives to active Draft with versions 2/3 | pass |
+| BLOG-ARCHIVE-FILTER-001 | Active-only manager/public reads and Archived filter | Same focused test verifies active default, declared active filter, and no published read after archive; `operations.yaml` guards public list/detail with `p.active = TRUE` | pass at contract level |
+| BLOG-ARCHIVE-PERM-001 | Archive permission boundary | Same focused test: actor with `blog.read`/`blog.write` but no `blog.manage` receives 403 and row remains unchanged | pass |
+| BLOG-ARCHIVE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `/tmp/core3-odoo-parity/blog/2026-09-21/odoo-blog-404-desktop.png` (1916x833), `odoo-blog-404-mobile.png` (390x844) | blocked: Odoo Website/Blog is not installed in `core3_reference`; Core3 `localhost:3001` refused connection |
+| BLOG-QA-009 | Slice regression/tooling gates | Focused archive test 3/13, Blog Sass build, and Blog-scoped `git diff --check`; full Blog wildcard attempted | conditional pass; full wildcard blocked by unrelated concurrent Sales duplicate `sale_quotation_templates` discovery ID |
+
+### BLOG-POST-ARCHIVE-001 evidence
+
+See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/). This is a bounded slice result and does not sign off the Blog module.
+
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-BLOG-WAVE-20260913-R2` → `QA-BLOG-WAVE-20260913-R2` | existing `agent/blog-wave-dev3` in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` | Blog site/company actor boundaries for blogs, posts, and assets, private 401/403 behavior, published/draft visibility, and focused stale/missing/atomicity tests | owner handle unavailable (no running owner process; HEAD `15814f8f` remains dispatch-only). Approved same-module takeover requested in this exact worktree; agent dispatch is unavailable here, so QA cannot yet be triggered |

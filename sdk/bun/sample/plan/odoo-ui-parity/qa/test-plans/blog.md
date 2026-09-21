@@ -71,3 +71,12 @@ Full Blog sign-off requires the focused suite, authenticated editor CRUD and
 publication workflow, public/private and site-scope checks, reload/restart
 persistence, Fluent HTML/assets validation, and paired Odoo desktop/mobile
 comparisons. Current contract evidence is not module completion.
+
+## BLOG-POST-ARCHIVE-001 — 2026-09-21
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-ARCHIVE-FUNC-001 | functional/data | Blog Editor with `blog.read`, `blog.write`, `blog.manage`; published demo post | Archive persists `active = false`, changes state to Archived, clears `published_date`, increments row version, and excludes the post from published reads | pass: focused 3-test slice |
+| BLOG-ARCHIVE-WF-001 | workflow | Same actor; archived post | Unarchive persists `active = true`, returns the post to Draft, does not republish it, and increments row version | pass: focused 3-test slice |
+| BLOG-ARCHIVE-PERM-001 | permission/security | Read/write actor without `blog.manage` | Archive is rejected with 403 and the row remains unchanged | pass: focused 3-test slice |
+| BLOG-ARCHIVE-UI-001 | responsive/visual | Authenticated shared Odoo profile; 1440x900 target and 390x844 target | Odoo Blog Post Pages and archived filter should be compared against Core3; exact blockers are recorded because reference `/blog` is 404 and Core3 `:3001` is unavailable | blocked: no visual claim |
