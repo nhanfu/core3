@@ -176,9 +176,9 @@ authenticated action boundary, migration reapply, and file-backed restart.
 Evidence: `evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
 The Odoo desktop/mobile launcher captures and `/forum` response show that
 `website_forum` is not installed in `core3_reference`; no Odoo Close Reasons
-screen exists to pair. Core3 browser capture remains blocked by the unrelated
-pre-existing Blog YAML discovery parse error before port 3001 binds. No visual
-parity or module sign-off is claimed.
+screen exists to pair. The final runtime check reached Core3 backend/frontend
+readiness, but an authenticated Core3 desktop/mobile capture was not completed
+before finalization. No visual parity or module sign-off is claimed.
 
 ## Runtime evidence and blockers — 2026-09-12
 

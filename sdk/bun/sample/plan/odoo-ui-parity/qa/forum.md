@@ -107,7 +107,8 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
   180 assertions, passed.
 - Odoo desktop/mobile authenticated launcher captures and the authenticated
   `/forum` 404 record the exact blocker: `website_forum` is not installed in
-  `core3_reference`, so Close Reasons is absent. Core3 desktop/mobile capture
-  is blocked by the unrelated Blog YAML discovery parse error before backend
-  bind. No visual parity claim is made.
+  `core3_reference`, so Close Reasons is absent. The final Core3 runtime check
+  reached backend/frontend readiness, but authenticated Core3 desktop/mobile
+  route evidence was not completed before finalization. No visual parity claim
+  is made.
 - Evidence: `../evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.

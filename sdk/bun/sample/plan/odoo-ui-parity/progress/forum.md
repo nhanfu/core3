@@ -63,9 +63,9 @@ and idempotent migration/restart coverage. Ranks and Badges are external
 Evidence: `evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
 Focused test passed 4/4 tests and 25/25 assertions; the full Forum corpus
 passed 25/25 tests and 180/180 assertions. Odoo visual pairing is blocked by
-the missing `website_forum` addon in `core3_reference`; Core3 browser capture is
-blocked by the pre-existing Blog YAML discovery error. No visual sign-off is
-claimed.
+the missing `website_forum` addon in `core3_reference`; the final Core3 runtime
+check reached readiness, but authenticated desktop/mobile browser capture was
+not completed before finalization. No visual sign-off is claimed.
 
 ## Next bounded task
 

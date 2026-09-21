@@ -18,13 +18,14 @@ or Forum entry. Therefore the requested Odoo Close Reasons list does not exist
 in this database and a paired Odoo list/form capture is not possible. The
 source-backed comparison above is from the local Odoo 19 addon source.
 
-## Core3 evidence blocker
+## Core3 evidence status
 
-No Core3 desktop/mobile page capture is claimed. The repository-wide runtime
-discovery is blocked before port 3001 binds by the unrelated pre-existing
-`services/blog/pages/blog-workflow.yaml` YAML parse error. This Forum slice did
-not modify Blog or any other module scope. The Core3 route, authenticated UI,
-and visual parity therefore remain open gates.
+No Core3 desktop/mobile page capture is claimed. The final
+`bun run dev --db=ddb --memory` check reached backend/frontend readiness and
+then ended only because the bounded command timeout elapsed. An authenticated
+Core3 route capture was not completed before finalization. This Forum slice did
+not modify Blog or any other module scope; Core3 browser proof and visual parity
+remain open gates.
 
 ## Decision
 
