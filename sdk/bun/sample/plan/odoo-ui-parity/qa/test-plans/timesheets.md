@@ -305,6 +305,16 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
+
+- Source gate: `hr_timesheet/views/hr_timesheet_views.xml` employee action uses `('employee_id', '=', active_id)` and `default_employee_id: active_id`.
+- Contract gate: `employee-timesheets` page/API pair exposes `employee_timesheet_entry_defaults` and source-prefills the employee create form.
+- Persistence/security gate: the create path canonicalizes the durable employee relation, writes the active company, requires `timesheets.write`, and rejects stale employee context, foreign company, inactive employee, and invalid project values.
+- Focused gate: `bun test test/timesheets_employee_context_default.integration.test.ts --timeout 20000` — 4 passed / 18 expectations.
+- Regression/static gates: related employee/project/task tests 17 passed / 100 expectations; full Timesheets 235 passed / 1,445 expectations; ESLint passed; UI audit passed with 746/755/1,483; `git diff --check` passed.
+- Browser gate: blocked. Core3 `/api/modules` and `/employee-timesheets` refused port 3001; Odoo 8069/8073 returned HTTP 200 only for `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`; no authenticated desktop/mobile sign-off is claimed.
+- Odoo Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
+
 ## Wave 32 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
 
 | Check | Expected evidence | Result |

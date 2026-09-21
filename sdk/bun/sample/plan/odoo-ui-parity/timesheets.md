@@ -1843,6 +1843,40 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
+
+The smallest open source-backed employee-context behavior after the prior
+report, portal, filter, grouping, import, project/task, and sub-task slices is
+Odoo's `timesheet_action_from_employee`. Its action domain uses
+`('employee_id', '=', active_id)` and its form context carries
+`default_employee_id: active_id`, so a new line opened from an employee stays
+owned by that employee instead of requiring a second manual selection.
+
+Core3 keeps `pages/employee-timesheets.yaml` layout-only and adds the
+`employee_timesheet_entry_defaults` datasource plus a source-prefilled
+`create_employee_timesheet_entry` form to
+`api/employee-timesheets.yaml`; both contracts remain joined by
+`page.id: employee-timesheets`. The datasource resolves the active employee
+from durable `timesheet_employees` in the current company. The create mutation
+canonicalizes the employee name, persists the current company, and fails closed
+for a stale employee context, foreign company, inactive employee, or invalid
+project. Existing durable entry storage is reused, so no duplicate migration is
+needed.
+
+Focused coverage is
+`test/timesheets_employee_context_default.integration.test.ts`: 4 tests / 18
+expectations. Related employee/project/task coverage is 17 tests / 100
+expectations; full Timesheets regression is 235 tests / 1,445 expectations
+across 62 files. Scoped ESLint, UI audit (746 pages / 755 routes / 1,483
+datasources), and Timesheets-owned `git diff --check` pass.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`.
+Core3 refused connections on port 3001 and Odoo 8069/8073 served only the
+unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
+and visual sign-off are blocked. Existing Odoo Print/PDF/action blockers remain
+open; no module sign-off is claimed.
+
 ## Wave 32 — `TIMESHEET-TASK-SUBTASK-SCOPE-001`
 
 The next smallest open source-backed task behavior is Odoo's

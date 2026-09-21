@@ -925,3 +925,12 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Full Timesheets regression passed 231/231 tests with 1,427 expectations across 61 files. Scoped ESLint and Timesheets-owned `git diff --check` passed. UI audit passed with 743 pages, 752 routes, and 1,473 datasources.
 - Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused connections. Odoo 8069/8073 are reachable but expose only `/web/login`; authenticated desktop/mobile comparison is not claimed. Exact probes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`.
 - Odoo Print/PDF/action blockers remain open; no module sign-off is claimed.
+
+## 2026-09-21 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
+
+- Selected Odoo `timesheet_action_from_employee`, whose form context carries `default_employee_id: active_id` while its domain stays scoped to the active employee. This is distinct from the completed employee report action/preview and the My Timesheets favorite-project prefill.
+- Added the durable `employee_timesheet_entry_defaults` API datasource and source-prefilled `create_employee_timesheet_entry` form to `api/employee-timesheets.yaml`; the page remains layout-only and joins the API by `page.id: employee-timesheets`. The mutation canonicalizes the employee name from the active company relation, persists company ownership, and guards context employee, employee/company, and project/company scope.
+- Focused coverage passed 4/4 tests with 18 expectations, including source/action mapping, page/API separation, permission/company/empty guards, durable create, stale context rejection, migration replay, and file-backed restart. Related employee/project/task regression passed 17/17 tests with 100 expectations. Full Timesheets regression passed 235/235 tests with 1,445 expectations across 62 files.
+- Scoped ESLint passed; UI audit passed with 746 pages, 755 routes, and 1,483 datasources; Timesheets-owned `git diff --check` passed.
+- Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused both `/api/modules` and `/employee-timesheets`; Odoo 8069/8073 returned HTTP 200 only for unauthenticated `/web/login`. Exact probes and the paired source comparison are under `evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`. No authenticated browser sign-off is claimed.
+- Odoo Print/PDF/action surfaces remain open blockers; no module sign-off is claimed.

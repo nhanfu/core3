@@ -965,3 +965,20 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Regression/static gates: full Timesheets 231 passed / 1,427 expectations across 61 files; scoped ESLint passed; UI audit passed with 743/752/1,473; Timesheets-owned `git diff --check` passed.
 - Browser gate: blocked. Core3 `127.0.0.1:3001` refused connections; Odoo 8069/8073 returned unauthenticated `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`; no authenticated desktop/mobile sign-off is claimed.
 - Existing Odoo Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
+
+## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo employee action comparison | `timesheet_action_from_employee`, `employee_id = active_id`, `default_employee_id = active_id` | pass in focused source test |
+| Paired YAML contract | `page.id: employee-timesheets`, layout-only page, source-prefilled API form | pass |
+| Durable context/create | employee relation-derived defaults and company-persisted entry | pass |
+| Permission/company/empty guards | `timesheets.write`, active employee/current company, empty defaults, project scope | pass |
+| Context/concurrency boundary | stale selected employee rejected before create; existing row persistence retained | pass |
+| Restart | migration replay and file-backed employee/default read pass | pass |
+| Focused/full regression | new test 4/4 (18 expectations); full Timesheets 235/235 (1,445 expectations) | pass |
+| Audit/lint/diff | UI audit 746/755/1483; ESLint; `git diff --check` | pass |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo employee route/action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login`; no sign-off |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-employee-context-default-001/`.
+Odoo Print/PDF/action parity remains a separate blocker.
