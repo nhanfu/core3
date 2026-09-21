@@ -1,5 +1,40 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-WCWAIT-001 — Work Center Waiting Availability (2026-09-22)
+
+- Source/action: local Odoo 19 `mrp.action_work_orders` in
+  `addons/mrp/views/mrp_workcenter_views.xml`, launched by the Work Center
+  dashboard `Waiting Availability` link with the selected work center and
+  `search_default_waiting=1`; model `mrp.workorder`, modes
+  `list,form,pivot,graph,calendar`, non-terminal domain.
+- Core3 paths: presentation
+  `services/manufacturing/pages/work-center-waiting.yaml`; page-id-bound
+  API/actions `services/manufacturing/api/work-center-waiting.yaml`; overview
+  binding in `services/manufacturing/pages/work-center-overview.yaml` and
+  `api/work-center-overview.yaml`; focused test
+  `test/manufacturing_work_center_waiting.integration.test.ts`.
+- Functional/data result: PASS, 4 tests / 23 assertions. Assembly 2 returns
+  only durable `wo-confirmed-001` in Waiting state; Assembly 1, Ready state,
+  search mismatch, empty, and 503 transport cases behave as declared.
+- Workflow/permission result: PASS at contract level. The report requires
+  `manufacturing.read`; only the existing `manufacturing.write` Plan action is
+  exposed, reusing workflow `mrp_workorders`; create/delete are absent.
+- Restart result: PASS. The waiting row remains queryable after file-backed
+  DuckDB close/reopen and migration replay.
+- Core3 browser result: PASS for the successful authenticated pass on bsk
+  browser `245ea108`, isolated runtime `http://127.0.0.1:4000`, and the
+  selected Assembly 2 route. Desktop/mobile captures are in `/tmp` and show
+  the populated waiting row, visible view tabs, and no horizontal overflow.
+  A later fresh navigation hit an unrelated concurrent Inventory page schema
+  error; no Inventory file was modified by this owner.
+- Odoo browser verification: BLOCKED, exact reason. The authenticated shared
+  reference navigation to `http://localhost:8069/odoo/work-centers` and
+  `http://localhost:8069/web?db=core3_reference` resolved to Discuss/OdooBot;
+  the launcher had no Manufacturing menu. No credentials, cookies, or tokens
+  were extracted, and no Odoo visual sign-off is claimed.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-WCWAIT-001/`.
+
 ## MANUFACTURING-BOM-OP-001 — BoM Operations Performance (2026-09-22)
 
 - Source/action: local Odoo 19 `mrp.action_mrp_routing_time` in

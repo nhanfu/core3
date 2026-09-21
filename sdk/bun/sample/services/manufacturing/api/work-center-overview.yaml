@@ -38,8 +38,8 @@ actions:
   - id: open_mrp_workcenter_waiting
     type: navigate
     permission: manufacturing.read
-    navigate_to: /workorders
-    params: { workcenter: '{row.name}', state: Waiting, search_default_ready: false, search_default_progress: false, search_default_blocked: false }
+    navigate_to: /manufacturing/work-centers/waiting-availability
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}', search_default_waiting: true }
   - id: open_mrp_workcenter_oee
     type: navigate
     permission: manufacturing.read

@@ -2,6 +2,53 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Work Center Waiting Availability bounded action
+
+Source comparison of the existing Work Center Overview and scoped Work Orders
+contracts found one distinct dashboard workflow still uncovered: Odoo's
+`action_work_order` link labelled `Waiting Availability` in
+`addons/mrp/views/mrp_workcenter_views.xml`. It reuses the `action_work_orders`
+window action (`mrp.workorder`, `list,form,pivot,graph,calendar`) with the
+selected work center and `search_default_waiting=1`; the source action excludes
+terminal work orders and the visible operator path plans a waiting order.
+
+Core3 adds the page-only contract
+`services/manufacturing/pages/work-center-waiting.yaml` at
+`/manufacturing/work-centers/waiting-availability` and the page-id-bound API
+contract `services/manufacturing/api/work-center-waiting.yaml`. The Work Center
+Overview row action now exposes `Waiting Availability` and passes the durable
+work-center ID/name plus the waiting default. The datasource strictly scopes
+persisted `mrp_workorders` rows to `state = 'Waiting'`, reuses the existing
+read-only Work Order detail page and durable `mrp_workorders` workflow, and
+exposes the source list/form/pivot/graph/calendar modes. Only the guarded Plan
+transition is available from this waiting state; create/delete are absent.
+
+No fixture-only table or rows were added: the existing durable work-order
+records and the idempotent work-center/state/planned-date index migration are
+the persistence boundary. Focused coverage is
+`test/manufacturing_work_center_waiting.integration.test.ts`: 4 tests / 23
+assertions pass, including page/API separation, isolated route discovery,
+work-center and Waiting-state scoping, empty/503 states, migration replay,
+file-backed restart persistence, and permissioned workflow action metadata.
+
+Authenticated Core3 browser verification used bsk browser instance `245ea108`
+and the isolated runtime at `http://127.0.0.1:4000`: the selected Assembly 2
+row rendered at desktop and mobile with visible List/Calendar/Pivot/Graph tabs,
+no page/request errors in the successful pass, and no horizontal overflow. The
+captures are `/tmp/core3-manufacturing-work-center-waiting-1440x900.png` (the
+browser viewport was 1440x719) and
+`/tmp/core3-manufacturing-work-center-waiting-390x844.png`. A later fresh
+navigation was blocked by an unrelated malformed Inventory page declaration
+(`components[0].views[5].category_field` and `views[6].activity_types`) in
+concurrent work; the Manufacturing page itself is unchanged by that error.
+
+The live authenticated Odoo check was blocked: `/odoo/work-centers` and
+`/web?db=core3_reference` resolved to Discuss/OdooBot and exposed no
+Manufacturing launcher in browser instance `245ea108`. The blocker captures
+are recorded in the feature evidence folder; no Odoo visual parity claim is
+made. Evidence is under
+`plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-WCWAIT-001/`.
+
 ## 2026-09-22 BoM Operations Performance bounded action
 
 Local Odoo 19 source inspection identified the next uncovered Manufacturing

@@ -1,0 +1,61 @@
+title: Waiting Availability
+page: { id: manufacturing-work-center-waiting, route: /manufacturing/work-centers/waiting-availability, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers, Waiting Availability], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workcenter_waiting_workorders
+    search: { label: Search work orders, placeholder: 'Search operations, manufacturing orders, or products...' }
+    filters:
+      - { field: state, label: Status, options_source: mrp_workcenter_waiting_states }
+      - { field: late, label: Late, options: [{ id: 'true', label: Late }, { id: 'false', label: On schedule }] }
+    default_filters: { search_default_waiting: true }
+    group_by:
+      - { field: workcenter, label: Work Center }
+      - { field: production_name, label: Manufacturing Order }
+    default_group_by: workcenter
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_start
+        end_date_field: date_finished
+        card: { title: operation_name, subtitle: production_name }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: workcenter, column: Work Center }, { field: production_name, column: Manufacturing Order }, { field: state, column: Status }, { field: planned_date, column: Planned Date, type: date }, { field: expected_duration, column: Expected minutes }, { field: actual_duration, column: Actual minutes }]
+          default: { rows: [workcenter], columns: [state], measures: [{ field: expected_duration, aggregate: sum, column: Expected minutes }, { field: actual_duration, aggregate: sum, column: Actual minutes }] }
+          date_ranges: { planned_date: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: workcenter
+        measure_field: expected_duration
+        type: bar
+        measures:
+          - { field: expected_duration, label: Expected minutes, aggregate: sum }
+          - { field: actual_duration, label: Actual minutes, aggregate: sum }
+    actions:
+      - { id: plan_mrp_waiting_workorder, label: Plan, permission: manufacturing.write, variant: primary }
+    form_view: { page: apps/services/manufacturing/pages/workorder-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_waiting_workorder
+    row_double_click_action: view_mrp_waiting_workorder
+    row_actions: menu
+    empty_state: { title: No work orders to do!, description: Work orders are operations to do as part of a manufacturing order. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true, mobile_secondary: production_name, sortable: true }
+      - { field: workcenter, label: Work Center, mobile: false }
+      - { field: production_name, label: Manufacturing Order, mobile: false }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: expected_duration, label: Expected minutes, align: right, mobile: true }
+      - { field: planned_date, label: Planned date, mobile: false }
+      - { field: late, label: Late, type: StatusChip, mobile: false, optional: hide }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_waiting_workorder, label: Open, icon: eye }] }
+    page_size: 50

@@ -42,5 +42,5 @@ components:
       - { field: planned_minutes, label: Load (minutes), align: right, mobile: false }
       - { field: oee, label: OEE, align: right, mobile: true }
       - { field: oee_target, label: OEE Target, align: right, mobile: false }
-      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: open_mrp_workcenter_orders, label: Work Orders, icon: tools }, { id: open_mrp_workcenter_oee, label: OEE, icon: chart }, { id: view_mrp_workcenter_overview, label: Open, icon: eye }] }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: open_mrp_workcenter_orders, label: Work Orders, icon: tools }, { id: open_mrp_workcenter_waiting, label: Waiting Availability, icon: clock }, { id: open_mrp_workcenter_oee, label: OEE, icon: chart }, { id: view_mrp_workcenter_overview, label: Open, icon: eye }] }
     page_size: 25
