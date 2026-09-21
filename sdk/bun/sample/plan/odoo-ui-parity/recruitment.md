@@ -1,6 +1,56 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-12-implemented-activity-plans-odoo-reference-blocked`
+Status: `batch-13-implemented-applicant-email-odoo-reference-blocked`
+
+## Batch 13 — Applications → Send Email
+
+The next distinct bounded Recruitment workflow is Odoo's applicant email
+composer. Local Odoo 19 source revision
+`659759969d535d286b656c96b675e4612b925ddd` binds the `Send Email` server
+action to `hr.applicant` list and kanban views. `action_send_email` opens the
+`applicant.send.mail` composer with the selected applicants; the transient
+wizard requires a subject/body, supports templates and attachments, rejects
+applicants without email addresses, and posts the rendered message back to
+each applicant.
+
+Core3 adds a page-local bulk `Send Email` action to `/recruitment/applicants`
+and a separate API fragment joined by `page.id`. The YAML `server_form`
+contract validates selection, actor, company scope, recipient email,
+template/content, and active template state. A migration creates durable
+email templates and sent-message audit rows; one row is inserted per selected
+applicant, with deterministic fixtures and file-backed restart coverage.
+The bounded slice records the sent message and composer inputs; it does not
+attempt to reproduce Odoo's full chatter, follower, mail queue, or external
+SMTP boundary.
+
+Source/gap matrix for `RECRUITMENT-APPLICANT-EMAIL-001`:
+
+| Odoo contract | Previous Core3 state | Batch 13 change | Verification |
+| --- | --- | --- | --- |
+| List/kanban `Send Email` applicant action | Missing | selectable applicants and page bulk action | page/API contract assertion |
+| Subject/body/template/attachment composer | Missing | YAML `server_form` modal with mail fields | focused integration contract and Core3 browser capture |
+| Missing-recipient and company/actor guards | Missing | explicit 403/404/422 guards with atomicity | guard tests |
+| Durable message result per applicant | Missing | templates plus sent-message audit table | multi-row persistence and restart test |
+
+Focused verification:
+
+- `bun test test/recruitment_applicant_email.integration.test.ts` — 4
+  passed, 0 failed, 29 assertions.
+- Recruitment regression — 55 passed, 0 failed, 514 assertions across 15
+  files.
+- `bun run audit` — passed: 797 pages, 806 routes, 1644 datasources;
+  targeted ESLint, frontend build, and `git diff --check` passed.
+- File-backed restart coverage verifies sent rows and seeded templates remain
+  available after reopening the database.
+
+Core3 browser evidence captured the authenticated composer at desktop
+1440x900 and exercised the real send request. The live Odoo reference is
+blocked: browser instance `245ea108`, database `core3_reference`, and direct
+`http://localhost:8069/odoo/recruitment?db=core3_reference` exposed only the
+Discuss/OdooBot shell with no Recruitment launcher. Exact blocker captures,
+hashes, and the stopped bsk session are recorded under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-APPLICANT-EMAIL-001/`.
+No paired Odoo visual-parity claim is made.
 
 ## Batch 12 — Configuration → Activities → Activity Plans
 

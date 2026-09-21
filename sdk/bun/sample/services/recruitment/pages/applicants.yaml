@@ -55,6 +55,9 @@ components:
     page_size: 25
     column_chooser: true
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: send_recruitment_applicant_email, label: Send Email, permission: recruitment.write }
     row_open_action: view_recruitment_applicant
     row_double_click_action: view_recruitment_applicant
     form_view: { page: apps/services/recruitment/pages/applicant-detail.yaml, side_panel: true }

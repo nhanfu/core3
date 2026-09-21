@@ -1,0 +1,50 @@
+version: 0.0.17
+kind: schema
+description: Durable Recruitment applicant email composer history and templates
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_mail_templates (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        created_by VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_mail_templates_name_idx ON recruitment_applicant_mail_templates(name, active);
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_mail_messages (
+        id VARCHAR PRIMARY KEY,
+        applicant_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        applicant_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        template_id VARCHAR,
+        attachment_name VARCHAR,
+        sent_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00'
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_mail_messages_applicant_idx ON recruitment_applicant_mail_messages(applicant_id, sent_at, id);
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_mail_messages_company_idx ON recruitment_applicant_mail_messages(company_name, sent_at, id);
+      INSERT OR IGNORE INTO recruitment_applicant_mail_templates(id, name, subject, body_html, created_by, active, row_version, created_at, updated_at)
+      VALUES
+        ('recruitment-applicant-template-001', 'Application update', 'Application update', '<p>Hello,</p><p>We have an update about your application.</p>', 'Recruitment Team', TRUE, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('recruitment-applicant-template-002', 'Interview invitation', 'Interview invitation', '<p>We would like to invite you to an interview.</p>', 'Recruitment Team', TRUE, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00');
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicant_mail_messages_company_idx;
+      DROP INDEX IF EXISTS recruitment_applicant_mail_messages_applicant_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_mail_messages;
+      DROP INDEX IF EXISTS recruitment_applicant_mail_templates_name_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_mail_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

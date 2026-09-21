@@ -4,17 +4,19 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Activity Plans commit
+Candidate commit: pending Recruitment applicant email commit
 
 ## Current state
 
-Batch 12 implements the next uncovered Recruitment configuration action,
-Activity Plans. Its focused suite passes 4 tests / 49 assertions with restart
-coverage for archived plans and ordered activity steps; audit, targeted ESLint,
-and diff-check are green. Authenticated Odoo desktop/mobile feature evidence is
-blocked because the shared `core3_reference` launcher has no Recruitment entry
-and the direct Recruitment URL returns Discuss. No visual parity sign-off is
-claimed.
+Batch 13 implements the next uncovered Recruitment workflow, applicant email
+composer/send. Its focused suite passes 4 tests / 29 assertions with durable
+multi-applicant rows, guard atomicity, and file-backed restart coverage. The
+Recruitment regression passes 55 tests / 514 assertions across 15 files; audit,
+targeted ESLint, frontend build, and diff-check are green. Core3 desktop
+composer/send evidence is captured. Authenticated Odoo desktop/mobile feature
+evidence is blocked because the shared `core3_reference` launcher has no
+Recruitment entry and the direct Recruitment URL returns Discuss. No paired
+visual parity sign-off is claimed.
 
 The full Recruitment regression passes 51 tests / 485 assertions across 14
 files. It also reconciled one stale Recruitment-owned Applicants view assertion
@@ -50,9 +52,9 @@ No parity claim is made here.
 
 ## Next bounded task
 
-Run an authenticated applicant/opening CRUD and workflow smoke, complete the
-role-specific permission matrix, and capture paired Odoo desktop/mobile
-screens. Update this file only with evidence from the matching module owner.
+Complete the remaining authenticated mobile composer proof and broader
+Recruitment actor matrix when the runtime/reference gates are available. Do
+not treat this bounded batch as full module sign-off.
 
 ## QA disposition `e9a19a8f` (2026-09-13)
 

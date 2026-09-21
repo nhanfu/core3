@@ -1,5 +1,37 @@
 # recruitment QA ledger
 
+## Batch 13 QA — Applicant Send Email — 2026-09-22
+
+- Candidate scope: Recruitment applicant mass-email composer and durable sent
+  message audit only; Activity Types/Plans are separate prior batches.
+- Source boundary: Odoo 19 `hr_applicant_views.xml` list/kanban `Send Email`
+  action, `hr_applicant.py::action_send_email`, and
+  `wizard/applicant_send_mail.py` / composer view were compared against local
+  source revision `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_applicant_email.integration.test.ts`
+  — 4 passed, 0 failed, 29 assertions. Recruitment regression: `bun test
+  ./test/recruitment*.integration.test.ts --timeout 20000` — 55 passed, 0
+  failed, 514 assertions across 15 files.
+- Static gates: `bun run audit` passed (797 pages, 806 routes, 1644
+  datasources); targeted ESLint, frontend build, and `git diff --check` passed.
+- Functional coverage: page/API `page.id` join, bulk selection/action,
+  composer fields, active template lookup, multi-applicant durable rows,
+  restart persistence, company/actor/selection/recipient/content/template
+  guards, and atomic no-partial-write failures.
+- Core3 browser evidence: authenticated desktop composer rendered at 1440x900;
+  the first real submission exposed empty template serialization, which was
+  corrected by normalizing blank template IDs before the active-template guard.
+  The exact desktop capture and network/result notes are in the batch
+  evidence directory. No mobile Core3 composer capture is claimed in this
+  finalization.
+- Odoo blocker: browser instance `245ea108`, database `core3_reference`, and
+  direct `/odoo/recruitment?db=core3_reference` exposed Discuss/OdooBot rather
+  than Recruitment on both desktop and mobile. Blocker captures and hashes
+  are recorded in the batch evidence directory. No paired visual comparison
+  or full Recruitment parity sign-off is claimed.
+- QA decision: bounded functional batch complete; live-reference and broader
+  module actor/mobile gates remain blocked or pending.
+
 ## Batch 12 QA — Activity Plans — 2026-09-22
 
 - Candidate scope: Recruitment Activity Plans only.

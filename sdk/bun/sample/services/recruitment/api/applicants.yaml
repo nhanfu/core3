@@ -12,6 +12,10 @@ datasources:
     permission: recruitment.read
     single: false
     query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
+  - id: recruitment_applicant_email_templates
+    permission: recruitment.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM recruitment_applicant_mail_templates WHERE active = TRUE ORDER BY name, id"
   - id: recruitment_applicants
     permission: recruitment.read
     workflow: recruitment_applicants
@@ -23,6 +27,48 @@ datasources:
     query: "SELECT a.id, a.row_version, a.name AS applicant, CAST(a.activity_date_deadline AS VARCHAR) AS activity_date_deadline, a.activity_type, a.activity_summary, a.stage, a.activity_exception, a.activity_user FROM recruitment_applicants a WHERE a.activity_date_deadline IS NOT NULL AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.activity_summary ILIKE '%' || :q || '%' OR a.activity_type ILIKE '%' || :q || '%') AND (:activity_state IS NULL OR (:activity_state = 'overdue' AND a.activity_exception = 'overdue') OR (:activity_state = 'upcoming' AND a.activity_exception <> 'overdue')) AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name) ORDER BY a.activity_date_deadline, a.id"
 actions:
   - { id: view_recruitment_applicant, type: navigate, permission: recruitment.read, navigate_to: /applicants/detail, params: { id: '{row.id}' } }
+  - id: send_recruitment_applicant_email
+    type: server_form
+    modal_style: mail_composer
+    permission: recruitment.write
+    title: Send Email
+    submit_label: Send
+    cancel_label: Cancel
+    success_message: Applicant emails sent.
+    action: recruitment.applicants.send_email
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [recruitment_applicants]
+    mutation:
+      table: recruitment_applicant_mail_messages
+      fields: [subject, body_html, template_id, attachment_name]
+      required: [subject]
+      defaults: { state: Sent }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: RECRUITMENT_MAIL_SELECTION_REQUIRED, message: Select at least one applicant. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_MAIL_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to send applicant email. }
+        - { query: "SELECT id FROM recruitment_applicants WHERE id IN :selectedIds LIMIT 1", status: 404, code: RECRUITMENT_MAIL_APPLICANT_NOT_FOUND, message: One or more selected applicants were not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds AND COALESCE(:current_company_name, '') <> '' AND a.company_name <> :current_company_name)", status: 403, code: RECRUITMENT_MAIL_COMPANY_FORBIDDEN, message: One or more selected applicants belong to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds AND NULLIF(TRIM(COALESCE(a.email, '')), '') IS NULL)", status: 422, code: RECRUITMENT_MAIL_EMAIL_REQUIRED, message: Every selected applicant must have an email address. }
+        - { query: "SELECT 1 AS ok WHERE (NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NOT NULL AND EXISTS (SELECT 1 FROM recruitment_applicant_mail_templates t WHERE t.id = :template_id AND t.active = TRUE)) OR (LENGTH(TRIM(CAST(COALESCE(:subject, '') AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(CAST(COALESCE(:body_html, '') AS VARCHAR)) BETWEEN 1 AND 10000)", status: 422, code: RECRUITMENT_MAIL_CONTENT_INVALID, message: Enter a subject and a message, or load an active template. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NULL OR EXISTS (SELECT 1 FROM recruitment_applicant_mail_templates t WHERE t.id = :template_id AND t.active = TRUE)", status: 422, code: RECRUITMENT_MAIL_TEMPLATE_INVALID, message: Select an active applicant email template. }
+      steps:
+        - for_each:
+            input: selectedIds
+            as: selected_applicant_id
+            steps:
+              - query: "INSERT INTO recruitment_applicant_mail_messages(id, applicant_id, company_name, applicant_name, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, sent_at, row_version) SELECT 'recruitment-applicant-mail-' || a.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_applicant_mail_messages prior WHERE prior.applicant_id = a.id), 0) + 1 AS VARCHAR), a.id, a.company_name, a.name, a.email, COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))), COALESCE(t.body_html, CAST(COALESCE(:body_html, '') AS VARCHAR)), t.id, NULLIF(TRIM(CAST(COALESCE(:attachment_name, '') AS VARCHAR)), ''), :current_user_name, 'Sent', TIMESTAMP '2026-01-15 09:30:00', 1 FROM recruitment_applicants a LEFT JOIN recruitment_applicant_mail_templates t ON t.id = :template_id AND t.active = TRUE WHERE a.id = :selected_applicant_id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
+                expect_changed: true
+                status: 409
+                code: RECRUITMENT_MAIL_SEND_FAILED
+                message: The applicant email could not be sent. Reload the selected applicants and try again.
+      result: { query: "SELECT id, applicant_id, applicant_name, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, CAST(sent_at AS VARCHAR) AS sent_at, row_version FROM recruitment_applicant_mail_messages WHERE applicant_id IN :selectedIds ORDER BY sent_at DESC, id DESC" }
+    fields:
+      - { field: applicant_names, label: Applications, type: mail_recipient, default: Selected applicants }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, placeholder: Write your message here... }
+      - { field: attachment_name, label: Attachments, type: mail_attachment }
+      - { field: template_id, label: Load template, type: select, options_source: recruitment_applicant_email_templates }
   - id: create_recruitment_applicant
     type: server_form
     permission: recruitment.write
