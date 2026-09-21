@@ -731,3 +731,17 @@ Focused test: `test/employees_related_contacts.integration.test.ts` (4 tests,
 Focused test: `test/employees_company_assignment.integration.test.ts` (4
 tests, 22 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001/`.
+
+## EMP-EMPLOYEE-CHATTER-NOTE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Employee mail-thread chatter maps to paired API/page contracts | pass |
+| Internal-note CRUD | A note is stored, attributed, returned by the datasource, and increments the employee version | pass |
+| Permission and scope | `employees.write`, actor, current-company, content, and stale guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve the deterministic and newly-created notes | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile chatter plus Odoo comparison | conditional; exact fixture-company and rejected-credential blockers are recorded |
+
+Focused test: `test/employees_chatter_note.integration.test.ts` (4 tests, 19
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`.

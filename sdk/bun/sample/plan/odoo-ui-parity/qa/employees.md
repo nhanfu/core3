@@ -1182,3 +1182,17 @@ Focused test: `test/employees_company_assignment.integration.test.ts` (4
 tests, 22 assertions). Adjacent Employees, Work-tab, Employee Type, scoped
 lint, merged API/page validation, UI audit, and staged diff-check are tracked
 with the commit. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-CHATTER-NOTE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-050 | Employee chatter internal-note CRUD | pass; note is visible through the company-scoped message datasource and employee version increments |
+| EMP-PERM-050 | `employees.write`, actor, current company, content, and row version | pass; actor, stale, wrong-company, invalid, and missing-employee requests reject atomically |
+| EMP-DATA-050 | Migration replay and file-backed restart | pass; deterministic note and new note survive restart without duplicate seed rows |
+| EMP-UI-046 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture-company mismatch and rejected local Odoo credential are recorded |
+
+Focused test: `test/employees_chatter_note.integration.test.ts` (4 tests, 19
+assertions). Merged API/page validation, scoped lint, UI audit, and staged
+diff-check are recorded with the commit. No aggregate Employees sign-off is
+claimed.

@@ -14,6 +14,13 @@ components:
     no_attachments_label: No attachments yet
     attachment_upload_action: upload_employee_attachment
     attachment_download_action: download_employee_attachment
+    message_source: employee_messages
+    note_action: log_employee_note
+    note_label: Log note
+    message_action_field: action_label
+    message_action_labels: { employees.note: Internal note }
+    chatter_label: Messages and activities
+    chatter_empty: No messages or activities yet.
     status_field: state
     statusbar: [{ value: Draft, label: New }, { value: Active, label: Active }, { value: On Leave, label: On leave }, { value: Terminated, label: Departed }]
     status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }

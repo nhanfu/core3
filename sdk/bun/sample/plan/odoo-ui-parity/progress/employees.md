@@ -1045,3 +1045,21 @@ Candidate commit: current working tree
   deterministic Employee fixtures do not match the authenticated company;
   the Odoo local credential is rejected. Evidence is conditional and no
   aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-CHATTER-NOTE-001 (2026-09-21)
+
+- Selected Odoo's source-visible Employee `mail.thread` chatter and its
+  internal-note composer as the smallest uncovered employee workflow after
+  company assignment; attachments did not cover chatter messages.
+- Added migration `20260922200000-074` with durable `employee_messages` storage,
+  an index, and a deterministic internal-note fixture for `employee-demo-001`.
+- Added separate API message datasource and guarded `log_employee_note` action;
+  the page binds only the shared OdooChatter note composer through `page.id`.
+- Guards cover `employees.write`, authenticated actor, active/current-company
+  employee, non-empty 1-4000 character note content, and optimistic employee
+  row-version concurrency. Focused verification is **4 tests / 19 assertions**,
+  including migration replay and file-backed restart.
+- Authenticated Core3 desktop/mobile and Odoo comparison attempts are under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`. Fixture/company
+  and local Odoo credential blockers remain explicit; no aggregate sign-off is
+  claimed.

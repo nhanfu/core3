@@ -18,6 +18,11 @@ datasources:
     permission: employees.read
     error_states: { transport_error: { status: 503, code: EMPLOYEES_RELATED_CONTACTS_UNAVAILABLE, message: Related contacts are temporarily unavailable. } }
     query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.company_id FROM base_contacts c JOIN employees e ON e.work_contact_id = c.id WHERE e.id = :id AND e.active = true AND c.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY c.name, c.id"
+  - id: employee_messages
+    single: false
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_MESSAGES_UNAVAILABLE, message: Employee messages are temporarily unavailable. } }
+    query: "SELECT m.id, m.employee_id, m.actor_name, m.action, m.action_label, m.detail, CAST(m.created_at AS VARCHAR) AS created_at FROM employee_messages m JOIN employees e ON e.id = m.employee_id WHERE m.employee_id = :id AND e.active = true AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY m.created_at DESC, m.id DESC"
   - id: employee_work_contact_options
     single: false
     permission: employees.write
@@ -379,6 +384,31 @@ actions:
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: company_id, label: Company, type: select, options_source: employee_company_options, required: true }
+  - id: log_employee_note
+    type: server_form
+    permission: employees.write
+    title: Log note
+    action: employees.records.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{state.employee_detail.id}', expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      generated: [note_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_NOTE_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the note was logged. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: EMPLOYEES_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }
+      steps:
+        - query: "INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail) VALUES(:note_id, :id, :current_user_id, :current_user_name, 'employees.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)))"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the note was logged. Reload and try again.
+      result: { query: "SELECT id, employee_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM employee_messages WHERE id = :note_id" }
   - id: open_employee_timesheets
     type: navigate
     permission: timesheets.read

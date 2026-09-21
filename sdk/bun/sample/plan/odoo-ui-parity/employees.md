@@ -2222,3 +2222,26 @@ Focused verification is **4 tests / 22 assertions**. Evidence is under
 `evidence/employees/2026-09-21/EMP-EMPLOYEE-COMPANY-ASSIGNMENT-001/`; Core3 fixture/company
 alignment and local Odoo credentials remain explicit comparison blockers. No
 aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-CHATTER-NOTE-001: Employee chatter internal note (2026-09-21)
+
+Odoo's Employee model inherits the mail-thread attachment/chatter surface and
+the supplied Employee form renders `<chatter reload_on_follower="True"/>`.
+Core3 previously rendered a read-only Messages and activities area; the
+completed attachment slice intentionally did not implement chatter posting.
+
+Migration `20260922200000-074` adds replay-safe `employee_messages` storage and
+one deterministic internal-note fixture. The API YAML owns the company-scoped
+message datasource and `log_employee_note` server form; the page YAML owns only
+the `OdooChatter` binding (`message_source`, note action, and labels).
+
+The note workflow requires `employees.write`, an authenticated actor, an active
+employee in the current company, 1-4000 characters, and the expected employee
+row version. It inserts the note and increments the employee version in one
+transaction. Focused verification is **4 tests / 19 assertions**, including
+CRUD, guard atomicity, migration replay, and restart persistence.
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-CHATTER-NOTE-001/`; Core3 fixture/company
+alignment and the rejected local Odoo credential remain explicit blockers. No
+aggregate Employees sign-off is claimed.

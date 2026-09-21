@@ -1,0 +1,27 @@
+version: 0.0.74
+kind: data
+description: Add durable Employee chatter internal notes and deterministic fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_messages (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        actor_id VARCHAR,
+        actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS employee_messages_employee_idx ON employee_messages(employee_id, created_at);
+      INSERT INTO employee_messages(id, employee_id, actor_id, actor_name, action, action_label, detail, created_at)
+      VALUES ('employee-message-note-001', 'employee-demo-001', 'user-admin', 'Administrator', 'employees.note', 'Internal note', 'Confirm the employee company and Payroll record before the next review.', TIMESTAMP '2026-01-14 11:15:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM employee_messages WHERE id = 'employee-message-note-001';
+      DROP TABLE IF EXISTS employee_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

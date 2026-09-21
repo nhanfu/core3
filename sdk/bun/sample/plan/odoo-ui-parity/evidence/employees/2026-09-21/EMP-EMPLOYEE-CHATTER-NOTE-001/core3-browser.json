@@ -1,0 +1,9 @@
+{
+  "name": "core3",
+  "target_url": "http://127.0.0.1:3002/employees/detail?id=employee-demo-001",
+  "authenticated": false,
+  "runtime_blocker": "The Vite frontend bound 127.0.0.1:3002, but Core3 backend 127.0.0.1:3001 never bound during a 115-second startup window; authentication and the Employee detail/chatter route could not be reached.",
+  "viewport_checks": [],
+  "request_failures": [],
+  "page_errors": []
+}
