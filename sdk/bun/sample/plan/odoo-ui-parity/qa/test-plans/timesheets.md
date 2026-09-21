@@ -139,3 +139,21 @@ The All Timesheets actor-filter source comparison and durable contract are cover
 
 Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-my-filter/`: desktop applies My Timesheets and renders `1-42 / 42` for Mitchell Admin; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile evidence is blocked before authentication because backend `3001/api/modules` did not expose `/api/modules` during the bounded startup probe, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
 - The repository audit is also blocked before completion by an unrelated page-schema options error; exact output is preserved in `audit-blocker.txt`. No other-owner page was edited.
+
+## Wave 19 execution — `TIMESHEET-ALL-SALES-ORDER-SEARCH-001`
+
+The All Timesheets Sales Order search source comparison and durable contract
+are covered by `test/timesheets_all_sales_order_search.integration.test.ts`
+(4 tests / 19 expectations). The test exercises the Odoo `order_id` source
+field, page/API separation, durable `sales_order_item` search, manager
+permission, current-company and empty guards, relation-update freshness, and
+file-backed restart persistence.
+
+Authenticated Odoo captures are in
+`../evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`:
+desktop applies Sales Order `S00035` and mobile captures responsive Kanban;
+`odoo-results.json` records no page/request errors. Core3 desktop/mobile
+evidence is blocked by the unrelated shared page-schema error
+`components[0].help is not allowed`, with exact output preserved in
+`core3-readiness.txt`. Odoo Print/PDF/action surfaces remain a known blocker
+and no module sign-off is claimed.

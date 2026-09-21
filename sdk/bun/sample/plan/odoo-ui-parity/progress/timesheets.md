@@ -758,6 +758,15 @@ sign-off is claimed.
 - Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
 - Repository audit is blocked before completion by an unrelated page-schema options error; exact output is in `audit-blocker.txt`. No other-owner page was edited.
 
+## 2026-09-21 — `TIMESHEET-ALL-SALES-ORDER-SEARCH-001`
+
+- Selected the smallest remaining source-backed All Timesheets interaction: Odoo `sale_timesheet` adds a visible Sales Order search field with `ilike` matching across order and order-line values.
+- Kept `pages/all-timesheets.yaml` and `api/all-timesheets.yaml` separate and joined by `page.id: all-timesheets`; the API now searches the existing durable `timesheet_entries.sales_order_item` relation and retains manager permission plus company/empty guards.
+- Focused verification: `test/timesheets_all_sales_order_search.integration.test.ts` passed 4/4 tests with 19 expectations, including source mapping, durable search, relation-update freshness, permission/company/empty guards, and file-backed restart.
+- Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`: desktop applies Sales Order `S00035`; mobile captures responsive Kanban; `odoo-results.json` records no page/request errors.
+- Core3 desktop/mobile evidence is blocked before authentication by the unrelated shared `discoverPages` error `components[0].help is not allowed`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/report-action blockers remain open and this slice is not sign-off.
+
+
 ## 2026-09-21 — `TIMESHEET-ALL-PROJECT-FILTER-001`
 
 - Selected the structured Project filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from the completed Employee filter and existing Project grouping metadata.

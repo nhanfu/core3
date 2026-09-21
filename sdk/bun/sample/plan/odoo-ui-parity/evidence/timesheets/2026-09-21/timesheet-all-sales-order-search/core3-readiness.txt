@@ -1,0 +1,8 @@
+Core3 authenticated desktop/mobile capture blocker (2026-09-21)
+
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit 1 before backend readiness/authentication.
+Error: PageSchemaError: Invalid page definition:
+- components[0].help is not allowed
+Location: shared page discovery in packages/server/src/yaml/schema.ts; no Timesheets page was edited to work around this unrelated owner boundary.
+Endpoint probe: http://127.0.0.1:3001/api/modules was unavailable after the failed startup.

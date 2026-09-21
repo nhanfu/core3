@@ -819,3 +819,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Focused gate: `test/timesheets_all_calendar_multi_create.integration.test.ts` passes 4/4 tests / 25 expectations, including no-partial-write and file restart coverage.
 - Odoo browser gate: authenticated desktop calendar and mobile Kanban captures are under `evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`; both have no page errors. The multi-create dialog was not exposed by a standard desktop toolbar button and is not claimed.
 - Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects `components[1].title`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
+
+## `TIMESHEET-ALL-SALES-ORDER-SEARCH-001` — All Timesheets Sales Order search (2026-09-21)
+
+- Source gate: `sale_timesheet` inserts `<field name="order_id" string="Sales Order" .../>` into the inherited All Timesheets search view.
+- Core3 gate: the paired `all-timesheets` page/API search contract includes the durable `sales_order_item` relation in the manager-scoped query; current-company and empty-fixture guards remain active.
+- Focused gate: `test/timesheets_all_sales_order_search.integration.test.ts` passes 4/4 tests / 19 expectations, including relation-update freshness and file-backed restart.
+- Odoo browser gate: authenticated desktop searches `S00035` and renders `1-80 / 113`; authenticated mobile captures responsive Kanban with no page/request errors. Artifacts are under `evidence/timesheets/2026-09-21/timesheet-all-sales-order-search/`.
+- Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects unrelated `components[0].help`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; this slice is not sign-off.

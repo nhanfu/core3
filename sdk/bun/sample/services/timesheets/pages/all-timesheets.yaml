@@ -4,7 +4,7 @@ components:
   - type: ListView
     variant: odoo
     source: all_timesheet_entries
-    search: { label: Search all timesheets, placeholder: 'Search employee, project, or entry...' }
+    search: { label: Search all timesheets, placeholder: 'Search employee, project, task, sales order, or entry...' }
     filters:
       - { field: employee_id, label: Employee, options_source: all_timesheet_employees }
       - { field: project_id, label: Project, options_source: all_timesheet_projects }
