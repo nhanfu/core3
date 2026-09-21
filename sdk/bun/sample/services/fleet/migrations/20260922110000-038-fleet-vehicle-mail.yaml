@@ -1,0 +1,45 @@
+version: 0.0.38
+kind: schema
+description: Durable Fleet driver mail composer records and template storage
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS driver_email VARCHAR;
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_mail_templates (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        created_by VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_mail_templates_name_idx ON fleet_vehicle_mail_templates(name, active);
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_mail_messages (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        driver_name VARCHAR,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        template_id VARCHAR,
+        sent_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_mail_messages_vehicle_idx ON fleet_vehicle_mail_messages(vehicle_id, sent_at, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_mail_messages_company_idx ON fleet_vehicle_mail_messages(company_name, sent_at, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_mail_messages;
+      DROP INDEX IF EXISTS fleet_vehicle_mail_templates_name_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_mail_templates;
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS driver_email;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

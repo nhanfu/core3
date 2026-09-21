@@ -1,7 +1,8 @@
 # Odoo 19 UI parity — Fleet
 
 Status: in progress; vehicle, Odometers, Contracts, Manufacturers, Models,
-Vehicle Status, and the Services checkpoint below are implemented in isolated worktrees, with
+Vehicle Status, Services, contract renewal activities, and the Mail to Driver
+checkpoint below are implemented in isolated worktrees, with
 remaining Fleet surfaces explicitly deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
@@ -1045,3 +1046,43 @@ with `core3_reference` has no Fleet application and remains on Discuss. The
 isolated Core3 runtime started on port 4322, but its fresh tab required
 protected QA sign-in and the authorized human-help login did not complete.
 No authenticated Core3 desktop/mobile parity claim is made.
+
+## Mail to Driver bounded slice (2026-09-22)
+
+The next genuinely uncovered source-backed Fleet action is Odoo's bound server
+action `action_fleet_vehicle_send_mail`, exposed as `Mail to Driver` on the
+vehicle list and kanban. `fleet.vehicle.action_send_email` opens the transient
+`fleet.vehicle.send.mail` composer for the selected vehicles. The wizard's
+`action_send` rejects drivers without email addresses and posts one message per
+vehicle; `action_save_as_template` persists a `mail.template` for the
+`fleet.vehicle` model. The source view, model, wizard, and manager-only access
+row are `/home/nhanjs/projects/odoo/addons/fleet/views/fleet_vehicle_views.xml`,
+`models/fleet_vehicle.py`, `wizard/fleet_vehicle_send_mail.py`,
+`wizard/fleet_vehicle_send_mail_views.xml`, and
+`security/ir.model.access.csv` at revision `65975996`.
+
+Core3 implements this bounded action in the existing `vehicles` page/API pair,
+joined by `page.id: vehicles`. `pages/vehicles.yaml` adds the selectable list
+and manager-only `Mail to Driver` bulk action. `api/vehicles.yaml` owns the
+mail-composer fields, active-template lookup, durable per-driver sent-message
+insert, and companion Save as new template action. Migration
+`20260922110000-038-fleet-vehicle-mail.yaml` adds driver email, template, and
+message storage; `20260922111000-039-fleet-vehicle-mail-data.yaml` supplies
+idempotent deterministic fixtures. The implementation persists one `Sent`
+message per selected driver and a reusable active template, with actor,
+selection, company, driver-email, template/content, and atomic mutation guards.
+
+Focused coverage is `test/fleet_vehicle_mail.integration.test.ts`: 3 tests / 27
+assertions. It checks the exact Odoo binding and wizard source, page/API
+separation, multi-selection action contract, durable send and template records,
+file-backed restart replay, and 400/403/404/409/422 guard behavior. The
+affected Fleet corpus and audit remain required before sign-off.
+
+Authenticated live-reference evidence is a blocker, not a parity claim. On
+browser instance `245ea108`, database `core3_reference`, the authenticated
+desktop launcher has no Fleet entry; direct `http://localhost:8069/odoo/fleet`
+returns to the current Discuss/Expenses shell. The same result is captured at
+390x844. Artifacts are recorded in
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-mail-to-driver-20260922/`.
+No Fleet desktop/mobile Odoo screen exists in this requested database, so no
+Odoo-to-Core3 visual parity claim is made for this slice.

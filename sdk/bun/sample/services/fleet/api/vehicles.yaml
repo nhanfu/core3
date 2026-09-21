@@ -6,7 +6,10 @@ datasources:
   - id: fleet_vehicles
     permission: fleet.read
     workflow: fleet_vehicles
-    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name) ORDER BY v.name, v.id"
+    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.driver_email, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name) ORDER BY v.name, v.id"
+  - id: fleet_vehicle_mail_templates
+    permission: fleet.manage
+    query: "SELECT id AS value, name AS label FROM fleet_vehicle_mail_templates WHERE active = TRUE ORDER BY name, id"
 actions:
   - { id: view_fleet_vehicle, type: navigate, permission: fleet.read, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
   - id: create_fleet_vehicle
@@ -49,3 +52,71 @@ actions:
   - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
   - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }
   - { id: retire_fleet_vehicle, type: server, permission: fleet.manage, action: fleet.vehicles.retire, handler: order_transition, workflow: fleet_vehicles, operation: retire, refresh: [fleet_vehicles] }
+  - id: mail_fleet_vehicle_drivers
+    type: server_form
+    modal_style: mail_composer
+    permission: fleet.manage
+    title: Send Email
+    submit_label: Send
+    cancel_label: Cancel
+    success_message: Driver emails sent.
+    action: fleet.vehicles.mail_to_driver
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [fleet_vehicles]
+    mutation:
+      table: fleet_vehicle_mail_messages
+      fields: [subject, body_html, template_id]
+      required: [subject]
+      defaults: { state: Sent }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: FLEET_MAIL_SELECTION_REQUIRED, message: Select at least one vehicle. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: FLEET_MAIL_ACTOR_REQUIRED, message: A signed-in Fleet manager is required to send driver email. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id IN :selectedIds LIMIT 1", status: 404, code: FLEET_MAIL_VEHICLE_NOT_FOUND, message: One or more selected vehicles were not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles v WHERE v.id IN :selectedIds AND COALESCE(:current_company_name, '') <> '' AND v.company_name <> :current_company_name)", status: 403, code: FLEET_MAIL_COMPANY_FORBIDDEN, message: One or more selected vehicles belong to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles v WHERE v.id IN :selectedIds AND NULLIF(TRIM(COALESCE(v.driver_email, '')), '') IS NULL)", status: 422, code: FLEET_MAIL_DRIVER_EMAIL_REQUIRED, message: Every selected vehicle driver must have an email address. }
+        - { query: "SELECT 1 AS ok WHERE (:template_id IS NOT NULL AND EXISTS (SELECT 1 FROM fleet_vehicle_mail_templates t WHERE t.id = :template_id AND t.active = TRUE)) OR (LENGTH(TRIM(CAST(COALESCE(:subject, '') AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(CAST(COALESCE(:body_html, '') AS VARCHAR)) <= 10000)", status: 422, code: FLEET_MAIL_CONTENT_INVALID, message: Enter a subject and a message, or select an active template. }
+        - { query: "SELECT 1 AS ok WHERE :template_id IS NULL OR EXISTS (SELECT 1 FROM fleet_vehicle_mail_templates t WHERE t.id = :template_id AND t.active = TRUE)", status: 422, code: FLEET_MAIL_TEMPLATE_INVALID, message: Select an active vehicle email template. }
+      steps:
+        - for_each:
+            input: selectedIds
+            as: selected_vehicle_id
+            steps:
+              - query: "INSERT INTO fleet_vehicle_mail_messages(id, vehicle_id, company_name, driver_name, recipient_email, subject, body_html, template_id, sent_by, state, sent_at, row_version) SELECT 'fleet-vehicle-mail-' || v.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM fleet_vehicle_mail_messages prior WHERE prior.vehicle_id = v.id), 0) + 1 AS VARCHAR), v.id, v.company_name, v.driver_name, v.driver_email, COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))), COALESCE(t.body_html, CAST(COALESCE(:body_html, '') AS VARCHAR)), t.id, :current_user_name, 'Sent', TIMESTAMP '2026-01-15 09:30:00', 1 FROM fleet_vehicles v LEFT JOIN fleet_vehicle_mail_templates t ON t.id = :template_id AND t.active = TRUE WHERE v.id = :selected_vehicle_id AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)"
+                expect_changed: true
+                status: 409
+                code: FLEET_MAIL_SEND_FAILED
+                message: The driver email could not be sent. Reload the selected vehicles and try again.
+      result: { query: "SELECT id, vehicle_id, company_name, driver_name, recipient_email, subject, body_html, template_id, sent_by, state, CAST(sent_at AS VARCHAR) AS sent_at, row_version FROM fleet_vehicle_mail_messages WHERE vehicle_id IN :selectedIds ORDER BY sent_at DESC, id DESC" }
+    fields:
+      - { field: template_id, label: Load template, type: select, options_source: fleet_vehicle_mail_templates }
+      - { field: subject, label: Subject, type: text, required: true, placeholder: Communication about your vehicle. }
+      - { field: body_html, label: Message, type: mail_body, placeholder: Write your message here... }
+  - id: save_fleet_vehicle_mail_template
+    type: server_form
+    modal_style: mail_composer
+    permission: fleet.manage
+    title: Save as new template
+    submit_label: Save
+    cancel_label: Cancel
+    success_message: Vehicle email template saved.
+    action: fleet.vehicles.mail_template.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      table: fleet_vehicle_mail_templates
+      fields: [name, subject, body_html]
+      required: [name, subject]
+      defaults: { active: true }
+      before_steps: [{ query: "SELECT 'fleet-vehicle-mail-template-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM fleet_vehicle_mail_templates", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: FLEET_MAIL_ACTOR_REQUIRED, message: A signed-in Fleet manager is required to save a template. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(COALESCE(:subject, '') AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(CAST(COALESCE(:body_html, '') AS VARCHAR)) <= 10000", status: 422, code: FLEET_MAIL_TEMPLATE_CONTENT_INVALID, message: Template name and subject are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_mail_templates WHERE LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND active = TRUE)", status: 409, code: FLEET_MAIL_TEMPLATE_EXISTS, message: An active vehicle email template with this name already exists. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_mail_templates(id, name, subject, body_html, created_by, active, row_version, created_at, updated_at) VALUES(:id, TRIM(CAST(:name AS VARCHAR)), TRIM(CAST(:subject AS VARCHAR)), CAST(COALESCE(:body_html, '') AS VARCHAR), :current_user_name, TRUE, 1, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00')", expect_changed: true, status: 409, code: FLEET_MAIL_TEMPLATE_CREATE_FAILED, message: The vehicle email template could not be saved. }
+      result: { query: "SELECT * FROM fleet_vehicle_mail_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Template Name, type: text, required: true, default: 'Vehicle: Mass mail drivers' }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body }

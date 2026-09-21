@@ -5,7 +5,7 @@ QA owner: fleet-qa
 Developer owner: fleet module owner  
 Reference addon/version: fleet, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-22
 
 This plan follows [`fleet.md`](../../fleet.md); executed evidence is recorded
 in [`../fleet.md`](../fleet.md).
@@ -38,6 +38,7 @@ deterministic.
 | FLEET-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate fleet records or moving timestamps | planned restart/migration gate |
 | FLEET-FUNC-008 | Attachments/import/export/print | Exercise exposed vehicle documents, import/export and report/print actions | planned browser interaction gate |
 | FLEET-FUNC-009 | Odometer Logs CRUD | Create, edit, delete, vehicle relation, related unit, invalid input, stale replay, and file-backed reload preserve the log contract | pass: `fleet_odometers.integration.test.ts` |
+| FLEET-FUNC-010 | Mail to Driver | Manager-only selected-vehicle composer validates driver emails/content, sends one durable message per driver, saves templates, and preserves records after restart | pass: `fleet_vehicle_mail.integration.test.ts`; live Odoo screen blocked |
 
 ## Workflow and integration cases
 
@@ -49,6 +50,7 @@ deterministic.
 | FLEET-WF-004 | Contract/odometer stats | Vehicle stat actions return only linked records and counts update after mutation | pass at contract level |
 | FLEET-WF-005 | Durable/external boundary | Reminders, service callbacks and cross-module integrations use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | FLEET-WF-006 | Odometer log lifecycle | New → edit → stale rejection → delete preserves vehicle relation and rejects archived vehicles | pass: focused integration test; authenticated browser workflow planned |
+| FLEET-WF-007 | Mail composer lifecycle | Selected vehicles → content/template guard → one Sent message per driver; invalid selection has no partial writes; file-backed restart retains messages/templates | pass: `fleet_vehicle_mail.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -60,6 +62,7 @@ deterministic.
 | FLEET-PERM-004 | Wrong company | Vehicles, drivers, contracts, services and reports are not leaked or mutable | planned |
 | FLEET-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
 | FLEET-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current fleet row unchanged | pass at contract level |
+| FLEET-PERM-007 | Mail to Driver manager boundary | `fleet.manage` is required; actor, company, missing-driver-email, missing-template, and invalid content are rejected without writes | pass: `fleet_vehicle_mail.integration.test.ts`; browser actor gate pending |
 
 ## Visual, responsive, and regression cases
 

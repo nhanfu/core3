@@ -1,0 +1,17 @@
+version: 0.0.39
+kind: data
+description: Deterministic Fleet driver email and template fixtures
+type:
+  postgres:
+    up: |
+      UPDATE fleet_vehicles SET driver_email = 'admin.user@example.test' WHERE id = 'fleet-demo-001' AND (driver_email IS NULL OR driver_email = '');
+      INSERT INTO fleet_vehicle_mail_templates(id, name, subject, body_html, created_by, active, row_version, created_at, updated_at)
+      VALUES ('fleet-vehicle-mail-template-1', 'Vehicle: Mass mail drivers', 'Communication about your vehicle.', '<p>Write your message here...</p>', 'Fleet QA', TRUE, 1, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicle_mail_templates WHERE id = 'fleet-vehicle-mail-template-1';
+      UPDATE fleet_vehicles SET driver_email = NULL WHERE id = 'fleet-demo-001' AND driver_email = 'admin.user@example.test';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -10,6 +10,19 @@
 
 QA state: qa-in-progress
 
+## 2026-09-22 — Mail to Driver bounded slice
+
+- `fleet_vehicle_mail.integration.test.ts`: **3 passed, 27 assertions, 0
+  failures**. Source mapping, page/API join, durable selected-driver sends,
+  template creation, file-backed restart, and 400/403/404/409/422 guards pass.
+- Live Odoo browser instance `245ea108`, database `core3_reference`: Fleet is
+  absent from the authenticated app launcher and direct `/odoo/fleet` returns
+  to Discuss. Desktop and 390x844 blocker captures are recorded in the feature
+  evidence directory; no Fleet visual parity is claimed.
+- Core3 authenticated desktop/mobile interaction and paired comparison remain
+  open because the live reference has no Fleet screen and the separate Core3
+  QA sign-in was not part of this bounded verification.
+
 ## Wave QA fallback (2026-09-13)
 
 - `fleet_vehicle_create.integration.test.ts`: **2 passed, 10 assertions,

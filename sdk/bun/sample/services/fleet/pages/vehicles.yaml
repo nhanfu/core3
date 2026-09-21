@@ -33,6 +33,9 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: mail_fleet_vehicle_drivers, label: Mail to Driver, permission: fleet.manage }
     row_open_action: view_fleet_vehicle
     row_double_click_action: view_fleet_vehicle
     form_view: { page: apps/services/fleet/pages/vehicle-detail.yaml, side_panel: true }
