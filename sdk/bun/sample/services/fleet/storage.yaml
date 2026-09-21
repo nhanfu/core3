@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${FLEET_UPLOAD_ROOT:-.data/fleet-uploads}
+  credentials: {}
+
+attachments:
+  fleet_vehicle_attachment:
+    download:
+      route: /api/fleet/vehicle-attachments
+      permission: fleet.read
+      query: SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.content_base64 FROM fleet_vehicle_attachments a JOIN fleet_vehicles v ON v.id = a.vehicle_id WHERE a.id = :attachment_id AND a.active = TRUE AND (COALESCE(:current_company_name, :company_name, '') = '' OR v.company_name = COALESCE(:current_company_name, :company_name))

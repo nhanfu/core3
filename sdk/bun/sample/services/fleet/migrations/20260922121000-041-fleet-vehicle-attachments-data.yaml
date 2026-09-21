@@ -1,0 +1,15 @@
+version: 0.0.41
+kind: data
+description: Deterministic Fleet vehicle attachment fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_attachments(id, row_version, vehicle_id, company_name, file_name, mime_type, size_bytes, storage_key, content_base64, uploaded_by, active, created_at)
+      VALUES ('fleet-vehicle-attachment-demo-001', 1, 'fleet-demo-001', 'Core3 Demo Company', 'vehicle-registration.pdf', 'application/pdf', 24, 'fleet-vehicle-attachment-demo-001-vehicle-registration.pdf', 'JVBERi0xLjQKJUZsZWV0IENvcmUzCg==', 'system', TRUE, TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicle_attachments WHERE id = 'fleet-vehicle-attachment-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

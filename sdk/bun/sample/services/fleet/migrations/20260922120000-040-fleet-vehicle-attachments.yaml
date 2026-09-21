@@ -1,0 +1,30 @@
+version: 0.0.40
+kind: schema
+description: Durable Fleet vehicle chatter attachment metadata
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_attachments (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        vehicle_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR,
+        content_base64 VARCHAR,
+        uploaded_by VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_attachments_vehicle_idx ON fleet_vehicle_attachments(vehicle_id, active, created_at, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_attachments_company_idx ON fleet_vehicle_attachments(company_name, active, vehicle_id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_attachments_company_idx;
+      DROP INDEX IF EXISTS fleet_vehicle_attachments_vehicle_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

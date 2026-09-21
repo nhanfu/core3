@@ -1086,3 +1086,44 @@ returns to the current Discuss/Expenses shell. The same result is captured at
 `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-mail-to-driver-20260922/`.
 No Fleet desktop/mobile Odoo screen exists in this requested database, so no
 Odoo-to-Core3 visual parity claim is made for this slice.
+
+## Vehicle chatter attachments bounded slice (2026-09-22)
+
+The next distinct source-backed Fleet workflow is the vehicle form's native
+chatter attachment surface. Odoo's `fleet.vehicle` inherits `mail.thread` and
+the vehicle form ends with `<chatter/>`; attachments are therefore part of the
+vehicle record workflow, not a duplicate of the Mail to Driver composer or
+contract renewal activity stream.
+
+Core3 adds `fleet_vehicle_attachments` to the existing `vehicle-detail`
+page/API pair. `pages/vehicle-detail.yaml` remains presentation-only and
+declares the Odoo attachment panel; `api/vehicle-detail.yaml` owns the
+read-scoped datasource, upload action, authenticated download action, and
+soft-remove action, joined by `page.id: vehicle-detail`. Migrations
+`20260922120000-040-fleet-vehicle-attachments.yaml` and
+`20260922121000-041-fleet-vehicle-attachments-data.yaml` add idempotent
+metadata/storage-key schema and one fixed PDF fixture for Pool Vehicle 01.
+
+The bounded contract supports Fleet-read attachment listing/download and
+Fleet-write upload/remove, with durable metadata, company and active-vehicle
+scope, authenticated actor, 5 MB/non-empty file validation, duplicate-name
+guard, and parent/attachment row-version checks. Failed mutations are atomic;
+file-backed restart and migration replay preserve the attachment metadata.
+The existing shared upload/download transport is reused; rich Odoo follower,
+message, and mail-composer attachment semantics remain outside this slice.
+
+Focused coverage is `test/fleet_vehicle_attachments.integration.test.ts`:
+**3 tests / 27 assertions**. The affected Fleet corpus passes **84 tests /
+876 assertions** across 25 files. `bun run css:build:fleet`, `bun run audit`
+(802 pages, 811 routes, 1,656 datasources), and `git diff --check` pass.
+
+Authenticated Core3 browser verification succeeded on isolated port 4323 with
+the existing QA session. Fleet > Fleet > Pool Vehicle 01 rendered the seeded
+Attachments panel at 1916x833 and 390x844; captures are stored in
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-attachments-20260922/`.
+The browser upload attempt was blocked by BrowserSkill's Chrome file-URL
+permission (`Not allowed`), so upload success is claimed only through the
+focused authenticated API/persistence test. The Odoo reference on instance
+245ea108/database `core3_reference` has no Fleet app/menu at either viewport;
+the blocker captures are recorded under `/tmp` and no Odoo visual parity claim
+is made.

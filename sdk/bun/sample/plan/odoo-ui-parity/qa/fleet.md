@@ -311,6 +311,31 @@ or duplicate QA was created.
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
 
+## 2026-09-22 — Vehicle chatter attachments bounded slice
+
+- Feature `fleet-vehicle-attachments-20260922` adds the Odoo vehicle-form
+  chatter attachment datasource, authenticated download rule, and durable
+  upload/remove actions to the existing `vehicle-detail` page/API pair.
+- Focused `bun test test/fleet_vehicle_attachments.integration.test.ts
+  --timeout 30000`: **3 passed / 27 assertions**. Full Fleet corpus:
+  **84 passed / 876 assertions** across 25 files.
+- File-backed DuckDB reload and migration replay retain attachment metadata;
+  invalid file, duplicate, missing/wrong-company vehicle, actor, and stale
+  row guards reject without partial writes.
+- `bun run css:build:fleet`, `bun run audit` (**802 / 811 / 1,656**), and
+  `git diff --check` pass.
+- Authenticated Core3 browser verification succeeded on port 4323 at desktop
+  1916x833 and mobile 390x844. Captures are in the feature evidence folder;
+  the seeded attachment panel rendered with Add, Download, and Remove.
+- Browser upload itself was not claimed: `bsk upload` returned the exact
+  extension file-URL permission blocker `Not allowed`. API/persistence upload
+  proof remains complete.
+- Odoo instance `245ea108` / `core3_reference` still has no Fleet menu;
+  desktop/mobile captures are blocker evidence only, not visual parity.
+
+QA state: **conditional bounded functional/UI pass; paired Odoo and browser
+file-upload gates blocked**. Fleet remains unsigned-off.
+
 ## 2026-09-22 — Contract renewal activities bounded slice
 
 - Feature `fleet-contract-renewal-activities-20260922` adds durable

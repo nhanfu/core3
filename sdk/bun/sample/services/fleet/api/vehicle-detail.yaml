@@ -9,6 +9,10 @@ datasources:
       forbidden: { status: 403, code: FLEET_VEHICLE_DETAIL_FORBIDDEN, message: You do not have permission to view this vehicle. }
       transport_error: { status: 503, code: FLEET_VEHICLE_DETAIL_UNAVAILABLE, message: Vehicle details are temporarily unavailable. }
     query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.future_driver_name, CAST(v.next_assignation_date AS VARCHAR) AS next_assignation_date, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.acquisition_date AS VARCHAR) AS acquisition_date, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date, (SELECT COUNT(*) FROM fleet_vehicle_assignation_logs l WHERE l.vehicle_id = v.id) AS assignment_count, (SELECT COUNT(*) FROM fleet_vehicle_contracts c WHERE c.vehicle_id = v.id AND c.status <> 'Closed') AS contract_count, (SELECT COUNT(*) FROM fleet_vehicle_services s WHERE s.vehicle_id = v.id AND s.active = NOT v.archived) AS service_count, COALESCE(v.service_activity, 'none') AS service_activity, (SELECT COUNT(*) FROM fleet_vehicle_odometers o WHERE o.vehicle_id = v.id) AS odometer_count FROM fleet_vehicles v WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND v.id = :id AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name)"
+  - id: fleet_vehicle_attachments
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_VEHICLE_ATTACHMENTS_UNAVAILABLE, message: Vehicle attachments are temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.vehicle_id, a.company_name, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM fleet_vehicle_attachments a JOIN fleet_vehicles v ON v.id = a.vehicle_id WHERE a.vehicle_id = :id AND a.active = TRUE AND (COALESCE(:current_company_name, :company_name, '') = '' OR v.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id DESC"
 actions:
   - { id: open_fleet_vehicle_assignment_logs, type: navigate, permission: fleet.read, navigate_to: /fleet/vehicles/assignment-logs, params: { vehicle_id: '{state.id}' } }
   - id: edit_fleet_vehicle
@@ -97,3 +101,46 @@ actions:
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM fleet_vehicles WHERE id = :id AND company_name = :current_company_name)", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle belongs to another company. }
         - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before restoring. }
       result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: upload_fleet_vehicle_attachment
+    type: upload
+    action: fleet.vehicles.attachments.upload
+    handler: attachment_metadata
+    permission: fleet.write
+    kind: fleet_vehicle_attachment
+    params: { vehicle_id: '{state.fleet_vehicle_detail.id}', expected_row_version: '{state.fleet_vehicle_detail.row_version}' }
+    refresh: [fleet_vehicle_detail, fleet_vehicle_attachments]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated Fleet actor is required. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND archived = FALSE AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 404, code: FLEET_ATTACHMENT_VEHICLE_NOT_FOUND, message: Active vehicle was not found in the current company. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND row_version = :expected_row_version AND archived = FALSE AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: STALE_RECORD, message: The vehicle changed before the attachment was uploaded. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 5242880", status: 422, code: FLEET_ATTACHMENT_INVALID, message: Upload a non-empty attachment up to 5 MB. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_attachments WHERE vehicle_id = :vehicle_id AND active = TRUE AND LOWER(file_name) = LOWER(TRIM(CAST(:fileName AS VARCHAR))))", status: 409, code: FLEET_ATTACHMENT_DUPLICATE, message: This attachment already exists for the vehicle. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_attachments(id, vehicle_id, company_name, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT :attachment_id, v.id, v.company_name, TRIM(CAST(:fileName AS VARCHAR)), :mimeType, CAST(:sizeBytes AS BIGINT), :storageKey, :current_user_id FROM fleet_vehicles v WHERE v.id = :vehicle_id", expect_changed: true, status: 404, code: FLEET_ATTACHMENT_VEHICLE_NOT_FOUND, message: Active vehicle was not found. }
+        - { query: "UPDATE fleet_vehicles SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :vehicle_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The vehicle changed before the attachment was uploaded. Reload and try again. }
+      result: { query: "SELECT id, vehicle_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM fleet_vehicle_attachments WHERE id = :attachment_id" }
+  - id: download_fleet_vehicle_attachment
+    type: download
+    permission: fleet.read
+    kind: fleet_vehicle_attachment
+  - id: remove_fleet_vehicle_attachment
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.attachments.remove
+    handler: line_item
+    operation: delete
+    domain: fleet_vehicle_attachment
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.fleet_vehicle_detail.row_version}' }
+    refresh: [fleet_vehicle_detail, fleet_vehicle_attachments]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated Fleet actor is required. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 404, code: FLEET_ATTACHMENT_VEHICLE_NOT_FOUND, message: Vehicle was not found in the current company. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: STALE_RECORD, message: The vehicle changed before the attachment was removed. Reload and try again. }
+        - { query: "SELECT id FROM fleet_vehicle_attachments WHERE id = :line_id AND vehicle_id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: FLEET_ATTACHMENT_STALE, message: This vehicle attachment changed before it was removed. Reload and try again. }
+      steps:
+        - { query: "UPDATE fleet_vehicle_attachments SET active = FALSE, row_version = row_version + 1 WHERE id = :line_id AND vehicle_id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FLEET_ATTACHMENT_STALE, message: This vehicle attachment changed before it was removed. Reload and try again. }
+        - { query: "UPDATE fleet_vehicles SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The vehicle changed before the attachment was removed. Reload and try again. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }

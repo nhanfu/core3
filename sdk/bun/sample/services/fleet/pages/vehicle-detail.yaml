@@ -4,6 +4,16 @@ components:
   - type: OdooFormView
     source: fleet_vehicle_detail
     title_field: name
+    attachment_source: fleet_vehicle_attachments
+    attachment_panel_open: true
+    attachment_label: Attachments
+    add_attachment_label: Add attachment
+    no_attachments_label: No attachments yet
+    upload_failed_label: Attachment upload failed
+    attachment_upload_action: upload_fleet_vehicle_attachment
+    attachment_download_action: download_fleet_vehicle_attachment
+    attachment_actions:
+      - { id: remove_fleet_vehicle_attachment, label: Remove, variant: danger, permission: fleet.write }
     status_field: state
     statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]
     status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
