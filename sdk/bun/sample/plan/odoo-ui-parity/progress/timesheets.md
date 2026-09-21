@@ -926,6 +926,15 @@ Print/PDF/action blockers remain open; no sign-off is claimed.
 - Core3 desktop/mobile evidence is blocked because `127.0.0.1:3001` refused connections. Odoo 8069/8073 are reachable but expose only `/web/login`; authenticated desktop/mobile comparison is not claimed. Exact probes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`.
 - Odoo Print/PDF/action blockers remain open; no module sign-off is claimed.
 
+## 2026-09-21 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
+
+- Selected Odoo `project_project.action_project_timesheets` / `act_hr_timesheet_line_by_project`, whose action domain scopes rows to `active_id` and whose context carries `default_project_id: active_id`. This is distinct from the completed project report/preview, project dashboard guards, and My Timesheets project-task dependency slices.
+- Added the durable `project_timesheet_entry_defaults` API datasource and source-prefilled `create_project_timesheet_entry` form to `api/project-timesheets.yaml`; `pages/project-timesheets.yaml` remains layout-only and the contracts stay joined by `page.id: project-timesheets`. The mutation canonicalizes project name/company from the durable active timesheetable project relation, persists company ownership, and guards the selected project context, company, active state, and analytic-account requirement.
+- Focused coverage passed 4/4 tests with 21 expectations, including Odoo action/source mapping, page/API separation, permission/company/empty guards, durable create, stale context rejection, migration replay, and file-backed restart. Related project report/dashboard/dependency data coverage passed 22 tests with 122 expectations; the remaining project contract discovery test is blocked by a shared non-Timesheets YAML parse error.
+- Scoped ESLint passed and Timesheets-owned `git diff --check` is clean. The full Timesheets run and UI audit are blocked before completion by the same concurrent non-Timesheets `discoverPages()` `SyntaxError: YAML Parse error: Unexpected token`; no other-owner file was edited.
+- Core3 desktop/mobile evidence is blocked because port 3001 refused `/api/modules` and `/project-timesheets`; Odoo 8069/8073 returned HTTP 200 only for unauthenticated `/web/login`. Exact probes and paired source comparison are under `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`. No authenticated browser sign-off is claimed.
+- Odoo Print/PDF/action surfaces remain open blockers; no module sign-off is claimed.
+
 ## 2026-09-21 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 - Selected Odoo `timesheet_action_from_employee`, whose form context carries `default_employee_id: active_id` while its domain stays scoped to the active employee. This is distinct from the completed employee report action/preview and the My Timesheets favorite-project prefill.

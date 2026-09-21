@@ -305,6 +305,16 @@ pages, 735 routes, and 1,409 datasources.
 | Audit/lint/diff | UI audit 729/738/1419; ESLint; `git diff --check` | pass |
 | Authenticated desktop/mobile evidence | Core3 and Odoo captures | blocked; exact runtime blockers recorded, no sign-off |
 
+## Wave 34 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
+
+- Source gate: `hr_timesheet/models/project_project.py` `action_project_timesheets`; `hr_timesheet/views/hr_timesheet_views.xml` `act_hr_timesheet_line_by_project` uses `project_id = active_id` and `default_project_id = active_id`.
+- Contract gate: `project-timesheets` page/API pair exposes `project_timesheet_entry_defaults` and source-prefills the project create form.
+- Persistence/security gate: the create path canonicalizes the durable project relation, writes the active company, requires `timesheets.write`, and rejects stale project context, foreign company, inactive/non-timesheetable projects, and missing analytic accounts.
+- Focused gate: `bun test test/timesheets_project_context_default.integration.test.ts --timeout 20000` — 4 passed / 21 expectations.
+- Regression/static gates: related project report/dashboard/dependency data tests 22 passed / 122 expectations; ESLint passed; Timesheets-owned `git diff --check` passed. Full Timesheets and UI audit are blocked by the shared `discoverPages()` `SyntaxError: YAML Parse error: Unexpected token` in concurrent non-Timesheets work.
+- Browser gate: blocked. Core3 `/api/modules` and `/project-timesheets` refused port 3001; Odoo 8069/8073 returned HTTP 200 only for `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`; no authenticated desktop/mobile sign-off is claimed.
+- Odoo Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
+
 ## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 - Source gate: `hr_timesheet/views/hr_timesheet_views.xml` employee action uses `('employee_id', '=', active_id)` and `default_employee_id: active_id`.

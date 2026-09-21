@@ -1843,6 +1843,40 @@ unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
 and visual sign-off are blocked. Existing Odoo Print/PDF/action surfaces remain
 open blockers; no module sign-off is claimed.
 
+## Wave 34 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
+
+The smallest open source-backed project-context behavior after the prior
+employee context, report, dashboard, dependency, filter, grouping, import, and
+sub-task slices is Odoo's `act_hr_timesheet_line_by_project`. The action domain
+uses `('project_id', '=', active_id)` and its context carries
+`default_project_id: active_id`, so a new line opened from a project retains
+that project instead of requiring a second manual selection.
+
+Core3 keeps `pages/project-timesheets.yaml` layout-only and adds the durable
+`project_timesheet_entry_defaults` datasource plus a source-prefilled
+`create_project_timesheet_entry` form to `api/project-timesheets.yaml`; both
+contracts remain joined by `page.id: project-timesheets`. The datasource resolves
+the active project from durable `timesheet_projects` in the current company.
+The create mutation canonicalizes project name/company and fails closed for a
+stale project context, foreign company, inactive/non-timesheetable project, or
+missing analytic account. Existing durable entry storage is reused, so no
+duplicate migration is needed.
+
+Focused coverage is
+`test/timesheets_project_context_default.integration.test.ts`: 4 tests / 21
+expectations. Related project report/dashboard/dependency data coverage is 22
+passing tests / 122 expectations; one discovery-only project contract test is
+blocked by a concurrent non-Timesheets YAML parse error. Scoped ESLint and
+Timesheets-owned `git diff --check` pass. Full module regression and UI audit
+are blocked by that shared discovery boundary.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`.
+Core3 refused connections on port 3001 and Odoo 8069/8073 served only the
+unauthenticated `/web/login` surface, so authenticated desktop/mobile captures
+and visual sign-off are blocked. Existing Odoo Print/PDF/action blockers remain
+open; no module sign-off is claimed.
+
 ## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 The smallest open source-backed employee-context behavior after the prior

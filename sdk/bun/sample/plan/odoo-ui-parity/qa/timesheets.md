@@ -966,6 +966,23 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Browser gate: blocked. Core3 `127.0.0.1:3001` refused connections; Odoo 8069/8073 returned unauthenticated `/web/login`. Exact probe and comparison notes are under `evidence/timesheets/2026-09-21/timesheet-task-subtask-scope-001/`; no authenticated desktop/mobile sign-off is claimed.
 - Existing Odoo Print/PDF/action surfaces remain blockers; no module sign-off is claimed.
 
+## Wave 34 — `TIMESHEET-PROJECT-CONTEXT-DEFAULT-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo project action comparison | `action_project_timesheets`, `act_hr_timesheet_line_by_project`, `project_id = active_id`, `default_project_id = active_id` | pass in focused source test |
+| Paired YAML contract | `page.id: project-timesheets`, layout-only page, source-prefilled API form | pass |
+| Durable context/create | project relation-derived defaults and company-persisted entry | pass |
+| Permission/company/empty guards | `timesheets.write`, active timesheetable project/current company, empty defaults, analytic-account scope | pass |
+| Context/concurrency boundary | stale selected project rejected before create; existing row persistence retained | pass |
+| Restart | migration replay and file-backed project/default read pass | pass |
+| Focused regression | new test 4/4 (21 expectations); related project data/report/dashboard/dependency 22 passing (122 expectations) | pass, with one discovery-only blocker |
+| Audit/lint/diff | ESLint and scoped diff-check pass; UI audit stops on shared non-Timesheets YAML parse error | partial; blocker recorded |
+| Authenticated desktop/mobile evidence | Core3 and paired Odoo project route/action capture | blocked; Core3 3001 refused connections and Odoo exposed only `/web/login`; no sign-off |
+
+Evidence: `evidence/timesheets/2026-09-21/timesheet-project-context-default-001/`.
+Odoo Print/PDF/action parity remains a separate blocker.
+
 ## Wave 33 — `TIMESHEET-EMPLOYEE-CONTEXT-DEFAULT-001`
 
 | Check | Expected evidence | Result |
