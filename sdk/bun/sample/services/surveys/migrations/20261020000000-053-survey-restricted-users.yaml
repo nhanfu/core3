@@ -1,0 +1,47 @@
+version: 0.0.53
+description: Durable Odoo-style restricted survey user access relation
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_restricted_users (
+        id VARCHAR PRIMARY KEY,
+        survey_id VARCHAR NOT NULL,
+        user_id VARCHAR NOT NULL,
+        user_name VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE (survey_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS survey_restricted_users_survey_idx
+        ON survey_restricted_users(survey_id, user_id);
+      INSERT INTO surveys(
+        id, name, title, description, owner, response_count, state,
+        access_token, created_at, updated_at
+      ) VALUES (
+        'survey-demo-restricted', 'SURVEY/RESTRICTED', 'Restricted Vendor Review',
+        'A deterministic survey visible only to its assigned internal users.',
+        'Mitchell Admin', 0, 'Draft', 'restricted-survey-token-2026',
+        TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'
+      ) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_questions(
+        id, survey_id, question_text, question_type, sequence, required, answer_options, is_page
+      ) VALUES (
+        'question-restricted-review', 'survey-demo-restricted',
+        'Which vendor control needs review?', 'Choice', 1, true,
+        'Access,Data retention,Incident response', false
+      ) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_restricted_users(id, survey_id, user_id, user_name, row_version)
+      VALUES
+        ('restricted-user-admin', 'survey-demo-restricted', 'user-admin', 'Admin User', 1),
+        ('restricted-user-demo', 'survey-demo-restricted', 'user-demo', 'Demo Survey Officer', 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS survey_restricted_users_survey_idx;
+      DROP TABLE IF EXISTS survey_restricted_users;
+      DELETE FROM survey_questions WHERE id = 'question-restricted-review';
+      DELETE FROM surveys WHERE id = 'survey-demo-restricted';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

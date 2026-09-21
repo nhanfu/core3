@@ -41,7 +41,7 @@ components:
       - title: Survey
         fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: response_count, label: Responses }]
       - title: Participants
-        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
+        fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: restricted_user_names, label: Restricted users }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
       - title: Description
         fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
   - type: LineItemGrid
@@ -67,6 +67,34 @@ components:
       - { field: required, label: Required }
       - { field: answer_options, label: Options }
     empty_state: { title: No questions or sections, description: Add a question or section to structure this survey. }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: survey_restricted_users
+    parent_source: survey_detail
+    title: Restricted users
+    description: Only assigned internal users can see this survey in the authenticated Surveys catalog.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_survey_restricted_user, label: Add restricted user, variant: primary, permission: surveys.write }
+    empty_state: { title: No restricted users, description: An empty list keeps the survey visible to every authenticated Surveys user. }
+    children:
+      - { type: LineItemField, id: user_name, field: user_name, label: User, readonly: true }
+      - { type: LineItemField, id: user_id, field: user_id, label: User ID, readonly: true }
+      - type: LineItemActions
+        id: survey_restricted_user_actions
+        actions:
+          - { id: remove_survey_restricted_user, label: Remove, icon: trash, variant: danger, permission: surveys.write }
+    columns:
+      - { field: user_name, label: User, type: PrimaryEntityCell }
+      - { field: user_id, label: User ID }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_survey_restricted_user, label: Remove, icon: trash, variant: danger, permission: surveys.write }
   - type: ContactGrid
     source: survey_responses
     row_key: id

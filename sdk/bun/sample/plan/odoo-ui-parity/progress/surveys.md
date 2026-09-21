@@ -441,6 +441,28 @@ authenticated fixture or paired visual comparison is claimed.
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/`.
 
+## 2026-09-21 — `SURVEYS-RESTRICTED-USERS-001`
+
+Selected the next smallest open source-backed backend behavior: Odoo's
+`survey.survey.restrict_user_ids` access relation. Core3 now persists a
+deterministic `survey_restricted_users` relation, filters the Surveys catalog,
+detail, and relation datasource by `current_user_id`, and exposes add/remove
+relation actions on the existing `survey-detail` page/API pair. Mutations
+require `surveys.write`, an authenticated actor, a non-archived survey, and
+matching parent/relation row versions; duplicate and stale replay are rejected
+before mutation. The relation and server-side visibility survive restart.
+
+Focused coverage is **3 passed / 26 assertions**; adjacent catalog/detail
+regression is **34 passed / 310 assertions**. Audit reports **747 pages, 756
+routes, and 1,490 datasources**; scoped ESLint and diff-check pass. Core3
+desktop/mobile capture was blocked by refused ports 3000, 3001, 3390, and 3391.
+Odoo `/odoo/surveys?` returned HTTP 303 to login and the session probe returned
+HTTP 200 `{"error":"survey_wrong"}`. No authenticated visual or paired Odoo
+sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/`.
+
 ## 2026-09-21 — SURVEYS-CERTIFICATION-BADGE-001
 
 Selected the smallest open certification behavior after the Wave 31 report:

@@ -1,0 +1,14 @@
+{
+  "feature_id": "SURVEYS-RESTRICTED-USERS-001",
+  "date": "2026-09-21",
+  "core3": {
+    "desktop": { "status": "blocked", "viewport": "1440x900", "reason": "No service listener on 127.0.0.1:3000, :3001, :3390, or :3391; authenticated browser capture could not start." },
+    "mobile": { "status": "blocked", "viewport": "390x844", "reason": "No service listener on 127.0.0.1:3000, :3001, :3390, or :3391; authenticated browser capture could not start." }
+  },
+  "odoo": {
+    "desktop": { "status": "blocked", "url": "http://127.0.0.1:8069/odoo/surveys?", "http_status": 303, "reason": "Redirected to the login shell; no authenticated restricted-user fixture was available." },
+    "mobile": { "status": "blocked", "viewport": "390x844", "reason": "The same unauthenticated Odoo host blocked a paired mobile capture." },
+    "session_probe": { "url": "http://127.0.0.1:8069/survey/check_session_code/5822", "http_status": 200, "body": { "error": "survey_wrong" }, "reason": "No valid authenticated/live session fixture was available for paired comparison." }
+  },
+  "sign_off": false
+}

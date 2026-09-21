@@ -70,6 +70,7 @@ components:
       - { field: name, label: Survey, type: PrimaryEntityCell }
       - { field: title, label: Title }
       - { field: owner, label: Owner }
+      - { field: restricted_user_names, label: Restricted users }
       - { field: response_count, label: Responses, align: right }
       - { field: published_at, label: Published at }
       - { field: state, label: Status, type: StatusChip }

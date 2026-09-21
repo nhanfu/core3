@@ -1509,3 +1509,26 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.
+
+## Bounded QA run: `SURVEYS-RESTRICTED-USERS-001` — 2026-09-21
+
+- Source/UI: Odoo defines `restrict_user_ids` as a Survey many-to-many field,
+  renders avatar tags on the form, and filters Survey officer access to
+  unrestricted surveys or surveys containing the current user
+  (`survey_survey.py:65-69`; `survey_survey_views.xml:63-70`;
+  `survey_security.xml:38-47`).
+- Persistence/guards: Core3's `survey_restricted_users` relation is durable and
+  restart-safe. Catalog, detail, and relation reads filter by actor; add/remove
+  require `surveys.write`, an actor, a live survey, and current parent/relation
+  versions. Duplicate and stale requests do not mutate state.
+- Verification: **3 focused tests / 26 assertions** and **34 adjacent tests /
+  310 assertions** pass. UI audit reports **747 pages, 756 routes, and 1,490
+  datasources**; scoped ESLint and diff-check pass. Full repository regression
+  was not run for this bounded slice.
+- Runtime/reference: Core3 desktop/mobile probes were refused on ports 3000,
+  3001, 3390, and 3391. Odoo `/odoo/surveys?` returned 303 to login; the
+  session probe returned 200 with `{"error":"survey_wrong"}`. No
+  authenticated desktop/mobile capture or paired Odoo sign-off is claimed.
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.

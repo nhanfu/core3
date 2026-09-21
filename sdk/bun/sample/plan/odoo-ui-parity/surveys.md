@@ -2311,3 +2311,34 @@ probe returned HTTP 200 `{"error":"survey_wrong"}`. No authenticated visual,
 mail-server delivery, binary mail rendering, or paired Odoo sign-off is
 claimed. Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/`.
+
+## Wave 34 — `SURVEYS-RESTRICTED-USERS-001`
+
+The next smallest open source-backed backend behavior is Odoo's internal
+restricted Survey access. Odoo defines `restrict_user_ids` as a many-to-many
+relation on `survey.survey` (`addons/survey/models/survey_survey.py:65-69`),
+renders it with `many2many_tags_avatar`
+(`addons/survey/views/survey_survey_views.xml:63-70`), and filters Survey
+officer access to unrestricted surveys or surveys containing the current user
+(`addons/survey/security/survey_security.xml:38-47`). The model also validates
+responsible-user access when restrictions change
+(`survey_survey.py:446-459`).
+
+Core3 adds the durable `survey_restricted_users` relation and deterministic
+restricted fixture. The existing `surveys` catalog, `survey_detail`, and
+`survey_restricted_users` datasources enforce the actor boundary server-side;
+an outsider cannot retrieve the restricted survey or its relation rows. The
+existing `survey-detail` page/API pair gains a Restricted users line grid with
+permissioned add/remove actions. Both mutations require `surveys.write`, an
+authenticated actor, a non-archived survey, and optimistic parent/relation
+versions; duplicate and stale replay are rejected. Public respondent token
+behavior remains separate from this authenticated backend rule.
+
+Focused verification is **3 passed / 26 assertions** and adjacent
+catalog/detail verification is **34 passed / 310 assertions**. Audit reports
+**747 pages, 756 routes, and 1,490 datasources**; scoped lint and diff-check
+pass. Core3 desktop/mobile capture was blocked by refused ports 3000, 3001,
+3390, and 3391. Odoo `/odoo/surveys?` returned HTTP 303 to login and the
+session-code probe returned HTTP 200 `{"error":"survey_wrong"}`. No
+authenticated visual or paired Odoo sign-off is claimed. Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/`.

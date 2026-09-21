@@ -673,3 +673,15 @@ plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-BADGE-001/
 
 Evidence:
 plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-INVITE-ATTACHMENT-001/.
+
+## `SURVEYS-RESTRICTED-USERS-001` — restricted Survey visibility
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-059 | authenticated form | Survey detail → restricted users | Existing page/API pair exposes a durable restricted-user relation with add/remove controls | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-058 | permission/actor | outsider read, missing actor, stale parent/relation | Restricted catalog/detail/relation reads disclose nothing; mutations reject unauthorized/stale calls | test-results.md, focused test | pass |
+| SURVEYS-WF-056 | restart/idempotency | Add → duplicate replay → remove → file-backed reopen | One relation per survey/user persists and filtering survives restart | test-results.md, focused test | pass |
+| SURVEYS-UI-057 | authenticated responsive/reference | Restricted-user form desktop/mobile + Odoo comparison | Record exact runtime/reference blockers; no sign-off without authenticated fixtures | browser-results.json | conditional |
+
+Evidence:
+plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-RESTRICTED-USERS-001/.
