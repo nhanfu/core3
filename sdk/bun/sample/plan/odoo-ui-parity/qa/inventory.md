@@ -2040,3 +2040,38 @@ sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable Waiting Transfers queue
 lifecycle and authenticated Odoo comparison; PARTIAL/BLOCKED for Core3 visual
 evidence. Full Inventory sign-off remains open.
+
+## Inventory Backorders queue QA — `INV-TRANSFER-BACKORDER-QUEUE-001`
+
+- Odoo source/action: PASS. `stock.action_picking_tree_backorder` is mapped
+  from `stock_picking_views.xml:601-607`; its title, four view modes, and
+  `search_default_backorder` context are asserted against the local Odoo 19
+  source. The shared filter requires `backorder_id != False` and active
+  assigned/waiting/confirmed states. Source and live blocker details are in
+  `evidence/inventory/2026-09-22/INV-TRANSFER-BACKORDER-QUEUE-001/`.
+- Core3 contract: PASS. `pages/transfer-backorder-queue.yaml` is
+  presentation-only and matches `api/transfer-backorder-queue.yaml` by
+  `page.id`; the Overview Back Orders card navigates to the queue. Migration
+  0.0.86 persists the queue context, refresh ledger, parent/child fixture, and
+  deterministic 2026-01-15 data.
+- Focused verification: PASS — 3 tests / 33 assertions in
+  `inventory_transfer_backorder_queue.integration.test.ts`. Coverage
+  includes source/schema mapping, active-child and cancelled exclusion,
+  search/operation/company filters, 404/empty/503 states, refresh CRUD,
+  actor/company/stale guards, permission denial, and restart persistence.
+- Static checks: PASS — `bun run audit` (784 pages / 794 routes / 1,613
+  datasources), `bun run css:build:inventory`, and `git diff --check`.
+- Authenticated Core3 browser: PASS for the bounded route. Desktop and
+  emulated 390x844 mobile both rendered one Backorders row; desktop Refresh
+  saved `Backorders refreshed.` and reload retained the row. The result JSON
+  is in the feature evidence directory; PNG captures remain outside Git under
+  `/tmp/core3-odoo-parity/`.
+- Authenticated Odoo browser: PARTIAL/BLOCKED for the bounded queue. The
+  Inventory Overview exists and was captured at desktop/mobile in
+  `core3_reference`; direct `/odoo/backorders` resolved to Discuss, and the
+  current overview exposed no Backorders card link. No Odoo mutation or
+  paired Backorders-list visual sign-off is claimed.
+
+QA disposition: PASS for the bounded Core3 durable Backorders queue;
+PARTIAL/BLOCKED for the live Odoo queue surface. Full Inventory sign-off
+remains open.

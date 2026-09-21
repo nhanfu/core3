@@ -1,0 +1,50 @@
+title: Backorders
+page: { id: transfer-backorder-queue, route: /inventory/transfer/backorders, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Backorders], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_transfer_backorder_queue_context
+    title: Backorders
+    stats:
+      - { label: Queue, field: title }
+      - { label: Backorders, field: transfer_count }
+      - { label: Company, field: company_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_transfer_backorder_transfers
+    header_actions:
+      - { id: refresh_inventory_transfer_backorder_queue, label: Refresh, variant: secondary, permission: inventory.read }
+    search: { label: Search backorders, placeholder: 'Search references, contacts, or source documents...' }
+    filters:
+      - { field: operation_kind, label: Operation, options: [{ id: receipt, label: Receipts }, { id: delivery, label: Deliveries }, { id: internal, label: Internal }] }
+    group_by:
+      - { field: operation_type_name, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date }
+      - { field: company_name, label: Company }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Cards
+        icon: dashboard
+        mobile: true
+        group_by: operation_type_name
+        card:
+          title: name
+          subtitle: contact_name
+          fields:
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: state, label: Status }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: operation_type_name, label: Operation Type, mobile: true }
+      - { field: contact_name, label: Contact, mobile: false }
+      - { field: scheduled_date, label: Scheduled Date, mobile: true, sortable: true }
+      - { field: source_document, label: Source Document, mobile: false }
+      - { field: backorder_of_name, label: Backorder Of, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+    page_size: 50
+    row_key: id
+    selectable: false
+    row_open_action: view_inventory_backorder_transfer
+    row_double_click_action: view_inventory_backorder_transfer
+    empty_state: { title: No backorders, description: Remaining parts of partially processed transfers will appear here. }

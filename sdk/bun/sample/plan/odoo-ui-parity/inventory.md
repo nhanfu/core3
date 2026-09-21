@@ -2721,3 +2721,43 @@ Surveys YAML parse error in `services/surveys/api/survey-detail.yaml`.
 Exact source comparison, captures, test results, and the blocker are under
 `evidence/inventory/2026-09-21/INV-TRANSFER-LATE-QUEUE-001/`. Full Inventory
 sign-off remains open.
+
+## Operations > Backorders queue — `INV-TRANSFER-BACKORDER-QUEUE-001` (2026-09-22)
+
+This bounded Wave 49 slice closes the uncovered queue action distinct from the
+already implemented partial-validation Backorder wizard. Odoo declares
+`stock.action_picking_tree_backorder` in
+`addons/stock/views/stock_picking_views.xml:601-607`; it is named
+`Backorders`, opens `stock.picking` in `list,kanban,form,calendar` views, and
+sets `search_default_backorder`. The shared filter at
+`stock_picking_views.xml:385` selects non-null `backorder_id` records in
+active `assigned`, `waiting`, or `confirmed` states.
+
+Core3 adds presentation-only `pages/transfer-backorder-queue.yaml` and the
+matching `api/transfer-backorder-queue.yaml` (`page.id:
+transfer-backorder-queue`) at `/inventory/transfer/backorders`. Migration
+`20260922360000-086-inventory-transfer-backorder-queue.yaml` adds a durable
+company queue context, refresh ledger, and parent/child backorder fixture.
+The Inventory Overview card exposes the source-backed Back Orders action;
+there is no new top-level menu leaf because Odoo exposes this queue through
+operation-card navigation. Reads are company-scoped and permissioned, with
+search, operation filter, empty/not-found/503 states, transfer navigation, and
+durable Refresh guarded by actor and optimistic queue row version.
+
+Focused verification passes 3 tests / 33 assertions in
+`test/inventory_transfer_backorder_queue.integration.test.ts`, including
+source/action comparison, page/API separation, active-child filtering,
+cancelled exclusion, permission, stale/company/actor guards, and file-backed
+restart persistence. `bun run audit` passes at 784 pages, 794 routes, and
+1,613 datasources; `bun run css:build:inventory` and `git diff --check` pass.
+
+Authenticated Core3 evidence is under
+`evidence/inventory/2026-09-22/INV-TRANSFER-BACKORDER-QUEUE-001/`; the
+desktop and emulated 390x844 mobile route both rendered the seeded row, and
+the desktop Refresh action saved successfully before reload. Authenticated
+Odoo Inventory Overview desktop/mobile captures are retained under the same
+feature evidence directory. The live source action is installed, but the
+direct `/odoo/backorders` alias falls back to Discuss on both observed
+viewports, and the current overview has no visible Backorders card link, so
+no authenticated Odoo Backorders list/mutation or visual parity sign-off is
+claimed. Full Inventory sign-off remains open.

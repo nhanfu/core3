@@ -1,0 +1,32 @@
+{
+  "feature": "INV-TRANSFER-BACKORDER-QUEUE-001",
+  "date": "2026-09-22",
+  "core3": {
+    "url": "http://127.0.0.1:3316/inventory/transfer/backorders",
+    "runtime": "single-module agent runner",
+    "user": "admin@tms.local",
+    "desktop_viewport": "1440x900 window",
+    "mobile_viewport": "390x844 emulation",
+    "row_count": 1,
+    "row_reference": "WH/OUT/BACKORDER/QUEUE/0001",
+    "refresh": "PASS: Backorders refreshed.",
+    "reload_persistence": "PASS: seeded row remained after reload",
+    "captures": [
+      "/tmp/core3-odoo-parity/inventory-backorders-core3-desktop-final.png",
+      "/tmp/core3-odoo-parity/inventory-backorders-core3-mobile.png"
+    ]
+  },
+  "odoo_reference": {
+    "url": "http://localhost:8069",
+    "database": "core3_reference",
+    "module_overview": "PASS: authenticated Inventory Overview loaded",
+    "overview_captures": [
+      "/tmp/core3-odoo-parity/inventory-backorders-odoo-overview-1440x900.png",
+      "/tmp/core3-odoo-parity/inventory-backorders-odoo-overview-mobile-390x844.png"
+    ],
+    "backorders_queue": "BLOCKED: direct /odoo/backorders resolved to Discuss; no visible Backorders card link was available in the observed Overview",
+    "blocker_capture": "/tmp/core3-odoo-parity/inventory-backorders-odoo-blocker-mobile-390x844.png",
+    "mutation_performed": false
+  },
+  "request_errors": "No browser error or failed-request claim was used as a completion gate for the Core3 mobile capture; visual overflow was not independently measured in the final bsk session."
+}

@@ -23,6 +23,8 @@ components:
             - { field: count_picking_late, label: Late }
             - { field: count_picking_backorders, label: Back Orders }
             - { field: count_move_ready, label: Operations }
+          actions:
+            - { id: open_inventory_backorder_queue, label: Back Orders, label_field: count_picking_backorders, variant: secondary, show_if: 'row.count_picking_backorders > 0' }
       - { id: list, label: List, icon: table, mobile: false }
     columns:
       - { field: name, label: Operation Type, type: PrimaryEntityCell }

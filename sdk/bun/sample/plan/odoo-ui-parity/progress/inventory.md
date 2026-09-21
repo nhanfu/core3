@@ -1563,3 +1563,29 @@ Full Inventory sign-off remains open.
   schema error; no authenticated Core3 sign-off is claimed. Exact evidence is
   under `evidence/inventory/2026-09-21/INV-TRANSFER-WAITING-QUEUE-001/`.
   Full Inventory sign-off remains open.
+
+## `INV-TRANSFER-BACKORDER-QUEUE-001` — Backorders queue (2026-09-22)
+
+- Selected Odoo `stock.action_picking_tree_backorder` from
+  `addons/stock/views/stock_picking_views.xml:601-607`; the action is named
+  Backorders, opens list/kanban/form/calendar views, and applies
+  `search_default_backorder` to active child pickings.
+- Added presentation-only `pages/transfer-backorder-queue.yaml` and backend
+  `api/transfer-backorder-queue.yaml`, joined by `page.id:
+  transfer-backorder-queue`, with an Inventory Overview Back Orders card
+  action. Migration `20260922360000-086-inventory-transfer-backorder-queue.yaml`
+  adds the durable queue context, refresh ledger, and parent/child fixture.
+- The queue is company-scoped and read-permissioned, supports search,
+  operation filters, active-state/cancelled exclusion, 404/empty/503 states,
+  transfer navigation, and a Refresh mutation guarded by actor/company/stale
+  row context. Focused verification passes 3 tests / 33 assertions, including
+  restart persistence and permission denial. Audit, Inventory CSS, and diff
+  checks pass.
+- Authenticated Core3 desktop and emulated 390x844 mobile captures show the
+  seeded row; desktop Refresh saved and reload retained it. Authenticated Odoo
+  Inventory Overview desktop/mobile captures exist, but direct
+  `/odoo/backorders` resolved to Discuss and no Backorders card link was
+  visible, so no live Odoo Backorders list/mutation sign-off is claimed. Exact
+  evidence is under
+  `evidence/inventory/2026-09-22/INV-TRANSFER-BACKORDER-QUEUE-001/`.
+  Full Inventory sign-off remains open.
