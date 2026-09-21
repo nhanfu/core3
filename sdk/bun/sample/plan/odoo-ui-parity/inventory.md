@@ -1489,6 +1489,7 @@ paired Odoo comparison/blocker evidence is under
 `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`. Full Inventory
 sign-off remains open.
 
+
 ## Procurement > Replenishment Information — `INV-REPLENISH-INFO-001` (2026-09-21)
 
 This bounded slice covers Odoo's source-backed Replenishment Information action
@@ -2267,4 +2268,30 @@ persistence, and permission denial. Core3 desktop/mobile probing reached only
 the sign-in shell, and live Odoo returned HTTP 303 to `/web/login`; exact
 blockers and non-authenticated captures are under
 `evidence/inventory/2026-09-21/INV-OP-TYPE-MOVES-ANALYSIS-001/`. Full Inventory
+sign-off remains open.
+
+## Procurement > Replenishment manual quantity reset — `INV-REPLENISH-MANUAL-QTY-001` (2026-09-21)
+
+This bounded Wave 32 slice closes the smallest remaining source-backed
+Replenishment row action without duplicating Order, Automate, Snooze, or
+Replenishment Information. Odoo declares
+`action_remove_manual_qty_to_order` in
+`addons/stock/views/stock_orderpoint_views.xml:51-53`; the source method
+`addons/stock/models/stock_orderpoint.py:630-632` clears
+`qty_to_order_manual` so the computed forecast quantity is restored.
+
+Core3 adds migration
+`services/inventory/migrations/20260922190000-069-inventory-replenishment-manual-quantity.yaml`
+with a deterministic manual override fixture. The existing presentation-only
+`pages/replenishment.yaml` and backend `api/replenishment.yaml` remain joined
+by `page.id: replenishment`; the API exposes the manager-only reset action and
+durably clears the override, recomputes `to_order`, increments `row_version`,
+and enforces actor, company, state, and stale-row guards.
+
+Focused verification passes 7 tests / 55 assertions in
+`test/inventory_replenishment_manual_quantity.integration.test.ts` and the
+replenishment regression suite. Core3 desktop/mobile probing reached only the
+login shell, and Odoo returned HTTP 303 to `/web/login`; exact blockers and
+non-authenticated captures are under
+`evidence/inventory/2026-09-21/INV-REPLENISH-MANUAL-QTY-001/`. Full Inventory
 sign-off remains open.

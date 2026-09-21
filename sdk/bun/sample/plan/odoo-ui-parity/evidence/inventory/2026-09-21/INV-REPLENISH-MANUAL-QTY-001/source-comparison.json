@@ -1,0 +1,22 @@
+{
+  "feature_id": "INV-REPLENISH-MANUAL-QTY-001",
+  "odoo": {
+    "view": "addons/stock/views/stock_orderpoint_views.xml:51-53",
+    "model": "addons/stock/models/stock_orderpoint.py:630-632",
+    "behavior": "The reordering-rules row exposes action_remove_manual_qty_to_order when qty_to_order_manual is set; the action clears the manual override so the computed quantity is used."
+  },
+  "core3": {
+    "page": "services/inventory/pages/replenishment.yaml",
+    "api": "services/inventory/api/replenishment.yaml",
+    "page_id": "replenishment",
+    "migration": "services/inventory/migrations/20260922190000-069-inventory-replenishment-manual-quantity.yaml",
+    "behavior": "The manager-only row action clears the durable manual quantity, restores the deterministic forecast-computed quantity, increments row_version, and refreshes the replenishment list."
+  },
+  "comparison": {
+    "source_mapping": "pass",
+    "page_api_separation": "pass",
+    "durable_manual_override": "pass",
+    "permission_company_stale_actor_guards": "pass",
+    "live_odoo_execution": "blocked_by_login_redirect"
+  }
+}

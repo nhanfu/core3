@@ -15,7 +15,7 @@ datasources:
         location_name, warehouse_name, CAST(on_hand AS DOUBLE) AS on_hand,
         CAST(forecast AS DOUBLE) AS forecast, route,
         CAST(min_qty AS DOUBLE) AS min_qty, CAST(max_qty AS DOUBLE) AS max_qty,
-        CAST(to_order AS DOUBLE) AS to_order, unit_name,
+        CAST(to_order AS DOUBLE) AS to_order, CAST(COALESCE(to_order_manual, 0) AS DOUBLE) AS to_order_manual, unit_name,
         CASE trigger WHEN 'auto' THEN 'Automatic' ELSE 'Manual' END AS trigger,
         trigger AS trigger_value, state, snoozed_until, order_reference,
         company_name, lead_days
@@ -118,6 +118,25 @@ actions:
       result: { query: "SELECT * FROM inventory_orderpoints WHERE id = :id" }
     fields:
       - { field: snoozed_until, label: Snooze Date, type: date, required: true, default: '2026-01-22' }
+  - id: remove_manual_inventory_replenishment
+    type: server
+    permission: inventory.manage
+    action: inventory.replenishment.remove_manual_qty
+    handler: yaml_mutation
+    operation: reset_manual_quantity
+    result: alert
+    result_field: message
+    refresh: [inventory_replenishment_orderpoints]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE", status: 404, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_NOT_FOUND, message: Replenishment proposal not found. }
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_STALE, message: This replenishment proposal changed. Reload before resetting the manual quantity. }
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND to_order_manual > 0 AND trigger = 'manual'", status: 409, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_NOT_SET, message: This replenishment proposal has no manual quantity to remove. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_ACTOR_REQUIRED, message: An authenticated inventory manager is required to reset the manual quantity. }
+        - { query: "SELECT 1 AS ok FROM inventory_orderpoints WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)') AND company_name = COALESCE(NULLIF(:company_name, ''), COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)'))", status: 403, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_COMPANY, message: The replenishment proposal must belong to the current company. }
+      steps:
+        - { query: "UPDATE inventory_orderpoints SET to_order_manual = 0, to_order = CASE WHEN forecast < min_qty THEN max_qty - forecast ELSE 0 END, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = :id AND active = TRUE AND to_order_manual > 0 AND trigger = 'manual' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_REPLENISHMENT_MANUAL_QTY_STALE, message: This replenishment proposal changed. Reload before resetting the manual quantity. }
+      result: { query: "SELECT id, to_order, to_order_manual, row_version, 'Manual replenishment quantity removed.' AS message FROM inventory_orderpoints WHERE id = :id" }
   - id: view_inventory_replenishment_info
     type: navigate
     permission: inventory.manage

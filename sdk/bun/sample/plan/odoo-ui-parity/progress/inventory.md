@@ -288,7 +288,7 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
   the date control. This exact responsive comparison boundary is recorded in
   `odoo.json`; no Odoo write was made.
 - Status: bounded report-context slice complete for review; full Inventory
-  sign-off remains open.
+sign-off remains open.
 
 ## `INV-OP-TYPES-001` — Operations Types lifecycle (2026-09-20)
 
@@ -1216,3 +1216,22 @@ Full Inventory sign-off remains open.
   authenticated visual pass is claimed. Odoo returned HTTP 303 to
   `/web/login`; exact blockers and captures are recorded under the feature
   evidence directory. Full Inventory sign-off remains open.
+
+## `INV-REPLENISH-MANUAL-QTY-001` — Replenishment manual quantity reset (2026-09-21)
+
+- Selected Odoo's uncovered Replenishment row action
+  `action_remove_manual_qty_to_order` after the existing Order, Automate,
+  Snooze, and Replenishment Information slices. The source clears
+  `qty_to_order_manual` and restores the computed quantity.
+- Added migration `20260922190000-069-inventory-replenishment-manual-quantity.yaml`
+  with a deterministic manual override. Extended the existing separate
+  `replenishment` page/API pair by `page.id` with a manager-only reset action,
+  durable computed-quantity restoration, company/actor/state/stale guards, and
+  row-version increment.
+- Focused verification passes 7 tests / 55 assertions, including migration
+  replay, restart persistence, permission denial, and regression coverage for
+  the existing replenishment list.
+- Core3 desktop/mobile captures reached only `/auth/login`, so no
+  authenticated visual pass is claimed. Odoo returned HTTP 303 to
+  `/web/login`; exact blockers are recorded under the feature evidence
+  directory. Full Inventory sign-off remains open.

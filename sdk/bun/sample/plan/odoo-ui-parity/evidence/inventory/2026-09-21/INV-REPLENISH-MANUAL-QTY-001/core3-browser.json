@@ -1,0 +1,36 @@
+{
+  "feature_id": "INV-REPLENISH-MANUAL-QTY-001",
+  "target": "http://127.0.0.1:4344/replenishment",
+  "authenticated": false,
+  "viewports": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:4344/auth/login?redirect=%2Freplenishment",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "page_errors": [],
+      "bad_responses": [],
+      "scroll_width": 1440,
+      "client_width": 1440
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:4344/auth/login?redirect=%2Freplenishment",
+      "title": "Sign in to your account",
+      "body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "page_errors": [],
+      "bad_responses": [],
+      "scroll_width": 390,
+      "client_width": 390
+    }
+  },
+  "blocker": "Core3 redirected to the authentication shell before the replenishment page could be exercised."
+}

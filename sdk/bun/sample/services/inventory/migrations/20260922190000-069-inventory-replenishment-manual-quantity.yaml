@@ -1,0 +1,15 @@
+version: 0.0.69
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_orderpoints ADD COLUMN IF NOT EXISTS to_order_manual DECIMAL(18,3);
+      UPDATE inventory_orderpoints SET to_order_manual = 0 WHERE to_order_manual IS NULL;
+      UPDATE inventory_orderpoints SET to_order_manual = 12, to_order = 12 WHERE id = 'orderpoint-desk-right' AND trigger = 'manual' AND active = TRUE;
+    down: |
+      UPDATE inventory_orderpoints SET to_order_manual = 0, to_order = 10 WHERE id = 'orderpoint-desk-right';
+      ALTER TABLE inventory_orderpoints DROP COLUMN IF EXISTS to_order_manual;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

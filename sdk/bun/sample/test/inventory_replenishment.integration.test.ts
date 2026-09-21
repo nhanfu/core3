@@ -39,7 +39,7 @@ describe('Inventory replenishment Odoo parity', () => {
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: true });
     expect(list.columns.map((column: any) => column.field)).toEqual(['product_name', 'on_hand', 'forecast', 'route', 'min_qty', 'max_qty', 'to_order', 'unit_name', 'actions']);
     expect(list.columns.at(-1).actions.map((item: any) => item.id)).toEqual([
-      'order_inventory_replenishment', 'automate_inventory_replenishment', 'snooze_inventory_replenishment', 'view_inventory_replenishment_info',
+      'order_inventory_replenishment', 'automate_inventory_replenishment', 'snooze_inventory_replenishment', 'remove_manual_inventory_replenishment', 'view_inventory_replenishment_info',
     ]);
     expect(api.datasources.every((candidate: any) => candidate.permission === 'inventory.manage')).toBe(true);
     expect(api.actions.every((candidate: any) => candidate.permission === 'inventory.manage')).toBe(true);
@@ -50,15 +50,15 @@ describe('Inventory replenishment Odoo parity', () => {
     const params = { q: null, trigger: 'manual', category_name: null, status: 'to_reorder', snooze_status: 'not_snoozed', horizon_days: '365', fixture_state: null };
 
     const initial = await repository.querySource(source, params, 0, 50);
-    expect(initial.data).toHaveLength(3);
+    expect(initial.data).toHaveLength(4);
     expect(initial.data.map((row: any) => row.id)).toEqual([
-      'orderpoint-desk-left', 'orderpoint-desk-right', 'orderpoint-drawer-black',
+      'orderpoint-quant-replenish-0001', 'orderpoint-desk-left', 'orderpoint-desk-right', 'orderpoint-drawer-black',
     ]);
-    expect(initial.data[0]).toMatchObject({ product_name: '[FURN_1118] Corner Desk Left Sit', trigger: 'Manual', to_order: 1 });
+    expect(initial.data.find((row: any) => row.id === 'orderpoint-desk-left')).toMatchObject({ product_name: '[FURN_1118] Corner Desk Left Sit', trigger: 'Manual', to_order: 1 });
 
     const automatic = await repository.querySource(source, { ...params, trigger: 'auto' }, 0, 50);
     expect(automatic.data).toMatchObject([{ id: 'orderpoint-storage-box-auto', trigger: 'Automatic', category_name: 'Office Supplies' }]);
-    expect((await repository.querySource(source, { ...params, category_name: 'Office Supplies', trigger: null, status: 'all' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['orderpoint-storage-box-auto']);
+    expect((await repository.querySource(source, { ...params, category_name: 'Office Supplies', trigger: null, status: 'all' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['orderpoint-quant-replenish-0001', 'orderpoint-storage-box-auto']);
     expect((await repository.querySource(source, { ...params, horizon_days: '3' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['orderpoint-desk-left']);
     expect((await repository.querySource(source, { ...params, q: 'E-COM06' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['orderpoint-desk-right']);
     expect((await repository.querySource(source, { ...params, q: 'not-a-product' }, 0, 50)).data).toEqual([]);

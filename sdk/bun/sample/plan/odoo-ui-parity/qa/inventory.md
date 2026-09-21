@@ -1637,3 +1637,28 @@ comparison. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 durable operation-type report
 contract; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
 comparison. Full Inventory sign-off remains open.
+
+## Inventory Replenishment manual quantity reset QA — `INV-REPLENISH-MANUAL-QTY-001`
+
+- Odoo source/action: PASS from
+  `addons/stock/views/stock_orderpoint_views.xml:51-53` and
+  `addons/stock/models/stock_orderpoint.py:630-632`. The row reset clears
+  `qty_to_order_manual` and returns to the forecast-computed quantity.
+- Core3 contract: PASS. The existing presentation-only
+  `pages/replenishment.yaml` and backend `api/replenishment.yaml` share
+  `page.id: replenishment`; migration 0.0.69 adds the durable manual quantity
+  and deterministic override fixture. The action is manager-only and guards
+  actor, company, manual state, and row version.
+- Focused verification: PASS —
+  `bun test test/inventory_replenishment_manual_quantity.integration.test.ts
+  test/inventory_replenishment.integration.test.ts`, 7 tests / 55 assertions.
+- Core3 browser evidence: BLOCKED for this wave. Desktop and mobile probes
+  reached `/auth/login`; captures are explicitly not authenticated
+  replenishment evidence and authenticated overflow was not assessed.
+- Odoo comparison: BLOCKED. `GET http://127.0.0.1:8069/web` returned HTTP
+  303 to `/web/login?redirect=%2Fweb%3F`; no authenticated paired row-action
+  execution or screenshot is claimed.
+
+QA disposition: PASS for the bounded Core3 durable reset lifecycle;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.

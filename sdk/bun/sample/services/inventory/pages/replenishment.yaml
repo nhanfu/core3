@@ -46,6 +46,7 @@ components:
           - { id: order_inventory_replenishment, label: Order, icon: truck, permission: inventory.manage, show_if: "row.to_order > 0" }
           - { id: automate_inventory_replenishment, label: Automate, icon: refresh, permission: inventory.manage, show_if: "row.to_order > 0 && row.trigger === 'manual'" }
           - { id: snooze_inventory_replenishment, label: Snooze, icon: bell-off, permission: inventory.manage, show_if: "row.to_order > 0 && row.trigger === 'manual'" }
+          - { id: remove_manual_inventory_replenishment, label: Reset manual quantity, icon: undo, permission: inventory.manage, show_if: "row.to_order_manual > 0 && row.trigger === 'manual'" }
           - { id: view_inventory_replenishment_info, label: Replenishment Information, icon: info, permission: inventory.manage }
     page_size: 50
     row_key: id
