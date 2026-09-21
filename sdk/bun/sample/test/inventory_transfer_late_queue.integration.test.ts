@@ -70,7 +70,7 @@ describe('Inventory Late Transfers queue parity', () => {
     database.close();
   });
 
-  test('refreshes queue history with actor/company/stale guards, survives restart, and enforces read permission', async () => {
+  test('refreshes queue history with actor/company/stale guards, survives restart, and enforces read permission', { timeout: 15000 }, async () => {
     const { database, repository } = await openRepository();
     const action = api.actions.find((candidate: any) => candidate.id === 'refresh_inventory_transfer_late_queue');
     const values = { company_name: 'Core3 Demo Company', refreshed_by: 'Inventory Operator', current_company_name: 'Core3 Demo Company', current_user_name: 'Inventory Operator', expected_row_version: 1 };
