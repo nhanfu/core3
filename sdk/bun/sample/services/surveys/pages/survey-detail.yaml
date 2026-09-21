@@ -33,6 +33,7 @@ components:
       - { id: share_survey_detail, label: Share, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_responsible_user, label: Change responsible user, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_speed_rating, label: Quick-answer rewards, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
+      - { id: update_survey_certification_template, label: Certification template, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: schedule_survey_activity, label: Schedule activity, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments_detail, label: Invite attachments, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: start_live_session_detail, label: Create Live Session, variant: primary, permission: surveys.manage, show_if: "!record.session_state" }
@@ -66,6 +67,8 @@ components:
         fields: [{ field: access_mode, label: Access mode }, { field: questions_selection, label: Question selection }, { field: languages, label: Languages }, { field: responsible_user_name, label: Responsible }, { field: restricted_user_names, label: Restricted users }, { field: users_login_required, label: Require login }, { field: is_attempts_limited, label: Limit attempts }, { field: attempts_limit, label: Attempts allowed }, { field: users_can_go_back, label: Allow going back }]
       - title: Live Session
         fields: [{ field: session_speed_rating, label: Reward quick answers }, { field: session_speed_rating_time_limit, label: Reward window (seconds) }]
+      - title: Certification
+        fields: [{ field: certification, label: Certification }, { field: certification_report_layout, label: Template }]
       - title: Description
         fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
   - type: LineItemGrid

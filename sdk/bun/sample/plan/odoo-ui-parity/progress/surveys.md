@@ -1403,3 +1403,26 @@ unavailable. No authenticated browser or paired Odoo sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.
+
+## 2026-09-21 — `SURVEYS-CERTIFICATION-TEMPLATE-001`
+
+Implemented the next uncovered Odoo Survey configuration behavior: the
+certification flag and six supported certification report layouts. The API
+owns `update_survey_certification_template`; the survey detail page owns the
+Certification group and binds it through `page.id: survey-detail`. Migration
+`0.0.70` persists both settings with deterministic defaults.
+
+Guards cover `surveys.write`, actor authentication, missing survey,
+archived/stale row, and invalid layout. The focused restart/concurrency suite
+also proves persistence and rejects replay with the prior row version. Odoo
+Survey has no `company_id`, so company scoping is not applicable.
+
+Verification: focused **3/3 tests, 17 assertions**. Authenticated Odoo desktop
+and mobile captures are present in the feature evidence directory. The
+certification Preview popup route opened, but bsk could not inspect its DOM due
+to Chrome's extension-content CDP boundary. Core3 authenticated browser
+runtime was unavailable in this bounded run. Odoo scoring-type parity remains
+open in Core3; no sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.

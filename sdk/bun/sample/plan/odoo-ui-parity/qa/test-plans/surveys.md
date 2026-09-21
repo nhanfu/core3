@@ -828,3 +828,15 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.
+
+## `SURVEYS-CERTIFICATION-TEMPLATE-001` — Certification template settings
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-072 | authenticated configuration | Survey detail → Certification template | Separate API/page YAML exposes the Odoo flag/layout settings joined by `page.id` | source-comparison.md, focused test | pass |
+| SURVEYS-PERM-071 | permission/actor/state/validation | Missing actor/survey, archived or stale row, invalid layout | Reject before mutation with explicit 403/404/409/422 guards | test-results.md, focused test | pass |
+| SURVEYS-WF-069 | persistence/concurrency/restart | Update → optimistic replay → file-backed reopen | Certification settings persist and replay cannot overwrite a newer row | test-results.md, focused test | pass |
+| SURVEYS-UI-070 | authenticated responsive/reference | Options form and certification Preview desktop/mobile + Odoo comparison | Capture available states and exact browser blockers; no sign-off without Core3 parity evidence | browser-results.json | conditional |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.

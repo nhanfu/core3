@@ -1,0 +1,44 @@
+{
+  "feature_id": "SURVEYS-CERTIFICATION-TEMPLATE-001",
+  "reference": {
+    "url": "http://localhost:8069",
+    "database": "core3_reference",
+    "container": "odoo-core3-reference",
+    "actor": "codex@core3.local",
+    "authenticated": true
+  },
+  "desktop": {
+    "viewport": "1916x833",
+    "route": "http://localhost:8069/odoo/surveys/2",
+    "observed": [
+      "Options tab",
+      "Is a Certification checked",
+      "Pick a Style... Modern Purple",
+      "Preview"
+    ],
+    "screenshot": "odoo-desktop.png"
+  },
+  "mobile": {
+    "device": "iphone-14",
+    "viewport": "390x844",
+    "route": "http://localhost:8069/odoo/surveys/2",
+    "observed": [
+      "Is a Certification checked",
+      "Pick a Style... Modern Purple",
+      "Preview"
+    ],
+    "screenshot": "odoo-mobile.png"
+  },
+  "preview_route": {
+    "url": "http://localhost:8069/survey/mycompany-vendor-certification-2/certification_preview",
+    "title": "MyCompany Vendor Certification Preview",
+    "dom_observation": "blocked: Chrome blocked CDP access to another extension's content in the popup"
+  },
+  "session_stopped": true,
+  "password_recorded": false,
+  "signoff": false,
+  "blockers": [
+    "Core3 authenticated browser runtime was not available during this bounded run",
+    "bsk could not observe the certification preview popup DOM because Chrome blocked CDP access to another extension's content"
+  ]
+}

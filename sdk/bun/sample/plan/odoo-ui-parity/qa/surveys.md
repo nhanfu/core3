@@ -1823,3 +1823,27 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.
+
+## Bounded QA run: `SURVEYS-CERTIFICATION-TEMPLATE-001` — 2026-09-21
+
+- Source/UI: Odoo's Survey options form persists `certification`, selects one
+  of six `certification_report_layout` values, and offers a certification
+  Preview action. The inspected model has no `company_id`.
+- Persistence/contracts: migration `0.0.70` adds durable certification/layout
+  columns. `api/survey-detail.yaml` owns the guarded server form and
+  `pages/survey-detail.yaml` owns the Certification group; both join at
+  `page.id: survey-detail`.
+- Guards: `surveys.write`, authenticated actor, missing survey,
+  archived/stale row, invalid layout, and generic optimistic replay handling
+  execute before/around the update.
+- Verification: focused **3 tests / 17 assertions** pass, including restart,
+  stale/concurrency, permission, missing, and validation cases. Odoo desktop
+  and mobile screenshots are captured in the feature evidence directory.
+- Runtime/reference: the authenticated Odoo Options page and Preview route
+  were reached. The Preview popup DOM was not inspectable because Chrome
+  blocked CDP access to another extension's content. Core3 authenticated
+  browser runtime was unavailable. Certification scoring parity remains open;
+  no visual or module sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.

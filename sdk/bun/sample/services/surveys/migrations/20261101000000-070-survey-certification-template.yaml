@@ -1,0 +1,19 @@
+version: 0.0.70
+description: Durable Odoo certification template settings
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS certification BOOLEAN;
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS certification_report_layout VARCHAR;
+      UPDATE surveys
+      SET certification = COALESCE(certification, title ILIKE '%certification%'),
+          certification_report_layout = COALESCE(NULLIF(certification_report_layout, ''), 'modern_purple')
+      WHERE certification IS NULL OR certification_report_layout IS NULL OR certification_report_layout = '';
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS certification_report_layout;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS certification;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -2705,3 +2705,32 @@ blocked; no visual or module sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-SUGGESTED-VALUE-CREATE-001/`.
+
+## Wave 47 — `SURVEYS-CERTIFICATION-TEMPLATE-001`
+
+The next uncovered source-backed Survey behavior is Odoo's certification
+template configuration: the durable `certification` flag, the six-value
+`certification_report_layout` selection, and the Options-form Preview action
+(`addons/survey/models/survey_survey.py:120-150`,
+`addons/survey/views/survey_survey_views.xml:151-165`). The inspected Odoo
+Survey model has no `company_id`, so company scoping is not applicable.
+
+Core3 now exposes the API-owned `update_survey_certification_template` server
+form and the page-owned Certification group in `survey-detail.yaml`, joined by
+`page.id: survey-detail`. Migration `0.0.70` adds durable certification/layout
+columns and deterministic defaults. The mutation requires `surveys.write` and
+an authenticated actor, and rejects missing, archived/stale, or invalid-layout
+updates. A file-backed restart test proves the values survive process restart;
+generic optimistic concurrency rejects an unchanged replay.
+
+Focused verification is **3 passed / 17 assertions**. Authenticated Odoo
+desktop and mobile evidence is captured in
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
+The Preview popup route was opened, but bsk could not inspect its DOM because
+Chrome blocked CDP access to another extension's content. Core3 authenticated
+browser evidence was unavailable in this bounded run. Full certification
+scoring parity remains open because the current Core3 schema has no Odoo
+scoring-type field; no parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-CERTIFICATION-TEMPLATE-001/`.
