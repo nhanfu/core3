@@ -4,9 +4,28 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `d63f86dbba63048508ef3792f48fd195eebd81a1`
-(`ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`, local and not pushed). The prior
-zero-price policy commit remains `29be880bcb203a6ee09b632f1cca2159dc17ceab`.
+Latest committed bounded slice: `6e08fffb73749a837abc149ad92c06324ab31f12`
+(`ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`, local and not pushed).
+The prior add-to-cart redirect commit remains
+`d63f86dbba63048508ef3792f48fd195eebd81a1`.
+
+## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TRANSACTION-POST-PROCESS-001`
+
+Wave 23 selected Odoo Payment Transaction post-processing, which was not
+represented in Core3's existing status-transition action. Odoo exposes
+`action_post_process` from the Website eCommerce Payment Transactions action;
+the generic `_post_process` sets `is_post_processed` and the form hides the
+button after completion. Core3 migrations 110/111 add the durable flag and
+timestamp, API/page fields and action, explicit checkout defaults, and reset
+on later state transitions.
+
+Focused verification passed **3 tests, 29 assertions, 0 failures**; payment
+transaction, checkout, and saved-token regression passed **22 tests, 136
+assertions, 0 failures**. Scoped Ecommerce YAML validation, scoped ESLint,
+and `git diff --check` passed; the repository UI audit passed at 726 pages,
+735 routes, and 1409 datasources. Core3 authenticated desktop/mobile capture is blocked by missing
+`js_repl` and unavailable ports 3000/4312/4313; Odoo `/shop` is an exact HTTP
+404 on 8069/8073. Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CHECKOUT-ADD-TO-CART-REDIRECT-001`
 
