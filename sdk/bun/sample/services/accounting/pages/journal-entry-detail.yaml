@@ -14,6 +14,7 @@ components:
       - { id: edit_journal_entry, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Draft'" }
       - { id: post_journal_entry, label: Post, variant: primary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Draft'" }
       - { id: reset_journal_entry, label: Reset to Draft, variant: secondary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Posted'" }
+      - { id: review_journal_entry, label: Reviewed, variant: secondary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Posted' && state.accounting_journal_entry_detail.checked !== true" }
     group_columns: 2
     groups:
       - title: Journal Entry
@@ -23,6 +24,7 @@ components:
           - { field: journal, label: Journal }
           - { field: entry_date, label: Date }
           - { field: reference, label: Reference }
+          - { field: checked, label: Reviewed }
       - title: Amounts
         fields:
           - { field: debit, label: Debit }

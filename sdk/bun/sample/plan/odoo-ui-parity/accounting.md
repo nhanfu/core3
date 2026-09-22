@@ -1667,3 +1667,29 @@ authenticated Odoo tab remained in `scope user` after two borrow attempts and
 never became owned by this session. No live Reviewed click or desktop/mobile
 capture was possible, so this slice makes no visual-parity claim; the exact
 blocker is recorded in the feature evidence.
+
+## Current batch: Journal Entries Review Entries action (2026-09-22)
+
+Odoo 19 exposes `accountant_confirm_entries_action` as the list/kanban-bound
+`Review Entries` server action in `account_move_views.xml`. It calls
+`account.move.check_selected_moves()`, which delegates to
+`set_moves_checked()` and marks only posted moves as reviewed.
+
+Core3 adds stable feature `ACC-JOURNAL-REVIEW-001` to the existing
+page/API-separated `/accounting/journal-entries` and
+`/accounting/journal-entry-detail` contracts. The row menu and detail header
+expose `Reviewed` with `accounting.write`; the datasource now returns a
+durable `checked` flag. Migration
+`20260922200000-054-accounting-journal-entry-reviewed.yaml` initializes that
+flag, while the mutation requires an unchanged posted row, increments
+`row_version`, and rejects missing, draft, duplicate, and stale attempts
+without partial writes.
+
+The focused suite passes 3 tests and 28 assertions, including source mapping,
+page/API separation, permissions, restart persistence, and migration replay.
+The global audit passed at 837 pages, 845 routes, and 1,747 datasources, and
+the frontend/CSS build passed. BrowserSkill instance `245ea108` was connected, but tab
+`1770662590` was already borrowed by session `rjvi`; no live Odoo click or
+desktop/mobile captures were possible, so this slice makes no visual-parity
+claim. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-JOURNAL-REVIEW-001/`.

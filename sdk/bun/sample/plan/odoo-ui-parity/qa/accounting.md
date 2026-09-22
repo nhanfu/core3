@@ -131,6 +131,25 @@ QA state: qa-verified-partial
 - Desktop/mobile visual parity: all 80 routes render at both viewports; paired Odoo toolbar/layout comparison remains open
 - Tester decision: not signed off; runtime and browser gates remain open
 
+## Bounded QA event: ACC-JOURNAL-REVIEW-001 (2026-09-22)
+
+- Scope: Odoo `accountant_confirm_entries_action` / Review Entries mapped to
+  Core3 `/accounting/journal-entries` and `/accounting/journal-entry-detail`.
+- Focused contract: `bun test
+  ./test/accounting_journal_entry_review.integration.test.ts --timeout 20000`
+  — **3 passed, 28 assertions, 0 failures**.
+- Coverage: source mapping, page/API IDs, row/detail actions, `accounting.write`,
+  posted-only/missing/stale/duplicate guards, durable checked state, restart,
+  and idempotent migration replay.
+- BrowserSkill: instance `245ea108` connected; tab `1770662590` was already
+  borrowed by session `rjvi`, so no live Odoo click or desktop/mobile capture
+  was possible. No visual-parity claim is made. The tab was not returned or
+  modified by this worker.
+- Global validation passed after the concurrent checkout settled: `bun run
+  audit` reported 837 pages, 845 routes, and 1,747 datasources; the frontend/CSS
+  build also passed. Unrelated module files were not changed.
+- Decision: bounded contract pass; Accounting module remains unsigned-off.
+
 ## QA dispatch contract
 
 ## Journal Items export retest (2026-09-13)

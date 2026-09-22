@@ -1,0 +1,14 @@
+version: 0.0.54
+kind: data
+description: Add durable reviewed state for posted accounting journal entries
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_journal_entries ADD COLUMN IF NOT EXISTS checked BOOLEAN;
+      UPDATE accounting_journal_entries SET checked = FALSE WHERE checked IS NULL;
+    down: |
+      ALTER TABLE accounting_journal_entries DROP COLUMN IF EXISTS checked;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

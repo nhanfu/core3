@@ -20,6 +20,8 @@ components:
     row_open_action: view_journal_entry
     row_double_click_action: view_journal_entry
     row_actions: menu
+    actions:
+      - { id: review_journal_entry, label: Reviewed, permission: accounting.write, variant: secondary, show_if: "row.state === 'Posted' && row.checked !== true" }
 actions:
   - id: view_journal_entry
     type: navigate

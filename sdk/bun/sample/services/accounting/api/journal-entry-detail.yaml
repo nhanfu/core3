@@ -3,4 +3,20 @@ datasources:
   - id: accounting_journal_entry_detail
     single: true
     permission: accounting.read
-    query: "SELECT id, row_version, name, journal, CAST(entry_date AS VARCHAR) AS entry_date, reference, debit, credit, debit - credit AS balance, state FROM accounting_journal_entries WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, journal, CAST(entry_date AS VARCHAR) AS entry_date, reference, debit, credit, debit - credit AS balance, state, COALESCE(checked, FALSE) AS checked FROM accounting_journal_entries WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: review_journal_entry
+    type: server
+    permission: accounting.write
+    action: accounting.journal_entries.review
+    handler: yaml_mutation
+    operation: review
+    refresh: [accounting_journal_entry_detail, accounting_journal_entries]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_journal_entries WHERE id = :id", status: 404, code: ACCOUNTING_JOURNAL_ENTRY_REVIEW_NOT_FOUND, message: Journal entry was not found. }
+        - { query: "SELECT id FROM accounting_journal_entries WHERE id = :id AND state = 'Posted' AND COALESCE(checked, FALSE) = FALSE AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_JOURNAL_ENTRY_REVIEW_UNAVAILABLE, message: Only an unchanged, unchecked posted journal entry can be marked reviewed. Reload before reviewing. }
+      steps:
+        - { query: "UPDATE accounting_journal_entries SET checked = TRUE, row_version = row_version + 1 WHERE id = :id AND state = 'Posted' AND COALESCE(checked, FALSE) = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_JOURNAL_ENTRY_REVIEW_STALE, message: The journal entry changed before it could be marked reviewed. Reload and try again. }
+      result: { query: "SELECT * FROM accounting_journal_entries WHERE id = :id" }
