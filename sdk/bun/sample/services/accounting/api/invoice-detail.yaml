@@ -53,6 +53,25 @@ actions:
     type: download
     permission: accounting.read
     kind: accounting_invoice_attachment
+  - id: remove_accounting_invoice_attachment
+    type: server
+    permission: accounting.write
+    action: accounting.invoices.attachments.remove
+    handler: line_item
+    operation: delete
+    domain: accounting_invoice_attachment
+    params: { id: '{state.accounting_invoice_detail.id}', line_id: '{row.id}', expected_row_version: '{row.row_version}', parent_expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail, accounting_invoice_attachments, accounting_invoice_messages]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_id AS VARCHAR))) > 0", status: 403, code: ACCOUNTING_INVOICE_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated Accounting user is required. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_PARENT_STALE, message: The invoice changed. Reload it before removing an attachment. }
+        - { query: "SELECT id FROM accounting_invoice_attachments WHERE id = :line_id AND invoice_id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_STALE, message: This attachment changed before it was removed. Reload and try again. }
+      steps:
+        - { query: "UPDATE accounting_invoice_attachments SET active = FALSE, row_version = row_version + 1 WHERE id = :line_id AND invoice_id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_STALE, message: This attachment changed before it was removed. Reload and try again. }
+        - { query: "UPDATE accounting_invoices SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_PARENT_STALE, message: The invoice changed before the attachment was removed. Reload and try again. }
+        - { query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.invoices.attachments.remove', 'Removed attachment', :file_name, 'Posted')" }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }
   - id: edit_accounting_invoice
     type: server_form
     permission: accounting.write

@@ -17,6 +17,7 @@ describe('Accounting invoice attachments parity', () => {
     const form = page.components.find((candidate: any) => candidate.type === 'OdooFormView');
     const upload = api.actions.find((candidate: any) => candidate.id === 'upload_accounting_invoice_attachment');
     const download = api.actions.find((candidate: any) => candidate.id === 'download_accounting_invoice_attachment');
+    const remove = api.actions.find((candidate: any) => candidate.id === 'remove_accounting_invoice_attachment');
 
     expect(() => validatePageDefinition({ ...page, actions: api.actions }, { allowExternalSources: true })).not.toThrow();
     expect(api.page).toEqual({ id: 'invoice-detail' });
@@ -26,9 +27,14 @@ describe('Accounting invoice attachments parity', () => {
       attachment_download_action: download.id,
       add_attachment_label: 'Attach files',
       no_attachments_label: 'No attachments',
+      attachment_actions: [{ id: remove.id, label: 'Remove', variant: 'danger', permission: 'accounting.write' }],
     });
     expect(upload).toMatchObject({ type: 'upload', permission: 'accounting.write', kind: 'accounting_invoice_attachment' });
     expect(download).toMatchObject({ type: 'download', permission: 'accounting.read', kind: 'accounting_invoice_attachment' });
+    expect(remove).toMatchObject({ type: 'server', handler: 'line_item', operation: 'delete', permission: 'accounting.write', domain: 'accounting_invoice_attachment' });
+    expect(remove.mutation.guards.map((guard: any) => guard.code)).toEqual([
+      'ACCOUNTING_INVOICE_ATTACHMENT_ACTOR_REQUIRED', 'ACCOUNTING_INVOICE_ATTACHMENT_PARENT_STALE', 'ACCOUNTING_INVOICE_ATTACHMENT_STALE',
+    ]);
     expect(yaml('storage.yaml').attachments.accounting_invoice_attachment.download).toMatchObject({
       route: '/api/accounting/invoice-attachments', permission: 'accounting.read',
     });
@@ -89,5 +95,47 @@ describe('Accounting invoice attachments parity', () => {
     restartedDatabase.close();
     rmSync(databasePath, { force: true });
     rmSync(uploadRoot, { recursive: true, force: true });
+  });
+
+  test('removes an invoice attachment atomically and records the chatter event', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, `accounting_invoice_attachment_remove_${crypto.randomUUID().replaceAll('-', '_')}`, ['schema', 'data']);
+    const apiDocument = yaml('api/invoice-detail.yaml');
+    const remove = apiDocument.actions.find((candidate: any) => candidate.id === 'remove_accounting_invoice_attachment');
+
+    expect(await repository.executeMutation(remove.mutation, {
+      id: 'accounting-invoice-demo-001', line_id: 'accounting-invoice-attachment-demo-001', expected_row_version: 1,
+      parent_expected_row_version: 1, current_user_id: 'user-admin', current_user_name: 'Accounting QA', file_name: 'supplier-quote.txt',
+    })).toEqual({ deleted: true, id: 'accounting-invoice-attachment-demo-001' });
+    expect(await repository.query("SELECT active, row_version FROM accounting_invoice_attachments WHERE id = 'accounting-invoice-attachment-demo-001'"))
+      .toEqual([{ active: false, row_version: 2 }]);
+    expect(await repository.query("SELECT row_version FROM accounting_invoices WHERE id = 'accounting-invoice-demo-001'"))
+      .toEqual([{ row_version: 2 }]);
+    expect(await repository.query("SELECT action, action_label, detail FROM accounting_invoice_messages WHERE invoice_id = 'accounting-invoice-demo-001' ORDER BY created_at DESC LIMIT 1"))
+      .toEqual([{ action: 'accounting.invoices.attachments.remove', action_label: 'Removed attachment', detail: 'supplier-quote.txt' }]);
+    expect((await repository.querySource(apiDocument.datasources.find((source: any) => source.id === 'accounting_invoice_attachments'), { id: 'accounting-invoice-demo-001', fixture_state: null }, 0, 10)).data)
+      .toEqual([]);
+    await database.close();
+  });
+
+  test('rejects read-only, stale-parent, stale-attachment, and missing attachment removal without partial writes', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, `accounting_invoice_attachment_remove_guards_${crypto.randomUUID().replaceAll('-', '_')}`, ['schema', 'data']);
+    const remove = yaml('api/invoice-detail.yaml').actions.find((candidate: any) => candidate.id === 'remove_accounting_invoice_attachment');
+    const base = {
+      id: 'accounting-invoice-demo-001', line_id: 'accounting-invoice-attachment-demo-001', expected_row_version: 1,
+      parent_expected_row_version: 1, current_user_id: 'user-admin', current_user_name: 'Accounting QA', file_name: 'supplier-quote.txt',
+    };
+    await expect(repository.executeMutation(remove.mutation, { ...base, current_user_id: '' })).rejects.toMatchObject({ status: 403, code: 'ACCOUNTING_INVOICE_ATTACHMENT_ACTOR_REQUIRED' });
+    await expect(repository.executeMutation(remove.mutation, { ...base, parent_expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'ACCOUNTING_INVOICE_ATTACHMENT_PARENT_STALE' });
+    await expect(repository.executeMutation(remove.mutation, { ...base, expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'ACCOUNTING_INVOICE_ATTACHMENT_STALE' });
+    await expect(repository.executeMutation(remove.mutation, { ...base, line_id: 'missing-attachment' })).rejects.toMatchObject({ status: 409, code: 'ACCOUNTING_INVOICE_ATTACHMENT_STALE' });
+    expect(await repository.query("SELECT active, row_version FROM accounting_invoice_attachments WHERE id = 'accounting-invoice-attachment-demo-001'"))
+      .toEqual([{ active: true, row_version: 1 }]);
+    expect(await repository.query("SELECT row_version FROM accounting_invoices WHERE id = 'accounting-invoice-demo-001'"))
+      .toEqual([{ row_version: 1 }]);
+    await database.close();
   });
 });

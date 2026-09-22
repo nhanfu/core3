@@ -93,6 +93,8 @@ components:
     attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
     attachment_upload_action: upload_accounting_invoice_attachment
     attachment_download_action: download_accounting_invoice_attachment
+    attachment_actions:
+      - { id: remove_accounting_invoice_attachment, label: Remove, variant: danger, permission: accounting.write }
     chatter_label: Messages and activities
     chatter_empty: No messages or activities yet.
     message_label: Send message

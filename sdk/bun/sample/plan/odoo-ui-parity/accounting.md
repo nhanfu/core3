@@ -1758,3 +1758,29 @@ evidence and the no-claim boundary are under
 `evidence/accounting/2026-09-22/ACC-INVOICE-ATTACHMENT-001/`; no screenshots are
 claimed. Attachment deletion, external delivery, and PDF/report integration
 remain outside this bounded slice.
+
+## Current batch: invoice attachment removal workflow (2026-09-22)
+
+Stable feature ID `ACC-INVOICE-ATTACHMENT-DELETE-001` closes the next explicit
+boundary from `ACC-INVOICE-ATTACHMENT-001`. Odoo's Accounting attachment widget
+removes ordinary `ir.attachment` rows through `unlink`; the local
+`account/models/ir_attachment.py` source retains a server-side restricted-audit
+trail guard for protected posted documents.
+
+Core3 now exposes `Remove` in the page/API-matched invoice attachment panel.
+The `accounting.write` line-item mutation requires a signed-in actor and
+unchanged parent and attachment row versions, marks the attachment inactive,
+increments both row versions, and records a durable `Removed attachment`
+chatter event. Inactive rows disappear from the attachment datasource and
+protected download route. This bounded YAML contract retains the metadata and
+storage key for auditability; physical object cleanup and restricted-audit
+trail policy are follow-up integration work.
+
+Focused coverage passes 4 tests and 29 assertions, including page/API action
+binding, atomic removal, active/download visibility, read-only denial, parent
+and child stale guards, missing-row rejection, and no partial writes. The
+authenticated Odoo comparison was attempted with BrowserSkill against the
+shared `core3_reference` tab, but ownership confirmation did not arrive before
+the borrow command became unavailable; no desktop/mobile screenshot or visual
+parity claim is made. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-INVOICE-ATTACHMENT-DELETE-001/`.
