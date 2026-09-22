@@ -1,0 +1,21 @@
+version: 0.0.24
+kind: schema
+description: Allow private project tasks without a project, matching Odoo task visibility rules
+type:
+  postgres:
+    up: |
+      DROP INDEX IF EXISTS project_tasks_project_idx;
+      DROP INDEX IF EXISTS project_tasks_state_idx;
+      DROP INDEX IF EXISTS project_tasks_parent_idx;
+      DROP INDEX IF EXISTS project_tasks_recurrence_idx;
+      ALTER TABLE project_tasks ALTER COLUMN project_id DROP NOT NULL;
+      CREATE INDEX IF NOT EXISTS project_tasks_project_idx ON project_tasks(project_id);
+      CREATE INDEX IF NOT EXISTS project_tasks_state_idx ON project_tasks(state);
+      CREATE INDEX IF NOT EXISTS project_tasks_parent_idx ON project_tasks(parent_task_id);
+      CREATE INDEX IF NOT EXISTS project_tasks_recurrence_idx ON project_tasks(recurrence_id);
+    down: |
+      ALTER TABLE project_tasks ALTER COLUMN project_id SET NOT NULL;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
