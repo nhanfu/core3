@@ -12,3 +12,6 @@
   — order-detail Send Email action; BrowserSkill borrow blocker recorded.
 - [POS-SESSION-ORDERS-001](POS-SESSION-ORDERS-001/README.md) — session Orders
   smart-button action and scoped list; BrowserSkill borrow blocker recorded.
+- [POS-SESSION-PICKINGS-001](POS-SESSION-PICKINGS-001/README.md) — session
+  Pickings smart-button action and scoped ready-picking list; BrowserSkill tab
+  ownership blocker recorded.

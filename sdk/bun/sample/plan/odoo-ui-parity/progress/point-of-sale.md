@@ -6,6 +6,20 @@ Status: in-progress
 Verification trigger: feature-complete
 Candidate commit: `b9eb2ea1`
 
+## Current bounded task: Session Pickings smart button (2026-09-22)
+
+- Implemented Odoo's `pos.session.action_stock_picking()` action as
+  `POS-SESSION-PICKINGS-001`: the session detail Pickings stat button opens a
+  current-session/current-company Ready picking list and reuses Inventory
+  transfer detail for rows.
+- Focused validation passes 3 tests and 18 assertions; related session/order
+  picking and actor/company regressions pass 20 tests and 166 assertions.
+  Audit, frontend build, POS CSS build, and `git diff --check` pass.
+- BrowserSkill instance `245ea108` was healthy, but tab `1770662590` was
+  already borrowed by session `ssyn`; worker session `ppeq` was stopped after
+  the exact ownership error. No visual parity claim is made; evidence records
+  the blocker and the absence of captures.
+
 ## Current bounded task: Session Orders smart button (2026-09-22)
 
 - Implemented Odoo's `pos.session.action_view_order()` action as

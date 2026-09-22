@@ -21,6 +21,7 @@ datasources:
         CAST(s.opened_at AS VARCHAR) AS opened_at,
         CAST(s.closed_at AS VARCHAR) AS closed_at,
         (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company) AS order_count,
+        (SELECT COUNT(*) FROM pos_order_pickings p JOIN pos_orders po ON po.id = p.order_id AND po.company = p.company WHERE po.session_id = s.id AND p.company = s.company) AS picking_count,
         CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company AND o.state = 'Paid') AS DOUBLE) AS total_paid,
         CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id AND EXISTS (SELECT 1 FROM pos_sessions ms WHERE ms.id = m.session_id AND ms.company = s.company)) AS DOUBLE) AS net_cash_movements
         ,CAST((SELECT COALESCE(SUM(p.amount), 0) FROM pos_payments p JOIN pos_orders po ON po.id = p.order_id WHERE po.session_id = s.id AND po.company = s.company AND p.company = s.company AND po.state IN ('Paid', 'Invoiced', 'Done')) AS DOUBLE) AS total_payments_amount
@@ -81,6 +82,12 @@ actions:
     type: navigate
     permission: pos.read
     navigate_to: /point-of-sale/session-orders
+    params: { session_id: '{state.id}' }
+
+  - id: open_session_pickings
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/session-pickings
     params: { session_id: '{state.id}' }
 
   - id: open_session_payments

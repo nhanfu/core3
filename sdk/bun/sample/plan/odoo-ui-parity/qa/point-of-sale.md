@@ -1,5 +1,29 @@
 # Point of Sale QA ledger
 
+## 2026-09-22 — POS-SESSION-PICKINGS-001
+
+- Status: bounded implementation and service verification complete; visual
+  sign-off is blocked because the required BrowserSkill tab was owned by
+  another active session.
+- Source: Odoo 19 `pos_session_view.xml` Pickings stat button and
+  `pos_session.py` `action_stock_picking()` ready-picking domain.
+- Implementation: session-detail Pickings stat action, separate
+  `/point-of-sale/session-pickings` page/API pair, current-company/session
+  scoped Ready projection over durable POS picking rows, responsive list/card
+  states, transfer-detail row navigation, and explicit empty/error metadata.
+- Focused test: `bun test ./test/pos_session_pickings.integration.test.ts
+  --timeout 30000` — 3 tests, 18 assertions passed.
+- Regression: session Orders, session Payments, order Pickings, and
+  actor/company boundary suites passed 20 tests and 166 assertions; UI audit
+  passed with 842 pages, 850 routes, and 1,755 datasources; frontend build,
+  POS CSS build, and `git diff --check` passed.
+- BrowserSkill: instance `245ea108` was connected; Odoo tab `1770662590` was
+  listed as `Acme Corporation`, but `bsk tab borrow` returned `tab is borrowed
+  by another session` with owner `ssyn`. Worker session `ppeq` was stopped.
+  No independent browser/login was used, and no desktop/mobile capture or
+  visual-parity claim is made.
+- Evidence: `../evidence/point_of_sale/2026-09-22/POS-SESSION-PICKINGS-001/`.
+
 ## 2026-09-22 — POS-SESSION-ORDERS-001
 
 - Status: bounded implementation and service verification complete; visual

@@ -21,6 +21,7 @@ components:
       Closed & Posted: neutral
     stat_buttons:
       - { id: open_session_orders, label: Orders, icon: shopping-basket, value_field: order_count, permission: pos.read }
+      - { id: open_session_pickings, label: Pickings, icon: truck, value_field: picking_count, permission: pos.read, show_if: "state.pos_session_detail.picking_count > 0" }
       - { id: open_session_payments, label: Payments, icon: dollar, value_field: total_payments_amount, permission: pos.read }
     header_actions:
       - { id: open_session_detail, label: Open, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control'" }

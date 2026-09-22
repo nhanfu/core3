@@ -1524,3 +1524,34 @@ the tab remained user-scoped. No independent login or alternate browser was
 used. No Odoo/Core3 desktop/mobile capture or visual-parity claim is made; the
 exact blocker is recorded under
 `evidence/point_of_sale/2026-09-22/POS-SESSION-ORDERS-001/`.
+
+## Current bounded batch: Sessions > Pickings smart button
+
+Feature ID: `POS-SESSION-PICKINGS-001`. Odoo 19 exposes the session form
+`Pickings` stat button in `addons/point_of_sale/views/pos_session_view.xml`.
+The button calls `pos.session.action_stock_picking()` and is hidden when
+`picking_count == 0`; the model opens the ready-picking action with a domain
+limited to `self.picking_ids`.
+
+Core3 previously had no session-level Pickings stat action. It now adds the
+read-only `open_session_pickings` action to the existing `pos-session-detail`
+page/API pair and exposes a separate `/point-of-sale/session-pickings`
+page/API pair joined by `page.id`. The list projects Ready pickings through the
+durable POS-owned `pos_order_pickings` relation, scopes both the selected
+session and current company, supports search/status filters and responsive
+list/card views, and reuses the Inventory transfer detail route for rows.
+Unauthorized, forbidden, missing-session, transport, and empty states are
+explicit. No picking CRUD, duplicate transfer form, or new schema is included.
+
+Focused coverage is `test/pos_session_pickings.integration.test.ts`: 3 tests
+and 18 assertions cover the Odoo source/action contract, page/API separation,
+Ready/session/company filtering, row navigation, refusal/empty metadata, and
+migration replay/file-backed restart durability. Related session/order picking
+and actor/company regressions pass 20 tests and 166 assertions. The UI audit,
+frontend build, POS CSS build, and `git diff --check` pass.
+
+BrowserSkill instance `245ea108` was connected, but the signed-in Odoo tab
+`1770662590` was already borrowed by session `ssyn`; the worker's fresh session
+`ppeq` received the exact ownership error and was stopped. No Odoo/Core3
+desktop/mobile capture or visual-parity claim is made. The complete record is
+under `evidence/point_of_sale/2026-09-22/POS-SESSION-PICKINGS-001/`.

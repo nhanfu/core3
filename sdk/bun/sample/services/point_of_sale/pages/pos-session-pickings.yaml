@@ -1,0 +1,42 @@
+title: POS Session Pickings
+page: { id: pos-session-pickings, route: /point-of-sale/session-pickings, breadcrumb: [Sales, Point of Sale, Session, Pickings], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_session_pickings
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: state
+          fields:
+            - { field: order_name, label: POS Order }
+            - { field: operation_type, label: Operation Type }
+            - { field: scheduled_date, label: Scheduled Date }
+            - { field: move_count, label: Move Lines }
+    search: { label: Search pickings, placeholder: 'Search reference, order, or source document...' }
+    filters:
+      - { field: state, label: Status, options_source: pos_session_picking_states }
+    columns:
+      - { field: name, label: Picking, type: PrimaryEntityCell }
+      - { field: order_name, label: POS Order }
+      - { field: operation_type, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date }
+      - { field: source_document, label: Source Document }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: move_count, label: Move Lines, align: right }
+    row_key: id
+    row_open_action: view_pos_session_picking
+    row_double_click_action: view_pos_session_picking
+    empty_state: { title: No ready pickings, description: This POS session has no ready inventory pickings. }
+actions:
+  - id: back_to_pos_session_from_pickings
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/session-detail
+    params: { id: '{query.session_id}' }
