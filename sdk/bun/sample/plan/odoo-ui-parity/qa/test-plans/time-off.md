@@ -39,6 +39,7 @@ mutations use isolated databases and deterministic dates.
 | TIMEOFF-ACCRUAL-EMP-001 | Accrual Plan Employees stat filters durable allocation employees, enforces manager read scope, and preserves search/empty/transport/restart behavior | pass: `time_off_accrual_plan_employees.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
 | TIMEOFF-ACTIVITY-MYALLOC-001 | My Allocations exposes the Odoo Activity view, durable slots, scheduling guards, and restart persistence | pass: `time_off_my_allocations_activity.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
 | TIMEOFF-ANALYSIS-001 | Time Off Analysis exposes the Odoo report union, signed measures, Graph/Pivot grouping, filters, empty/error states, read permission, and migration replay | pass: `time_off_analysis.integration.test.ts`; paired Odoo/Core3 browser blocked as recorded in evidence |
+| TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001 | By Employee report rows open the existing Leave Request form through the durable request ID, with read permission and existing not-found/error guards | pass: `time_off_report_employee_drilldown.integration.test.ts`; Odoo tab borrow blocked before navigation |
 
 ## Exit criteria
 

@@ -106,3 +106,20 @@ to Discuss; Core3 binds in the isolated runtime but the task-created tab has no
 Core3 auth session (401), so no independent login or credential-bearing capture
 was attempted. No paired visual parity claim is made; Time Off remains
 conditional and unsigned-off.
+
+## 2026-09-22 bounded candidate: By Employee report row drilldown
+
+Implemented `TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001`, the missing Odoo form-mode
+row action from `action_hr_available_holidays_report`. By Employee rows now
+open the existing Leave Request detail route with the durable request ID for
+both click and double-click, under `time_off.read`; page/API separation remains
+joined by `page.id` and no migration was needed.
+
+Focused verification passes **2 tests / 12 assertions** and the Time Off
+regression glob passes **74 tests / 718 assertions**. Time Off CSS, the full
+frontend build, and `git diff --check` pass. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001/`.
+
+BrowserSkill instance `245ea108` was healthy, but the normal authenticated
+Odoo tab was already borrowed by another session; the pending PDF-tab borrow
+was cancelled. No Odoo desktop/mobile visual-parity claim is made.

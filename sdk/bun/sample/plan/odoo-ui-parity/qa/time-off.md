@@ -198,3 +198,25 @@ blocker.
   no credential-bearing screenshot was retained.
 - Disposition: conditional bounded PASS; no paired visual parity or full module
   sign-off.
+
+## 2026-09-22 bounded candidate: By Employee report row drilldown
+
+- Stable ID: `TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001`.
+- Source action: Odoo `action_hr_available_holidays_report`, whose
+  `list,graph,pivot,calendar,form` modes target `hr.leave`.
+- Core3 contract: `pages/report-by-employee.yaml` and
+  `api/report-by-employee.yaml`, joined by `page.id:
+  time-off-report-by-employee`.
+- Focused test: **PASS**, 2 tests / 12 assertions in
+  `test/time_off_report_employee_drilldown.integration.test.ts`.
+- Regression: **PASS**, 74 tests / 718 assertions across the Time Off glob.
+- Persistence/guards: **PASS by reuse**; the row carries the durable
+  `leave_requests.id` into the existing request detail datasource, retaining
+  its 404/503 and `time_off.read` boundary.
+- CSS/frontend/diff checks: **PASS**; Time Off CSS build, complete frontend
+  build, and `git diff --check`.
+- Odoo browser gate: **BLOCKED before navigation**; the normal authenticated
+  Odoo tab on BrowserSkill instance `245ea108` was already borrowed by another
+  session. A pending existing PDF-tab borrow was cancelled. No Odoo mutation
+  or visual-parity claim was made.
+- Disposition: conditional bounded pass; no full Time Off sign-off.

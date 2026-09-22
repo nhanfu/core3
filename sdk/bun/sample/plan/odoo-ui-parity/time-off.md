@@ -1035,3 +1035,31 @@ bound successfully, but the same BrowserSkill task-created tab had no Core3
 auth session (`/api/auth/me` returned 401), so the report route could not be
 loaded without an unauthorized independent login. No paired visual parity
 claim is made.
+
+## By Employee report row drilldown (2026-09-22)
+
+The next bounded report gap is the form mode of Odoo's installed
+`action_hr_available_holidays_report` (`addons/hr_holidays/views/hr_leave_views.xml`).
+The action targets `hr.leave` and declares `list,graph,pivot,calendar,form`, so a
+report row opens the standard leave request form. Core3's By Employee report
+already selected the durable `leave_requests.id` but had no row navigation;
+the row therefore stopped at the report instead of reaching the existing
+request detail form.
+
+Core3 adds the page/API `page.id: time-off-report-by-employee` action
+`open_employee_report_request`. Both row click and double-click navigate to
+`/time-off/leave-request-detail` with `{row.id}` and require `time_off.read`.
+The existing request-detail datasource retains its durable 404/503 guards and
+state/workflow actions; no duplicate persistence or migration is introduced.
+
+Focused verification passes 2 tests and 12 assertions in
+`test/time_off_report_employee_drilldown.integration.test.ts`; the Time Off
+regression glob passes 74 tests and 718 assertions. Time Off CSS, the complete
+frontend build, and `git diff --check` pass.
+
+BrowserSkill instance `245ea108` was healthy, but the only ordinary
+authenticated Odoo tab was already borrowed by another session. A pending
+borrow of an existing PDF tab was cancelled without navigation. No Odoo
+desktop/mobile capture was possible, so no visual-parity claim is made. The
+exact blocker and cleanup are recorded under
+`evidence/time-off/2026-09-22/TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001/`.
