@@ -10,6 +10,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: back_to_event_templates, label: Back to event templates, variant: secondary, permission: events.read }
+      - { id: manage_event_template_tickets, label: Tickets, variant: secondary, permission: events.read }
       - { id: edit_event_template, label: Edit, variant: primary, permission: events.write }
       - { id: delete_event_template, label: Delete, variant: danger, permission: events.write, confirm: Delete this event template? }
     groups:
@@ -67,6 +68,11 @@ actions:
     type: navigate
     permission: events.read
     navigate_to: /events/templates
+  - id: manage_event_template_tickets
+    type: navigate
+    permission: events.read
+    navigate_to: /events/templates/tickets
+    params: { id: '{state.id}' }
   - id: edit_event_template
     type: server_form
     permission: events.write

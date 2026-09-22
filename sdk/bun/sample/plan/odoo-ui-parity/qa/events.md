@@ -1,5 +1,30 @@
 # events QA ledger
 
+## Bounded QA - Event Template Tickets relation (2026-09-22)
+
+- Source contract: **PASS by local source**. Odoo `action_event_type` renders
+  the Event Template Tickets x2many; `event_type_ticket_view_tree_from_type`
+  exposes sequence, name, description, `seats_max`, and the derived
+  `seats_limited` field, while the form exposes name, description, and seat
+  limit.
+- YAML ownership and permissions: **PASS**. The new
+  `event-template-tickets` page is layout-only and its matching API owns both
+  datasources and `events.write` add/edit/delete actions.
+- Durable data and guards: **PASS**. Migration 038 is idempotent and seeds
+  stable Exhibition ticket rows. Parent and line versions reject stale
+  mutations; duplicate, blank, negative-seat, empty, missing, and transport
+  contracts are declared.
+- Focused tests: **PASS**, page/API discovery plus CRUD/replay/restart and
+  validation guards in `events_template_tickets.integration.test.ts`.
+- Odoo browser evidence: **BLOCKED**. BrowserSkill daemon and shared browser
+  `245ea108` were healthy, but borrow of user tab `1770662590` timed out after
+  120 seconds without extension confirmation. No Odoo desktop/mobile capture
+  was produced, and no independent login/backend was used.
+- Core3 browser evidence: **NOT CLAIMED**. This bounded checkpoint does not
+  claim rendered parity without the paired authenticated Odoo action capture.
+- Full module sign-off: **OPEN**. Actor matrix, paired visual evidence, and
+  broader Events residuals remain outstanding.
+
 ## Bounded QA - Event chatter message and internal note (2026-09-22)
 
 - Source contract: **PASS**. Local Odoo 19 source confirms `mail.thread` on

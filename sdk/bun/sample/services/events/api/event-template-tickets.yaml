@@ -1,0 +1,90 @@
+page: { id: event-template-tickets }
+datasources:
+  - id: event_template_tickets_detail
+    single: true
+    permission: events.read
+    error_states: { missing_record: { status: 404, code: EVENT_TEMPLATE_NOT_FOUND, message: Event template not found. }, transport_error: { status: 503, code: EVENT_TEMPLATE_TICKETS_UNAVAILABLE, message: Event template tickets are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, seats, active, 'Event Template Tickets' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: event_template_tickets
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_TICKETS_UNAVAILABLE, message: Event template tickets are temporarily unavailable. } }
+    query: "SELECT id, row_version, template_id, sequence, name, COALESCE(description, '') AS description, seats_limited, seats_max FROM event_template_tickets WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND template_id = :id AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(description, '') ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+actions:
+  - id: back_to_event_template
+    type: navigate
+    permission: events.read
+    navigate_to: /events/templates/detail
+    params: { id: '{state.id}' }
+  - id: add_event_template_ticket
+    type: server_form
+    permission: events.write
+    title: Add event template ticket
+    action: events.templates.tickets.create
+    handler: line_item
+    operation: create
+    domain: event_template
+    params: { id: '{state.id}' }
+    refresh: [event_template_tickets_detail, event_template_tickets]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: seats_max, label: Maximum Attendees, type: number, min: 0, required: true, default: 0 }
+    mutation:
+      generated: [line_id, next_sequence]
+      before_steps:
+        - { query: "SELECT 'event-template-ticket-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_template_tickets WHERE template_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before adding a ticket. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) > 0", status: 422, code: EVENT_TEMPLATE_TICKET_NAME_REQUIRED, message: Enter a ticket name. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:seats_max AS INTEGER), 0) >= 0", status: 422, code: EVENT_TEMPLATE_TICKET_SEATS_INVALID, message: Maximum attendees must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_tickets WHERE template_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EVENT_TEMPLATE_TICKET_NAME_EXISTS, message: A ticket with this name already exists for the template. }
+      steps:
+        - { query: "INSERT INTO event_template_tickets(id, template_id, sequence, name, description, seats_limited, seats_max, row_version) VALUES(:line_id, :id, :next_sequence, TRIM(CAST(:name AS VARCHAR)), NULLIF(TRIM(CAST(COALESCE(:description, '') AS VARCHAR)), ''), COALESCE(CAST(:seats_max AS INTEGER), 0) > 0, COALESCE(CAST(:seats_max AS INTEGER), 0), 1)", expect_changed: true, status: 409, code: EVENT_TEMPLATE_TICKET_NOT_CREATED, message: The event template ticket could not be created. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event template changed while adding a ticket. Reload before saving. }
+      result: { query: "SELECT * FROM event_template_tickets WHERE id = :line_id" }
+  - id: edit_event_template_ticket
+    type: server_form
+    permission: events.write
+    title: Edit event template ticket
+    action: events.templates.tickets.update
+    handler: line_item
+    operation: update
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [event_template_tickets_detail, event_template_tickets]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: seats_max, label: Maximum Attendees, type: number, min: 0, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before saving the ticket. }
+        - { query: "SELECT id FROM event_template_tickets WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_TICKET_STALE, message: This template ticket changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) > 0", status: 422, code: EVENT_TEMPLATE_TICKET_NAME_REQUIRED, message: Enter a ticket name. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:seats_max AS INTEGER), 0) >= 0", status: 422, code: EVENT_TEMPLATE_TICKET_SEATS_INVALID, message: Maximum attendees must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_tickets WHERE template_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: EVENT_TEMPLATE_TICKET_NAME_EXISTS, message: A ticket with this name already exists for the template. }
+      steps:
+        - { query: "UPDATE event_template_tickets SET name = TRIM(CAST(:name AS VARCHAR)), description = NULLIF(TRIM(CAST(COALESCE(:description, '') AS VARCHAR)), ''), seats_limited = COALESCE(CAST(:seats_max AS INTEGER), 0) > 0, seats_max = COALESCE(CAST(:seats_max AS INTEGER), 0), row_version = row_version + 1 WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_TEMPLATE_TICKET_STALE, message: This template ticket changed or was deleted. Reload before saving. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event template changed while saving the ticket. Reload before saving. }
+      result: { query: "SELECT * FROM event_template_tickets WHERE id = :line_id" }
+  - id: delete_event_template_ticket
+    type: server
+    permission: events.write
+    action: events.templates.tickets.delete
+    handler: line_item
+    operation: delete
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete this template ticket?'
+    refresh: [event_template_tickets_detail, event_template_tickets]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before deleting the ticket. }
+        - { query: "SELECT id FROM event_template_tickets WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_TICKET_STALE, message: This template ticket changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM event_template_tickets WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_TEMPLATE_TICKET_STALE, message: This template ticket changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The event template changed while deleting the ticket. Reload before saving. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }

@@ -1,0 +1,42 @@
+title: Event Template Tickets
+page: { id: event-template-tickets, route: /events/templates/tickets, breadcrumb: [Marketing, Events, Configuration, Event Templates, Tickets], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_template_tickets_detail
+    title_field: name
+    subtitle_field: template_label
+    editable: false
+    content_slot: true
+    labels: { editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_template, label: Back to event template, variant: secondary, permission: events.read }
+    groups:
+      - title: Event Template
+        fields:
+          - { field: name, label: Event Template }
+          - { field: seats, label: Seats }
+          - { field: active, label: Active }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_template_tickets
+    parent_source: event_template_tickets_detail
+    title: Event Template Tickets
+    description: Configure the tickets copied to events created from this template.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_template_ticket, label: Add a line, variant: primary, permission: events.write }
+    empty_state: { title: No template tickets, description: Add a line to configure a reusable ticket for this template. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: name, field: name, label: Name, input_type: text, required: true }
+      - { type: LineItemField, id: description, field: description, label: Description, input_type: textarea }
+      - { type: LineItemField, id: seats_limited, field: seats_limited, label: Limited, readonly: true }
+      - { type: LineItemField, id: seats_max, field: seats_max, label: Maximum Attendees, input_type: number, min: 0, required: true }
+      - type: LineItemActions
+        id: event_template_ticket_actions
+        edit_action: edit_event_template_ticket
+        create_action: add_event_template_ticket
+        actions:
+          - { id: edit_event_template_ticket, label: Edit, icon: edit, variant: ghost, permission: events.write }

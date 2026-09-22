@@ -1,5 +1,39 @@
 # Events UI parity
 
+## Current bounded batch: Event Template Tickets relation (2026-09-22)
+
+The next concrete source-backed gap after the event-form activity, Notes &
+Documents, Questions relation, and chatter slices is the Odoo
+`action_event_type` form's `event_type_ticket_ids` relation. The Odoo 19
+source view `addons/event/views/event_type_views.xml` mounts a Tickets
+notebook page, and `addons/event/views/event_ticket_views.xml` defines the
+editable `event.type.ticket` list with sequence, name, description, maximum
+attendees, and the derived limit flag. The Core3 Event Template form had only
+the Tickets tab placeholder; no durable template-ticket table, datasource, or
+mutation existed.
+
+Core3 adds the page/API-separated `event-template-tickets` route, linked from
+the existing Event Template detail action. The page owns the Odoo-shaped
+template header and x2many grid; `api/event-template-tickets.yaml` owns the
+scoped datasource and permissioned add/edit/delete actions. Migration
+`20260922200000-038-event-template-tickets.yaml` adds durable stable-ID ticket
+rows for the Exhibition fixture. Parent and line row versions protect stale
+writes/deletes; duplicate names, blank names, negative maximums, missing
+templates, empty results, and transport errors have explicit contracts.
+
+Focused validation covers page/API discovery, migration replay and restart,
+CRUD, permissions, duplicate/required/seat validation, and stale guards in
+`test/events_template_tickets.integration.test.ts`.
+
+The required live Odoo action/browser comparison is blocked for this
+checkpoint: BrowserSkill daemon status was healthy on shared instance
+`245ea108`, but borrowing the existing signed-in Odoo tab `1770662590` timed
+out after 120 seconds without extension confirmation. The tab remained
+user-scoped; no independent browser or login was used, no new Odoo desktop or
+mobile capture was produced, and no visual-parity claim is made. The exact
+blocker and residual gate are recorded under
+`evidence/events/2026-09-22/event-template-tickets/`.
+
 ## Current bounded batch: Event chatter message and internal note (2026-09-22)
 
 The next distinct uncovered event-form workflow after activities, Notes &

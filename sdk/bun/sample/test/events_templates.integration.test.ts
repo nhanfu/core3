@@ -23,7 +23,7 @@ describe('Events Event Templates configuration slice', () => {
       'event_template_detail', 'event_template_communications',
     ]);
     expect(detail.components[0].header_actions.map((candidate: any) => candidate.id)).toEqual([
-      'back_to_event_templates', 'edit_event_template', 'delete_event_template',
+      'back_to_event_templates', 'manage_event_template_tickets', 'edit_event_template', 'delete_event_template',
     ]);
   });
 
