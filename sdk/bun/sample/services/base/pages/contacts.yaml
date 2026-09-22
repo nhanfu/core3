@@ -18,7 +18,7 @@ components:
       - { id: companies, label: Companies, filters: { company_type: company }, group_by: country_name }
       - { id: people, label: People, filters: { company_type: person }, group_by: country_name }
     actions:
-      - { id: contacts.export, label: Export, title: Export contacts, icon: download }
+      - { id: contacts.export, label: Export, title: Export contacts, icon: download, permission: base.contacts.read }
     tree: { parent_field: parent_company_id }
     selectable: true
     column_chooser: true

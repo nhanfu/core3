@@ -375,3 +375,36 @@ Local Odoo source and the authenticated live reference were compared. Odoo
 visual behavior was observed, but the final Core3 bsk sessions stopped before a
 fresh desktop/mobile duplicate capture; the evidence folder records the exact
 blocker and makes no visual parity claim.
+
+## Contact export bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACTS-EXPORT-001`.
+
+Odoo source comparison: `addons/contacts/views/contact_views.xml` defines the
+Contacts window action `action_contacts` on `res.partner`; Odoo's generic list
+Action menu provides Export, which reads the current search/filter domain and
+downloads a CSV after the export-field dialog. The local Odoo 19 source and
+the existing Core3 Contacts page were inspected before implementation. Core3
+already displayed an `contacts.export` utility item, but it had no matching
+API action and clicking it was a no-op.
+
+Core3 now keeps the layout-only `pages/contacts.yaml` fragment joined to
+`api/contacts.yaml` through `page.id: contacts`. API-owned client action
+`contacts.export` requires `base.contacts.read`, re-queries the Contacts
+datasource with the current active/archive, text, type, and country filters,
+pages through all result rows in batches of 100, and downloads a CSV containing
+Name, Type, Email, Phone, City, Country, Company, and Active. This bounded
+slice is read-only, so it needs no migration; the durable source remains
+`base_contacts` and its existing migrations.
+
+Focused validation is `test/base_contacts_export.integration.test.ts`: page/API
+separation and action binding, complete default result coverage, filtered
+result coverage, CSV generation contract, and read permission are asserted.
+
+Browser evidence is blocked for this worker. BrowserSkill instance `245ea108`
+is connected, but borrowing the signed-in Contacts tab failed with the exact
+daemon response `tab is borrowed by another session` (the tab is owned by
+another active BrowserSkill session). The worker did not navigate an
+independent tab, inspect credentials, or bypass the borrow. No desktop/mobile
+Odoo or Core3 screenshot is claimed; the exact blocker is recorded in
+`evidence/base/2026-09-22/BASE-CONTACTS-EXPORT-001/browser-check.md`.

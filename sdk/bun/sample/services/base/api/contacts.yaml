@@ -17,6 +17,53 @@ datasources:
     permission: base.contacts.read
     query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
 actions:
+  - id: contacts.export
+    type: client
+    permission: base.contacts.read
+    script: |
+      async ({ request, state }) => {
+        const filterKeys = ['q', 'active', 'company_type', 'country_name'];
+        const params = Object.fromEntries(filterKeys
+          .filter((key) => state && state[key] !== undefined && state[key] !== null && state[key] !== '')
+          .map((key) => [key, String(state[key])]));
+        const rows = [];
+        let skip = 0;
+        let total = 0;
+        do {
+          const payload = await request('/query', {
+            method: 'POST',
+            body: JSON.stringify({ sourceId: 'contacts', params, skip, top: 100 }),
+          });
+          const batch = Array.isArray(payload?.data) ? payload.data : [];
+          rows.push(...batch);
+          total = Number(payload?.meta?.total || rows.length);
+          skip += batch.length;
+          if (!batch.length) break;
+        } while (rows.length < total);
+        const columns = [
+          ['name', 'Name'],
+          ['company_type', 'Type'],
+          ['email', 'Email'],
+          ['phone', 'Phone'],
+          ['city', 'City'],
+          ['country_name', 'Country'],
+          ['parent_company_name', 'Company'],
+          ['active', 'Active'],
+        ];
+        const cell = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+        const csv = [
+          columns.map(([, label]) => cell(label)).join(','),
+          ...rows.map((row) => columns.map(([field]) => cell(row[field])).join(',')),
+        ].join('\r\n') + '\r\n';
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      }
   - id: create_contact
     type: server_form
     permission: base.contacts.write
