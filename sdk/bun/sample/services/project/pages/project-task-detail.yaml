@@ -25,6 +25,11 @@ components:
       - { id: start_task, label: Start, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'Todo'" }
       - { id: complete_task, label: Mark done, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'In Progress'" }
       - { id: cancel_task, label: Cancel, variant: danger, permission: project.manage, show_if: "state.project_task_detail.state === 'Todo' || state.project_task_detail.state === 'In Progress'" }
+    action_menu:
+      label: Actions
+      aria_label: Task actions
+      actions:
+        - { id: convert_task_to_subtask, label: Convert to Task/Sub-Task, icon: hierarchy, permission: project.write, show_if: "state.project_task_detail.active === true" }
     group_columns: 2
     groups:
       - title: Task details

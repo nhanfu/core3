@@ -5,7 +5,7 @@ datasources:
     permission: project.read
     workflow: project_tasks
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_DETAIL_UNAVAILABLE, message: Task details are temporarily unavailable. } }
-    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN '0 / 0 (0%)' ELSE CAST(SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) AS VARCHAR) || ' / ' || CAST(COUNT(*) AS VARCHAR) || ' (' || CAST(ROUND(100.0 * SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) / COUNT(*)) AS INTEGER) || '%)' END FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '0 / 0 (0%)') AS subtask_summary, COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, COALESCE(t.recurring_task, FALSE) AS recurring_task, t.recurrence_id, COALESCE(r.repeat_interval, t.repeat_interval, 1) AS repeat_interval, COALESCE(r.repeat_unit, t.repeat_unit, 'week') AS repeat_unit, COALESCE(r.repeat_type, t.repeat_type, 'forever') AS repeat_type, CAST(COALESCE(r.repeat_until, t.repeat_until) AS VARCHAR) AS repeat_until, r.row_version AS recurrence_row_version, COALESCE((SELECT COUNT(*) FROM project_tasks recurring WHERE recurring.recurrence_id = t.recurrence_id AND COALESCE(recurring.active, TRUE) = TRUE), 0) AS recurring_count, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN project_task_recurrences r ON r.id = t.recurrence_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.parent_task_id, (SELECT parent.name FROM project_tasks parent WHERE parent.id = t.parent_task_id) AS parent_task_name, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3 Demo Company') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN '0 / 0 (0%)' ELSE CAST(SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) AS VARCHAR) || ' / ' || CAST(COUNT(*) AS VARCHAR) || ' (' || CAST(ROUND(100.0 * SUM(CASE WHEN child.state IN ('Done', 'Cancelled') THEN 1 ELSE 0 END) / COUNT(*)) AS INTEGER) || '%)' END FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '0 / 0 (0%)') AS subtask_summary, COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id) FROM project_tasks child WHERE child.parent_task_id = t.id AND COALESCE(child.active, TRUE) = TRUE), '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, COALESCE(t.recurring_task, FALSE) AS recurring_task, t.recurrence_id, COALESCE(r.repeat_interval, t.repeat_interval, 1) AS repeat_interval, COALESCE(r.repeat_unit, t.repeat_unit, 'week') AS repeat_unit, COALESCE(r.repeat_type, t.repeat_type, 'forever') AS repeat_type, CAST(COALESCE(r.repeat_until, t.repeat_until) AS VARCHAR) AS repeat_until, r.row_version AS recurrence_row_version, COALESCE((SELECT COUNT(*) FROM project_tasks recurring WHERE recurring.recurrence_id = t.recurrence_id AND COALESCE(recurring.active, TRUE) = TRUE), 0) AS recurring_count, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id LEFT JOIN project_task_recurrences r ON r.id = t.recurrence_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
   - id: project_task_timesheets
     type: service
     service: yaml.service.timesheets
@@ -26,6 +26,9 @@ datasources:
     permission: project.read
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_SUBTASKS_UNAVAILABLE, message: Task subtasks are temporarily unavailable. } }
     query: "SELECT child.id, child.row_version, child.parent_task_id, child.project_id, child.project_name, child.name, COALESCE(child.assignee, 'Unassigned') AS assignee, child.priority, child.state, child.stage, CAST(child.due_date AS VARCHAR) AS due_date, child.planned_hours, child.spent_hours, COALESCE(child.active, TRUE) AS active FROM project_tasks child JOIN project_tasks parent ON parent.id = child.parent_task_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND child.parent_task_id = :id AND COALESCE(child.active, TRUE) = TRUE AND COALESCE(parent.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(child.company_name, :current_company_name) = :current_company_name) AND (COALESCE(:current_company_name, '') = '' OR COALESCE(parent.company_name, :current_company_name) = :current_company_name) AND (:q IS NULL OR child.name ILIKE '%' || :q || '%' OR child.assignee ILIKE '%' || :q || '%' OR child.state ILIKE '%' || :q || '%') ORDER BY child.name, child.id"
+  - id: project_task_parent_lookup
+    permission: project.read
+    query: "WITH RECURSIVE descendants(id) AS (SELECT child.id FROM project_tasks child WHERE child.parent_task_id = :id UNION ALL SELECT child.id FROM project_tasks child JOIN descendants ancestor ON child.parent_task_id = ancestor.id) SELECT candidate.id AS value, candidate.name || ' · ' || candidate.project_name AS label FROM project_tasks candidate JOIN project_tasks current_task ON current_task.id = :id WHERE candidate.id <> :id AND candidate.project_id = current_task.project_id AND COALESCE(candidate.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(candidate.company_name, :current_company_name) = :current_company_name) AND NOT EXISTS (SELECT 1 FROM descendants WHERE descendants.id = candidate.id) ORDER BY candidate.name, candidate.id"
 actions:
   - id: open_task_timesheets
     type: navigate
@@ -37,6 +40,33 @@ actions:
     permission: project.read
     navigate_to: /tasks/recurrence
     params: { task_id: '{state.id}' }
+  - id: convert_task_to_subtask
+    type: server_form
+    permission: project.write
+    title: Convert Task
+    description: Select a parent task to make this a sub-task, or leave it blank to make it standalone.
+    submit_label: Convert Task
+    cancel_label: Discard
+    success_message: Task hierarchy updated.
+    action: project.tasks.convert_to_subtask
+    handler: yaml_mutation
+    operation: convert_to_subtask
+    params: { id: '{state.project_task_detail.id}', expected_row_version: '{state.project_task_detail.row_version}', current_company_name: '{state.project_task_detail.company_name}' }
+    refresh: [project_task_detail, project_task_subtasks, project_tasks_all, project_tasks_detail]
+    fields:
+      - { field: parent_id, label: Parent Task, type: select, options_source: project_task_parent_lookup, required: false }
+    mutation:
+      concurrency: { required: true }
+      normalize_empty: [parent_id]
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND COALESCE(active, TRUE) = TRUE", status: 404, code: PROJECT_TASK_CONVERT_NOT_FOUND, message: The task is missing or archived. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND project_id IS NOT NULL", status: 409, code: PROJECT_TASK_PRIVATE_CANNOT_CONVERT, message: Private tasks cannot be converted into sub-tasks. Assign a project first. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PROJECT_TASK_CONVERT_STALE, message: The task changed before it could be converted. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:parent_id AS VARCHAR), '') = '' OR EXISTS (SELECT 1 FROM project_tasks parent JOIN project_tasks task ON task.id = :id WHERE parent.id = :parent_id AND parent.id <> task.id AND parent.project_id = task.project_id AND COALESCE(parent.active, TRUE) = TRUE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(parent.company_name, :current_company_name) = :current_company_name))", status: 422, code: PROJECT_TASK_PARENT_INVALID, message: Select an active parent task in the same project and company. }
+        - { query: "WITH RECURSIVE descendants(id) AS (SELECT child.id FROM project_tasks child WHERE child.parent_task_id = :id UNION ALL SELECT child.id FROM project_tasks child JOIN descendants ancestor ON child.parent_task_id = ancestor.id) SELECT 1 AS ok WHERE COALESCE(CAST(:parent_id AS VARCHAR), '') = '' OR NOT EXISTS (SELECT 1 FROM descendants WHERE id = :parent_id)", status: 422, code: PROJECT_TASK_PARENT_CYCLE, message: A task cannot be placed under one of its descendants. }
+      steps:
+        - { query: "UPDATE project_tasks SET parent_task_id = NULLIF(CAST(:parent_id AS VARCHAR), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PROJECT_TASK_CONVERT_STALE, message: The task changed before it could be converted. Reload and try again. }
+      result: { query: "SELECT id, row_version, parent_task_id, (SELECT parent.name FROM project_tasks parent WHERE parent.id = project_tasks.parent_task_id) AS parent_task_name FROM project_tasks WHERE id = :id" }
   - id: edit_task
     type: server_form
     permission: project.write
