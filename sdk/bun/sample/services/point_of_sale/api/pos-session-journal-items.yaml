@@ -1,0 +1,34 @@
+page: { id: pos-session-journal-items }
+datasources:
+  - id: pos_session_journal_items
+    single: false
+    permission: accounting.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_JOURNAL_ITEMS_UNAUTHORIZED, message: Sign in to view session journal items. }
+      forbidden: { status: 403, code: POS_SESSION_JOURNAL_ITEMS_FORBIDDEN, message: You do not have access to this POS session's journal items. }
+      not_found: { status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+      transport_error: { status: 503, code: POS_SESSION_JOURNAL_ITEMS_UNAVAILABLE, message: Session journal items are temporarily unavailable. }
+    query: |
+      SELECT i.id, i.row_version, i.session_id, i.company,
+        CAST(i.item_date AS VARCHAR) AS item_date,
+        i.entry_name, i.journal, i.account_name, i.partner_name, i.label,
+        CAST(i.debit AS DOUBLE) AS debit,
+        CAST(i.credit AS DOUBLE) AS credit,
+        CAST(i.debit - i.credit AS DOUBLE) AS balance,
+        i.matching, i.state,
+        strftime(i.item_date, '%B %Y') AS item_month
+      FROM pos_session_journal_items i
+      JOIN pos_sessions s ON s.id = i.session_id AND s.company = i.company
+      WHERE i.session_id = :session_id
+        AND s.id = :session_id
+        AND i.company = :current_company_name
+        AND s.company = :current_company_name
+        AND (:q IS NULL OR i.entry_name ILIKE '%' || :q || '%' OR COALESCE(i.partner_name, '') ILIKE '%' || :q || '%' OR i.label ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR i.state = :state)
+      ORDER BY i.item_date DESC, i.entry_name, i.id
+actions:
+  - id: open_session_journal_items
+    type: navigate
+    permission: accounting.read
+    navigate_to: /point-of-sale/session-journal-items
+    params: { session_id: '{state.id}' }

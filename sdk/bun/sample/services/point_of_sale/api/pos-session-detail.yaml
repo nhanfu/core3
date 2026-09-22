@@ -26,6 +26,7 @@ datasources:
         CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id AND EXISTS (SELECT 1 FROM pos_sessions ms WHERE ms.id = m.session_id AND ms.company = s.company)) AS DOUBLE) AS net_cash_movements
         ,CAST((SELECT COALESCE(SUM(p.amount), 0) FROM pos_payments p JOIN pos_orders po ON po.id = p.order_id WHERE po.session_id = s.id AND po.company = s.company AND p.company = s.company AND po.state IN ('Paid', 'Invoiced', 'Done')) AS DOUBLE) AS total_payments_amount
         ,(SELECT COUNT(*) FROM pos_cash_movements m WHERE m.session_id = s.id) AS cash_register_line_count
+        ,(SELECT COUNT(*) FROM pos_session_journal_items i WHERE i.session_id = s.id AND i.company = s.company) AS journal_item_count
         ,TRUE AS cash_control
       FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name
 
@@ -108,6 +109,12 @@ actions:
     type: navigate
     permission: pos.read
     navigate_to: /point-of-sale/session-payments
+    params: { session_id: '{state.id}' }
+
+  - id: open_session_journal_items
+    type: navigate
+    permission: accounting.read
+    navigate_to: /point-of-sale/session-journal-items
     params: { session_id: '{state.id}' }
 
   - id: open_session_detail

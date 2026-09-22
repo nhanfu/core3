@@ -1,0 +1,29 @@
+title: POS Session Journal Items
+page: { id: pos-session-journal-items, route: /point-of-sale/session-journal-items, breadcrumb: [Sales, Point of Sale, Session, Journal Items], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_session_journal_items
+    default_group_by: entry_name
+    group_by: [{ field: entry_name, label: Journal Entry }]
+    default_filters: { state: Posted }
+    filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }] }]
+    search: { label: Search journal items, placeholder: 'Search journal entry, partner, or label...' }
+    columns:
+      - { field: item_date, label: Date }
+      - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }
+      - { field: account_name, label: Account }
+      - { field: partner_name, label: Partner }
+      - { field: label, label: Label }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: matching, label: Matching }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No journal items, description: This POS session has no posted journal items. }
+actions:
+  - id: back_to_pos_session_from_journal_items
+    type: navigate
+    permission: accounting.read
+    navigate_to: /point-of-sale/session-detail
+    params: { id: '{query.session_id}' }

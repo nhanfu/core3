@@ -23,6 +23,7 @@ components:
       - { id: open_session_orders, label: Orders, icon: shopping-basket, value_field: order_count, permission: pos.read }
       - { id: open_session_pickings, label: Pickings, icon: truck, value_field: picking_count, permission: pos.read, show_if: "state.pos_session_detail.picking_count > 0" }
       - { id: open_session_payments, label: Payments, icon: dollar, value_field: total_payments_amount, permission: pos.read }
+      - { id: open_session_journal_items, label: Journal Items, icon: bars, value_field: journal_item_count, permission: accounting.read }
       - { id: open_session_cash_register, label: Cash Register, icon: money, value_field: cash_register_line_count, permission: accounting.read, show_if: "state.pos_session_detail.cash_control === true" }
     header_actions:
       - { id: continue_session_selling, label: Continue Selling, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control' || state.pos_session_detail.state === 'In Progress'" }

@@ -1,0 +1,39 @@
+version: 0.0.53
+kind: schema
+description: Durable POS session journal-item projection for the Odoo Journal Items smart button
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_session_journal_items (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        session_id VARCHAR NOT NULL,
+        company VARCHAR NOT NULL,
+        item_date DATE NOT NULL,
+        entry_name VARCHAR NOT NULL,
+        journal VARCHAR NOT NULL DEFAULT 'General',
+        account_name VARCHAR NOT NULL,
+        partner_name VARCHAR,
+        label VARCHAR NOT NULL,
+        debit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        credit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        matching VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Posted'
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_session_journal_items_scope
+        ON pos_session_journal_items(session_id, company, item_date);
+      INSERT INTO pos_session_journal_items(
+        id, session_id, company, item_date, entry_name, journal, account_name,
+        partner_name, label, debit, credit, matching, state
+      ) VALUES
+        ('pos-session-journal-item-demo-001', 'pos-session-demo-001', 'Core3 Demo Company', DATE '2026-01-15', 'POS/2026/08/17/001', 'General', 'Account Receivable', 'Acme Corporation', 'Sales untaxed', 117.00, 0, 'Matched', 'Posted'),
+        ('pos-session-journal-item-demo-002', 'pos-session-demo-001', 'Core3 Demo Company', DATE '2026-01-15', 'POS/2026/08/17/001', 'General', 'Sales Revenue', 'Acme Corporation', 'Sales untaxed', 0, 117.00, 'Matched', 'Posted'),
+        ('pos-session-journal-item-demo-003', 'pos-session-demo-001', 'Core3 Demo Company', DATE '2026-01-15', 'POS/2026/08/17/001', 'General', 'Account Receivable', 'Acme Corporation', 'Tax 10%', 12.50, 0, 'Matched', 'Posted'),
+        ('pos-session-journal-item-demo-004', 'pos-session-demo-001', 'Core3 Demo Company', DATE '2026-01-15', 'POS/2026/08/17/001', 'General', 'Tax Payable', 'Acme Corporation', 'Tax 10%', 0, 12.50, 'Matched', 'Posted')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_session_journal_items;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
