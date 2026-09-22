@@ -5,6 +5,13 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_DETAIL_UNAVAILABLE, message: Event template details are temporarily unavailable. } }
     query: "SELECT id, row_version, name, seats, active, 'Event Template' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: event_template_tags
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_TAGS_UNAVAILABLE, message: Template tags are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.template_id, l.tag_id, t.name, t.color, c.name AS category FROM event_template_tags l JOIN event_tags t ON t.id = l.tag_id JOIN event_tag_categories c ON c.id = t.category_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.template_id = :id ORDER BY l.sequence, t.name, t.id"
+  - id: event_template_tag_options
+    permission: events.read
+    query: "SELECT t.id AS value, t.name || ' · ' || c.name AS label FROM event_tags t JOIN event_tag_categories c ON c.id = t.category_id WHERE NOT EXISTS (SELECT 1 FROM event_template_tags l WHERE l.template_id = :id AND l.tag_id = t.id) ORDER BY t.name, t.id"
   - id: event_template_communications
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_COMMUNICATIONS_UNAVAILABLE, message: Template communication schedules are temporarily unavailable. } }
@@ -18,6 +25,49 @@ datasources:
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_QUESTION_OPTIONS_UNAVAILABLE, message: Reusable event questions are temporarily unavailable. } }
     query: "SELECT q.id AS value, q.title AS label FROM event_questions q WHERE NOT EXISTS (SELECT 1 FROM event_template_questions l WHERE l.template_id = :id AND l.question_id = q.id) ORDER BY q.title, q.id"
 actions:
+  - id: add_event_template_tag
+    type: server_form
+    permission: events.write
+    title: Add a tag
+    action: events.templates.tags.create
+    handler: line_item
+    operation: create
+    domain: event_template
+    params: { id: '{state.id}' }
+    refresh: [event_template_detail, event_template_tags, event_template_tag_options, event_templates]
+    fields:
+      - { field: tag_id, label: Tag, type: select, options_source: event_template_tag_options, required: true }
+    mutation:
+      generated: [line_id, next_sequence]
+      before_steps:
+        - { query: "SELECT 'event-template-tag-' || :id || '-' || CAST(:tag_id AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_template_tags WHERE template_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before adding a tag. }
+        - { query: "SELECT id FROM event_tags WHERE id = :tag_id", status: 422, code: EVENT_TEMPLATE_TAG_INVALID, message: Select a valid event tag. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_tags WHERE template_id = :id AND tag_id = :tag_id)", status: 409, code: EVENT_TEMPLATE_TAG_EXISTS, message: This tag is already linked to the template. }
+      steps:
+        - { query: "INSERT INTO event_template_tags(id, template_id, tag_id, sequence, row_version) VALUES(:line_id, :id, :tag_id, :next_sequence, 1)", expect_changed: true, status: 409, code: EVENT_TEMPLATE_TAG_NOT_CREATED, message: The template tag could not be added. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while adding a tag. }
+      result: { query: "SELECT l.*, t.name, t.color, c.name AS category FROM event_template_tags l JOIN event_tags t ON t.id = l.tag_id JOIN event_tag_categories c ON c.id = t.category_id WHERE l.id = :line_id" }
+  - id: remove_event_template_tag
+    type: server
+    permission: events.write
+    action: events.templates.tags.delete
+    handler: line_item
+    operation: delete
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Remove this tag from the template?'
+    refresh: [event_template_detail, event_template_tags, event_template_tag_options, event_templates]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before removing the tag. }
+        - { query: "SELECT id FROM event_template_tags WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_TAG_STALE, message: This template tag changed or was removed. Reload before removing. }
+      steps:
+        - { query: "DELETE FROM event_template_tags WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_TEMPLATE_TAG_STALE, message: This template tag changed or was removed. Reload before removing. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while removing a tag. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: add_event_template_communication
     type: server_form
     permission: events.write

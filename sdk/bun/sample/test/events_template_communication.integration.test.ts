@@ -28,7 +28,7 @@ describe('Events Event Template Communication parity', () => {
     expect(action('add_event_template_communication')).toMatchObject({ permission: 'events.write', handler: 'line_item', domain: 'event_template' });
     expect(action('edit_event_template_communication')).toMatchObject({ permission: 'events.write', operation: 'update' });
     expect(action('delete_event_template_communication')).toMatchObject({ permission: 'events.write', operation: 'delete' });
-    expect(discovered.pageDatasources.get('event-template-detail')).toEqual(['event_template_detail', 'event_template_communications', 'event_template_questions', 'event_template_question_options']);
+    expect(discovered.pageDatasources.get('event-template-detail')).toEqual(['event_template_detail', 'event_template_tags', 'event_template_tag_options', 'event_template_communications', 'event_template_questions', 'event_template_question_options']);
   });
 
   test('seeds the Odoo Exhibition schedules and explicit empty/error contracts', async () => {

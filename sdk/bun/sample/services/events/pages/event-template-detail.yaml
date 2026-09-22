@@ -99,6 +99,37 @@ components:
         width: 84
         actions:
           - { id: remove_event_template_question, label: Remove, icon: trash, variant: danger, permission: events.write }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_template_tags
+    parent_source: event_template_detail
+    title: Tags
+    description: Apply reusable event tags to every event created from this template.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_template_tag, label: Add a tag, variant: primary, permission: events.write }
+    empty_state: { title: No template tags, description: Add a tag to classify events created from this template. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Tag, readonly: true }
+      - { type: LineItemField, id: category, field: category, label: Category, readonly: true }
+      - { type: LineItemField, id: color, field: color, label: Color, readonly: true }
+      - type: LineItemActions
+        id: event_template_tag_actions
+        actions:
+          - { id: remove_event_template_tag, label: Remove, icon: trash, variant: danger, permission: events.write }
+    columns:
+      - { field: name, label: Tag, width: 320 }
+      - { field: category, label: Category, width: 220 }
+      - { field: color, label: Color, width: 120 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_event_template_tag, label: Remove, icon: trash, variant: danger, permission: events.write }
 actions:
   - id: back_to_event_templates
     type: navigate
