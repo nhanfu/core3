@@ -189,3 +189,13 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 | BLOG-POST-WEBSITE-WF-001 | Public visibility guard for website action | Same focused test confirms active/published guards remain in both public list and detail SQL; draft/archived rows cannot be exposed by the action route | pass |
 | BLOG-POST-WEBSITE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-WEBSITE-001/browser-check.md`, `odoo-blog-desktop-blocker.png`, and `odoo-blog-mobile-blocker.png` | blocked: shared signed-in tab was borrowed by session `wqul`; same-instance task tab showed Odoo `/blog` Error 404; no visual-parity claim |
 | BLOG-QA-013 | Focused regression/tooling gates | Focused test 3/22; full Blog suite 42/247; UI audit 811/820/1,689; targeted Blog ESLint, Blog Sass build, full frontend build, and `git diff --check` passed | pass; paired Odoo/Core3 visual parity remains blocked |
+
+## Blog Post New action slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-POST-NEW-FUNC-001 | Odoo `blog_post_action_add` source mapping and two-field modal contract | `test/blog_post_new.integration.test.ts` — source XML assertion, page/API separation, action mapping, generated ID, derived scope, and active Draft persistence | pass: 4 tests / 22 assertions |
+| BLOG-POST-NEW-PERM-001 | Create permission and company/active-blog guards | Same focused test rejects read-only, missing, archived, and cross-company creates without rows being inserted | pass |
+| BLOG-POST-NEW-RESTART-001 | File-backed restart durability | Same focused test closes/reopens DuckDB, reapplies migrations, and finds the created Draft with derived blog/company fields | pass |
+| BLOG-POST-NEW-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-NEW-001/browser-check.md` | blocked: BrowserSkill instance `245ea108` was connected, but the signed-in Odoo tab was already borrowed by team session `wabp`; no independent login or visual-parity claim |
+| BLOG-QA-014 | Scoped Blog regression/tooling gates | `evidence/blog/2026-09-22/BLOG-POST-NEW-001/test-results.md` — focused 4/22 and Blog wildcard 46/269; UI audit 831/839/1,732; targeted ESLint, Blog Sass, full frontend build, and `git diff --check` | pass; authenticated paired Odoo visual parity remains blocked |

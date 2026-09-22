@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: blog_posts
     create_action: create_blog_post
-    create_label: New blog post
+    create_label: New Blog Post
     search: { label: Search blog posts, placeholder: 'Search title, subtitle, or tag...' }
     default_filters: { active: active }
     filters:

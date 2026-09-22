@@ -346,3 +346,46 @@ Stable ID: `BLOG-POST-WEBSITE-001`.
   `evidence/blog/2026-09-22/BLOG-POST-WEBSITE-001/`. The shared authenticated
   tab was already borrowed by another team session, and the same-instance
   task tab showed Odoo `/blog` Error 404, so no visual-parity claim is made.
+
+## Blog Post New action slice — 2026-09-22
+
+The next uncovered concrete Odoo Website Blog action is
+`website_blog.blog_post_action_add` (`BLOG-POST-NEW-001`). Odoo defines this
+as a modal `New Blog Post` form with only `Select Blog` and `Blog Post Title`;
+the selected active blog supplies the durable blog and company context for the
+new draft. Core3 previously exposed a full editor-shaped create form that
+accepted caller-supplied `blog_name` and `company_name`, so it did not match
+the source action or protect those derived fields.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| New Blog Post opens a form with Select Blog and Blog Post Title | Create exposed unrelated editor fields and trusted caller-supplied scope fields | Keep the existing stable create entry point but reduce it to the two Odoo fields and derive the remaining durable columns server-side | source-backed contract test |
+| New posts start as active Draft records | Generic create relied on table defaults without an explicit source-action contract | Generated ID plus explicit active default inserts a durable Draft | create and restart assertions |
+| Blog selection is valid, active, and company-scoped | Invalid, archived, and cross-company blog selections were not guarded by the create action | Add ordered empty/title, blog existence/active, and company-scope guards; no partial insert occurs | invalid, archived, cross-company, and unauthorized assertions |
+
+### Core3 contract
+
+- Presentation remains layout-only in `services/blog/pages/posts.yaml` and
+  joins `services/blog/api/posts.yaml` by `page.id: blog-posts`.
+- `api/posts.yaml` owns the `blog.posts.create` action, generates the post ID,
+  enriches `blog_name` and `company_name` from the selected active blog, and
+  requires `blog.write`.
+- No migration is required: existing `blog_posts` durable columns and table
+  defaults are sufficient; the action explicitly sets `active: true` and the
+  database default supplies `state: Draft`.
+- The source uses Odoo's `target="new"`; Core3's shared `server_form` opens the
+  existing ListView modal and refreshes `blog_posts` after the transaction.
+
+### Verification — 2026-09-22
+
+- Focused test: `bun test ./test/blog_post_new.integration.test.ts
+  --timeout 20000` passed 4 tests / 22 assertions.
+- BrowserSkill desktop/mobile comparison is blocked and makes no visual-parity
+  claim. BrowserSkill instance `245ea108` was connected, but borrowing the
+  authenticated Odoo user tab was rejected because it was already borrowed by
+  team session `wabp`. The BrowserSkill policy forbids reading that tab without
+  ownership and forbids an independent login; therefore no desktop/mobile
+  captures were created. The exact blocker is recorded under
+  `evidence/blog/2026-09-22/BLOG-POST-NEW-001/browser-check.md`.

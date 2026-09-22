@@ -41,31 +41,27 @@ actions:
   - id: create_blog_post
     type: server_form
     permission: blog.write
-    title: New blog post
+    title: New Blog Post
     action: blog.posts.create
     handler: yaml_mutation
     operation: create
     refresh: [blog_posts]
     mutation:
+      generated: [id]
       operation: insert
       table: blog_posts
-      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags, active]
-      required: [blog_id, blog_name, name]
+      fields: [blog_id, blog_name, company_name, name, active]
+      required: [blog_id, name]
       defaults: { active: true }
       guards:
-        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
-        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) > 0", status: 422, code: BLOG_POST_TITLE_REQUIRED, message: A blog post title is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:blog_id, '') AS VARCHAR))) > 0", status: 422, code: BLOG_POST_BLOG_REQUIRED, message: Select a blog. }
+        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active", status: 422, code: BLOG_POST_BLOG_INVALID, message: Select an active blog. }
+        - { query: "SELECT name AS blog_name, company_name FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", assign: true, status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
       result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     fields:
-      - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
-      - { field: blog_name, label: Blog name, type: text, required: true }
-      - { field: company_name, label: Company, type: text }
-      - { field: name, label: Title, type: text, required: true }
-      - { field: subtitle, label: Subtitle, type: text }
-      - { field: author_name, label: Author, type: text }
-      - { field: teaser, label: Teaser, type: textarea }
-      - { field: content_html, label: Content, type: textarea }
-      - { field: tags, label: Tags, type: text }
+      - { field: blog_id, label: Select Blog, type: select, options_source: blog_lookup, required: true }
+      - { field: name, label: Title, type: text, required: true, placeholder: Blog Post Title }
   - id: view_blog_post
     type: navigate
     permission: blog.read

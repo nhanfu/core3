@@ -101,3 +101,20 @@ baseline active column is reused and the workflow owns durable archive state.
   Blog evidence bundle. Website/Blog is not installed in `core3_reference`
   (`/blog` is 404), and Core3 `localhost:3001` refused connection; no paired
   visual-parity claim is made.
+
+## BLOG-POST-NEW-001 — 2026-09-22
+
+Aligned the existing Blog Posts create entry point to Odoo's
+`website_blog.blog_post_action_add` source action. The modal now exposes only
+Select Blog and Blog Post Title; the server derives blog/company fields from
+the selected active current-company blog, generates the durable post ID, and
+creates an active Draft atomically.
+
+- Focused test: `bun test ./test/blog_post_new.integration.test.ts
+  --timeout 20000` — 4 pass, 22 assertions.
+- Invalid title/blog, archived blog, cross-company blog, read-only actor, and
+  file-backed restart cases are covered.
+- BrowserSkill is connected to instance `245ea108`, but the authenticated Odoo
+  user tab was already borrowed by session `wabp`; no independent browser or
+  login was used, and no visual-parity claim is made. Evidence records the
+  exact blocker and the absence of captures.
