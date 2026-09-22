@@ -16,6 +16,17 @@ components:
       - { field: favourite_count, label: Favorites }
       - { field: state, label: Status, type: StatusChip }
       - { field: closed_reason, label: Closed reason }
+    message_source: forum_post_comments
+    message_action: add_forum_question_comment
+    message_label: Add a comment
+    message_placeholder: Comment this post
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_actor_field: actor_name
+    chatter_label: Comments
+    chatter_empty: No comments yet.
+    send_label: Add a comment
     header_actions:
       - { id: upvote_forum_post, label: Upvote, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.user_vote !== 1" }
       - { id: upvote_forum_post, label: Remove upvote, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.user_vote === 1" }
@@ -52,6 +63,7 @@ components:
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
+          - { id: add_forum_answer_comment, label: Comment, icon: message-circle, variant: ghost, permission: forum.write, show_if: "row.state === 'Active' || row.state === 'Accepted'" }
     columns:
       - { field: content, label: Answer, width: 480 }
       - { field: author_name, label: Author, width: 180 }
@@ -71,3 +83,4 @@ components:
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
+          - { id: add_forum_answer_comment, label: Comment, icon: message-circle, variant: ghost, permission: forum.write, show_if: "row.state === 'Active' || row.state === 'Accepted'" }

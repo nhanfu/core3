@@ -18,7 +18,7 @@ describe('Forum answer creation and moderation', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(api.page.id).toBe(page.page.id);
-    expect(api.datasources.map((source: any) => source.id)).toEqual(['forum_post_detail', 'forum_post_answers']);
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['forum_post_detail', 'forum_post_answers', 'forum_post_comments']);
     expect(api.actions.find((action: any) => action.id === 'unaccept_forum_answer')).toMatchObject({
       permission: 'forum.manage', action: 'forum.answers.unaccept', operation: 'update',
     });

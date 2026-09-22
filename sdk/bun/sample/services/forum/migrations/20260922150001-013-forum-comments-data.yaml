@@ -1,0 +1,16 @@
+version: 0.0.13
+kind: data
+description: Seed deterministic Odoo-shaped Forum comment content
+type:
+  postgres:
+    up: |
+      INSERT INTO forum_post_comments(id, question_id, post_id, actor_id, actor_name, action, action_label, content, created_at)
+      SELECT 'forum-comment-demo-001', 'forum-post-demo-001', 'forum-post-demo-001', 'forum-user-demo-003', 'Developer C', 'forum.posts.comment', 'Comment', 'The service manifest and migration discovery order are the best places to start.', TIMESTAMP '2026-09-03 10:15:00'
+      WHERE NOT EXISTS (SELECT 1 FROM forum_post_comments WHERE id = 'forum-comment-demo-001');
+      UPDATE forum_posts SET last_activity_at = GREATEST(COALESCE(last_activity_at, created_at), TIMESTAMP '2026-09-03 10:15:00') WHERE id = 'forum-post-demo-001';
+    down: |
+      DELETE FROM forum_post_comments WHERE id = 'forum-comment-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -168,3 +168,25 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
   `/forum` tab returned HTTP 404 and desktop/mobile blocker captures are under
   `/tmp/core3-odoo-parity/`. No visual parity claim is made.
 - Evidence: `../evidence/forum/2026-09-22/FORUM-QUESTION-DOWNVOTE-001/`.
+
+## Wave 13 developer handoff — Post comments (2026-09-22)
+
+- Implemented stable feature `FORUM-POST-COMMENT-001` from Odoo's
+  `post_comment` route and public post-comment template. Core3 now has
+  question/answer YAML comment actions, a durable `forum_post_comments`
+  relation, deterministic seed content, and `last_activity_at` persistence.
+- Focused suite: `bun test ./test/forum_post_comments.integration.test.ts
+  --timeout 30000` — 4 tests, 29 assertions, passed.
+- Full Forum corpus: `bun test ./test/forum*.integration.test.ts
+  --timeout 30000` — 51 tests, 328 assertions, passed.
+- Coverage includes source mapping, page/API separation, seeded and newly
+  posted question/answer comments, active-target/content/actor guards,
+  optimistic parent/answer versions, migration replay, file-backed restart,
+  and authenticated `forum.write` HTTP enforcement.
+- BrowserSkill daemon `245ea108` was healthy, but the existing authenticated
+  Odoo tab borrow remained pending under required extension confirmation and
+  was stopped without bypassing the confirmation. The known reference blocker
+  remains: `website_forum` is not installed in `core3_reference`, so no Forum
+  route or comment surface exists for authenticated Odoo desktop/mobile pairing.
+  No visual parity claim is made.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-POST-COMMENT-001/`.

@@ -1,7 +1,7 @@
-# Forum parity — bounded wave 7 slice
+# Forum parity — bounded wave 13 slice
 
-Status: in-progress. Wave 7 adds the authenticated Post Close Reasons editable
-list behind the existing Forum menu. It is not the anonymous `/forum` website
+Status: in-progress. Wave 13 adds authenticated post comments to the existing
+question detail and answer relation. It is not the anonymous `/forum` website
 route or the complete answer, rank, badge, and moderation module.
 
 ## Source-backed Odoo trace
@@ -23,6 +23,7 @@ Reference: Odoo 19 `addons/website_forum`.
 | Post Close Reasons list | `forum_post_reason_view_list` | Editable List | `forum.manage` |
 | Forum Questions list | `forum_post_action` | `/forum-questions` | `forum.read` |
 | Question edit | `forum_post_view_form` | question detail edit form | `forum.write` |
+| Question/answer comment composer | `post_comment` | question detail comments and answer row action | authenticated `forum.write` |
 | Question archive | moderation action on `forum.post` | question row/detail action | `forum.manage` |
 | Forum create | `forum_forum_view_form_add` → `forum_forum_action_add` | create modal on `/forums` | `forum.manage` |
 | Forum detail/edit | `forum_forum_view_form` | `/forum-detail?id=...` | `forum.manage` |
@@ -92,6 +93,16 @@ website object actions.
   table and idempotently seed Odoo's 13 demo reasons. The focused suite covers
   search, empty/transport-error behavior, validation, stale writes,
   permission enforcement, deletion, migration reapply, and restart.
+- `pages/question-detail.yaml` remains presentation-only; its Comments chatter
+  and answer-row Comment actions join `api/question-detail.yaml` through
+  `page.id: forum-question-detail`. `forum_post_comments` is the durable
+  comment datasource and `forum.posts.comment` / `forum.answers.comment` are
+  YAML `order_chatter` actions protected by `forum.write`.
+- Migrations `20260922150000-012-forum-comments-schema.yaml` and
+  `20260922150001-013-forum-comments-data.yaml` add the comment relation,
+  backfill `forum_posts.last_activity_at`, and seed one deterministic public
+  comment. Question comments update the question activity/version atomically;
+  answer comments update the answer and parent question versions atomically.
 
 ## Acceptance/evidence
 
@@ -114,6 +125,10 @@ website object actions.
   separation, durable Odoo seed data, create/edit/delete actions, valid-type
   and required-name guards, stale-row protection, `forum.manage`, and restart
   coverage.
+- [x] Stable feature `FORUM-POST-COMMENT-001` implements Odoo's question and
+  answer comment composer with durable persistence, active-target validation,
+  actor/permission guards, parent activity refresh, optimistic versions,
+  migration replay, restart, and HTTP action coverage.
 - [ ] Odoo and Core3 authenticated desktop 1440×900 captures.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
@@ -312,6 +327,42 @@ passed 47/47 tests and 299 assertions. Real merged discovery confirms the new
 action is registered once. BrowserSkill recorded the authenticated Odoo 404
 because `website_forum` is absent from `core3_reference`; no visual parity
 claim is made.
+
+## Wave 13 source-backed feature — Post comments — 2026-09-22
+
+Odoo's authenticated `post_comment` route at
+`addons/website_forum/controllers/website_forum.py:439-451` accepts a plain-text
+comment for a question or answer, posts a `mail.message` with
+`message_type='comment'`, and updates the parent question's
+`last_activity_date`. The public template at
+`views/forum_forum_templates_post.xml:522-563` exposes the `Comment this post`
+textarea, `Add a comment` button, author, timestamp, and rendered comment body.
+The model computes `can_comment` from the forum's karma thresholds
+(`models/forum_post.py:240-263`); Core3's bounded authenticated equivalent is
+the declared `forum.write` permission.
+
+Stable ID: `FORUM-POST-COMMENT-001`.
+
+Core3 adds the `forum_post_comments` durable relation, deterministic seed, and
+`last_activity_at` projection in migrations 012/013. The question-detail API
+adds `add_forum_question_comment` and `add_forum_answer_comment` YAML
+`order_chatter` actions. Both require an authenticated `forum.write` actor,
+reject blank content and closed/flagged/unavailable targets, and use atomic
+optimistic version updates; answer comments protect both the answer and parent
+question versions. The presentation page renders the comment timeline through
+the existing OdooFormView chatter seam and adds Comment actions to both answer
+row action surfaces.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-POST-COMMENT-001/`.
+Focused coverage passed 4/4 tests and 29 assertions, including Odoo source
+mapping, question/answer persistence, actor/content/state guards, migration
+replay, file-backed restart, and the authenticated `forum.write` HTTP boundary.
+The complete Forum corpus passed 51/51 tests and 328 assertions after updating
+the affected page-datasource join assertions.
+Odoo/Core3 desktop/mobile visual pairing remains blocked because
+`website_forum` is not installed in `core3_reference`; comment deletion,
+comment-to-answer conversion, karma thresholds, follower notifications, and
+full public website rendering remain follow-up gaps.
 
 ## Runtime evidence and blockers — 2026-09-12
 

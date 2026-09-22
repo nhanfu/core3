@@ -1,0 +1,27 @@
+version: 0.0.12
+kind: schema
+description: Persist public Forum post comments and last activity timestamps
+type:
+  postgres:
+    up: |
+      ALTER TABLE forum_posts ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMP;
+      UPDATE forum_posts SET last_activity_at = COALESCE(last_activity_at, updated_at, created_at) WHERE last_activity_at IS NULL;
+      CREATE TABLE IF NOT EXISTS forum_post_comments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        question_id VARCHAR NOT NULL, post_id VARCHAR NOT NULL,
+        actor_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL DEFAULT 'forum.posts.comment',
+        action_label VARCHAR NOT NULL DEFAULT 'Comment',
+        content VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS forum_post_comments_question_idx ON forum_post_comments(question_id, created_at, id);
+      CREATE INDEX IF NOT EXISTS forum_post_comments_post_idx ON forum_post_comments(post_id, created_at, id);
+    down: |
+      DROP TABLE IF EXISTS forum_post_comments;
+      ALTER TABLE forum_posts DROP COLUMN IF EXISTS last_activity_at;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

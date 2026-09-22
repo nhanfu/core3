@@ -44,6 +44,7 @@ databases and deterministic IDs.
 | FORUM-FUNC-012 | Question favorite toggle | Authenticated user can favorite/unfavorite active or closed questions; count/state persist and stale/archived/actor guards reject safely | pass: `forum_question_favorite.integration.test.ts` |
 | FORUM-FUNC-013 | Question upvote toggle | Authenticated user can upvote/un-upvote questions; aggregate/user state persist and stale/archived/own-post/actor guards reject safely | pass: `forum_question_vote.integration.test.ts` |
 | FORUM-FUNC-014 | Question downvote toggle | Authenticated user can downvote/remove downvote questions and switch vote direction; signed aggregate/user state persists and stale/archived/own-post/actor guards reject safely | pass: `forum_question_downvote.integration.test.ts` |
+| FORUM-FUNC-015 | Post comments | Authenticated user can comment on a question or active/accepted answer; content, actor, target relation, activity timestamp, and reload state persist | pass: `forum_post_comments.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -60,6 +61,7 @@ databases and deterministic IDs.
 | FORUM-WF-009 | Question favorite relation | Per-user insert/delete is atomic with the question version; a second user changes the count without changing the first user's state | pass: `forum_question_favorite.integration.test.ts` |
 | FORUM-WF-010 | Question upvote relation | Per-user upvote insert/delete is atomic with the question version and survives restart | pass: `forum_question_vote.integration.test.ts` |
 | FORUM-WF-011 | Question downvote relation | Per-user downvote insert/delete and upvote conversion are atomic with the question version and survive restart | pass: `forum_question_downvote.integration.test.ts` |
+| FORUM-WF-012 | Post comment activity | Question/answer comment insert and parent activity/version updates are atomic; stale or unavailable targets leave no comment row | pass: `forum_post_comments.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -77,6 +79,7 @@ databases and deterministic IDs.
 | FORUM-PERM-010 | Favorite actor boundary | `forum.read` is required; missing actor, stale row, archived question, and direct denied action leave favorite data unchanged | pass: `forum_question_favorite.integration.test.ts` |
 | FORUM-PERM-011 | Upvote actor boundary | `forum.read` is required; missing actor, stale row, archived question, own question, and direct denied action leave vote data unchanged | pass: `forum_question_vote.integration.test.ts` |
 | FORUM-PERM-012 | Downvote actor boundary | `forum.read` is required; missing actor, stale row, archived question, own question, and direct denied action leave vote data unchanged | pass: `forum_question_downvote.integration.test.ts` |
+| FORUM-PERM-013 | Comment actor boundary | `forum.write` is required; missing actor, blank content, closed/flagged target, stale parent/answer, and direct denied action leave comment data unchanged | pass: `forum_post_comments.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -92,6 +95,7 @@ databases and deterministic IDs.
 | FORUM-UI-008 | Question favorite action | 1440x900, 390x844 | Odoo question favorite control/count paired with Core3 question detail after authenticated toggle/reload | blocked: `FORUM-QUESTION-FAVORITE-001` |
 | FORUM-UI-009 | Question upvote action | 1440x900, 390x844 | Odoo upvote control/count paired with Core3 question detail after authenticated toggle/reload | blocked: `FORUM-QUESTION-UPVOTE-001` |
 | FORUM-UI-010 | Question downvote action | 1440x900, 390x844 | Odoo downvote control/count paired with Core3 question detail after authenticated toggle/reload | blocked: `FORUM-QUESTION-DOWNVOTE-001` |
+| FORUM-UI-011 | Post comment composer/timeline | 1440x900, 390x844 | Odoo question/answer comment composer, author/timestamp/body timeline, and Core3 question-detail/answer actions paired after authenticated submit/reload | blocked: `FORUM-POST-COMMENT-001` |
 
 ## Exit criteria
 

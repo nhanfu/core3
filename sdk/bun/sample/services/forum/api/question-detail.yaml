@@ -3,11 +3,62 @@ datasources:
   - id: forum_post_detail
     permission: forum.read
     single: true
-    query: "SELECT p.*, COALESCE((SELECT COUNT(*) FROM forum_post_favorites f WHERE f.post_id = p.id), 0) AS favourite_count, EXISTS (SELECT 1 FROM forum_post_favorites f WHERE f.post_id = p.id AND f.user_id = :current_user_id) AS is_favorite, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = p.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_posts p WHERE p.id = :id"
+    query: "SELECT p.*, CAST(p.last_activity_at AS VARCHAR) AS last_activity_date, COALESCE((SELECT COUNT(*) FROM forum_post_favorites f WHERE f.post_id = p.id), 0) AS favourite_count, EXISTS (SELECT 1 FROM forum_post_favorites f WHERE f.post_id = p.id AND f.user_id = :current_user_id) AS is_favorite, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = p.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_posts p WHERE p.id = :id"
   - id: forum_post_answers
     permission: forum.read
     query: "SELECT a.id, a.row_version, a.post_id, a.forum_id, a.forum_name, a.content, a.author_name, a.state, a.created_at, COALESCE((SELECT SUM(v.vote) FROM forum_post_votes v WHERE v.post_id = a.id), 0) AS vote_count, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = a.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_answers a WHERE a.post_id = :id ORDER BY a.created_at, a.id"
+  - id: forum_post_comments
+    permission: forum.read
+    error_states: { transport_error: { status: 503, code: FORUM_COMMENTS_UNAVAILABLE, message: Forum comments are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.question_id, c.post_id, c.actor_id, c.actor_name, c.action, c.action_label, c.content AS detail, CAST(c.created_at AS VARCHAR) AS created_at FROM forum_post_comments c WHERE c.question_id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN FALSE ELSE TRUE END ORDER BY c.created_at, c.id"
 actions:
+  - id: add_forum_question_comment
+    type: server_form
+    permission: forum.write
+    title: Add a comment
+    action: forum.posts.comment
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.forum_post_detail.id}', target_id: '{state.forum_post_detail.id}', expected_row_version: '{state.forum_post_detail.row_version}', target_expected_row_version: '{state.forum_post_detail.row_version}' }
+    refresh: [forum_post_detail, forum_post_comments]
+    fields: [{ field: content, label: Comment, type: textarea, required: true, placeholder: Comment this post }]
+    mutation:
+      concurrency: { required: true }
+      generated: [comment_id]
+      before_steps:
+        - { query: "SELECT 'forum-comment-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS comment_id FROM forum_post_comments WHERE question_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FORUM_COMMENT_ACTOR_REQUIRED, message: An authenticated Forum actor is required to add a comment. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND id = :target_id AND state = 'Active' AND row_version = :expected_row_version", status: 409, code: FORUM_COMMENT_PARENT_CHANGED, message: This question changed, was closed, or is unavailable. Reload before commenting. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FORUM_COMMENT_CONTENT_INVALID, message: Comment content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO forum_post_comments(id, question_id, post_id, actor_id, actor_name, action, action_label, content) VALUES(:comment_id, :id, :target_id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Forum Participant'), 'forum.posts.comment', 'Comment', TRIM(CAST(:content AS VARCHAR)))", expect_changed: true, status: 409, code: FORUM_COMMENT_NOT_CREATED, message: The Forum comment could not be added. }
+        - { query: "UPDATE forum_posts SET last_activity_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FORUM_COMMENT_PARENT_CHANGED, message: The question changed while adding the comment. Reload before retrying. }
+      result: { query: "SELECT id, question_id, post_id, actor_id, actor_name, action, action_label, content AS detail, created_at FROM forum_post_comments WHERE id = :comment_id" }
+  - id: add_forum_answer_comment
+    type: server_form
+    permission: forum.write
+    title: Add a comment
+    action: forum.answers.comment
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.forum_post_detail.id}', target_id: '{row.id}', expected_row_version: '{state.forum_post_detail.row_version}', target_expected_row_version: '{row.row_version}' }
+    refresh: [forum_post_detail, forum_post_answers, forum_post_comments]
+    fields: [{ field: content, label: Comment, type: textarea, required: true, placeholder: Comment this post }]
+    mutation:
+      concurrency: { required: true }
+      generated: [comment_id]
+      before_steps:
+        - { query: "SELECT 'forum-comment-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS comment_id FROM forum_post_comments WHERE question_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FORUM_COMMENT_ACTOR_REQUIRED, message: An authenticated Forum actor is required to add a comment. }
+        - { query: "SELECT p.id FROM forum_posts p JOIN forum_answers a ON a.post_id = p.id WHERE p.id = :id AND a.id = :target_id AND p.state = 'Active' AND a.state IN ('Active', 'Accepted') AND p.row_version = :expected_row_version AND a.row_version = :target_expected_row_version", status: 409, code: FORUM_COMMENT_TARGET_CHANGED, message: This answer or question changed, was closed, or is unavailable. Reload before commenting. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FORUM_COMMENT_CONTENT_INVALID, message: Comment content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO forum_post_comments(id, question_id, post_id, actor_id, actor_name, action, action_label, content) VALUES(:comment_id, :id, :target_id, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Forum Participant'), 'forum.posts.comment', 'Comment', TRIM(CAST(:content AS VARCHAR)))", expect_changed: true, status: 409, code: FORUM_COMMENT_NOT_CREATED, message: The Forum comment could not be added. }
+        - { query: "UPDATE forum_answers SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :target_id AND post_id = :id AND row_version = :target_expected_row_version", expect_changed: true, status: 409, code: FORUM_COMMENT_TARGET_CHANGED, message: The answer changed while adding the comment. Reload before retrying. }
+        - { query: "UPDATE forum_posts SET last_activity_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FORUM_COMMENT_PARENT_CHANGED, message: The question changed while adding the comment. Reload before retrying. }
+      result: { query: "SELECT id, question_id, post_id, actor_id, actor_name, action, action_label, content AS detail, created_at FROM forum_post_comments WHERE id = :comment_id" }
   - id: edit_forum_post_detail
     type: server_form
     permission: forum.write

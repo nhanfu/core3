@@ -25,7 +25,7 @@ describe('Forum question favorite action', () => {
     expect(api.actions.find((item: any) => item.id === action.id)).toMatchObject({
       permission: 'forum.read', action: 'forum.posts.toggle_favourite', refresh: ['forum_post_detail'],
     });
-    expect(discovered.pageDatasources.get('forum-question-detail')).toEqual(['forum_post_detail', 'forum_post_answers']);
+    expect(discovered.pageDatasources.get('forum-question-detail')).toEqual(['forum_post_detail', 'forum_post_answers', 'forum_post_comments']);
 
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
