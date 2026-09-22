@@ -384,3 +384,42 @@ authenticated Odoo tab `1770662590` was already borrowed by session `xigt`.
 The worker did not take over or stop that session and did not use an
 independent login. No truthful Odoo/favicon desktop or mobile captures are
 available, so this wave makes no visual-parity claim.
+
+## Wave 12 execution evidence — 2026-09-22 — Page Manager old-URL redirect
+
+The next missing Page Manager action after the Settings/favicon slices is
+`WEBSITE-PAGE-REDIRECT-001`. Odoo's `website_page_properties_view_form` exposes
+`Redirect Old URL` and a 301/302 `redirect_type` when a page URL changes;
+`website_page_properties.py` then creates a `website.rewrite` with the old and
+new paths. Core3 now keeps this behavior YAML-first: the Page Manager and Page
+detail edit actions collect the redirect choice, capture the old URL in a
+mutation guard step, update the page, and insert a durable
+`website_page_redirects` row in the same transaction.
+
+The migration is
+`services/website/migrations/20260923090000-020-website-page-redirects.yaml`.
+The action requires `website.write`, requires the existing page row version,
+rejects redirect types other than 301/302, skips same-URL redirects, and
+persists Website/page scope, redirect type, active state, and row version.
+Presentation remains in `pages/pages.yaml` and `pages/page-detail.yaml`; the
+mutation contracts remain in `api/pages.yaml` and `api/page-detail.yaml`.
+
+Focused coverage passes in
+`test/website_page_redirect.integration.test.ts` (3 tests, 13 assertions),
+alongside the adjacent Page Manager and Settings regression set (26 tests,
+131 assertions). The Website UI audit and Website Sass build also pass.
+
+The single permitted BrowserSkill attempt was blocked before navigation: the
+connected Chrome instance was healthy, but the required borrow command for tab
+`1770662590` rejected the requested immediate timeout (`0s` must be greater
+than zero). No confirmation wait, retry, credential access, or screenshot was
+performed. Session `jrgb` was stopped immediately. There is therefore no
+authenticated `core3_reference` browser evidence or visual-parity claim for
+this wave.
+
+### Updated next slice
+
+Page Manager URL redirect persistence is covered at the contract/data/API
+level. The broader Website module remains conditional on authenticated Odoo
+Website availability, paired desktop/mobile evidence, and the remaining public,
+theme-asset, and full workflow gates.

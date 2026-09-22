@@ -186,3 +186,18 @@ Focused result: `bun test ./test/website_settings.integration.test.ts --timeout 
 This is one bounded Website settings feature only. Website module sign-off,
 paired visual comparison, and the broader open workflow/public gates remain
 pending.
+
+## 2026-09-22 Website Page Manager old-URL redirect checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-014 | Odoo Page Properties redirect controls and page/API separation | `test/website_page_redirect.integration.test.ts`; source anchors, matching page IDs, 301/302 fields and mutation steps | pass: 3 tests / 13 assertions |
+| WEBSITE-DATA-009 | URL-change redirect persistence and migration/restart replay | same focused test; durable `website_page_redirects` row stores old/new URL, Website/page scope, type, and version | pass |
+| WEBSITE-PERM-011 | Read-only actor cannot change a page or create a redirect | same focused test; action endpoint returns 403 and leaves data unchanged | pass |
+| WEBSITE-UI-015 | Authenticated Odoo `core3_reference` browser comparison | `evidence/website/2026-09-22/website-page-redirect-001/browser-check.md` | blocked before navigation; immediate borrow timeout was rejected, no retry or confirmation wait |
+
+Focused result: the new redirect test plus adjacent Page Manager/Settings
+regressions passed — 26 tests, 131 assertions. `bun run audit` passed with
+853 pages, 861 routes, and 1,797 datasources. `bun run css:build:website`
+passed. `git diff --check` passed. This checkpoint does not sign off the
+Website module.

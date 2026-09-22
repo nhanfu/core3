@@ -174,3 +174,22 @@ BrowserSkill instance `245ea108` was healthy, but authenticated Odoo tab
 or stopped. No truthful Odoo favicon desktop/mobile captures were available and
 no visual-parity claim is made. Website module sign-off and broader open slices
 remain pending.
+
+## 2026-09-22 owner checkpoint — Page Manager old-URL redirect
+
+Implemented `WEBSITE-PAGE-REDIRECT-001`, the next uncovered source-backed Page
+Manager action after the Settings/favicon slices. The Odoo source pair is
+`website_pages_views.xml` (`redirect_old_url`, `redirect_type`) and
+`website_page_properties.py` (create a `website.rewrite` after a URL change).
+Core3 implements the page and page-detail YAML edit contracts, transactional
+redirect insert step, `website.write` permission, row-version/stale guards,
+301/302 validation, same-URL no-op behavior, and durable migration/restart
+storage.
+
+Focused result: `website_page_redirect.integration.test.ts` — 3 tests / 13
+assertions; adjacent Page Manager/Settings regression set — 26 tests / 131
+assertions. UI audit, Website Sass build, and diff check pass. BrowserSkill
+could not reach the requested authenticated `core3_reference` route because the
+single immediate borrow attempt was rejected for an invalid zero timeout; no
+retry or confirmation wait was made, and session `jrgb` was stopped. Website
+remains active/conditional with no visual-parity claim.

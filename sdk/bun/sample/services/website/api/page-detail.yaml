@@ -80,6 +80,11 @@ actions:
       guards:
         - { query: "SELECT id FROM website_pages WHERE id = :id", status: 404, code: WEBSITE_PAGE_NOT_FOUND, message: Website page not found }
         - { query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:redirect_old_url AS BOOLEAN), FALSE) = FALSE OR CAST(:redirect_type AS VARCHAR) IN ('301', '302')", status: 422, code: WEBSITE_PAGE_REDIRECT_TYPE_INVALID, message: Page URL redirects must use 301 or 302. }
+      before_steps:
+        - { query: "SELECT url AS old_url FROM website_pages WHERE id = :id", assign: true }
+      steps:
+        - { query: "INSERT INTO website_page_redirects(id, row_version, page_id, website_id, website_name, name, url_from, url_to, redirect_type, active, sequence) SELECT 'website-page-redirect-' || :id || '-' || CAST(:expected_row_version AS VARCHAR), 1, id, website_id, website_name, name, :old_url, url, COALESCE(NULLIF(CAST(:redirect_type AS VARCHAR), ''), '301'), TRUE, 10 FROM website_pages WHERE id = :id AND COALESCE(CAST(:redirect_old_url AS BOOLEAN), FALSE) = TRUE AND COALESCE(CAST(:old_url AS VARCHAR), '') <> COALESCE(url, '')" }
       timestamps: true
       result: { query: "SELECT * FROM website_pages WHERE id = :id" }
     fields:
@@ -93,3 +98,5 @@ actions:
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
       - { field: is_seo_optimized, label: Is SEO Optimized, type: checkbox }
       - { field: track, label: Track, type: checkbox }
+      - { field: redirect_old_url, label: Redirect old URL, type: checkbox }
+      - { field: redirect_type, label: Redirect type, type: select, options: [{ value: '301', label: 301 Moved permanently }, { value: '302', label: 302 Moved temporarily }], default: '301' }
