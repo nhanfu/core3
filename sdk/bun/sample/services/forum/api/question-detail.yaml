@@ -173,3 +173,23 @@ actions:
         - { query: "INSERT INTO forum_post_votes(id, post_id, user_id, vote, row_version) SELECT :vote_id, :id, :current_user_id, 1, 1 WHERE COALESCE(CAST(:current_vote AS INTEGER), 0) <> 1" }
         - { query: "UPDATE forum_posts SET vote_count = vote_count + CASE WHEN COALESCE(CAST(:current_vote AS INTEGER), 0) = 1 THEN -1 WHEN COALESCE(CAST(:current_vote AS INTEGER), 0) = -1 THEN 2 ELSE 1 END, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_VOTE_STALE, message: This question changed while its vote state was updating. }
       result: { query: "SELECT p.*, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = p.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_posts p WHERE p.id = :id" }
+  - id: downvote_forum_post
+    type: server
+    permission: forum.read
+    action: forum.posts.downvote
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.forum_post_detail.row_version}' }
+    refresh: [forum_post_detail]
+    mutation:
+      generated: [vote_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:current_user_name AS VARCHAR))) > 0", status: 403, code: FORUM_DOWNVOTE_ACTOR, message: An authenticated user is required to vote on a question. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND state IN ('Active', 'Closed')", status: 409, code: FORUM_DOWNVOTE_UNAVAILABLE, message: Only active or closed questions can be voted on. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :expected_row_version", status: 409, code: FORUM_DOWNVOTE_STALE, message: This question changed before its downvote state was updated. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND (author_name IS NULL OR LOWER(TRIM(author_name)) <> LOWER(TRIM(CAST(:current_user_name AS VARCHAR))))", status: 403, code: FORUM_DOWNVOTE_OWN_POST, message: You cannot vote on your own question. }
+        - { query: "SELECT COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = :id AND v.user_id = :current_user_id), 0) AS current_vote", assign: true }
+      steps:
+        - { query: "DELETE FROM forum_post_votes WHERE post_id = :id AND user_id = :current_user_id AND COALESCE(CAST(:current_vote AS INTEGER), 0) <> 0" }
+        - { query: "INSERT INTO forum_post_votes(id, post_id, user_id, vote, row_version) SELECT :vote_id, :id, :current_user_id, -1, 1 WHERE COALESCE(CAST(:current_vote AS INTEGER), 0) <> -1" }
+        - { query: "UPDATE forum_posts SET vote_count = vote_count + CASE WHEN COALESCE(CAST(:current_vote AS INTEGER), 0) = -1 THEN 1 WHEN COALESCE(CAST(:current_vote AS INTEGER), 0) = 1 THEN -2 ELSE -1 END, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_DOWNVOTE_STALE, message: This question changed while its downvote state was updating. }
+      result: { query: "SELECT p.*, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = p.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_posts p WHERE p.id = :id" }

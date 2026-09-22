@@ -148,3 +148,23 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
   Existing authenticated desktop/mobile launcher captures show the reference
   database lacks `website_forum`; no Odoo/Core3 visual parity claim is made.
 - Evidence: `../evidence/forum/2026-09-22/FORUM-QUESTION-FAVORITE-001/`.
+
+## Wave 11 developer handoff — Question downvote toggle (2026-09-22)
+
+- Implemented stable feature `FORUM-QUESTION-DOWNVOTE-001` from Odoo's
+  `post_downvote` JSON-RPC route in
+  `addons/website_forum/controllers/website_forum.py`.
+- Added the question-detail `forum.posts.downvote` action and
+  Downvote/Remove downvote presentation controls. The existing durable vote
+  relation is reused; switching from upvote to downvote adjusts the signed
+  aggregate atomically.
+- Focused suite: `bun test ./test/forum_question_downvote.integration.test.ts
+  --timeout 20000` — 4 tests, 21 assertions, passed.
+- Coverage includes page/API separation, toggle/removal, direction switching,
+  stale/own-post/actor/archived guards, HTTP permission enforcement, reload,
+  and file-backed restart persistence.
+- BrowserSkill instance `245ea108` was healthy. Borrowing tab `1770662590` was
+  denied because it was already borrowed by session `mczn`; the task-created
+  `/forum` tab returned HTTP 404 and desktop/mobile blocker captures are under
+  `/tmp/core3-odoo-parity/`. No visual parity claim is made.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-QUESTION-DOWNVOTE-001/`.

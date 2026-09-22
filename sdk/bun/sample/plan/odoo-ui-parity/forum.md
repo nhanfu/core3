@@ -262,6 +262,33 @@ worker session, and Core3 runtime/browser navigation was blocked by an
 unrelated Website page-schema error (`page config.catalogs is not allowed` in
 `services/website/api/settings.yaml`). No visual parity claim is made.
 
+## Wave 11 source-backed feature — Question downvote toggle — 2026-09-22
+
+Odoo 19's distinct `WebsiteForum.post_downvote` JSON-RPC route at
+`addons/website_forum/controllers/website_forum.py:519-524` toggles the current
+user's vote to `-1`, removes an existing downvote, and switches an existing
+upvote to a downvote through `forum.post.vote`. The model's `vote_count` is the
+signed sum of vote rows, and users cannot vote on their own posts.
+
+Stable ID: `FORUM-QUESTION-DOWNVOTE-001`.
+
+Core3 adds `downvote_forum_post` to the existing question-detail API and adds
+Downvote/Remove downvote header actions to the presentation page. The existing
+durable `forum_post_votes` relation and `vote_count` projection are reused; no
+migration is required. The `forum.read` action requires an authenticated actor,
+active/closed question state, the current question row version, and a
+non-owner actor. It atomically removes/replaces the user's vote, adjusts the
+signed aggregate, increments the question version, and refreshes the detail
+state. Answer voting, karma, public moderation queues, and full Forum sign-off
+remain outside this bounded slice.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-QUESTION-DOWNVOTE-001/`.
+The Odoo `/forum` route returned the authenticated Odoo 404 page in a
+task-created BrowserSkill tab; the shared authenticated Odoo tab was not
+available because it was already borrowed by session `mczn`. Desktop 1440x900
+and mobile 390x844 blocker captures are recorded, but no Odoo action screen or
+Core3 paired capture exists. No visual parity claim is made.
+
 ## Runtime evidence and blockers — 2026-09-12
 
 - Odoo login was authenticated successfully with the local parity credentials

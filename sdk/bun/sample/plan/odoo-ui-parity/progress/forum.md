@@ -127,3 +127,19 @@ BrowserSkill instance `245ea108` was reachable, but borrow of the shared
 authenticated Odoo tab was denied because session `ftio` already owned it.
 The reference addon is also absent from `core3_reference`; desktop/mobile
 visual pairing remains blocked and no visual sign-off is claimed.
+
+## Wave 11 — Question downvote toggle (2026-09-22)
+
+The next distinct source action after the completed question upvote slice is
+Odoo's authenticated `post_downvote` JSON-RPC route. Core3 now adds stable
+`FORUM-QUESTION-DOWNVOTE-001`: a durable signed downvote toggle on the existing
+question-detail API/page pair, with direction switching, removal, aggregate
+projection, and `forum.read` actor/stale/archived/own-post guards.
+
+Focused suite passed 4/4 tests and 21/21 assertions, including HTTP permission
+enforcement and file-backed restart persistence. Evidence:
+`evidence/forum/2026-09-22/FORUM-QUESTION-DOWNVOTE-001/`.
+BrowserSkill instance `245ea108` was reachable, but the shared authenticated
+Odoo tab `1770662590` was already borrowed by session `mczn`; task-created
+desktop/mobile `/forum` captures show the truthful 404 blocker. No visual parity
+or module-completion claim is made.
