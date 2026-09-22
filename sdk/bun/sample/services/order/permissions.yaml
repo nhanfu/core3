@@ -3,6 +3,7 @@ permissions:
   - orders.read
   - orders.write
   - orders.approve
+  - orders.manage
   - orders.chatter
 endpoints:
   upload.order_attachment: orders.write

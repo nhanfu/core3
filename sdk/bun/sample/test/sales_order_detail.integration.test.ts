@@ -34,7 +34,7 @@ describe('Sales order form parity slice', () => {
   it('declares Odoo Sales labels, tabs, mapped states, and form sources', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     const lines = page.components.find((component: any) => component.type === 'LineItemGrid');
-    expect(form.header_actions.map((item: any) => item.label)).toEqual(['Edit', 'Apply Template', 'Send', 'Confirm', 'Confirm', 'Create Invoice', 'Print', 'Cancel', 'Set to Quotation', 'Preview']);
+    expect(form.header_actions.map((item: any) => item.label)).toEqual(['Edit', 'Apply Template', 'Send', 'Confirm', 'Confirm', 'Create Invoice', 'Lock', 'Unlock', 'Print', 'Cancel', 'Set to Quotation', 'Preview']);
     expect(form.notebook.tabs.map((item: any) => item.label)).toEqual(['Order Lines', 'Other Information']);
     const formLabels = [
       ...form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label)),
@@ -53,6 +53,8 @@ describe('Sales order form parity slice', () => {
     expect(action('send_sale_quotation').permission).toBe('orders.write');
     expect(action('confirm_sale_order').permission).toBe('orders.approve');
     expect(action('cancel_sale_order').permission).toBe('orders.write');
+    expect(action('lock_sale_order')).toMatchObject({ action: 'sale.orders.lock', permission: 'orders.manage', operation: 'update' });
+    expect(action('unlock_sale_order')).toMatchObject({ action: 'sale.orders.unlock', permission: 'orders.manage', operation: 'update' });
     expect(action('edit_sale_order').mutation.guards.map((guard: any) => guard.status)).toEqual([409, 404, 403, 403, 409, 409, 422]);
     expect(action('edit_sale_order').mutation.concurrency).toEqual({ required: true });
     expect(action('cancel_sale_order').mutation.guards[0]).toMatchObject({ status: 409, code: 'STALE_RECORD' });

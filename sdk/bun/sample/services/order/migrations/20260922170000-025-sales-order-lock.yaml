@@ -1,0 +1,12 @@
+version: 0.0.25
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT FALSE;
+      UPDATE orders SET locked = COALESCE(locked, FALSE);
+    down: ''
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -11,6 +11,7 @@ datasources:
         o.customer_reference, CAST(o.order_date AS VARCHAR) AS order_date,
         CAST(o.validity_date AS VARCHAR) AS validity_date, CAST(o.commitment_date AS VARCHAR) AS commitment_date,
         o.pricelist_name, o.payment_term_name, COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
+        COALESCE(o.locked, false) AS locked,
         COALESCE(c.company_name, 'My Company') AS company_name, o.require_signature, o.require_payment,
         t.name AS sale_order_template_name,
         COALESCE(c.name, o.customer_name) AS recipient_name, COALESCE(c.email, '') AS recipient_email,
@@ -310,6 +311,46 @@ actions:
       steps:
         - { query: "INSERT INTO sale_order_print_runs(id, order_id, report_name, report_action, report_template, output_format, filename, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Quotation / Order', 'sale.action_report_saleorder', 'sale.report_saleorder', 'PDF', CASE WHEN COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval') THEN 'Quotation - ' || order_number || '.pdf' ELSE 'Order - ' || order_number || '.pdf' END, :current_user_name, CURRENT_TIMESTAMP, 1 FROM orders WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_PRINT_FAILED, message: The Quotation / Order report could not be prepared. }
       result: { query: "SELECT r.id, r.order_id, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, r.row_version FROM sale_order_print_runs r WHERE r.id = :print_run_id" }
+  - id: lock_sale_order
+    type: server
+    permission: orders.manage
+    action: sale.orders.lock
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.sale_order_detail.id}', expected_row_version: '{state.sale_order_detail.row_version}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    mutation:
+      concurrency: { required: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id", status: 404, code: SALE_ORDER_LOCK_NOT_FOUND, message: Sales order not found. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_LOCK_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Approved' AND COALESCE(locked, false) = false AND row_version = :expected_row_version", status: 409, code: SALE_ORDER_LOCK_INVALID, message: Only an unchanged confirmed sales order can be locked. Reload before locking. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: SALE_ORDER_LOCK_ACTOR_REQUIRED, message: A signed-in Sales manager is required to lock the order. }
+      steps:
+        - { query: "UPDATE orders SET locked = true, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Approved' AND COALESCE(locked, false) = false AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_LOCK_STALE, message: The sales order changed before it could be locked. Reload before locking. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sale.orders.lock', 'orders', :id, 'Locked sales order')" }
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+  - id: unlock_sale_order
+    type: server
+    permission: orders.manage
+    action: sale.orders.unlock
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.sale_order_detail.id}', expected_row_version: '{state.sale_order_detail.row_version}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    mutation:
+      concurrency: { required: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id", status: 404, code: SALE_ORDER_UNLOCK_NOT_FOUND, message: Sales order not found. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_UNLOCK_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND COALESCE(locked, false) = true AND row_version = :expected_row_version", status: 409, code: SALE_ORDER_UNLOCK_INVALID, message: Only an unchanged locked sales order can be unlocked. Reload before unlocking. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: SALE_ORDER_UNLOCK_ACTOR_REQUIRED, message: A signed-in Sales manager is required to unlock the order. }
+      steps:
+        - { query: "UPDATE orders SET locked = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND COALESCE(locked, false) = true AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_UNLOCK_STALE, message: The sales order changed before it could be unlocked. Reload before unlocking. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sale.orders.unlock', 'orders', :id, 'Unlocked sales order')" }
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
   - id: add_sale_order_line
     type: server_form
     permission: orders.write

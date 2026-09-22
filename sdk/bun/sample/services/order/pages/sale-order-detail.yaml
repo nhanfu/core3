@@ -23,6 +23,8 @@ components:
       - { id: confirm_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_draft_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
       - { id: create_sale_invoice, label: Create Invoice, variant: primary, show_if: "state.sale_order_detail.status === 'Sales Order' && state.sale_order_detail.invoice_status !== 'Invoiced'" }
+      - { id: lock_sale_order, label: Lock, variant: secondary, permission: orders.manage, show_if: "state.sale_order_detail.status === 'Sales Order' && !state.sale_order_detail.locked" }
+      - { id: unlock_sale_order, label: Unlock, variant: secondary, permission: orders.manage, show_if: "state.sale_order_detail.locked" }
       - { id: print_sale_order, label: Print, variant: secondary, permission: orders.read, show_if: "state.sale_order_detail.status !== 'Sales Order'" }
       - { id: cancel_sale_order, label: Cancel, variant: secondary, show_if: "state.sale_order_detail.status !== 'Cancelled'" }
       - { id: reset_sale_quotation, label: Set to Quotation, variant: secondary, show_if: "state.sale_order_detail.status === 'Cancelled'" }
@@ -58,6 +60,7 @@ components:
                 - { field: company_name, label: Company }
                 - { field: require_signature, label: Online Signature }
                 - { field: require_payment, label: Online Payment }
+                - { field: locked, label: Locked, type: checkbox, readonly: true }
                 - { field: notes, label: Terms and Conditions, type: textarea, wide: true }
     message_source: sale_order_timeline
     chatter_label: Chatter
