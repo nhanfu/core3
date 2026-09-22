@@ -303,14 +303,10 @@ left unstaged and untouched.
   variant visibility guard.
 - Focused validation: **3 passed, 0 failed, 23 assertions** in
   `test/email_marketing_mailing_ab_compare.integration.test.ts`.
-- Full regression: **54 passed, 16 failed, 504 assertions** across 20 files;
-  all 16 failures are discovery-time reports of the unrelated concurrent
-  Inventory schema defect `components[0].stat_buttons[3].value_field must be a
-  non-empty string`. No Inventory files were changed.
-- Builds: `bun run css:build:email-marketing` passed; `bun run frontend:build`
-  passed. `bun run audit` is blocked by the same unrelated Inventory schema
-  error. `git diff --check` passed after the implementation and documentation
-  edits.
+- Full regression: **70 passed, 0 failed, 611 assertions** across 20 files.
+- Builds: `bun run css:build:email-marketing` and `bun run frontend:build`
+  passed. `bun run audit` passed with **845 pages, 853 routes, and 1,767
+  datasources**. Scoped ESLint and `git diff --check` passed.
 - Browser blocker: BrowserSkill instance `245ea108` was healthy and the
   authenticated Odoo tab was `1770662590`, but the required borrow returned
   `tab is borrowed by another session` with owner `ebbh`. The task did not

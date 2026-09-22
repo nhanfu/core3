@@ -1108,11 +1108,10 @@ Implementation and test paths:
 - `test/email_marketing_mailing_ab_compare.integration.test.ts`
 
 Focused validation is **3 passed, 0 failed, 23 assertions**. The full Email
-Marketing glob was attempted but 16 discovery cases are blocked by an
-unrelated concurrent Inventory YAML error:
-`components[0].stat_buttons[3].value_field must be a non-empty string`.
-Email Marketing CSS and frontend builds pass; the global audit reaches the
-same unrelated Inventory schema failure. BrowserSkill instance `245ea108` was
+Marketing regression is **70 passed, 0 failed, 611 assertions** across 20
+files. Email Marketing CSS and full frontend builds pass; the global audit
+passes with **845 pages, 853 routes, and 1,767 datasources**. BrowserSkill
+instance `245ea108` was
 connected, but the authenticated tab `1770662590` was already borrowed by
 session `ebbh`; the task session did not navigate or reuse it. No Odoo or Core3
 desktop/mobile capture exists and no visual-parity claim is made. Details are

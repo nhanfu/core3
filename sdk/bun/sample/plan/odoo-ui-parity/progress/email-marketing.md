@@ -23,10 +23,9 @@ claim is made.
   search/status filters, empty state, and detail navigation. The detail action
   is guarded by a durable two-variant count.
 - Focused validation: **3 passed, 23 assertions**; full Email Marketing
-  regression is blocked by an unrelated Inventory page-schema error during
-  global discovery (54 passed, 16 failed across 70 tests).
-- CSS and frontend builds pass. Global audit hits the same unrelated Inventory
-  `stat_buttons[3].value_field` schema error.
+  regression: **70 passed, 0 failed, 611 assertions** across 20 files.
+- CSS and frontend builds pass. Global audit passes with **845 pages, 853
+  routes, and 1,767 datasources**.
 - BrowserSkill instance `245ea108` was connected, but tab `1770662590` was
   already borrowed by session `ebbh`; no tab navigation or visual claim was
   made. Evidence:
