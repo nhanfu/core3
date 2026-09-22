@@ -1176,3 +1176,45 @@ Email Marketing menu/action was exposed. No user tab for `core3_reference` was
 available to borrow, so no credentials were requested and no installed-reference
 desktop/mobile capture or visual-parity claim is made. The task session was
 stopped after this check.
+
+## Mailing-scoped Mail Statistics bounded slice (2026-09-22)
+
+The next uncovered stable source action is Odoo's
+`action_view_mail_mail_statistics_mailing` from
+`addons/mass_mailing/views/mailing_trace_views.xml`. It opens a read-only
+`mailing.trace` window named **Mail Statistics** in `graph,list,form,pivot`
+modes, with the current mailing supplied as
+`search_default_mass_mailing_id`. Odoo grants ordinary Email Marketing users
+read access to `mailing.trace` (`access_mailing_trace_mm_user`); this is
+distinct from the technical all-traces menu, which remains administrator-only.
+
+Core3 implements stable ID `EMAIL-MARKETING-MAILING-STATISTICS-001` as a
+dedicated scoped surface:
+
+- Layout: `services/email-marketing/pages/mailing-statistics.yaml` and
+  `pages/mailing-statistics-detail.yaml`; both are presentation-only.
+- API: `services/email-marketing/api/mailing-statistics.yaml` and
+  `api/mailing-statistics-detail.yaml`, joined to their layouts by matching
+  `page.id`. The existing mailing detail API adds a permissioned navigation
+  action with the Odoo source action identity recorded in the contract test.
+- Persistence/seed: the existing durable `email_mailing_traces` table and
+  fixed-date migration `20260912160000-019-email-mailing-traces.yaml` are
+  reused idempotently; the selected mailing scope returns persisted rows after
+  migration replay and restart, with no new schema needed.
+- Focused contract: `test/email_marketing_mailing_statistics.integration.test.ts`
+  covers the exact Odoo source action, page/API ownership, graph/list/form/pivot
+  modes, current-mailing scope, deterministic filtering, persistence replay,
+  read-only user permission, and stable 401/403/404/503 boundaries.
+- Evidence: `evidence/email-marketing/2026-09-22/`
+  `EMAIL-MARKETING-MAILING-STATISTICS-001/`.
+
+Focused validation is **3 passed, 0 failed, 24 assertions**; the Email
+Marketing regression is **80 passed, 0 failed, 669 assertions across 23
+files**. UI audit reports 865 pages, 873 routes, and 1,828 datasources, and
+the Email Marketing Sass build passes. BrowserSkill was connected, but the
+available Odoo user tabs were unavailable for this task: one was already
+borrowed by session `qsyw`, and a second borrow for session `gocr` timed out
+waiting for configured human confirmation. No tab was navigated, no credentials
+or browser secrets were exposed, and no installed-reference desktop/mobile
+visual claim is made. The task session was stopped and the exact blocker is
+recorded in the evidence bundle.

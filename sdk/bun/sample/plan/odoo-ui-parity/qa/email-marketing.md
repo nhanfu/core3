@@ -259,6 +259,31 @@ Disposition: bounded Campaigns action is implementation- and contract-tested;
 installed-Odoo desktop/mobile comparison, full Campaigns parity, and module
 sign-off remain open.
 
+## Bounded review handoff — Mailing-scoped Mail Statistics (2026-09-22)
+
+- Source comparison: Odoo 19 `action_view_mail_mail_statistics_mailing` from
+  `mass_mailing/views/mailing_trace_views.xml`; read-only `mailing.trace`
+  action with `graph,list,form,pivot` and current-mailing context. Ordinary
+  mass-mailing users have read access to the trace model.
+- Core3 implementation: stable ID `EMAIL-MARKETING-MAILING-STATISTICS-001`,
+  separate page/API detail and list contracts, a scoped route at
+  `/email-mailings/statistics`, and a read-only `Mail Statistics` action on
+  mailing detail. Technical `/email-traces` remains settings-only.
+- Focused validation: `bun test ./test/email_marketing_mailing_statistics.integration.test.ts --timeout 20000` — **3 passed, 24 assertions, 0 failed**.
+- Full Email Marketing regression: `bun test --reporter=dots ./test/email_marketing_*.integration.test.ts --timeout 20000` — **80 passed, 0 failed, 669 assertions across 23 files**.
+- UI audit: **passed**, 865 pages, 873 routes, 1,828 datasources. Email
+  Marketing Sass build and `git diff --check` are required release gates.
+- Browser blocker: BrowserSkill instance `245ea108` was healthy; tab
+  `1770663883` was already borrowed by session `qsyw`, and tab `1770663889`
+  timed out waiting for configured confirmation in task session `gocr`.
+  No Odoo tab was navigated and no visual-parity claim is made.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-STATISTICS-001/`.
+
+Disposition: bounded action is implementation- and contract-tested; the
+authenticated Odoo desktop/mobile comparison and full Email Marketing
+sign-off remain open.
+
 ## Bounded review handoff — Mailing A/B winner (2026-09-22)
 
 - Source comparison: Odoo 19 `mailing.mailing.action_select_as_winner` from

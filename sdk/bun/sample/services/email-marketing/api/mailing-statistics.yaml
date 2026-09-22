@@ -1,0 +1,34 @@
+page: { id: email-mailing-statistics }
+datasources:
+  - id: email_mailing_statistics
+    single: false
+    permission: email_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_MAILING_STATISTICS_UNAUTHORIZED, message: Sign in to view Mail Statistics. }
+      forbidden: { status: 403, code: EMAIL_MAILING_STATISTICS_FORBIDDEN, message: You do not have permission to view Mail Statistics. }
+      transport_error: { status: 503, code: EMAIL_MAILING_STATISTICS_UNAVAILABLE, message: Mail Statistics are temporarily unavailable. }
+    pivot:
+      fields: [id, row_version, mass_mailing_id, mass_mailing_name, email, message_id, sent_datetime, links_click_datetime, trace_status, failure_type, failure_reason, open_datetime, reply_datetime, campaign_name, medium_name, source_name, is_test_trace, trace_count, updated_at]
+    query: |
+      SELECT id, row_version, mass_mailing_id, mass_mailing_name, email, message_id,
+        CAST(sent_datetime AS VARCHAR) AS sent_datetime,
+        CAST(links_click_datetime AS VARCHAR) AS links_click_datetime,
+        trace_status, failure_type, failure_reason,
+        CAST(open_datetime AS VARCHAR) AS open_datetime,
+        CAST(reply_datetime AS VARCHAR) AS reply_datetime,
+        campaign_name, medium_name, source_name, is_test_trace, trace_count,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM email_mailing_traces
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND :mass_mailing_id IS NOT NULL
+        AND mass_mailing_id = :mass_mailing_id
+        AND (:q IS NULL OR email ILIKE '%' || :q || '%' OR mass_mailing_name ILIKE '%' || :q || '%' OR message_id ILIKE '%' || :q || '%' OR COALESCE(failure_reason, '') ILIKE '%' || :q || '%')
+        AND (:trace_status IS NULL OR trace_status = :trace_status)
+        AND (:is_test_trace IS NULL OR is_test_trace = CAST(:is_test_trace AS BOOLEAN))
+      ORDER BY updated_at DESC, id
+actions:
+  - id: view_email_mailing_statistic
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-mailings/statistics/detail
+    params: { id: '{row.id}' }

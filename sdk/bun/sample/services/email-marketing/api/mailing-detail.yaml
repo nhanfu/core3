@@ -17,6 +17,11 @@ actions:
     permission: email_marketing.read
     navigate_to: /email-mailings/ab-tests
     params: { campaign_name: '{state.email_mailing_detail.campaign_name}' }
+  - id: view_email_mailing_statistics
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-mailings/statistics
+    params: { mass_mailing_id: '{state.email_mailing_detail.id}' }
   - id: duplicate_email_mailing
     type: server_form
     permission: email_marketing.write
