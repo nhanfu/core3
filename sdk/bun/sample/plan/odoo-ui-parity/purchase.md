@@ -1384,6 +1384,21 @@ Core3 desktop/mobile capture was obtained and no visual-parity claim is made.
 Evidence is under
 `evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.
 
+## 2026-09-23 bounded slice: Purchase Order Followers
+
+Implemented `PURCHASE-ORDER-FOLLOWERS-001` from Odoo's
+`mail_followers_edit_action_from_purchase` Add/Remove Followers action in
+`purchase/views/purchase_views.xml`. Core3 adds durable purchase-order
+follower subscriptions and candidate contacts, page/API-bound follower
+controls, permission and actor checks, duplicate/missing/stale guards, audit
+chatter entries, migration replay, and file-backed restart coverage.
+
+Focused validation passed 2 tests / 11 assertions in
+`test/purchase_order_followers.integration.test.ts`. Authenticated Odoo
+visual comparison remains open and no visual-parity claim is made.
+Evidence is under
+`evidence/purchase/2026-09-23/PURCHASE-ORDER-FOLLOWERS-001/`.
+
 ## 2026-09-22 bounded addendum — Purchase Order Upload Bill
 
 The next missing source-defined Purchase action after the Products-tab line

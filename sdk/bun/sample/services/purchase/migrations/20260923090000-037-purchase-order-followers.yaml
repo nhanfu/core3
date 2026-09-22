@@ -1,0 +1,40 @@
+version: 0.0.37
+kind: schema
+description: Persist Purchase order follower subscriptions and candidate contacts
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_follower_catalog (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS purchase_order_followers (
+        purchase_order_id VARCHAR NOT NULL,
+        user_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL,
+        added_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(purchase_order_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_followers_order_idx
+        ON purchase_order_followers(purchase_order_id, created_at, user_id);
+      INSERT INTO purchase_follower_catalog(id, name, email, active) VALUES
+        ('purchase-user-admin', 'Mitchell Admin', 'mitchell@core3.local', true),
+        ('purchase-user-qa', 'Purchase QA', 'purchase-qa@core3.local', true),
+        ('purchase-user-buyer', 'Grace Chen', 'grace.chen@core3.local', true)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO purchase_order_followers(purchase_order_id, user_id, name, email, added_by)
+      VALUES ('po-demo-005', 'purchase-user-admin', 'Mitchell Admin', 'mitchell@core3.local', 'purchase-user-admin')
+      ON CONFLICT (purchase_order_id, user_id) DO NOTHING;
+    down: |
+      DELETE FROM purchase_order_followers WHERE purchase_order_id = 'po-demo-005' AND user_id = 'purchase-user-admin';
+      DROP INDEX IF EXISTS purchase_order_followers_order_idx;
+      DROP TABLE IF EXISTS purchase_order_followers;
+      DROP TABLE IF EXISTS purchase_follower_catalog;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

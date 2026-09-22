@@ -1,5 +1,13 @@
 page: { id: purchase-detail }
 datasources:
+  - id: purchase_order_followers
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_FOLLOWERS_UNAVAILABLE, message: Purchase order followers are temporarily unavailable. } }
+    query: "SELECT f.user_id, f.name, f.email, CAST(f.created_at AS VARCHAR) AS followed_at FROM purchase_order_followers f JOIN purchase_orders p ON p.id = f.purchase_order_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND f.purchase_order_id = :id ORDER BY f.created_at, f.user_id"
+  - id: purchase_order_follower_candidates
+    permission: purchase.write
+    error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_FOLLOWER_CANDIDATES_UNAVAILABLE, message: Purchase order follower candidates are temporarily unavailable. } }
+    query: "SELECT c.id AS value, c.name || ' · ' || c.email AS label FROM purchase_follower_catalog c JOIN purchase_orders p ON p.id = :id WHERE c.active = true AND NOT EXISTS (SELECT 1 FROM purchase_order_followers f WHERE f.purchase_order_id = :id AND f.user_id = c.id) ORDER BY c.name, c.id"
   - id: purchase_order_detail
     single: true
     permission: purchase.read
@@ -631,3 +639,52 @@ actions:
         - { query: "INSERT INTO purchase_order_messages(id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Purchase User'), 'purchase.orders.chatter.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-09-22 10:00:00')", expect_changed: true, status: 409, code: PURCHASE_ORDER_NOTE_FAILED, message: The Purchase order note could not be recorded. }
         - { query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_NOTE_PARENT_CHANGED, message: This purchase order changed while logging the note. Reload before retrying. }
       result: { query: "SELECT id, purchase_order_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_order_messages WHERE id = :message_id" }
+  - id: add_purchase_order_follower
+    type: server
+    permission: purchase.write
+    action: purchase.orders.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_followers, purchase_order_follower_candidates, purchase_order_email_history]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: PURCHASE_ORDER_FOLLOWER_ACTOR_REQUIRED, message: An authenticated Purchase actor is required. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_FOLLOWER_ORDER_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_FOLLOWER_STALE, message: The purchase order changed before the follower was added. }
+        - { query: "SELECT id FROM purchase_follower_catalog WHERE id = :user_id AND active = true", status: 404, code: PURCHASE_ORDER_FOLLOWER_USER_NOT_FOUND, message: Select an enabled follower. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_order_followers WHERE purchase_order_id = :id AND user_id = :user_id)", status: 409, code: PURCHASE_ORDER_FOLLOWER_EXISTS, message: This user already follows the purchase order. }
+      steps:
+        - query: "INSERT INTO purchase_order_followers(purchase_order_id, user_id, name, email, added_by) SELECT :id, c.id, c.name, c.email, :current_user_id FROM purchase_follower_catalog c WHERE c.id = :user_id AND c.active = true"
+        - query: "INSERT INTO purchase_order_messages(id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail) SELECT :message_id, :id, 1, :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Purchase User'), 'purchase.orders.followers.add', 'Added follower', c.name || ' now follows ' || p.name FROM purchase_follower_catalog c JOIN purchase_orders p ON p.id = :id WHERE c.id = :user_id"
+        - query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: PURCHASE_ORDER_FOLLOWER_STALE
+          message: The purchase order changed before the follower was added.
+      result: { query: "SELECT :user_id AS user_id, c.name, c.email, false AS removed FROM purchase_follower_catalog c WHERE c.id = :user_id" }
+  - id: remove_purchase_order_follower
+    type: server
+    permission: purchase.write
+    action: purchase.orders.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_followers, purchase_order_follower_candidates, purchase_order_email_history]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: PURCHASE_ORDER_FOLLOWER_ACTOR_REQUIRED, message: An authenticated Purchase actor is required. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_FOLLOWER_ORDER_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_FOLLOWER_STALE, message: The purchase order changed before the follower was removed. }
+        - { query: "SELECT user_id FROM purchase_order_followers WHERE purchase_order_id = :id AND user_id = :user_id", status: 404, code: PURCHASE_ORDER_FOLLOWER_NOT_FOUND, message: Follower not found for this purchase order. }
+      steps:
+        - query: "INSERT INTO purchase_order_messages(id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail) SELECT :message_id, :id, 1, :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Purchase User'), 'purchase.orders.followers.remove', 'Removed follower', f.name || ' no longer follows ' || p.name FROM purchase_order_followers f JOIN purchase_orders p ON p.id = :id WHERE f.purchase_order_id = :id AND f.user_id = :user_id"
+        - query: "DELETE FROM purchase_order_followers WHERE purchase_order_id = :id AND user_id = :user_id"
+        - query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: PURCHASE_ORDER_FOLLOWER_STALE
+          message: The purchase order changed before the follower was removed.
+      result: { query: "SELECT :user_id AS user_id, c.name, c.email, true AS removed FROM purchase_follower_catalog c WHERE c.id = :user_id" }

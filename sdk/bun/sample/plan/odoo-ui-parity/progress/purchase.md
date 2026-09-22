@@ -116,3 +116,11 @@ remained user-scoped and the owned session was stopped. No desktop/mobile
 capture or visual-parity claim is made.
 Evidence is under
 `evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.
+
+## 2026-09-23 bounded slice: Purchase Order Followers
+
+`PURCHASE-ORDER-FOLLOWERS-001` adds the Odoo purchase-order follower
+subscription workflow. Focused validation passed 2 tests / 11 assertions,
+including page/API ownership, idempotent add/remove behavior, row-version
+guards, migration replay, and restart persistence. Visual Odoo comparison is
+still open because no authenticated BrowserSkill capture was made.

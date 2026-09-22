@@ -66,6 +66,16 @@ components:
     message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+    follower_source: purchase_order_followers
+    follower_candidates_source: purchase_order_follower_candidates
+    follower_candidates_page_size: 100
+    follower_label: Followers
+    add_follower_label: Add Followers
+    remove_follower_label: Remove follower
+    no_followers_label: No followers
+    follower_search_placeholder: Select a follower
+    follower_add_action: add_purchase_order_follower
+    follower_remove_action: remove_purchase_order_follower
   - type: LineItemGrid
     mount_in: previous-panel
     source: purchase_order_lines
