@@ -1,0 +1,29 @@
+version: 0.0.21
+description: Durable Project Share Project collaborator access
+type:
+  postgres:
+    up: |
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS privacy_visibility VARCHAR DEFAULT 'portal';
+      UPDATE projects SET privacy_visibility = COALESCE(NULLIF(privacy_visibility, ''), 'portal');
+      CREATE TABLE IF NOT EXISTS project_shares (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        access_mode VARCHAR NOT NULL DEFAULT 'read',
+        send_invitation BOOLEAN NOT NULL DEFAULT TRUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 12:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 12:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS project_shares_project_idx ON project_shares(project_id, active);
+      INSERT OR IGNORE INTO project_shares(id, project_id, recipient_email, access_mode, send_invitation, active, row_version, created_at, updated_at)
+      VALUES ('project-share-demo-001', 'project-demo-001', 'customer@example.com', 'read', FALSE, TRUE, 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00');
+    down: |
+      DELETE FROM project_shares WHERE id = 'project-share-demo-001';
+      DROP TABLE IF EXISTS project_shares;
+      ALTER TABLE projects DROP COLUMN IF EXISTS privacy_visibility;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -10,6 +10,36 @@ actions:
     permission: project.read
     navigate_to: /projects/detail/preview
     params: { id: '{row.id}' }
+  - id: share_project
+    type: server_form
+    permission: project.manage
+    title: Share Project
+    description: Choose an access mode and a collaborator to share this project.
+    submit_label: Share Project
+    cancel_label: Discard
+    success_message: Project shared with your collaborator.
+    action: project.projects.share
+    handler: yaml_mutation
+    operation: share
+    params: { project_id: '{state.id}', expected_project_row_version: '{state.row_version}' }
+    fields:
+      - { field: recipient_email, label: Collaborator email, type: text, required: true, placeholder: name@example.com }
+      - { field: access_mode, label: Access mode, type: select, options: [{ value: read, label: Read }, { value: edit_limited, label: Edit with limited access }, { value: edit, label: Edit }], default: read, required: true }
+      - { field: send_invitation, label: Send invitation, type: checkbox, default: true }
+    mutation:
+      generated: [id]
+      boolean_fields: [send_invitation]
+      required: [recipient_email, access_mode]
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :project_id AND COALESCE(archived, FALSE) = FALSE AND COALESCE(is_template, FALSE) = FALSE AND COALESCE(privacy_visibility, 'portal') IN ('portal', 'invited_users')", status: 404, code: PROJECT_SHARE_PROJECT_NOT_FOUND, message: The project is not available for sharing. }
+        - { query: "SELECT id FROM projects WHERE id = :project_id AND row_version = :expected_project_row_version", status: 409, code: PROJECT_SHARE_STALE_PROJECT, message: The project changed before it was shared. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE POSITION('@' IN TRIM(COALESCE(:recipient_email, ''))) > 1 AND POSITION('.' IN SPLIT_PART(TRIM(COALESCE(:recipient_email, '')), '@', 2)) > 1", status: 422, code: PROJECT_SHARE_RECIPIENT_INVALID, message: Enter a valid collaborator email address. }
+        - { query: "SELECT 1 AS ok WHERE :access_mode IN ('read', 'edit_limited', 'edit')", status: 422, code: PROJECT_SHARE_ACCESS_MODE_INVALID, message: Select a valid project access mode. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_shares WHERE project_id = :project_id AND LOWER(TRIM(recipient_email)) = LOWER(TRIM(:recipient_email)) AND active = TRUE)", status: 409, code: PROJECT_SHARE_ALREADY_EXISTS, message: This collaborator already has access to the project. }
+      steps:
+        - { query: "INSERT INTO project_shares(id, project_id, recipient_email, access_mode, send_invitation, active, row_version, created_at, updated_at) VALUES (:id, :project_id, LOWER(TRIM(:recipient_email)), :access_mode, COALESCE(:send_invitation, TRUE), TRUE, 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00')" }
+        - { query: "UPDATE projects SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :project_id AND row_version = :expected_project_row_version", expect_changed: true, status: 409, code: PROJECT_SHARE_STALE_PROJECT, message: The project changed before it was shared. Reload and try again. }
+      result: { query: "SELECT id, project_id, LOWER(TRIM(recipient_email)) AS recipient_email, access_mode, send_invitation, active, '/my/projects/detail?id=' || project_id AS share_link, row_version, created_at FROM project_shares WHERE id = :id" }
   - id: open_project_timesheets
     type: navigate
     permission: timesheets.read
@@ -19,7 +49,7 @@ datasources:
   - id: project_detail
     single: true
     permission: project.read
-    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, CAST(COALESCE((SELECT COUNT(*) FROM project_updates WHERE project_id = p.id), 0) AS VARCHAR) || ' Status' AS update_summary FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(privacy_visibility, 'portal') AS privacy_visibility, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, CAST(COALESCE((SELECT COUNT(*) FROM project_updates WHERE project_id = p.id), 0) AS VARCHAR) || ' Status' AS update_summary FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: project_tasks_detail
     single: false
     permission: project.read

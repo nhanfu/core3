@@ -304,3 +304,30 @@ Contract, migration, CRUD, permission-boundary declarations, stale guards, and
 regression checks pass. The feature is conditionally accepted only; live
 authenticated desktop/mobile comparison, request-error checks, and browser
 CRUD evidence remain blocked by the borrowed-tab ownership boundary.
+
+## QA execution — PROJECT-SHARE-PROJECT-001 — 2026-09-22
+
+- Feature: Project form Share Project action; evidence:
+  ../evidence/project/2026-09-22/project-share-project-001/.
+- Source comparison: Odoo action_open_share_project_wizard, Share Project
+  header button, collaborator access modes, and Grant Portal Access path
+  verified in the local Project source.
+- Focused checks:
+  bun test ./test/project_share_project.integration.test.ts --timeout 30000
+  — 3 passed, 0 failed, 17 assertions.
+- Regression note: the broad bun test ./test/project*.integration.test.ts run
+  exercised Project contracts but discovery-backed tests are blocked by the
+  pre-existing unrelated duplicate datasource inventory_reordering_rule_products
+  in services/inventory/pages/reordering-rules.yaml; mutation/query cases
+  continued to pass.
+- Browser/reference blocker: BrowserSkill instance 245ea108 reported the
+  authenticated Odoo tab 1770662590 already borrowed by session olvm;
+  borrowing another user tab waited 30 seconds without confirmation. Session
+  psih was stopped cleanly. No screenshots or visual-parity claim are made.
+
+### QA decision
+
+The bounded contract, durable persistence, and guard assertions pass. The
+slice remains conditionally accepted pending authenticated Odoo/Core3 desktop
+and mobile captures and real browser CRUD/request checks. Full portal sharing,
+email delivery, and collaborator revocation are not claimed.

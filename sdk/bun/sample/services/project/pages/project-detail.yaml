@@ -12,6 +12,7 @@ components:
       - { id: open_project_dashboard, label: Dashboard, value_field: update_summary, permission: project.read }
     header_actions:
       - { id: preview_project_portal, label: Preview, variant: secondary, permission: project.read }
+      - { id: share_project, label: Share Project, variant: primary, permission: project.manage }
     action_menu:
       label: Actions
       aria_label: Project actions

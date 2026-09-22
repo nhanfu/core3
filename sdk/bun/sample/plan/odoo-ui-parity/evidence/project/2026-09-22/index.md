@@ -7,3 +7,6 @@
   Configuration > Projects action; contract/CRUD/persistence pass, live
   desktop/mobile comparison blocked because the authenticated tab was already
   borrowed by another BrowserSkill session.
+- [project-share-project-001](project-share-project-001/README.md) —
+  Project form Share Project action; durable guarded share mutation passes,
+  authenticated live comparison blocked by the shared-tab ownership boundary.

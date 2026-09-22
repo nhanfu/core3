@@ -31,11 +31,25 @@ hits the unrelated Employees YAML validation error and Project-only task detail
 requires the existing unregistered Timesheets service. No Core3 visual parity
 claim is made.
 
+## Current bounded task — Project form Share Project (2026-09-22)
+
+Implemented stable ID PROJECT-SHARE-PROJECT-001: the Project detail page/API
+now exposes a manager-only Share Project server form backed by durable
+project_shares rows and migration 20260922140000-021-project-share-project.yaml.
+Focused coverage passes 3 tests with 17 assertions, including normalized
+recipient persistence, fixed-date replay data, project row-version increment,
+and missing/restricted/stale/duplicate/invalid guards.
+
+Authenticated Odoo/Core3 desktop/mobile evidence is blocked by the shared
+BrowserSkill tab ownership/confirmation boundary. No visual-parity claim is
+made; email delivery, portal-user provisioning, collaborator removal, and full
+portal-sharing behavior remain outside this bounded slice.
+
 ## Next bounded task
 
-Run authenticated CRUD/workflow checks and paired Odoo desktop/mobile captures;
-use the dependency-aware process for Project task screens. Update this file
-only with evidence from the matching module owner.
+Run authenticated CRUD/workflow checks and paired Odoo desktop/mobile captures
+for the Share Project action, then select the next non-configuration Project
+action. Update this file only with evidence from the matching module owner.
 
 ## QA checkpoint — c49d8cb6 (2026-09-13)
 

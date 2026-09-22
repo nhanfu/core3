@@ -1104,3 +1104,41 @@ borrow waited 30 seconds without confirmation and timed out. No Odoo or Core3
 desktop/mobile captures were produced, and this slice makes no authenticated
 visual-parity claim. No shared session was stopped or otherwise disturbed; the
 fresh session `ksja` was stopped cleanly.
+
+## Bounded slice: Project form Share Project action (2026-09-22)
+
+Stable ID: `PROJECT-SHARE-PROJECT-001`.
+
+The next missing non-menu Project action is Odoo's Project form
+`action_open_share_project_wizard`, declared by the `Share Project` header
+button in `addons/project/views/project_project_views.xml` and implemented by
+`addons/project/models/project_project.py`. The wizard view in
+`addons/project/wizard/project_share_wizard_views.xml` provides a public link,
+collaborators, `Read` / `Edit with limited access` / `Edit` access modes,
+invitation state, and the `Grant Portal Access` confirmation path. Core3 had
+portal preview and portal project reads, but no durable share mutation.
+
+Core3 adds the manager-only `Share Project` server-form action to the existing
+`project-detail` page/API pair. It persists normalized collaborator email,
+access mode, invitation intent, active state, row version, and deterministic
+fixed-date metadata in `project_shares`; it also adds the idempotent
+`20260922140000-021-project-share-project.yaml` migration and a default
+`portal` project privacy value. Guards cover missing/archived/template or
+restricted projects, stale project versions, malformed recipients, invalid
+access modes, and duplicate active recipients. The bounded action records
+share access and the deterministic `/my/projects/detail?id=...` link; email
+delivery, portal-user provisioning, collaborator removal, and the full Odoo
+sharing controller remain separate follow-up slices.
+
+Focused coverage is `test/project_share_project.integration.test.ts`: 3 tests
+and 17 assertions pass for source/action identity, page/API separation,
+durable normalized persistence, row-version increment, and duplicate,
+invalid, missing, restricted, and stale guards.
+
+BrowserSkill inspection used connected instance `245ea108`. The authenticated
+Odoo tab `1770662590` was already borrowed by session `olvm`; a second user
+tab borrow waited 30 seconds without extension confirmation. This session
+stopped its own `psih` session cleanly and did not stop or return another
+worker's tab. No credentials, independent login, Odoo/Core3 captures, or
+visual-parity claim are recorded. Evidence is under
+`evidence/project/2026-09-22/project-share-project-001/`.
