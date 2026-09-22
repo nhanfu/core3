@@ -698,3 +698,23 @@ captures are present. Core3 runtime startup succeeded, but its task-created
 tab showed the login page and the existing authenticated user tab could not be
 borrowed after confirmation remained pending; no authenticated Core3 visual
 parity claim is made.
+
+## Bounded batch: Maintenance Request Chatter internal note (2026-09-22)
+
+Feature ID: `MAINT-REQUEST-CHATTER-NOTE-001`.
+
+The Odoo `maintenance.request` model inherits `mail.thread.cc` and
+`mail.activity.mixin`, and its form contains `<chatter/>`. The live request
+detail exposes `Log note` with an internal-note composer. Core3 previously
+rendered only the request activity stream. This bounded slice adds a durable
+`maintenance_request_messages` table, deterministic creation timeline rows,
+the page-id-owned `log_maintenance_request_note` action, and the shared
+`OdooChatter` note composer. Actor, content, missing-request, archived/stale,
+transaction, migration-replay, and file-backed restart guards are covered.
+
+Send message, followers, attachments, and whole-module sign-off remain outside
+this batch. Evidence and source comparison are recorded under
+`odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-REQUEST-CHATTER-NOTE-001/`.
+The live Odoo desktop/mobile captures are truthful, but the required
+user-owned-tab borrow confirmation timed out; no paired Core3/Odoo visual
+parity claim is made.

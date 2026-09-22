@@ -47,6 +47,7 @@ unauthenticated user, and wrong-company scope. Stable fixtures include
 | MAINT-FUNC-011 | data | Migrations/demo | Clean and existing development DB | Rerun schema/demo migrations; fixed IDs and dates produce no duplicates | focused suite | pass |
 | MAINT-FUNC-012 | data | Empty/not-found/error | All list/detail routes | Explicit empty, missing, transport-error and invalid-input states contain no fabricated data | focused suites; matrix | pass |
 | MAINT-FUNC-013 | functional/data | Maintenance Requests Analysis Graph/Pivot | Admin, persisted maintenance fixtures | Active default and Cancelled filter scope real rows; Graph exposes Duration, Repeat Every, Count and Responsible/Stage dimensions; Pivot exposes source-aligned fields; empty and restart results remain deterministic | `evidence/maintenance/2026-09-22/MAINT-ANALYSIS-REPORT-001/`; `maintenance_analysis_reporting.integration.test.ts` | pass |
+| MAINT-REQUEST-CHATTER-NOTE-001 | integration/workflow | Maintenance Request detail Log note | Maintenance User, active `maintenance-demo-001` | Odoo Chatter-style internal note creates a stable message, increments the parent row version, appears in the timeline after reload/restart, and rejects missing actor, blank content, missing, archived, or stale requests without partial writes | `evidence/maintenance/2026-09-22/MAINT-REQUEST-CHATTER-NOTE-001/`; `maintenance_request_chatter_note.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 

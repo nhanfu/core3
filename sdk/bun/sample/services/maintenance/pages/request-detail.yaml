@@ -19,6 +19,14 @@ components:
     groups: [{ title: Request, fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: kanban_state, label: Kanban state }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: request_type, label: Type }, { field: priority, label: Priority }] }, { title: Scheduling, fields: [{ field: assigned_to, label: Responsible }, { field: owner, label: Created by }, { field: request_date, label: Request date }, { field: scheduled_date, label: Scheduled date }, { field: completed_date, label: Completed date }, { field: recurrence, label: Recurrence }, { field: recurrence_sequence, label: Occurrence number }, { field: instructions, label: Instructions }, { field: description, label: Description }] }]
     message_source: maintenance_request_activity
     activity_complete_action: complete_maintenance_request_activity
-    chatter_label: Activities
-    chatter_empty: No request activities yet.
+    note_action: log_maintenance_request_note
+    note_label: Log note
+    note_placeholder: Log an internal note…
+    log_label: Log note
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_actor_field: actor_name
+    chatter_label: Chatter
+    chatter_empty: No messages or activities yet.
 actions: []

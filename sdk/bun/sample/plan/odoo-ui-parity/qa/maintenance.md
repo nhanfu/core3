@@ -325,3 +325,25 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   feature evidence folder. Core3 authentication was blocked by the task tab
   showing the login page and pending borrow confirmation for the existing
   authenticated tab; no Core3 visual parity claim is made.
+
+## 2026-09-22 bounded developer verification: `MAINT-REQUEST-CHATTER-NOTE-001`
+
+- Added the missing Odoo Maintenance Request internal-note slice. The existing
+  shared `OdooChatter` primitive now receives a page-id-owned message source and
+  `Log note` action; Send message, followers, and attachments remain deferred.
+- Focused test: `maintenance_request_chatter_note.integration.test.ts` covers
+  page/API separation, source inheritance and `<chatter/>`, stable IDs,
+  actor/content/missing/archived/stale guards, timeline visibility, migration
+  replay, and file-backed restart.
+- Focused result: **4 tests, 22 assertions, 0 failures**; request regression
+  corpus: **15 tests, 100 assertions, 0 failures**. Audit passed at **842
+  pages / 850 routes / 1755 datasources**, targeted ESLint and frontend/CSS
+  build passed. The full Maintenance glob remains **46 pass / 4 fail** because
+  an unrelated concurrent dirty Employees page has
+  `components[0].views[4].title`, which the current schema rejects during
+  global discovery.
+- Authenticated Odoo request-detail and Log note composer captures are in
+  `evidence/maintenance/2026-09-22/MAINT-REQUEST-CHATTER-NOTE-001/` at
+  1440x900 and 390x844. The required signed-in user-tab borrow confirmation
+  timed out; the task-created BrowserSkill tab still rendered the live action,
+  but no paired Core3/Odoo visual-parity claim is made.
