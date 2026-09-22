@@ -70,26 +70,33 @@ datasources:
       SELECT 'split-wizard-' || e.id AS id, e.id AS expense_id, e.row_version,
         e.amount AS original_amount,
         COALESCE(SUM(l.total_amount), 0) AS split_total,
+        COALESCE(SUM(l.tax_amount), 0) AS tax_amount,
         COUNT(l.id) AS line_count,
         ABS(e.amount - COALESCE(SUM(l.total_amount), 0)) < 0.01 AND COUNT(l.id) >= 2 AS split_possible,
+        COALESCE(ABS(c.unit_cost) > 0, false) AS product_has_cost,
         CASE WHEN ABS(e.amount - COALESCE(SUM(l.total_amount), 0)) < 0.01 AND COUNT(l.id) >= 2 THEN NULL
           ELSE 'The total amount does not match the original amount.' END AS warning
-      FROM expenses e LEFT JOIN expense_split_lines l ON l.expense_id = e.id
+      FROM expenses e
+      LEFT JOIN expense_split_lines l ON l.expense_id = e.id
+      LEFT JOIN expense_categories c ON lower(c.name) = lower(e.category)
       WHERE e.id = :id AND e.state = 'Draft'
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
-      GROUP BY e.id, e.row_version, e.amount
+      GROUP BY e.id, e.row_version, e.amount, c.unit_cost
   - id: expense_split_lines
     single: false
     permission: expenses.read
     error_states: { transport_error: { status: 503, code: EXPENSE_SPLIT_LINES_UNAVAILABLE, message: Expense split lines are temporarily unavailable } }
     query: |
-      SELECT id, expense_id, row_version, sequence, name, product_name, employee_name,
+      SELECT l.id, l.expense_id, l.row_version, l.sequence, l.name, l.product_name, l.employee_name,
         total_amount, printf('$%,.2f', total_amount) AS total_amount_display,
-        tax_amount, analytic_distribution
-      FROM expense_split_lines
-      WHERE expense_id = :id
+        tax_amount, printf('$%,.2f', tax_amount) AS tax_amount_display,
+        analytic_distribution,
+        COALESCE(ABS(c.unit_cost) > 0, false) AS product_has_cost
+      FROM expense_split_lines l
+      LEFT JOIN expense_categories c ON lower(c.name) = lower(l.product_name)
+      WHERE l.expense_id = :id
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
-      ORDER BY sequence, id
+      ORDER BY l.sequence, l.id
   - id: expense_post_wizard
     single: true
     permission: expenses.manage
@@ -266,18 +273,21 @@ actions:
     refresh: [expense_detail, expense_detail_activity, expense_split_wizard, expense_split_lines]
     mutation:
       guards:
+        - { query: "SELECT e.id FROM expenses e LEFT JOIN expense_categories c ON lower(c.name) = lower(e.category) WHERE e.id = :id AND COALESCE(c.unit_cost, 0) = 0", status: 409, code: EXPENSE_SPLIT_COST_PRODUCT, message: Expenses with a product cost cannot be split. }
         - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: EXPENSE_SPLIT_STALE, message: Only the current draft expense can be split. }
         - { query: "SELECT 1 AS ok FROM expenses e WHERE e.id = :id AND (SELECT COUNT(*) FROM expense_split_lines WHERE expense_id = :id) >= 2 AND ABS(e.amount - (SELECT COALESCE(SUM(total_amount), 0) FROM expense_split_lines WHERE expense_id = :id)) < 0.01", status: 409, code: EXPENSE_SPLIT_TOTAL_MISMATCH, message: The total amount does not match the original amount. }
       steps:
-        - query: "UPDATE expenses SET amount = (SELECT total_amount FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), name = (SELECT name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), product_name = (SELECT product_name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), split_expense_origin_id = COALESCE(split_expense_origin_id, id), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE expenses SET amount = (SELECT total_amount FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), tax_amount = (SELECT tax_amount FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), name = (SELECT name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), product_name = (SELECT product_name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), split_expense_origin_id = COALESCE(split_expense_origin_id, id), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
           expect_changed: true
           code: EXPENSE_SPLIT_STALE
         - query: "INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name, tax_amount, analytic_distribution, journal_entry, duplicate_candidate, reimbursement_status, product_name, quantity, unit_name, manager_name, vendor_name, receipt_checksum, refusal_reason, split_expense_origin_id) SELECT 'expense-split-' || l.id, 1, e.sheet_id, l.name, e.category, e.expense_date, l.employee_name, l.total_amount, e.payment_method, e.description, e.receipt_reference, e.state, e.receipt_label, e.company_name, e.department_name, l.tax_amount, l.analytic_distribution, NULL, NULL, e.reimbursement_status, l.product_name, e.quantity, e.unit_name, e.manager_name, e.vendor_name, e.receipt_checksum, NULL, :id FROM expense_split_lines l JOIN expenses e ON e.id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
+        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, created_at) SELECT 'attachment-expense-split-' || l.id || '-' || a.id, 'expense-split-' || l.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.uploaded_by, a.created_at FROM expense_split_lines l JOIN expense_attachments a ON a.expense_id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-split-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.split', 'Split Expense', 'Expense split into editable lines')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     fields:
       - { field: original_amount, label: Original Amount, type: number, readonly: true }
       - { field: split_total, label: Total Amount, type: number, readonly: true }
+      - { field: tax_amount, label: Taxes, type: number, readonly: true }
       - { field: line_count, label: Split lines, type: number, readonly: true }
       - { field: warning, label: Validation, type: textarea, readonly: true, show_if: "state.expense_split_wizard.warning" }
   - id: add_expense_split_line
@@ -291,11 +301,11 @@ actions:
     params: { id: '{state.id}' }
     refresh: [expense_detail, expense_split_wizard, expense_split_lines]
     fields:
-      - { field: name, label: Expense, type: text, required: true }
+      - { field: name, label: Description, type: text, required: true }
       - { field: product_name, label: Product, type: text }
       - { field: employee_name, label: Employee, type: text, required: true }
-      - { field: total_amount, label: Total Amount, type: number, required: true, min: 0.01 }
-      - { field: tax_amount, label: Taxes, type: number, default: 0, min: 0 }
+      - { field: tax_amount, label: Tax amount in Currency, type: number, default: 0, min: 0 }
+      - { field: total_amount, label: Total In Currency, type: number, required: true, min: 0.01 }
       - { field: analytic_distribution, label: Analytic distribution, type: text }
     mutation:
       generated: [line_id]
@@ -317,11 +327,11 @@ actions:
     prefill: row
     refresh: [expense_detail, expense_split_wizard, expense_split_lines]
     fields:
-      - { field: name, label: Expense, type: text, required: true }
+      - { field: name, label: Description, type: text, required: true }
       - { field: product_name, label: Product, type: text }
       - { field: employee_name, label: Employee, type: text, required: true }
-      - { field: total_amount, label: Total Amount, type: number, required: true, min: 0.01 }
-      - { field: tax_amount, label: Taxes, type: number, min: 0 }
+      - { field: tax_amount, label: Tax amount in Currency, type: number, min: 0 }
+      - { field: total_amount, label: Total In Currency, type: number, required: true, min: 0.01 }
       - { field: analytic_distribution, label: Analytic distribution, type: text }
     mutation:
       concurrency: { required: true }

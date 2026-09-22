@@ -213,3 +213,20 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
   desktop/mobile capture was read, and no visual-parity claim is made.
 
 | EXPENSE-FUNC-015 | Expense accounting document action | Posted/in-payment detail exposes the correct typed Journal Entry or Payment destination with company and permission guards | pass: focused suite; visual browser gate blocked |
+| EXPENSE-FUNC-016 | Split Expense wizard parity | Odoo tax fields/labels, exact totals, product-cost guard, tax propagation, child relations, and receipt attachment copy | pass: 6 tests / 21 assertions; visual browser gate blocked |
+
+## Batch 12 - Split Expense wizard parity repair (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-016`, the non-analytics/non-accounting Odoo
+  Split Expense action and its existing detail line editor.
+- Source-backed change: `expense-detail` remains presentation-only while the
+  service API adds Odoo tax totals/line metadata, product-cost enforcement,
+  first-line tax persistence, and stable receipt attachment copies for child
+  expenses.
+- Focused evidence: `expenses_split.integration.test.ts` — 6 tests / 21
+  assertions passed. The full Expenses corpus passed 60 tests / 325
+  assertions across 17 files. Audit, Expenses CSS, frontend build, targeted
+  ESLint, and `git diff --check` passed.
+- BrowserSkill instance `245ea108` was connected, but required tab
+  `1770662590` was borrowed by session `cqvt`; this worker stopped session
+  `czha` and made no current Odoo desktop/mobile visual claim.

@@ -21,7 +21,9 @@ describe('Expenses split wizard parity slice', () => {
       source: 'expense_split_lines', parent_source: 'expense_detail', variant: 'odoo_x2many',
     });
     expect(action('split_expense')).toMatchObject({ type: 'server_form', permission: 'expenses.write', prefill_source: 'expense_split_wizard' });
-    expect(action('split_expense').fields.map((field: any) => field.field)).toEqual(['original_amount', 'split_total', 'line_count', 'warning']);
+    expect(action('split_expense').fields.map((field: any) => field.field)).toEqual(['original_amount', 'split_total', 'tax_amount', 'line_count', 'warning']);
+    expect(page.components[0].header_actions.find((candidate: any) => candidate.id === 'split_expense').show_if)
+      .toContain("!state.expense_split_wizard.product_has_cost");
   });
 
   test('seeds stable Odoo-shaped lines and exposes mismatch or unavailable states', async () => {
@@ -31,9 +33,11 @@ describe('Expenses split wizard parity slice', () => {
     const wizard = api.datasources.find((source: any) => source.id === 'expense_split_wizard');
     const lines = api.datasources.find((source: any) => source.id === 'expense_split_lines');
     expect((await repository.querySource(wizard, { id: 'expense-demo-draft', fixture_state: null }, 0, 1)).data).toMatchObject({
-      original_amount: 24.5, split_total: 24.5, line_count: 2, split_possible: true,
+      original_amount: 24.5, split_total: 24.5, tax_amount: 0, line_count: 2, split_possible: true, product_has_cost: false,
     });
-    expect((await repository.querySource(lines, { id: 'expense-demo-draft', fixture_state: null }, 0, 20)).data).toHaveLength(2);
+    expect((await repository.querySource(lines, { id: 'expense-demo-draft', fixture_state: null }, 0, 20)).data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ product_name: 'Meals', tax_amount: 0, tax_amount_display: '$0.00', product_has_cost: false }),
+    ]));
     expect((await repository.querySource(wizard, { id: 'expense-demo-draft', fixture_state: 'empty' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(lines, { id: 'expense-demo-draft', fixture_state: 'transport_error' }, 0, 20))
       .rejects.toMatchObject({ status: 503, code: 'EXPENSE_SPLIT_LINES_UNAVAILABLE' });
@@ -75,5 +79,29 @@ describe('Expenses split wizard parity slice', () => {
       ]));
     expect(await repository.query("SELECT action, action_label FROM expense_activity WHERE expense_id = 'expense-demo-draft' AND action = 'expenses.split'"))
       .toEqual([expect.objectContaining({ action: 'expenses.split', action_label: 'Split Expense' })]);
+  });
+
+  test('propagates split tax and receipt attachments to copied expenses', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'expenses_split_attachment_copy', ['schema', 'data']);
+    await repository.run("UPDATE expense_split_lines SET tax_amount = 1.25 WHERE id = 'expense-split-line-draft-1'");
+    await repository.run("INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES ('expense-attachment-split-source', 'expense-demo-draft', 'receipt.pdf', 'application/pdf', 128, 'expenses/receipt.pdf', 'user-admin')");
+    const result = await repository.executeMutation(action('split_expense').mutation, {
+      id: 'expense-demo-draft', expected_row_version: 1, current_user_name: 'Admin User',
+    });
+    expect(result).toMatchObject({ amount: 12.25, tax_amount: 1.25 });
+    expect(await repository.query("SELECT expense_id, file_name FROM expense_attachments WHERE expense_id = 'expense-split-expense-split-line-draft-2'"))
+      .toEqual([expect.objectContaining({ expense_id: 'expense-split-expense-split-line-draft-2', file_name: 'receipt.pdf' })]);
+  });
+
+  test('rejects splitting a non-zero-cost expense category', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'expenses_split_cost_guard', ['schema', 'data']);
+    await repository.run("UPDATE expense_categories SET unit_cost = 1.00 WHERE id = 'expense-category-meals'");
+    await expect(repository.executeMutation(action('split_expense').mutation, {
+      id: 'expense-demo-draft', expected_row_version: 1, current_user_name: 'Admin User',
+    })).rejects.toMatchObject({ status: 409, code: 'EXPENSE_SPLIT_COST_PRODUCT' });
   });
 });

@@ -5,3 +5,4 @@
 - [EXPENSE-FUNC-013](EXPENSE-FUNC-013/README.md) — My Expenses Activity view
 - [EXPENSE-FUNC-014](EXPENSE-FUNC-014/README.md) — Employee Expenses action analytics
 - [EXPENSE-FUNC-015](EXPENSE-FUNC-015/README.md) — accounting document smart-button action
+- [EXPENSE-FUNC-016](EXPENSE-FUNC-016/README.md) — Split Expense wizard field, guard, tax, and attachment parity
