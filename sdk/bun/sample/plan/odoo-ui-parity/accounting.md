@@ -1821,3 +1821,59 @@ The next boundary is the broader Odoo payment-state lifecycle: registering
 payments must synchronize blocked/unblocked status with payment transactions
 and settlement, rather than this bounded toggle alone. Accounting remains
 unsigned-off.
+
+## Next batch contract: invoice Lock (2026-09-22)
+
+The next smallest uncovered stable-ID form capability is `ACC-INVOICE-LOCK-001`.
+Odoo 19 exposes `button_hash` as the `Lock` object action in
+`addons/account/views/account_move_views.xml`; it is visible only for posted
+moves when the journal `restrict_mode_hash_table` is enabled and the move has
+no `inalterable_hash`. `account.move.button_hash()` delegates to
+`_hash_moves(force_hash=True)`, and the model refuses to reset a move with an
+`inalterable_hash` to Draft. The authenticated `core3_reference` invoice
+`INV/2026/00008` did not show Lock because its journal hash restriction is not
+enabled; this is a reference configuration state, not evidence that the source
+capability is absent.
+
+The bounded Core3 contract will keep the page/API split on
+`/accounting/invoice-detail`, add a permissioned one-way Lock action for the
+configured Accounting documents, persist locked state, actor, and timestamp,
+increment `row_version`, write a secured-entry chatter event, and prevent
+Reset to Draft after locking. The deterministic migration is
+`20260922250000-058-accounting-invoice-lock.yaml`. The required Accounting
+permission is `accounting.write`; reads remain `accounting.read`. Acceptance
+cases are normal posted lock, missing/locked/draft/paid/stale/blank-actor
+guards, atomic chatter persistence, restart/replay, and reset-to-draft denial.
+The Odoo cryptographic hash chain, sequence-gap validation, journal-level
+restriction configuration, and bulk chain locking remain explicitly outside
+this smallest UI/service slice.
+
+## Current batch: invoice Lock (2026-09-22)
+
+Stable feature `ACC-INVOICE-LOCK-001` is implemented through the
+page/API-matched `lock_accounting_invoice` action. The invoice detail source
+now returns `locked`, `hash_lock_enabled`, `locked_at`, and `locked_by`; the
+form exposes Lock only for an unlocked posted document and hides Reset to Draft
+after locking. Migration `0.0.58` adds idempotent lock columns and enables the
+configured lock contract for existing deterministic fixtures. The mutation is
+actor-required, optimistic-concurrency guarded, atomic for the invoice and
+chatter event, and durable across DuckDB restart and migration replay.
+
+Focused validation passes 3 tests and 30 assertions in
+`test/accounting_invoice_lock.integration.test.ts`; the lock, reset, and
+payment-block regression set passes 7 tests and 70 assertions. `git diff --check`
+passes. The global audit and isolated Accounting server are blocked before
+Accounting discovery by unrelated dirty CRM YAML: `leads.yaml` references
+missing `send_leads_email`, while `lead-detail.yaml` references missing
+`send_lead_email_detail`. The full Accounting glob reached 102 passing and 29
+discovery-only failures caused by unrelated dirty module contracts, including
+missing `reschedule_activity_*` actions and duplicate Base `activity_types`.
+This work changed no non-Accounting files.
+
+BrowserSkill authenticated inspection of `http://localhost:8069/odoo/invoicing/10`
+against the `core3_reference` session confirmed the posted invoice form and its
+source actions; the reference journal did not enable Lock, so no live Odoo Lock
+click was possible. The task-owned BrowserSkill session was stopped cleanly.
+No Core3 desktop/mobile capture or visual-parity claim is made because the
+Accounting runner could not start. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-INVOICE-LOCK-001/`.

@@ -19,12 +19,12 @@ workflow:
       permission: accounting.write
       mutation:
         guards:
-          - query: "SELECT id FROM accounting_invoices WHERE id = :id AND state IN ('Posted', 'Cancelled') AND row_version = :expected_row_version"
+          - query: "SELECT id FROM accounting_invoices WHERE id = :id AND state IN ('Posted', 'Cancelled') AND COALESCE(locked, FALSE) = FALSE AND row_version = :expected_row_version"
             status: 409
             code: ACCOUNTING_INVOICE_RESET_UNAVAILABLE
-            message: Only a posted or cancelled invoice can be reset to draft. Reload before resetting.
+            message: Only an unchanged, unlocked posted or cancelled invoice can be reset to draft. Reload before resetting.
         steps:
-          - query: "UPDATE accounting_invoices SET state = 'Draft', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          - query: "UPDATE accounting_invoices SET state = 'Draft', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND COALESCE(locked, FALSE) = FALSE"
             expect_changed: true
             status: 409
             code: ACCOUNTING_INVOICE_RESET_STALE

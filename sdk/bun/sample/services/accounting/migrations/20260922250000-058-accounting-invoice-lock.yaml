@@ -1,0 +1,21 @@
+version: 0.0.58
+kind: schema
+description: Persist Odoo-compatible posted invoice lock state
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS lock_enabled BOOLEAN DEFAULT TRUE;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT FALSE;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS locked_by VARCHAR;
+      UPDATE accounting_invoices SET lock_enabled = TRUE WHERE lock_enabled IS NULL;
+      UPDATE accounting_invoices SET locked = FALSE WHERE locked IS NULL;
+    down: |
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS locked_by;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS locked_at;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS locked;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS lock_enabled;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -5,7 +5,7 @@ datasources:
     permission: accounting.read
     workflow: accounting_invoices
     error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, COALESCE(payment_state, 'not_paid') AS payment_state, COALESCE(checked, FALSE) AS checked, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, COALESCE(send_count, 0) AS send_count, CAST(last_sent_at AS VARCHAR) AS last_sent_at, CASE partner_name WHEN 'Gemini Furniture' THEN 'gemini@example.com' WHEN 'LightsUp' THEN 'lightsup@example.com' WHEN 'Azure Interior' THEN 'azure@example.com' WHEN 'Lumber Inc' THEN 'lumber@example.com' ELSE 'billing@example.com' END AS recipient_email, 'Invoice ' || name AS subject, 'Please find your invoice ' || name || ' attached.' AS body, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, COALESCE(payment_state, 'not_paid') AS payment_state, COALESCE(checked, FALSE) AS checked, COALESCE(locked, FALSE) AS locked, COALESCE(lock_enabled, TRUE) AS hash_lock_enabled, CAST(locked_at AS VARCHAR) AS locked_at, COALESCE(locked_by, '') AS locked_by, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, COALESCE(send_count, 0) AS send_count, CAST(last_sent_at AS VARCHAR) AS last_sent_at, CASE partner_name WHEN 'Gemini Furniture' THEN 'gemini@example.com' WHEN 'LightsUp' THEN 'lightsup@example.com' WHEN 'Azure Interior' THEN 'azure@example.com' WHEN 'Lumber Inc' THEN 'lumber@example.com' ELSE 'billing@example.com' END AS recipient_email, 'Invoice ' || name AS subject, 'Please find your invoice ' || name || ' attached.' AS body, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 2 ELSE 1 END AS line_count, CASE WHEN invoice_type IN ('Customer Invoice', 'Vendor Bill') THEN 'Primary accounting line; tax line' ELSE 'Adjustment line' END AS line_summary FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id"
   - id: accounting_invoice_messages
     single: false
     permission: accounting.read
@@ -89,6 +89,24 @@ actions:
       steps:
         - { query: "UPDATE accounting_invoices SET payment_state = CASE WHEN payment_state = 'blocked' THEN 'not_paid' ELSE 'blocked' END, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND invoice_type <> 'Journal Entry' AND state <> 'Cancelled' AND COALESCE(payment_state, 'not_paid') NOT IN ('paid', 'in_payment')", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_PAYMENT_BLOCK_STALE, message: The invoice changed before its payment block was updated. Reload and try again. }
       result: { query: "SELECT id, row_version, payment_state, state, amount_residual FROM accounting_invoices WHERE id = :id" }
+  - id: lock_accounting_invoice
+    type: server
+    permission: accounting.write
+    action: accounting.invoices.lock
+    handler: yaml_mutation
+    operation: lock
+    params: { id: '{state.accounting_invoice_detail.id}', expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail, accounting_invoice_messages]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id", status: 404, code: ACCOUNTING_INVOICE_LOCK_NOT_FOUND, message: Invoice not found. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND COALESCE(lock_enabled, TRUE) = TRUE AND COALESCE(locked, FALSE) = FALSE AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_LOCK_UNAVAILABLE, message: Only an unchanged, unlocked posted document can be locked. Reload before locking. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_name AS VARCHAR))) > 0", status: 403, code: ACCOUNTING_INVOICE_LOCK_ACTOR_REQUIRED, message: A signed-in Accounting user is required to lock the document. }
+      steps:
+        - { query: "UPDATE accounting_invoices SET locked = TRUE, locked_at = CURRENT_TIMESTAMP, locked_by = :current_user_name, row_version = row_version + 1 WHERE id = :id AND state = 'Posted' AND COALESCE(lock_enabled, TRUE) = TRUE AND COALESCE(locked, FALSE) = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_LOCK_STALE, message: The document changed before it could be locked. Reload and try again. }
+        - { query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.invoices.lock', 'Locked journal entry', 'This journal entry has been secured.', 'Posted')" }
+      result: { query: "SELECT id, row_version, state, locked, CAST(locked_at AS VARCHAR) AS locked_at, locked_by FROM accounting_invoices WHERE id = :id" }
   - id: edit_accounting_invoice
     type: server_form
     permission: accounting.write
