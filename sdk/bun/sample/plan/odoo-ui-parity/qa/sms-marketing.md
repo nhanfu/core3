@@ -162,6 +162,28 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 | SMS-FUNC-009 | SMS UTM Campaigns page/API and durable CRUD contract | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGNS-001/test-results.md` | pass | Core3 contract; visual gate open |
 | SMS-BROWSER-003 | Authenticated Odoo SMS Campaigns desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGNS-001/verification.md` | blocked | BrowserSkill borrow confirmation timeout |
 
+## Bounded wave 8 - Send SMS from UTM campaign (2026-09-22)
+
+- Stable ID: `SMS-UTM-CAMPAIGN-SEND-001`.
+- Source comparison: **PASS**. Odoo's `action_create_mass_sms` header action
+  and `UtmCampaign.action_create_mass_sms` context were confirmed in the local
+  `mass_mailing_sms` addon. The action is distinct from the already-landed
+  Campaigns list/detail CRUD slice.
+- Core3 contract: **PASS**. The focused UTM campaign test covers 5 tests / 47
+  expectations, including Odoo source mapping, separate page/API contracts,
+  active-list options, durable campaign-linked insert, parent count/version
+  update, migration replay, duplicate protection, and stale-parent rejection.
+- BrowserSkill gate: **BLOCKED**. Instance `245ea108` reported a healthy
+  daemon, but authenticated Odoo tab `1770662590` was already borrowed by
+  session `ivfy`. The borrow was refused before capture; no session takeover,
+  independent login, alternate browser, or credential access was attempted.
+  Desktop and mobile captures for this stable ID are absent. Existing
+  diagnostic captures from earlier SMS waves remain outside Git and are not
+  reused as visual-parity evidence for this feature.
+
+| SMS-FUNC-010 | Odoo UTM campaign Send SMS form and durable linked mailing | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-SEND-001/test-results.md` | pass | Contract and migration evidence; visual gate open |
+| SMS-BROWSER-004 | Authenticated Odoo campaign Send SMS desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-SEND-001/verification.md` | blocked | Tab `1770662590` owned by BrowserSkill session `ivfy` |
+
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

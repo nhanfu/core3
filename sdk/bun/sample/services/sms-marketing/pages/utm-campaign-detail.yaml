@@ -9,6 +9,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Stage }
     header_actions:
       - { id: new_sms_utm_campaign_detail, label: New, variant: primary, permission: sms_marketing.manage }
+      - { id: create_sms_from_utm_campaign, label: Send SMS, variant: primary, permission: sms_marketing.write, show_if: "state.sms_utm_campaign_detail.active === true && state.sms_utm_campaign_detail.is_auto_campaign === false" }
       - { id: edit_sms_utm_campaign_detail, label: Edit, variant: secondary, permission: sms_marketing.manage }
       - { id: archive_sms_utm_campaign_detail, label: Archive, variant: danger, permission: sms_marketing.manage, show_if: "state.sms_utm_campaign_detail.active === true" }
       - { id: restore_sms_utm_campaign_detail, label: Restore, variant: secondary, permission: sms_marketing.manage, show_if: "state.sms_utm_campaign_detail.active === false" }

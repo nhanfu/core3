@@ -8,6 +8,7 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 const serviceRoot = join(import.meta.dir, '../services/sms-marketing');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const campaignsApi = yaml('api/utm-campaigns.yaml');
+const mailingApi = yaml('api/campaigns.yaml');
 const detailApi = yaml('api/utm-campaign-detail.yaml');
 const action = (id: string) => [...campaignsApi.actions, ...detailApi.actions].find((candidate: any) => candidate.id === id);
 
@@ -24,14 +25,21 @@ describe('SMS Marketing Odoo UTM Campaigns action', () => {
     expect(detailApi.page.id).toBe(detail.page.id);
     expect(campaignsApi.datasources.map((source: any) => source.id)).toEqual(expect.arrayContaining(['sms_utm_campaign_stages', 'sms_utm_campaigns']));
     expect(detailApi.datasources.map((source: any) => source.id)).toContain('sms_utm_campaign_detail');
+    expect(detailApi.datasources.map((source: any) => source.id)).toContain('sms_utm_campaign_sms_lists');
     expect(menu.items).toContainEqual({ path: '/sms-marketing/campaigns', label: 'Campaigns', icon: 'mail', permission: 'sms_marketing.manage' });
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['kanban', 'list']);
     expect(action('create_sms_utm_campaign')).toMatchObject({ type: 'server_form', permission: 'sms_marketing.manage', operation: 'create' });
+    expect(action('create_sms_from_utm_campaign')).toMatchObject({ type: 'server_form', permission: 'sms_marketing.write', action: 'mass_mailing.action_create_mass_sms', operation: 'create' });
+    expect(action('create_sms_from_utm_campaign').mutation.fields).toContain('campaign_id');
     expect(action('sms_utm_campaign_mailings')).toMatchObject({ navigate_to: '/sms-campaigns', params: { campaign_name: '{state.sms_utm_campaign_detail.title}' } });
     expect(readFileSync('/home/nhanjs/projects/odoo/addons/mass_mailing/views/utm_campaign_views.xml', 'utf8'))
       .toMatch(/id="action_view_utm_campaigns"[\s\S]*<field name="view_mode">kanban,list,form<\/field>[\s\S]*<field name="domain">\[\('is_auto_campaign', '=', False\)\]<\/field>/);
     expect(readFileSync('/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/mailing_sms_menus.xml', 'utf8'))
       .toMatch(/id="menu_email_campaigns"[\s\S]*name="Campaigns"[\s\S]*action="mass_mailing\.action_view_utm_campaigns"/);
+    expect(readFileSync('/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/utm_campaign_views.xml', 'utf8'))
+      .toMatch(/name="action_create_mass_sms"[\s\S]*string="Send SMS"/);
+    expect(readFileSync('/home/nhanjs/projects/odoo/addons/mass_mailing_sms/models/utm.py', 'utf8'))
+      .toMatch(/def action_create_mass_sms[\s\S]*default_mailing_type.*sms[\s\S]*default_campaign_id/);
   });
 
   test('seeds deterministic SMS campaigns idempotently and supports search, stage filtering, archived data, and empty state', async () => {
@@ -94,6 +102,68 @@ describe('SMS Marketing Odoo UTM Campaigns action', () => {
     database.close();
   });
 
+  test('creates a durable SMS mailing from a campaign and rejects stale parent versions', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'sms_utm_campaign_send_test', ['schema', 'data']);
+
+    const send = action('create_sms_from_utm_campaign');
+    const created = await repository.executeMutation(send.mutation, {
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      expected_campaign_row_version: 1,
+      values: {
+        campaign_id: 'sms-utm-campaign-summer-sale',
+        name: 'SMS/2026/0097',
+        title: 'Summer SMS Sale - VIP',
+        sender_name: 'Core3',
+        list_id: 'sms-list-demo-001',
+        message: 'Your summer offer is ready.',
+        recipient_count: 840,
+      },
+    });
+    expect(created).toMatchObject({
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      list_name: 'Opt-in Customers',
+      state: 'Draft',
+      row_version: 1,
+    });
+    expect(await repository.query('SELECT mailing_sms_count, row_version FROM sms_marketing_utm_campaigns WHERE id = ?', ['sms-utm-campaign-summer-sale']))
+      .toEqual([{ mailing_sms_count: 3, row_version: 2 }]);
+    expect((await repository.querySource(mailingApi.datasources.find((source: any) => source.id === 'sms_marketing_mailings'), {
+      q: null,
+      state: null,
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      fixture_state: null,
+    }, 0, 50)).data.map((row: any) => row.id)).toEqual(['sms-campaign-demo-001', 'sms-campaign-demo-004', created.id]);
+
+    await expect(repository.executeMutation(send.mutation, {
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      expected_campaign_row_version: 2,
+      values: { campaign_id: 'sms-utm-campaign-summer-sale', name: 'SMS/2026/0098', title: 'Invalid list', list_id: 'sms-list-missing', message: 'This must not be created.', recipient_count: 1 },
+    })).rejects.toMatchObject({ status: 422, code: 'SMS_UTM_CAMPAIGN_LIST_REQUIRED' });
+    await expect(repository.executeMutation(send.mutation, {
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      expected_campaign_row_version: 2,
+      values: { campaign_id: 'sms-utm-campaign-summer-sale', name: 'SMS/2026/0097', title: 'Duplicate mailing', list_id: 'sms-list-demo-001', message: 'This must not be created.', recipient_count: 1 },
+    })).rejects.toMatchObject({ status: 409, code: 'SMS_UTM_CAMPAIGN_MAILING_EXISTS' });
+
+    await expect(repository.executeMutation(send.mutation, {
+      campaign_id: 'sms-utm-campaign-summer-sale',
+      expected_campaign_row_version: 1,
+      values: {
+        campaign_id: 'sms-utm-campaign-summer-sale',
+        name: 'SMS/2026/0096',
+        title: 'Stale campaign send',
+        list_id: 'sms-list-demo-001',
+        message: 'This must not be created.',
+        recipient_count: 1,
+      },
+    })).rejects.toMatchObject({ status: 409, code: 'SMS_UTM_CAMPAIGN_STALE' });
+    expect(await repository.query('SELECT COUNT(*) AS count FROM sms_campaigns WHERE name = ?', ['SMS/2026/0096']))
+      .toEqual([{ count: 0 }]);
+    database.close();
+  });
+
   test('keeps manager permissions, transport errors, fixed seed dates, and source separation explicit', () => {
     const api = yaml('api/utm-campaigns.yaml');
     const detail = yaml('api/utm-campaign-detail.yaml');
@@ -108,7 +178,15 @@ describe('SMS Marketing Odoo UTM Campaigns action', () => {
     for (const id of ['create_sms_utm_campaign', 'edit_sms_utm_campaign_detail', 'archive_sms_utm_campaign_detail', 'restore_sms_utm_campaign_detail']) {
       expect(action(id), id).toMatchObject({ permission: 'sms_marketing.manage', handler: 'yaml_mutation' });
     }
+    expect(action('create_sms_from_utm_campaign')).toMatchObject({ permission: 'sms_marketing.write', handler: 'yaml_mutation', mutation: { operation: 'insert', table: 'sms_campaigns' } });
+    expect(action('create_sms_from_utm_campaign').mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'SMS_UTM_CAMPAIGN_STALE', status: 409 }),
+      expect.objectContaining({ code: 'SMS_UTM_CAMPAIGN_LIST_REQUIRED', status: 422 }),
+      expect.objectContaining({ code: 'SMS_UTM_CAMPAIGN_MAILING_EXISTS', status: 409 }),
+    ]));
     expect(readFileSync(join(serviceRoot, 'migrations/20260922131000-016-sms-utm-campaigns-demo.yaml'), 'utf8'))
+      .not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid|random_uuid/i);
+    expect(readFileSync(join(serviceRoot, 'migrations/20260922141000-018-sms-utm-campaign-mailings-demo.yaml'), 'utf8'))
       .not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid|random_uuid/i);
   });
 });

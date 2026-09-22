@@ -3,6 +3,9 @@ datasources:
   - id: sms_utm_campaign_detail_stages
     permission: sms_marketing.manage
     query: "SELECT id AS value, name AS label FROM sms_marketing_campaign_stages ORDER BY sequence, id"
+  - id: sms_utm_campaign_sms_lists
+    permission: sms_marketing.write
+    query: "SELECT id AS value, name AS label FROM sms_lists WHERE state = 'Active' ORDER BY name, id"
   - id: sms_utm_campaign_detail
     single: true
     permission: sms_marketing.manage
@@ -13,6 +16,47 @@ actions:
     type: navigate
     permission: sms_marketing.manage
     navigate_to: /sms-marketing/campaigns
+  - id: create_sms_from_utm_campaign
+    type: server_form
+    permission: sms_marketing.write
+    title: Send SMS
+    description: Create an SMS mailing linked to this campaign.
+    action: mass_mailing.action_create_mass_sms
+    handler: yaml_mutation
+    operation: create
+    prefill:
+      campaign_id: '{state.sms_utm_campaign_detail.id}'
+      title: '{state.sms_utm_campaign_detail.title}'
+    params:
+      campaign_id: '{state.sms_utm_campaign_detail.id}'
+      expected_campaign_row_version: '{state.sms_utm_campaign_detail.row_version}'
+    refresh: [sms_utm_campaign_detail, sms_utm_campaigns]
+    mutation:
+      operation: insert
+      table: sms_campaigns
+      fields: [name, title, sender_name, list_id, list_name, message, recipient_count, scheduled_at, campaign_id, company_name]
+      required: [name, title, list_id, message, recipient_count, campaign_id]
+      defaults: { state: Draft, row_version: 1, delivered_count: 0, failed_count: 0, created_at: '2026-09-22 14:00:00', updated_at: '2026-09-22 14:00:00' }
+      before_steps:
+        - { query: "SELECT 'sms-campaign-utm-' || :campaign_id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM sms_campaigns WHERE campaign_id = :campaign_id", assign: true }
+      guards:
+        - { query: "SELECT id AS campaign_id, company_name FROM sms_marketing_utm_campaigns WHERE id = :campaign_id AND active = true AND is_auto_campaign = false AND row_version = :expected_campaign_row_version", status: 409, code: SMS_UTM_CAMPAIGN_STALE, message: This campaign changed before the SMS mailing could be created. Reload and try again., assign: true }
+        - { query: "SELECT id AS list_id, name AS list_name FROM sms_lists WHERE id = :list_id AND state = 'Active'", status: 422, code: SMS_UTM_CAMPAIGN_LIST_REQUIRED, message: Select an active mailing list., assign: true }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:message AS VARCHAR))) > 0 AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: SMS_UTM_CAMPAIGN_MAILING_REQUIRED, message: Mailing name, title, SMS content, and a non-negative recipient count are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: SMS_UTM_CAMPAIGN_MAILING_EXISTS, message: A mailing with this name already exists. }
+      steps:
+        - { query: "UPDATE sms_marketing_utm_campaigns SET mailing_sms_count = mailing_sms_count + 1, row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-22 14:00:00' WHERE id = :campaign_id AND active = true AND is_auto_campaign = false AND row_version = :expected_campaign_row_version", expect_changed: true, status: 409, code: SMS_UTM_CAMPAIGN_STALE, message: This campaign changed before the SMS mailing could be linked. Reload and try again. }
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    fields:
+      - { field: campaign_id, label: Campaign, type: hidden, required: true }
+      - { field: name, label: Mailing, type: text, required: true, placeholder: 'e.g. SMS/2026/0005' }
+      - { field: title, label: Title, type: text, required: true }
+      - { field: sender_name, label: Sender, type: text }
+      - { field: list_id, label: Mailing List, type: select, options_source: sms_utm_campaign_sms_lists, required: true }
+      - { field: list_name, label: Mailing List Name, type: hidden }
+      - { field: message, label: SMS Content, type: textarea, required: true }
+      - { field: scheduled_at, label: Scheduled for, type: text }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
   - id: edit_sms_utm_campaign_detail
     type: server_form
     permission: sms_marketing.manage

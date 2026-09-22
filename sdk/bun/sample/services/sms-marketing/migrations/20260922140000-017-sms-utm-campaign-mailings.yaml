@@ -1,0 +1,14 @@
+version: 0.0.17
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS campaign_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS sms_campaigns_campaign_idx ON sms_campaigns(campaign_id, state, id);
+    down: |
+      DROP INDEX IF EXISTS sms_campaigns_campaign_idx;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS campaign_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

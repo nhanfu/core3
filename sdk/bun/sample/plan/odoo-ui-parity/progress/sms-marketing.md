@@ -2,7 +2,7 @@
 
 Module owner: sms-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: active - blacklisted phone numbers bounded implementation in progress; sign-off gates remain open
+Status: active - SMS from UTM campaign form bounded implementation in progress; sign-off gates remain open
 Verification trigger: focused contract suite and module audit
 Candidate commit: 2fb85b60ce7fa1c5e84b37d80107c60b78dc0357
 
@@ -39,6 +39,17 @@ optimistic concurrency are covered by the focused integration test. The
 authenticated Odoo desktop/mobile gate remains blocked by the BrowserSkill tab
 borrow confirmation timeout; no visual-parity claim is made and module
 sign-off remains open.
+
+## Wave 8 checkpoint (2026-09-22)
+
+`SMS-UTM-CAMPAIGN-SEND-001` adds the missing Odoo `Send SMS` campaign-form
+action. The action opens a bounded SMS mailing form, persists the
+`campaign_id` relationship, increments the campaign SMS count atomically under
+a parent row-version guard, and rejects inactive-list, duplicate, invalid, and
+stale requests. The focused test now covers the source action and durable
+workflow. BrowserSkill instance `245ea108` was healthy, but authenticated Odoo
+tab `1770662590` was already borrowed by session `ivfy`; desktop/mobile
+captures could not be taken and no visual-parity claim is made.
 
 ## QA checkpoint (2026-09-13, candidate `2fb85b60`)
 

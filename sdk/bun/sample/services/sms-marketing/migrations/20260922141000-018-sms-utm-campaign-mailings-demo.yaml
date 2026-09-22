@@ -1,0 +1,15 @@
+version: 0.0.18
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE sms_campaigns SET campaign_id = 'sms-utm-campaign-summer-sale', updated_at = TIMESTAMP '2026-09-22 14:10:00' WHERE id = 'sms-campaign-demo-001';
+      UPDATE sms_campaigns SET campaign_id = 'sms-utm-campaign-product-update', updated_at = TIMESTAMP '2026-09-22 14:10:00' WHERE id = 'sms-campaign-demo-002';
+      UPDATE sms_campaigns SET campaign_id = 'sms-utm-campaign-event-follow-up', updated_at = TIMESTAMP '2026-09-22 14:10:00' WHERE id = 'sms-campaign-demo-003';
+      UPDATE sms_campaigns SET campaign_id = 'sms-utm-campaign-summer-sale', updated_at = TIMESTAMP '2026-09-22 14:10:00' WHERE id = 'sms-campaign-demo-004';
+    down: |
+      UPDATE sms_campaigns SET campaign_id = NULL WHERE id IN ('sms-campaign-demo-001', 'sms-campaign-demo-002', 'sms-campaign-demo-003', 'sms-campaign-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
