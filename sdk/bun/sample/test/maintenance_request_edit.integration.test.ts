@@ -28,7 +28,7 @@ describe('Maintenance Request edit parity', () => {
     expect(edit.mutation).toMatchObject({
       operation: 'update',
       table: 'maintenance_requests',
-      fields: ['name', 'request_type', 'description', 'instructions', 'priority', 'assigned_to', 'scheduled_date', 'recurrence'],
+      fields: ['name', 'request_type', 'description', 'instructions', 'priority', 'assigned_to', 'scheduled_date', 'scheduled_end', 'duration', 'recurrence'],
       required: ['name', 'description'],
       concurrency: { required: true },
     });

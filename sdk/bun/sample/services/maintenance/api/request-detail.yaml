@@ -1,6 +1,6 @@
 page: { id: maintenance-request-detail }
 datasources:
-  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
+  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(scheduled_end AS VARCHAR) AS scheduled_end, duration, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
   - id: maintenance_request_activity
     single: false
     permission: maintenance.read
@@ -133,13 +133,17 @@ actions:
       operation: update
       table: maintenance_requests
       key: id
-      fields: [name, request_type, description, instructions, priority, assigned_to, scheduled_date, recurrence]
+      fields: [name, request_type, description, instructions, priority, assigned_to, scheduled_date, scheduled_end, duration, recurrence]
       required: [name, description]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Active maintenance request was not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:description AS VARCHAR))) > 0", status: 422, code: MAINTENANCE_REQUEST_REQUIRED, message: Request and description are required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MAINTENANCE_REQUEST_NAME_EXISTS, message: A maintenance request with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :scheduled_date IS NULL OR LENGTH(TRIM(CAST(:scheduled_date AS VARCHAR))) = 0 OR TRY_CAST(:scheduled_date AS DATE) IS NOT NULL", status: 422, code: MAINTENANCE_REQUEST_SCHEDULED_DATE_INVALID, message: Scheduled date must be a valid ISO date. }
+        - { query: "SELECT 1 AS ok WHERE :scheduled_end IS NULL OR LENGTH(TRIM(CAST(:scheduled_end AS VARCHAR))) = 0 OR TRY_CAST(:scheduled_end AS TIMESTAMP) IS NOT NULL", status: 422, code: MAINTENANCE_REQUEST_SCHEDULED_END_INVALID, message: Scheduled end must be a valid ISO date or timestamp. }
+        - { query: "SELECT 1 AS ok WHERE :scheduled_date IS NULL OR LENGTH(TRIM(CAST(:scheduled_date AS VARCHAR))) = 0 OR :scheduled_end IS NULL OR LENGTH(TRIM(CAST(:scheduled_end AS VARCHAR))) = 0 OR TRY_CAST(:scheduled_end AS TIMESTAMP) >= TRY_CAST(:scheduled_date AS TIMESTAMP)", status: 422, code: MAINTENANCE_REQUEST_SCHEDULE_WINDOW_INVALID, message: Scheduled end cannot be earlier than scheduled date. }
+        - { query: "SELECT CASE WHEN :scheduled_date IS NULL OR LENGTH(TRIM(CAST(:scheduled_date AS VARCHAR))) = 0 THEN NULL ELSE COALESCE(TRY_CAST(:scheduled_end AS TIMESTAMP), TRY_CAST(:scheduled_date AS TIMESTAMP) + INTERVAL '1 hour') END AS scheduled_end, CASE WHEN :scheduled_date IS NULL OR LENGTH(TRIM(CAST(:scheduled_date AS VARCHAR))) = 0 THEN 0.0 ELSE EXTRACT(EPOCH FROM (COALESCE(TRY_CAST(:scheduled_end AS TIMESTAMP), TRY_CAST(:scheduled_date AS TIMESTAMP) + INTERVAL '1 hour') - TRY_CAST(:scheduled_date AS TIMESTAMP))) / 3600.0 END AS duration", status: 500, code: MAINTENANCE_REQUEST_SCHEDULE_WINDOW_COMPUTE_FAILED, message: The maintenance schedule window could not be calculated., assign: true }
       result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
     fields:
       - { field: name, label: Request, type: text, required: true }
@@ -149,6 +153,7 @@ actions:
       - { field: priority, label: Priority, type: select, options: [Low, Normal, High], required: true }
       - { field: assigned_to, label: Assigned to, type: text }
       - { field: scheduled_date, label: Scheduled date, type: text }
+      - { field: scheduled_end, label: Scheduled end, type: text }
       - { field: recurrence, label: Recurrence, type: text }
   - id: generate_maintenance_request_recurrence
     type: server
@@ -169,7 +174,7 @@ actions:
         - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND recurrence_generated_id IS NULL", status: 409, code: MAINTENANCE_RECURRENCE_ALREADY_GENERATED, message: The next recurring occurrence has already been generated. }
         - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND scheduled_date IS NOT NULL AND regexp_matches(trim(COALESCE(recurrence, '')), '^Every [1-9][0-9]* (day|days|week|weeks|month|months|year|years)$')", status: 422, code: MAINTENANCE_RECURRENCE_INVALID, message: Recurrence must use Every N days, weeks, months, or years. }
       steps:
-        - query: "INSERT INTO maintenance_requests(id, name, equipment_id, equipment_name, category, category_id, team, team_id, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, completed_date, stage, state, kanban_state, recurrence, company_name, archived, row_version, recurrence_parent_id, recurrence_sequence, recurrence_generated_id, created_at, updated_at) VALUES(:occurrence_id, :occurrence_name, :equipment_id, :equipment_name, :category, :category_id, :team, :team_id, :request_type, :description, :instructions, :priority, :assigned_to, :owner, DATE '2026-01-15', :next_scheduled_date, NULL, 'New Request', 'New Request', 'ready', :recurrence, :company_name, FALSE, 1, :recurrence_root_id, :next_recurrence_sequence, NULL, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')"
+        - query: "INSERT INTO maintenance_requests(id, name, equipment_id, equipment_name, category, category_id, team, team_id, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, scheduled_end, duration, completed_date, stage, state, kanban_state, recurrence, company_name, archived, row_version, recurrence_parent_id, recurrence_sequence, recurrence_generated_id, created_at, updated_at) VALUES(:occurrence_id, :occurrence_name, :equipment_id, :equipment_name, :category, :category_id, :team, :team_id, :request_type, :description, :instructions, :priority, :assigned_to, :owner, DATE '2026-01-15', :next_scheduled_date, CAST(:next_scheduled_date AS TIMESTAMP) + INTERVAL '1 hour', 1.0, NULL, 'New Request', 'New Request', 'ready', :recurrence, :company_name, FALSE, 1, :recurrence_root_id, :next_recurrence_sequence, NULL, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')"
         - query: "UPDATE maintenance_requests SET recurrence_generated_id = :occurrence_id, updated_at = TIMESTAMP '2026-01-15 09:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
           expect_changed: true
           status: 409

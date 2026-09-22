@@ -1,0 +1,25 @@
+database: duckdb
+version: 0.0.12
+kind: schema
+description: Persist Odoo maintenance request schedule end and duration
+type:
+  postgres:
+    up: |
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS scheduled_end TIMESTAMP;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS duration DOUBLE;
+      UPDATE maintenance_requests
+      SET scheduled_end = CAST(scheduled_date AS TIMESTAMP) + INTERVAL '1 hour'
+      WHERE scheduled_date IS NOT NULL AND scheduled_end IS NULL;
+      UPDATE maintenance_requests
+      SET duration = CASE
+        WHEN scheduled_date IS NULL OR scheduled_end IS NULL THEN 0
+        ELSE EXTRACT(EPOCH FROM (scheduled_end - CAST(scheduled_date AS TIMESTAMP))) / 3600.0
+      END
+      WHERE duration IS NULL OR duration = 0;
+    down: |
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS duration;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS scheduled_end;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

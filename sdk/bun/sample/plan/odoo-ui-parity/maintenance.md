@@ -737,3 +737,27 @@ and `odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-REQUEST-CHATTER-MESSAG
 Followers, attachments, outbound mail delivery, notification/provider behavior,
 and whole-module sign-off remain outside this batch. The explicit shared-tab
 borrow timed out, so no authenticated Core3/Odoo visual-parity claim is made.
+
+## Bounded batch: Maintenance Request schedule window (2026-09-22)
+
+Feature ID: `MAINT-REQUEST-SCHEDULE-WINDOW-001`.
+
+Odoo computes `schedule_end` as one hour after `schedule_date`, rejects an end
+before the start, and stores `duration` in hours. Core3 now persists
+`scheduled_end` and `duration` with idempotent migration `0.0.12`, computes the
+same default during request create/edit, validates explicit windows, returns
+the fields from request/detail/calendar/analysis API fragments, and binds the
+calendar end field and detail scheduling fields through the existing
+page/API boundary. Recurrence-generated occurrences keep a one-hour window.
+
+Focused verification passed 2 tests / 19 assertions; the full Maintenance
+regression passed 56 tests / 482 assertions. Audit passed at 847 pages, 855
+routes, and 1,778 datasources; frontend, Maintenance CSS, and diff checks also
+passed. Evidence is under
+`odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-REQUEST-SCHEDULE-WINDOW-001/`.
+
+The explicit BrowserSkill borrow request for the user-owned Odoo tab remained
+pending and the session became unregistered; the tab was not touched. No
+desktop/mobile visual-parity claim is made. Full authenticated comparison,
+source schedule-widget behavior, instruction widgets, and whole-module
+sign-off remain open.
