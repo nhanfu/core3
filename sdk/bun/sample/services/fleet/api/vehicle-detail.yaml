@@ -57,6 +57,82 @@ actions:
   - { id: open_fleet_vehicle_services_today, type: navigate, permission: fleet.read, navigate_to: /fleet/services, params: { vehicle_id: '{state.id}', search_default_inactive: '{state.archived}' } }
   - { id: open_fleet_vehicle_odometers, type: navigate, permission: fleet.read, navigate_to: /fleet/odometers, params: { vehicle_id: '{state.id}' } }
   - { id: open_fleet_vehicle_odometer_report, type: navigate, permission: fleet.manage, navigate_to: /fleet/reporting/odometers, params: { vehicle_id: '{state.id}', default_group_by: recorded_month } }
+  - id: set_fleet_vehicle_status_available
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.status
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Available } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id", status: 404, code: FLEET_VEHICLE_NOT_FOUND, message: Vehicle was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM fleet_vehicles WHERE id = :id AND company_name = :current_company_name)", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle belongs to another company. }
+        - { query: "SELECT id FROM fleet_vehicle_states WHERE id = :state AND active = TRUE", status: 422, code: FLEET_VEHICLE_STATUS_INVALID, message: Vehicle status is not available. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before changing its status. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: set_fleet_vehicle_status_assigned
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.status
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Assigned } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id", status: 404, code: FLEET_VEHICLE_NOT_FOUND, message: Vehicle was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM fleet_vehicles WHERE id = :id AND company_name = :current_company_name)", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle belongs to another company. }
+        - { query: "SELECT id FROM fleet_vehicle_states WHERE id = :state AND active = TRUE", status: 422, code: FLEET_VEHICLE_STATUS_INVALID, message: Vehicle status is not available. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before changing its status. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: set_fleet_vehicle_status_maintenance
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.status
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Maintenance } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id", status: 404, code: FLEET_VEHICLE_NOT_FOUND, message: Vehicle was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM fleet_vehicles WHERE id = :id AND company_name = :current_company_name)", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle belongs to another company. }
+        - { query: "SELECT id FROM fleet_vehicle_states WHERE id = :state AND active = TRUE", status: 422, code: FLEET_VEHICLE_STATUS_INVALID, message: Vehicle status is not available. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before changing its status. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: set_fleet_vehicle_status_retired
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.status
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Retired } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id", status: 404, code: FLEET_VEHICLE_NOT_FOUND, message: Vehicle was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM fleet_vehicles WHERE id = :id AND company_name = :current_company_name)", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle belongs to another company. }
+        - { query: "SELECT id FROM fleet_vehicle_states WHERE id = :state AND active = TRUE", status: 422, code: FLEET_VEHICLE_STATUS_INVALID, message: Vehicle status is not available. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before changing its status. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
   - { id: assign_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }
   - { id: service_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }
   - { id: release_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }

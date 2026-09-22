@@ -17,6 +17,7 @@ components:
     content_slot: vehicle-tags
     status_field: state
     statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]
+    statusbar_actions: { Available: set_fleet_vehicle_status_available, Assigned: set_fleet_vehicle_status_assigned, Maintenance: set_fleet_vehicle_status_maintenance, Retired: set_fleet_vehicle_status_retired }
     status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
     header_actions:
       - { id: action_accept_driver_change, label: Apply New Driver, variant: primary, permission: fleet.write, show_if: "state.future_driver_name" }

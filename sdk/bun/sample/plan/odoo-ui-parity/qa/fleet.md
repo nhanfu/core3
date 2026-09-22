@@ -397,3 +397,23 @@ Fleet remains unsigned-off.
 
 QA state: **conditional bounded functional pass; live Odoo/Core3 visual gates
 blocked**. Fleet remains unsigned-off.
+
+## 2026-09-22 — Vehicle clickable statusbar bounded action
+
+- Feature `fleet-vehicle-statusbar-20260922` binds the Odoo vehicle form's
+  clickable `state_id` statusbar to four durable Core3 status mutations on the
+  existing `vehicle-detail` page/API pair.
+- Focused test: `bun test
+  test/fleet_vehicle_statusbar.integration.test.ts` — **2 passed / 17
+  assertions**. It verifies the local Odoo source mapping, page/API join, all
+  four stage actions, persistence, row-version, invalid-status, and company
+  guards.
+- No migration was required; the existing vehicle/status tables are reused.
+- BrowserSkill blocker: session `gguk` on browser instance `245ea108` could
+  list the signed-in Odoo tab but `bsk tab borrow 1770662590 --timeout 120s`
+  timed out awaiting the required browser confirmation. The exact
+  contemporaneous desktop/mobile blocker captures are linked from the feature
+  evidence folder; no live Odoo or Core3 visual parity claim is made.
+
+QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
+Fleet remains unsigned-off.

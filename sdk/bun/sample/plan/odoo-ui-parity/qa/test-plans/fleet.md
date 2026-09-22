@@ -42,6 +42,7 @@ deterministic.
 | FLEET-FUNC-011 | Vehicle attachments | Vehicle chatter attachments list, upload/download/remove, company scope, validation, stale guards, and restart persistence | pass: `fleet_vehicle_attachments.integration.test.ts`; browser upload blocked by file-URL permission |
 | FLEET-FUNC-012 | Vehicle tag assignment | Vehicle `tag_ids` options, add/remove, color projection, company/archive/duplicate/stale guards, and restart persistence | pass: `fleet_vehicle_tags.integration.test.ts`; visual gate blocked by missing Odoo Fleet |
 | FLEET-FUNC-013 | Manufacturer Models stat action | Manufacturer detail opens the existing Models action with the selected `brand_id`; durable model reads remain filtered after migration replay | pass: `fleet_manufacturer_models_action.integration.test.ts`; Odoo tab borrow blocked |
+| FLEET-FUNC-014 | Vehicle clickable statusbar | Vehicle form statusbar stages update the durable vehicle state with row-version, company, invalid-status, and stale-write guards | pass: `fleet_vehicle_statusbar.integration.test.ts`; BrowserSkill borrow timeout blocks visual gate |
 
 ## Workflow and integration cases
 
@@ -50,6 +51,7 @@ deterministic.
 | FLEET-WF-001 | Vehicle archive lifecycle | Active → archived → restored updates row versions and prevents stale replay | pass: browser probe |
 | FLEET-WF-002 | Driver assignment | Future driver change applies once, validates relation/date and rejects missing or stale vehicles | pass: focused suite |
 | FLEET-WF-003 | Service lifecycle | Service activity states, costs and vehicle relations remain consistent through transitions | pass at contract level; browser workflow planned |
+| FLEET-WF-004 | Vehicle statusbar lifecycle | Vehicle detail → clickable status stage → persisted state/list refresh; stale and cross-company clicks do not write | pass: `fleet_vehicle_statusbar.integration.test.ts`; live Odoo tab borrow blocked |
 | FLEET-WF-004 | Contract/odometer stats | Vehicle stat actions return only linked records and counts update after mutation | pass at contract level |
 | FLEET-WF-005 | Durable/external boundary | Reminders, service callbacks and cross-module integrations use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | FLEET-WF-006 | Odometer log lifecycle | New → edit → stale rejection → delete preserves vehicle relation and rejects archived vehicles | pass: focused integration test; authenticated browser workflow planned |

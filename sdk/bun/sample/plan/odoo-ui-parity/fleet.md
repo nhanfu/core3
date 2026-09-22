@@ -1182,3 +1182,35 @@ the required confirmation. The desktop/mobile blocker captures and exact
 cleanup record are under
 `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-manufacturer-models-action-20260922/`.
 No live Odoo or Core3 visual parity claim is made.
+
+## Vehicle clickable statusbar bounded action (2026-09-22)
+
+Feature ID: `fleet-vehicle-statusbar-20260922`.
+
+The Odoo vehicle form declares `fleet.vehicle.state_id` as a clickable
+statusbar. The local source permits Fleet officers to write the vehicle and
+its status field is a real `fleet.vehicle.state` relation; this is distinct
+from the separate Assign, Send to maintenance, Release, and Retire buttons.
+Before this slice Core3 rendered the four status stages but had no
+`statusbar_actions`, so clicking a stage had no durable effect.
+
+Core3 now binds each statusbar stage on the existing `vehicle-detail` page to
+the matching `fleet.vehicles.status` YAML mutation in the paired
+`api/vehicle-detail.yaml` contract. The mutation is `fleet.write` scoped,
+company checked, validates the active status catalog, requires the current
+vehicle row version, increments that version, and refreshes both the detail
+and vehicle list datasources. No schema change was needed; the existing
+idempotent `fleet_vehicles` and `fleet_vehicle_states` migrations remain the
+durable source.
+
+Focused coverage is `test/fleet_vehicle_statusbar.integration.test.ts`:
+**2 tests / 17 assertions**, including local Odoo source mapping, page/API
+joining, all four status actions, persistence, stale replay, invalid status,
+and cross-company guards. Evidence artifacts are under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-statusbar-20260922/`.
+
+The requested BrowserSkill borrow on instance `245ea108` timed out awaiting
+the browser's required confirmation before the Odoo tab could be read. The
+contemporaneous desktop/mobile blocker captures from the same authenticated
+`core3_reference` tab are linked in the evidence folder; no live Odoo action
+screen, Core3 browser run, or visual-parity claim is made for this feature.
