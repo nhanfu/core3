@@ -259,6 +259,105 @@ actions:
       before_steps:
         - { query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) SELECT :message_id, a.contact_id, :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Administrator'), 'base.contacts.activity.cancel', 'Activity cancelled', a.summary FROM base_activities a WHERE a.id = :id" }
       result: { query: "SELECT :id AS id, true AS cancelled" }
+  - id: reschedule_contact_activities_today
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_today
+    handler: yaml_mutation
+    operation: reschedule_activities_today
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: BASE_CONTACT_ACTIVITY_SELECTION_REQUIRED, message: Select at least one activity to reschedule. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM base_activities WHERE id IN :selectedIds) > 0", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: No selected activities were found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id IN :selectedIds AND (a.state <> 'planned' OR (COALESCE(:current_company_id, '') <> '' AND c.company_id <> :current_company_id)))", status: 403, code: BASE_CONTACT_ACTIVITY_SCOPE, message: All selected activities must be planned and in the current company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CURRENT_DATE, row_version = row_version + 1 WHERE id IN :selectedIds AND state = 'planned'", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: A selected activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT COUNT(*) AS rescheduled_count, MIN(CAST(due_date AS VARCHAR)) AS due_date FROM base_activities WHERE id IN :selectedIds" }
+  - id: reschedule_contact_activities_tomorrow
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_tomorrow
+    handler: yaml_mutation
+    operation: reschedule_activities_tomorrow
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: BASE_CONTACT_ACTIVITY_SELECTION_REQUIRED, message: Select at least one activity to reschedule. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM base_activities WHERE id IN :selectedIds) > 0", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: No selected activities were found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id IN :selectedIds AND (a.state <> 'planned' OR (COALESCE(:current_company_id, '') <> '' AND c.company_id <> :current_company_id)))", status: 403, code: BASE_CONTACT_ACTIVITY_SCOPE, message: All selected activities must be planned and in the current company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CURRENT_DATE + INTERVAL '1 day', row_version = row_version + 1 WHERE id IN :selectedIds AND state = 'planned'", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: A selected activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT COUNT(*) AS rescheduled_count, MIN(CAST(due_date AS VARCHAR)) AS due_date FROM base_activities WHERE id IN :selectedIds" }
+  - id: reschedule_contact_activities_next_week
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_nextweek
+    handler: yaml_mutation
+    operation: reschedule_activities_next_week
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL", status: 400, code: BASE_CONTACT_ACTIVITY_SELECTION_REQUIRED, message: Select at least one activity to reschedule. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM base_activities WHERE id IN :selectedIds) > 0", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: No selected activities were found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id IN :selectedIds AND (a.state <> 'planned' OR (COALESCE(:current_company_id, '') <> '' AND c.company_id <> :current_company_id)))", status: 403, code: BASE_CONTACT_ACTIVITY_SCOPE, message: All selected activities must be planned and in the current company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CAST(DATE_TRUNC('week', CURRENT_DATE) AS DATE) + INTERVAL '7 days', row_version = row_version + 1 WHERE id IN :selectedIds AND state = 'planned'", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: A selected activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT COUNT(*) AS rescheduled_count, MIN(CAST(due_date AS VARCHAR)) AS due_date FROM base_activities WHERE id IN :selectedIds" }
+  - id: reschedule_contact_activity_today
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_today
+    handler: yaml_mutation
+    operation: reschedule_activity_today
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM base_activities WHERE id = :id", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_CONTACT_ACTIVITY_COMPANY_FORBIDDEN, message: Activity is outside the current company. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity is already completed or changed. Reload before rescheduling it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT id, contact_id, summary, activity_type, state, row_version, CAST(due_date AS VARCHAR) AS due_date, assigned_user_name FROM base_activities WHERE id = :id" }
+  - id: reschedule_contact_activity_tomorrow
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_tomorrow
+    handler: yaml_mutation
+    operation: reschedule_activity_tomorrow
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM base_activities WHERE id = :id", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_CONTACT_ACTIVITY_COMPANY_FORBIDDEN, message: Activity is outside the current company. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity is already completed or changed. Reload before rescheduling it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CURRENT_DATE + INTERVAL '1 day', row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT id, contact_id, summary, activity_type, state, row_version, CAST(due_date AS VARCHAR) AS due_date, assigned_user_name FROM base_activities WHERE id = :id" }
+  - id: reschedule_contact_activity_next_week
+    type: server
+    permission: base.activities.write
+    action: base.activities.reschedule_nextweek
+    handler: yaml_mutation
+    operation: reschedule_activity_next_week
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM base_activities WHERE id = :id", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_CONTACT_ACTIVITY_COMPANY_FORBIDDEN, message: Activity is outside the current company. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity is already completed or changed. Reload before rescheduling it. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to reschedule an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET due_date = CAST(DATE_TRUNC('week', CURRENT_DATE) AS DATE) + INTERVAL '7 days', row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity changed before it could be rescheduled. Reload before trying again. }
+      result: { query: "SELECT id, contact_id, summary, activity_type, state, row_version, CAST(due_date AS VARCHAR) AS due_date, assigned_user_name FROM base_activities WHERE id = :id" }
   - id: send_contact_message
     type: server_form
     permission: base.contacts.write

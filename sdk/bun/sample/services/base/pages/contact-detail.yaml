@@ -156,9 +156,25 @@ components:
       - { field: due_date, label: Due date }
       - { field: completed_at, label: Completed }
       - { field: assigned_user_name, label: Assigned to }
+      - field: id
+        label: ''
+        sortable: false
+        actions:
+          - { id: reschedule_contact_activity_today, label: Today, icon: arrow-down, show_if: "row.state === 'planned'" }
+          - { id: reschedule_contact_activity_tomorrow, label: Tomorrow, icon: calendar-plus, show_if: "row.state === 'planned'" }
+          - { id: reschedule_contact_activity_next_week, label: Next Week, icon: calendar, show_if: "row.state === 'planned'" }
     actions:
       - { id: complete_contact_activity, label: Mark done, permission: base.activities.write, variant: primary, show_if: "row.state === 'planned'" }
       - { id: cancel_contact_activity, label: Cancel, permission: base.activities.write, variant: danger, show_if: "row.state === 'planned'" }
+      - { id: reschedule_contact_activity_today, label: Today, permission: base.activities.write, show_if: "row.state === 'planned'" }
+      - { id: reschedule_contact_activity_tomorrow, label: Tomorrow, permission: base.activities.write, show_if: "row.state === 'planned'" }
+      - { id: reschedule_contact_activity_next_week, label: Next Week, permission: base.activities.write, show_if: "row.state === 'planned'" }
+    bulk_actions:
+      - { id: reschedule_contact_activities_today, label: Today, permission: base.activities.write }
+      - { id: reschedule_contact_activities_tomorrow, label: Tomorrow, permission: base.activities.write }
+      - { id: reschedule_contact_activities_next_week, label: Next Week, permission: base.activities.write }
+    selectable: true
+    row_actions: menu
     row_open_action: view_activity
     row_double_click_action: view_activity
     empty_state: { title: No scheduled activities, description: Schedule an activity to keep this contact moving. }

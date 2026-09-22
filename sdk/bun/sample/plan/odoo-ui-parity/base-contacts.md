@@ -513,6 +513,36 @@ session `aotm` was stopped. No Odoo desktop/mobile capture or visual-parity
 claim is made. Evidence is in
 `evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-COMPLETE-001/`.
 
-Remaining gaps for this slice are Odoo's Today/Tomorrow/Next Week rescheduling
-actions, feedback/attachments on completion, the standalone Activities menu
-and activity form parity, and authenticated paired visual evidence.
+Remaining gaps for this slice are feedback/attachments on completion, the
+standalone Activities menu and activity form parity, and authenticated paired
+visual evidence.
+
+## Contact activity rescheduling bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-ACTIVITY-RESCHEDULE-001`.
+
+Odoo source comparison: `addons/mail/views/mail_activity_views.xml:277-295`
+binds the Next Activities list header to Today, Tomorrow, and Next Week
+reschedule actions and exposes row reschedule controls. The implementations in
+`addons/mail/models/mail_activity.py:638-645` set active deadlines to today,
+tomorrow, or the Monday of next week.
+
+Core3 keeps `pages/contact-detail.yaml` layout-only and extends the existing
+`contact-detail` API contract with bulk and row reschedule actions. The page
+binds selectable activity rows, bulk actions, and a row action menu. The API
+updates only planned activities, applies current-company and authenticated
+actor guards, increments `row_version`, and uses database date arithmetic for
+the three Odoo deadlines. No migration was needed because activity row
+versions were added by the preceding completion slice.
+
+Focused validation is `test/base_contact_activity_reschedule.integration.test.ts`:
+3 tests / 29 assertions. It covers source/action mapping, page/API separation,
+bulk Today/Tomorrow/Next Week persistence, row-action concurrency, actor and
+company boundaries, planned-state rejection, and file-backed restart.
+
+Authenticated paired visual evidence remains blocked by the shared BrowserSkill
+tab borrow: instance `245ea108`, Contacts tab `1770662590`, exact daemon
+response `tab is borrowed by another session` from session `gvwd`. The worker
+did not retry, open an independent tab, inspect credentials, or use Playwright.
+Details are in
+`plan/odoo-ui-parity/evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-RESCHEDULE-001/`.
