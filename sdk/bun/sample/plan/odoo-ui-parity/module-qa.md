@@ -130,6 +130,14 @@ ledger file.
 ### fleet
 ### email-marketing
 ### sms-marketing
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SMS-LINK-TRACKER-001 | `link_tracker.link_tracker_action` / Configuration → Link Tracker | `/sms-link-trackers` | list/form/graph, CRUD | blocked: BrowserSkill tab borrow timeout | blocked: BrowserSkill tab borrow timeout | source-backed contract and focused integration test complete; no visual-parity claim | shared tester 2026-09-22 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| SMS-BF-001 | Existing authenticated Odoo tab could not be borrowed before BrowserSkill timeout | `evidence/sms-marketing/2026-09-22/SMS-LINK-TRACKER-001/verification.md` | sms-marketing agent | — | repeat authenticated Odoo desktop/mobile capture | open blocker |
 ### events
 ### surveys
 ### marketing-automation

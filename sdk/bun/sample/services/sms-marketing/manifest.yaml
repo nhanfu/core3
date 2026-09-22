@@ -25,3 +25,4 @@ menu:
       label: Configuration
       items:
         - { path: /sms-phone-blacklist, label: Blacklisted Phone Numbers, icon: phone, permission: sms_marketing.manage }
+        - { path: /sms-link-trackers, label: Link Tracker, icon: link, permission: sms_marketing.read }

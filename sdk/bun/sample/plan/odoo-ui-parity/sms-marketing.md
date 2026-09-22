@@ -234,6 +234,41 @@ exposes SMS Marketing only as an installable Apps entry; `mass_mailing_sms` is
 not installed in `core3_reference`, so its SMS configuration menu/action cannot
 be opened and no paired Odoo screen claim is made.
 
+## Bounded action: SMS Marketing / Configuration / Link Tracker (wave 5)
+
+Stable ID: `SMS-LINK-TRACKER-001`.
+
+The next uncovered SMS Marketing menu action after Blacklisted Phone Numbers is
+`SMS Marketing` → `Configuration` → `Link Tracker` (`link_tracker_menu_main` is
+re-parented by `mailing_sms_menus.xml` to the SMS Configuration menu and
+uses `link_tracker.link_tracker_action`). Odoo's Link Tracker addon defines the
+action in `/home/nhanjs/projects/odoo/addons/link_tracker/views/link_tracker_views.xml`
+with `list,form,graph` modes. The list exposes Create Date, Link Tracker, Page
+Title, Target URL, Button label, click count, and optional Campaign/Medium/Source
+columns. The form is `Website Link`, groups Target Link and UTM fields, and has
+`Visit Page` plus `Clicks` stat actions. Odoo validates target URLs and prevents
+duplicate URL/UTM/label combinations; tracked URLs use generated short codes.
+
+Core3 maps this action to `services/sms-marketing/pages/link-trackers.yaml` plus
+`api/link-trackers.yaml`, and the detail form to
+`pages/link-tracker-detail.yaml` plus `api/link-tracker-detail.yaml`, joined by
+`page.id`. Migration `20260922120000-013-sms-link-trackers.yaml` creates durable
+storage and `20260922121000-014-sms-link-trackers-demo.yaml` adds fixed,
+idempotent SMS link fixtures. `sms_marketing.read` protects list/detail/stat
+reads and `sms_marketing.write` protects create, edit, and delete. Invalid URLs,
+duplicate trackers, missing records, stale row versions, empty results, and
+transport failures have explicit contracts. The action is isolated to SMS-owned
+storage; the existing Email Marketing Link Tracker implementation is not reused
+as a shared datasource.
+
+Focused coverage is `test/sms_marketing_link_trackers.integration.test.ts`.
+Authenticated Odoo desktop/mobile evidence could not be captured because the
+BrowserSkill borrow of the existing signed-in Odoo tab in browser instance
+`245ea108` timed out while awaiting the configured borrow confirmation. The tab
+remained in the user's window and was not accessed through another browser
+backend; no Odoo visual-parity claim is made. Core3 visual evidence remains
+pending until an authenticated browser pass succeeds.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

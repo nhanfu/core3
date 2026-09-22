@@ -1,0 +1,24 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_marketing_link_trackers (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL,
+        short_url VARCHAR NOT NULL,
+        title VARCHAR NOT NULL DEFAULT '',
+        url VARCHAR NOT NULL,
+        label VARCHAR NOT NULL DEFAULT '',
+        count INTEGER NOT NULL DEFAULT 0,
+        campaign_name VARCHAR NOT NULL DEFAULT '',
+        medium_name VARCHAR NOT NULL DEFAULT '',
+        source_name VARCHAR NOT NULL DEFAULT ''
+      );
+      CREATE INDEX IF NOT EXISTS sms_marketing_link_trackers_count_idx ON sms_marketing_link_trackers(count DESC, id);
+    down: DROP TABLE IF EXISTS sms_marketing_link_trackers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

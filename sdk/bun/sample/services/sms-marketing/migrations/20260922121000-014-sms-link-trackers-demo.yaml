@@ -1,0 +1,18 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO sms_marketing_link_trackers
+        (id, row_version, created_at, short_url, title, url, label, count, campaign_name, medium_name, source_name)
+      VALUES
+        ('sms-link-summer-sale', 1, TIMESTAMP '2026-01-15 12:00:00', 'https://go.core3.local/r/summer-sale', 'Summer sale landing page', 'https://core3.local/offers/summer', 'Shop now', 31, 'Summer SMS', 'SMS', 'Promotion'),
+        ('sms-link-account-help', 1, TIMESTAMP '2026-01-15 12:10:00', 'https://go.core3.local/r/account-help', 'Account help centre', 'https://docs.core3.local/account', 'Get help', 12, '', 'SMS', 'Support'),
+        ('sms-link-new-feature', 1, TIMESTAMP '2026-01-15 12:20:00', 'https://go.core3.local/r/new-feature', 'New feature announcement', 'https://core3.local/features/new', 'Learn more', 4, 'Product Updates', 'SMS', 'Product'),
+        ('sms-link-pricing', 1, TIMESTAMP '2026-01-15 12:30:00', 'https://go.core3.local/r/pricing', 'Pricing page', 'https://core3.local/pricing', 'View pricing', 0, 'Summer SMS', 'SMS', 'Promotion')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM sms_marketing_link_trackers WHERE id IN ('sms-link-summer-sale', 'sms-link-account-help', 'sms-link-new-feature', 'sms-link-pricing');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
