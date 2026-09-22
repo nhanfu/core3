@@ -1,0 +1,29 @@
+version: 0.0.48
+kind: schema
+description: Durable Odoo Fleet vehicle chatter messages and internal notes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_messages (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        actor_id VARCHAR,
+        actor_name VARCHAR,
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_messages_vehicle_idx ON fleet_vehicle_messages(vehicle_id, created_at, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_messages_company_idx ON fleet_vehicle_messages(company_name, vehicle_id, created_at, id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_messages_company_idx;
+      DROP INDEX IF EXISTS fleet_vehicle_messages_vehicle_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

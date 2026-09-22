@@ -22,8 +22,58 @@ datasources:
     permission: fleet.read
     error_states: { transport_error: { status: 503, code: FLEET_VEHICLE_TAGS_UNAVAILABLE, message: Vehicle tags are temporarily unavailable. } }
     query: "SELECT r.vehicle_id, r.tag_id AS id, 1 AS row_version, r.tag_id, t.name, t.color FROM fleet_vehicle_tag_rel r JOIN fleet_vehicle_tags t ON t.id = r.tag_id JOIN fleet_vehicles v ON v.id = r.vehicle_id WHERE r.vehicle_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR v.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY t.name, t.id"
+  - id: fleet_vehicle_detail_chatter
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_VEHICLE_CHATTER_UNAVAILABLE, message: Vehicle messages and activities are temporarily unavailable. } }
+    query: "SELECT timeline.id, timeline.row_version, timeline.vehicle_id, timeline.state, timeline.actor_name, timeline.action, timeline.action_label, timeline.detail, CAST(timeline.created_at AS VARCHAR) AS created_at FROM (SELECT m.id, m.row_version, m.vehicle_id, 'done' AS state, m.actor_name, m.action, m.action_label, m.detail, m.created_at FROM fleet_vehicle_messages m UNION ALL SELECT a.id, a.row_version, a.vehicle_id, CASE WHEN a.state = 'Done' THEN 'done' ELSE 'planned' END AS state, a.created_by AS actor_name, 'fleet.vehicles.activity.schedule' AS action, CASE WHEN a.state = 'Done' THEN 'Activity completed' ELSE 'Activity scheduled' END AS action_label, a.summary AS detail, a.created_at FROM fleet_vehicle_activities a) timeline JOIN fleet_vehicles v ON v.id = timeline.vehicle_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND timeline.vehicle_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR v.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY timeline.created_at DESC, timeline.id DESC"
 actions:
   - { id: open_fleet_vehicle_assignment_logs, type: navigate, permission: fleet.read, navigate_to: /fleet/vehicles/assignment-logs, params: { vehicle_id: '{state.id}' } }
+  - id: send_fleet_vehicle_detail_message
+    type: server_form
+    permission: fleet.write
+    title: Send message
+    action: fleet.vehicles.chatter.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.fleet_vehicle_detail.id}', expected_row_version: '{state.fleet_vehicle_detail.row_version}' }
+    refresh: [fleet_vehicle_detail, fleet_vehicle_detail_chatter]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'fleet-vehicle-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM fleet_vehicle_messages WHERE vehicle_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_VEHICLE_CHATTER_ACTOR_REQUIRED, message: An authenticated Fleet actor is required to send a message. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: FLEET_VEHICLE_CHATTER_PARENT_CHANGED, message: This vehicle changed before the message was sent. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FLEET_VEHICLE_CHATTER_CONTENT_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_messages(id, vehicle_id, company_name, row_version, actor_id, actor_name, action, action_label, detail, created_at) SELECT :message_id, v.id, v.company_name, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Fleet User'), 'fleet.vehicles.chatter.message', 'Message', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 11:00:00' FROM fleet_vehicles v WHERE v.id = :id", expect_changed: true, status: 409, code: FLEET_VEHICLE_CHATTER_NOT_CREATED, message: The vehicle message could not be sent. }
+        - { query: "UPDATE fleet_vehicles SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FLEET_VEHICLE_CHATTER_PARENT_CHANGED, message: This vehicle changed while sending the message. Reload before retrying. }
+      result: { query: "SELECT id, vehicle_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM fleet_vehicle_messages WHERE id = :message_id" }
+  - id: log_fleet_vehicle_detail_note
+    type: server_form
+    permission: fleet.write
+    title: Log note
+    action: fleet.vehicles.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{state.fleet_vehicle_detail.id}', expected_row_version: '{state.fleet_vehicle_detail.row_version}' }
+    refresh: [fleet_vehicle_detail, fleet_vehicle_detail_chatter]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'fleet-vehicle-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM fleet_vehicle_messages WHERE vehicle_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_VEHICLE_CHATTER_ACTOR_REQUIRED, message: An authenticated Fleet actor is required to log a note. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: FLEET_VEHICLE_CHATTER_PARENT_CHANGED, message: This vehicle changed before the note was logged. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FLEET_VEHICLE_CHATTER_CONTENT_INVALID, message: Note content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_messages(id, vehicle_id, company_name, row_version, actor_id, actor_name, action, action_label, detail, created_at) SELECT :message_id, v.id, v.company_name, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Fleet User'), 'fleet.vehicles.chatter.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 11:00:00' FROM fleet_vehicles v WHERE v.id = :id", expect_changed: true, status: 409, code: FLEET_VEHICLE_CHATTER_NOT_CREATED, message: The vehicle note could not be logged. }
+        - { query: "UPDATE fleet_vehicles SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FLEET_VEHICLE_CHATTER_PARENT_CHANGED, message: This vehicle changed while logging the note. Reload before retrying. }
+      result: { query: "SELECT id, vehicle_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM fleet_vehicle_messages WHERE id = :message_id" }
   - id: edit_fleet_vehicle
     type: server_form
     permission: fleet.write

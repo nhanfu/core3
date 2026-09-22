@@ -8,6 +8,20 @@ Candidate commit: working tree after vehicle create contract slice
 
 ## Current state
 
+## Current wave: Vehicle chatter `FLEET-VEHICLE-CHATTER-001` (2026-09-22)
+
+- Added durable vehicle detail messages/notes and combined them with vehicle
+  activities in the Odoo-style chatter stream.
+- Focused: **4 passed / 23 assertions** in
+  `fleet_vehicle_chatter.integration.test.ts`, including migration replay,
+  restart persistence, actor/company/content/stale guards, and page/API seam.
+- Evidence: `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-chatter-20260922/`.
+- Browser blocker: borrowing authenticated Odoo tab `1770662590` on instance
+  `245ea108` timed out awaiting confirmation; blank desktop/mobile Agent Window
+  captures only, no visual parity claim.
+
+This is a bounded feature result, not Fleet module completion or sign-off.
+
 ## Current wave: Vehicles Activity action mode `FLEET-VEHICLE-ACTIVITY-001` (2026-09-22)
 
 - Added the missing Odoo `fleet_vehicle_action` Activity mode to the existing

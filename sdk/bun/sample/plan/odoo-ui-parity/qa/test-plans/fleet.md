@@ -44,6 +44,7 @@ deterministic.
 | FLEET-FUNC-013 | Manufacturer Models stat action | Manufacturer detail opens the existing Models action with the selected `brand_id`; durable model reads remain filtered after migration replay | pass: `fleet_manufacturer_models_action.integration.test.ts`; Odoo tab borrow blocked |
 | FLEET-FUNC-014 | Vehicle clickable statusbar | Vehicle form statusbar stages update the durable vehicle state with row-version, company, invalid-status, and stale-write guards | pass: `fleet_vehicle_statusbar.integration.test.ts`; BrowserSkill borrow timeout blocks visual gate |
 | FLEET-FUNC-015 | Model Vehicles stat action | Model detail opens the Vehicles action with `model_id`; durable vehicle reads are scoped after migration replay and preserve company/empty/transport guards | pass: `fleet_model_vehicles_action.integration.test.ts`; visual gate blocked by tab ownership |
+| FLEET-FUNC-016 | Vehicle chatter | Vehicle detail combines durable messages, internal notes, and activities; message/note writes validate actor, company, content, stale row, and restart persistence | pass: `fleet_vehicle_chatter.integration.test.ts`; BrowserSkill borrow blocker |
 
 ## Workflow and integration cases
 
@@ -61,6 +62,7 @@ deterministic.
 | FLEET-WF-009 | Vehicle tag lifecycle | Vehicle detail → select unassigned tag → add → reload → remove; parent row version and relation guards prevent stale writes | pass: `fleet_vehicle_tags.integration.test.ts`; browser visual gate blocked |
 | FLEET-WF-010 | Manufacturer model navigation | Manufacturer detail → Models stat → `/fleet/config/models?brand_id=...`; only the selected manufacturer’s models are returned | pass: `fleet_manufacturer_models_action.integration.test.ts`; live browser route blocked |
 | FLEET-WF-011 | Model vehicle navigation | Model detail → Vehicles stat → `/vehicles?model_id=...`; only the selected model’s vehicles are returned | pass: `fleet_model_vehicles_action.integration.test.ts`; live browser route blocked |
+| FLEET-WF-012 | Vehicle chatter lifecycle | Vehicle detail → Send message or Log note → stream refresh; parent row version advances and stale/invalid writes are atomic | pass: `fleet_vehicle_chatter.integration.test.ts`; authenticated browser workflow blocked |
 
 ## Permission and security cases
 
@@ -75,6 +77,7 @@ deterministic.
 | FLEET-PERM-007 | Mail to Driver manager boundary | `fleet.manage` is required; actor, company, missing-driver-email, missing-template, and invalid content are rejected without writes | pass: `fleet_vehicle_mail.integration.test.ts`; browser actor gate pending |
 | FLEET-PERM-008 | Vehicle attachment boundary | Fleet read can list/download; Fleet write controls upload/remove; actor, company, active vehicle, and row-version guards are enforced | pass: `fleet_vehicle_attachments.integration.test.ts` |
 | FLEET-PERM-009 | Vehicle tag boundary | Fleet read can list; Fleet write controls add/remove; actor, company, active vehicle, duplicate, missing relation, and stale guards are enforced | pass: `fleet_vehicle_tags.integration.test.ts` |
+| FLEET-PERM-010 | Vehicle chatter boundary | Fleet read can view the stream; Fleet write plus authenticated actor controls post/note; wrong-company and stale writes are rejected without rows | pass: `fleet_vehicle_chatter.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -88,6 +91,7 @@ deterministic.
 | FLEET-UI-006 | Vehicle tag panel | 1440x900, 390x844 | Vehicle detail renders seeded colored tags, Add a tag, Remove, and responsive line-item state without overflow | blocked: no authenticated Core3 runtime and no Odoo Fleet app |
 | FLEET-UI-007 | Manufacturer Models stat action | 1440x900, 390x844 | Manufacturer detail Models stat opens the Odoo list/form Models surface scoped to the selected manufacturer without overflow | blocked: BrowserSkill tab borrow timed out; blocker captures in feature evidence |
 | FLEET-UI-008 | Model Vehicles stat action | 1440x900, 390x844 | Model detail Vehicles stat opens the Vehicles list scoped to the selected model without overflow | blocked: signed-in Odoo tab already borrowed by session `cqvt`; blocker captures in feature evidence |
+| FLEET-UI-009 | Vehicle chatter | 1440x900, 390x844 | Vehicle detail renders Messages and activities, Send message, Log note, seeded timeline, and responsive stream without overflow | blocked: BrowserSkill borrow confirmation timeout; blank Agent Window captures in feature evidence |
 
 ## Exit criteria
 

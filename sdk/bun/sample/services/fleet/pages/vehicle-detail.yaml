@@ -14,6 +14,19 @@ components:
     attachment_download_action: download_fleet_vehicle_attachment
     attachment_actions:
       - { id: remove_fleet_vehicle_attachment, label: Remove, variant: danger, permission: fleet.write }
+    message_source: fleet_vehicle_detail_chatter
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_action: send_fleet_vehicle_detail_message
+    note_action: log_fleet_vehicle_detail_note
+    message_placeholder: Send a message to vehicle followers…
+    note_placeholder: Log an internal note…
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    chatter_empty: No messages or activities yet.
     content_slot: vehicle-tags
     status_field: state
     statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]

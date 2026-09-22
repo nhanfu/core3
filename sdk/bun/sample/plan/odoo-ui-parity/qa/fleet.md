@@ -331,6 +331,19 @@ or duplicate QA was created.
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
 
+## 2026-09-22 — Vehicle chatter `FLEET-VEHICLE-CHATTER-001`
+
+- Odoo `fleet.vehicle` inherits `mail.thread` and its form contains
+  `<chatter/>`; Core3 binds `vehicle-detail` to a durable messages/activities
+  stream with Send message and Log note actions.
+- Focused verification: `fleet_vehicle_chatter.integration.test.ts` — **4
+  passed / 23 assertions**, including migration replay, restart persistence, and
+  actor/company/content/stale guards.
+- Visual gate: **BLOCKED**. BrowserSkill borrow of user tab `1770662590` on
+  instance `245ea108` timed out awaiting confirmation. Blank desktop/mobile
+  Agent Window captures are in the feature evidence directory; no visual parity
+  claim is made.
+
 ## 2026-09-22 — Model Vehicles stat action
 
 - Feature `FLEET-MODEL-VEHICLES-001` repairs the existing model detail

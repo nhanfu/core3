@@ -1,0 +1,20 @@
+version: 0.0.49
+kind: data
+description: Deterministic Fleet vehicle chatter fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_messages(
+        id, vehicle_id, company_name, row_version, actor_id, actor_name,
+        action, action_label, detail, created_at
+      ) VALUES (
+        'fleet-vehicle-message-demo-001-1', 'fleet-demo-001', 'Core3 Demo Company', 1,
+        'odoo-system', 'OdooBot', 'fleet.vehicles.created', 'Vehicle created',
+        'Vehicle created', TIMESTAMP '2026-01-15 09:00:00'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicle_messages WHERE id = 'fleet-vehicle-message-demo-001-1';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
