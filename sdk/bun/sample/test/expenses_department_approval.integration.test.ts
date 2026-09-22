@@ -15,7 +15,12 @@ describe('Expenses department approval action parity', () => {
     const page = yaml('pages/to-approve.yaml');
     expect(page.datasources).toBeUndefined();
     expect(page.page).toMatchObject({ id: 'expenses-to-approve', route: '/expenses/to-approve' });
-    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'pivot', 'graph']);
+    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form', 'pivot', 'graph']);
+    expect(page.components[0]).toMatchObject({
+      row_open_action: 'view_expense_detail',
+      row_double_click_action: 'view_expense_detail',
+      form_view: { page: 'pages/expense-detail.yaml', side_panel: false },
+    });
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('expenses-to-approve')).toContain('expenses_department_to_approve');
     expect(findAction('approve_department_expense')).toMatchObject({ permission: 'expenses.manage', operation: 'approve' });
     expect(findAction('refuse_department_expense').fields[0]).toMatchObject({ field: 'reason', required: true });

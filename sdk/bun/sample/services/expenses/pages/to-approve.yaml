@@ -16,6 +16,7 @@ components:
     views:
       - { id: list, label: List, icon: table }
       - { id: kanban, label: Kanban, icon: dashboard, group_by: employee_name, card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] } }
+      - { id: form, label: Form, icon: form }
       - { id: pivot, label: Pivot, icon: pivot, pivot: { fields: [{ field: employee_name, column: Employee }, { field: expense_date, column: Expense Date }, { field: amount, column: Total }], default: { rows: [employee_name], columns: [expense_date], measures: [{ field: amount, aggregate: sum, column: Total }] } } }
       - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: amount }
     page_size: 25
@@ -23,7 +24,9 @@ components:
     selectable: true
     row_key: id
     row_actions: menu
+    row_open_action: view_expense_detail
     row_double_click_action: view_expense_detail
+    form_view: { page: pages/expense-detail.yaml, side_panel: false }
     empty_state: { title: No expenses to approve, description: Submitted expenses in this department will appear here. }
     labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all, select_row: Select row, previous_page: Previous page, next_page: Next page }
     columns:

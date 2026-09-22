@@ -214,6 +214,7 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 
 | EXPENSE-FUNC-015 | Expense accounting document action | Posted/in-payment detail exposes the correct typed Journal Entry or Payment destination with company and permission guards | pass: focused suite; visual browser gate blocked |
 | EXPENSE-FUNC-016 | Split Expense wizard parity | Odoo tax fields/labels, exact totals, product-cost guard, tax propagation, child relations, and receipt attachment copy | pass: 6 tests / 21 assertions; visual browser gate blocked |
+| EXPENSE-FUNC-017 | Department approval Form mode | Odoo `list,kanban,form,pivot,graph` order and shared detail binding for the department approval action, preserving scope and guards | pass: focused suite; visual browser gate blocked |
 
 ## Batch 12 - Split Expense wizard parity repair (2026-09-22)
 
@@ -230,3 +231,24 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 - BrowserSkill instance `245ea108` was connected, but required tab
   `1770662590` was borrowed by session `cqvt`; this worker stopped session
   `czha` and made no current Odoo desktop/mobile visual claim.
+
+## Batch 13 - department approval Form mode (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-017`, the missing Form mode on Odoo's
+  `action_hr_expense_department_to_approve`.
+- Core3 now declares the source order `list,kanban,form,pivot,graph`, binds the
+  Form mode to the existing `expense-detail` page, and makes row open and
+  double-click use the existing permissioned detail action. No new schema or
+  module renderer was added.
+- Focused evidence is under
+  `odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-017/`.
+- First focused run passed 3 tests / 14 assertions. The later full corpus ran
+  60 tests with 51 passing; global discovery failures are caused by unrelated
+  concurrent Purchase/Fleet/Recruitment/Time Off edits, including the Purchase
+  `upload_purchase_bill` action reference. Expenses page/API validation, CSS,
+  frontend build, and diff-check passed; the audit remains blocked by that
+  unrelated discovery defect.
+- BrowserSkill instance `245ea108` was connected, but tab `1770662590` was
+  already borrowed by session `yabv`; the borrow was denied. This worker
+  stopped session `wryg`, captured no Odoo DOM or screenshots, and makes no
+  desktop/mobile visual-parity claim.

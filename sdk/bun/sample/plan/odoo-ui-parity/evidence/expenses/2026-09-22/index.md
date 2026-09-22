@@ -6,3 +6,4 @@
 - [EXPENSE-FUNC-014](EXPENSE-FUNC-014/README.md) — Employee Expenses action analytics
 - [EXPENSE-FUNC-015](EXPENSE-FUNC-015/README.md) — accounting document smart-button action
 - [EXPENSE-FUNC-016](EXPENSE-FUNC-016/README.md) — Split Expense wizard field, guard, tax, and attachment parity
+- [EXPENSE-FUNC-017](EXPENSE-FUNC-017/README.md) — department approval Form mode and detail binding

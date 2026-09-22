@@ -43,6 +43,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-FUNC-014 | Employee Expenses action | Read approved/to-pay scope with status/payment filters, list/kanban/form/pivot/graph order, stable total/tax fields, empty/error states, and permission boundary | pass: `expenses_employee_action.integration.test.ts`; visual browser gate blocked |
 | EXPENSE-FUNC-015 | Expense accounting document action | Posted/in-payment detail resolves the employee-paid journal entry or company-paid originating payment, persists the typed relation, enforces company/accounting-read boundaries, and opens the existing Accounting detail route | pass: `expenses_accounting_link.integration.test.ts`; visual browser gate blocked |
 | EXPENSE-FUNC-016 | Split Expense wizard parity | Odoo tax fields/labels, exact totals, product-cost guard, tax propagation, child relations, and receipt attachment copy persist without partial writes | pass: `expenses_split.integration.test.ts`; visual browser gate blocked |
+| EXPENSE-FUNC-017 | Department approval Form mode | Department-scoped approval action exposes Odoo `list,kanban,form,pivot,graph` order and opens the shared expense detail form without changing scope or guards | pass: `expenses_department_approval.integration.test.ts`; visual browser gate blocked |
 
 ## Workflow and integration cases
 
@@ -81,6 +82,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-UI-008 | Employee Expenses action | 1440x900, 390x844 | Accounting/Payables action exposes Odoo view order, default scope, analytics tabs, and responsive no-overflow layout | blocked; `EXPENSE-FUNC-014` evidence |
 | EXPENSE-UI-009 | Expense accounting smart button | 1440x900, 390x844 | Posted/in-payment detail exposes the correct Journal Entry or Payment smart button and opens the Accounting detail form without overflow | blocked; `EXPENSE-FUNC-015` evidence |
 | EXPENSE-UI-010 | Split Expense wizard | 1440x900, 390x844 | Odoo line fields, totals/warning, disabled product-cost action, attachment behavior, and responsive modal/grid match the live reference | blocked; `EXPENSE-FUNC-016` evidence |
+| EXPENSE-UI-011 | Department approval Form mode | 1440x900, 390x844 | Expense to Approve exposes the Odoo view order and usable detail form without overflow | blocked; `EXPENSE-FUNC-017` evidence |
 
 ## Exit criteria
 

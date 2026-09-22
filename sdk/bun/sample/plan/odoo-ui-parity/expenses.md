@@ -664,3 +664,27 @@ Focused evidence is under
 instance `245ea108` was connected, but the signed-in Odoo tab was already
 borrowed by session `wbjh`; this worker did not seize or bypass that ownership.
 No Odoo desktop/mobile visual-parity claim is made.
+
+## Department approval Form mode follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-017`.
+
+The next genuinely missing stable-ID behavior was the Form mode on Odoo's
+department-scoped `action_hr_expense_department_to_approve`. The source action
+at `/home/nhanjs/projects/odoo/addons/hr_expense/views/hr_expense_views.xml:607-615`
+declares `list,kanban,form,pivot,graph`, keeps submitted expenses scoped to the
+active department, and reuses the `hr.expense` form.
+
+Core3 now declares that exact mode order in `pages/to-approve.yaml`, binds the
+Form mode to the existing `pages/expense-detail.yaml` surface with
+`side_panel: false`, and exposes the existing permissioned detail action for
+both row-open and double-click behavior. The API remains service-owned in
+`api/to-approve.yaml`, joined by `page.id: expenses-to-approve`; no migration,
+page-local SQL, or Expenses-specific renderer was added.
+
+Focused evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-017/`. BrowserSkill
+instance `245ea108` was connected, but authenticated tab `1770662590` was
+already borrowed by session `yabv`; this worker did not seize that tab. No
+Odoo DOM or desktop/mobile screenshot was captured, so visual parity remains
+blocked and is not claimed.
