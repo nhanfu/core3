@@ -1,0 +1,23 @@
+version: 0.0.27
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_multiple_request_departments (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT OR IGNORE INTO time_off_multiple_request_departments(id, name, company_name, active) VALUES
+        ('department-demo-management', 'Management', 'YShip Demo Company', TRUE),
+        ('department-demo-product', 'Product', 'YShip Demo Company', TRUE);
+      CREATE INDEX IF NOT EXISTS time_off_multiple_request_departments_scope_idx
+        ON time_off_multiple_request_departments(company_name, active, name);
+    down: |
+      DROP INDEX IF EXISTS time_off_multiple_request_departments_scope_idx;
+      DROP TABLE IF EXISTS time_off_multiple_request_departments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

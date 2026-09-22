@@ -15,6 +15,10 @@ datasources:
     permission: time_off.manage
     single: false
     query: "SELECT id AS value, name AS label FROM time_off_multiple_request_employees WHERE active = TRUE ORDER BY name"
+  - id: multiple_request_departments
+    permission: time_off.manage
+    single: false
+    query: "SELECT d.id AS value, d.name || ' (' || CAST(COUNT(e.id) AS VARCHAR) || ')' AS label FROM time_off_multiple_request_departments d LEFT JOIN time_off_multiple_request_employees e ON e.department_name = d.name AND e.company_name = d.company_name AND e.active = TRUE WHERE d.active = TRUE GROUP BY d.id, d.name ORDER BY d.name"
   - id: multiple_request_modes
     permission: time_off.manage
     single: false
@@ -76,4 +80,31 @@ actions:
       - { field: employee_ids, label: Employees, type: multi-select, multiple: true, options_source: multiple_request_employees, placeholder: Everyone, required: true }
       - { field: date_from, label: Dates, type: date, required: false }
       - { field: date_to, label: Dates, type: date, required: false }
+      - { field: description, label: Description, type: textarea, placeholder: 'e.g. Extra recuperation, Company unavailability, ...' }
+  - id: create_department_requests
+    type: server_form
+    permission: time_off.manage
+    title: Multiple Requests — By Department
+    modal_style: time_off_multiple
+    submit_label: Generate Time Off
+    cancel_label: Discard
+    action: time_off.requests.generate_multiple.department
+    handler: yaml_mutation
+    refresh: [time_off_approval_requests, leave_requests]
+    success_message: Time off generated for the selected department.
+    mutation:
+      steps:
+        - query: "INSERT INTO leave_requests(id, name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days, reason, approver, state) SELECT 'leave-request-group-' || e.id || '-' || CAST(:date_from AS DATE), 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/' || e.id, e.id, e.name, t.id, t.name, CAST(:date_from AS DATE), CAST(:date_to AS DATE), CAST(CAST(:date_to AS DATE) - CAST(:date_from AS DATE) + 1 AS DECIMAL(18,3)), NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), NULL, CASE WHEN t.requires_approval = FALSE THEN 'Approved' ELSE 'Submitted' END FROM time_off_multiple_request_employees e JOIN time_off_multiple_request_departments d ON d.name = e.department_name AND d.company_name = e.company_name AND d.id = :department_id JOIN leave_types t ON t.id = :holiday_status_id WHERE e.active = TRUE AND d.active = TRUE"
+      guards:
+        - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :holiday_status_id AND state = 'Active' AND requires_approval = TRUE", status: 422, code: TIME_OFF_MULTI_TYPE_INVALID, message: Select an active Time Off Type. }
+        - { query: "SELECT 1 AS ok FROM time_off_multiple_request_departments d JOIN time_off_multiple_request_employees e ON e.department_name = d.name AND e.company_name = d.company_name WHERE d.id = :department_id AND d.active = TRUE AND e.active = TRUE", status: 422, code: TIME_OFF_MULTI_DEPARTMENT_INVALID, message: Select an active department with employees. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_MULTI_DATES_INVALID, message: Dates must be valid and the end date cannot be before the start date. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests r JOIN time_off_multiple_request_employees e ON e.id = r.employee_id JOIN time_off_multiple_request_departments d ON d.id = :department_id AND d.active = TRUE AND d.name = e.department_name AND d.company_name = e.company_name WHERE e.active = TRUE AND r.date_from <= CAST(:date_to AS DATE) AND r.date_to >= CAST(:date_from AS DATE) AND r.state NOT IN ('Refused', 'Cancelled'))", status: 409, code: TIME_OFF_MULTI_OVERLAP, message: One or more department employees already have time off in the selected dates. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests r JOIN time_off_multiple_request_employees e ON e.id = r.employee_id JOIN time_off_multiple_request_departments d ON d.id = :department_id AND d.active = TRUE AND d.name = e.department_name AND d.company_name = e.company_name WHERE e.active = TRUE AND r.name IN (SELECT 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/' || selected.id FROM time_off_multiple_request_employees selected JOIN time_off_multiple_request_departments selected_d ON selected_d.id = :department_id AND selected_d.active = TRUE AND selected_d.name = selected.department_name AND selected_d.company_name = selected.company_name WHERE selected.active = TRUE))", status: 409, code: TIME_OFF_MULTI_EXISTS, message: These department requests have already been generated. }
+      result: { query: "SELECT COUNT(*) AS generated_count FROM leave_requests WHERE name LIKE 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/%'" }
+    fields:
+      - { field: holiday_status_id, label: Time Off Type, type: select, options_source: multiple_request_types, required: true }
+      - { field: department_id, label: Department, type: select, options_source: multiple_request_departments, required: true }
+      - { field: date_from, label: Dates, type: date, required: true }
+      - { field: date_to, label: Dates, type: date, required: true }
       - { field: description, label: Description, type: textarea, placeholder: 'e.g. Extra recuperation, Company unavailability, ...' }
