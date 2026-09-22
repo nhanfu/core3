@@ -389,3 +389,46 @@ the source action or protect those derived fields.
   ownership and forbids an independent login; therefore no desktop/mobile
   captures were created. The exact blocker is recorded under
   `evidence/blog/2026-09-22/BLOG-POST-NEW-001/browser-check.md`.
+
+## Blog Post publishing date slice — 2026-09-22
+
+The next genuinely uncovered bounded source behavior is Odoo's editable
+`blog.post.post_date` field. `website_pages_views.xml` exposes `post_date` in
+the Blog Post form's Publishing Options group, while `models/website_blog.py`
+computes it from `published_date` or `create_date` and writes an edited value
+back through the `published_date` inverse. Core3 previously displayed only a
+read-only Published on value and could not persist a scheduled/publishing date.
+
+Stable ID: `BLOG-POST-DATE-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| Blog Post form exposes editable Publishing date | Detail form showed `published_date` as read-only | Expose the date in the shared Odoo form and include it in the existing edit contract | page/API and Odoo source assertions |
+| `post_date` inverse persists through `published_date` | No date field was accepted by the edit mutation | Map the projected Odoo date to durable `blog_posts.published_date` with blank-to-null normalization | persisted update, clear, and reload assertions |
+| Date edits honor model and actor boundaries | Edit accepted no date validation specific to this field | Add ISO/date-time validation, company/missing guards, required row version, and existing `blog.write` permission | invalid, unauthorized, stale, and wrong-company assertions |
+
+### Core3 contract
+
+- Presentation remains layout-only in `services/blog/pages/post-detail.yaml`.
+- `services/blog/api/post-detail.yaml` remains the matching backend contract;
+  its `published_date` field is the durable inverse storage for Odoo's
+  computed `post_date` projection. The existing `post_date` list/kanban
+  projection continues to fall back to `created_at` when the inverse is null.
+- No migration is required because `blog_posts.published_date` already exists.
+- Date edits require `blog.write`; read/detail access remains `blog.read`, and
+  row-version, company, missing-record, invalid-date, and blank-date behavior
+  remain explicit and atomic.
+
+### Acceptance checklist
+
+- Blog Post detail visibly labels the Odoo Publishing date and the edit form
+  can save a valid date/time or clear it back to the create-date projection.
+- Invalid, stale, missing, wrong-company, and read-only requests fail without
+  changing the post; valid changes survive file-backed restart and migration
+  replay.
+- BrowserSkill desktop/mobile captures for the live Odoo action and Core3 route
+  are retained under `evidence/blog/2026-09-22/BLOG-POST-DATE-001/`. If either
+  runtime or tab ownership is unavailable, the exact blocker and absence of
+  paired visual-parity evidence are recorded.

@@ -199,3 +199,12 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 | BLOG-POST-NEW-RESTART-001 | File-backed restart durability | Same focused test closes/reopens DuckDB, reapplies migrations, and finds the created Draft with derived blog/company fields | pass |
 | BLOG-POST-NEW-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-NEW-001/browser-check.md` | blocked: BrowserSkill instance `245ea108` was connected, but the signed-in Odoo tab was already borrowed by team session `wabp`; no independent login or visual-parity claim |
 | BLOG-QA-014 | Scoped Blog regression/tooling gates | `evidence/blog/2026-09-22/BLOG-POST-NEW-001/test-results.md` — focused 4/22 and Blog wildcard 46/269; UI audit 831/839/1,732; targeted ESLint, Blog Sass, full frontend build, and `git diff --check` | pass; authenticated paired Odoo visual parity remains blocked |
+
+## Blog Post publishing date slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-POST-DATE-FUNC-001 | Odoo `post_date` mapping and durable edit | `test/blog_post_date.integration.test.ts` — source-backed Publishing Options assertion, page/API separation, valid date persistence, clear-to-create-date projection, and restart durability | pass: 4 tests / 21 assertions |
+| BLOG-POST-DATE-PERM-001 | Date mutation boundary | Same focused test sends the real `blog.posts.update` action as a read-only actor and checks 403, invalid-date, wrong-company, missing, and stale guards without partial writes | pass |
+| BLOG-POST-DATE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-DATE-001/browser-check.md` | blocked: BrowserSkill borrow confirmation timed out; no visual-parity claim |
+| BLOG-QA-015 | Scoped Blog regression/tooling gates | `evidence/blog/2026-09-22/BLOG-POST-DATE-001/test-results.md` — focused 4/21, Blog wildcard 50/290, audit 843/851/1,761, Blog Sass, targeted ESLint, full frontend build, and diff-check passed | pass; paired Odoo visual parity remains blocked |

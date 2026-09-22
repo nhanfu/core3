@@ -69,13 +69,15 @@ actions:
     mutation:
       operation: update
       table: blog_posts
-      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags]
+      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags, published_date]
       required: [blog_id, blog_name, name]
+      normalize_empty: [published_date]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
         - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE :published_date IS NULL OR TRY_CAST(CAST(:published_date AS VARCHAR) AS TIMESTAMP) IS NOT NULL", status: 422, code: BLOG_POST_DATE_INVALID, message: Publishing date must be a valid date and time. }
       result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     fields:
       - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
@@ -86,6 +88,7 @@ actions:
       - { field: teaser, label: Teaser, type: textarea }
       - { field: content_html, label: Content, type: textarea }
       - { field: tags, label: Tags, type: text }
+      - { field: published_date, label: Publishing date, type: datetime }
   - id: add_blog_post_tag
     type: server_form
     permission: blog.write

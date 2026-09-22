@@ -119,3 +119,13 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-POST-WEBSITE-PERM-001 | permission/security | Blog reader, forbidden actor, unauthenticated visitor | Action is declared `blog.read`; private datasource remains guarded by existing 401/403 contracts and no write action is introduced | pass: contract assertions; full authenticated actor/browser matrix remains open |
 | BLOG-POST-WEBSITE-WF-001 | workflow/data | Published, draft, and archived post rows | Published public detail resolves; draft/archived public reads remain unavailable because active Published predicates are unchanged | pass: public SQL and route contract assertions |
 | BLOG-POST-WEBSITE-UI-001 | responsive/visual | Authenticated Odoo reference, 1440x900 and emulated 390x844 | Compare Odoo `open_website_url` behavior and Core3 action at desktop/mobile | blocked: shared signed-in Odoo tab was borrowed by another session; same-instance task tab captured Odoo `/blog` Error 404 at both viewports |
+
+## BLOG-POST-DATE-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-POST-DATE-FUNC-001 | functional/data | Blog Editor with `blog.write`; seeded draft post | Edit the Odoo Publishing date, persist it through `published_date`, and expose the same value after reload | pass: focused 4-test slice, 21 assertions |
+| BLOG-POST-DATE-WF-001 | workflow/data | Same post with a previously persisted date | Clear the date; the inverse stores NULL and the projected `post_date` falls back to the durable create date without changing publication state | pass: focused slice |
+| BLOG-POST-DATE-PERM-001 | permission/security | Blog reader with `blog.read` only | Date update returns 403 and leaves the post/version unchanged; invalid, missing, wrong-company, and stale requests are rejected atomically | pass: focused slice |
+| BLOG-POST-DATE-RESTART-001 | data/regression | File-backed DuckDB; date update then close/reopen and reapply migrations | Persisted `published_date` and projected `post_date` remain stable after restart | pass: focused slice |
+| BLOG-POST-DATE-UI-001 | responsive/visual | Authenticated Odoo reference and Core3, 1440x900 and 390x844 | Compare the Publishing Options form at both viewports; record exact BrowserSkill/runtime blockers and make no visual-parity claim when unavailable | blocked: borrow confirmation timed out; no captures or visual-parity claim |

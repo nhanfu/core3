@@ -20,7 +20,7 @@ components:
       - { field: content_html, label: Content, type: textarea }
       - { field: tags, label: Tags }
       - { field: visits, label: Views }
-      - { field: published_date, label: Published on }
+      - { field: published_date, label: Publishing date, type: datetime }
       - { field: state, label: Status, type: StatusChip }
   - type: LineItemGrid
     mount_in: previous-panel
