@@ -1,0 +1,69 @@
+page: { id: ecommerce-delivery-zip-prefixes }
+datasources:
+  - id: ecommerce_delivery_zip_prefixes
+    permission: ecommerce.technical
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_DELIVERY_ZIP_PREFIXES_UNAUTHENTICATED, message: Sign in to view delivery zip prefixes. }
+      forbidden: { status: 403, code: ECOMMERCE_DELIVERY_ZIP_PREFIXES_FORBIDDEN, message: You do not have permission to manage delivery zip prefixes. }
+      transport_error: { status: 503, code: ECOMMERCE_DELIVERY_ZIP_PREFIXES_UNAVAILABLE, message: Delivery zip prefixes are temporarily unavailable. }
+    query: "SELECT id, row_version, name, CAST(created_at AS VARCHAR) AS created_at, CAST(updated_at AS VARCHAR) AS updated_at FROM ecommerce_delivery_zip_prefixes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_ecommerce_delivery_zip_prefix
+    type: server_form
+    permission: ecommerce.technical
+    title: New Zip Prefix
+    action: ecommerce.delivery_zip_prefixes.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_delivery_zip_prefixes]
+    mutation:
+      operation: insert
+      table: ecommerce_delivery_zip_prefixes
+      generated: [id]
+      fields: [name]
+      required: [name]
+      defaults: { row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_REQUIRED, message: Zip prefix is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_zip_prefixes WHERE name = UPPER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_EXISTS, message: This zip prefix already exists. }
+      steps:
+        - { query: "UPDATE ecommerce_delivery_zip_prefixes SET name = UPPER(TRIM(CAST(:name AS VARCHAR))), updated_at = CURRENT_TIMESTAMP WHERE id = :id", expect_changed: true, status: 409, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_CREATE_FAILED, message: Zip prefix could not be created. }
+      result: { query: "SELECT * FROM ecommerce_delivery_zip_prefixes WHERE id = :id" }
+    fields:
+      - { field: name, label: Prefix, type: text, required: true }
+  - id: edit_ecommerce_delivery_zip_prefix
+    type: server_form
+    permission: ecommerce.technical
+    title: Edit Zip Prefix
+    action: ecommerce.delivery_zip_prefixes.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_delivery_zip_prefixes]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_delivery_zip_prefixes WHERE id = :id", status: 404, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_NOT_FOUND, message: Zip prefix not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_REQUIRED, message: Zip prefix is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_zip_prefixes WHERE name = UPPER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_EXISTS, message: This zip prefix already exists. }
+      steps:
+        - { query: "UPDATE ecommerce_delivery_zip_prefixes SET name = UPPER(TRIM(CAST(:name AS VARCHAR))), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_STALE, message: This zip prefix changed before it was saved. Reload before editing. }
+      result: { query: "SELECT * FROM ecommerce_delivery_zip_prefixes WHERE id = :id" }
+    fields:
+      - { field: name, label: Prefix, type: text, required: true }
+  - id: delete_ecommerce_delivery_zip_prefix
+    type: server
+    permission: ecommerce.technical
+    action: ecommerce.delivery_zip_prefixes.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete zip prefix {{row.name}}?'
+    refresh: [ecommerce_delivery_zip_prefixes]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: ecommerce_delivery_zip_prefixes
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_delivery_zip_prefixes WHERE id = :id", status: 404, code: ECOMMERCE_DELIVERY_ZIP_PREFIX_NOT_FOUND, message: Zip prefix not found. }
+      result: { query: "SELECT TRUE AS deleted" }

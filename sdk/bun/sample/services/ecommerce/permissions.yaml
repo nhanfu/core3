@@ -1,6 +1,6 @@
 permissions:
   - ecommerce.read
   - ecommerce.write
+  - ecommerce.technical
 database:
   driver: duckdb
-

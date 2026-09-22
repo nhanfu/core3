@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Delivery Zip Prefixes (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001`, 2026-09-22)
+
+- Source comparison: pass. Odoo 19 `website_sale_menus.xml` registers the
+  technical-only `menu_delivery_zip_prefix` action; `delivery.zip.prefix`
+  requires a unique Prefix and uppercases it on create/write; the list/form
+  action is `delivery.action_delivery_zip_prefix_list` with the documented
+  empty-state help.
+- Core3 contract: pass. The technical permission, Configuration > Zip Prefix
+  menu item, separate page/API YAML contracts joined by
+  `ecommerce-delivery-zip-prefixes`, durable migrations 169/170, normalized
+  CRUD, uniqueness, empty/error states, and row-version guards are covered by
+  the focused suite.
+- Focused verification: `bun test
+  ./test/ecommerce_delivery_zip_prefixes.integration.test.ts --timeout 30000`
+  — **3 passed, 30 assertions, 0 failures**. Coverage includes source/action
+  comparison, page/API binding, permission declarations, deterministic and
+  idempotent fixtures, search/empty/transport-error states, uppercase CRUD,
+  duplicate/blank/missing/stale guards, delete, and DuckDB restart.
+- Browser/Odoo status: BrowserSkill daemon and browser instance `245ea108`
+  were ready. Borrowing authenticated tab `1770662590` was denied because it
+  was already borrowed by session `mczn`; the owned session was stopped. No
+  independent login or alternate browser backend was used, and no visual
+  parity claim is made.
+- Evidence: `evidence/ecommerce/2026-09-22/ecom-checkout-delivery-zip-prefixes-001/`.
+
 ## Online Sales Analysis (`ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`, 2026-09-22)
 
 - Source comparison: pass. Odoo 19

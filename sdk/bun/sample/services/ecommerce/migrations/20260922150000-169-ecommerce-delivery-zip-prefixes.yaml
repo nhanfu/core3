@@ -1,0 +1,23 @@
+version: 0.0.169
+kind: schema
+description: durable Website Sale delivery zip prefixes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_delivery_zip_prefixes (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_delivery_zip_prefixes_name_idx ON ecommerce_delivery_zip_prefixes(LOWER(name));
+      CREATE INDEX IF NOT EXISTS ecommerce_delivery_zip_prefixes_row_version_idx ON ecommerce_delivery_zip_prefixes(id, row_version);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_delivery_zip_prefixes_row_version_idx;
+      DROP INDEX IF EXISTS ecommerce_delivery_zip_prefixes_name_idx;
+      DROP TABLE IF EXISTS ecommerce_delivery_zip_prefixes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

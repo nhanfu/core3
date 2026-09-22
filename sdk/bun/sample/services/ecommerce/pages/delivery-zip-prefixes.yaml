@@ -1,0 +1,18 @@
+title: Zip Prefix
+page: { id: ecommerce-delivery-zip-prefixes, route: /ecommerce/delivery-zip-prefixes, breadcrumb: [eCommerce, Configuration, Zip Prefix], auth: { require: [ecommerce.technical] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_delivery_zip_prefixes
+    create_action: create_ecommerce_delivery_zip_prefix
+    create_label: New
+    search: { label: Search zip prefixes, placeholder: Search prefix... }
+    columns:
+      - { field: name, label: Prefix, type: PrimaryEntityCell }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_delivery_zip_prefix, label: Edit, permission: ecommerce.technical }
+      - { id: delete_ecommerce_delivery_zip_prefix, label: Delete, permission: ecommerce.technical, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: Manage delivery zip prefixes, description: Delivery zip prefixes are assigned to delivery carriers to restrict which zips it is available to. }

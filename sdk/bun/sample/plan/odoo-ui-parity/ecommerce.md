@@ -1,6 +1,36 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Online Sales Analysis slice; module sign-off remains open)
+Status: qa-in-progress (bounded Delivery Zip Prefix slice; module sign-off remains open)
+
+## Bounded feature — Delivery Zip Prefixes (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001`)
+
+Wave 55 selects the next missing Website Sale configuration action after the
+completed delivery-method slice: Odoo's technical-only `Zip Prefix` menu entry
+(`menu_delivery_zip_prefix` → `delivery.action_delivery_zip_prefix_list`). The
+Odoo 19 `delivery.zip.prefix` model stores a required unique `Prefix`,
+uppercases values on create/write, and exposes list/form CRUD. The action help
+text explains that prefixes are assigned to delivery carriers to restrict the
+zip codes where a carrier is available.
+
+Core3 adds the technical permission `ecommerce.technical`, the
+`/ecommerce/delivery-zip-prefixes` route, and separate
+`pages/delivery-zip-prefixes.yaml` / `api/delivery-zip-prefixes.yaml`
+contracts joined by `page.id: ecommerce-delivery-zip-prefixes`. Migrations
+`0.0.169` and `0.0.170` add an idempotent durable table and deterministic
+prefix fixtures. The page/API provide technical-only read/write CRUD, uppercase
+normalization, case-insensitive uniqueness, empty and transport-error states,
+missing and stale guards, and DuckDB restart persistence. Carrier assignment
+and postal-code availability evaluation remain outside this bounded catalog
+slice.
+
+Focused verification is in
+`test/ecommerce_delivery_zip_prefixes.integration.test.ts` (3 tests, 30
+assertions). Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-checkout-delivery-zip-prefixes-001/`.
+BrowserSkill comparison on browser instance `245ea108` was attempted, but the
+authenticated Odoo tab `1770662590` was already borrowed by session `mczn`;
+the borrow was denied and no live desktop/mobile capture or visual-parity claim
+is made.
 
 ## Bounded feature — Online Sales Analysis (`ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`)
 

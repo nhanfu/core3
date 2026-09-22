@@ -7,6 +7,23 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001
+
+- ECOM-FUNC-094: compare Odoo's technical-only `menu_delivery_zip_prefix` →
+  `delivery.action_delivery_zip_prefix_list`, the `delivery.zip.prefix` model,
+  required unique Prefix field, uppercase create/write normalization, and
+  list/form empty-state help with the separate Core3 page/API contracts.
+- ECOM-WF-094: create, edit, search, and delete durable prefixes; preserve
+  uppercase values, reject blank/duplicate/missing/stale records, replay
+  migrations idempotently, and verify persistence after DuckDB restart.
+- ECOM-PERM-094: require `ecommerce.technical` for the technical menu, page,
+  datasource, and CRUD actions; keep carrier assignment and delivery-rate
+  evaluation outside this bounded slice.
+- ECOM-UI-094: compare the authenticated Odoo Zip Prefix list/form at desktop
+  and iPhone-14 mobile viewports. BrowserSkill tab `1770662590` was already
+  borrowed by session `mczn`, so the exact borrow denial is recorded and
+  visual sign-off is withheld.
+
 ## ECOM-REPORT-ONLINE-SALES-ANALYSIS-001
 
 - ECOM-FUNC-093: compare Odoo's `sale_report_action_dashboard`, website-order

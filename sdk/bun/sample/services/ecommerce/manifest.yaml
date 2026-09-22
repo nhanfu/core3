@@ -92,6 +92,10 @@ menu:
           label: Delivery Methods
           icon: truck
           permission: ecommerce.read
+        - path: /ecommerce/delivery-zip-prefixes
+          label: Zip Prefix
+          icon: map-pin
+          permission: ecommerce.technical
         - path: /ecommerce/payment-transactions
           label: Payment Transactions
           icon: credit-card

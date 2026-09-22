@@ -4,6 +4,11 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 55 bounded slice: `ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001`
+(implementation and focused verification complete: 3 tests, 30 assertions;
+BrowserSkill could not borrow authenticated Odoo tab `1770662590` because it
+was owned by session `mczn`; no visual-parity claim; module sign-off remains
+open).
 Latest Wave 54 bounded slice: `ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`
 (implementation and focused verification complete: 3 tests, 26 assertions;
 BrowserSkill could not borrow the signed-in Odoo tab because it was owned by

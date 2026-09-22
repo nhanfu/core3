@@ -1,0 +1,17 @@
+version: 0.0.170
+kind: data
+description: deterministic Website Sale delivery zip prefix fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_delivery_zip_prefixes (id, row_version, name) VALUES
+        ('ecommerce-delivery-zip-prefix-100', 1, '100'),
+        ('ecommerce-delivery-zip-prefix-200', 1, '200'),
+        ('ecommerce-delivery-zip-prefix-700-exact', 1, '700$')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_delivery_zip_prefixes WHERE id IN ('ecommerce-delivery-zip-prefix-100', 'ecommerce-delivery-zip-prefix-200', 'ecommerce-delivery-zip-prefix-700-exact');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
