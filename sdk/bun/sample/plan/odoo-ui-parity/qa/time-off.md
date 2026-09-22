@@ -221,6 +221,22 @@ blocker.
   or visual-parity claim was made.
 - Disposition: conditional bounded pass; no full Time Off sign-off.
 
+## 2026-09-22 bounded candidate: public-holiday calendar context
+
+- Stable ID: `TIMEOFF-PUBLIC-HOLIDAY-CALENDAR-001`.
+- Source action: `resource_calendar_global_leaves_action_from_calendar` from
+  `addons/hr_holidays/views/resource_views.xml`; global holidays are scoped to
+  the active working calendar.
+- Core3 contract: `pages/public-holiday-calendar.yaml` and
+  `api/public-holiday-calendar.yaml`, joined by `page.id`.
+- Focused verification: **PASS**, 3 tests / 48 assertions in
+  `test/time_off_public_holidays.integration.test.ts`.
+- Browser gate: **BLOCKED**; tab `1770662590` was borrowed by session `yabv`
+  and the task-owned Odoo route showed Discuss. Captures and cleanup are in
+  `evidence/time-off/2026-09-22/TIMEOFF-PUBLIC-HOLIDAY-CALENDAR-001/`.
+- Disposition: conditional bounded pass; no visual-parity claim or full
+  Time Off sign-off.
+
 ## 2026-09-22 bounded candidate: Time Off Summary QWeb-PDF report
 
 - Stable ID: `TIMEOFF-SUMMARY-REPORT-001`.

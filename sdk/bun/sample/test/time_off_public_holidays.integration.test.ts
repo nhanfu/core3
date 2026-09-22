@@ -13,8 +13,10 @@ describe('Time Off Public Holidays configuration', () => {
   test('keeps the Odoo list/detail contract and page/API page-id separation', () => {
     const discovered = discoverPages(join(root, '..'));
     const list = yaml('pages/public-holidays.yaml');
+    const calendar = yaml('pages/public-holiday-calendar.yaml');
     const detail = yaml('pages/public-holiday-detail.yaml');
     const listApi = yaml('api/public-holidays.yaml');
+    const calendarApi = yaml('api/public-holiday-calendar.yaml');
     const detailApi = yaml('api/public-holiday-detail.yaml');
     const listView = list.components.find((component: any) => component.type === 'ListView');
     const form = detail.components.find((component: any) => component.type === 'OdooFormView');
@@ -31,16 +33,24 @@ describe('Time Off Public Holidays configuration', () => {
       row_actions: 'menu',
       empty_state: { title: 'No public holidays found' },
     });
+    expect(list.toolbar).toContainEqual(expect.objectContaining({ id: 'open_public_holiday_calendar', action: 'open_public_holiday_calendar' }));
+    expect(calendar.page).toMatchObject({ id: 'public-holiday-calendar', route: '/public-holidays/calendar', auth: { require: ['time_off.manage'] } });
+    expect(calendar.components[0].views).toContainEqual(expect.objectContaining({ id: 'calendar', date_field: 'date_from', end_date_field: 'date_to' }));
+    expect(calendar.components[0].filters).toContainEqual(expect.objectContaining({ field: 'calendar_name' }));
+    expect(calendar.datasources).toBeUndefined();
+    expect(calendar.actions).toBeUndefined();
     expect(listView.date_range).toMatchObject({ from_field: 'date_from', to_field: 'date_to', default_preset: 'year' });
     expect(form).toMatchObject({ source: 'public_holiday_detail', editable: true });
     expect(discovered.pageDatasources.get('public-holiday-detail')).toEqual(['public_holiday_detail']);
     expect(listApi.page.id).toBe('public-holidays');
+    expect(calendarApi.page.id).toBe('public-holiday-calendar');
     expect(detailApi.page.id).toBe('public-holiday-detail');
     expect(listApi.datasources[0]).toMatchObject({ id: 'public_holidays', permission: 'time_off.manage' });
     expect(listApi.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'TIME_OFF_PUBLIC_HOLIDAYS_UNAVAILABLE' });
     expect(detailApi.datasources[0]).toMatchObject({ id: 'public_holiday_detail', single: true, permission: 'time_off.manage' });
-    expect([...listApi.actions, ...detailApi.actions].every((action: any) => action.permission === 'time_off.manage')).toBe(true);
-    expect(listApi.actions.map((action: any) => action.id)).toEqual(['view_public_holiday', 'create_public_holiday', 'delete_public_holiday']);
+    expect([...listApi.actions, ...calendarApi.actions, ...detailApi.actions].every((action: any) => action.permission === 'time_off.manage')).toBe(true);
+    expect(listApi.actions.map((action: any) => action.id)).toEqual(['view_public_holiday', 'create_public_holiday', 'delete_public_holiday', 'open_public_holiday_calendar']);
+    expect(calendarApi.actions.map((action: any) => action.id)).toEqual(['back_to_public_holidays', 'open_public_holiday_from_calendar']);
     expect(detailApi.actions[0].mutation).toMatchObject({ operation: 'update', table: 'public_holidays', concurrency: { required: true } });
     expect(detailApi.actions[0].mutation.guards.map((guard: any) => guard.status)).toEqual([404, 422, 409]);
   });
@@ -51,6 +61,7 @@ describe('Time Off Public Holidays configuration', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'time_off_public_holiday_schema_migrations', ['schema', 'data']);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'time_off_public_holiday_schema_migrations', ['schema', 'data']);
     const source = yaml('api/public-holidays.yaml').datasources[0];
+    const calendarSource = yaml('api/public-holiday-calendar.yaml').datasources[0];
 
     const params = { q: null, from_date: null, to_date: null, fixture_state: null };
     const populated = await repository.querySource(source, params, 0, 50);
@@ -65,6 +76,15 @@ describe('Time Off Public Holidays configuration', () => {
     expect((await repository.querySource(source, { ...params, q: 'does-not-exist' })).data).toEqual([]);
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' })).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' })).rejects.toMatchObject({ status: 503, code: 'TIME_OFF_PUBLIC_HOLIDAYS_UNAVAILABLE' });
+    const calendarParams = { ...params, calendar_name: null };
+    expect((await repository.querySource(calendarSource, calendarParams)).data.map((row: any) => row.name)).toEqual([
+      'Public Time Off',
+      'Reunification Day',
+      'National Day Holiday',
+    ]);
+    expect((await repository.querySource(calendarSource, { ...calendarParams, calendar_name: 'Standard 40 hours/week' })).data).toHaveLength(3);
+    expect((await repository.querySource(calendarSource, { ...calendarParams, calendar_name: 'Missing Schedule' })).data).toEqual([]);
+    await expect(repository.querySource(calendarSource, { ...calendarParams, fixture_state: 'transport_error' })).rejects.toMatchObject({ status: 503, code: 'TIME_OFF_PUBLIC_HOLIDAY_CALENDAR_UNAVAILABLE' });
     expect((await repository.query("SELECT version FROM time_off_public_holiday_schema_migrations WHERE version = '0.0.8'")).length).toBe(1);
     expect((await repository.query("SELECT index_name FROM duckdb_indexes() WHERE index_name = 'public_holidays_date_idx'")).length).toBe(1);
     database.close();

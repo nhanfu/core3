@@ -1,5 +1,31 @@
 # recruitment QA ledger
 
+## Batch 19 QA — Applicant Create Employee — 2026-09-22
+
+- Stable ID: `RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001`.
+- Source boundary: Odoo 19 `hr_recruitment/views/hr_applicant_views.xml` and
+  `models/hr_applicant.py::create_employee_from_applicant`, compared against
+  source revision `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test
+  test/recruitment_applicant_create_employee.integration.test.ts` — 4 passed,
+  0 failed, 19 assertions.
+- Functional coverage: page/API `page.id` separation, Hired-only action
+  visibility, Employees-table creation, applicant employee linkage, employee
+  detail navigation, actor/company/name/not-ready/duplicate/stale guards,
+  atomic no-partial-write behavior, idempotent migration, and file-backed
+  restart persistence.
+- Browser blocker: BrowserSkill instance `245ea108` was connected. The
+  authenticated Odoo tab `1770662590` was already borrowed by session `fqey`;
+  `bsk tab borrow 1770662590 --session sisw --timeout 20s` returned
+  `error: tab is borrowed by another session`. Session `sisw` was stopped. No
+  tab was borrowed, no Odoo action was inspected, and no desktop/mobile
+  captures were possible. No independent login, Playwright session,
+  credentials, or alternate browser was used; no Odoo visual-parity claim is
+  made.
+- QA decision: bounded functional batch complete after local verification;
+  live Odoo inspection and paired desktop/mobile evidence remain blocked.
+  Recruitment is not signed off.
+
 ## Batch 18 QA — Job Positions (Interviewer) — 2026-09-22
 
 - Stable ID: `RECRUITMENT-JOB-INTERVIEWER-001`.

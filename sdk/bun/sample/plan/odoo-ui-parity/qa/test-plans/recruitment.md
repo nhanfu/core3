@@ -42,6 +42,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-FUNC-011 | Applicant email | Bulk composer validates recipients/templates/content, persists one sent audit row per applicant, and survives restart | pass: focused applicant email suite; Odoo browser blocked |
 | RECRUITMENT-FUNC-012 | Applicant followers | Bulk Add/Remove Followers validates active contacts, persists subscriptions and notification audit, and survives restart | pass: focused applicant followers suite; Odoo browser blocked |
 | RECRUITMENT-FUNC-013 | Interviewer job positions | Assigned interviewer sees only durable same-company positions in Kanban and read-only form; no create action is exposed | pass: focused interviewer suite; Odoo browser blocked |
+| RECRUITMENT-FUNC-014 | Applicant Create Employee | Current hired applicant creates one linked durable employee; repeated, stale, wrong-company and not-ready requests do not create partial rows; restart preserves the link | pass: focused Create Employee suite; Odoo browser blocked |
 
 ## Workflow and integration cases
 
@@ -69,6 +70,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-PERM-008 | Applicant email actor/company boundary | Recruitment write actor can send only selected same-company applicants with recipient email; actor/company/recipient violations are rejected atomically | pass: focused integration; live actor/browser gate pending |
 | RECRUITMENT-PERM-009 | Applicant follower actor/company/contact boundary | Recruitment write actor can manage only selected same-company applicants and active contacts; invalid contact/company/notify requests are rejected atomically | pass: focused integration; live actor/browser gate pending |
 | RECRUITMENT-PERM-010 | Interviewer job-position boundary | Assigned interviewer can read assigned same-company positions; unassigned, wrong-company, and direct detail access return no record; mutations are absent | pass: focused interviewer suite; live actor/browser gate pending |
+| RECRUITMENT-PERM-011 | Applicant Create Employee boundary | Only an authenticated Employees writer can convert a same-company current hired applicant; anonymous, wrong-company, duplicate and stale requests are rejected atomically | pass: focused Create Employee suite; live actor/browser gate pending |
 
 ## Visual, responsive, and regression cases
 
@@ -82,6 +84,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-UI-006 | Applicant email composer | 1440x900, 390x844 | Applicant list bulk Send Email opens composer with subject/body/template/attachment controls and sends selected applicants | partial: authenticated Core3 desktop capture; mobile and paired Odoo blocked |
 | RECRUITMENT-UI-007 | Applicant follower wizard | 1440x900, 390x844 | Applicant list bulk Add/Remove Followers opens source-shaped modal, updates selected records, and detail shows persisted followers | partial: source-backed Core3 contract; live Odoo and Core3 runtime capture blocked/pending |
 | RECRUITMENT-UI-008 | Interviewer Job Positions | 1440x900, 390x844 | Recruitment Applications → By Job Positions exposes Kanban/form only, no create control, assigned-row filtering, and responsive read-only detail | blocked: authenticated Odoo tab borrow is owned by another team session |
+| RECRUITMENT-UI-009 | Applicant Create Employee | 1440x900, 390x844 | Hired applicant detail exposes Create Employee, then Employee navigation and persisted employee summary | blocked: authenticated Odoo tab borrow is owned by another team session; no visual-parity claim |
 
 ## Exit criteria
 

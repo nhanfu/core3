@@ -1,0 +1,16 @@
+page: { id: public-holiday-calendar }
+datasources:
+  - id: public_holiday_calendar
+    permission: time_off.manage
+    error_states: { transport_error: { status: 503, code: TIME_OFF_PUBLIC_HOLIDAY_CALENDAR_UNAVAILABLE, message: Public holiday calendar data is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR calendar_name ILIKE '%' || :q || '%') AND (:from_date IS NULL OR date_to >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR date_from <= CAST(:to_date AS DATE)) AND (:calendar_name IS NULL OR calendar_name = CAST(:calendar_name AS VARCHAR)) ORDER BY date_from, date_to, id"
+actions:
+  - id: back_to_public_holidays
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /public-holidays
+  - id: open_public_holiday_from_calendar
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /public-holidays/detail
+    params: { id: '{row.id}' }

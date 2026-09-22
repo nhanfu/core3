@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: recruitment.read
     error_states: { unauthorized: { status: 401, code: RECRUITMENT_APPLICANT_UNAUTHENTICATED, message: Sign in to view this applicant. }, forbidden: { status: 403, code: RECRUITMENT_APPLICANT_FORBIDDEN, message: You do not have permission to view this applicant. }, missing_record: { status: 404, code: RECRUITMENT_APPLICANT_NOT_FOUND, message: Applicant not found. }, transport_error: { status: 503, code: RECRUITMENT_APPLICANT_UNAVAILABLE, message: Applicant details are temporarily unavailable. } }
-    query: "SELECT a.id, a.row_version, a.name, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id) AS is_pool_applicant, (SELECT COUNT(*) FROM recruitment_applicants created WHERE created.pool_applicant_id = a.id) AS created_application_count, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
+    query: "SELECT a.id, a.row_version, a.name, a.opening_id, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.employee_id, COALESCE(a.employee_name, '') AS employee_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id) AS is_pool_applicant, (SELECT COUNT(*) FROM recruitment_applicants created WHERE created.pool_applicant_id = a.id) AS created_application_count, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
   - id: recruitment_applicant_refuse_reason_lookup
     permission: recruitment.read
     query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
@@ -14,6 +14,38 @@ datasources:
     error_states: { unauthorized: { status: 401, code: RECRUITMENT_JOB_APPLICATIONS_UNAUTHENTICATED, message: Sign in to create applications. }, forbidden: { status: 403, code: RECRUITMENT_JOB_APPLICATIONS_FORBIDDEN, message: You do not have permission to create applications. }, transport_error: { status: 503, code: RECRUITMENT_JOB_APPLICATIONS_UNAVAILABLE, message: Job positions are temporarily unavailable. } }
     query: "SELECT id AS value, name || ' — ' || job_title AS label FROM recruitment_openings WHERE state <> 'Archived' ORDER BY name, id"
 actions:
+  - id: view_recruitment_applicant_employee
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/detail
+    params: { id: '{state.employee_id}' }
+  - id: create_employee_from_recruitment_applicant
+    type: server
+    permission: employees.write
+    action: recruitment.applicants.create_employee
+    handler: yaml_mutation
+    operation: create
+    params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
+    refresh: [recruitment_applicant_detail, recruitment_applicants, employees]
+    mutation:
+      guards:
+        - query: "SELECT 'employee-recruitment-' || regexp_replace(lower(trim(CAST(a.id AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS employee_id, 'RECRUIT-' || upper(regexp_replace(lower(trim(CAST(a.id AS VARCHAR))), '[^a-z0-9]+', '-', 'g')) AS employee_number, TRIM(a.name) AS employee_name, TRIM(COALESCE(a.email, '')) AS employee_email, TRIM(COALESCE(a.phone, '')) AS employee_phone, TRIM(COALESCE(a.department_name, '')) AS department_name, TRIM(COALESCE(o.job_title, a.opening_name)) AS job_title, a.company_name FROM recruitment_applicants a LEFT JOIN recruitment_openings o ON o.id = a.opening_id WHERE a.id = :id AND a.row_version = :expected_row_version AND a.stage = 'Hired' AND a.archived = FALSE AND a.employee_id IS NULL"
+          assign: true
+          status: 409
+          code: RECRUITMENT_CREATE_EMPLOYEE_NOT_READY
+          message: Only a current hired applicant without an employee can be converted.
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: RECRUITMENT_CREATE_EMPLOYEE_ACTOR_REQUIRED, message: A signed-in HR user is required to create an employee. }
+        - { query: "SELECT 1 AS ok FROM recruitment_applicants WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: RECRUITMENT_CREATE_EMPLOYEE_COMPANY_FORBIDDEN, message: The applicant belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:employee_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: RECRUITMENT_CREATE_EMPLOYEE_NAME_REQUIRED, message: Please provide an applicant name before creating an employee. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = :employee_id OR employee_number = :employee_number)", status: 409, code: RECRUITMENT_CREATE_EMPLOYEE_EXISTS, message: An employee has already been created for this applicant. }
+      steps:
+        - query: "INSERT INTO employees(id, employee_number, name, work_email, phone, department_name, job_title, employment_type, hire_date, state, active, company_name, row_version, created_at, updated_at) VALUES(:employee_id, :employee_number, :employee_name, NULLIF(:employee_email, ''), NULLIF(:employee_phone, ''), NULLIF(:department_name, ''), NULLIF(:job_title, ''), 'Employee', DATE '2026-01-15', 'Active', TRUE, :company_name, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')"
+        - query: "UPDATE recruitment_applicants SET employee_id = :employee_id, employee_name = :employee_name, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version AND employee_id IS NULL"
+          expect_changed: true
+          status: 409
+          code: RECRUITMENT_CREATE_EMPLOYEE_STALE
+          message: The applicant changed before the employee was created. Reload and try again.
+      result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
   - id: reopen_applicant_detail
     type: server
     permission: recruitment.write

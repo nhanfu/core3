@@ -49,3 +49,7 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM public_holidays WHERE id = :id", status: 404, code: TIME_OFF_PUBLIC_HOLIDAY_NOT_FOUND, message: Public holiday not found. }
+  - id: open_public_holiday_calendar
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /public-holidays/calendar

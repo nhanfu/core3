@@ -156,3 +156,17 @@ session and the required borrow confirmation did not complete within 120s.
 No Odoo navigation or mutation occurred, no desktop/mobile captures exist,
 and no visual-parity claim is made. Evidence is under
 `evidence/time-off/2026-09-22/TIMEOFF-DASHBOARD-CALENDAR-001/`.
+
+## 2026-09-22 bounded candidate: public-holiday calendar context
+
+Implemented `TIMEOFF-PUBLIC-HOLIDAY-CALENDAR-001`, the missing
+`resource_calendar_global_leaves_action_from_calendar` projection. Core3 now
+offers `/public-holidays/calendar` with separate page/API contracts, Calendar
+and List modes, date-range and working-hours scope, detail drilldown, and
+explicit empty/503 states over the existing durable holiday rows.
+
+Focused verification passes **3 tests / 48 assertions**. The authenticated
+Odoo tab was already borrowed by session `yabv`; the task-owned route showed
+Discuss at desktop and emulated mobile sizes. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-PUBLIC-HOLIDAY-CALENDAR-001/`; no
+visual-parity claim is made.

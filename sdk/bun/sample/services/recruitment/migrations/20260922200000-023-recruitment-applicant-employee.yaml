@@ -1,0 +1,18 @@
+version: 0.0.23
+kind: schema
+description: Durable Recruitment applicant to employee conversion link
+type:
+  postgres:
+    up: |
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS employee_id VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS employee_name VARCHAR;
+      CREATE INDEX IF NOT EXISTS recruitment_applicants_employee_idx
+        ON recruitment_applicants(employee_id);
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicants_employee_idx;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS employee_name;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS employee_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

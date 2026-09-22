@@ -4,7 +4,22 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment Job Positions (Interviewer) commit
+Candidate commit: pending Recruitment applicant Create Employee commit
+
+## Batch 19 current state
+
+`RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001` implements Odoo's
+`create_employee_from_applicant` applicant-form action. A current Hired
+applicant can create one durable Employees row, retain the applicant link and
+employee name after reload/restart, and open the existing Employee detail;
+anonymous, wrong-company, not-ready, duplicate, and stale requests are
+guarded atomically. The focused suite passes 4 tests / 19 assertions.
+
+BrowserSkill instance `245ea108` was connected, but authenticated Odoo tab
+`1770662590` was borrowed by session `fqey`; `bsk tab borrow` returned
+`error: tab is borrowed by another session`. The owned BrowserSkill session was
+stopped after the failed borrow. No desktop/mobile Odoo captures were possible
+and no visual-parity claim is made. Recruitment remains in progress.
 
 ## Batch 18 current state
 

@@ -1,5 +1,42 @@
 # Odoo 19 UI parity — Recruitment
 
+## Batch 19 — Applicant → Create Employee
+
+The next missing stable-ID Recruitment action after the implemented interviewer
+job-position action is Odoo's applicant-form `create_employee_from_applicant`
+button from `addons/hr_recruitment/views/hr_applicant_views.xml`. Odoo exposes
+it to HR users only after an applicant is hired, creates an `hr.employee` from
+the applicant's contact/job/company values, and then opens the employee form.
+
+Core3 adds stable ID `RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001`. The existing
+applicant detail page/API pair now exposes a permission-gated Create Employee
+action for current Hired applicants without an employee, creates a durable
+record in the existing Employees table, stores the applicant-to-employee link
+and employee name on `recruitment_applicants`, and exposes a navigation action
+to `/employees/detail`. The first YAML guard derives all conversion fields
+before validation; actor, company, hired-state, duplicate, stale, and required
+name guards run atomically. A Recruitment migration adds the nullable link
+fields and index without duplicating Employees-owned schema.
+
+Source/gap matrix for `RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001`:
+
+| Odoo contract | Previous Core3 state | Batch 19 change | Verification |
+| --- | --- | --- | --- |
+| Applicant form Create Employee / `create_employee_from_applicant` | Missing; Hired applicants had no employee action or linkage | Applicant-detail server action inserts a durable Employees row and links the applicant | source/page/API test and mutation test |
+| Hired-only action guard | Missing | Action is shown only for `Hired` with no `employee_id`; server guard checks hired date, active state, row version, and link absence | focused ready/not-ready/stale assertions |
+| Employee field mapping and navigation | Missing | Name, email, phone, department, job title, company, hire date, and employee number persist; Employee action navigates to existing detail | employee row and detail query assertions |
+| Actor/company/duplicate/error handling | Missing | `employees.write` boundary plus explicit 403/409/422 guards and transaction rollback | anonymous, wrong-company, duplicate, stale, and restart tests |
+
+Focused verification: `bun test test/recruitment_applicant_create_employee.integration.test.ts`
+passes 4 tests / 19 assertions. Full Recruitment regression and final static
+gates are recorded in the QA ledger. BrowserSkill reference comparison was
+blocked because the authenticated tab on browser instance `245ea108` was
+already borrowed by session `fqey`; no Odoo desktop/mobile visual-parity claim
+is made. The exact blocker record is under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001/`.
+
+Status: `batch-19-implemented-applicant-create-employee-odoo-borrow-blocked`
+
 ## Batch 18 — Applications → By Job Positions (Interviewer)
 
 The next missing stable-ID Recruitment action after the implemented job-position

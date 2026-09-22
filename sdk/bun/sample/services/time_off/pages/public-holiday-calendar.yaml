@@ -1,0 +1,42 @@
+title: Public Holidays Calendar
+page: { id: public-holiday-calendar, route: /public-holidays/calendar, breadcrumb: [Human Resources, Time Off, Public Holidays, Calendar], auth: { require: [time_off.manage] } }
+
+toolbar:
+  - { id: back_to_public_holidays, label: Public Holidays, action: back_to_public_holidays, permission: time_off.manage, variant: secondary }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: public_holiday_calendar
+    search: { label: Search public holidays, placeholder: Search name or working hours... }
+    filters:
+      - { field: calendar_name, label: Working Hours, options: [{ id: 'Standard 40 hours/week', label: Standard 40 hours/week }] }
+    date_range:
+      label: Period
+      from_field: date_from
+      to_field: date_to
+      presets: [year, last_12_months, all]
+      default_preset: year
+      preset_labels: { year: This year, last_12_months: Last 12 months, all: All dates }
+      validation_messages:
+        invalid: Enter valid dates in YYYY-MM-DD format.
+        start_before_end: The start date must be before the end date.
+    view_navigation: tabs
+    views:
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: calendar_name, fields: [{ field: date_from, label: Start date }, { field: date_to, label: End date }] }
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: date_from, label: Start date }
+      - { field: date_to, label: End date }
+      - { field: calendar_name, label: Working Hours }
+    page_size: 50
+    row_key: id
+    row_open_action: open_public_holiday_from_calendar
+    row_double_click_action: open_public_holiday_from_calendar
+    empty_state: { title: No public holidays found, description: Create a public holiday or adjust your search. }

@@ -2,6 +2,7 @@ title: Public Holidays
 page: { id: public-holidays, route: /public-holidays, breadcrumb: [Human Resources, Time Off, Public Holidays], auth: { require: [time_off.manage] } }
 toolbar:
   - { id: create_public_holiday, label: New, action: create_public_holiday, permission: time_off.manage, variant: primary }
+  - { id: open_public_holiday_calendar, label: Calendar, action: open_public_holiday_calendar, permission: time_off.manage, variant: secondary }
 components:
   - type: ListView
     variant: odoo
