@@ -1487,3 +1487,19 @@ Focused test: `test/employees_department_children.integration.test.ts` (3 tests,
 assertions. UI audit and frontend/CSS build pass.
 Evidence: `evidence/employees/2026-09-22/EMP-DEPARTMENT-CHILDREN-001/`.
 No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-ACTIVITY-FILTERS-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-062 | Odoo stable IDs for My/Late/Today/Future activity filters | pass; exact local search-view source mapping |
+| EMP-FUNC-062 | Current-user deadline scopes at seeded date `2026-01-15` | pass; overdue, today, and future results are deterministic |
+| EMP-PERM-062 | `employees.read`, current-user, active/non-done, and company boundary | pass; other actor and foreign company return no rows |
+| EMP-DATA-062 | Assignee projection migration replay and file-backed restart | pass; `activity_user_id` backfill/index is idempotent and durable |
+| EMP-UI-062 | Authenticated Odoo desktop/mobile comparison | conditional; task-owned authenticated tab captured both sizes, but user-tab borrow was blocked by active session `goea` |
+
+Focused test: `test/employees_activity_filters.integration.test.ts` (3 tests,
+21 assertions). Adjacent activity, completion, newly-hired, contract-filter,
+and organization-chart tests pass (18 tests, 98 assertions). Evidence:
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-ACTIVITY-FILTERS-001/`. No aggregate
+Employees sign-off is claimed.

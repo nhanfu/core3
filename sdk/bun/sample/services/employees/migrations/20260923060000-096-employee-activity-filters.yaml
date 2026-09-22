@@ -1,0 +1,24 @@
+version: 0.0.96
+kind: data
+description: Persist stable assignee IDs and lookup coverage for Employees activity filters
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_activities ADD COLUMN IF NOT EXISTS activity_user_id VARCHAR;
+      UPDATE employee_activities
+      SET activity_user_id = CASE activity_user
+        WHEN 'Admin User' THEN 'user-admin'
+        WHEN 'HR Manager' THEN 'user-hr-manager'
+        WHEN 'Engineering Manager' THEN 'user-engineering-manager'
+        ELSE NULL
+      END
+      WHERE activity_user_id IS NULL;
+      CREATE INDEX IF NOT EXISTS employee_activities_filter_scope_idx
+        ON employee_activities(activity_user_id, activity_date, activity_state, employee_id);
+    down: |
+      DROP INDEX IF EXISTS employee_activities_filter_scope_idx;
+      ALTER TABLE employee_activities DROP COLUMN IF EXISTS activity_user_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

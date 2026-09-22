@@ -16,7 +16,66 @@ datasources:
     permission: employees.read
     pivot:
       fields: [state, department_name, job_title, employment_type, employee_type, hire_date, contract_start, birthday, employee_properties, employee_count]
-    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.coach_name, e.private_car_plate, COALESCE(NULLIF(e.employee_properties, ''), '{}') AS employee_properties, e.employment_type, e.employee_type, e.state, COALESCE(e.hr_presence_state, CASE WHEN e.active = false THEN 'archive' WHEN e.presence = 'online' THEN 'present' WHEN e.presence = 'offline' THEN 'absent' ELSE 'out_of_working_hour' END) AS hr_presence_state, e.active, e.company_name, CAST(e.hire_date AS VARCHAR) AS hire_date, CAST(e.contract_start AS VARCHAR) AS contract_start, CAST(e.contract_end AS VARCHAR) AS contract_end, CAST(e.birthday AS VARCHAR) AS birthday, CAST(1 AS INTEGER) AS employee_count, CASE WHEN e.contract_start IS NOT NULL AND e.contract_start <= DATE '2026-01-15' AND (e.contract_end IS NULL OR e.contract_end >= DATE '2026-01-15') THEN true ELSE false END AS in_contract, CASE WHEN e.contract_start IS NULL OR e.contract_start > DATE '2026-01-15' OR (e.contract_end IS NOT NULL AND e.contract_end < DATE '2026-01-15') THEN true ELSE false END AS out_of_contract, CASE WHEN e.created_at > TIMESTAMP '2025-10-17 00:00:00' THEN true ELSE false END AS newly_hired, CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.manager_id = viewer.id OR e.org_parent_name = viewer.name OR e.manager_name = viewer.name)) THEN true ELSE false END AS my_team, CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.department_id = viewer.department_id OR e.department_name = viewer.department_name)) THEN true ELSE false END AS my_department, COALESCE(a.activity_type, 'todo') AS activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, COALESCE(a.activity_state, 'planned') AS activity_state, COALESCE(a.activity_count, 0) AS activity_count FROM employees e LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%' OR COALESCE(e.coach_name, '') ILIKE '%' || :q || '%' OR COALESCE(e.private_car_plate, '') ILIKE '%' || :q || '%' OR COALESCE(e.employee_properties, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) AND (:coach_name IS NULL OR e.coach_name = :coach_name) AND (:my_team IS NULL OR (CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.manager_id = viewer.id OR e.org_parent_name = viewer.name OR e.manager_name = viewer.name)) THEN true ELSE false END) = CAST(:my_team AS BOOLEAN)) AND (:my_department IS NULL OR (CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.department_id = viewer.department_id OR e.department_name = viewer.department_name)) THEN true ELSE false END) = CAST(:my_department AS BOOLEAN)) AND (:newly_hired IS NULL OR (CASE WHEN e.created_at > TIMESTAMP '2025-10-17 00:00:00' THEN true ELSE false END) = CAST(:newly_hired AS BOOLEAN)) AND (:in_contract IS NULL OR (CASE WHEN e.contract_start IS NOT NULL AND e.contract_start <= DATE '2026-01-15' AND (e.contract_end IS NULL OR e.contract_end >= DATE '2026-01-15') THEN true ELSE false END) = CAST(:in_contract AS BOOLEAN)) AND (:out_of_contract IS NULL OR (CASE WHEN e.contract_start IS NULL OR e.contract_start > DATE '2026-01-15' OR (e.contract_end IS NOT NULL AND e.contract_end < DATE '2026-01-15') THEN true ELSE false END) = CAST(:out_of_contract AS BOOLEAN)) AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY e.name, e.id"
+    query: |
+      WITH activity_scope AS (
+        SELECT e.id,
+          EXISTS (
+            SELECT 1 FROM employee_activities a
+            WHERE a.employee_id = e.id AND a.activity_user_id = :current_user_id
+              AND a.activity_state <> 'done'
+          ) AS my_activities,
+          EXISTS (
+            SELECT 1 FROM employee_activities a
+            WHERE a.employee_id = e.id AND a.activity_user_id = :current_user_id
+              AND a.activity_state <> 'done' AND a.activity_date < DATE '2026-01-15'
+          ) AS activities_overdue,
+          EXISTS (
+            SELECT 1 FROM employee_activities a
+            WHERE a.employee_id = e.id AND a.activity_user_id = :current_user_id
+              AND a.activity_state <> 'done' AND a.activity_date = DATE '2026-01-15'
+          ) AS activities_today,
+          EXISTS (
+            SELECT 1 FROM employee_activities a
+            WHERE a.employee_id = e.id AND a.activity_user_id = :current_user_id
+              AND a.activity_state <> 'done' AND a.activity_date > DATE '2026-01-15'
+          ) AS activities_upcoming_all
+        FROM employees e
+      )
+      SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone,
+        e.department_name, e.job_title, e.manager_name, e.coach_name, e.private_car_plate,
+        COALESCE(NULLIF(e.employee_properties, ''), '{}') AS employee_properties, e.employment_type,
+        e.employee_type, e.state,
+        COALESCE(e.hr_presence_state, CASE WHEN e.active = false THEN 'archive' WHEN e.presence = 'online' THEN 'present' WHEN e.presence = 'offline' THEN 'absent' ELSE 'out_of_working_hour' END) AS hr_presence_state,
+        e.active, e.company_name, CAST(e.hire_date AS VARCHAR) AS hire_date,
+        CAST(e.contract_start AS VARCHAR) AS contract_start, CAST(e.contract_end AS VARCHAR) AS contract_end,
+        CAST(e.birthday AS VARCHAR) AS birthday, CAST(1 AS INTEGER) AS employee_count,
+        CASE WHEN e.contract_start IS NOT NULL AND e.contract_start <= DATE '2026-01-15' AND (e.contract_end IS NULL OR e.contract_end >= DATE '2026-01-15') THEN true ELSE false END AS in_contract,
+        CASE WHEN e.contract_start IS NULL OR e.contract_start > DATE '2026-01-15' OR (e.contract_end IS NOT NULL AND e.contract_end < DATE '2026-01-15') THEN true ELSE false END AS out_of_contract,
+        CASE WHEN e.created_at > TIMESTAMP '2025-10-17 00:00:00' THEN true ELSE false END AS newly_hired,
+        s.my_activities, s.activities_overdue, s.activities_today, s.activities_upcoming_all,
+        CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.manager_id = viewer.id OR e.org_parent_name = viewer.name OR e.manager_name = viewer.name)) THEN true ELSE false END AS my_team,
+        CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.department_id = viewer.department_id OR e.department_name = viewer.department_name)) THEN true ELSE false END AS my_department,
+        COALESCE(a.activity_type, 'todo') AS activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date,
+        a.activity_user, COALESCE(a.activity_state, 'planned') AS activity_state, COALESCE(a.activity_count, 0) AS activity_count
+      FROM employees e
+      JOIN activity_scope s ON s.id = e.id
+      LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true
+      WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN)))
+        AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%' OR COALESCE(e.coach_name, '') ILIKE '%' || :q || '%' OR COALESCE(e.private_car_plate, '') ILIKE '%' || :q || '%' OR COALESCE(e.employee_properties, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR e.state = :state)
+        AND (:department_name IS NULL OR e.department_name = :department_name)
+        AND (:coach_name IS NULL OR e.coach_name = :coach_name)
+        AND (:my_activities IS NULL OR s.my_activities = CAST(:my_activities AS BOOLEAN))
+        AND (:activities_overdue IS NULL OR s.activities_overdue = CAST(:activities_overdue AS BOOLEAN))
+        AND (:activities_today IS NULL OR s.activities_today = CAST(:activities_today AS BOOLEAN))
+        AND (:activities_upcoming_all IS NULL OR s.activities_upcoming_all = CAST(:activities_upcoming_all AS BOOLEAN))
+        AND (:my_team IS NULL OR (CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.manager_id = viewer.id OR e.org_parent_name = viewer.name OR e.manager_name = viewer.name)) THEN true ELSE false END) = CAST(:my_team AS BOOLEAN))
+        AND (:my_department IS NULL OR (CASE WHEN EXISTS (SELECT 1 FROM employees viewer WHERE viewer.auth_user_id = :current_user_id AND viewer.active = true AND viewer.company_name = e.company_name AND (e.department_id = viewer.department_id OR e.department_name = viewer.department_name)) THEN true ELSE false END) = CAST(:my_department AS BOOLEAN))
+        AND (:newly_hired IS NULL OR (CASE WHEN e.created_at > TIMESTAMP '2025-10-17 00:00:00' THEN true ELSE false END) = CAST(:newly_hired AS BOOLEAN))
+        AND (:in_contract IS NULL OR (CASE WHEN e.contract_start IS NOT NULL AND e.contract_start <= DATE '2026-01-15' AND (e.contract_end IS NULL OR e.contract_end >= DATE '2026-01-15') THEN true ELSE false END) = CAST(:in_contract AS BOOLEAN))
+        AND (:out_of_contract IS NULL OR (CASE WHEN e.contract_start IS NULL OR e.contract_start > DATE '2026-01-15' OR (e.contract_end IS NOT NULL AND e.contract_end < DATE '2026-01-15') THEN true ELSE false END) = CAST(:out_of_contract AS BOOLEAN))
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY e.name, e.id
   - id: employee_sample_load_runs
     permission: employees.read
     query: "SELECT id, company_name, requested_by, employee_count, CAST(loaded_at AS VARCHAR) AS loaded_at, row_version FROM employee_sample_load_runs WHERE COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name ORDER BY loaded_at DESC, id DESC"

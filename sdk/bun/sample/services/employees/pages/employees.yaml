@@ -13,6 +13,10 @@ components:
       - { field: state, label: Status, options_source: employee_states }
       - { field: department_name, label: Department, options_source: employee_departments }
       - { field: coach_name, label: Coach, options_source: employee_coaches }
+      - { field: my_activities, label: My Activities, options: [{ id: 'true', label: My Activities }] }
+      - { field: activities_overdue, label: Late Activities, options: [{ id: 'true', label: Late Activities }] }
+      - { field: activities_today, label: Today Activities, options: [{ id: 'true', label: Today Activities }] }
+      - { field: activities_upcoming_all, label: Future Activities, options: [{ id: 'true', label: Future Activities }] }
       - { field: my_team, label: My Team, options: [{ id: 'true', label: My Team }] }
       - { field: my_department, label: My Department, options: [{ id: 'true', label: My Department }] }
       - { field: newly_hired, label: Hiring, options: [{ id: 'true', label: Newly Hired }] }

@@ -1942,6 +1942,35 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-ACTIVITY-FILTERS-001: Employees activity search filters (2026-09-22)
+
+Odoo's `hr.employee` search view declares the stable activity filter IDs
+`filter_activities_my`, `activities_overdue`, `activities_today`, and
+`activities_upcoming_all`. The first limits employees to activities assigned to
+the current user; the remaining filters compare that user's activity deadline
+with today. The local source is
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml:25-35`.
+
+Core3 adds the four filters to the existing Employees page/API pair. Migration
+`20260923060000-096-employee-activity-filters.yaml` persists a stable
+`activity_user_id` projection from the existing display assignee and adds the
+lookup index. The query derives each boolean from active, non-done activities
+at the deterministic seeded date `2026-01-15`, scopes the result to the current
+company, and requires `employees.read`. Selecting a filter is a read-side
+workflow with no mutation, so no new server action is needed; the page remains
+layout-only and joins the datasource through `page.id: employees`.
+
+Focused verification is `test/employees_activity_filters.integration.test.ts`:
+3 tests / 21 assertions. The adjacent activity, completion, newly-hired,
+contract-filter, and organization-chart run passed 18 tests / 98 assertions.
+Authenticated Odoo activity-view evidence is under
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-ACTIVITY-FILTERS-001/` at desktop
+1916x833 and mobile 390x844. The only available user tab was already borrowed
+by another BrowserSkill session; the task-owned BrowserSkill tab was
+authenticated and used without exposing credentials, and the unavailable user
+tab was not interrupted. Core3 runtime capture is not claimed for this slice.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-PROPERTIES-GROUP-001 execution (2026-09-22)
 
 | Case ID | Scope | Result |
