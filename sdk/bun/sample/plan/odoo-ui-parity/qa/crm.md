@@ -256,6 +256,16 @@ Conditional bounded result; not signed off.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
 
+## 2026-09-22 — CRM-LEAD-MASS-CONVERT-001
+
+| Case | Odoo action/route | Core3 route/page | Fixture/state | Result/evidence | Blocker or repair |
+| --- | --- | --- | --- | --- | --- |
+| MASS-CONVERT-MAP | `crm.action_crm_send_mass_convert`, list/kanban binding | `/leads`, page `leads`, API `leads` | Selected open leads; wizard contract | Pass: source mapping and page/API join in `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-MASS-CONVERT-001/` | Core3 intentionally maps Odoo `user_ids` to the existing single `crm_leads.salesperson`; deduplication branch remains open |
+| MASS-CONVERT-SUCCESS | Same | `/leads` bulk action `convert_leads_mass` | Two open leads, active team, active salesperson, force assignment | Pass: 2 records converted, row versions incremented, 2 durable activities recorded; `test-results.md` | None in focused repository test |
+| MASS-CONVERT-GUARDS | Same | `/leads` action endpoint | Empty, missing, closed, inactive-team, invalid assignment | Pass: explicit 400/409 guards and no partial writes; `test-results.md` | None in focused repository test |
+| MASS-CONVERT-DESKTOP | Same | `/leads` | 1440x900 authenticated browser | Not captured | BrowserSkill borrow denied: Odoo tab `1770662590` already borrowed by session `zfuv` |
+| MASS-CONVERT-MOBILE | Same | `/leads` | 390x844 authenticated browser | Not captured | Same blocker; no visual-parity claim |
+
 ## Bounded feature checkpoint — CRM-LEAD-MERGE-WIZARD-001 (2026-09-22)
 
 - Source-backed gap: Odoo `action_merge_opportunities` modal assignment fields

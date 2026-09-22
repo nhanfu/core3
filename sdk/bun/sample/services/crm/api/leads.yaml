@@ -199,6 +199,59 @@ actions:
         - query: "UPDATE crm_leads SET type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
         - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+  - id: convert_leads_mass
+    type: server_form
+    permission: crm.write
+    title: Convert to Opportunity
+    submit_label: Convert to Opportunities
+    cancel_label: Cancel
+    action: crm.leads.mass_convert
+    handler: yaml_mutation
+    operation: mass_convert
+    refresh: [crm_leads]
+    fields:
+      - { field: user_id, label: Salesperson, type: select, options_source: crm_salespeople }
+      - { field: team_id, label: Sales Team, type: select, options_source: crm_sales_teams }
+      - { field: force_assignment, label: Force assignment, type: checkbox, default: false }
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'"
+          status: 400
+          code: CRM_MASS_CONVERT_SELECTION_REQUIRED
+          message: Select at least one lead to convert.
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team_id AND active = true)"
+          status: 400
+          code: CRM_MASS_CONVERT_TEAM_INVALID
+          message: Select an active sales team.
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:user_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :user_id AND active = true)"
+          status: 400
+          code: CRM_MASS_CONVERT_USER_INVALID
+          message: Select an active salesperson.
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team_id, '') AS VARCHAR)), '') IS NULL OR NULLIF(TRIM(CAST(COALESCE(:user_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = :team_id AND t.active = true AND m.user_name = :user_id AND m.active = true)"
+          status: 409
+          code: CRM_MASS_CONVERT_ASSIGNMENT_INVALID
+          message: Select a salesperson who belongs to the selected sales team.
+      steps:
+        - for_each:
+            input: selectedIds
+            as: selected_lead_id
+            steps:
+              - query: "UPDATE crm_leads SET updated_at = updated_at WHERE id = :selected_lead_id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
+                expect_changed: true
+                status: 409
+                code: CRM_MASS_CONVERT_SELECTION_INVALID
+                message: Select only open leads that have not already been converted.
+        - for_each:
+            input: selectedIds
+            as: selected_lead_id
+            steps:
+              - query: "UPDATE crm_leads SET type = 'opportunity', salesperson = CASE WHEN CAST(COALESCE(:force_assignment, false) AS BOOLEAN) THEN COALESCE(NULLIF(:user_id, ''), salesperson) ELSE COALESCE(NULLIF(salesperson, ''), NULLIF(:user_id, '')) END, team = COALESCE(NULLIF(:team_id, ''), team), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :selected_lead_id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
+                expect_changed: true
+                status: 409
+                code: CRM_MASS_CONVERT_STALE
+                message: A selected lead changed before conversion. Reload and try again.
+              - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:selected_lead_id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
+      result: { query: "SELECT COUNT(*) AS converted_count FROM crm_leads WHERE id IN :selectedIds AND type = 'opportunity'" }
   - id: merge_leads
     type: server_form
     title: Merge Leads/Opportunities

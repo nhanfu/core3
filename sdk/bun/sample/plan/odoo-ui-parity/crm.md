@@ -874,3 +874,43 @@ Status: bounded implementation; not CRM sign-off.
   `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-MERGE-WIZARD-001/`.
   Authenticated Odoo and Core3 desktop/mobile visual captures are blocked and
   therefore no visual-parity claim is made.
+
+## 2026-09-22 — Mass Convert to Opportunities wizard
+
+Stable feature ID: `CRM-LEAD-MASS-CONVERT-001`.
+
+Status: bounded implementation; not CRM sign-off.
+
+- Odoo source action: `crm.action_crm_send_mass_convert` from
+  `addons/crm/wizard/crm_lead_to_opportunity_mass_views.xml`, bound to the
+  `crm.lead` list and kanban. The modal is `Convert to Opportunity` with the
+  `Convert to Opportunities` submit and `Cancel` controls, plus salesperson,
+  sales team, force-assignment, related-customer, and deduplication options.
+- Current Core3 had only per-row conversion and the separate merge wizard; the
+  Leads page had no mass-conversion bulk action. Core3 now adds the
+  `convert_leads_mass` bulk action to `pages/leads.yaml` and its
+  `crm.leads.mass_convert` server-form contract to `api/leads.yaml`, joined by
+  `page.id: leads`.
+- The bounded contract validates a non-empty selection, open lead state,
+  active team/salesperson membership, stale/changed rows, and atomic rollback;
+  it converts each selected lead, applies optional team/single-salesperson
+  assignment with `force_assignment`, increments row versions, and records a
+  durable activity. Core3's `crm_leads` schema has one salesperson field, so
+  Odoo's multi-salesperson `user_ids` and deduplication/duplicate-merge
+  branches remain explicit open parity gaps rather than being silently
+  approximated.
+- Focused validation: `bun test test/crm_mass_convert.integration.test.ts` —
+  4 pass / 21 assertions. The tests cover source/action mapping, successful
+  conversion and assignment, empty/missing/closed/invalid-team guards, atomic
+  no-partial-write behavior, and file-backed restart persistence.
+- Related regression: `crm_merge_opportunities.integration.test.ts` passes
+  2 tests / 14 assertions. The broader `crm.integration.test.ts` run is 45
+  pass / 1 fail / 227 assertions; the sole failure is the existing AI
+  allowlist invariant, which now lists four Lead Mining operations plus this
+  new `crm.leads.mass_convert`. `services/ai` was intentionally left outside
+  this CRM-only change.
+- Browser evidence is blocked: BrowserSkill instance `245ea108` was healthy,
+  but borrowing authenticated Odoo tab `1770662590` was denied because it was
+  already borrowed by session `zfuv`. No Odoo or Core3 desktop/mobile capture
+  was made and no visual-parity claim is recorded. Exact evidence is under
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-MASS-CONVERT-001/`.
