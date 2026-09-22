@@ -85,3 +85,17 @@ visitor-feedback, widget-bootstrap, and operator-message regression passed 12
 tests and 77 assertions. Odoo remains blocked by authenticated 404/no Live
 Chat addon; Core3 browser evidence remains pending runtime availability. No
 visual-parity sign-off is claimed.
+
+## Bounded implementation slice: authenticated transcript email delivery (2026-09-22)
+
+`services/livechat/api/session-detail.yaml` now exposes
+`email_livechat_session_transcript` at Odoo's
+`/im_livechat/email_livechat_transcript`, bound to the closed-session action
+on the existing `livechat-session-detail` page. It validates the recipient,
+actor, closed state, assigned-operator scope, and optimistic session version,
+then inserts a durable `Queued` delivery request and refreshes the detail
+projection. Migration `20260922150000-053-livechat-transcript-delivery.yaml`
+is idempotent and the focused test reopens a file-backed database to verify
+delivery history survives restart.
+
+Focused validation: `bun test test/livechat_transcript_delivery.integration.test.ts --timeout 20000` — 3 passed, 20 assertions. BrowserSkill was connected to shared browser instance `245ea108`, but the authenticated Odoo tab was already borrowed by session `ftio`; no live desktop/mobile capture was possible and no visual-parity claim is made. Core3 visual evidence remains pending a runnable local runtime. The bounded Core3 contract queues delivery; no external mail transport is claimed.

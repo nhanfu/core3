@@ -166,3 +166,17 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   `/tmp/odoo-livechat-public-message-blocker-mobile-20260922.png`.
 - Core3 authenticated composer captures were not claimed until the local
   runtime is available. Full Live Chat sign-off remains open.
+
+## 2026-09-22 bounded review: authenticated transcript email delivery
+
+- Selected stable feature `livechat-transcript-email-001`, distinct from the
+  public visitor composer, widget bootstrap/resume, and visitor feedback/leave.
+- Focused: `bun test test/livechat_transcript_delivery.integration.test.ts --timeout 20000` — **3 passed, 20 assertions, 0 failed**. It covers the Odoo route/source trace, page/API join, closed-session action, valid queueing, invalid/open/missing/stale/operator-scope/actor guards, migration replay, and file-backed restart recovery.
+- The bounded Core3 behavior is a durable `Queued` delivery request because no
+  outbound mail transport is configured for the Live Chat service. The UI copy
+  does not claim external delivery.
+- BrowserSkill cleanup: session `bsix` was stopped after the borrow attempt.
+  Shared browser instance `245ea108` was connected, but Odoo tab `1770662590`
+  was already borrowed by session `ftio`; no desktop/mobile live-reference
+  capture was produced and no visual-parity claim is made.
+- Full Live Chat sign-off remains open.

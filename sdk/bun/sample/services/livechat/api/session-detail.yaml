@@ -22,7 +22,12 @@ datasources:
           WHEN status = 'Waiting for Customer' THEN 'Waiting'
           ELSE 'Never Answered'
         END AS status_label,
-        CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
+        CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at,
+        COALESCE((SELECT d.recipient_email FROM livechat_transcript_deliveries d
+          WHERE d.session_id = livechat_sessions.id ORDER BY d.requested_at DESC, d.id DESC LIMIT 1), '') AS transcript_last_sent_to,
+        COALESCE((SELECT CAST(d.requested_at AS VARCHAR) FROM livechat_transcript_deliveries d
+          WHERE d.session_id = livechat_sessions.id ORDER BY d.requested_at DESC, d.id DESC LIMIT 1), '') AS transcript_last_sent_at,
+        COALESCE((SELECT COUNT(*) FROM livechat_transcript_deliveries d WHERE d.session_id = livechat_sessions.id), 0) AS transcript_delivery_count
       FROM livechat_sessions
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
         AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
@@ -63,6 +68,32 @@ datasources:
       ORDER BY m.created_at, m.id
 
 actions:
+  - id: email_livechat_session_transcript
+    type: server_form
+    permission: livechat.write
+    title: Email conversation transcript
+    action: /im_livechat/email_livechat_transcript
+    handler: yaml_mutation
+    operation: transcript
+    params: { id: '{state.id}' }
+    success_message: Conversation transcript queued for delivery.
+    refresh: [livechat_session_detail]
+    fields:
+      - { field: email, label: Email, type: email, required: true, placeholder: 'mail@example.com' }
+    mutation:
+      generated: [delivery_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND status = 'Closed'", status: 409, code: LIVECHAT_TRANSCRIPT_SESSION_OPEN, message: A transcript is available after the Live Chat session is closed. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_TRANSCRIPT_STALE, message: This Live Chat session changed before the transcript was requested. Reload before trying again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: LIVECHAT_TRANSCRIPT_ACTOR_REQUIRED, message: An authenticated Live Chat operator is required to email a transcript. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: LIVECHAT_TRANSCRIPT_EMAIL_INVALID, message: Enter a valid email address for the transcript. }
+      steps:
+        - { query: "INSERT INTO livechat_transcript_deliveries(id, session_id, recipient_email, requested_by, state, requested_at) VALUES(:delivery_id, :id, TRIM(CAST(:email AS VARCHAR)), :current_user_id, 'Queued', CURRENT_TIMESTAMP)", expect_changed: true, status: 409, code: LIVECHAT_TRANSCRIPT_NOT_QUEUED, message: The conversation transcript could not be queued. }
+        - { query: "UPDATE livechat_sessions SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_TRANSCRIPT_STALE, message: This Live Chat session changed before the transcript was requested. Reload before trying again. }
+      result: { query: "SELECT d.id, d.session_id, d.recipient_email, d.requested_by, d.state, CAST(d.requested_at AS VARCHAR) AS requested_at, 'Conversation transcript queued for delivery.' AS message FROM livechat_transcript_deliveries d WHERE d.id = :delivery_id" }
   - id: send_livechat_session_message
     type: server_form
     permission: livechat.write

@@ -11,6 +11,7 @@ components:
       - { id: help_livechat_session_detail, label: Need Help, variant: secondary, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer'" }
       - { id: join_livechat_session_detail, label: Join, variant: primary, show_if: "record.status === 'Looking for Help'" }
       - { id: close_livechat_session_detail, label: Close, variant: danger, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer' || record.status === 'Looking for Help'" }
+      - { id: email_livechat_session_transcript, label: Email transcript, variant: secondary, show_if: "record.status === 'Closed'" }
       - { id: add_livechat_session_tag, label: Add Tag, variant: secondary }
       - { id: remove_livechat_session_tag, label: Remove Tag, variant: secondary }
     fields:
@@ -26,6 +27,8 @@ components:
       - { field: rating, label: Satisfaction rating }
       - { field: started_label, label: Started }
       - { field: ended_at, label: Ended }
+      - { field: transcript_last_sent_to, label: Last transcript recipient }
+      - { field: transcript_last_sent_at, label: Last transcript sent }
     message_source: livechat_session_messages
     chatter_label: Conversation
     chatter_empty: No messages in this conversation yet.

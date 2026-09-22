@@ -1253,3 +1253,37 @@ under `plan/odoo-ui-parity/evidence/livechat/2026-09-22/
 livechat-public-message-001/`. Core3 browser verification remains subject to
 the local runtime; no visual-parity claim is made without authenticated
 desktop/mobile captures.
+
+## Bounded implementation slice: Authenticated transcript email delivery (2026-09-22)
+
+The next uncovered authenticated transcript behavior is Odoo's
+`/im_livechat/email_livechat_transcript` JSON-RPC controller in
+`addons/im_livechat/controllers/main.py`. Odoo's `TranscriptSender` validates
+the recipient email, calls that route with the conversation id, and reports a
+sent/failed state. The source model delegates to
+`discuss.channel._email_livechat_transcript`; a transcript is offered for a
+closed conversation alongside the public download link.
+
+Core3 adds `email_livechat_session_transcript` to the existing
+`livechat-session-detail` page/API join. The closed-session header action is
+operator-scoped, requires `livechat.write`, validates the recipient and actor,
+checks the session row version, and records a durable `Queued` transcript
+delivery request in `livechat_transcript_deliveries`. The detail projection
+exposes the last recipient, timestamp, and delivery count after refresh. Core3
+has no configured outbound mail transport in this service, so the bounded
+implementation stops at a durable delivery queue and says so in the success
+copy; it does not claim that an external email was delivered.
+
+Migration `20260922150000-053-livechat-transcript-delivery.yaml` creates the
+idempotent delivery table and seeds one closed-session request. The focused
+`test/livechat_transcript_delivery.integration.test.ts` covers the exact Odoo
+route/source trace, page/API join, closed-session UI guard, invalid/missing/
+stale/operator-scope/actor guards, idempotent migration, and file-backed
+restart persistence.
+
+Evidence is recorded under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-transcript-email-001/`.
+BrowserSkill could not borrow the authenticated Odoo tab because it was already
+borrowed by session `ftio` on shared browser instance `245ea108`; no desktop or
+mobile live-reference capture was produced and no visual-parity claim is made.
+Full Live Chat parity remains planned.

@@ -1,0 +1,29 @@
+version: 0.0.53
+kind: data
+description: Persist authenticated Odoo Live Chat transcript delivery requests
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_transcript_deliveries (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Queued',
+        requested_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS livechat_transcript_deliveries_session_idx
+        ON livechat_transcript_deliveries(session_id, requested_at);
+      INSERT INTO livechat_transcript_deliveries
+        (id, session_id, recipient_email, requested_by, state, requested_at)
+      SELECT 'livechat-transcript-delivery-demo-001', 'livechat-session-demo-001',
+        'visitor.a@example.com', 'livechat-agent', 'Queued', TIMESTAMP '2026-01-15 09:05:00'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-001' AND status = 'Closed')
+        AND NOT EXISTS (SELECT 1 FROM livechat_transcript_deliveries WHERE id = 'livechat-transcript-delivery-demo-001');
+    down: |
+      DELETE FROM livechat_transcript_deliveries WHERE id = 'livechat-transcript-delivery-demo-001';
+      DROP TABLE IF EXISTS livechat_transcript_deliveries;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
