@@ -1,0 +1,16 @@
+version: 0.0.23
+kind: schema
+description: Persist row versions and completion timestamps for contact activities
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_activities ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE base_activities ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;
+      UPDATE base_activities SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE base_activities DROP COLUMN IF EXISTS completed_at;
+      ALTER TABLE base_activities DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

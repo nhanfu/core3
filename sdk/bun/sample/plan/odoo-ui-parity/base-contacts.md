@@ -478,3 +478,41 @@ session `xcvu`; it did not navigate, log in independently, inspect credentials,
 or use Playwright. Odoo/Core3 desktop and mobile captures are therefore not
 available for this feature and no visual-parity claim is made. Evidence is in
 `evidence/base/2026-09-22/BASE-CONTACT-MERGE-001/`.
+
+## Contact activity completion bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-ACTIVITY-COMPLETE-001`.
+
+Odoo source comparison: Odoo 19 `addons/mail/views/mail_activity_views.xml:277-284`
+declares the Next Activities list actions `action_done` (Done), `action_cancel`
+(Cancel), and rescheduling actions. `addons/mail/models/mail_activity.py:451-485`
+marks active activities done through `action_feedback`, while lines 647-650
+cancel by unlinking the active activity. Core3 previously allowed contacts to
+schedule and open activities but had no completion/cancellation mutation.
+
+Core3 now extends the API-owned `contact-detail` contract with
+`complete_contact_activity` and `cancel_contact_activity`, binds both actions
+to the contact activity list, and exposes completion timestamp and row version
+fields. Migration `20260922170000-023-contact-activity-completion.yaml` adds
+durable `row_version` and `completed_at` columns to `base_activities`.
+Completion and cancellation require `base.activities.write`, a signed-in
+actor, current-company scope, planned state, and the expected row version;
+completion persists `done`/timestamp state and both mutations write a durable
+contact chatter audit entry.
+
+Focused validation is `test/base_contact_activity_completion.integration.test.ts`
+(3 tests, 25 assertions). It covers source/action mapping, page/API
+separation, idempotent migration, planned reads, actor/company/stale guards,
+durable completion, cancellation, and chatter audit persistence.
+
+BrowserSkill was attempted against the shared authenticated Odoo tab
+`1770662590` in instance `245ea108`, but explicit borrowing was denied because
+the tab was already borrowed by session `trfx`. The worker did not retry,
+navigate independently, inspect credentials, or use Playwright; its BrowserSkill
+session `aotm` was stopped. No Odoo desktop/mobile capture or visual-parity
+claim is made. Evidence is in
+`evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-COMPLETE-001/`.
+
+Remaining gaps for this slice are Odoo's Today/Tomorrow/Next Week rescheduling
+actions, feedback/attachments on completion, the standalone Activities menu
+and activity form parity, and authenticated paired visual evidence.

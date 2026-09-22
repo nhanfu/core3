@@ -149,7 +149,16 @@ components:
           title: summary
           subtitle: activity_type
           fields: [{ field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
-    columns: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
+    columns:
+      - { field: summary, label: Summary }
+      - { field: activity_type, label: Type }
+      - { field: state, label: Status }
+      - { field: due_date, label: Due date }
+      - { field: completed_at, label: Completed }
+      - { field: assigned_user_name, label: Assigned to }
+    actions:
+      - { id: complete_contact_activity, label: Mark done, permission: base.activities.write, variant: primary, show_if: "row.state === 'planned'" }
+      - { id: cancel_contact_activity, label: Cancel, permission: base.activities.write, variant: danger, show_if: "row.state === 'planned'" }
     row_open_action: view_activity
     row_double_click_action: view_activity
     empty_state: { title: No scheduled activities, description: Schedule an activity to keep this contact moving. }
