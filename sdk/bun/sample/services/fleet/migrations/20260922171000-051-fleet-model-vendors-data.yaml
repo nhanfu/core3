@@ -1,0 +1,29 @@
+version: 0.0.51
+kind: data
+description: Deterministic Fleet model vendor fixtures and assignments
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vendor_contacts(id, name, email, phone, active) VALUES
+        ('fleet-vendor-001', 'Acme Mobility Parts', 'sales@acme-mobility.example', '+1 555 0140', TRUE),
+        ('fleet-vendor-002', 'Northwind Fleet Services', 'fleet@northwind.example', '+1 555 0141', TRUE),
+        ('fleet-vendor-003', 'Green Road Motors', 'hello@greenroad.example', '+1 555 0142', TRUE)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO fleet_vehicle_model_vendors(model_id, vendor_id) VALUES
+        ('fleet-model-001', 'fleet-vendor-001'),
+        ('fleet-model-001', 'fleet-vendor-002'),
+        ('fleet-model-002', 'fleet-vendor-003')
+      ON CONFLICT (model_id, vendor_id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicle_model_vendors
+      WHERE (model_id, vendor_id) IN (
+        ('fleet-model-001', 'fleet-vendor-001'),
+        ('fleet-model-001', 'fleet-vendor-002'),
+        ('fleet-model-002', 'fleet-vendor-003')
+      );
+      DELETE FROM fleet_vendor_contacts
+      WHERE id IN ('fleet-vendor-001', 'fleet-vendor-002', 'fleet-vendor-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

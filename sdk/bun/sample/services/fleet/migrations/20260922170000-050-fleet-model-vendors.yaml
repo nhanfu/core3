@@ -1,0 +1,34 @@
+version: 0.0.50
+kind: schema
+description: Durable Odoo Fleet model vendor catalog and assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vendor_contacts (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL DEFAULT '',
+        phone VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_model_vendors (
+        model_id VARCHAR NOT NULL,
+        vendor_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        PRIMARY KEY (model_id, vendor_id)
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_model_vendors_model_idx
+        ON fleet_vehicle_model_vendors(model_id, vendor_id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_model_vendors_vendor_idx
+        ON fleet_vehicle_model_vendors(vendor_id, model_id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_model_vendors_vendor_idx;
+      DROP INDEX IF EXISTS fleet_vehicle_model_vendors_model_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_model_vendors;
+      DROP TABLE IF EXISTS fleet_vendor_contacts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

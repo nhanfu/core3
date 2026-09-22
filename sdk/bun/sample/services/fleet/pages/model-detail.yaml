@@ -8,6 +8,7 @@ components:
     status_field: active
     status_colors: { true: green, false: neutral }
     editable: true
+    content_slot: model-vendors
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_fleet_models, label: Models, variant: secondary, permission: fleet.read }
@@ -46,3 +47,22 @@ components:
         - id: vendors
           label: Vendors
           fields: [{ field: vendor_summary, label: Vendors }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: fleet_model_vendor_assignments
+    parent_source: fleet_model_detail
+    title: Vendors
+    description: Assign the Odoo vendor contacts available for this vehicle model.
+    variant: odoo_x2many
+    page_size: 20
+    row_key: id
+    actions:
+      - { id: add_fleet_model_vendor, label: Add a vendor, variant: primary, permission: fleet.manage }
+    empty_state: { title: No vendors, description: Add a vendor contact to this vehicle model. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Vendor, readonly: true }
+      - { type: LineItemField, id: email, field: email, label: Email, readonly: true }
+      - { type: LineItemField, id: phone, field: phone, label: Phone, readonly: true }
+      - type: LineItemActions
+        id: fleet_model_vendor_actions
+        actions: [{ id: remove_fleet_model_vendor, label: Remove, icon: trash, variant: danger, permission: fleet.manage }]

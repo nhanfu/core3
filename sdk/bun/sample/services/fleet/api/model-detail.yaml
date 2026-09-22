@@ -6,11 +6,18 @@ datasources:
   - id: fleet_model_detail_categories
     permission: fleet.read
     query: "SELECT id AS value, name AS label FROM fleet_vehicle_model_categories WHERE active = TRUE ORDER BY sequence, name, id"
+  - id: fleet_model_vendor_options
+    permission: fleet.manage
+    query: "SELECT v.id AS value, v.name || CASE WHEN v.email = '' THEN '' ELSE ' · ' || v.email END AS label FROM fleet_vendor_contacts v JOIN fleet_vehicle_models model ON model.id = :id AND model.active = TRUE WHERE v.active = TRUE AND NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_vendors r WHERE r.model_id = :id AND r.vendor_id = v.id) ORDER BY v.name, v.id"
+  - id: fleet_model_vendor_assignments
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_MODEL_VENDORS_UNAVAILABLE, message: Model vendors are temporarily unavailable. } }
+    query: "SELECT r.model_id, v.id, v.id AS vendor_id, v.name, v.email, v.phone, v.active, 1 AS row_version FROM fleet_vehicle_model_vendors r JOIN fleet_vendor_contacts v ON v.id = r.vendor_id JOIN fleet_vehicle_models model ON model.id = r.model_id WHERE r.model_id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND model.id = :id ORDER BY v.name, v.id"
   - id: fleet_model_detail
     single: true
     permission: fleet.read
     error_states: { transport_error: { status: 503, code: FLEET_MODEL_DETAIL_UNAVAILABLE, message: Model details are temporarily unavailable. } }
-    query: "SELECT model.id, model.row_version, model.brand_id, brand.name AS brand_name, model.category_id, category.name AS category_name, model.name, model.vehicle_count, model.vehicle_type, CASE model.vehicle_type WHEN 'bike' THEN 'Bike' ELSE 'Car' END AS vehicle_type_label, model.model_year, model.seats, model.doors, model.color, model.trailer_hook, model.electric_assistance, model.default_fuel_type, model.transmission, model.drive_type, model.power, model.power_unit, model.vehicle_range, model.range_unit, model.default_co2, model.co2_emission_unit, model.co2_standard, model.active, CASE WHEN model.active THEN 'Active' ELSE 'Archived' END AS active_label, 'No vendor records in this bounded slice' AS vendor_summary FROM fleet_vehicle_models AS model JOIN fleet_vehicle_model_brands AS brand ON brand.id = model.brand_id LEFT JOIN fleet_vehicle_model_categories AS category ON category.id = model.category_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND model.id = :id"
+    query: "SELECT model.id, model.row_version, model.brand_id, brand.name AS brand_name, model.category_id, category.name AS category_name, model.name, model.vehicle_count, model.vehicle_type, CASE model.vehicle_type WHEN 'bike' THEN 'Bike' ELSE 'Car' END AS vehicle_type_label, model.model_year, model.seats, model.doors, model.color, model.trailer_hook, model.electric_assistance, model.default_fuel_type, model.transmission, model.drive_type, model.power, model.power_unit, model.vehicle_range, model.range_unit, model.default_co2, model.co2_emission_unit, model.co2_standard, model.active, CASE WHEN model.active THEN 'Active' ELSE 'Archived' END AS active_label, COALESCE((SELECT string_agg(v.name, ', ' ORDER BY v.name, v.id) FROM fleet_vehicle_model_vendors r JOIN fleet_vendor_contacts v ON v.id = r.vendor_id WHERE r.model_id = model.id AND v.active = TRUE), '') AS vendor_summary FROM fleet_vehicle_models AS model JOIN fleet_vehicle_model_brands AS brand ON brand.id = model.brand_id LEFT JOIN fleet_vehicle_model_categories AS category ON category.id = model.category_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND model.id = :id"
 actions:
   - { id: back_to_fleet_models, type: navigate, permission: fleet.read, navigate_to: /fleet/config/models }
   - id: edit_fleet_model
@@ -40,6 +47,49 @@ actions:
       steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :old_brand_id AND :old_brand_id <> :brand_id AND :old_active = TRUE" }, { query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count + 1 WHERE id = :brand_id AND :old_brand_id <> :brand_id AND active = TRUE" }]
       result: { query: "SELECT * FROM fleet_vehicle_models WHERE id = :id" }
     fields: [{ field: name, label: Model name, type: text, required: true }, { field: brand_id, label: Manufacturer, type: select, options_source: fleet_model_detail_manufacturers, required: true }, { field: category_id, label: Category, type: select, options_source: fleet_model_detail_categories }, { field: vehicle_type, label: Vehicle Type, type: select, options: [{ value: car, label: Car }, { value: bike, label: Bike }], required: true }, { field: model_year, label: Model Year, type: text }, { field: seats, label: Seating Capacity, type: number }, { field: doors, label: Number of Doors, type: number }, { field: color, label: Color, type: text }, { field: trailer_hook, label: Trailer Hitch, type: checkbox }, { field: electric_assistance, label: Electric Assistance, type: checkbox }, { field: default_fuel_type, label: Fuel Type, type: select, options: [{ value: diesel, label: Diesel }, { value: gasoline, label: Gasoline }, { value: full_hybrid, label: Full Hybrid }, { value: electric, label: Electric }] }, { field: transmission, label: Transmission, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }, { field: drive_type, label: Drive Type, type: select, options: [{ value: fwd, label: Front-Wheel Drive (FWD) }, { value: awd, label: All-Wheel Drive (AWD) }, { value: rwd, label: Rear-Wheel Drive (RWD) }, { value: 4wd, label: Four-Wheel Drive (4WD) }] }, { field: power, label: Power, type: number }, { field: power_unit, label: Power Unit, type: select, options: [{ value: power, label: kW }, { value: horsepower, label: Horsepower (hp) }] }, { field: vehicle_range, label: Range, type: number }, { field: range_unit, label: Range Unit, type: select, options: [{ value: km, label: km }, { value: mi, label: mi }] }, { field: default_co2, label: CO₂ Emissions, type: number }, { field: co2_emission_unit, label: Emission Unit, type: text }, { field: co2_standard, label: Emission Standard, type: text }]
+  - id: add_fleet_model_vendor
+    type: server_form
+    permission: fleet.manage
+    title: Add Vendor
+    description: Assign an Odoo vendor contact to this vehicle model.
+    action: fleet.models.vendors.add
+    handler: line_item
+    operation: create
+    domain: fleet_model_detail
+    params: { id: '{state.fleet_model_detail.id}', parent_expected_row_version: '{state.fleet_model_detail.row_version}' }
+    refresh: [fleet_model_detail, fleet_model_vendor_assignments, fleet_model_vendor_options]
+    fields:
+      - { field: vendor_id, label: Vendor, type: select, options_source: fleet_model_vendor_options, required: true }
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_MODEL_VENDOR_ACTOR_REQUIRED, message: An authenticated Fleet actor is required. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = TRUE", status: 404, code: FLEET_MODEL_VENDOR_MODEL_NOT_FOUND, message: Active model was not found. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = TRUE AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The model changed before the vendor was added. Reload and try again. }
+        - { query: "SELECT id FROM fleet_vendor_contacts WHERE id = :vendor_id AND active = TRUE", status: 422, code: FLEET_MODEL_VENDOR_INVALID, message: Select an active vendor. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_vendors WHERE model_id = :id AND vendor_id = :vendor_id)", status: 409, code: FLEET_MODEL_VENDOR_EXISTS, message: This vendor is already assigned to the model. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_model_vendors(model_id, vendor_id) VALUES(:id, :vendor_id)", expect_changed: true, status: 409, code: FLEET_MODEL_VENDOR_CREATE_FAILED, message: The vendor could not be assigned to the model. }
+        - { query: "UPDATE fleet_vehicle_models SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND active = TRUE AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The model changed while assigning the vendor. Reload and try again. }
+      result: { query: "SELECT r.model_id, v.id, v.id AS vendor_id, v.name, v.email, v.phone, v.active, 1 AS row_version FROM fleet_vehicle_model_vendors r JOIN fleet_vendor_contacts v ON v.id = r.vendor_id WHERE r.model_id = :id AND r.vendor_id = :vendor_id" }
+  - id: remove_fleet_model_vendor
+    type: server
+    permission: fleet.manage
+    action: fleet.models.vendors.remove
+    handler: line_item
+    operation: delete
+    domain: fleet_model_vendor_assignment
+    params: { id: '{state.fleet_model_detail.id}', vendor_id: '{row.vendor_id}', parent_expected_row_version: '{state.fleet_model_detail.row_version}' }
+    refresh: [fleet_model_detail, fleet_model_vendor_assignments, fleet_model_vendor_options]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: FLEET_MODEL_VENDOR_ACTOR_REQUIRED, message: An authenticated Fleet actor is required. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = TRUE", status: 404, code: FLEET_MODEL_VENDOR_MODEL_NOT_FOUND, message: Active model was not found. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = TRUE AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The model changed before the vendor was removed. Reload and try again. }
+        - { query: "SELECT vendor_id FROM fleet_vehicle_model_vendors WHERE model_id = :id AND vendor_id = :vendor_id", status: 409, code: FLEET_MODEL_VENDOR_STALE, message: This model vendor changed or was removed; reload and try again. }
+      steps:
+        - { query: "DELETE FROM fleet_vehicle_model_vendors WHERE model_id = :id AND vendor_id = :vendor_id", expect_changed: true, status: 409, code: FLEET_MODEL_VENDOR_STALE, message: This model vendor changed or was removed; reload and try again. }
+        - { query: "UPDATE fleet_vehicle_models SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND active = TRUE AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The model changed while removing the vendor. Reload and try again. }
+      result: { query: "SELECT :id AS model_id, :vendor_id AS vendor_id" }
   - id: archive_fleet_model
     type: server
     permission: fleet.manage
