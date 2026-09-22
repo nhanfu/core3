@@ -170,3 +170,24 @@ Odoo tab was already borrowed by session `yabv`; the task-owned route showed
 Discuss at desktop and emulated mobile sizes. Evidence is under
 `evidence/time-off/2026-09-22/TIMEOFF-PUBLIC-HOLIDAY-CALENDAR-001/`; no
 visual-parity claim is made.
+
+## 2026-09-22 bounded candidate: All Time Off bulk request actions
+
+Implemented `TIMEOFF-REQUEST-BULK-ACTIONS-001`, the missing Odoo
+`hr_leave_view_tree` selection-header `Approve` and `Refuse` workflow on
+`/time-off-approval`. The YAML page declares selectable rows and manager-only
+bulk actions; the matching API performs guarded durable updates over existing
+requests, balances, validation types, and approval audit rows. Manager-only
+approval handles ordinary and two-step requests, applies balance only on final
+approval, and increments row versions. Bulk refusal persists the acting manager
+and `Bulk refusal` reason. No migration was needed.
+
+Focused verification passes **3 tests / 14 assertions** in
+`test/time_off_request_bulk_actions.integration.test.ts`. BrowserSkill instance
+`245ea108` was healthy, but authenticated tab `1770662590` was already owned
+by session `lfvs`; the task-created `core3_reference` route showed Discuss
+without Time Off. Session `xlgl` was stopped and no tab was retained. No
+Odoo/Core3 visual-parity claim is made. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-REQUEST-BULK-ACTIONS-001/`.
+The full Time Off regression passes **85 tests / 806 assertions** across 31
+integration files.

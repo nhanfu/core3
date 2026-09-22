@@ -1123,3 +1123,33 @@ not be borrowed within the requested confirmation window. No live Odoo
 navigation, mutation, desktop/mobile capture, or visual-parity claim was made.
 The exact blocker and cleanup are recorded under
 `evidence/time-off/2026-09-22/TIMEOFF-DASHBOARD-CALENDAR-001/`.
+
+## All Time Off bulk request actions (2026-09-22)
+
+The next uncovered source-backed workflow is the Odoo `hr_leave_view_tree`
+selection header: `Approve` and `Refuse` call `hr.leave.action_approve` and
+`hr.leave.action_refuse` on selected rows in the `All Time Off` action. Core3
+now exposes the same manager-only selection actions on `/time-off-approval`,
+with separate page/API contracts joined by `page.id: time-off-approval`.
+
+Bulk approval is durable over `leave_requests` and `leave_balances`: ordinary
+pending requests become Approved and consume balance, two-step requests move
+from Submitted to Second Approval without consuming balance, and existing
+Second Approval requests finalize with balance application and second-approver
+audit. The operation rejects missing selections, non-pending rows,
+insufficient aggregate balance, and invalid two-step states. Bulk refusal
+persists `Refused`, the acting manager, and the deterministic `Bulk refusal`
+reason. No migration was needed because the existing request, balance,
+validation-type, and approval-audit tables are reused.
+
+Focused coverage is in
+`test/time_off_request_bulk_actions.integration.test.ts`: 3 tests and 14
+assertions pass. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-REQUEST-BULK-ACTIONS-001/`.
+
+BrowserSkill instance `245ea108` was healthy, but authenticated tab
+`1770662590` could not be borrowed because it was already owned by session
+`lfvs`. The task-created tab loaded
+`http://localhost:8069/odoo/time-off-approval?db=core3_reference` and showed
+the Discuss shell without a Time Off surface; the session was stopped and no
+tab was retained. No Odoo mutation or visual-parity claim is made.

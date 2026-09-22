@@ -24,6 +24,40 @@ datasources:
     single: false
     query: "SELECT value, label FROM (VALUES ('employee','By Employee'), ('company','By Company'), ('department','By Department'), ('category','By Employee Tag')) modes(value, label)"
 actions:
+  - id: approve_selected_requests
+    type: server
+    permission: time_off.manage
+    action: time_off.requests.bulk_approve
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [time_off_approval_requests]
+    confirm: 'Approve {count} selected time off requests?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_requests WHERE id IN :ids)", status: 400, code: TIME_OFF_REQUEST_SELECTION_REQUIRED, message: Select at least one time off request. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests r WHERE r.id IN :ids AND r.state NOT IN ('Submitted', 'Second Approval'))", status: 409, code: TIME_OFF_REQUEST_BULK_STATE_INVALID, message: Only pending time off requests can be approved. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (WITH final_requests AS (SELECT r.employee_id, r.leave_type_id, EXTRACT(YEAR FROM r.date_from) AS year, SUM(r.days) AS days FROM leave_requests r LEFT JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id WHERE r.id IN :ids AND (r.state = 'Second Approval' OR (r.state = 'Submitted' AND COALESCE(v.validation_type, 'manager') <> 'both')) GROUP BY r.employee_id, r.leave_type_id, EXTRACT(YEAR FROM r.date_from)) SELECT 1 FROM final_requests f LEFT JOIN leave_balances b ON b.employee_id = f.employee_id AND b.leave_type_id = f.leave_type_id AND b.year = f.year WHERE b.id IS NULL OR b.allocated_days - b.used_days < f.days)", status: 409, code: TIME_OFF_REQUEST_BULK_BALANCE_INVALID, message: One or more requests do not have enough leave balance. }
+      steps:
+        - query: "UPDATE leave_balances SET used_days = used_days + (SELECT COALESCE(SUM(r.days), 0) FROM leave_requests r LEFT JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id WHERE r.id IN :ids AND (r.state = 'Second Approval' OR (r.state = 'Submitted' AND COALESCE(v.validation_type, 'manager') <> 'both')) AND r.employee_id = leave_balances.employee_id AND r.leave_type_id = leave_balances.leave_type_id AND EXTRACT(YEAR FROM r.date_from) = leave_balances.year) WHERE EXISTS (SELECT 1 FROM leave_requests r LEFT JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id WHERE r.id IN :ids AND (r.state = 'Second Approval' OR (r.state = 'Submitted' AND COALESCE(v.validation_type, 'manager') <> 'both')) AND r.employee_id = leave_balances.employee_id AND r.leave_type_id = leave_balances.leave_type_id AND EXTRACT(YEAR FROM r.date_from) = leave_balances.year)"
+        - query: "UPDATE leave_requests SET state = CASE WHEN state = 'Submitted' AND COALESCE((SELECT validation_type FROM time_off_leave_validation_types v WHERE v.leave_type_id = leave_requests.leave_type_id), 'manager') = 'both' THEN 'Second Approval' ELSE 'Approved' END, approver = :current_user_name, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :ids AND state IN ('Submitted', 'Second Approval')"
+        - query: "INSERT INTO time_off_leave_approvals(request_id, first_approver, second_approver, row_version) SELECT r.id, :current_user_name, NULL, 1 FROM leave_requests r JOIN time_off_leave_validation_types v ON v.leave_type_id = r.leave_type_id WHERE r.id IN :ids AND r.state = 'Second Approval' ON CONFLICT(request_id) DO UPDATE SET first_approver = excluded.first_approver, row_version = time_off_leave_approvals.row_version + 1"
+        - query: "UPDATE time_off_leave_approvals SET second_approver = :current_user_name, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE request_id IN :ids AND EXISTS (SELECT 1 FROM leave_requests r WHERE r.id = time_off_leave_approvals.request_id AND r.state = 'Approved')"
+      result: { query: "SELECT TRUE AS approved" }
+  - id: refuse_selected_requests
+    type: server
+    permission: time_off.manage
+    action: time_off.requests.bulk_refuse
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [time_off_approval_requests]
+    confirm: 'Refuse {count} selected time off requests?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_requests WHERE id IN :ids)", status: 400, code: TIME_OFF_REQUEST_SELECTION_REQUIRED, message: Select at least one time off request. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests WHERE id IN :ids AND state NOT IN ('Submitted', 'Second Approval'))", status: 409, code: TIME_OFF_REQUEST_BULK_STATE_INVALID, message: Only pending time off requests can be refused. }
+      steps:
+        - query: "UPDATE leave_requests SET state = 'Refused', approver = :current_user_name, refusal_reason = 'Bulk refusal', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :ids AND state IN ('Submitted', 'Second Approval')"
+      result: { query: "SELECT TRUE AS refused" }
   - id: refuse_approval_request
     type: server_form
     permission: time_off.manage

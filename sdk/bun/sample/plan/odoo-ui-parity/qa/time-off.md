@@ -258,3 +258,26 @@ blocker.
   README; no visual-parity claim is made.
 - Evidence: `evidence/time-off/2026-09-22/TIMEOFF-SUMMARY-REPORT-001/`.
 - Disposition: conditional bounded pass; no full Time Off sign-off.
+
+## 2026-09-22 bounded candidate: All Time Off bulk request actions
+
+- Stable ID: `TIMEOFF-REQUEST-BULK-ACTIONS-001`.
+- Source workflow: `hr_leave_view_tree` header `Approve`/`Refuse` buttons call
+  `hr.leave.action_approve` and `hr.leave.action_refuse` for selected requests.
+- Core3 contract: `pages/time-off-approval.yaml` and
+  `api/time-off-approval.yaml`, joined by `page.id: time-off-approval`.
+- Focused verification: **PASS**, 3 tests / 14 assertions in
+  `test/time_off_request_bulk_actions.integration.test.ts`.
+- Time Off regression: **PASS**, 85 tests / 806 assertions across 31
+  integration files.
+- Functional coverage: manager-only selection actions, ordinary approval,
+  first and second approval, aggregate balance guard, refusal persistence,
+  selection guard, non-pending guard, and row-version increments.
+- Persistence: **PASS by reuse**; durable request/balance/approval rows are
+  updated and no migration was required.
+- Browser gate: **BLOCKED**; authenticated tab `1770662590` was already owned
+  by session `lfvs`. The task-created `core3_reference` route showed Discuss
+  without a Time Off surface. BrowserSkill session `xlgl` was stopped and no
+  tab was retained.
+- Disposition: conditional bounded pass; no visual-parity claim or full module
+  sign-off.
