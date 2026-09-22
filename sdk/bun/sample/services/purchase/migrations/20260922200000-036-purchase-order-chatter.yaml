@@ -1,0 +1,37 @@
+version: 0.0.36
+kind: schema
+description: Persist Purchase order chatter messages and internal notes
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_order_messages (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        actor_id VARCHAR,
+        actor_name VARCHAR NOT NULL DEFAULT 'Purchase User',
+        action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_messages_order_idx
+        ON purchase_order_messages(purchase_order_id, created_at DESC, id DESC);
+      INSERT INTO purchase_order_messages
+        (id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail, created_at)
+      VALUES
+        ('purchase-chatter-demo-005-1', 'po-demo-005', 1, 'purchase-user-demo', 'Mitchell Admin',
+         'purchase.orders.chatter.note', 'Internal note', 'Vendor confirmed the delivery window.', TIMESTAMP '2026-01-15 10:00:00'),
+        ('purchase-chatter-demo-002-1', 'po-demo-002', 1, 'purchase-user-demo', 'Mitchell Admin',
+         'purchase.orders.chatter.message', 'Message', 'Please confirm the requested delivery date.', TIMESTAMP '2026-01-15 10:05:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM purchase_order_messages
+        WHERE id IN ('purchase-chatter-demo-005-1', 'purchase-chatter-demo-002-1');
+      DROP INDEX IF EXISTS purchase_order_messages_order_idx;
+      DROP TABLE IF EXISTS purchase_order_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

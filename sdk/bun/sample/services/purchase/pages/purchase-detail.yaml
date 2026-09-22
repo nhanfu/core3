@@ -55,9 +55,17 @@ components:
               fields: [{ field: notes, label: Notes, type: textarea, wide: true }, { field: locked, label: Locked }, { field: acknowledged, label: Acknowledged }]
     message_source: purchase_order_email_history
     chatter_label: Chatter
-    chatter_empty: No purchase order emails yet.
+    chatter_empty: No messages or activities yet.
     message_label: Send message
+    message_action: send_purchase_order_message
+    message_placeholder: Send a message to purchase order followers…
     note_label: Log note
+    note_action: log_purchase_order_note
+    note_placeholder: Log an internal note…
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
   - type: LineItemGrid
     mount_in: previous-panel
     source: purchase_order_lines

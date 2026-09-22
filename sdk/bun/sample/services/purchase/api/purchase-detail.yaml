@@ -39,7 +39,28 @@ datasources:
   - id: purchase_order_email_history
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_EMAIL_HISTORY_UNAVAILABLE, message: Purchase order email history is temporarily unavailable. } }
-    query: "SELECT e.id, e.purchase_order_id, e.sent_by AS actor_name, CAST(e.sent_at AS VARCHAR) AS created_at, 'purchase.orders.email.message' AS action, 'Sent ' || e.template_label AS action_label, e.recipient_name, e.recipient_email, 'To ' || e.recipient_name || ' (' || e.recipient_email || ') · ' || e.attachment_name AS detail, e.subject, e.state, e.row_version FROM purchase_order_emails e WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.purchase_order_id = :id UNION ALL SELECT r.id, r.purchase_order_id, r.sent_by AS actor_name, CAST(r.sent_at AS VARCHAR) AS created_at, 'purchase.orders.reminder.preview' AS action, 'Sent Purchase: Vendor Reminder' AS action_label, r.recipient_name, r.recipient_email, 'Sample sent to ' || r.recipient_email AS detail, r.subject, 'Sent' AS state, r.row_version FROM purchase_order_reminder_previews r WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.purchase_order_id = :id ORDER BY created_at DESC, id DESC"
+    query: >-
+      SELECT e.id, e.purchase_order_id, e.sent_by AS actor_name, CAST(e.sent_at AS VARCHAR) AS created_at,
+      'purchase.orders.email.message' AS action, 'Sent ' || e.template_label AS action_label,
+      e.recipient_name, e.recipient_email,
+      'To ' || e.recipient_name || ' (' || e.recipient_email || ') · ' || e.attachment_name AS detail,
+      e.subject, e.state, e.row_version
+      FROM purchase_order_emails e
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.purchase_order_id = :id
+      UNION ALL
+      SELECT r.id, r.purchase_order_id, r.sent_by AS actor_name, CAST(r.sent_at AS VARCHAR) AS created_at,
+      'purchase.orders.reminder.preview' AS action, 'Sent Purchase: Vendor Reminder' AS action_label,
+      r.recipient_name, r.recipient_email, 'Sample sent to ' || r.recipient_email AS detail,
+      r.subject, 'Sent' AS state, r.row_version
+      FROM purchase_order_reminder_previews r
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.purchase_order_id = :id
+      UNION ALL
+      SELECT m.id, m.purchase_order_id, m.actor_name, CAST(m.created_at AS VARCHAR) AS created_at,
+      m.action, m.action_label, CAST(NULL AS VARCHAR) AS recipient_name, CAST(NULL AS VARCHAR) AS recipient_email,
+      m.detail, CAST(NULL AS VARCHAR) AS subject, 'Posted' AS state, m.row_version
+      FROM purchase_order_messages m
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.purchase_order_id = :id
+      ORDER BY created_at DESC, id DESC
 actions:
   - { id: open_purchase_bill_matching, type: navigate, permission: accounting.write, navigate_to: /purchase/bill-matching, params: { id: '{row.id}' } }
   - { id: open_purchase_price_comparison, type: navigate, permission: purchase.read, navigate_to: /purchase/price-comparison, params: { id: '{row.id}' } }
@@ -562,3 +583,51 @@ actions:
         - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'product' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
         - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_PARENT_STALE, message: This purchase order changed while deleting the line. Reload before saving. }
       result: { query: "SELECT true AS deleted, :line_id AS id" }
+  - id: send_purchase_order_message
+    type: server_form
+    permission: purchase.write
+    title: Send message
+    action: purchase.orders.chatter.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.purchase_order_detail.id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_email_history]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'purchase-chatter-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM purchase_order_messages WHERE purchase_order_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: PURCHASE_ORDER_MESSAGE_ACTOR_REQUIRED, message: An authenticated Purchase actor is required to send a message. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_CHATTER_NOT_FOUND, message: Purchase order was not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_MESSAGE_PARENT_CHANGED, message: This purchase order changed. Reload before sending a message. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_ORDER_MESSAGE_CONTENT_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO purchase_order_messages(id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Purchase User'), 'purchase.orders.chatter.message', 'Message', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-09-22 10:00:00')", expect_changed: true, status: 409, code: PURCHASE_ORDER_MESSAGE_FAILED, message: The Purchase order message could not be recorded. }
+        - { query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_MESSAGE_PARENT_CHANGED, message: This purchase order changed while sending the message. Reload before retrying. }
+      result: { query: "SELECT id, purchase_order_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_order_messages WHERE id = :message_id" }
+  - id: log_purchase_order_note
+    type: server_form
+    permission: purchase.write
+    title: Log note
+    action: purchase.orders.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{state.purchase_order_detail.id}', expected_row_version: '{state.purchase_order_detail.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_email_history]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'purchase-chatter-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM purchase_order_messages WHERE purchase_order_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: PURCHASE_ORDER_NOTE_ACTOR_REQUIRED, message: An authenticated Purchase actor is required to log a note. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_CHATTER_NOT_FOUND, message: Purchase order was not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_PARENT_CHANGED, message: This purchase order changed. Reload before logging a note. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_ORDER_NOTE_CONTENT_INVALID, message: Note content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO purchase_order_messages(id, purchase_order_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Purchase User'), 'purchase.orders.chatter.note', 'Internal note', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-09-22 10:00:00')", expect_changed: true, status: 409, code: PURCHASE_ORDER_NOTE_FAILED, message: The Purchase order note could not be recorded. }
+        - { query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PURCHASE_ORDER_NOTE_PARENT_CHANGED, message: This purchase order changed while logging the note. Reload before retrying. }
+      result: { query: "SELECT id, purchase_order_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_order_messages WHERE id = :message_id" }
