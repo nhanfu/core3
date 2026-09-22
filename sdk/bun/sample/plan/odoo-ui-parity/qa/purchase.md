@@ -314,3 +314,41 @@ capture was produced, and no visual-parity claim is made.
 Disposition: **conditional bounded pass** for the source-backed declarative
 contract, durable add/merge workflow, guards, tests, and build. This does not
 sign off the Purchase module or visual parity.
+
+## 2026-09-22 candidate QA — Purchase Order Add a section
+
+- Stable ID: `PURCHASE-ORDER-SECTION-001`.
+- Scope: Purchase Order Products-tab `Add a section` line action only; Odoo's
+  `Add a note` and full Purchase sign-off remain outside this slice.
+- Source: Odoo 19 `addons/purchase/views/purchase_views.xml:250-253`, with the
+  existing `purchase.order.line` display-line model contract.
+- Focused: `bun test ./test/purchase_order_sections.integration.test.ts
+  ./test/purchase_order_lines.integration.test.ts --timeout 30000` — **PASS**,
+  7 tests / 53 assertions.
+- Contract coverage: `purchase-detail` page/API join, Purchase write
+  permission, Draft/Sent unlocked state guard, stable durable `line_section`
+  fixture, atomic parent row version and zero-total persistence, section edit
+  and delete, invalid/stale/locked/non-section guards, and migration replay.
+- Audit: `bun run audit` — **PASS**, 834 pages, 842 routes, 1,740 datasources.
+- `bun run audit:yaml` — **UNAVAILABLE**; no such script exists in the active
+  `sdk/bun/sample/package.json`.
+
+### Browser result and open gates
+
+BrowserSkill instance `245ea108` was connected and session `imom` was stopped
+cleanly. The required borrow of signed-in Odoo tab `1770662590` did not enter
+the agent scope: the borrow confirmation remained pending until the 30-second
+request timeout, and `bsk tab list --scope all` showed the tab still in user
+scope. Because the live tab was not borrowed, this slice has no truthful live
+Odoo action inspection, no desktop/mobile screenshots, and no Core3 browser
+captures; no visual-parity claim is made and no credentials were accessed.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-SECTION-QA-001 | Required BrowserSkill borrow confirmation timed out before the authenticated Odoo tab entered agent scope | open blocker; no visual claim |
+| PURCHASE-SECTION-QA-002 | Shared LineItemGrid control dispatch was changed and covered indirectly by the page/action contract, but authenticated click/reload proof is unavailable until a tab/runtime is borrowable | open browser gate |
+| PURCHASE-SECTION-QA-003 | `Add a note` remains a separate source-defined Products-tab action | explicit follow-up |
+
+Evidence manifest: `evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.
+This is a conditional bounded pass for source-backed persistence and guards,
+not a visual or module sign-off.

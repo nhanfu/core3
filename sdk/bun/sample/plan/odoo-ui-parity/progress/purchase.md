@@ -87,3 +87,16 @@ borrow the authenticated Odoo tab (first occupied by another session, then
 borrow confirmation pending until timeout). No desktop/mobile capture or
 visual-parity claim is made. Vendor-specific seller pricing and Odoo's richer
 per-card catalog quantity UI remain follow-up gaps.
+
+## 2026-09-22 bounded slice: Purchase Order Add a section
+
+Implemented `PURCHASE-ORDER-SECTION-001` from Odoo's Products-tab
+`add_section_control`. Core3 adds a page/API-bound section-line form, durable
+`line_section` identity, atomic parent version/total handling, section edit and
+delete guards, and a generic LineItemGrid fix so each create control dispatches
+its own action. Focused section + line regression passed 7/53; UI audit passed.
+
+Status remains **conditional**: BrowserSkill instance `245ea108` could not
+borrow signed-in Odoo tab `1770662590` before the confirmation request timed
+out. No desktop/mobile capture or visual-parity claim is made. `Add a note`
+remains a separate Purchase follow-up.

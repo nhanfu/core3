@@ -1314,3 +1314,39 @@ BrowserSkill instance `245ea108` was connected, but the authenticated Odoo
 tab was initially borrowed by another session and the later borrow confirmation
 remained pending until timeout. The owned session was stopped. No live Odoo or
 Core3 desktop/mobile capture was obtained and no visual-parity claim is made.
+
+## 2026-09-22 bounded addendum — Purchase Order Add a section
+
+The next genuinely missing Products-tab action after Catalog, excluding the
+receipt reminder work, is Odoo's `Add a section` control. The source view at
+`addons/purchase/views/purchase_views.xml:250-253` declares
+`add_section_control` with `default_display_type: line_section`; Odoo stores the
+section name in the order-line `name` field and keeps product, quantity, price,
+tax, and amount empty/zero for the display line. This is part of the existing
+`purchase.order.line` one2many form, not a new menu or route.
+
+Core3 adds stable feature ID `PURCHASE-ORDER-SECTION-001` to the existing
+`purchase-detail` page/API pair. The Products grid exposes `Add a section`, and
+the `purchase.orders.lines.section.create` server form requires `purchase.write`,
+an editable Draft/Sent unlocked order, a current parent row version, and a
+1–500 character section name. It persists a `line_section` row with a stable
+generated ID, zero total, and atomically increments the parent version. Created
+sections can be edited or deleted with the same stale/locked guards; product
+line mutations explicitly reject display lines. Migration
+`20260922160000-033-purchase-order-sections.yaml` seeds and replays the stable
+`purchase-section-demo-008-10` fixture.
+
+The shared LineItemGrid create-control dispatch now remembers the clicked
+action ID, so `Add a section` opens/submits its own server form rather than
+reusing the first `Add a product` action. The Purchase page remains layout-only
+and the API remains page-id owned. Odoo's `Add a note` control is intentionally
+the next separate follow-up and is not claimed here.
+
+Focused verification is in
+`test/purchase_order_sections.integration.test.ts` plus the existing line
+regression: 7 tests / 53 assertions. BrowserSkill instance `245ea108` was
+healthy, but the required borrow of signed-in Odoo tab `1770662590` did not
+enter the agent scope before the confirmation request timed out. No live Odoo
+or Core3 desktop/mobile capture was obtained and no visual-parity claim is
+made. The exact blocker and evidence boundary are recorded in
+`evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.

@@ -320,6 +320,75 @@ actions:
               - query: "INSERT INTO purchase_order_lines(id, order_id, product_id, row_version, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total) SELECT 'purchase-catalog-' || :id || '-' || p.id, :id, p.id, 1, COALESCE((SELECT MAX(sequence) FROM purchase_order_lines WHERE order_id = :id), 0) + 10, 'product', p.name, p.name, CAST(:quantity AS DECIMAL(18,3)), 0, 0, p.uom, p.cost_price, 0, ROUND(CAST(:quantity AS DECIMAL(18,3)) * p.cost_price, 2) FROM purchase_products p WHERE p.id = :selected_product_id AND NOT EXISTS (SELECT 1 FROM purchase_order_lines existing WHERE existing.order_id = :id AND existing.product_id = :selected_product_id AND existing.display_type = 'product')"
         - { query: "UPDATE purchase_orders SET quantity = (SELECT COALESCE(SUM(quantity), 0) FROM purchase_order_lines WHERE order_id = :id AND display_type = 'product'), total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_CATALOG_STALE, message: This purchase order changed while adding catalog products. Reload before saving. }
       result: { query: "SELECT id, order_id, product_id, quantity, line_total FROM purchase_order_lines WHERE order_id = :id AND product_id IN :product_ids ORDER BY sequence, id" }
+  - id: add_purchase_order_section
+    type: server_form
+    permission: purchase.write
+    title: Add a section
+    submit_label: Add
+    success_message: Section added to the purchase order.
+    action: purchase.orders.lines.section.create
+    handler: line_item
+    operation: create
+    domain: purchase_order
+    params: { id: '{state.purchase_order_detail.id}' }
+    refresh: [purchase_order_detail, purchase_order_lines]
+    fields:
+      - { field: description, label: Section, type: text, required: true, placeholder: Section name }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'purchase-section-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM purchase_order_lines WHERE order_id = :id", assign: true }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed or is no longer editable. Reload before adding a section. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: PURCHASE_ORDER_SECTION_INVALID, message: Section name must be between 1 and 500 characters. }
+      steps:
+        - { query: "INSERT INTO purchase_order_lines(id, order_id, product_id, row_version, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total) VALUES(:line_id, :id, NULL, 1, :next_sequence, 'line_section', NULL, TRIM(CAST(:description AS VARCHAR)), 0, 0, 0, '', 0, 0, 0)" }
+        - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed while adding the section. Reload before saving. }
+      result: { query: "SELECT * FROM purchase_order_lines WHERE id = :line_id" }
+  - id: edit_purchase_order_section
+    type: server_form
+    permission: purchase.write
+    title: Edit section
+    submit_label: Save
+    action: purchase.orders.lines.section.update
+    handler: line_item
+    operation: update
+    domain: purchase_order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [purchase_order_detail, purchase_order_lines]
+    fields:
+      - { field: description, label: Section, type: text, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed or is no longer editable. Reload before saving the section. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_section' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_SECTION_LINE_STALE, message: This section changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: PURCHASE_ORDER_SECTION_INVALID, message: Section name must be between 1 and 500 characters. }
+      steps:
+        - { query: "UPDATE purchase_order_lines SET description = TRIM(CAST(:description AS VARCHAR)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id AND display_type = 'line_section' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_LINE_STALE, message: This section changed or was deleted. Reload before saving. }
+        - { query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed while saving the section. Reload before saving. }
+      result: { query: "SELECT * FROM purchase_order_lines WHERE id = :line_id" }
+  - id: delete_purchase_order_section
+    type: server
+    permission: purchase.write
+    action: purchase.orders.lines.section.delete
+    handler: line_item
+    operation: delete
+    domain: purchase_order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete section {{row.description}}?'
+    refresh: [purchase_order_detail, purchase_order_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed or is no longer editable. Reload before deleting the section. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_section' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_SECTION_LINE_STALE, message: This section changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_section' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_LINE_STALE, message: This section changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed while deleting the section. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: edit_purchase_order_line
     type: server_form
     permission: purchase.write
@@ -342,10 +411,10 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_PARENT_STALE, message: This purchase order changed or is no longer editable. Reload before saving the line. }
-        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before saving. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'product' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before saving. }
         - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:product_name AS VARCHAR))) BETWEEN 1 AND 200 AND length(trim(COALESCE(NULLIF(CAST(:description AS VARCHAR), ''), CAST(:product_name AS VARCHAR)))) BETWEEN 1 AND 500 AND CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:unit_price AS DECIMAL(18,2)) >= 0 AND CAST(CAST(COALESCE(NULLIF(CAST(:tax_rate AS VARCHAR), ''), '0') AS DECIMAL(9,4)) AS DECIMAL(9,4)) BETWEEN 0 AND 100", status: 422, code: PURCHASE_ORDER_LINE_INVALID, message: Product, description, quantity, price, and tax must be valid. }
       steps:
-        - { query: "UPDATE purchase_order_lines SET row_version = row_version + 1, product_name = trim(CAST(:product_name AS VARCHAR)), description = COALESCE(NULLIF(trim(CAST(:description AS VARCHAR)), ''), trim(CAST(:product_name AS VARCHAR))), quantity = CAST(:quantity AS DECIMAL(18,3)), uom = COALESCE(NULLIF(trim(CAST(:uom AS VARCHAR)), ''), 'Units'), unit_price = CAST(:unit_price AS DECIMAL(18,2)), tax_rate = CAST(COALESCE(NULLIF(CAST(:tax_rate AS VARCHAR), ''), '0') AS DECIMAL(9,4)), line_total = ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:unit_price AS DECIMAL(18,2)) * (1 + CAST(COALESCE(NULLIF(CAST(:tax_rate AS VARCHAR), ''), '0') AS DECIMAL(9,4)) / 100), 2), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before saving. }
+        - { query: "UPDATE purchase_order_lines SET row_version = row_version + 1, product_name = trim(CAST(:product_name AS VARCHAR)), description = COALESCE(NULLIF(trim(CAST(:description AS VARCHAR)), ''), trim(CAST(:product_name AS VARCHAR))), quantity = CAST(:quantity AS DECIMAL(18,3)), uom = COALESCE(NULLIF(trim(CAST(:uom AS VARCHAR)), ''), 'Units'), unit_price = CAST(:unit_price AS DECIMAL(18,2)), tax_rate = CAST(COALESCE(NULLIF(CAST(:tax_rate AS VARCHAR), ''), '0') AS DECIMAL(9,4)), line_total = ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:unit_price AS DECIMAL(18,2)) * (1 + CAST(COALESCE(NULLIF(CAST(:tax_rate AS VARCHAR), ''), '0') AS DECIMAL(9,4)) / 100), 2), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id AND display_type = 'product' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_STALE, message: This product line was changed or was deleted. Reload before saving. }
         - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_PARENT_STALE, message: This purchase order changed while saving the line. Reload before saving. }
       result: { query: "SELECT * FROM purchase_order_lines WHERE id = :line_id" }
   - id: delete_purchase_order_line
@@ -362,8 +431,8 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_PARENT_STALE, message: This purchase order changed or is no longer editable. Reload before deleting the line. }
-        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'product' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
       steps:
-        - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
+        - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'product' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
         - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LINE_PARENT_STALE, message: This purchase order changed while deleting the line. Reload before saving. }
       result: { query: "SELECT true AS deleted, :line_id AS id" }

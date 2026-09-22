@@ -28,10 +28,11 @@ describe('Purchase order line editor parity', () => {
     expect(lines).toMatchObject({ type: 'LineItemGrid', source: 'purchase_order_lines', parent_source: 'purchase_order_detail', variant: 'odoo_x2many' });
     expect(lines.actions).toEqual([
       expect.objectContaining({ id: 'add_purchase_order_line', label: 'Add a product', permission: 'purchase.write' }),
+      expect.objectContaining({ id: 'add_purchase_order_section', label: 'Add a section', permission: 'purchase.write' }),
       expect.objectContaining({ id: 'add_purchase_order_catalog', label: 'Catalog', permission: 'purchase.write' }),
     ]);
-    expect(lines.columns.map((entry: any) => entry.label)).toEqual(['Product', 'Quantity', 'Unit', 'Unit Price', 'Taxes', 'Amount', '']);
-    expect(lines.children.filter((entry: any) => entry.type === 'LineItemField').map((entry: any) => entry.label)).toEqual(['Product', 'Quantity', 'Unit', 'Unit Price', 'Taxes', 'Amount']);
+    expect(lines.columns.map((entry: any) => entry.label)).toEqual(['Product', 'Description', 'Quantity', 'Unit', 'Unit Price', 'Taxes', 'Amount', '']);
+    expect(lines.children.filter((entry: any) => entry.type === 'LineItemField').map((entry: any) => entry.label)).toEqual(['Product', 'Description', 'Quantity', 'Unit', 'Unit Price', 'Taxes', 'Amount']);
 
     expect(source('api/purchase-detail.yaml', 'purchase_order_detail').permission).toBe('purchase.read');
     expect(source('api/purchase-detail.yaml', 'purchase_order_lines').permission).toBe('purchase.read');

@@ -1,0 +1,14 @@
+version: 0.0.33
+kind: data
+description: Seed durable Purchase section-line support
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_order_lines(id, order_id, product_id, row_version, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total)
+      VALUES ('purchase-section-demo-008-10', 'po-demo-008', NULL, 1, 10, 'line_section', NULL, 'Warehouse labelling', 0, 0, 0, '', 0, 0, 0);
+    down: |
+      DELETE FROM purchase_order_lines WHERE id = 'purchase-section-demo-008-10';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

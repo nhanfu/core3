@@ -108,7 +108,10 @@ export class LineItemGrid extends DataGrid {
       const actionBar = html.take(controls).div.className('flex items-center gap-2').ele();
       for (const action of this.state.actions as any[]) {
         const button = html.take(actionBar).button.className('o-x2many-create').type('button').text(action.label).ele();
-        html.take(button).event('click', () => this.startCreate());
+        html.take(button).event('click', () => {
+          if (this.inline) this.inline.createAction = action.id;
+          this.startCreate();
+        });
       }
       if (this.options.columnChooser) {
         const details = this.drawColumnChooser(controls);
