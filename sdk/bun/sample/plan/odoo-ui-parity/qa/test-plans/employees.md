@@ -10,6 +10,16 @@ Last reviewed: 2026-09-12
 This checklist follows [`employees.md`](../../employees.md); executed results
 are recorded in [`../employees.md`](../employees.md).
 
+## EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001
+
+| Case ID | Class | Route/action | Expected result and persistence assertion | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| EMP-SRC-065 | regression | `open_view_employee_list_my` Employees Graph/Pivot | Page/API share `page.id: employees`; Graph is `New Employees Over Time` by contract start and employee count; Pivot uses Job Position rows and contract-start year | source-comparison.md | pass |
+| EMP-DATA-065 | data | `/employees` `employees` datasource | Scoped rows retain persisted `employees.contract_start` and `employee_count = 1`; foreign company is empty | test-results.md | pass |
+| EMP-PERM-065 | permission | `/employees` company domain | Existing `employees.read` and current-company boundary remain enforced | functionality-checklist.md | pass |
+| EMP-DATA-066 | data | Employees migration | Replayed index remains singular and projection survives file-backed restart | test-results.md | pass |
+| EMP-UI-065 | visual/responsive | `/employees` Graph/Pivot | Desktop/mobile compare title, labels, date grouping, measure, responsive layout, and browser errors | browser-check.md | blocked |
+
 ## Coverage inventory
 
 | Menu/action family | Core3 routes | Scope |

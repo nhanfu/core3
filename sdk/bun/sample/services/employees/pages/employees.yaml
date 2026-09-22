@@ -75,8 +75,9 @@ components:
         label: Graph
         icon: graph
         mobile: false
-        category_field: hire_date
-        measure_field: activity_count
+        category_field: contract_start
+        measure_field: employee_count
+        measure_label: Employees
         type: line
       - id: pivot
         label: Pivot
@@ -84,15 +85,14 @@ components:
         mobile: false
         pivot:
           fields:
-            - { field: state, column: Status }
-            - { field: department_name, column: Department }
-            - { field: hire_date, column: Start Date, type: date }
-            - { field: activity_count, column: Activities }
+            - { field: job_title, column: Job Position }
+            - { field: contract_start, column: Contract Start, type: date }
+            - { field: employee_count, column: Employees }
           default:
-            rows: [department_name]
-            columns: [state]
-            measures: [{ field: activity_count, aggregate: sum, column: Activities }]
-          date_ranges: { hire_date: month }
+            rows: [job_title]
+            columns: [contract_start]
+            measures: [{ field: employee_count, aggregate: sum, column: Employees }]
+          date_ranges: { contract_start: year }
     columns:
       - { field: image_url, label: Avatar, type: Image }
       - { field: employee_number, label: Employee number, type: PrimaryEntityCell }

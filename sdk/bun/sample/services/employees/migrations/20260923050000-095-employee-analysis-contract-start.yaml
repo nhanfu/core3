@@ -1,0 +1,14 @@
+version: 0.0.95
+kind: data
+description: Add durable lookup coverage for Employees contract-start analysis
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employees_contract_start_analysis_idx
+        ON employees(company_name, active, contract_start, job_title);
+    down: |
+      DROP INDEX IF EXISTS employees_contract_start_analysis_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -48,7 +48,7 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(employees.views.find((view: any) => view.id === 'activity')?.activity_types.map((type: any) => type.label))
       .toEqual(['To-Do', 'Email', 'Call', 'Meeting', 'Document']);
     expect(employees.views.find((view: any) => view.id === 'pivot')?.pivot.default)
-      .toMatchObject({ rows: ['department_name'], columns: ['state'] });
+      .toMatchObject({ rows: ['job_title'], columns: ['contract_start'], measures: [{ field: 'employee_count', aggregate: 'sum', column: 'Employees' }] });
 
     const directory = yaml('pages/directory.yaml').components[0];
     expect(directory.view_navigation).toBe('tabs');

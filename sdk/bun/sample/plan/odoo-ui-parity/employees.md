@@ -1942,6 +1942,39 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001: Employees contract-start Graph/Pivot (2026-09-22)
+
+The next missing stable-ID view behavior after the landed organization-chart
+and department-child actions is the Graph/Pivot state of Odoo's
+`open_view_employee_list_my` Employees action. The local Odoo 19 source at
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml` defines
+the Graph title `New Employees Over Time`, groups by persisted
+`contract_date_start` by month, and measures employee `id`; its Pivot uses
+`job_id` rows, `contract_date_start` by year, and the employee measure. Core3
+was instead using `hire_date` and the unrelated activity count measure.
+
+Core3 now keeps the existing `employees` page/API pair joined by
+`page.id: employees`, projects a persisted `employee_count = 1` per scoped
+employee, and binds Graph/Pivot to `contract_start`, Job Position, and
+Employees. Migration `20260923050000-095-employee-analysis-contract-start.yaml`
+adds an idempotent company/active/contract-start/job lookup index. The query
+continues to enforce the existing current-company and active/archived
+boundaries; no fixture-only or random analysis data was added.
+
+Focused verification is `test/employees_analysis_contract_start.integration.test.ts`:
+3 tests / 18 assertions. It covers source mapping, page/API separation,
+persisted scoped rows, one-count measures, foreign-company empty results,
+migration replay, and file-backed restart. Evidence is under
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001/`.
+
+BrowserSkill instance `245ea108` was connected, but required authenticated
+Odoo tab `1770662590` was owned by active session `kioz`; the task session
+`amuw` received `tab is borrowed by another session`. The task session was
+stopped and no tab was borrowed, so no desktop/mobile screenshot or visual
+parity claim is made for this feature.
+
+No aggregate Employees sign-off is claimed.
+
 ## EMP-DEPARTMENT-CHILDREN-001: Department Child departments action (2026-09-22)
 
 The next bounded missing department action is Odoo's kanban-menu `Child

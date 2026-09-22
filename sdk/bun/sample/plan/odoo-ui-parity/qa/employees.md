@@ -14,6 +14,18 @@ Module owner: employees module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-065 | Odoo Employees Graph/Pivot source mapping | pass; local Odoo 19 XML and page/API contract assert contract-start grouping, Job Position rows, and employee-count measure |
+| EMP-DATA-065 | Durable analysis projection and company scope | pass; 3 focused tests / 18 assertions verify persisted contract dates, one-count measures, and foreign-company empty results |
+| EMP-DATA-066 | Migration replay and restart | pass; `employees_contract_start_analysis_idx` remains idempotent and projection survives file-backed reopen |
+| EMP-UI-065 | Authenticated Odoo/Core3 desktop/mobile comparison | blocked; authenticated Odoo tab `1770662590` was borrowed by bsk session `kioz`; no screenshot or visual-parity claim is made |
+
+Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-AVATAR-001 execution (2026-09-21)
 
 | Case | Scope | Result |

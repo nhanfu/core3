@@ -4,6 +4,14 @@ Module owner: employees module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 
+## EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001 (2026-09-22)
+
+- Selected the missing Graph/Pivot behavior in Odoo's `open_view_employee_list_my`: Graph `New Employees Over Time` uses persisted contract start by month and the employee measure; Pivot uses Job Position rows and contract-start year columns.
+- Replaced Core3's prior `hire_date`/activity-count analysis bindings with the page/API-separated `contract_start`/`employee_count` projection on `page.id: employees`; added migration `20260923050000-095-employee-analysis-contract-start.yaml` with a replay-safe lookup index.
+- Focused verification: **3 tests / 18 assertions**; source mapping, current-company persistence, foreign-company empty result, migration replay, and file-backed restart pass.
+- Browser comparison is blocked because authenticated Odoo tab `1770662590` was borrowed by active bsk session `kioz`; task session `amuw` received `tab is borrowed by another session`. No desktop/mobile visual claim is made.
+- Evidence: `evidence/employees/2026-09-22/EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001/`.
+
 ## EMP-EMPLOYEE-MY-TEAM-DEPARTMENT-FILTER-001 (2026-09-22)
 
 - Selected Odoo's ordinary read-side `My Team` and `My Department` employee
