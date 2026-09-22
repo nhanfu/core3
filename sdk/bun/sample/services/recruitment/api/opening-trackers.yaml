@@ -1,0 +1,79 @@
+page: { id: recruitment-job-trackers }
+datasources:
+  - id: recruitment_job_trackers
+    permission: recruitment.read
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_JOB_TRACKERS_UNAUTHENTICATED, message: Sign in to view job trackers. }
+      forbidden: { status: 403, code: RECRUITMENT_JOB_TRACKERS_FORBIDDEN, message: You do not have permission to view job trackers. }
+      transport_error: { status: 503, code: RECRUITMENT_JOB_TRACKERS_UNAVAILABLE, message: Job trackers are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.opening_id, t.opening_name, t.campaign_name, t.source_name, t.medium_name, t.email FROM recruitment_job_trackers t JOIN recruitment_openings o ON o.id = t.opening_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND t.opening_id = :opening_id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name) AND (:q IS NULL OR t.campaign_name ILIKE '%' || :q || '%' OR t.source_name ILIKE '%' || :q || '%' OR t.medium_name ILIKE '%' || :q || '%' OR COALESCE(t.email, '') ILIKE '%' || :q || '%') ORDER BY t.source_name, t.campaign_name, t.id"
+actions:
+  - id: create_recruitment_job_tracker
+    type: server_form
+    permission: recruitment.write
+    title: New Tracker
+    action: recruitment.job_trackers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_job_trackers, recruitment_opening_detail]
+    params: { opening_id: '{query.opening_id}', opening_name: '{query.opening_name}' }
+    mutation:
+      operation: insert
+      table: recruitment_job_trackers
+      generated: [id]
+      before_steps: [{ query: "SELECT 'job-tracker-' || :opening_id || '-' || regexp_replace(lower(trim(CAST(:source_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_job_trackers prior WHERE prior.opening_id = :opening_id), 0) + 1 AS VARCHAR) AS id", assign: true }]
+      fields: [opening_id, opening_name, campaign_name, source_name, medium_name, email, company_name]
+      required: [opening_id, source_name]
+      defaults: { medium_name: Website, campaign_name: '', email: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_JOB_TRACKERS_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to manage trackers. }
+        - { query: "SELECT o.id, o.name AS opening_name, o.company_name FROM recruitment_openings o WHERE o.id = :opening_id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name)", status: 404, code: RECRUITMENT_JOB_TRACKERS_OPENING_NOT_FOUND, message: The job position for this tracker was not found., assign: true }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:source_name, '') AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: RECRUITMENT_JOB_TRACKERS_SOURCE_REQUIRED, message: Enter a tracker source. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:campaign_name, '') AS VARCHAR)) <= 200 AND LENGTH(CAST(COALESCE(:medium_name, '') AS VARCHAR)) BETWEEN 1 AND 100 AND LENGTH(CAST(COALESCE(:email, '') AS VARCHAR)) <= 255", status: 422, code: RECRUITMENT_JOB_TRACKERS_DETAILS_INVALID, message: Tracker campaign, medium, or email is too long. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_job_trackers WHERE opening_id = :opening_id AND LOWER(source_name) = LOWER(TRIM(:source_name)) AND LOWER(COALESCE(campaign_name, '')) = LOWER(COALESCE(:campaign_name, '')) AND LOWER(COALESCE(medium_name, '')) = LOWER(COALESCE(:medium_name, '')))", status: 409, code: RECRUITMENT_JOB_TRACKERS_DUPLICATE, message: This tracker already exists for the job position. }
+      result: { query: "SELECT * FROM recruitment_job_trackers WHERE id = :id" }
+    fields:
+      - { field: campaign_name, label: Campaign, type: text, placeholder: e.g. Spring Hiring }
+      - { field: source_name, label: Source, type: text, required: true, placeholder: e.g. LinkedIn }
+      - { field: medium_name, label: Medium, type: text, required: true, default: Website, placeholder: e.g. Website }
+      - { field: email, label: Email, type: email, placeholder: Tracker email alias }
+  - id: edit_recruitment_job_tracker
+    type: server_form
+    permission: recruitment.write
+    title: Edit Tracker
+    action: recruitment.job_trackers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_job_trackers, recruitment_opening_detail]
+    mutation:
+      operation: update
+      table: recruitment_job_trackers
+      fields: [campaign_name, source_name, medium_name, email]
+      required: [source_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT t.id FROM recruitment_job_trackers t JOIN recruitment_openings o ON o.id = t.opening_id WHERE t.id = :id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name)", status: 404, code: RECRUITMENT_JOB_TRACKER_NOT_FOUND, message: Job tracker not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:source_name, '') AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: RECRUITMENT_JOB_TRACKERS_SOURCE_REQUIRED, message: Enter a tracker source. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:campaign_name, '') AS VARCHAR)) <= 200 AND LENGTH(CAST(COALESCE(:medium_name, '') AS VARCHAR)) BETWEEN 1 AND 100 AND LENGTH(CAST(COALESCE(:email, '') AS VARCHAR)) <= 255", status: 422, code: RECRUITMENT_JOB_TRACKERS_DETAILS_INVALID, message: Tracker campaign, medium, or email is too long. }
+        - { query: "SELECT 1 AS ok FROM recruitment_job_trackers current WHERE current.id = :id AND NOT EXISTS (SELECT 1 FROM recruitment_job_trackers duplicate WHERE duplicate.id <> current.id AND duplicate.opening_id = current.opening_id AND LOWER(duplicate.source_name) = LOWER(TRIM(:source_name)) AND LOWER(COALESCE(duplicate.campaign_name, '')) = LOWER(COALESCE(:campaign_name, '')) AND LOWER(COALESCE(duplicate.medium_name, '')) = LOWER(COALESCE(:medium_name, '')))", status: 409, code: RECRUITMENT_JOB_TRACKERS_DUPLICATE, message: This tracker already exists for the job position. }
+      result: { query: "SELECT * FROM recruitment_job_trackers WHERE id = :id" }
+    fields:
+      - { field: campaign_name, label: Campaign, type: text, placeholder: e.g. Spring Hiring }
+      - { field: source_name, label: Source, type: text, required: true, placeholder: e.g. LinkedIn }
+      - { field: medium_name, label: Medium, type: text, required: true, placeholder: e.g. Website }
+      - { field: email, label: Email, type: email, placeholder: Tracker email alias }
+  - id: delete_recruitment_job_tracker
+    type: server
+    permission: recruitment.write
+    action: recruitment.job_trackers.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete tracker {{row.source_name}}?'
+    refresh: [recruitment_job_trackers, recruitment_opening_detail]
+    mutation:
+      operation: delete
+      table: recruitment_job_trackers
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT t.id FROM recruitment_job_trackers t JOIN recruitment_openings o ON o.id = t.opening_id WHERE t.id = :id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name)", status: 404, code: RECRUITMENT_JOB_TRACKER_NOT_FOUND, message: Job tracker not found. }

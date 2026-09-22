@@ -1,5 +1,29 @@
 # recruitment QA ledger
 
+## Batch 17 QA — Job Position Trackers — 2026-09-22
+
+- Stable ID: `RECRUITMENT-JOB-TRACKERS-001`.
+- Source boundary: Odoo 19 `hr_recruitment/views/hr_recruitment_source_views.xml`
+  action `action_hr_job_sources`, `models/hr_recruitment_source.py`, and
+  `security/ir.model.access.csv`, compared at source revision
+  `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_job_trackers.integration.test.ts`
+  — 4 passed, 0 failed, 46 assertions.
+- Functional coverage: source/page/API separation by `page.id`, job detail
+  Trackers stat navigation, per-opening deterministic rows, source/campaign/
+  medium/email query and search, empty and transport states, writer CRUD,
+  canonical opening/company assignment, actor/company/duplicate/required/
+  missing/stale guards, and file-backed restart persistence.
+- Browser blocker: BrowserSkill status showed instance `245ea108`; tab list
+  identified the authenticated Odoo tab, but
+  `bsk tab borrow 1770662590 --session quzf --timeout 20s` returned
+  `error: tab is borrowed by another session` with hint that session `ioxf`
+  owns the tab. Session `quzf` was stopped. No independent login or alternate
+  browser was used; no Odoo desktop/mobile visual-parity claim is made.
+- QA decision: bounded functional batch complete after local verification;
+  authenticated Odoo action inspection and paired desktop/mobile evidence
+  remain blocked. Broader Recruitment sign-off remains pending.
+
 ## Batch 16 QA — Job Position New Application — 2026-09-22
 
 - Stable ID: `RECRUITMENT-JOB-NEW-APPLICATION-001`.

@@ -1,0 +1,32 @@
+version: 0.0.21
+kind: schema
+description: Durable Recruitment job-position trackers
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_job_trackers (
+        id VARCHAR PRIMARY KEY,
+        opening_id VARCHAR NOT NULL,
+        opening_name VARCHAR NOT NULL,
+        campaign_name VARCHAR NOT NULL DEFAULT '',
+        source_name VARCHAR NOT NULL,
+        medium_name VARCHAR NOT NULL DEFAULT 'Website',
+        email VARCHAR NOT NULL DEFAULT '',
+        company_name VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_job_trackers_opening_idx ON recruitment_job_trackers(opening_id, source_name, id);
+      INSERT OR IGNORE INTO recruitment_job_trackers(id, opening_id, opening_name, campaign_name, source_name, medium_name, email, company_name)
+      VALUES
+        ('job-tracker-opening-demo-001-linkedin-1', 'opening-demo-001', 'JOB/2026/0001', 'Job Campaign', 'LinkedIn', 'Website', '', 'Core3 Demo Company'),
+        ('job-tracker-opening-demo-001-careers-page-2', 'opening-demo-001', 'JOB/2026/0001', 'Spring Hiring', 'Careers Page', 'Website', 'jobs+operations@core3.local', 'Core3 Demo Company'),
+        ('job-tracker-opening-demo-002-linkedin-1', 'opening-demo-002', 'JOB/2026/0002', 'People Hiring', 'LinkedIn', 'Email', '', 'Core3 Demo Company');
+    down: |
+      DROP INDEX IF EXISTS recruitment_job_trackers_opening_idx;
+      DROP TABLE IF EXISTS recruitment_job_trackers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,19 @@
+title: Trackers
+page: { id: recruitment-job-trackers, route: /openings/trackers, breadcrumb: [Human Resources, Recruitment, Job Positions, Trackers], auth: { require: [recruitment.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_job_trackers
+    create_action: create_recruitment_job_tracker
+    create_label: New
+    search: { label: Search Source, placeholder: Search source or campaign... }
+    columns:
+      - { field: campaign_name, label: Campaign, sortable: true, mobile: true }
+      - { field: source_name, label: Source, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: medium_name, label: Medium, sortable: true, mobile: true }
+      - { field: email, label: Email, sortable: true, mobile: false }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_recruitment_job_tracker, label: Edit, icon: edit }, { id: delete_recruitment_job_tracker, label: Delete, icon: delete, variant: danger }] }
+    row_key: id
+    row_actions: menu
+    empty_state: { title: Want to analyse where applications come from ?, description: Use emails and links trackers }
+    page_size: 25

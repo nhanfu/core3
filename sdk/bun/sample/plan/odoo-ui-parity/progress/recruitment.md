@@ -4,7 +4,21 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment Job New Application commit
+Candidate commit: pending Recruitment Job Trackers commit
+
+## Batch 17 current state
+
+`RECRUITMENT-JOB-TRACKERS-001` implements Odoo's job-position-scoped
+`action_hr_job_sources` action. Core3 now has the durable Trackers list/API
+pair at `/openings/trackers`, a Trackers stat action on job-position detail,
+deterministic fixture rows, Recruitment writer CRUD, canonical opening/company
+assignment, optimistic concurrency, and empty/error/duplicate/scope guards.
+The focused suite passes 4 tests / 46 assertions. BrowserSkill connected to
+instance `245ea108`, but the authenticated Odoo tab was already borrowed by
+team session `ioxf`; the required borrow returned `tab is borrowed by another
+session`. My BrowserSkill session was stopped and no independent login,
+Playwright, credentials, or alternate browser was used. No Odoo visual-parity
+claim is made.
 
 ## Batch 16 current state
 

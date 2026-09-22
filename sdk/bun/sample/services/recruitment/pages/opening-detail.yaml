@@ -13,6 +13,7 @@ components:
       - { id: create_recruitment_application_from_opening, label: New Application, variant: primary, permission: recruitment.write, show_if: "record.state === 'Open' || record.state === 'Draft'" }
     stat_buttons:
       - { id: view_recruitment_opening_applications, label: Applications, value_field: application_count, permission: recruitment.read }
+      - { id: view_recruitment_opening_trackers, label: Trackers, value_field: tracker_count, permission: recruitment.read }
     group_columns: 2
     groups:
       - title: Job Position

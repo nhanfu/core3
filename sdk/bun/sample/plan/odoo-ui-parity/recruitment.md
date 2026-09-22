@@ -1,5 +1,43 @@
 # Odoo 19 UI parity — Recruitment
 
+## Batch 17 — Job Positions → Trackers
+
+The next missing stable-ID Recruitment action after the implemented New
+Application slice is Odoo's `action_hr_job_sources` from
+`addons/hr_recruitment/views/hr_recruitment_source_views.xml`. It opens the
+job-scoped `hr.recruitment.source` list in `list` mode with the active
+`hr.job` as both `search_default_job_id` and `default_job_id`. The list exposes
+Campaign, Source, Medium, and the generated Email alias; the source model is
+officer-readable and writable, searches by Source and Job, and keeps the
+tracker attached to the selected job.
+
+Core3 adds stable ID `RECRUITMENT-JOB-TRACKERS-001`: a durable
+`/openings/trackers` page/API pair joined by `page.id`, a Trackers stat action
+from the existing job-position detail, deterministic per-opening fixtures,
+and Recruitment writer CRUD. The opening guard assigns canonical opening and
+company values before insert, while company, signed-in actor, duplicate,
+required-field, missing, stale-row, empty, and transport states are explicit.
+The bounded slice records the tracker source/campaign/medium/email contract;
+it does not claim the separate UTM Sources/Mediums configuration menus,
+mail-alias delivery, or applicant UTM propagation.
+
+Source/gap matrix for `RECRUITMENT-JOB-TRACKERS-001`:
+
+| Odoo contract | Previous Core3 state | Batch 17 change | Verification |
+| --- | --- | --- | --- |
+| Job form Trackers / `action_hr_job_sources` | Missing | Job-position Trackers route and detail stat action | source/page/API contract test |
+| Job-scoped Campaign, Source, Medium, Email list | Missing | Real datasource filtered by opening ID and company scope | seeded query/search/empty test |
+| Officer tracker CRUD | Missing | Durable create/update/delete with optimistic row versions | focused mutation test |
+| Active job binding and canonical company | Missing | Guard-assigned opening/company fields | wrong-opening/company and persistence assertions |
+| Empty/error/stale/duplicate states | Missing | Explicit YAML errors and atomic guards | focused guard and transport assertions |
+
+Focused verification: `bun test test/recruitment_job_trackers.integration.test.ts`
+passes 4 tests / 46 assertions. BrowserSkill reference borrowing was blocked
+by an existing team session; the exact blocker and cleanup are recorded in
+the feature evidence. No Odoo desktop/mobile visual-parity claim is made.
+
+Status: `batch-17-implemented-job-trackers-odoo-borrow-blocked`
+
 ## Batch 16 — Job Positions → New Application
 
 The next missing stable-ID Recruitment action is Odoo's
