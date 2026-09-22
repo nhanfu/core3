@@ -1,0 +1,33 @@
+version: 0.0.94
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_quant_links (
+        id VARCHAR PRIMARY KEY,
+        quant_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        template_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(quant_id, product_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_product_quant_links_product_idx
+        ON inventory_product_quant_links(product_id, company_name, quant_id);
+      CREATE INDEX IF NOT EXISTS inventory_product_quant_links_template_idx
+        ON inventory_product_quant_links(template_id, company_name, quant_id);
+      INSERT INTO inventory_product_quant_links
+        (id, quant_id, product_id, template_id, company_name, created_at)
+      VALUES
+        ('product-quant-link-storage-box-0001', 'quant-box-main', 'inventory-variant-storage-box', 'inventory-template-storage-box', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:00:00'),
+        ('product-quant-link-large-cabinet-0001', 'quant-cabinet-main', 'inventory-variant-cabinet', 'inventory-template-large-cabinet', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:01:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_quant_links
+      WHERE id IN ('product-quant-link-storage-box-0001', 'product-quant-link-large-cabinet-0001');
+      DROP TABLE IF EXISTS inventory_product_quant_links;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

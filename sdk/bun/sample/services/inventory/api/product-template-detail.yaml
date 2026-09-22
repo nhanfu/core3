@@ -14,6 +14,13 @@ actions:
     type: navigate
     permission: inventory.read
     navigate_to: /products
+  - id: view_inventory_product_template_on_hand
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock
+    params:
+      product_template_id: '{state.inventory_product_template_detail.id}'
+      current_company_name: '{state.inventory_product_template_detail.company_name}'
   - id: update_inventory_product_quantity
     type: navigate
     permission: inventory.manage
