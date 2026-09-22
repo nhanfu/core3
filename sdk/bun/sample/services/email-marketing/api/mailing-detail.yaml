@@ -6,7 +6,7 @@ datasources:
     error_states:
       missing_record: { status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }
       transport_error: { status: 503, code: EMAIL_MAILING_DETAIL_UNAVAILABLE, message: Mailing details are temporarily unavailable. }
-    query: "SELECT m.id, m.row_version, m.subject, m.preview, m.email_from, m.reply_to, m.state, m.schedule_type, CAST(m.schedule_date AS VARCHAR) AS schedule_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.recipient_model, m.recipient_model_label, m.recipient_domain, m.responsible, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.body, m.last_test_email, m.last_test_recipients, m.mail_server_available, m.active, m.favorite, m.ab_testing_enabled FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id"
+    query: "SELECT m.id, m.row_version, m.subject, m.preview, m.email_from, m.reply_to, m.state, m.schedule_type, CAST(m.schedule_date AS VARCHAR) AS schedule_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.recipient_model, m.recipient_model_label, m.recipient_domain, m.responsible, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.body, m.last_test_email, m.last_test_recipients, m.mail_server_available, m.active, m.favorite, m.ab_testing_enabled, m.ab_testing_group_id, m.ab_testing_pc, m.ab_testing_winner_selection, m.ab_testing_completed, m.ab_testing_winner, m.ab_testing_parent_id, m.ab_testing_is_winner_mailing FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id"
 actions:
   - id: new_email_mailing
     type: navigate
@@ -128,6 +128,33 @@ actions:
         - { query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Draft' AND active = true AND mail_server_available = true AND LENGTH(TRIM(subject)) > 0 AND LENGTH(TRIM(body)) > 0 AND recipient_count > 0", status: 409, code: EMAIL_MAILING_SEND_BLOCKED, message: A mailing needs a mail server, subject, body, and recipients before sending. }
       steps: [{ query: "UPDATE email_mailings SET state = 'Sent', schedule_type = 'now', sent_date = TIMESTAMP '2026-01-15 11:30:00', calendar_date = TIMESTAMP '2026-01-15 11:30:00', sent = recipient_count, expected = recipient_count, delivered = recipient_count, received_ratio = 100, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be sent. }]
       result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: select_ab_winner_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: mass_mailing.mailing.action_select_as_winner
+    handler: yaml_mutation
+    operation: update
+    params: { values: { ab_testing_winner: true } }
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      operation: update
+      table: email_mailings
+      fields: [ab_testing_winner]
+      boolean_fields: [ab_testing_winner]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id", status: 404, code: EMAIL_MAILING_AB_WINNER_NOT_FOUND, message: Mailing not found. }
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND ab_testing_enabled = true AND ab_testing_completed = false AND ab_testing_winner = false AND ab_testing_winner_selection = 'manual' AND ab_testing_group_id IS NOT NULL AND state = 'Sent' AND active = true AND mail_server_available = true", status: 409, code: EMAIL_MAILING_AB_WINNER_BLOCKED, message: This mailing is not ready to be sent as the A/B winner. Reload the mailing and try again. }
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EMAIL_MAILING_AB_WINNER_STALE, message: This mailing changed before the A/B winner could be selected. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM email_mailings source JOIN email_mailings sibling ON sibling.ab_testing_group_id = source.ab_testing_group_id AND sibling.ab_testing_enabled = true AND sibling.state = 'Sent' AND sibling.active = true WHERE source.id = :id) >= 2", status: 409, code: EMAIL_MAILING_AB_WINNER_INCOMPLETE, message: An A/B test needs at least two sent variants before selecting a winner. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_mailings WHERE id = 'email-mailing-ab-winner-' || CAST(:id AS VARCHAR))", status: 409, code: EMAIL_MAILING_AB_WINNER_EXISTS, message: An A/B winner has already been sent for this mailing. }
+      before_steps:
+        - { query: "SELECT 'email-mailing-ab-winner-' || CAST(:id AS VARCHAR) AS winner_id", assign: true }
+      steps:
+        - { query: "INSERT INTO email_mailings (id, row_version, subject, preview, email_from, reply_to, state, schedule_type, schedule_date, sent_date, calendar_date, recipient_model, recipient_model_label, recipient_domain, responsible, recipient_count, sent, scheduled, expected, canceled, process, delivered, opened, clicked, replied, bounced, failed, received_ratio, opened_ratio, replied_ratio, bounced_ratio, clicks_ratio, link_trackers_count, mailing_list_names, campaign_name, body, last_test_email, last_test_recipients, mail_server_available, active, favorite, ab_testing_enabled, ab_testing_group_id, ab_testing_pc, ab_testing_winner_selection, ab_testing_completed, ab_testing_winner, ab_testing_parent_id, ab_testing_is_winner_mailing, created_at, updated_at) SELECT :winner_id, 1, subject || ' (final)', preview, email_from, reply_to, 'In Queue', 'now', NULL, NULL, NULL, recipient_model, recipient_model_label, recipient_domain, responsible, recipient_count, 0, 0, recipient_count, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, link_trackers_count, mailing_list_names, campaign_name, body, NULL, NULL, mail_server_available, true, false, true, ab_testing_group_id, 100, ab_testing_winner_selection, true, true, :id, true, TIMESTAMP '2026-01-15 11:30:00', TIMESTAMP '2026-01-15 11:30:00' FROM email_mailings WHERE id = :id" }
+        - { query: "UPDATE email_mailings SET ab_testing_completed = true, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version + 1", expect_changed: true, status: 409, code: EMAIL_MAILING_AB_WINNER_STALE, message: This mailing changed before the A/B winner could be selected. Reload and try again. }
+        - { query: "UPDATE email_mailings SET ab_testing_completed = true, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE ab_testing_group_id = (SELECT ab_testing_group_id FROM email_mailings WHERE id = :id) AND ab_testing_enabled = true AND id NOT IN (:id, :winner_id)" }
+      result: { query: "SELECT * FROM email_mailings WHERE id = :winner_id" }
   - id: schedule_email_mailing
     type: server_form
     permission: email_marketing.write

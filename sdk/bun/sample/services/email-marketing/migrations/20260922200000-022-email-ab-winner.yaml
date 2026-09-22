@@ -1,0 +1,24 @@
+version: 0.0.22
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_group_id VARCHAR;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_pc DOUBLE;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_winner_selection VARCHAR;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_completed BOOLEAN;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_winner BOOLEAN;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_parent_id VARCHAR;
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS ab_testing_is_winner_mailing BOOLEAN;
+      UPDATE email_mailings SET ab_testing_pc = 100 WHERE ab_testing_pc IS NULL;
+      UPDATE email_mailings SET ab_testing_winner_selection = 'manual' WHERE ab_testing_winner_selection IS NULL;
+      UPDATE email_mailings SET ab_testing_completed = false WHERE ab_testing_completed IS NULL;
+      UPDATE email_mailings SET ab_testing_winner = false WHERE ab_testing_winner IS NULL;
+      UPDATE email_mailings SET ab_testing_is_winner_mailing = false WHERE ab_testing_is_winner_mailing IS NULL;
+      CREATE INDEX IF NOT EXISTS email_mailings_ab_testing_group_idx ON email_mailings(ab_testing_group_id);
+    down: |
+      DROP INDEX IF EXISTS email_mailings_ab_testing_group_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

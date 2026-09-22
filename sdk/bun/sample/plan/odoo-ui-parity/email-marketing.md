@@ -1043,3 +1043,40 @@ session `lexx`; the required borrow returned `tab is borrowed by another
 session`. The tab was not navigated, no desktop/mobile captures exist, and no
 visual-parity claim is made. Exact BrowserSkill output and cleanup are recorded
 under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-UTM-CAMPAIGNS-001/`.
+
+## Mailing A/B winner bounded slice (2026-09-22)
+
+The next missing Mass Mailing workflow is Odoo's manual A/B winner action
+`mailing.mailing.action_select_as_winner`, exposed by the A/B Tests section in
+`addons/mass_mailing/views/mailing_mailing_views.xml`. Odoo copies a sent,
+A/B-enabled variant, changes the copy to 100% of the audience, queues it, and
+opens the `action_ab_testing_open_winner_mailing` form. The automatic winner
+selection path (`action_send_winner_mailing`) and A/B comparison view remain
+separate actions and are not included in this bounded slice.
+
+Core3 implements the manual branch on the existing `mailing-detail` page/API
+join. Two fixed sent variants share a stable A/B group from migrations
+`20260922200000-022-email-ab-winner.yaml` and
+`20260922201000-023-email-ab-winner-demo.yaml`. The permissioned
+`select_ab_winner_email_mailing` action creates the deterministic
+`email-mailing-ab-winner-<variant-id>` queued copy, marks the source group
+complete, preserves the source/audience/content fields, and uses row-version
+guards plus an existing-winner guard to prevent stale or duplicate sends.
+The page remains layout-only; the API owns the datasource fields and mutation,
+joined by `page.id: mailing-detail`.
+
+Focused validation is recorded in
+`test/email_marketing_mailing_ab_winner.integration.test.ts`: **4 passed, 0
+failed, 20 assertions**. It covers source action identity, deterministic
+idempotent migrations, durable winner creation, group completion, stale,
+missing, incomplete, non-manual, inactive, duplicate, and permission guards.
+The implementation is not module sign-off and does not claim automatic winner
+selection, A/B comparison, rich builder, or chatter parity.
+
+BrowserSkill instance `245ea108` was healthy and the signed-in Odoo tab was
+identified as `1770662590`, but `bsk tab borrow 1770662590 --session zfuv
+--timeout 120s` did not grant ownership; after the configured wait the tab
+remained user-owned. The tab was not navigated, the session was stopped, and no
+Odoo desktop/mobile action captures exist. No visual-parity claim is made.
+The exact blocker is recorded under
+`evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-WINNER-001/`.

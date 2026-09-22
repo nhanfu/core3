@@ -258,3 +258,33 @@ module sign-off remain open.
 Disposition: bounded Campaigns action is implementation- and contract-tested;
 installed-Odoo desktop/mobile comparison, full Campaigns parity, and module
 sign-off remain open.
+
+## Bounded review handoff — Mailing A/B winner (2026-09-22)
+
+- Source comparison: Odoo 19 `mailing.mailing.action_select_as_winner` from
+  `mass_mailing/models/mailing.py` and the A/B Tests form controls in
+  `mass_mailing/views/mailing_mailing_views.xml`; a sent A/B variant is copied,
+  queued at 100%, and opened through `action_ab_testing_open_winner_mailing`.
+- Core3 implementation: `mailing-detail` page/API fragments add the manual
+  **Send this as winner** action, durable stable-ID final mailing, A/B group
+  completion, deterministic fixtures/migrations, and stale/missing/not-ready/
+  duplicate guards. Automatic winner selection and comparison remain deferred.
+- Focused validation: **4 passed, 0 failed, 20 assertions** in
+  `test/email_marketing_mailing_ab_winner.integration.test.ts`.
+- Browser blocker: BrowserSkill instance `245ea108` was healthy, but the
+  authenticated tab `1770662590` remained user-owned after the configured
+  `120s` borrow wait. The tab was not navigated; no Odoo action screen or
+  desktop/mobile captures exist and no visual-parity claim is made.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-WINNER-001/`.
+
+Disposition: bounded manual winner workflow is implementation- and
+contract-tested; authenticated Odoo/Core3 browser proof and Email Marketing
+module sign-off remain open.
+
+Validation handoff: focused A/B winner **4 passed, 0 failed, 20 assertions**;
+Email Marketing regression **67 passed, 0 failed, 588 assertions** across 19
+files; audit passed with **829 pages, 837 routes, 1,728 datasources**; Email
+Marketing CSS and full frontend/Vite builds passed; scoped ESLint and
+`git diff --check` passed. Concurrent CRM, Employees, and Events changes were
+left unstaged and untouched.

@@ -51,6 +51,8 @@ describe('Email Marketing Mailings parity action', () => {
       'In Queue:Quarterly Product Briefing',
       'Sending:Customer Onboarding Tips',
       'Sent:Monthly Newsletter',
+      'Sent:Newsletter Variant A',
+      'Sent:Newsletter Variant B',
     ]);
     expect(all.data.find((row: any) => row.subject === 'Monthly Newsletter')).toMatchObject({
       sent: 6, received_ratio: 62.5, opened_ratio: 80, replied_ratio: 40, state: 'Sent',
