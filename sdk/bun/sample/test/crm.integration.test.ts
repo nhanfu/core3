@@ -244,6 +244,8 @@ describe('CRM YAML lifecycle integration', () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR,
         summary VARCHAR, state VARCHAR, completed_at TIMESTAMP);
+      CREATE TABLE crm_teams(name VARCHAR PRIMARY KEY, active BOOLEAN DEFAULT true);
+      INSERT INTO crm_teams(name) VALUES ('Enterprise');
       INSERT INTO crm_leads(id, name, type, stage, probability) VALUES ('closed-a', 'Closed', 'opportunity', 'Won', 100);
       INSERT INTO crm_leads(id, name, type, stage, probability, partner_name, email, source, salesperson, team, tags, expected_revenue) VALUES ('lead-z', 'Primary', 'opportunity', 'New', 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
       INSERT INTO crm_leads(id, name, type, stage, probability, partner_name, email, source, salesperson, team, tags, utm_campaign, utm_medium, utm_source, expected_revenue) VALUES ('lead-a', 'Duplicate', 'lead', 'Qualified', 20, 'Acme', 'buyer@example.test', 'Website', 'Sales User', 'Enterprise', 'urgent, enterprise', 'spring-launch', 'email', 'newsletter', 4200);
@@ -256,7 +258,7 @@ describe('CRM YAML lifecycle integration', () => {
     expect(merged.id).toBe('lead-z');
     expect((await repository.query('SELECT id FROM crm_leads ORDER BY id'))).toEqual([{ id: 'closed-a' }, { id: 'lead-z' }]);
     expect((await repository.query('SELECT lead_id FROM crm_activities WHERE id = ?', ['activity-b']))[0].lead_id).toBe('lead-z');
-    expect((await repository.query('SELECT partner_name, email, source, salesperson, team, tags, utm_campaign, utm_medium, utm_source, expected_revenue, row_version FROM crm_leads WHERE id = ?', ['lead-z']))[0]).toMatchObject({ partner_name: 'Acme', email: 'buyer@example.test', source: 'Website', salesperson: 'Sales User', team: 'Enterprise', tags: 'urgent, enterprise', utm_campaign: 'spring-launch', utm_medium: 'email', utm_source: 'newsletter', expected_revenue: 4200, row_version: 2 });
+    expect((await repository.query('SELECT partner_name, email, source, salesperson, team, tags, utm_campaign, utm_medium, utm_source, expected_revenue, row_version FROM crm_leads WHERE id = ?', ['lead-z']))[0]).toMatchObject({ partner_name: 'Acme', email: 'buyer@example.test', source: 'Website', salesperson: 'Sales User', team: 'Enterprise', tags: 'urgent, enterprise', utm_campaign: 'spring-launch', utm_medium: 'email', utm_source: 'newsletter', expected_revenue: 4200, row_version: 3 });
   });
 
   it('enforces the sales team lead setting when creating a lead', async () => {

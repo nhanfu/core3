@@ -19,6 +19,16 @@ Executed results and runtime topology notes are in [`../crm.md`](../crm.md).
 | Activities | `/crm/crm-activities`, `/crm/crm-activity-detail`, `/crm/activity-types`, `/crm/activity-types/detail` | Queue, detail, scheduling/completion, type administration |
 | Configuration | `/crm/configuration`, `/crm/settings`, `/crm/teams`, `/crm/team-detail`, `/crm/team-opportunities`, `/crm/team-members`, `/crm/stages`, `/crm/stages/detail`, `/crm/tags`, `/crm/tags/detail`, `/crm/lost-reasons`, `/crm/lost/reason/detail`, `/crm/recurring-plans` | List/form, team-scoped opportunity CRUD/assignment, technical member CRUD/toggle, manager archive, relation and configuration guards |
 
+## Bounded feature wave: CRM-LEAD-MERGE-WIZARD-001
+
+| Case | Class | Setup / actor | Exact action or route | Expected result / persistence | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| MERGE-CONTRACT-001 | functional | CRM salesperson with `crm.write`; source XML and `leads` page/API available | Leads bulk action `merge_leads` on `/leads` | Action is a `server_form` matching Odoo `action_merge_opportunities`; assignment fields and Merge/Cancel controls are declared | `evidence/crm/2026-09-22/CRM-LEAD-MERGE-WIZARD-001/source-comparison.md` |
+| MERGE-HAPPY-002 | workflow/data | Two open selected rows, one closed selected row, one planned activity on a duplicate | Submit `crm.leads.merge` with `selectedIds`, `user_id`, and `team_id` | Oldest open row survives, explicit assignment persists, activities move to survivor, duplicate open row deletes, closed row remains | `test/crm_merge_opportunities.integration.test.ts` |
+| MERGE-GUARD-003 | permission/error | One selected row or only closed rows | Submit same mutation | 409 guard; no rows or activities mutate | `test/crm_merge_opportunities.integration.test.ts` |
+| MERGE-RELOAD-004 | data/regression | File-backed CRM database after successful merge | Reopen/query CRM storage | Survivor assignment, deleted duplicate, preserved closed row, and reparented activity remain durable | implementation contract; browser capture remains blocked |
+| MERGE-VISUAL-005 | visual/responsive/security | Authenticated Odoo/Core3 actor at 1440x900 and 390x844 | Odoo `action_merge_opportunities` and Core3 `/leads` bulk Merge | Compare modal labels, fields, selected-row behavior, mobile overflow, and permission-hidden action | blocked: borrowed-tab conflict; no visual pass claimed |
+
 The dependency-aware browser topology is `crm,base,order`: CRM contact
 lookups use `yaml.service.base`, and quotation handoff uses
 `yaml.service.order`. Fixtures include deterministic CRM leads, teams, stages,

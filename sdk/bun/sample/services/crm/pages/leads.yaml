@@ -109,7 +109,7 @@ components:
       - { id: qualify_lead, label: Qualify, permission: crm.write, variant: ghost, show_if: "row.stage === 'New'" }
       - { id: convert_lead, label: Convert to opportunity, permission: crm.write, variant: ghost, show_if: "row.type === 'lead' && row.stage !== 'Won' && row.stage !== 'Lost'" }
     bulk_actions:
-      - { id: merge_leads, label: Merge selected }
+      - { id: merge_leads, label: Merge }
       - { id: bulk_delete_leads, label: Delete selected, permission: crm.write }
     row_open_action: view_lead
     row_double_click_action: view_lead

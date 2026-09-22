@@ -256,6 +256,27 @@ Conditional bounded result; not signed off.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
 
+## Bounded feature checkpoint — CRM-LEAD-MERGE-WIZARD-001 (2026-09-22)
+
+- Source-backed gap: Odoo `action_merge_opportunities` modal assignment fields
+  were absent from Core3's existing one-click merge.
+- Implementation: `services/crm/api/leads.yaml` upgrades `merge_leads` to a
+  page/API-bound `server_form`; `pages/leads.yaml` exposes the Odoo label
+  `Merge`. The mutation applies optional salesperson/team assignment while
+  retaining open-record guards, activity reparenting, and closed-row safety.
+- Focused test: `bun test test/crm_merge_opportunities.integration.test.ts` —
+  2 pass / 14 assertions.
+- Related CRM test: `bun test test/crm.integration.test.ts` — 45 pass / 1
+  known pre-existing AI allowlist failure for Lead Mining Requests. The merge
+  regression itself passes.
+- Browser/Odoo: BrowserSkill daemon was healthy on instance `245ea108`, but
+  the authenticated Odoo contacts tab `1770662590` was already borrowed by
+  session `expk`; borrow returned `tab is borrowed by another session`. The
+  session was stopped cleanly. No Odoo/Core3 desktop/mobile capture or visual
+  parity claim is recorded.
+- Disposition: bounded implementation only; CRM remains conditional and
+  unsigned-off.
+
 ## QA checkpoint — Lead detail Attachments (`CRM-LEAD-ATTACHMENTS-001`)
 
 Conditional bounded result; not signed off.

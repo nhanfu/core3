@@ -850,3 +850,27 @@ Status: bounded implementation; browser parity conditional.
   using the existing Odoo tab. Borrow confirmation timed out after 20 seconds;
   no live Odoo or Core3 screenshot was captured, and no visual parity claim is
   made. The exact blocker is recorded in the feature evidence.
+
+## 2026-09-22 — Merge Leads/Opportunities wizard
+
+Stable feature ID: `CRM-LEAD-MERGE-WIZARD-001`.
+
+Status: bounded implementation; not CRM sign-off.
+
+- Odoo source action `action_merge_opportunities` is defined in
+  `addons/crm/wizard/crm_merge_opportunities_views.xml` as a modal form for
+  `crm.merge.opportunity`, bound to the `crm.lead` list and kanban. The form
+  exposes `Salesperson`, `Sales Team`, the selected Leads/Opportunities, and
+  `Merge`/`Cancel` controls.
+- Before this slice Core3 had a one-click `merge_leads` bulk mutation that
+  merged open records but did not expose the Odoo assignment fields or modal
+  action contract. The existing Leads page/API join remains the owning seam:
+  `pages/leads.yaml` and `api/leads.yaml`, joined by `page.id: leads`.
+- Core3 now renders `merge_leads` as a `server_form` titled
+  `Merge Leads/Opportunities`, with Salesperson and Sales Team selectors,
+  selected-ID transport, durable activity reparenting, closed-record guards,
+  explicit assignment, and refresh of `crm_leads`. No migration was required.
+- Focused validation is recorded under
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-MERGE-WIZARD-001/`.
+  Authenticated Odoo and Core3 desktop/mobile visual captures are blocked and
+  therefore no visual-parity claim is made.
