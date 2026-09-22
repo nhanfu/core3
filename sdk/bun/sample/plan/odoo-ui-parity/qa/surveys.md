@@ -1937,3 +1937,25 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-EDIT-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-DELETE-001` — 2026-09-22
+
+- Source/UI: Odoo's Survey kanban menu exposes `Delete` as a card action in
+  `addons/survey/views/survey_survey_views.xml:237-240`.
+- Contract: `pages/surveys.yaml` adds `delete_survey_card` with the exact
+  `Delete` label, trash affordance, and `surveys.write` permission. Its client
+  action confirms, submits the selected row ID/version to the existing
+  `/api/actions/surveys.records.delete` contract, and returns to the Cards
+  route. No duplicate delete mutation was introduced.
+- Persistence/guards: the existing API-owned delete graph removes dependent
+  questions, answers, participants, invites, sessions, and the survey; the
+  focused test confirms an empty Cards source after deletion and a safe
+  `SURVEY_DELETE_NOT_FOUND` replay response.
+- Verification: **2 focused tests / 16 assertions** pass.
+- Browser blocker: BrowserSkill instance `245ea108`, session `hsfh`, was
+  denied borrowing signed-in tab `1770662590` because session `wbjh` already
+  held it. No authenticated Odoo desktop/mobile captures were possible and
+  no visual-parity claim is made. See the feature evidence blocker record.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.

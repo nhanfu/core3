@@ -876,3 +876,15 @@ Evidence:
 | SURVEYS-WF-072 | workflow/recovery | File-backed DuckDB, Admin | Save access settings, close/reopen, replay with stale row version | Values and row version survive restart; stale replay is rejected | test-results.md | pass |
 | SURVEYS-FUNC-077 | cross-setting workflow | Feedback Form with scoring-after-each-page | Enable Allow Roaming through access action | Odoo conflict is rejected as `SURVEY_ACCESS_ROAMING_CONFLICT` before mutation | test-results.md | pass |
 | SURVEYS-UI-073 | visual/responsive | Authenticated Odoo reference; Core3 module runtime | Options → Participants at 1440x900 and 390x844 | Compare exact labels, controls, conditional attempts row, spacing, and overflow; Core3 is blocked by shared discovery error | verification.md | conditional |
+
+## `SURVEYS-CARD-DELETE-001` — Survey Cards Delete action
+
+| Test ID | Class | Setup/actor | Exact action | Expected result and persistence assertion | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-078 | functional | `survey-delete-candidate`, Admin | Cards → row menu → Delete; confirm | Existing `surveys.records.delete` removes the durable survey graph and Cards query returns an explicit empty state | source-comparison.md, test-results.md | pass |
+| SURVEYS-PERM-075 | permission/security | Admin/write boundary, stale/missing row | Direct action contract with missing or changed ID/version | `surveys.write` remains required; missing returns 404 and stale/replay returns a stable conflict without partial mutation | test-results.md | pass through existing delete contract |
+| SURVEYS-WF-073 | workflow/recovery | In-memory DuckDB, deterministic seed | Delete → query/replay | Dependent rows are gone, the list is empty, and a second delete cannot mutate or disclose a record | test-results.md | pass |
+| SURVEYS-UI-074 | authenticated responsive/reference | Odoo signed-in tab; 1440x900 and 390x844 | Cards → row menu → Delete | Compare exact menu label/placement and responsive action menu; BrowserSkill tab ownership blocker recorded, so no visual sign-off | browser-results.json | conditional/blocker |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.

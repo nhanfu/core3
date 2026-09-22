@@ -2916,3 +2916,35 @@ session `zfuv`.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-EDIT-001/`.
+
+## Bounded slice: `SURVEYS-CARD-DELETE-001` — 2026-09-22
+
+The next missing concrete action after the card `Edit Survey` entry is the
+Odoo kanban/card menu's `Delete` action. Odoo declares it as a `type="delete"`
+menu item in `addons/survey/views/survey_survey_views.xml:237-240`, gated by
+the card's deletable/editable state and the model's normal write access.
+Core3's Cards action menu had no delete entry, although the durable survey
+detail page already owned the permissioned `surveys.records.delete` graph
+mutation and its 404/stale guards.
+
+Core3 now declares stable page action `delete_survey_card` on the Cards list,
+with the exact `Delete` label, trash affordance, and `surveys.write` boundary.
+The action confirms the survey title, posts the selected stable ID and
+`row_version` to the existing delete contract, then returns to `/surveys`.
+No second mutation or migration was added; the Cards page remains joined to
+`api/surveys.yaml` through `page.id: surveys`, while the existing detail API
+continues to own the durable cascading delete implementation.
+
+Focused verification is **2 passed / 16 assertions** in
+`test/surveys_card_delete.integration.test.ts`, including discovery/page/API
+binding, exact action contract, graph deletion, empty-list behavior, and
+replay-safe missing-record handling.
+
+The required authenticated Odoo capture is blocked: BrowserSkill session
+`hsfh` on browser instance `245ea108` could not borrow signed-in tab
+`1770662590` because it was already borrowed by session `wbjh`. The exact
+error and hint are recorded in the feature evidence. No Odoo desktop/mobile
+capture or visual-parity claim is made.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.

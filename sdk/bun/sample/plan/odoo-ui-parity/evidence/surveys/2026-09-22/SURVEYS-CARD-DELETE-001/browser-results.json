@@ -1,0 +1,19 @@
+{
+  "feature": "SURVEYS-CARD-DELETE-001",
+  "browser_instance": "245ea108",
+  "session": "hsfh",
+  "borrowed_tab": "1770662590",
+  "viewports": [
+    { "name": "desktop", "width": 1440, "height": 900 },
+    { "name": "mobile", "width": 390, "height": 844 }
+  ],
+  "captures": [],
+  "visual_parity_claim": false,
+  "blocker": {
+    "operation": "bsk tab borrow 1770662590 --session hsfh",
+    "error": "tab is borrowed by another session",
+    "hint": "return the tab from the borrowing session via bsk tab return <tab-id> --session <id> or stop that session",
+    "owner_session": "wbjh",
+    "session_stopped": true
+  }
+}

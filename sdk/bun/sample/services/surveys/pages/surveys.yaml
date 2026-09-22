@@ -81,6 +81,7 @@ components:
     row_double_click_action: view_survey_detail
     actions:
       - { id: edit_survey, label: Edit Survey, permission: surveys.write }
+      - { id: delete_survey_card, label: Delete, icon: trash, variant: danger, permission: surveys.write }
       - { id: share_survey, label: Share, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments, label: Invite attachments, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: test_survey, label: Test, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
@@ -95,6 +96,24 @@ actions:
     permission: surveys.write
     navigate_to: /surveys/detail
     params: { id: '{row.id}' }
+  - id: delete_survey_card
+    type: client
+    permission: surveys.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const title = String(row.title || row.name || 'this survey');
+        if (!window.confirm(`Delete survey ${title}?\nIt will be removed permanently.`)) return;
+        await request('/api/actions/surveys.records.delete', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+          },
+        });
+        const app = await import('/app.ts');
+        await app.navigate('/surveys');
+      }
   - id: manage_survey_invite_attachments
     type: navigate
     permission: surveys.write
