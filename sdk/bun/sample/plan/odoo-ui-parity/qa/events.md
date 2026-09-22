@@ -1,5 +1,35 @@
 # events QA ledger
 
+## Bounded QA - Event archive and restore (2026-09-22)
+
+- Stable feature ID: **EVENTS-EVENT-ARCHIVE-001**.
+- Source contract: **PASS by local source**. Odoo 19 defines
+  `event.event.active`, renders the Archived ribbon, and exposes the Archived
+  search filter in `event_event_views.xml`.
+- YAML ownership and permissions: **PASS**. The `/events` and
+  `/event-detail` page IDs join the service-owned active datasource and
+  archive/restore action contracts; the existing Events list action remains
+  page-owned while detail mutations are API-owned. Reads require
+  `events.read`; mutations require `events.write`.
+- Durable data and guards: **PASS**. Migration 044 adds an indexed active
+  column, seeds `event-archive-20260115`, is idempotent, and uses a fixed
+  2026-01-15 timestamp. Archive/restore increments `row_version`; missing,
+  stale, replay, active-only, and archived-filter boundaries are covered.
+- Focused tests: **PASS**, 2 tests / 26 assertions in
+  `events_archive.integration.test.ts`.
+- Related Events regression: **PASS**, 126 tests / 967 assertions across 46
+  files in `bun test ./test/events*.integration.test.ts --timeout 20000`.
+- Browser evidence: **BLOCKED**. BrowserSkill daemon `245ea108` and its
+  connected extension were healthy. Borrowing the authenticated Odoo user tab
+  timed out waiting for human confirmation; the task session was stopped
+  without borrowing. No credentials, independent browser, Playwright session,
+  or Odoo screenshot was used.
+- Full module sign-off: **OPEN**. This bounded feature has no live Odoo
+  desktop/mobile visual claim; broader Events actor and route-level evidence
+  gates remain outstanding.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-22/event-archive/`.
+
 ## Bounded QA - reopen cancelled attendee registration (2026-09-22)
 
 - Stable feature ID: **EVENTS-ATTENDEE-REOPEN-001**.

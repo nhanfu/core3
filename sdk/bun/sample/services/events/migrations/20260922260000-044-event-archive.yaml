@@ -1,0 +1,19 @@
+id: 20260922260000-044-event-archive
+description: Durable Odoo Events archive state and fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      UPDATE events SET active = TRUE WHERE active IS NULL;
+      CREATE INDEX IF NOT EXISTS events_active_idx ON events(active, state, start_at);
+      INSERT INTO events(id, name, event_type, organizer, venue, description, capacity, registration_count, start_at, end_at, state, active, row_version)
+      VALUES ('event-archive-20260115', 'Archived Events Planning', 'Conference', 'Events Team', 'Archive Room', 'Deterministic archived event fixture', 0, 0, TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 15:00:00', 'Draft', FALSE, 1)
+      ON CONFLICT (id) DO UPDATE SET active = FALSE, updated_at = TIMESTAMP '2026-01-15 12:00:00';
+    down: |
+      DELETE FROM events WHERE id = 'event-archive-20260115';
+      DROP INDEX IF EXISTS events_active_idx;
+      ALTER TABLE events DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

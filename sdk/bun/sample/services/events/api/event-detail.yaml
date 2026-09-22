@@ -3,7 +3,7 @@ datasources:
   - id: event_detail
     single: true
     permission: events.read
-    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, (SELECT COUNT(*) FROM event_linked_leads l WHERE l.event_id = e.id) AS lead_count, COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS sale_price_total, printf('$ %,.2f', CAST(COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS DOUBLE)) AS sale_price_total_display, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, 'Europe/Brussels' AS display_timezone, 'Exhibition' AS template, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY r.sequence, t.name, t.id) FROM event_event_tags r JOIN event_tags t ON t.id = r.tag_id WHERE r.event_id = e.id), 'Online') AS tags, 'YourCompany' AS company, '' AS online_url, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) > 1 AS multiple_slots, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) AS slot_count, false AS limit_registrations, COALESCE(e.badge_format, 'A6') AS badge_format, e.badge_image_file_name, e.badge_image_mime_type, e.badge_image_size_bytes, e.badge_image_uploaded_by, CAST(e.badge_image_updated_at AS VARCHAR) AS badge_image_updated_at, e.ticket_instructions, e.note, e.state FROM events e WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
+    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, (SELECT COUNT(*) FROM event_linked_leads l WHERE l.event_id = e.id) AS lead_count, COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS sale_price_total, printf('$ %,.2f', CAST(COALESCE((SELECT SUM(total) FROM event_sales_orders s WHERE s.event_id = e.id), 0) AS DOUBLE)) AS sale_price_total_display, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, 'Europe/Brussels' AS display_timezone, 'Exhibition' AS template, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY r.sequence, t.name, t.id) FROM event_event_tags r JOIN event_tags t ON t.id = r.tag_id WHERE r.event_id = e.id), 'Online') AS tags, 'YourCompany' AS company, '' AS online_url, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) > 1 AS multiple_slots, (SELECT COUNT(*) FROM event_slots WHERE event_id = e.id) AS slot_count, false AS limit_registrations, COALESCE(e.badge_format, 'A6') AS badge_format, e.badge_image_file_name, e.badge_image_mime_type, e.badge_image_size_bytes, e.badge_image_uploaded_by, CAST(e.badge_image_updated_at AS VARCHAR) AS badge_image_updated_at, e.ticket_instructions, e.note, e.active, e.state FROM events e WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
   - id: event_registrations
     permission: events.read
     query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY registered_at DESC"
@@ -356,3 +356,35 @@ actions:
         - { query: "DELETE FROM event_mail_schedulers WHERE id = :line_id AND event_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. }
         - { query: "UPDATE events SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event changed while deleting communication. Reload before saving. }
       result: { query: "SELECT TRUE AS deleted, :line_id AS id" }
+  - id: archive_event_detail
+    type: server
+    permission: events.write
+    action: events.records.archive
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.event_detail.row_version}' }
+    confirm: Archive this event?
+    refresh: [event_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT id FROM events WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: EVENT_ARCHIVE_STALE, message: This event is already archived or changed. Reload before archiving. }
+      steps:
+        - { query: "UPDATE events SET active = FALSE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_ARCHIVE_STALE, message: This event changed before it could be archived. }
+      result: { query: "SELECT * FROM events WHERE id = :id" }
+  - id: unarchive_event_detail
+    type: server
+    permission: events.write
+    action: events.records.unarchive
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.event_detail.row_version}' }
+    confirm: Restore this event?
+    refresh: [event_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT id FROM events WHERE id = :id AND active = FALSE AND row_version = :expected_row_version", status: 409, code: EVENT_ARCHIVE_STALE, message: This event is active or changed. Reload before restoring. }
+      steps:
+        - { query: "UPDATE events SET active = TRUE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND active = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_ARCHIVE_STALE, message: This event changed before it could be restored. }
+      result: { query: "SELECT * FROM events WHERE id = :id" }

@@ -1,5 +1,34 @@
 # Events UI parity
 
+## Current bounded batch: Event archive and restore (2026-09-22)
+
+Stable feature ID: EVENTS-EVENT-ARCHIVE-001.
+
+The next smallest uncovered stable-ID feature after the responsive attendee
+report was Odoo 19's `event.event.active` archive boundary. The local source
+defines `active = fields.Boolean(default=True)` in
+`addons/event/models/event_event.py:73-76`; the event form renders the
+Archived ribbon in `addons/event/views/event_event_views.xml:44-46`, and its
+search view declares the Archived filter at lines 310-312.
+
+Core3 adds the page/API-connected active-state datasource to `/events`, a
+deterministic archived fixture, and permissioned Archive/Restore actions on
+the list and existing `event-detail` form. Migration
+`20260922260000-044-event-archive.yaml` is idempotent and replay-safe. Both
+mutations persist `events.active`, increment `row_version`, use fixed seed
+timestamps, and reject missing or stale/replayed writes. The default list
+query remains active-only; the Records filter exposes the archived fixture.
+
+Focused coverage is in `test/events_archive.integration.test.ts` and the
+existing Events regression. It proves source mapping, page/API IDs, active
+filtering, archive/restore persistence, stale and missing guards, migration
+replay, and file-backed restart. BrowserSkill was healthy and showed the
+authenticated Odoo user tabs at `http://localhost:8069`, but borrowing the
+selected user tab timed out waiting for the required extension confirmation;
+the session was stopped without borrowing, credentials were not accessed, and
+no Odoo desktop/mobile capture or visual-parity claim is made. Evidence is
+under `evidence/events/2026-09-22/event-archive/`.
+
 ## Current bounded batch: Responsive Html Full Page Ticket (2026-09-22)
 
 Stable feature ID: EVENTS-RESPONSIVE-HTML-TICKET-001.

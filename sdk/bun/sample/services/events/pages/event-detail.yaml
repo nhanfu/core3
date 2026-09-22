@@ -30,6 +30,8 @@ components:
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
       - { id: complete_event_detail, label: Complete, variant: primary, permission: events.manage, show_if: "record.state === 'In Progress'" }
       - { id: cancel_event_detail, label: Cancel, variant: danger, permission: events.manage, show_if: "record.state !== 'Completed' && record.state !== 'Cancelled'" }
+      - { id: archive_event_detail, label: Archive, variant: danger, permission: events.write, show_if: 'record.active === true' }
+      - { id: unarchive_event_detail, label: Restore, variant: secondary, permission: events.write, show_if: 'record.active === false' }
       - { id: event_slots_detail, label: Slots, variant: secondary, permission: events.read, show_if: "record.multiple_slots" }
     stat_buttons:
       - { id: event_registration_stats_detail, label: Registration, value_field: registration_count, permission: events.read }
@@ -66,6 +68,7 @@ components:
           - { field: venue, label: Venue }
           - { field: online_url, label: Online Event URL }
           - { field: limit_registrations, label: Limit Registrations, type: checkbox }
+          - { field: active, label: Active, type: checkbox, readonly: true }
       - title: Schedule and attendance
         wide: true
         fields: [{ field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]

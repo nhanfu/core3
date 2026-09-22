@@ -23,7 +23,7 @@ describe('Events attendee parity batch', () => {
     expect(list.views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'start_at', end_date_field: 'end_at' });
     expect(list.views.find((view: any) => view.id === 'pivot')?.pivot.default).toMatchObject({ rows: ['state'], columns: ['event_type'] });
     expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'state', measure_field: 'registration_count' });
-    expect(yaml('api/events.yaml').datasources.map((source: any) => source.id)).toEqual(['event_states', 'events']);
+    expect(yaml('api/events.yaml').datasources.map((source: any) => source.id)).toEqual(['event_states', 'event_active_states', 'events']);
     expect(yaml('api/events.yaml').datasources.find((source: any) => source.id === 'events')?.pivot.fields).toEqual(['state', 'event_type', 'start_at', 'capacity', 'registration_count']);
   });
 
@@ -42,6 +42,8 @@ describe('Events attendee parity batch', () => {
       'start_event_detail',
       'complete_event_detail',
       'cancel_event_detail',
+      'archive_event_detail',
+      'unarchive_event_detail',
       'event_slots_detail',
     ]);
     expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count', 'lead_count', 'sale_price_total_display']);

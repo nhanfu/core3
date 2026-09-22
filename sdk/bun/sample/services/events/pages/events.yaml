@@ -7,7 +7,10 @@ components:
     create_action: create_event
     create_label: New event
     search: { label: Search events, placeholder: 'Search event or event type...' }
-    filters: [{ field: state, label: Status, options_source: event_states }]
+    default_filters: { active: active }
+    filters:
+      - { field: active, label: Records, options_source: event_active_states }
+      - { field: state, label: Status, options_source: event_states }
     view_navigation: tabs
     views:
       - id: list
@@ -92,6 +95,7 @@ components:
       - { field: capacity, label: Capacity, align: right }
       - { field: registration_count, label: Registered, align: right }
       - { field: start_at, label: Starts }
+      - { field: active, label: Active, type: StatusChip, optional: hide }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
@@ -103,6 +107,8 @@ components:
       - { id: start_event, label: Start, permission: events.write, variant: secondary, show_if: "row.state === 'Published'" }
       - { id: complete_event, label: Complete, permission: events.manage, variant: primary, show_if: "row.state === 'In Progress'" }
       - { id: cancel_event, label: Cancel, permission: events.manage, variant: danger, show_if: "row.state !== 'Completed' && row.state !== 'Cancelled'" }
+      - { id: archive_event, label: Archive, permission: events.write, variant: danger, show_if: 'row.active === true' }
+      - { id: unarchive_event, label: Restore, permission: events.write, variant: secondary, show_if: 'row.active === false' }
 actions:
   - id: view_event_detail
     type: navigate
@@ -136,6 +142,38 @@ actions:
   - { id: start_event, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, refresh: [events] }
   - { id: complete_event, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, refresh: [events] }
   - { id: cancel_event, type: server, permission: events.manage, action: events.records.cancel, handler: order_transition, workflow: events, operation: cancel, refresh: [events] }
+  - id: archive_event
+    type: server
+    permission: events.write
+    action: events.records.archive
+    handler: yaml_mutation
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    confirm: Archive this event?
+    refresh: [events]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT id FROM events WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: EVENT_ARCHIVE_STALE, message: This event is already archived or changed. Reload before archiving. }
+      steps:
+        - { query: "UPDATE events SET active = FALSE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_ARCHIVE_STALE, message: This event changed before it could be archived. }
+      result: { query: "SELECT * FROM events WHERE id = :id" }
+  - id: unarchive_event
+    type: server
+    permission: events.write
+    action: events.records.unarchive
+    handler: yaml_mutation
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    confirm: Restore this event?
+    refresh: [events]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT id FROM events WHERE id = :id AND active = FALSE AND row_version = :expected_row_version", status: 409, code: EVENT_ARCHIVE_STALE, message: This event is active or changed. Reload before restoring. }
+      steps:
+        - { query: "UPDATE events SET active = TRUE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND active = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_ARCHIVE_STALE, message: This event changed before it could be restored. }
+      result: { query: "SELECT * FROM events WHERE id = :id" }
   - { id: schedule_event_activity, type: navigate, permission: events.write, navigate_to: /event-detail, params: { id: '{row.id}' } }
   - id: register_event_attendee
     type: server_form
