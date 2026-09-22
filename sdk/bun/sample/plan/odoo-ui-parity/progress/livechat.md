@@ -121,3 +121,20 @@ authenticated Odoo tab `1770662590` from session `roqk` timed out during
 extension confirmation. The tab was not borrowed and the session was stopped;
 no desktop/mobile capture or visual-parity claim is made. Evidence is under
 `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-transcript-download-001/`.
+
+## Bounded implementation slice: authenticated session note (2026-09-22)
+
+Stable feature `livechat-session-note-001` adds the source-backed internal
+session note editor to the existing `livechat-session-detail` page/API join.
+The new `livechat_note` projection and `update_livechat_session_note` action
+retain Odoo's `/im_livechat/session/update_note` route, preserve markup-
+compatible note content, increment the durable session version, support
+clearing the note, and guard missing records and assigned-operator scope.
+Migration `20260922210000-056-livechat-session-note.yaml` is idempotent.
+
+Focused validation and evidence are recorded under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-session-note-001/`.
+BrowserSkill reached `http://localhost:8069` but the requested public Live
+Chat support route returned Error 404 at desktop and emulated mobile sizes;
+authenticated tabs were occupied or unavailable for borrowing. No visual
+parity or authenticated Odoo/Core3 sign-off is claimed.

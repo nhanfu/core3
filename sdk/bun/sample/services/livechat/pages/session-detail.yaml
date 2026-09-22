@@ -14,6 +14,7 @@ components:
       - { id: email_livechat_session_transcript, label: Email transcript, variant: secondary, show_if: "record.status === 'Closed'" }
       - { id: send_livechat_session_history, label: Send Page History, variant: secondary, permission: livechat.write }
       - { id: invite_livechat_session_member, label: Invite People, variant: secondary, permission: livechat.write, show_if: "record.status !== 'Closed'" }
+      - { id: update_livechat_session_note, label: Save note, variant: secondary, permission: livechat.write }
       - { id: add_livechat_session_tag, label: Add Tag, variant: secondary }
       - { id: remove_livechat_session_tag, label: Remove Tag, variant: secondary }
     fields:
@@ -33,6 +34,7 @@ components:
       - { field: ended_at, label: Ended }
       - { field: transcript_last_sent_to, label: Last transcript recipient }
       - { field: transcript_last_sent_at, label: Last transcript sent }
+      - { field: livechat_note, label: Notes, type: textarea, placeholder: 'Add your notes here...' }
     message_source: livechat_session_messages
     chatter_label: Conversation
     chatter_empty: No messages in this conversation yet.

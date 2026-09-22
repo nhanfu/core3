@@ -1350,3 +1350,39 @@ with 120 assertions. BrowserSkill was connected to shared browser
 credentials were read, and no desktop/mobile live capture was produced. This
 slice therefore makes no visual-parity claim. Evidence is recorded under
 `plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-transcript-download-001/`.
+
+## Bounded implementation slice: Authenticated session note (2026-09-22)
+
+Stable feature ID: `livechat-session-note-001`.
+
+The next uncovered operator action is Odoo's internal Discuss side-panel note
+editor in `addons/im_livechat/static/src/core/web/livechat_channel_info_list.*`.
+The textarea is labeled `Notes`, uses the placeholder `Add your notes here...`,
+and saves on blur through the authenticated JSON-RPC route
+`/im_livechat/session/update_note`. The controller rejects shared/public users,
+requires an existing `discuss.channel`, and writes the HTML note to
+`livechat_note`; the source field is visible to internal users with session
+access and is not an operator-status transition.
+
+Core3 extends the existing `livechat-session-detail` page/API join with the
+`livechat_note` projection and a `livechat.write` `update_livechat_session_note`
+server action retaining the Odoo route string. Migration
+`20260922210000-056-livechat-session-note.yaml` adds the durable note column and
+an idempotent deterministic demo value. The action preserves markup-compatible
+text, increments the session row version, allows clearing the note, rejects a
+missing session, and applies the existing assigned-operator scope guard without
+changing the row on denial. Session status updates and expertise edits remain
+separate uncovered actions.
+
+Focused validation is
+`test/livechat_session_note.integration.test.ts`: source route and frontend
+trace, page/API join, idempotent migration, markup-compatible persistence,
+clear behavior, version advancement, missing-record handling, and operator
+scope denial. BrowserSkill reached the requested `core3_reference` service but
+`/im_livechat/support/1` returned Odoo Error 404 at observed 1916x833 desktop
+and emulated 390x844 mobile viewports; borrowing authenticated tabs was
+unavailable because the tabs were occupied by other BrowserSkill sessions and
+the available-tab confirmation timed out. No visual-parity claim is made.
+Blocker captures are outside Git at
+`/tmp/odoo-livechat-session-note-blocker-desktop-20260922.png` and
+`/tmp/odoo-livechat-session-note-blocker-mobile-20260922.png`.

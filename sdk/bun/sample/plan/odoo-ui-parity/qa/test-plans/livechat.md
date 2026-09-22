@@ -69,6 +69,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-PERM-009 | Public message ownership | Wrong visitor token cannot post, and a closed visitor conversation cannot be reopened by message post | pass: `livechat_public_message.integration.test.ts` |
 | LIVECHAT-PERM-010 | Transcript delivery actor/scope | Missing actor, another operator, and stale session version return bounded errors without a delivery row | pass: `livechat_transcript_delivery.integration.test.ts` |
 | LIVECHAT-PERM-011 | Public transcript ownership | A visitor can download only the closed session artifact bound to its visitor token; wrong-token and open-session queries return no data | pass: `livechat_transcript_download.integration.test.ts` |
+| LIVECHAT-NOTE-001 | Session note | Odoo note route, Notes field, markup-compatible create/update/clear, missing-session and assigned-operator denial, row-version persistence after restart | pass: `livechat_session_note.integration.test.ts`; browser comparison blocked |
 
 ## Visual, responsive, and regression cases
 

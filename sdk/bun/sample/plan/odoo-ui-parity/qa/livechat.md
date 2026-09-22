@@ -222,3 +222,20 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   stopped. No desktop/mobile capture was produced and no visual-parity claim is
   made. Evidence details are in
   `evidence/livechat/2026-09-22/livechat-transcript-download-001/`.
+
+## LIVECHAT-SESSION-NOTE-001 — 2026-09-22
+
+- Scope: authenticated internal session note editor on the existing session
+  detail surface.
+- Odoo source: `im_livechat/controllers/channel.py` route
+  `/im_livechat/session/update_note` and
+  `static/src/core/web/livechat_channel_info_list.xml` Notes textarea with
+  blur-save behavior.
+- Core3: `livechat_note` is projected by `livechat_session_detail`; the
+  `update_livechat_session_note` action persists it through the existing
+  page/API join and migration `20260922210000-056-livechat-session-note.yaml`.
+- Focused test: 3 passed, 19 assertions.
+- BrowserSkill evidence is a blocker only: the requested Odoo support route
+  returned authenticated Error 404 at observed desktop and emulated mobile
+  viewports, and authenticated tabs could not be borrowed. No visual-parity
+  claim is made.

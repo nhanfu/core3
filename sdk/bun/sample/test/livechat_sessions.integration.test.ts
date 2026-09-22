@@ -210,6 +210,7 @@ describe('Live Chat Conversations — Sessions parity', () => {
       'email_livechat_session_transcript',
       'send_livechat_session_history',
       'invite_livechat_session_member',
+      'update_livechat_session_note',
       'add_livechat_session_tag',
       'remove_livechat_session_tag',
     ]);

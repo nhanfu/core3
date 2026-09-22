@@ -1,0 +1,17 @@
+version: 0.0.56
+kind: data
+description: Persist the internal Live Chat session note used by Odoo's information panel
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS livechat_note VARCHAR;
+      UPDATE livechat_sessions
+      SET livechat_note = 'Order follow-up requested.'
+      WHERE id = 'livechat-session-demo-001'
+        AND COALESCE(livechat_note, '') = '';
+    down: |
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS livechat_note;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

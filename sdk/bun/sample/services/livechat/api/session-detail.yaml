@@ -32,7 +32,8 @@ datasources:
           WHERE d.session_id = livechat_sessions.id ORDER BY d.requested_at DESC, d.id DESC LIMIT 1), '') AS transcript_last_sent_to,
         COALESCE((SELECT CAST(d.requested_at AS VARCHAR) FROM livechat_transcript_deliveries d
           WHERE d.session_id = livechat_sessions.id ORDER BY d.requested_at DESC, d.id DESC LIMIT 1), '') AS transcript_last_sent_at,
-        COALESCE((SELECT COUNT(*) FROM livechat_transcript_deliveries d WHERE d.session_id = livechat_sessions.id), 0) AS transcript_delivery_count
+        COALESCE((SELECT COUNT(*) FROM livechat_transcript_deliveries d WHERE d.session_id = livechat_sessions.id), 0) AS transcript_delivery_count,
+        COALESCE(livechat_note, '') AS livechat_note
       FROM livechat_sessions
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
         AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
@@ -106,6 +107,39 @@ datasources:
       ORDER BY u.livechat_name, u.id
 
 actions:
+  - id: update_livechat_session_note
+    type: server_form
+    permission: livechat.write
+    title: Update Live Chat note
+    description: Saves the internal note shown in Odoo's Live Chat information panel.
+    action: /im_livechat/session/update_note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    success_message: Live Chat note saved.
+    refresh: [livechat_session_detail]
+    fields:
+      - { field: note, label: Notes, type: textarea, required: false, placeholder: 'Add your notes here...' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+      steps:
+        - query: |
+            UPDATE livechat_sessions
+            SET livechat_note = COALESCE(CAST(:note AS VARCHAR), ''),
+                row_version = row_version + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id
+          expect_changed: true
+          status: 409
+          code: LIVECHAT_SESSION_NOTE_NOT_SAVED
+          message: The Live Chat note could not be saved.
+      result:
+        query: |
+          SELECT id, COALESCE(livechat_note, '') AS livechat_note, row_version
+          FROM livechat_sessions
+          WHERE id = :id
   - id: send_livechat_session_history
     type: server_form
     permission: livechat.write
