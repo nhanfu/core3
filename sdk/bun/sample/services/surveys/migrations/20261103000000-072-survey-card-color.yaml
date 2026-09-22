@@ -1,0 +1,14 @@
+version: 0.0.72
+description: Durable Odoo survey card color index
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS color INTEGER;
+      UPDATE surveys SET color = 0 WHERE color IS NULL;
+    down: |
+      ALTER TABLE surveys DROP COLUMN IF EXISTS color;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

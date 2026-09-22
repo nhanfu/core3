@@ -1494,3 +1494,20 @@ Surveys and were not edited. No Core3 visual parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.
+
+## 2026-09-22 — `SURVEYS-CARD-COLOR-001`
+
+Implemented the next missing Odoo Survey card action: the `Color` kanban
+picker. The Cards page now exposes stable `set_survey_card_color`, while the
+API fragment owns the Odoo-palette server form through `page.id: surveys`.
+Migration `0.0.72` persists the color index and the mutation guards actor,
+write permission, archive state, stale row version, and the 0..11 palette
+range.
+
+Verification is **3/3 tests, 18 assertions** with file-backed restart
+coverage. BrowserSkill instance `245ea108` could not borrow signed-in tab
+`1770662590` because session `xigt` already held it; no Odoo desktop/mobile
+capture or visual-parity sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.

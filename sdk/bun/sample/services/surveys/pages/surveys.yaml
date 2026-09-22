@@ -82,6 +82,7 @@ components:
     actions:
       - { id: edit_survey, label: Edit Survey, permission: surveys.write }
       - { id: delete_survey_card, label: Delete, icon: trash, variant: danger, permission: surveys.write }
+      - { id: set_survey_card_color, label: Color, icon: palette, permission: surveys.write }
       - { id: share_survey, label: Share, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments, label: Invite attachments, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: test_survey, label: Test, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }

@@ -2948,3 +2948,30 @@ capture or visual-parity claim is made.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.
+
+## Bounded slice: `SURVEYS-CARD-COLOR-001` — 2026-09-22
+
+The next missing stable-ID behavior after the card Edit and Delete entries is
+Odoo's kanban `Color` picker. Odoo declares `color = fields.Integer('Color
+Index', default=0)` on `survey.survey` and renders the `Color` menu plus
+`kanban_color_picker` in `addons/survey/views/survey_survey_views.xml:237-243`.
+The current Core3 Cards action menu had no color action or durable color field.
+
+Core3 adds API-owned `set_survey_card_color` to `api/surveys.yaml` and the
+matching `Color` row-menu action to `pages/surveys.yaml`, joined by
+`page.id: surveys`. Migration `0.0.72` adds durable `surveys.color`; the list
+datasource projects the Odoo palette index and the mutation enforces
+`surveys.write`, actor authentication, non-archived state, optimistic row
+version, and the Odoo 0..11 color range. The shared server-form color control
+uses the Odoo palette; no bespoke renderer or unrelated module change was
+introduced.
+
+Focused verification is **3 passed / 18 assertions**, including page/API
+binding, persistence, range/actor/archive/stale guards, and file-backed
+restart. No authenticated Odoo desktop/mobile capture was possible: BrowserSkill
+instance `245ea108` denied borrowing tab `1770662590` because session `xigt`
+already owned it. This exact blocker is retained in the evidence directory;
+no visual-parity claim is made.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.

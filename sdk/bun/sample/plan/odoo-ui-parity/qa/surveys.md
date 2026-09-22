@@ -1959,3 +1959,30 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-COLOR-001` — 2026-09-22
+
+- Source/UI: Odoo's Survey kanban menu exposes the `Color` separator and
+  `kanban_color_picker` for `survey.survey.color`
+  (`addons/survey/views/survey_survey_views.xml:237-243`); the model defaults
+  the integer color index to 0 (`addons/survey/models/survey_survey.py:55`).
+- Contract: `pages/surveys.yaml` owns the stable `set_survey_card_color` row
+  action and `api/surveys.yaml` owns the `surveys.records.color.update`
+  server form; both bind at `page.id: surveys`. Migration `0.0.72` adds the
+  durable color column and the list source returns `COALESCE(s.color, 0)`.
+- Guards: `surveys.write`, authenticated actor, missing/archived survey,
+  stale row version, and color index 0..11 are enforced before mutation.
+  The selected color and incremented version survive file-backed restart.
+- Verification: **3 focused tests / 18 assertions** pass. The full Surveys
+  glob is **217 passed / 6 failed / 1,807 assertions**; four failures are the
+  existing DuckDB migration rollback blocker and the two timeout cases pass
+  when rerun in isolation (**5/5 tests, 34 assertions**). Adjacent card,
+  access, scoring, time-limit, and base Surveys tests pass. `git diff --check`,
+  scoped ESLint, the UI audit, and the frontend/CSS build pass.
+- Browser blocker: BrowserSkill instance `245ea108`, session `pati`, denied
+  borrowing signed-in tab `1770662590` because session `xigt` already owned
+  it. No Odoo desktop/mobile screenshots were captured and no visual-parity
+  claim is made.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.

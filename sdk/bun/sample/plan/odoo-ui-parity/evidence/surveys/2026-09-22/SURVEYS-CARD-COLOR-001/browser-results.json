@@ -1,0 +1,20 @@
+{
+  "browser_instance": "245ea108",
+  "session": "pati",
+  "tab_id": "1770662590",
+  "requested_viewports": [
+    { "name": "desktop", "width": 1440, "height": 900 },
+    { "name": "mobile", "device": "iphone-14", "width": 390, "height": 844 }
+  ],
+  "captures": [],
+  "status": "blocked",
+  "blocker": {
+    "operation": "bsk tab borrow 1770662590 --session pati --timeout 30s",
+    "error": "tab is borrowed by another session",
+    "hint": "return the tab from the borrowing session via bsk tab return <tab-id> --session <id> or stop that session",
+    "owner_session": "xigt"
+  },
+  "visual_parity_claim": false,
+  "credentials_printed": false,
+  "core3_reference_reset": false
+}

@@ -888,3 +888,16 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-DELETE-001/`.
+
+## `SURVEYS-CARD-COLOR-001` — Survey Cards Color action
+
+| Case ID | Class | Setup/actor | Exact action | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-079 | functional/data | `survey-demo-certification`, Admin | Cards → row menu → Color → choose Odoo palette index 7 | The API-owned update persists color 7, returns the incremented row version, and the Cards source projects it | source-comparison.md, test-results.md | pass |
+| SURVEYS-PERM-076 | permission/security | Admin/write boundary; missing actor, missing, archived, stale rows | Direct `surveys.records.color.update` calls with invalid actor/record/version | Explicit 403/404/409 guards leave the durable row unchanged | test-results.md | pass |
+| SURVEYS-FUNC-080 | validation | Admin | Submit color indexes -1, 12, and non-numeric input | The Odoo palette boundary is enforced with `SURVEY_COLOR_INVALID` and no mutation | test-results.md | pass |
+| SURVEYS-WF-074 | workflow/recovery | File-backed DuckDB, Admin | Color → close/reopen → replay with old row version | Color and row version survive restart; stale replay cannot overwrite the selected color | test-results.md | pass |
+| SURVEYS-UI-075 | visual/responsive | Odoo signed-in tab; 1440x900 and 390x844 | Cards → row menu → Color | Compare Odoo Color menu/picker at desktop and mobile; BrowserSkill ownership blocker recorded, so no visual sign-off | browser-results.json | conditional/blocker |
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.
