@@ -1,0 +1,18 @@
+version: 0.0.26
+description: Durable Manufacturing Order scope for the Odoo Scraps stat action
+type:
+  postgres:
+    up: |
+      ALTER TABLE stock_scraps ADD COLUMN IF NOT EXISTS production_id VARCHAR;
+      UPDATE stock_scraps AS s
+      SET production_id = p.id
+      FROM mrp_productions AS p
+      WHERE s.production_id IS NULL AND s.production_name = p.name;
+      CREATE INDEX IF NOT EXISTS idx_stock_scraps_production ON stock_scraps(production_id, state, date_done, id);
+    down: |
+      DROP INDEX IF EXISTS idx_stock_scraps_production;
+      ALTER TABLE stock_scraps DROP COLUMN IF EXISTS production_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

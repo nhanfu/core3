@@ -2,6 +2,39 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Manufacturing Order Scraps stat action (`MANUFACTURING-MO-SCRAPS-001`)
+
+Local Odoo 19 source identifies `mrp.production.action_see_move_scrap` in
+`addons/mrp/models/mrp_production.py` as the Manufacturing Order Scraps stat
+action. It opens `stock.action_stock_scrap` for `stock.scrap`, applies the
+domain `production_id = active_id`, and inherits the source action's
+`list,form,kanban,pivot,graph` modes. Existing Core3 had the global Scrap
+Orders action and CRUD workflow, but no durable `production_id` relation or MO
+detail launcher for this installed button action.
+
+Core3 adds the presentation-only
+`services/manufacturing/pages/production-scraps.yaml` and page-id-bound
+`services/manufacturing/api/production-scraps.yaml`, plus the
+`open_mrp_production_scraps` stat action on the MO detail. Migration
+`20260922170000-026-production-scraps-index.yaml` adds/backfills the durable
+relation and creates an idempotent scope index. The scoped list enforces the
+selected MO and company, reuses the existing Scrap Order form, and guards
+create/delete with manufacturing permissions and row versions.
+
+Focused coverage is
+`test/manufacturing_production_scraps.integration.test.ts`: 3 tests / 26
+assertions pass. It covers source identity/modes, page/API separation, durable
+MO/company scoping, filtered/empty/not-found/503 states, migration replay,
+create validation, and stale/delete guards.
+
+BrowserSkill visual verification is blocked. On browser `245ea108`, the
+authenticated user tab `1770662590` was already borrowed by session `rjvi`,
+so task session `akol` received `tab is borrowed by another session`. A
+task-created navigation to `/odoo/manufacturing` rendered Discuss/OdooBot
+instead of Manufacturing. Desktop/mobile blocker captures and hashes are in
+`odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-MO-SCRAPS-001/`;
+no Odoo visual-parity claim is made.
+
 ## 2026-09-22 Manufacturing Order Work Orders bounded action (`MANUFACTURING-MO-WO-001`)
 
 ### Source analysis and current-source comparison

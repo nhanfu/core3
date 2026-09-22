@@ -1,5 +1,38 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-MO-SCRAPS-001 — Manufacturing Order Scraps stat action (2026-09-22)
+
+- Source/action: local Odoo 19 `mrp.production.action_see_move_scrap` in
+  `addons/mrp/models/mrp_production.py`; it opens `stock.action_stock_scrap`
+  for `stock.scrap`, scopes `production_id = active_id`, and inherits
+  `list,form,kanban,pivot,graph`.
+- Core3 paths: presentation
+  `services/manufacturing/pages/production-scraps.yaml`; page-id-bound API
+  `services/manufacturing/api/production-scraps.yaml`; MO detail binding in
+  `pages/manufacturing-detail.yaml` and `api/manufacturing-order-detail.yaml`;
+  durable relation/index migration
+  `migrations/20260922170000-026-production-scraps-index.yaml`; focused test
+  `test/manufacturing_production_scraps.integration.test.ts`.
+- Functional/data result: PASS, 3 tests / 26 assertions. Durable scraps are
+  backfilled and scoped to the selected MO and matching company; filtered,
+  empty, not-found, and 503 states are declared.
+- Workflow/permission result: PASS at contract level. Reads require
+  `manufacturing.read`; scoped create/delete require `manufacturing.write`,
+  validate the selected MO, and retain row-version and Draft-only guards.
+- Restart/migration result: PASS through the focused migration replay; no
+  fixture-only scope rows were introduced.
+- Build result: audit passed at 836 pages / 844 routes / 1,745 datasources;
+  global and Manufacturing CSS builds, frontend production build, targeted
+  ESLint, and `git diff --check` passed.
+- Full Manufacturing result: PASS, 93 tests / 914 assertions across 28 files.
+  An earlier concurrent POS write briefly produced discovery errors; the final
+  rerun completed cleanly. No POS files were changed.
+- Odoo BrowserSkill result: BLOCKED, exact reason. Borrowing authenticated tab
+  `1770662590` on browser `245ea108` failed because active session `rjvi`
+  already owned it. A task-created navigation rendered Discuss/OdooBot. The
+  desktop/mobile blocker captures and hashes are recorded in the feature
+  evidence folder; no Odoo visual-parity claim is made.
+
 ## MANUFACTURING-MO-WO-001 — Manufacturing Order Work Orders (2026-09-22)
 
 - Source/action: local Odoo 19 `action_mrp_workorder_production_specific` in

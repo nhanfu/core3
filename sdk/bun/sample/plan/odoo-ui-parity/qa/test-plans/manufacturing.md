@@ -20,6 +20,16 @@ evidence is recorded in [`../manufacturing.md`](../manufacturing.md).
 | MRP-PP-004 | data/regression | File-backed DuckDB | Migrate twice, close/reopen, query again | Index/migrations are idempotent and rows persist after restart | focused integration test |
 | MRP-PP-005 | responsive/visual | Shared authenticated BrowserSkill Odoo tab | Borrow existing tab at 1440x900 and 390x844 | Borrow did not complete; case is blocked and carries no visual pass | blocker record |
 
+## MANUFACTURING-MO-SCRAPS-001
+
+| Case | Class | Setup / actor | Action or route | Expected / persistence | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| MRP-MOS-001 | source/contract | Local Odoo `action_see_move_scrap`; read actor | Discover `/manufacturing-orders/detail/scraps` from the MO Scraps stat action | Page/API join by `manufacturing-production-scraps`; List/Form/Kanban/Pivot/Graph; selected MO domain | focused integration test |
+| MRP-MOS-002 | data | Durable MOs and scrap rows | Query selected MO with search/status/product filters | Only matching-company scraps for the selected MO; empty/not-found/503 are explicit | focused integration test |
+| MRP-MOS-003 | workflow/permission | Manufacturing write actor and stale row | Create/delete scoped scrap | Selected MO guard, positive quantity validation, Draft-only delete, and stale row rejection | focused integration test |
+| MRP-MOS-004 | migration | Fresh and replayed DuckDB | Apply migrations twice and reopen | `production_id` backfill and scope index are idempotent; existing scrap rows persist | focused integration test |
+| MRP-MOS-005 | responsive/visual | BrowserSkill instance `245ea108` | Borrow shared Odoo tab at desktop/mobile sizes | Blocked by active borrow and Discuss redirect; captures retained with no visual pass | browser-blocker.md |
+
 ## Coverage inventory
 
 | Menu/action family | Core3 route families | Scope |
