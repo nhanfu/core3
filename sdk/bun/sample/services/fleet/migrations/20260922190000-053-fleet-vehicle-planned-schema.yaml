@@ -1,0 +1,19 @@
+version: 0.0.53
+kind: schema
+description: Persist Odoo Fleet planned-for-change flags
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS plan_to_change_car BOOLEAN;
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS plan_to_change_bike BOOLEAN;
+      UPDATE fleet_vehicles SET plan_to_change_car = FALSE WHERE plan_to_change_car IS NULL;
+      UPDATE fleet_vehicles SET plan_to_change_bike = FALSE WHERE plan_to_change_bike IS NULL;
+      CREATE INDEX IF NOT EXISTS fleet_vehicles_planned_idx ON fleet_vehicles(plan_to_change_car, plan_to_change_bike, vehicle_type);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicles_planned_idx;
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS plan_to_change_car;
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS plan_to_change_bike;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

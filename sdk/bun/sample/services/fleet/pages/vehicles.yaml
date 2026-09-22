@@ -11,6 +11,7 @@ components:
       - { field: state, label: Status, options_source: fleet_vehicle_states }
       - { field: vehicle_type, label: Type, options: [{ id: Car, label: Cars }, { id: Bike, label: Bikes }] }
       - { field: trailer_hook, label: Trailer Hook, options: [{ id: 'true', label: Trailer Hook }] }
+      - { field: planned, label: Planned for Change, options: [{ id: 'true', label: Planned for Change }] }
       - { field: archived, label: Archived, options: [{ id: 'false', label: Active }, { id: 'true', label: Archived }] }
     group_by: [{ field: model, label: Model }, { field: manufacturer, label: Brand }, { field: state, label: Status }, { field: fuel_type, label: Fuel Type }]
     view_navigation: tabs

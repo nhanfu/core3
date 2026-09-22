@@ -1281,3 +1281,38 @@ taken over and no credentials, independent browser, or visual-parity claim
 was made. The owned session (aozk) was stopped immediately; the exact result
 is recorded under
 odoo-ui-parity/evidence/fleet/2026-09-22/fleet-model-vehicles-create-20260922/.
+
+## Planned for Change vehicle filter bounded slice (2026-09-22)
+
+Feature ID: `FLEET-VEHICLE-PLANNED-FILTER-001`.
+
+The next smallest uncovered stable source contract was Odoo's `planned` search
+filter in `fleet_vehicle_view_search`. Its domain matches planned cars and
+bikes independently: `plan_to_change_car` applies to cars and
+`plan_to_change_bike` applies to bikes. Before this slice Core3 exposed the
+vehicle list filters for status, type, trailer hitch, and archive state but
+did not persist or query these planned flags.
+
+Core3 adds the `Planned for Change` filter to `pages/vehicles.yaml` and the
+vehicle-type predicate to the paired `api/vehicles.yaml` datasource. Migration
+`20260922190000-053-fleet-vehicle-planned-schema.yaml` adds adapter-safe flag
+columns and an index; migration
+`20260922191000-054-fleet-vehicle-planned-data.yaml` deterministically marks
+the existing City Bike 02 future-driver fixture as planned. The existing
+`action_accept_driver_change` mutation now clears both flags atomically with
+the driver promotion, preserving `fleet.write`, company, and row-version
+guards.
+
+Focused coverage is `test/fleet_vehicle_planned_filter.integration.test.ts`:
+**3 tests / 15 assertions**; with the driver-change regression the focused
+command is **5 tests / 33 assertions**. The targeted six-file vehicle/model
+regression is **17 tests / 104 assertions**. Evidence and the exact browser
+blocker are under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-planned-filter-20260922/`.
+
+BrowserSkill connected to instance `245ea108`. Borrowing the existing Odoo
+tab did not complete within the required confirmation wait. A task-created
+authenticated tab at `http://localhost:8069/odoo/fleet` resolved to
+Discuss/OdooBot without Fleet at desktop or 390x844 mobile. No authenticated
+Fleet or Core3 visual-parity claim is made; blocker screenshots are retained
+under `/tmp/core3-odoo-parity/fleet-planned-filter-20260922/`.

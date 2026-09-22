@@ -36,7 +36,7 @@ describe('Fleet Apply New Driver parity state', () => {
     await expect(repository.querySource(detail, { id: 'fleet-demo-002', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'FLEET_VEHICLE_DETAIL_UNAVAILABLE' });
     const action = api.actions.find((entry: any) => entry.id === 'action_accept_driver_change');
     const updated = await repository.executeMutation(action.mutation, { id: 'fleet-demo-002', expected_row_version: 1 });
-    expect(updated).toMatchObject({ driver_name: 'Doris Cole', future_driver_name: null, next_assignation_date: null, row_version: 2 });
+    expect(updated).toMatchObject({ driver_name: 'Doris Cole', future_driver_name: null, next_assignation_date: null, plan_to_change_bike: false, plan_to_change_car: false, row_version: 2 });
     await expect(repository.executeMutation(action.mutation, { id: 'fleet-demo-002', expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'FLEET_DRIVER_CHANGE_NOT_PLANNED' });
     await expect(repository.executeMutation(action.mutation, { id: 'missing-vehicle', expected_row_version: 1 })).rejects.toMatchObject({ status: 404, code: 'FLEET_VEHICLE_NOT_FOUND' });
     database.close();

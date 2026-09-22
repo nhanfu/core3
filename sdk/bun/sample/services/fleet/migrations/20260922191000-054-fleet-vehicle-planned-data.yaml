@@ -1,0 +1,17 @@
+version: 0.0.54
+kind: data
+description: Seed the deterministic future-driver planned vehicle fixture
+type:
+  postgres:
+    up: |
+      UPDATE fleet_vehicles
+      SET plan_to_change_bike = TRUE, updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE id = 'fleet-demo-002' AND future_driver_name = 'Doris Cole';
+    down: |
+      UPDATE fleet_vehicles
+      SET plan_to_change_bike = FALSE, updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE id = 'fleet-demo-002' AND future_driver_name = 'Doris Cole';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

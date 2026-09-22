@@ -4,3 +4,4 @@
 - [`fleet-vehicle-statusbar-20260922`](fleet-vehicle-statusbar-20260922/README.md): durable clickable vehicle statusbar transitions with stale and company guards.
 - Existing same-day slices: [`fleet-mail-to-driver-20260922`](fleet-mail-to-driver-20260922/README.md), [`fleet-contract-renewal-activities-20260922`](fleet-contract-renewal-activities-20260922/README.md), and [`fleet-vehicle-attachments-20260922`](fleet-vehicle-attachments-20260922/README.md).
 - [`fleet-vehicle-activity-action-20260922`](fleet-vehicle-activity-action-20260922/README.md): Vehicles action Activity mode and durable scheduling guards; visual capture blocked by BrowserSkill tab borrow timeout.
+- [`fleet-vehicle-planned-filter-20260922`](fleet-vehicle-planned-filter-20260922/README.md): Odoo Planned for Change vehicle filter, deterministic flag data, and Apply New Driver clearing workflow.

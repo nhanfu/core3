@@ -10,6 +10,27 @@
 
 QA state: qa-in-progress
 
+## 2026-09-22 — Planned for Change vehicle filter
+
+- Feature `FLEET-VEHICLE-PLANNED-FILTER-001` maps Odoo's stable `planned`
+  search filter to the existing `vehicles` page/API pair. The query preserves
+  the Car/Bike-specific planned flags and current company/read permission.
+- Migrations `20260922190000-053` and `20260922191000-054` add nullable-safe
+  DuckDB/Postgres-compatible flag storage, deterministic backfill, and replay
+  coverage. Apply New Driver clears both flags in the same row-versioned
+  mutation.
+- Focused coverage: **5 passed, 33 assertions**. Targeted vehicle/model
+  regression: **17 passed, 104 assertions**.
+- BrowserSkill connected to `245ea108`; the existing Odoo-tab borrow did not
+  complete within confirmation timeout. A task-created authenticated tab at
+  `/odoo/fleet` resolved to Discuss/OdooBot with no Fleet menu at desktop or
+  mobile sizes. Blocker captures are under
+  `evidence/fleet/2026-09-22/fleet-vehicle-planned-filter-20260922/` and
+  `/tmp/core3-odoo-parity/fleet-planned-filter-20260922/`.
+
+Disposition: **functionally accepted / visual gate blocked**. This slice does
+not sign off the Fleet module.
+
 ## 2026-09-22 — Vehicles Activity action mode
 
 - Feature `FLEET-VEHICLE-ACTIVITY-001` adds the missing Activity mode from
