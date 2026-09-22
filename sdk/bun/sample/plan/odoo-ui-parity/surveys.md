@@ -2994,3 +2994,31 @@ exclusion of a section row.
 Focused verification and the single authenticated reference-browser attempt
 are recorded in
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-QUESTION-COUNT-001/`.
+
+## Bounded slice: `SURVEYS-CARD-LIVE-SESSION-001` — 2026-09-22
+
+The next concrete missing action after the Questions card metric and card
+counter slices is Odoo's kanban `Start Live Session` button. Odoo renders it
+in the card footer when the survey is active, has an available session, and
+has questions (`addons/survey/views/survey_survey_views.xml:317-321`); the
+model action writes the live-session state to ready and clears its current
+question before opening the session manager
+(`addons/survey/models/survey_survey.py:1139-1158`).
+
+Core3 adds the stable `start_live_session_card` card action with the
+`surveys.manage` boundary. The matching `api/surveys.yaml` action is joined by
+`page.id: surveys`, projects the existing session state/version into the Cards
+source, and atomically persists the ready session state. Guards reject missing
+actors, non-Draft/Published or questionless surveys, archived/non-startable
+rows, already-active sessions, and stale row versions. No migration or new
+renderer was required because the durable `survey_live_sessions` contract and
+session manager already exist.
+
+Verification is **3 focused tests / 19 assertions** and **30 adjacent tests /
+262 assertions**. The one permitted BrowserSkill run loaded authenticated Odoo
+Surveys Cards at `http://localhost:8069/odoo/surveys?db=core3_reference` and
+captured a 1916x833 desktop reference. No Core3 visual-parity sign-off is
+claimed from that Odoo-targeted browser run.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.

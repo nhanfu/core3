@@ -1511,3 +1511,24 @@ capture or visual-parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.
+
+## 2026-09-22 — `SURVEYS-CARD-LIVE-SESSION-001`
+
+Implemented Odoo's missing kanban `Start Live Session` action after the
+question-count and participant/card slices. The Cards page now exposes the
+stable permissioned action, while the page-matched API projects the durable
+session state/version and atomically transitions an eligible closed session to
+`Ready`.
+
+Guards cover `surveys.manage`, actor authentication, open surveys with at least
+one non-section question, active-session replay, and optimistic session row
+version. Existing `survey_live_sessions` persistence and the session-manager
+workflow are reused; no migration was needed.
+
+Verification: focused **3/3 tests, 19 assertions**; adjacent **30/30 tests,
+262 assertions**. The single BrowserSkill run loaded authenticated Odoo
+Surveys Cards for `core3_reference` and produced a sanitized desktop capture;
+Core3 visual parity is not claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.

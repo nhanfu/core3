@@ -1986,3 +1986,24 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-LIVE-SESSION-001` — 2026-09-22
+
+- Source/UI: Odoo's Survey kanban footer exposes `Start Live Session` and
+  `action_start_session` for eligible active surveys.
+- Contract: the `surveys` page Cards view references
+  `start_live_session_card`; `api/surveys.yaml` owns the matching
+  `surveys.sessions.start` YAML mutation through `page.id: surveys`.
+- Persistence/guards: the existing unique `survey_live_sessions` row is
+  updated to `Ready` with a deterministic start timestamp, cleared question
+  state, reset counters, and incremented version. `surveys.manage`, actor,
+  startability, active-session, and stale-version guards are explicit.
+- Verification: focused **3 tests / 19 assertions** and adjacent **30 tests /
+  262 assertions** pass. BrowserSkill loaded authenticated Odoo
+  `core3_reference` Surveys Cards at 1916x833; the session was stopped and no
+  credentials were exposed.
+- Sign-off: no Core3 visual-parity claim; the browser run targeted the Odoo
+  reference URL as requested.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.

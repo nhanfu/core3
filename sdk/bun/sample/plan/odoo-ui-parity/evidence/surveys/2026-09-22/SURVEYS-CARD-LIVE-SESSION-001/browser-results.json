@@ -1,0 +1,9 @@
+{
+  "url": "http://localhost:8069/odoo/surveys?db=core3_reference",
+  "database": "core3_reference",
+  "viewport": "1916x833",
+  "result": "authenticated Odoo Surveys Cards loaded",
+  "session_stopped": true,
+  "screenshot": "/tmp/core3-odoo-parity/surveys-card-live-session-20260922/odoo-desktop.png",
+  "secrets": "none"
+}
