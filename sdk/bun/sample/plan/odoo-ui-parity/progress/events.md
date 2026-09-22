@@ -1,5 +1,18 @@
 # events parity progress
 
+## Bounded feature - event tag category tag_ids editor (2026-09-22)
+
+Stable feature ID: EVENTS-TAGS-001. The Event Tags Categories detail form now
+has a durable Odoo-style tag_ids x2many editor with sequence, tag name, numeric
+color index, add/edit/delete actions, category-summary projection, permissions,
+parent/line optimistic concurrency, deterministic seeds, and restart coverage.
+Focused validation passes 2 tests / 23 assertions; the full Events corpus passes
+109 tests / 813 assertions; the UI audit, Events Sass build, frontend build,
+targeted ESLint, and diff-check pass. The required live Odoo comparison is
+blocked because the authenticated user tab on shared BrowserSkill instance
+245ea108 is already borrowed by session zfuv; no visual-parity claim is made.
+Evidence is recorded under the event-tag-lines evidence folder.
+
 ## Bounded feature - event chatter message and internal note (2026-09-22)
 
 The event detail form now exposes the source-backed Odoo Send message and Log

@@ -1,0 +1,26 @@
+version: 0.0.39
+kind: schema
+description: Durable Odoo Events tag category relation editor
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_tags (
+        id VARCHAR PRIMARY KEY,
+        category_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL,
+        color INTEGER NOT NULL DEFAULT 1,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS event_tags_category_idx ON event_tags(category_id, sequence, id);
+      INSERT INTO event_tags(id, category_id, sequence, name, color, row_version) VALUES
+        ('event-tag-culture-music', 'tag-culture', 10, 'Music', 3, 1),
+        ('event-tag-culture-sport', 'tag-culture', 20, 'Sport', 7, 1),
+        ('event-tag-activity-conference', 'tag-activity', 10, 'Conference', 5, 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

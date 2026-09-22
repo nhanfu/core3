@@ -7,6 +7,16 @@ Reference addon/version: event, Odoo 19 Community
 Plan status: approved  
 Last reviewed: 2026-09-22
 
+## Latest bounded cases — event tag category tag_ids editor (2026-09-22)
+
+Stable feature ID: EVENTS-TAGS-001.
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-016 | functional/data | Events > Configuration > Event Tags Categories > category detail | Durable tag rows render through the page/API pair; add, edit, delete, category summary projection, replay, and restart persist correctly | pass: events_tag_lines.integration.test.ts |
+| EVENTS-WF-011 | workflow/security | Tag child mutations | events.write, required-name, color range, duplicate, missing, parent/line stale guards reject invalid writes without partial persistence | pass: events_tag_lines.integration.test.ts |
+| EVENTS-UI-009 | visual/responsive | Event tag category form | Authenticated Odoo desktop/mobile source captures and paired Core3 captures at 1440x900 and 390x844 | blocked: BrowserSkill tab already borrowed; no visual claim |
+
 ## Latest bounded cases — event chatter (2026-09-22)
 
 | Case ID | Class | Route/action | Expected result and evidence | Status |

@@ -1,5 +1,36 @@
 # Events UI parity
 
+## Current bounded batch: Event tag category tag_ids editor (2026-09-22)
+
+Stable feature ID: EVENTS-TAGS-001.
+
+The next uncovered source-backed gap after the completed event-form and
+template-ticket slices is the editable event.tag.category.tag_ids relation
+inside Odoo's event_tag_category_action_tree. The local Odoo 19 source
+addons/event/models/event_tag.py and addons/event/views/event_tag_views.xml
+defines the Event Tags Categories action as list,form; its form renders an
+editable Tags one-to-many list with sequence, name, and numeric color_picker.
+Core3 previously stored only category summary text and had no durable tag rows
+or child mutation contract.
+
+This bounded slice adds a page/API-separated event_tag_category_tags datasource
+to the existing event-tag-category-detail page, joined by page.id. Migration
+20260922210000-039-event-tag-lines.yaml creates the durable event_tags table
+and seeds fixed Music, Sport, and Conference tags. The shared LineItemGrid
+renders the Odoo-shaped x2many editor; add/edit/delete actions require
+events.write, validate nonblank names and color indices 0-11, reject
+duplicates, update the denormalized category summary, and use parent/line row
+versions for stale-write protection. Empty, missing, transport, replay, and
+restart behavior are covered by test/events_tag_lines.integration.test.ts.
+
+The source action was analyzed locally. BrowserSkill daemon and shared browser
+instance 245ea108 were healthy, but authenticated user tab 1770662590 was
+already borrowed by session zfuv; a second borrow from session mdyi was
+rejected with tab is borrowed by another session. No independent login,
+Playwright session, credential access, or Odoo screenshot was used. Therefore
+this batch makes no live Odoo desktop/mobile or Core3 visual parity claim; the
+exact blocker is recorded in the event-tag-lines evidence folder.
+
 ## Current bounded batch: Event Template Tickets relation (2026-09-22)
 
 The next concrete source-backed gap after the event-form activity, Notes &

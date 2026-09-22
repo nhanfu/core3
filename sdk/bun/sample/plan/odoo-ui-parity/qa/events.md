@@ -1,5 +1,38 @@
 # events QA ledger
 
+## Bounded QA - Event tag category tag_ids editor (2026-09-22)
+
+- Stable feature ID: EVENTS-TAGS-001.
+- Source contract: PASS by local source. Odoo's event_tag_category_action_tree
+  form renders the tag_ids one-to-many editor with sequence, name, and
+  color_picker; the category list exposes colored tag chips.
+- YAML ownership and permissions: PASS. The existing category detail page
+  remains presentation-only; api/event-tag-category-detail.yaml owns the
+  event_tag_category_tags datasource and events.write child mutations, joined
+  by page.id.
+- Durable data and guards: PASS. Migration 039 is idempotent, seeds fixed tag
+  rows, projects the category summary, and protects parent/line versions.
+  Blank names, colors outside 0-11, duplicates, missing rows, empty results,
+  transport errors, replay, and stale writes have stable contracts.
+- Focused tests: PASS, 2 tests / 23 assertions in
+  events_tag_lines.integration.test.ts, including source mapping, CRUD,
+  validation, replay, and file-backed restart.
+- Related regression: PASS, full Events corpus 109 tests / 813 assertions.
+- Audit/build/diff: PASS. UI audit reports 829 pages, 837 routes, and 1,728
+  datasources; Events Sass build, production frontend build, targeted ESLint,
+  and git diff --check pass.
+- Odoo browser evidence: BLOCKED. BrowserSkill status was healthy on shared
+  instance 245ea108, but user tab 1770662590 was already borrowed by session
+  zfuv; borrow from this task's session mdyi was rejected with tab is borrowed
+  by another session. No desktop/mobile screenshot was produced, no
+  independent browser/login was used, and no credentials were accessed.
+- Core3 browser evidence: NOT CLAIMED. Without the paired authenticated Odoo
+  action capture, this bounded slice has no visual-parity claim.
+- Full module sign-off: OPEN. Actor matrix and paired visual evidence remain
+  outstanding.
+
+Evidence: odoo-ui-parity/evidence/events/2026-09-22/event-tag-lines/.
+
 ## Bounded QA - Event Template Tickets relation (2026-09-22)
 
 - Source contract: **PASS by local source**. Odoo `action_event_type` renders

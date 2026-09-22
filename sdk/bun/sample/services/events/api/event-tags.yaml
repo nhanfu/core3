@@ -2,4 +2,4 @@ page: { id: event-tags }
 datasources:
   - id: event_tag_categories
     permission: events.read
-    query: "SELECT id, name, tags, activity, age FROM event_tag_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name"
+    query: "SELECT c.id, c.name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.sequence, t.id) FROM event_tags t WHERE t.category_id = c.id), c.tags, '') AS tags, c.activity, c.age FROM event_tag_categories c WHERE (:q IS NULL OR c.name ILIKE '%' || :q || '%') ORDER BY c.name"

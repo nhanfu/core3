@@ -4,4 +4,80 @@ datasources:
     single: true
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TAG_CATEGORY_DETAIL_UNAVAILABLE, message: Event tag category details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, tags, activity, age, 'Event Tag Category' AS category_label FROM event_tag_categories WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT c.id, c.row_version, c.name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.sequence, t.id) FROM event_tags t WHERE t.category_id = c.id), c.tags, '') AS tags, c.activity, c.age, 'Event Tag Category' AS category_label FROM event_tag_categories c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
+  - id: event_tag_category_tags
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TAG_CATEGORY_TAGS_UNAVAILABLE, message: Event tags are temporarily unavailable. } }
+    query: "SELECT id, row_version, category_id, sequence, name, color FROM event_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND category_id = :id AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+actions:
+  - id: add_event_tag
+    type: server_form
+    permission: events.write
+    title: Add event tag
+    action: events.tag_categories.tags.create
+    handler: line_item
+    operation: create
+    domain: event_tag_category
+    params: { id: '{state.id}', parent_expected_row_version: '{state.event_tag_category_detail.row_version}' }
+    refresh: [event_tag_category_detail, event_tag_category_tags, event_tag_categories]
+    fields:
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: color, label: Color, type: number, min: 0, max: 11, default: 1, required: true }
+    mutation:
+      generated: [tag_id, next_sequence]
+      before_steps:
+        - { query: "SELECT 'event-tag-' || CAST(:id AS VARCHAR) || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS tag_id, COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_tags WHERE category_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_tag_categories WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tag category changed. Reload before adding a tag. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) > 0", status: 422, code: EVENT_TAG_NAME_REQUIRED, message: Enter a tag name. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:color, 0) AS INTEGER) BETWEEN 0 AND 11", status: 422, code: EVENT_TAG_COLOR_INVALID, message: Color must be between 0 and 11. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_tags WHERE category_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EVENT_TAG_EXISTS, message: A tag with this name already exists in this category. }
+      steps:
+        - { query: "INSERT INTO event_tags(id, category_id, sequence, name, color, row_version) VALUES(:tag_id, :id, :next_sequence, TRIM(CAST(:name AS VARCHAR)), CAST(:color AS INTEGER), 1)", expect_changed: true, status: 409, code: EVENT_TAG_NOT_CREATED, message: The event tag could not be created. }
+        - { query: "UPDATE event_tag_categories SET tags = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_tags WHERE category_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The tag category changed while adding a tag. Reload before saving. }
+      result: { query: "SELECT * FROM event_tags WHERE id = :tag_id" }
+  - id: edit_event_tag
+    type: server_form
+    permission: events.write
+    title: Edit event tag
+    action: events.tag_categories.tags.update
+    handler: line_item
+    operation: update
+    domain: event_tag_category
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.event_tag_category_detail.row_version}' }
+    prefill: row
+    refresh: [event_tag_category_detail, event_tag_category_tags, event_tag_categories]
+    fields:
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: color, label: Color, type: number, min: 0, max: 11, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_tag_categories WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tag category changed. Reload before saving the tag. }
+        - { query: "SELECT id FROM event_tags WHERE id = :line_id AND category_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TAG_STALE, message: This tag changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) > 0", status: 422, code: EVENT_TAG_NAME_REQUIRED, message: Enter a tag name. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:color, 0) AS INTEGER) BETWEEN 0 AND 11", status: 422, code: EVENT_TAG_COLOR_INVALID, message: Color must be between 0 and 11. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_tags WHERE category_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: EVENT_TAG_EXISTS, message: A tag with this name already exists in this category. }
+      steps:
+        - { query: "UPDATE event_tags SET name = TRIM(CAST(:name AS VARCHAR)), color = CAST(:color AS INTEGER), row_version = row_version + 1 WHERE id = :line_id AND category_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_TAG_STALE, message: This tag changed or was deleted. Reload before saving. }
+        - { query: "UPDATE event_tag_categories SET tags = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_tags WHERE category_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The tag category changed while saving the tag. Reload before saving. }
+      result: { query: "SELECT * FROM event_tags WHERE id = :line_id" }
+  - id: delete_event_tag
+    type: server
+    permission: events.write
+    action: events.tag_categories.tags.delete
+    handler: line_item
+    operation: delete
+    domain: event_tag_category
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.event_tag_category_detail.row_version}' }
+    confirm: 'Delete this event tag?'
+    refresh: [event_tag_category_detail, event_tag_category_tags, event_tag_categories]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_tag_categories WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tag category changed. Reload before deleting the tag. }
+        - { query: "SELECT id FROM event_tags WHERE id = :line_id AND category_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TAG_STALE, message: This tag changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM event_tags WHERE id = :line_id AND category_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_TAG_STALE, message: This tag changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE event_tag_categories SET tags = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_tags WHERE category_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The tag category changed while deleting the tag. Reload before saving. }
+      result: { query: "SELECT TRUE AS deleted, :line_id AS id" }

@@ -19,6 +19,29 @@ components:
           - { field: activity, label: Activity }
           - { field: age, label: Age }
           - { field: row_version, label: Record version }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_tag_category_tags
+    parent_source: event_tag_category_detail
+    title: Tags
+    description: Classify events with reusable tags in this category.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_tag, label: Add a line, variant: primary, permission: events.write }
+    empty_state: { title: No tags, description: Add a line to define a tag for this category. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: name, field: name, label: Tag, input_type: text, required: true }
+      - { type: LineItemField, id: color, field: color, label: Color, input_type: number, min: 0, max: 11, required: true }
+      - type: LineItemActions
+        id: event_tag_actions
+        edit_action: edit_event_tag
+        create_action: add_event_tag
+        actions:
+          - { id: edit_event_tag, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_tag, label: Delete, icon: trash, variant: danger, permission: events.write }
 actions:
   - id: back_to_event_tag_categories
     type: navigate
