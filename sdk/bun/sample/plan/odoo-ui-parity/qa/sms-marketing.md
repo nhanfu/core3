@@ -184,6 +184,26 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 | SMS-FUNC-010 | Odoo UTM campaign Send SMS form and durable linked mailing | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-SEND-001/test-results.md` | pass | Contract and migration evidence; visual gate open |
 | SMS-BROWSER-004 | Authenticated Odoo campaign Send SMS desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-SEND-001/verification.md` | blocked | Tab `1770662590` owned by BrowserSkill session `ivfy` |
 
+## Bounded wave 9 - UTM campaign SMS mailing tab (2026-09-22)
+
+- Stable ID: `SMS-UTM-CAMPAIGN-MAILINGS-001`.
+- Source comparison: **PASS**. Odoo's SMS campaign form adds the `SMS`
+  notebook page over `mailing_sms_ids`, with mailing metrics and
+  `action_duplicate`; the local source was read directly from
+  `mass_mailing_sms/views/utm_campaign_views.xml`.
+- Core3 contract: **PASS**. The focused test covers 4 tests / 21 expectations:
+  page/API joins, source fields and list action, deterministic A/B projection,
+  migration replay, duplicate persistence, parent count/version updates, and
+  stale guards.
+- BrowserSkill gate: **BLOCKED**. The shared Odoo endpoint was reachable and
+  the existing authenticated tab was listed, but borrowing tab `1770662590`
+  timed out while awaiting the configured confirmation. The tab remained
+  user-owned; no alternate browser backend or credential access was attempted.
+  No authenticated Odoo desktop/mobile captures exist for this stable ID.
+
+| SMS-FUNC-011 | UTM campaign SMS mailing notebook/list and duplicate contract | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/test-results.md` | pass | YAML/API/migration contract and persistence evidence |
+| SMS-BROWSER-005 | Authenticated Odoo campaign SMS notebook desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/verification.md` | blocked | BrowserSkill borrow confirmation timeout |
+
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

@@ -26,6 +26,39 @@ components:
       - title: Mailing results
         fields:
           - { field: mailing_sms_count, label: Mailings }
+          - { field: ab_testing_mailings_sms_count, label: SMS A/B Mailings }
           - { field: active, label: Active }
           - { field: is_auto_campaign, label: Automatically Generated }
           - { field: name, label: Campaign Identifier }
+    content_slot: true
+    notebook:
+      active: sms
+      tabs:
+        - { id: sms, label: SMS, content_slot: true }
+
+  - type: ListView
+    mount_in: previous-panel
+    variant: odoo
+    scroll: body
+    source: sms_utm_campaign_mailings
+    page_size: 50
+    row_key: id
+    row_open_action: view_sms_campaign_from_utm_campaign
+    row_double_click_action: view_sms_campaign_from_utm_campaign
+    row_actions: menu
+    columns:
+      - { field: calendar_date, label: Date, type: DateTime, mobile: false }
+      - { field: subject, label: Title, type: PrimaryEntityCell, mobile: true }
+      - { field: recipient_model_label, label: Recipients, optional: true, mobile: false }
+      - { field: responsible, label: Responsible, mobile: false }
+      - { field: sent, label: Sent, align: right, mobile: false }
+      - { field: clicked, label: Clicked (%), type: ProgressBar, align: right, mobile: false }
+      - { field: bounced, label: Bounced (%), type: ProgressBar, align: right, optional: true, mobile: false }
+      - { field: ab_testing_enabled, label: A/B Test, type: StatusChip, optional: true, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - field: id
+        label: ''
+        sortable: false
+        actions:
+          - { id: duplicate_sms_utm_campaign_mailing, label: Duplicate, icon: copy, permission: sms_marketing.write }
+    empty_state: { title: No SMS mailings, description: SMS mailings linked to this campaign will appear here. }

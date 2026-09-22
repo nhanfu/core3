@@ -1,0 +1,13 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE sms_campaigns SET ab_testing_enabled = false, updated_at = TIMESTAMP '2026-09-22 15:10:00' WHERE id IN ('sms-campaign-demo-001', 'sms-campaign-demo-002', 'sms-campaign-demo-003');
+      UPDATE sms_campaigns SET ab_testing_enabled = true, updated_at = TIMESTAMP '2026-09-22 15:10:00' WHERE id = 'sms-campaign-demo-004';
+    down: |
+      UPDATE sms_campaigns SET ab_testing_enabled = false WHERE id IN ('sms-campaign-demo-001', 'sms-campaign-demo-002', 'sms-campaign-demo-003', 'sms-campaign-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

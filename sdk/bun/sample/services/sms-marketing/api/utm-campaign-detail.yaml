@@ -10,7 +10,11 @@ datasources:
     single: true
     permission: sms_marketing.manage
     error_states: { transport_error: { status: 503, code: SMS_UTM_CAMPAIGN_DETAIL_UNAVAILABLE, message: Campaign details are temporarily unavailable. } }
-    query: "SELECT c.id, c.row_version, c.title, c.name, c.user_name, c.stage_id, c.stage_name, c.tag_names, c.active, c.color, c.mailing_sms_count, c.is_auto_campaign, c.company_name FROM sms_marketing_utm_campaigns c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND c.id = :id AND c.is_auto_campaign = false"
+    query: "SELECT c.id, c.row_version, c.title, c.name, c.user_name, c.stage_id, c.stage_name, c.tag_names, c.active, c.color, c.mailing_sms_count, (SELECT COUNT(*) FROM sms_campaigns m WHERE m.campaign_id = c.id AND COALESCE(m.ab_testing_enabled, false) = true) AS ab_testing_mailings_sms_count, c.is_auto_campaign, c.company_name FROM sms_marketing_utm_campaigns c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND c.id = :id AND c.is_auto_campaign = false"
+  - id: sms_utm_campaign_mailings
+    permission: sms_marketing.read
+    error_states: { transport_error: { status: 503, code: SMS_UTM_CAMPAIGN_MAILINGS_UNAVAILABLE, message: Campaign SMS mailings are temporarily unavailable. } }
+    query: "SELECT m.id, m.row_version, m.name, m.campaign_id, c.row_version AS campaign_row_version, m.scheduled_at, CAST(m.scheduled_at AS VARCHAR) AS calendar_date, m.title, m.title AS subject, m.list_id, m.list_name, m.message, m.sender_name, 'mailing.contact' AS recipient_model_label, m.sender_name AS responsible, m.company_name, m.recipient_count, m.recipient_count AS sent, CASE WHEN m.recipient_count = 0 THEN 0 ELSE ROUND(100.0 * m.delivered_count / m.recipient_count, 1) END AS clicked, CASE WHEN m.recipient_count = 0 THEN 0 ELSE ROUND(100.0 * m.failed_count / m.recipient_count, 1) END AS bounced, COALESCE(m.ab_testing_enabled, false) AS ab_testing_enabled, m.state FROM sms_campaigns m JOIN sms_marketing_utm_campaigns c ON c.id = m.campaign_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND m.campaign_id = :id AND c.is_auto_campaign = false ORDER BY m.scheduled_at, m.id"
 actions:
   - id: new_sms_utm_campaign_detail
     type: navigate
@@ -120,3 +124,31 @@ actions:
     permission: sms_marketing.manage
     navigate_to: /sms-campaigns
     params: { campaign_name: '{state.sms_utm_campaign_detail.title}' }
+  - id: view_sms_campaign_from_utm_campaign
+    type: navigate
+    permission: sms_marketing.read
+    navigate_to: /sms-campaigns/detail
+    params: { id: '{row.id}' }
+  - id: duplicate_sms_utm_campaign_mailing
+    type: server
+    permission: sms_marketing.write
+    action: mass_mailing.action_duplicate
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_utm_campaign_detail, sms_utm_campaign_mailings]
+    mutation:
+      operation: insert
+      table: sms_campaigns
+      id_input: copy_id
+      fields: [name, title, sender_name, list_id, list_name, message, recipient_count, scheduled_at, campaign_id, company_name, ab_testing_enabled]
+      required: [name, title, list_id, list_name, message, recipient_count, campaign_id]
+      defaults: { state: Draft, row_version: 1, delivered_count: 0, failed_count: 0, created_at: '2026-09-22 15:00:00', updated_at: '2026-09-22 15:00:00', ab_testing_enabled: false }
+      guards:
+        - { query: "SELECT 'sms-campaign-copy-' || CAST(:id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS copy_id, CAST(:name AS VARCHAR) || ' (copy ' || CAST(COUNT(*) + 1 AS VARCHAR) || ')' AS name, CAST(:id AS VARCHAR) AS source_id, :expected_row_version AS source_row_version FROM sms_campaigns WHERE id LIKE 'sms-campaign-copy-' || CAST(:id AS VARCHAR) || '-%'", assign: true }
+        - { query: "SELECT m.id FROM sms_campaigns m JOIN sms_marketing_utm_campaigns c ON c.id = m.campaign_id WHERE m.id = :source_id AND m.row_version = :source_row_version AND m.campaign_id = :campaign_id AND c.active = true AND c.is_auto_campaign = false", status: 409, code: SMS_UTM_CAMPAIGN_MAILING_STALE, message: This SMS mailing or its campaign changed. Reload before duplicating. }
+        - { query: "SELECT id FROM sms_marketing_utm_campaigns WHERE id = :campaign_id AND active = true AND is_auto_campaign = false AND row_version = :expected_campaign_row_version", status: 409, code: SMS_UTM_CAMPAIGN_STALE, message: This campaign changed before the SMS mailing could be duplicated. Reload and try again. }
+        - { query: "SELECT 1 AS ok FROM sms_lists WHERE id = :list_id AND state = 'Active'", status: 422, code: SMS_UTM_CAMPAIGN_LIST_REQUIRED, message: The SMS mailing list is no longer active. }
+      steps:
+        - { query: "UPDATE sms_marketing_utm_campaigns SET mailing_sms_count = mailing_sms_count + 1, row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-22 15:00:00' WHERE id = :campaign_id AND row_version = :expected_campaign_row_version", expect_changed: true, status: 409, code: SMS_UTM_CAMPAIGN_STALE, message: This campaign changed while duplicating the SMS mailing. Reload and try again. }
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    params: { campaign_id: '{row.campaign_id}', expected_campaign_row_version: '{row.campaign_row_version}' }

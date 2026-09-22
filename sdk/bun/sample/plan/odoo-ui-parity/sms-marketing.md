@@ -345,6 +345,41 @@ or captured without taking over another session. No alternate browser, login,
 credential, cookie, or token was used. Desktop and mobile visual captures for
 this stable ID are therefore absent, and no visual-parity claim is made.
 
+## Bounded action: SMS Marketing / UTM campaign SMS mailing tab (wave 9)
+
+Stable ID: `SMS-UTM-CAMPAIGN-MAILINGS-001`.
+
+The next uncovered SMS-specific campaign-form surface is the `SMS` notebook
+page in `/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/utm_campaign_views.xml`.
+Odoo binds `mailing_sms_ids` to a list with Date, Title, Recipients,
+Responsible, Campaign, A/B Test, Sent, Clicked (%), Bounced (%), Status, and a
+`Duplicate` object action. The existing Core3 UTM campaign detail exposed only
+the SMS mailing stat count, so the related mailing records and duplicate
+workflow were not visible from the campaign form.
+
+Core3 maps this bounded relation to the `sms-utm-campaign-detail` page/API join:
+`api/utm-campaign-detail.yaml` owns the `sms_utm_campaign_mailings` datasource
+and duplicate mutation, while `pages/utm-campaign-detail.yaml` owns the SMS
+notebook tab and nested Odoo-style list. Migration
+`20260922150000-019-sms-utm-campaign-mailing-tab.yaml` adds the durable A/B
+projection and `20260922151000-020-sms-utm-campaign-mailing-tab-demo.yaml`
+seeds fixed values. Duplicates create a Draft SMS mailing with a deterministic
+copy name, increment the campaign mailing count, and require both mailing and
+campaign row versions plus an active list.
+
+Focused coverage is
+`test/sms_marketing_utm_campaign_mailing_tab.integration.test.ts`; it verifies
+the Odoo source mapping, page/API separation, migration replay, deterministic
+linked rows, A/B count, duplicate persistence, parent count/version update,
+stale guards, permissions, and fixed-seed hygiene. BrowserSkill was used
+against the shared Odoo endpoint, database `core3_reference`, but the explicit
+borrow of the existing authenticated tab `1770662590` timed out while awaiting
+the configured user-window confirmation. The tab remained user-owned; no
+credentials, cookies, tokens, alternate browser, or independent login were
+used. No authenticated Odoo desktop/mobile capture or visual-parity claim is
+made. Evidence is under
+`evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/`.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

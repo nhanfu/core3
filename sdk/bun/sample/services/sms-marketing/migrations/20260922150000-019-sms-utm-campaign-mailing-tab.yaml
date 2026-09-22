@@ -1,0 +1,12 @@
+version: 0.0.19
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS ab_testing_enabled BOOLEAN;
+    down: |
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS ab_testing_enabled;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
