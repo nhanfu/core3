@@ -208,3 +208,14 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 | BLOG-POST-DATE-PERM-001 | Date mutation boundary | Same focused test sends the real `blog.posts.update` action as a read-only actor and checks 403, invalid-date, wrong-company, missing, and stale guards without partial writes | pass |
 | BLOG-POST-DATE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-DATE-001/browser-check.md` | blocked: BrowserSkill borrow confirmation timed out; no visual-parity claim |
 | BLOG-QA-015 | Scoped Blog regression/tooling gates | `evidence/blog/2026-09-22/BLOG-POST-DATE-001/test-results.md` — focused 4/21, Blog wildcard 50/290, audit 843/851/1,761, Blog Sass, targeted ESLint, full frontend build, and diff-check passed | pass; paired Odoo visual parity remains blocked |
+
+## Blog Post SEO metadata slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-POST-SEO-FUNC-001 | Odoo Website SEO metadata field/projection contract | `test/blog_post_seo.integration.test.ts` — Odoo mixin/model/view anchors, page/API separation, four metadata fields, computed optimization, list/detail/public projections | pass: 4 tests / 32 assertions |
+| BLOG-POST-SEO-WF-001 | Persist, clear, optimize, and validate metadata | Same focused test saves all fields, normalizes blank description to NULL, computes false when incomplete, rejects unsafe OpenGraph URLs and oversized titles atomically | pass |
+| BLOG-POST-SEO-PERM-001 | Permission, company, and stale boundary | Same focused test rejects reader and wrong-company writes with 403, stale writes with 409, and preserves the row | pass |
+| BLOG-POST-SEO-RESTART-001 | File-backed restart durability | Same focused test closes/reopens DuckDB, reapplies migrations, and finds all SEO values and row version | pass |
+| BLOG-POST-SEO-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-SEO-001/browser-check.md`; Odoo blocker captures `odoo-desktop-404.png` and `odoo-mobile-404.png`; Core3 sign-in capture `core3-sign-in.png` | blocked: Odoo Blog is not installed in `core3_reference`; Core3 authentication was not completed through BrowserSkill; no paired visual-parity claim |
+| BLOG-QA-016 | Scoped Blog regression/tooling gates | `test-results.md` records focused 4/32, Blog wildcard 56/339, UI audit 865/873/1,829, Blog Sass, targeted ESLint, and diff-check | pass; paired Odoo/Core3 visual parity remains blocked |

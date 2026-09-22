@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: BLOG_POST_DETAIL_FORBIDDEN, message: You do not have permission to view this blog post. }
       missing_record: { status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
       transport_error: { status: 503, code: BLOG_POST_DETAIL_UNAVAILABLE, message: This blog post is temporarily unavailable. }
-    query: "SELECT *, '/blog/post?id=' || id AS website_url FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
+    query: "SELECT *, (NULLIF(website_meta_title, '') IS NOT NULL AND NULLIF(website_meta_description, '') IS NOT NULL AND NULLIF(website_meta_keywords, '') IS NOT NULL) AS is_seo_optimized, '/blog/post?id=' || id AS website_url FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
   - id: blog_post_attachments
     permission: blog.read
     query: "SELECT a.id, a.post_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id"
@@ -89,6 +89,29 @@ actions:
       - { field: content_html, label: Content, type: textarea }
       - { field: tags, label: Tags, type: text }
       - { field: published_date, label: Publishing date, type: datetime }
+  - id: update_blog_post_seo
+    type: server_form
+    permission: blog.write
+    title: Edit SEO Metadata
+    action: blog.posts.seo.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.blog_post_detail.id}', expected_row_version: '{state.blog_post_detail.row_version}' }
+    refresh: [blog_post_detail, blog_posts]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_POST_SEO_COMPANY_SCOPE_REQUIRED, message: This blog post belongs to another company. }
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND row_version = :expected_row_version", status: 409, code: BLOG_POST_SEO_STALE, message: This blog post changed before its SEO metadata could be saved. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:website_meta_title, '') AS VARCHAR)) <= 160 AND LENGTH(CAST(COALESCE(:website_meta_description, '') AS VARCHAR)) <= 320 AND LENGTH(CAST(COALESCE(:website_meta_keywords, '') AS VARCHAR)) <= 255 AND LENGTH(CAST(COALESCE(:website_meta_og_img, '') AS VARCHAR)) <= 2048 AND LOWER(CAST(COALESCE(:website_meta_og_img, '') AS VARCHAR)) NOT LIKE 'javascript:%'", status: 422, code: BLOG_POST_SEO_INVALID, message: SEO metadata exceeds its supported length or contains an unsafe OpenGraph URL. }
+      steps:
+        - { query: "UPDATE blog_posts SET row_version = row_version + 1, website_meta_title = NULLIF(TRIM(CAST(COALESCE(:website_meta_title, '') AS VARCHAR)), ''), website_meta_description = NULLIF(TRIM(CAST(COALESCE(:website_meta_description, '') AS VARCHAR)), ''), website_meta_keywords = NULLIF(TRIM(CAST(COALESCE(:website_meta_keywords, '') AS VARCHAR)), ''), website_meta_og_img = NULLIF(TRIM(CAST(COALESCE(:website_meta_og_img, '') AS VARCHAR)), ''), updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BLOG_POST_SEO_STALE, message: This blog post changed before its SEO metadata could be saved. }
+      result: { query: "SELECT id, row_version, website_meta_title, website_meta_description, website_meta_keywords, website_meta_og_img, (NULLIF(website_meta_title, '') IS NOT NULL AND NULLIF(website_meta_description, '') IS NOT NULL AND NULLIF(website_meta_keywords, '') IS NOT NULL) AS is_seo_optimized FROM blog_posts WHERE id = :id" }
+    fields:
+      - { field: website_meta_title, label: Website Meta Title, type: text }
+      - { field: website_meta_description, label: Website Meta Description, type: textarea }
+      - { field: website_meta_keywords, label: Website Meta Keywords, type: text }
+      - { field: website_meta_og_img, label: Website OpenGraph Image, type: text }
   - id: add_blog_post_tag
     type: server_form
     permission: blog.write

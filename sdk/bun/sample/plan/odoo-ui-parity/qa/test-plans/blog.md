@@ -129,3 +129,13 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-POST-DATE-PERM-001 | permission/security | Blog reader with `blog.read` only | Date update returns 403 and leaves the post/version unchanged; invalid, missing, wrong-company, and stale requests are rejected atomically | pass: focused slice |
 | BLOG-POST-DATE-RESTART-001 | data/regression | File-backed DuckDB; date update then close/reopen and reapply migrations | Persisted `published_date` and projected `post_date` remain stable after restart | pass: focused slice |
 | BLOG-POST-DATE-UI-001 | responsive/visual | Authenticated Odoo reference and Core3, 1440x900 and 390x844 | Compare the Publishing Options form at both viewports; record exact BrowserSkill/runtime blockers and make no visual-parity claim when unavailable | blocked: borrow confirmation timed out; no captures or visual-parity claim |
+
+## BLOG-POST-SEO-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-POST-SEO-FUNC-001 | functional/data | Seeded Blog post and Blog reader | Odoo SEO metadata fields map to the separated Core3 detail/API contracts; the list/detail/public projections expose metadata and `is_seo_optimized` | pass: source and query assertions in `blog_post_seo.integration.test.ts` |
+| BLOG-POST-SEO-WF-001 | workflow/data | Blog Editor with `blog.write`; draft post | Save all four metadata values, clear a value to NULL, and compute optimization only when title, description, and keywords are present | pass: focused mutation test |
+| BLOG-POST-SEO-PERM-001 | permission/security | Blog reader without `blog.write`; writer in another company | SEO mutation returns 403 and changes no row; invalid unsafe/oversized values return 422; stale row returns 409 | pass: focused API and mutation guards |
+| BLOG-POST-SEO-RESTART-001 | data/regression | File-backed DuckDB; metadata update then migration replay | All four metadata values, optimization state, and row version survive close/reopen | pass: focused restart test |
+| BLOG-POST-SEO-UI-001 | responsive/visual | BrowserSkill Odoo/Core3, 1916x833 and 390x844 | Compare Blog Post SEO form and SEO Optimized list state through authenticated routes | blocked: Odoo `/blog` is 404 and Website/Blog is absent in `core3_reference`; Core3 task tab redirected to sign-in and authorized help was cancelled; no visual-parity claim |

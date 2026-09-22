@@ -1,0 +1,23 @@
+version: 0.0.11
+kind: data
+description: Deterministic Blog post SEO metadata fixture
+type:
+  postgres:
+    up: |
+      UPDATE blog_posts
+      SET website_meta_title = 'Shipping YAML-first services',
+          website_meta_description = 'Learn how Core3 turns declarative YAML into durable services.',
+          website_meta_keywords = 'yaml, services, Core3',
+          website_meta_og_img = '/blog/post/blog-post-demo-001/og'
+      WHERE id = 'blog-post-demo-001';
+    down: |
+      UPDATE blog_posts
+      SET website_meta_title = NULL,
+          website_meta_description = NULL,
+          website_meta_keywords = NULL,
+          website_meta_og_img = NULL
+      WHERE id = 'blog-post-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

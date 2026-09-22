@@ -432,3 +432,61 @@ Stable ID: `BLOG-POST-DATE-001`.
   are retained under `evidence/blog/2026-09-22/BLOG-POST-DATE-001/`. If either
   runtime or tab ownership is unavailable, the exact blocker and absence of
   paired visual-parity evidence are recorded.
+
+## Blog Post SEO metadata slice — 2026-09-22
+
+The next smallest uncovered source-backed `blog.post` feature is the Odoo
+Website SEO metadata contract. `website_blog.models.website_blog.BlogPost`
+inherits `website.seo.metadata`; the mixin persists Website Meta Title,
+Website Meta Description, Website Meta Keywords, and Website OpenGraph Image,
+and computes `is_seo_optimized` when the first three values are present. The
+Blog Post form exposes these fields in its SEO page, and Blog Post Pages shows
+the optimization state in the list. Core3 previously had none of these
+columns, projections, or mutations.
+
+Stable ID: `BLOG-POST-SEO-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| `blog.post` inherits four SEO metadata fields and computes `is_seo_optimized` | `blog_posts` stored no SEO metadata and post reads exposed no optimization state | Add idempotent Blog-owned columns, deterministic published-post metadata, and computed SQL projections | migration replay, source trace, list/detail/public query assertions |
+| Blog Post form exposes the SEO page | Core3 detail had no SEO group or action | Add the layout-only SEO Metadata group and `Edit SEO Metadata` API action joined by `page.id` | page/API separation and Odoo XML assertions |
+| SEO edits persist with model/actor boundaries | No SEO mutation, validation, company scope, or stale guard existed | Add `blog.write` mutation with length limits, unsafe OpenGraph URL rejection, row-version guard, and atomic NULL normalization | valid/clear, invalid, permission, company, stale, and restart tests |
+
+### Core3 contract
+
+- Schema/data: migrations `20260922200000-010-blog-post-seo-metadata.yaml` and
+  `20260922201000-011-blog-post-seo-metadata-demo.yaml` add four nullable
+  metadata columns and seed `blog-post-demo-001` idempotently.
+- Presentation remains layout-only in `services/blog/pages/posts.yaml` and
+  `services/blog/pages/post-detail.yaml`; the backend remains in the matching
+  `api/posts.yaml` and `api/post-detail.yaml` contracts.
+- `update_blog_post_seo` requires `blog.write`, checks the current company and
+  row version, limits title/description/keywords/OpenGraph URL lengths to
+  160/320/255/2048 characters, rejects `javascript:` OpenGraph URLs, and
+  normalizes blank values to NULL. `is_seo_optimized` is true only when title,
+  description, and keywords are all non-empty.
+- Published public operations project the same read-only metadata under their
+  existing active/published guards. Public head rendering remains outside this
+  bounded slice because the current Blog public renderer has no declared SEO
+  head contract.
+
+### Verification — 2026-09-22
+
+- Focused test: `bun test ./test/blog_post_seo.integration.test.ts
+  --timeout 20000` passed 4 tests / 32 assertions.
+- Full Blog wildcard: `bun test ./test/blog*.integration.test.ts
+  --timeout 20000` passed 56 tests / 339 assertions. UI audit passed with 865
+  pages, 873 routes, and 1,829 datasources; Blog Sass and targeted ESLint
+  passed; `git diff --check` passed before commit.
+- BrowserSkill connected to Odoo at `http://localhost:8069` using the task
+  session and the `core3_reference` database. `/blog?db=core3_reference`
+  returned Odoo Error 404 at 1916x833 and 390x844; the reference has no
+  Website/Blog addon/menu. The existing authenticated user tab could not be
+  borrowed before the checkpoint, so no credentials were used or exposed.
+- A scoped Core3 runtime loaded at `http://127.0.0.1:4311`, but the task tab
+  redirected to Core3 sign-in. The authorized help request was cancelled at
+  the checkpoint; no authenticated Core3 capture exists. Odoo and Core3
+  paired visual parity is blocked and no visual-parity claim is made. Complete
+  evidence is under `evidence/blog/2026-09-22/BLOG-POST-SEO-001/`.

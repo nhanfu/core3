@@ -9,6 +9,7 @@ components:
     header_actions:
       - { id: back_to_blog_posts, label: Back, variant: secondary }
       - { id: open_blog_post_website, label: Open website, variant: secondary, permission: blog.read }
+      - { id: update_blog_post_seo, label: Edit SEO Metadata, variant: secondary, permission: blog.write }
       - { id: edit_blog_post_detail, label: Edit, variant: primary, permission: blog.write }
       - { id: print_blog_post, label: Print, variant: secondary, permission: blog.read }
     fields:
@@ -21,7 +22,10 @@ components:
       - { field: tags, label: Tags }
       - { field: visits, label: Views }
       - { field: published_date, label: Publishing date, type: datetime }
+      - { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }
       - { field: state, label: Status, type: StatusChip }
+    groups:
+      - { title: SEO Metadata, columns: 2, fields: [{ field: website_meta_title, label: Website Meta Title }, { field: website_meta_description, label: Website Meta Description, wide: true }, { field: website_meta_keywords, label: Website Meta Keywords }, { field: website_meta_og_img, label: Website OpenGraph Image }, { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }] }
   - type: LineItemGrid
     mount_in: previous-panel
     source: blog_post_tags

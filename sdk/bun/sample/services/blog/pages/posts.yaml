@@ -41,6 +41,7 @@ components:
       - { field: tags, label: Tags }
       - { field: visits, label: Views, align: right }
       - { field: published_date, label: Published on }
+      - { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }
       - { field: active, label: Active, type: StatusChip, optional: hide }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
