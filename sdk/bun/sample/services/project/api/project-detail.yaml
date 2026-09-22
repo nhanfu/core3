@@ -10,6 +10,11 @@ actions:
     permission: project.read
     navigate_to: /projects/detail/preview
     params: { id: '{row.id}' }
+  - id: open_project_burndown
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/burndown
+    params: { project_id: '{state.id}' }
   - id: share_project
     type: server_form
     permission: project.manage

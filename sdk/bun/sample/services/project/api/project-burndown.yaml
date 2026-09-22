@@ -1,0 +1,15 @@
+page: { id: project-burndown }
+datasources:
+  - id: project_burndown_project
+    single: true
+    permission: project.read
+    error_states:
+      forbidden: { status: 403, code: PROJECT_BURNDOWN_FORBIDDEN, message: You do not have permission to view the Burndown Chart. }
+      transport_error: { status: 503, code: PROJECT_BURNDOWN_UNAVAILABLE, message: The Burndown Chart is temporarily unavailable. }
+    query: "SELECT p.name AS project_name, p.planned_hours, COUNT(t.id) AS task_count FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id AND COALESCE(t.active, TRUE) = TRUE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE AND p.id = :project_id GROUP BY p.id, p.name, p.planned_hours"
+  - id: project_burndown_chart
+    permission: project.read
+    error_states:
+      forbidden: { status: 403, code: PROJECT_BURNDOWN_FORBIDDEN, message: You do not have permission to view the Burndown Chart. }
+      transport_error: { status: 503, code: PROJECT_BURNDOWN_UNAVAILABLE, message: The Burndown Chart is temporarily unavailable. }
+    query: "WITH periods(period) AS (VALUES (DATE '2026-01-15'), (DATE '2026-01-22'), (DATE '2026-01-29'), (DATE '2026-02-05'), (DATE '2026-02-12'), (DATE '2026-02-19'), (DATE '2026-02-26')) SELECT CAST(period AS VARCHAR) AS period, COUNT(t.id) FILTER (WHERE t.state NOT IN ('Done', 'Cancelled') AND (t.due_date IS NULL OR t.due_date >= period)) AS open_tasks, COUNT(t.id) FILTER (WHERE t.state IN ('Done', 'Cancelled') AND (t.due_date IS NULL OR t.due_date <= period)) AS closed_tasks FROM periods LEFT JOIN project_tasks t ON t.project_id = :project_id AND COALESCE(t.active, TRUE) = TRUE AND COALESCE(t.created_at, TIMESTAMP '2026-01-15 00:00:00') <= period WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND EXISTS (SELECT 1 FROM projects p WHERE p.id = :project_id AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE) GROUP BY period ORDER BY period"

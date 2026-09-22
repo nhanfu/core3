@@ -10,3 +10,6 @@
 - [project-share-project-001](project-share-project-001/README.md) —
   Project form Share Project action; durable guarded share mutation passes,
   authenticated live comparison blocked by the shared-tab ownership boundary.
+- [project-burndown-001](project-burndown-001/README.md) — Project card
+  Burndown Chart action; contract/report query passes, authenticated comparison
+  blocked because the required Odoo tab was owned by session `rjvi`.

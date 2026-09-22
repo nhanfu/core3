@@ -1,0 +1,16 @@
+title: Burndown Chart
+page: { id: project-burndown, route: /projects/detail/burndown, breadcrumb: [Services, Project, Burndown Chart], auth: { require: [project.read] } }
+components:
+  - type: StatRow
+    source: project_burndown_project
+    title: Project
+    stats: [{ label: Project, field: project_name }, { label: Planned hours, field: planned_hours }, { label: Tasks, field: task_count }]
+  - type: Chart
+    source: project_burndown_chart
+    title: Burndown Chart
+    label_field: period
+    value_field: open_tasks
+    variant: line
+    series:
+      - { field: open_tasks, label: Open Tasks, color: blue }
+      - { field: closed_tasks, label: Closed Tasks, color: green }

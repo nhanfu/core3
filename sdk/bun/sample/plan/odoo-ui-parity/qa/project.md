@@ -331,3 +331,29 @@ The bounded contract, durable persistence, and guard assertions pass. The
 slice remains conditionally accepted pending authenticated Odoo/Core3 desktop
 and mobile captures and real browser CRUD/request checks. Full portal sharing,
 email delivery, and collaborator revocation are not claimed.
+
+## QA execution — PROJECT-BURNDOWN-001 — 2026-09-22
+
+- Feature: Project card Reporting > Burndown Chart record action; evidence:
+  `../evidence/project/2026-09-22/project-burndown-001/`.
+- Source comparison: Odoo `action_project_task_burndown_chart_report`, graph
+  path `burndown-chart`, line graph grouped by weekly Date and Stage, and the
+  `project.group_project_user` card action were verified in the local Odoo 19
+  source.
+- Focused checks:
+  `bun test ./test/project_burndown.integration.test.ts --timeout 30000` —
+  2 passed, 0 failed, 18 assertions.
+- Audit: `bun run audit` — passed with 836 pages, 844 routes, and 1,745
+  datasources.
+- Browser/reference blocker: BrowserSkill instance `245ea108` was connected,
+  but authenticated Odoo tab `1770662590` was already borrowed by session
+  `rjvi`; the fresh session `yhip` could not borrow it. The session was
+  stopped cleanly. No credentials, independent browser, PDF/access-token tab,
+  Odoo/Core3 screenshots, or visual-parity claim were used.
+
+### QA decision
+
+The bounded route/action contract and persisted report query pass. The slice is
+conditionally accepted only; authenticated Odoo/Core3 desktop and mobile
+comparison, request/error checks through the real browser, and Odoo historical
+stage-line parity remain open. Full Project sign-off is not claimed.

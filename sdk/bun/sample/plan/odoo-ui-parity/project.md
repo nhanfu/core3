@@ -1142,3 +1142,42 @@ stopped its own `psih` session cleanly and did not stop or return another
 worker's tab. No credentials, independent login, Odoo/Core3 captures, or
 visual-parity claim are recorded. Evidence is under
 `evidence/project/2026-09-22/project-share-project-001/`.
+
+## Bounded slice: Project Burndown Chart action (2026-09-22)
+
+Stable ID: `PROJECT-BURNDOWN-001`.
+
+The next missing non-excluded Project action is the record-linked Project card
+Reporting > Burndown Chart action `action_project_task_burndown_chart_report`.
+Odoo 19 defines it in `/home/nhanjs/projects/odoo/addons/project/report/project_task_burndown_chart_report_views.xml` as a graph-only `burndown-chart` action over
+`project.task.burndown.chart.report`, defaulted to the active project, weekly
+Date grouping, and Stage grouping. The Project kanban card exposes the action
+as `action_project_task_burndown_chart_report` with the label `Burndown Chart`
+for `project.group_project_user` in `project_project_views.xml`. Its source
+report reconstructs task stage history and exposes `# of Tasks`; Is Closed is
+the alternate burn-up grouping.
+
+Core3 adds `open_project_burndown` to the Projects collection, Projects
+grouped by stage, and Project detail action menu. It navigates to the
+deliberate Core3 alias `/projects/detail/burndown`. The layout-only
+`pages/project-burndown.yaml` and service-owned `api/project-burndown.yaml`
+join through `page.id: project-burndown`. The page provides Project context
+stats and an accessible line Chart with deterministic weekly Open Tasks and
+Closed Tasks series from persisted `projects`/`project_tasks` rows. Queries
+exclude archived/template projects and support stable permission, empty,
+not-found, and transport-error branches. No migration is needed because this
+slice reads existing durable tables and uses the fixed `2026-01-15` seed
+contract.
+
+The bounded Core3 report intentionally does not claim Odoo's historical stage
+move reconstruction, dynamic per-stage lines, or configurable search facets;
+those require a future task-history/reporting contract. Focused coverage is
+`test/project_burndown.integration.test.ts` (2 tests, 18 assertions), with
+route discovery and Project audit passing.
+
+BrowserSkill status showed connected instance `245ea108`, but borrowing the
+required authenticated Odoo tab `1770662590` failed because it was already
+owned by session `rjvi`. The worker session was not interrupted and no
+alternate PDF/access-token tab was used. No desktop/mobile captures were
+produced, and this slice makes no visual-parity claim. Evidence is under
+`evidence/project/2026-09-22/project-burndown-001/`.
