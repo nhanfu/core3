@@ -1775,6 +1775,40 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Products > Product form Storage Capacities — `INV-PRODUCT-STORAGE-CAPACITY-001` (2026-09-22)
+
+This bounded slice closes the next uncovered product-form action after the
+Product Lots and Warehouse Rules slices. Odoo's product and product-template
+forms expose `action_view_storage_category_capacity` in
+`addons/stock/views/product_views.xml:411-416,534-543`; the implementation in
+`addons/stock/models/product.py:635-645,1235-1237` opens the editable
+`stock.storage.category.capacity` list, hides package type for this context,
+defaults a single product, and scopes the domain to the selected variant(s).
+
+Core3 adds presentation-only `pages/storage-category-capacity.yaml` and the
+matching `api/storage-category-capacity.yaml`, joined by `page.id`. Product
+template and variant details expose `Storage Capacities` actions bound to a
+durable `capacity_count` and pass product/template context. The API reuses the
+existing `inventory_storage_category_capacities` table, supports deterministic
+variant/template filtering and company scope, and provides guarded YAML
+create/update/delete mutations. Product capacities persist `kind: product`,
+require an active product and valid storage category, reject duplicates and
+non-positive quantities, and enforce row-version conflicts. Existing
+stock-report product IDs are accepted alongside current variant IDs through
+the deterministic Core3/My Company identity mapping.
+
+Focused verification passes 4 tests / 30 assertions in
+`test/inventory_product_storage_capacity.integration.test.ts`; the adjacent
+five-file Inventory regression set passes 17 tests / 130 assertions. The full
+UI audit passes at 854 pages, 862 routes, and 1,806 datasources; Inventory Sass
+build and `git diff --check` pass. Evidence is under
+`evidence/inventory/2026-09-22/INV-PRODUCT-STORAGE-CAPACITY-001/`.
+
+BrowserSkill was stopped cleanly after the required one-time attempt. The
+connected Chrome instance had no confirmed borrowable `core3_reference` tab;
+the only existing user report/PDF tab timed out waiting for human borrow
+confirmation. No authenticated visual or live Odoo parity claim is made.
+
 ## Configuration > Warehouse form Routes stat action — `INV-WAREHOUSE-ROUTES-001` (2026-09-22)
 
 This bounded slice closes the previously uncovered Warehouse form `Routes`

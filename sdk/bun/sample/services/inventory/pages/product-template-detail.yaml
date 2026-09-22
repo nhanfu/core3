@@ -49,6 +49,7 @@ components:
       - { id: view_inventory_product_template_moves, label: Stock Moves, icon: transfer, value_field: move_count, permission: inventory.read, show_if: "record.move_count > 0" }
       - { id: view_inventory_product_template_lots, label: Lot/Serial Numbers, icon: tag, value_field: lot_count, permission: inventory.tracking, show_if: "record.tracking !== 'none'" }
       - { id: view_inventory_product_template_putaway_rules, label: Putaway Rules, icon: route, value_field: putaway_rule_count, permission: inventory.multi_location, show_if: "record.product_type !== 'Service'" }
+      - { id: view_inventory_product_template_storage_capacities, label: Storage Capacities, icon: boxes, value_field: capacity_count, permission: inventory.multi_location, show_if: "record.product_type !== 'Service'" }
   - type: ListView
     variant: odoo
     source: inventory_product_template_variants

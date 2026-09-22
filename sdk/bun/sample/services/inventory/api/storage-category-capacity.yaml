@@ -1,0 +1,105 @@
+page: { id: storage-category-capacity }
+datasources:
+  - id: inventory_product_storage_capacities
+    single: false
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_UNAVAILABLE, message: Product storage capacities are temporarily unavailable. } }
+    query: |
+      SELECT cp.id, cp.row_version, cp.storage_category_id, c.name AS storage_category_name,
+        cp.product_id, cp.product_name, cp.quantity, cp.unit_name,
+        COALESCE(cp.company_name, 'Visible to all companies') AS company_name
+      FROM inventory_storage_category_capacities cp
+      JOIN inventory_storage_categories c ON c.id = cp.storage_category_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND cp.kind = 'product'
+        AND (c.company_name IS NULL OR c.company_name = COALESCE(NULLIF(:current_company_name, ''), c.company_name)
+          OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND c.company_name = 'My Company (San Francisco)'))
+        AND (:product_template_id IS NULL OR EXISTS (SELECT 1 FROM inventory_product_templates t WHERE t.id = :product_template_id AND (t.company_name = COALESCE(NULLIF(:current_company_name, ''), t.company_name) OR t.company_name = 'Shared' OR (COALESCE(:current_company_name, '') IN ('Core3 Demo Company', 'My Company (San Francisco)') AND t.company_name IN ('Core3 Demo Company', 'My Company (San Francisco)')))))
+        AND (:product_id IS NULL OR cp.product_id = :product_id OR EXISTS (
+          SELECT 1 FROM inventory_product_variants v JOIN inventory_stock_report r ON r.default_code = v.default_code
+          WHERE v.id = :product_id AND cp.product_id = r.id
+            AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), v.company_name) OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') IN ('Core3 Demo Company', 'My Company (San Francisco)') AND v.company_name IN ('Core3 Demo Company', 'My Company (San Francisco)')))
+        ))
+        AND (:product_template_id IS NULL OR EXISTS (
+          SELECT 1 FROM inventory_product_variants v
+          WHERE v.template_name = (SELECT t.name FROM inventory_product_templates t WHERE t.id = :product_template_id)
+            AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), v.company_name) OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') IN ('Core3 Demo Company', 'My Company (San Francisco)') AND v.company_name IN ('Core3 Demo Company', 'My Company (San Francisco)')))
+            AND (v.id = cp.product_id OR EXISTS (SELECT 1 FROM inventory_stock_report r WHERE r.default_code = v.default_code AND r.id = cp.product_id))
+        ))
+        AND (:q IS NULL OR cp.product_name ILIKE '%' || :q || '%' OR c.name ILIKE '%' || :q || '%')
+      ORDER BY cp.product_name, c.name, cp.id
+  - id: inventory_product_storage_categories
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT c.id AS value, c.name AS label FROM inventory_storage_categories c WHERE c.company_name IS NULL OR c.company_name = COALESCE(NULLIF(:current_company_name, ''), c.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND c.company_name = 'My Company (San Francisco)') ORDER BY c.name, c.id"
+  - id: inventory_product_storage_products
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT v.id AS value, v.name || ' (' || v.default_code || ')' AS label FROM inventory_product_variants v WHERE v.active = TRUE AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), v.company_name) OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)')) AND (:product_id IS NULL OR v.id = :product_id) AND (:product_template_id IS NULL OR v.template_name = (SELECT t.name FROM inventory_product_templates t WHERE t.id = :product_template_id)) ORDER BY v.name, v.id"
+actions:
+  - id: create_inventory_product_storage_capacity
+    type: server_form
+    permission: inventory.manage
+    title: New product storage capacity
+    action: inventory.product_storage_capacity.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_product_storage_capacities]
+    mutation:
+      generated: [capacity_id]
+      before_steps:
+        - query: "SELECT 'storage-capacity-product-' || :product_id || '-' || :storage_category_id AS capacity_id, COALESCE((SELECT v.name FROM inventory_product_variants v WHERE v.id = :product_id), (SELECT r.product_name FROM inventory_stock_report r WHERE r.id = :product_id)) AS product_name FROM inventory_storage_category_capacities"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_product_variants v WHERE v.id = :product_id AND v.active = TRUE AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), v.company_name) OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') IN ('Core3 Demo Company', 'My Company (San Francisco)') AND v.company_name IN ('Core3 Demo Company', 'My Company (San Francisco)')))) OR (COALESCE(:current_company_name, '') IN ('', 'Core3 Demo Company', 'My Company (San Francisco)') AND EXISTS (SELECT 1 FROM inventory_stock_report r WHERE r.id = :product_id))", status: 422, code: INVENTORY_PRODUCT_STORAGE_PRODUCT_INVALID, message: Select an active product in the current company. }
+        - { query: "SELECT id FROM inventory_storage_categories WHERE id = :storage_category_id AND (company_name IS NULL OR company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 422, code: INVENTORY_PRODUCT_STORAGE_CATEGORY_INVALID, message: Select a storage category in the current company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0", status: 422, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_INVALID, message: Capacity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_storage_category_capacities cp WHERE cp.storage_category_id = :storage_category_id AND cp.kind = 'product' AND (cp.product_id = :product_id OR cp.product_name = (SELECT '[' || v.default_code || '] ' || v.name FROM inventory_product_variants v WHERE v.id = :product_id) OR EXISTS (SELECT 1 FROM inventory_stock_report r JOIN inventory_product_variants v ON v.default_code = r.default_code WHERE v.id = :product_id AND cp.product_id = r.id)))", status: 409, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_EXISTS, message: This product already has a capacity rule for the selected category. }
+      steps:
+        - query: "INSERT INTO inventory_storage_category_capacities(id, storage_category_id, kind, product_id, product_name, quantity, unit_name, company_name) SELECT :capacity_id, :storage_category_id, 'product', :product_id, :product_name, CAST(:quantity AS DECIMAL(18,3)), COALESCE(NULLIF(TRIM(CAST(:unit_name AS VARCHAR)), ''), 'Units'), c.company_name FROM inventory_storage_categories c WHERE c.id = :storage_category_id"
+      result: { query: "SELECT * FROM inventory_storage_category_capacities WHERE id = :capacity_id" }
+    fields:
+      - { field: storage_category_id, label: Storage Category, type: select, options_source: inventory_product_storage_categories, required: true }
+      - { field: product_id, label: Product, type: select, options_source: inventory_product_storage_products, required: true }
+      - { field: quantity, label: Capacity, type: number, min: 0.001, required: true }
+      - { field: unit_name, label: Unit, type: text, default: Units }
+  - id: edit_inventory_product_storage_capacity
+    type: server_form
+    permission: inventory.manage
+    title: Edit product storage capacity
+    action: inventory.product_storage_capacity.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [inventory_product_storage_capacities]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_storage_category_capacities WHERE id = :id AND kind = 'product' AND row_version = :expected_row_version AND (company_name IS NULL OR company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 409, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_STALE, message: This capacity rule changed or was deleted. Reload before editing. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_product_variants v WHERE v.id = :product_id AND v.active = TRUE AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), v.company_name) OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') IN ('Core3 Demo Company', 'My Company (San Francisco)') AND v.company_name IN ('Core3 Demo Company', 'My Company (San Francisco)')))) OR (COALESCE(:current_company_name, '') IN ('', 'Core3 Demo Company', 'My Company (San Francisco)') AND EXISTS (SELECT 1 FROM inventory_stock_report r WHERE r.id = :product_id))", status: 422, code: INVENTORY_PRODUCT_STORAGE_PRODUCT_INVALID, message: Select an active product in the current company. }
+        - { query: "SELECT id FROM inventory_storage_categories WHERE id = :storage_category_id AND (company_name IS NULL OR company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 422, code: INVENTORY_PRODUCT_STORAGE_CATEGORY_INVALID, message: Select a storage category in the current company. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0", status: 422, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_INVALID, message: Capacity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_storage_category_capacities cp WHERE cp.storage_category_id = :storage_category_id AND cp.kind = 'product' AND id <> :id AND (cp.product_id = :product_id OR cp.product_name = (SELECT '[' || v.default_code || '] ' || v.name FROM inventory_product_variants v WHERE v.id = :product_id) OR EXISTS (SELECT 1 FROM inventory_stock_report r JOIN inventory_product_variants v ON v.default_code = r.default_code WHERE v.id = :product_id AND cp.product_id = r.id)))", status: 409, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_EXISTS, message: This product already has a capacity rule for the selected category. }
+      before_steps:
+        - query: "SELECT COALESCE((SELECT v.name FROM inventory_product_variants v WHERE v.id = :product_id), (SELECT r.product_name FROM inventory_stock_report r WHERE r.id = :product_id)) AS product_name"
+          assign: true
+      steps:
+        - query: "UPDATE inventory_storage_category_capacities SET storage_category_id = :storage_category_id, product_id = :product_id, product_name = :product_name, quantity = CAST(:quantity AS DECIMAL(18,3)), unit_name = COALESCE(NULLIF(TRIM(CAST(:unit_name AS VARCHAR)), ''), 'Units'), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+      result: { query: "SELECT * FROM inventory_storage_category_capacities WHERE id = :id" }
+    fields:
+      - { field: storage_category_id, label: Storage Category, type: select, options_source: inventory_product_storage_categories, required: true }
+      - { field: product_id, label: Product, type: select, options_source: inventory_product_storage_products, required: true }
+      - { field: quantity, label: Capacity, type: number, min: 0.001, required: true }
+      - { field: unit_name, label: Unit, type: text }
+  - id: delete_inventory_product_storage_capacity
+    type: server
+    permission: inventory.manage
+    action: inventory.product_storage_capacity.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_storage_capacities]
+    mutation:
+      operation: delete
+      table: inventory_storage_category_capacities
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_storage_category_capacities WHERE id = :id AND kind = 'product' AND row_version = :expected_row_version AND (company_name IS NULL OR company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 409, code: INVENTORY_PRODUCT_STORAGE_CAPACITY_STALE, message: This capacity rule changed or was deleted. Reload before deleting. }

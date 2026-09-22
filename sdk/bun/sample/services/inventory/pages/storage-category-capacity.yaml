@@ -1,0 +1,19 @@
+title: Storage Category Capacity
+page: { id: storage-category-capacity, route: /storage-categories/capacity, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Storage Category Capacity], auth: { require: [inventory.multi_location] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_product_storage_capacities
+    create_action: create_inventory_product_storage_capacity
+    create_label: New capacity rule
+    search: { label: Search capacity rules, placeholder: Search products or storage categories... }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: storage_category_name, label: Storage Category }
+      - { field: quantity, label: Capacity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No storage capacity rules, description: Add a capacity rule for this product or adjust your search. }

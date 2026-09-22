@@ -426,6 +426,28 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Product form Storage Capacities QA — `INV-PRODUCT-STORAGE-CAPACITY-001`
+
+- Odoo source/action: PASS. Product and product-template forms expose
+  `action_view_storage_category_capacity`; the model scopes the editable
+  capacity list to the selected product or all variants of the template.
+- Core3 contract: PASS. Separate page/API YAML contracts expose the product or
+  template contextual list, `capacity_count` stat binding, deterministic
+  company filtering, and durable product-capacity CRUD.
+- Focused verification: PASS — 4 tests / 30 assertions in
+  `test/inventory_product_storage_capacity.integration.test.ts`; adjacent
+  five-file Inventory regression set: 17 tests / 130 assertions.
+- Static verification: PASS — UI audit 854 pages / 862 routes / 1,806
+  datasources, Inventory Sass build, and `git diff --check`.
+- Browser evidence: BLOCKED. BrowserSkill could not borrow the only existing
+  user report/PDF tab before the 20-second confirmation timeout. The session
+  was stopped; no independent browser or credential fallback was used. Exact
+  details are in the feature evidence `browser-blocker.md`.
+
+QA disposition: PASS for the bounded durable Core3 Storage Capacities action;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.
+
 ## Inventory Location Barcode QA — `INV-LOCATION-BARCODE-001`
 
 - Odoo source/action: PASS. `action_report_location_barcode` is bound to

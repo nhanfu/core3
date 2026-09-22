@@ -16,7 +16,8 @@ datasources:
         (SELECT COUNT(*) FROM inventory_lots l WHERE l.product_id = inventory_product_variants.id
           AND (l.company_name = inventory_product_variants.company_name OR l.company_name IS NULL
             OR (inventory_product_variants.company_name = 'Core3 Demo Company' AND l.company_name = 'My Company (San Francisco)'))) AS lot_count,
-        CAST(volume AS DOUBLE) AS volume
+        CAST(volume AS DOUBLE) AS volume,
+        (SELECT COUNT(DISTINCT cp.id) FROM inventory_storage_category_capacities cp JOIN inventory_storage_categories c ON c.id = cp.storage_category_id WHERE cp.kind = 'product' AND (c.company_name IS NULL OR c.company_name = inventory_product_variants.company_name OR (inventory_product_variants.company_name = 'Core3 Demo Company' AND c.company_name = 'My Company (San Francisco)')) AND (cp.product_id = inventory_product_variants.id OR cp.product_id IN (SELECT r.id FROM inventory_stock_report r WHERE r.default_code = inventory_product_variants.default_code))) AS capacity_count
       FROM inventory_product_variants
       WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
         OR company_name = 'Shared'
@@ -53,6 +54,13 @@ actions:
     type: navigate
     permission: inventory.multi_location
     navigate_to: /putaway-rules
+    params:
+      product_id: '{state.inventory_product_variant_detail.id}'
+      current_company_name: '{state.inventory_product_variant_detail.company_name}'
+  - id: view_inventory_product_variant_storage_capacities
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /storage-categories/capacity
     params:
       product_id: '{state.inventory_product_variant_detail.id}'
       current_company_name: '{state.inventory_product_variant_detail.company_name}'
