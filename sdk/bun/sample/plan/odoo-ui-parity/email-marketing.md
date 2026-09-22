@@ -1116,3 +1116,34 @@ connected, but the authenticated tab `1770662590` was already borrowed by
 session `ebbh`; the task session did not navigate or reuse it. No Odoo or Core3
 desktop/mobile capture exists and no visual-parity claim is made. Details are
 under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-COMPARE-001/`.
+
+## Mailing A/B automatic winner bounded slice (2026-09-22)
+
+Stable ID `EMAIL-MARKETING-MAILING-AB-AUTO-WINNER-001` implements Odoo's
+`mailing.mailing.action_send_winner_mailing`, the non-manual A/B workflow
+exposed as **Send Winner Now**. The action selects the highest sent variant by
+the configured `opened_ratio`, `clicks_ratio`, or `replied_ratio`, breaks ties
+by stable mailing ID, creates one queued 100%-audience winner copy, and marks
+the A/B group complete. It is a durable mutation only; it does not send real
+email or add a scheduler.
+
+The page/API contract remains joined by `page.id: mailing-detail`:
+
+- `services/email-marketing/pages/mailing-detail.yaml` adds the guarded
+  **Send Winner Now** action for non-manual campaigns with at least two
+  variants.
+- `services/email-marketing/api/mailing-detail.yaml` owns the source action
+  identity, metric selection, deterministic winner ID, optimistic row-version
+  checks, duplicate/no-sent/missing guards, and refresh targets.
+- `test/email_marketing_mailing_ab_auto_winner.integration.test.ts` reuses the
+  existing deterministic A/B fixtures and covers contract discovery, metric
+  selection, durable copy creation, idempotent migration state, and stale/
+  manual/completed/duplicate/missing boundaries.
+
+Focused validation passes **4 tests, 17 assertions**. Email Marketing CSS
+build and the global UI audit pass with **852 pages, 860 routes, and 1,792
+datasources**; `git diff --check` passes. BrowserSkill instance `245ea108`
+was connected, but authenticated Odoo tab `1770662590` was already borrowed by
+session `fngy`; it was not navigated or inspected. No Odoo or Core3 visual
+capture exists and no installed-reference parity claim is made. Details are
+under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-AUTO-WINNER-001/`.
