@@ -12,6 +12,7 @@ components:
     status_colors: { In Progress: blue, 'Waiting for Customer': amber, Closed: neutral, 'Looking for Help': violet }
     header_actions:
       - { id: submit_livechat_feedback, label: Rate Conversation, variant: secondary, permission: livechat.public, show_if: "record.status === 'Closed' || record.feedback_submitted === true" }
+      - { id: download_livechat_transcript, label: Download Transcript, variant: secondary, permission: livechat.public, show_if: "record.status === 'Closed' && record.transcript_available === true" }
       - { id: leave_livechat_session, label: Leave Conversation, variant: danger, permission: livechat.public, show_if: "record.status !== 'Closed'" }
     group_columns: 2
     groups:

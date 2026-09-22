@@ -1,0 +1,40 @@
+version: 0.0.55
+kind: data
+description: Persist Odoo Live Chat public transcript PDF artifacts
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_transcript_downloads (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL UNIQUE,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL DEFAULT 'application/pdf',
+        content_base64 VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS livechat_transcript_downloads_session_idx
+        ON livechat_transcript_downloads(session_id, created_at);
+      INSERT INTO livechat_transcript_downloads
+        (id, session_id, file_name, mime_type, content_base64, created_at)
+      SELECT 'livechat-transcript-download-demo-001', 'livechat-session-demo-001',
+        'transcript_livechat-session-demo-001.pdf', 'application/pdf',
+        'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA5OCA+PgpzdHJlYW0KQlQKL0YxIDE4IFRmCjcyIDc2MCBUZAooSW52b2ljZSBQREZcXG5JTlYvMjAyNi8wMDAxXFxuQ29yZTMgQWNjb3VudGluZ1xcblRvdGFsICQgMSw2NTAuMDApIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDI0MSAwMDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDU3CiUlRU9GCg==',
+        TIMESTAMP '2026-01-15 09:00:00'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-001' AND status = 'Closed')
+        AND NOT EXISTS (SELECT 1 FROM livechat_transcript_downloads WHERE session_id = 'livechat-session-demo-001');
+      INSERT INTO livechat_transcript_downloads
+        (id, session_id, file_name, mime_type, content_base64, created_at)
+      SELECT 'livechat-transcript-download-demo-003', 'livechat-session-demo-003',
+        'transcript_livechat-session-demo-003.pdf', 'application/pdf',
+        'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA5OCA+PgpzdHJlYW0KQlQKL0YxIDE4IFRmCjcyIDc2MCBUZAooSW52b2ljZSBQREZcXG5JTlYvMjAyNi8wMDAxXFxuQ29yZTMgQWNjb3VudGluZ1xcblRvdGFsICQgMSw2NTAuMDApIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDI0MSAwMDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDU3CiUlRU9GCg==',
+        TIMESTAMP '2026-01-15 09:00:00'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-003' AND status = 'Closed')
+        AND NOT EXISTS (SELECT 1 FROM livechat_transcript_downloads WHERE session_id = 'livechat-session-demo-003');
+    down: |
+      DELETE FROM livechat_transcript_downloads
+      WHERE id IN ('livechat-transcript-download-demo-001', 'livechat-transcript-download-demo-003');
+      DROP TABLE IF EXISTS livechat_transcript_downloads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

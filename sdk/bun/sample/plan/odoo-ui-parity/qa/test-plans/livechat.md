@@ -52,6 +52,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-WF-007 | Visitor feedback and leave session | Public token-scoped feedback persists one rating per session; visitor leave closes the session, appends a timeline event, rejects replay, and survives restart | pass: `livechat_visitor_feedback.integration.test.ts`; Odoo widget blocked because addon is not installed |
 | LIVECHAT-WF-008 | Public visitor message composer | Token-owned visitor message persists in the transcript, increments session counters/version, rejects blank/oversize/closed sends, and survives restart | pass: `livechat_public_message.integration.test.ts`; browser/reference blocked |
 | LIVECHAT-WF-009 | Authenticated transcript email | Closed-session operator action validates email and scope, queues a durable transcript delivery, refreshes the detail projection, rejects stale/open/missing/invalid requests, and survives restart | pass: `livechat_transcript_delivery.integration.test.ts`; live browser tab blocked |
+| LIVECHAT-WF-010 | Public transcript download | Closed token-owned session returns durable PDF bytes with Odoo MIME/name semantics; wrong-token, open, empty, and missing-artifact paths expose no transcript and restart preserves bytes | pass: `livechat_transcript_download.integration.test.ts`; browser/reference blocked |
 
 ## Permission and security cases
 
@@ -67,6 +68,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-PERM-008 | Visitor token | Wrong visitor token returns 404 without disclosing or mutating another conversation | pass: `livechat_visitor_feedback.integration.test.ts` |
 | LIVECHAT-PERM-009 | Public message ownership | Wrong visitor token cannot post, and a closed visitor conversation cannot be reopened by message post | pass: `livechat_public_message.integration.test.ts` |
 | LIVECHAT-PERM-010 | Transcript delivery actor/scope | Missing actor, another operator, and stale session version return bounded errors without a delivery row | pass: `livechat_transcript_delivery.integration.test.ts` |
+| LIVECHAT-PERM-011 | Public transcript ownership | A visitor can download only the closed session artifact bound to its visitor token; wrong-token and open-session queries return no data | pass: `livechat_transcript_download.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -78,6 +80,7 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-UI-004 | Current route regression | all manifest-owned Live Chat routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 | LIVECHAT-UI-005 | Visitor composer | 1440x900, 390x844 | Existing visitor conversation displays the Odoo-shaped composer and refreshes the timeline; paired Odoo/Core3 capture required when runtimes are available | blocked: Odoo addon route is 404; Core3 runtime availability pending |
 | LIVECHAT-UI-006 | Closed session transcript email | 1440x900, 390x844 | Closed session exposes Email transcript, validates the email form, and shows the durable last-recipient projection without overflow | blocked: authenticated Odoo tab already borrowed; no visual claim |
+| LIVECHAT-UI-007 | Public transcript download | 1440x900, 390x844 | Closed visitor conversation exposes Download Transcript and the browser receives a PDF without page/request errors or overflow | blocked: BrowserSkill borrow confirmation timed out; no visual claim |
 
 ## Exit criteria
 

@@ -15,6 +15,7 @@ datasources:
         s.rating, COALESCE(f.rating, s.rating) AS feedback_rating,
         COALESCE(f.reason, '') AS feedback_reason,
         CASE WHEN f.session_id IS NULL THEN FALSE ELSE TRUE END AS feedback_submitted,
+        CASE WHEN EXISTS (SELECT 1 FROM livechat_transcript_downloads d WHERE d.session_id = s.id) THEN TRUE ELSE FALSE END AS transcript_available,
         CAST(s.started_at AS VARCHAR) AS started_label,
         CAST(s.ended_at AS VARCHAR) AS ended_label,
         s.visitor_token
@@ -40,6 +41,22 @@ datasources:
       FROM livechat_session_feedback
       WHERE session_id = :id
         AND EXISTS (SELECT 1 FROM livechat_sessions WHERE id = :id AND visitor_token = :visitor_token)
+  - id: livechat_public_transcript
+    single: true
+    permission: livechat.public
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_PUBLIC_TRANSCRIPT_UNAUTHORIZED, message: A visitor session is required to download this transcript. }
+      forbidden: { status: 403, code: LIVECHAT_PUBLIC_TRANSCRIPT_FORBIDDEN, message: This visitor transcript is not available. }
+      transport_error: { status: 503, code: LIVECHAT_PUBLIC_TRANSCRIPT_UNAVAILABLE, message: The conversation transcript is temporarily unavailable. }
+    query: |
+      SELECT d.id, d.session_id, d.file_name, d.mime_type, d.content_base64,
+        CAST(d.created_at AS VARCHAR) AS created_at
+      FROM livechat_transcript_downloads d
+      JOIN livechat_sessions s ON s.id = d.session_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND d.session_id = :id
+        AND s.visitor_token = :visitor_token
+        AND s.status = 'Closed'
 
 actions:
   - id: send_livechat_visitor_message
@@ -128,3 +145,29 @@ actions:
         - { query: "INSERT INTO livechat_session_feedback(session_id, rating, reason, submitted_at) VALUES(:id, CAST(:rating AS INTEGER), COALESCE(CAST(:reason AS VARCHAR), ''), CURRENT_TIMESTAMP)" }
         - { query: "UPDATE livechat_sessions SET rating = CAST(:rating AS INTEGER), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND visitor_token = :visitor_token AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_PUBLIC_FEEDBACK_STALE, message: This visitor session changed before the rating was saved. Reload and try again. }
       result: { query: "SELECT session_id, rating, reason, CAST(submitted_at AS VARCHAR) AS submitted_at FROM livechat_session_feedback WHERE session_id = :id" }
+  - id: download_livechat_transcript
+    type: client
+    permission: livechat.public
+    script: |
+      async ({ row, request }) => {
+        // Odoo routes this public action through /im_livechat/cors/download_transcript/<channel_id>.
+        const result = await request('/api/query', {
+          method: 'POST',
+          body: {
+            sourceId: 'livechat_public_transcript',
+            params: { id: row.id, visitor_token: row.visitor_token },
+            top: 1,
+          },
+        });
+        const artifact = Array.isArray(result?.data) ? result.data[0] : result?.data;
+        if (!artifact?.content_base64) throw new Error('The conversation transcript is unavailable.');
+        const bytes = Uint8Array.from(atob(artifact.content_base64), (character) => character.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], { type: artifact.mime_type || 'application/pdf' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = artifact.file_name || `transcript_${row.id}.pdf`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      }

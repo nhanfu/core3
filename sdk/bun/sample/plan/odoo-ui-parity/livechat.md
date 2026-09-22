@@ -1312,3 +1312,41 @@ BrowserSkill could not borrow the authenticated Odoo tab on shared browser
 `245ea108` because the extension confirmation timed out; no desktop/mobile
 capture was produced and no visual-parity claim is made. Full Live Chat parity
 remains planned.
+
+## Bounded implementation slice: Public transcript download (2026-09-22)
+
+Stable feature ID: `livechat-transcript-download-001`.
+
+The next distinct public transcript surface is Odoo's
+`/im_livechat/download_transcript/<channel_id>` HTTP route and its CORS
+counterpart `/im_livechat/cors/download_transcript/<channel_id>` in
+`addons/im_livechat/controllers/main.py` and `controllers/cors/main.py`.
+Odoo renders the conversation report as PDF and returns `application/pdf` with
+an inline transcript filename; the public widget exposes Download only for an
+ended conversation and uses the guest persona/token context.
+
+Core3 extends the existing `livechat-visitor-session` page/API join with the
+token-scoped `livechat_public_transcript` datasource and the
+`download_livechat_transcript` client action. The datasource reads durable
+`livechat_transcript_downloads` artifacts only for the matching visitor token
+and closed session. The client action decodes the persisted PDF bytes and
+downloads them as `application/pdf`; it retains the Odoo CORS route in the
+source-backed action script. The page shows the control only when the closed
+session projection reports an available artifact.
+
+Migration `20260922190000-055-livechat-transcript-download.yaml` is
+idempotent, seeds stable closed-session PDF fixtures, and is replayed through a
+file-backed restart test. Wrong visitor tokens, open sessions, empty/not-found
+profiles, and missing artifacts return no transcript data rather than leaking
+another visitor's conversation. No authenticated menu or operator transcript
+email behavior is changed by this slice.
+
+Focused validation is
+`test/livechat_transcript_download.integration.test.ts`: 3 tests passed with
+18 assertions. The paired public-widget/transcript regression passed 18 tests
+with 120 assertions. BrowserSkill was connected to shared browser
+`245ea108`, but borrowing authenticated Odoo tab `1770662590` in session
+`roqk` timed out during extension confirmation; no tab was borrowed, no
+credentials were read, and no desktop/mobile live capture was produced. This
+slice therefore makes no visual-parity claim. Evidence is recorded under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-transcript-download-001/`.

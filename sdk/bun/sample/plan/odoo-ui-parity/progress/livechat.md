@@ -99,3 +99,25 @@ is idempotent and the focused test reopens a file-backed database to verify
 delivery history survives restart.
 
 Focused validation: `bun test test/livechat_transcript_delivery.integration.test.ts --timeout 20000` — 3 passed, 20 assertions. BrowserSkill was connected to shared browser instance `245ea108`, but the authenticated Odoo tab was already borrowed by session `ftio`; no live desktop/mobile capture was possible and no visual-parity claim is made. Core3 visual evidence remains pending a runnable local runtime. The bounded Core3 contract queues delivery; no external mail transport is claimed.
+
+## Bounded implementation slice: public transcript download (2026-09-22)
+
+Stable feature `livechat-transcript-download-001` adds the public transcript
+download surface without duplicating authenticated transcript email. Odoo's
+HTTP/CORS download routes are source-traced in the focused test. Core3 adds
+`livechat_public_transcript` and `download_livechat_transcript` to the existing
+`livechat-visitor-session` page/API join, with visitor-token ownership and a
+closed-session guard. The durable PDF artifact table is created by
+`20260922190000-055-livechat-transcript-download.yaml`; two migration runs and
+a file-backed restart preserve stable rows and `%PDF-1.4` bytes.
+
+Focused validation: **3 tests, 18 assertions, 0 failures**. The paired public
+visitor message, feedback/leave, widget bootstrap, transcript email, and Invite
+People regression passed **18 tests, 120 assertions, 0 failures**. Focused
+ESLint and `git diff --check` passed.
+
+BrowserSkill blocker: shared browser `245ea108` was connected, but borrowing
+authenticated Odoo tab `1770662590` from session `roqk` timed out during
+extension confirmation. The tab was not borrowed and the session was stopped;
+no desktop/mobile capture or visual-parity claim is made. Evidence is under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-transcript-download-001/`.

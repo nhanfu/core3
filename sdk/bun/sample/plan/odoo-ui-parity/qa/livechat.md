@@ -198,3 +198,27 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   browser `245ea108` timed out in session `wabp`; no desktop/mobile capture
   and no visual-parity claim.
 - Open gate: authenticated Odoo/Core3 desktop and mobile action captures.
+
+## LIVECHAT-TRANSCRIPT-DOWNLOAD-001 — 2026-09-22
+
+- Scope: public closed-conversation transcript PDF download, distinct from the
+  authenticated transcript-email queue.
+- Odoo source: `/im_livechat/download_transcript/<channel_id>` and
+  `/im_livechat/cors/download_transcript/<channel_id>` render the conversation
+  report and return `application/pdf`; the widget exposes Download for ended
+  conversations.
+- Core3: `livechat_public_transcript` is token-scoped to the existing
+  `livechat-visitor-session` page/API id; `download_livechat_transcript` decodes
+  the durable PDF artifact and downloads the Odoo-shaped filename/MIME type.
+  Migration `20260922190000-055-livechat-transcript-download.yaml` is
+  idempotent and restart-safe.
+- Focused validation: `bun test ./test/livechat_transcript_download.integration.test.ts --timeout 20000` — **3 passed, 18 assertions, 0 failed**.
+- Paired public/transcript regression: **18 passed, 120 assertions, 0 failed**;
+  focused ESLint and `git diff --check` passed.
+- Browser evidence blocker: BrowserSkill session `roqk` on shared browser
+  `245ea108` attempted to borrow Odoo tab `1770662590`, but the extension
+  confirmation timed out after 30 seconds. The tab was never borrowed, no
+  independent login or credential access occurred, and session `roqk` was
+  stopped. No desktop/mobile capture was produced and no visual-parity claim is
+  made. Evidence details are in
+  `evidence/livechat/2026-09-22/livechat-transcript-download-001/`.
