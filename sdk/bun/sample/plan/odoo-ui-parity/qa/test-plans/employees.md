@@ -971,3 +971,18 @@ Focused test: `test/employees_team_department_filters.integration.test.ts`
 Focused test: `test/employees_contract_filters.integration.test.ts` (3 tests,
 22 assertions). Evidence:
 `evidence/employees/2026-09-22/EMP-EMPLOYEE-CONTRACT-FILTERS-001/`.
+
+## EMP-DEPARTMENT-CHILDREN-001 test plan (2026-09-22)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/contract mapping | Odoo `child_of` action and kanban menu map to separate Core3 page/API contracts with matching `page.id` | pass from local source and YAML assertions |
+| Recursive behavior | Selected department plus all descendants, deterministic ordering, search, active/archived filter, and empty state | pass; focused test covers descendants and empty/search/error guards |
+| Permission and navigation | `employees.read` gates the datasource and detail navigation; row navigation remains read-only | pass from contract inspection |
+| Persistence | Parent relations survive migration replay and file-backed restart without duplicate seeds | pass; focused test verifies replay and restart |
+| Browser comparison | Authenticated Odoo/Core3 desktop and mobile captures | blocked; existing signed-in tab was owned by BrowserSkill session `zfuv`, so no visual claim |
+
+Focused test: `test/employees_department_children.integration.test.ts` (3 tests,
+20 assertions). Adjacent department regression set: 10 tests / 89 assertions;
+UI audit and frontend/CSS build pass.
+Evidence: `evidence/employees/2026-09-22/EMP-DEPARTMENT-CHILDREN-001/`.

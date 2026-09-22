@@ -9,3 +9,6 @@
 - `EMP-EMPLOYEE-CONTRACT-FILTERS-001/`: Odoo 19 `In Contract` and `Out of
   Contract` source mapping, durable filter tests, and exact browser/runtime
   blockers; no visual parity claim.
+- `EMP-DEPARTMENT-CHILDREN-001/`: Odoo 19 department `Child departments`
+  action mapping, durable recursive hierarchy tests, and the exact
+  BrowserSkill tab-ownership blocker; no visual parity claim.

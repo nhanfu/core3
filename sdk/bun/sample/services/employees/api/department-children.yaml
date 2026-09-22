@@ -1,0 +1,14 @@
+page: { id: employee-department-children }
+datasources:
+  - id: employee_department_children
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_DEPARTMENT_CHILDREN_ROOT_NOT_FOUND, message: The selected department was not found. }
+      transport_error: { status: 503, code: EMPLOYEES_DEPARTMENT_CHILDREN_UNAVAILABLE, message: Child departments are temporarily unavailable. }
+    query: "WITH RECURSIVE department_tree(id) AS (SELECT d.id FROM employee_departments d WHERE d.id = :root_department_id AND COALESCE(d.report_visible, true) = true UNION ALL SELECT child.id FROM employee_departments child JOIN department_tree parent ON child.parent_id = parent.id WHERE COALESCE(child.report_visible, true) = true) SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.employee_count, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true)) AS employee_count, COALESCE(d.color, 0) AS color FROM employee_departments d JOIN department_tree tree ON tree.id = d.id LEFT JOIN employees e ON e.department_id = d.id WHERE ((:active IS NULL AND COALESCE(d.active, true) = true) OR (:active IS NOT NULL AND d.active = CAST(:active AS BOOLEAN))) AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.manager_name ILIKE '%' || :q || '%' OR d.parent_name ILIKE '%' || :q || '%' OR d.company_name ILIKE '%' || :q || '%') GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.employee_count, d.color ORDER BY d.name, d.id"
+actions:
+  - id: view_child_department
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/departments/detail
+    params: { id: '{row.id}' }

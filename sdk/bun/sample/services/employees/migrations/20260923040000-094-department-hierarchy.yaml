@@ -1,0 +1,24 @@
+version: 0.0.94
+kind: data
+description: Add durable department parent relations for Child departments drilldown
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
+      UPDATE employee_departments SET parent_id = CASE id
+        WHEN 'department-administration' THEN 'department-management'
+        WHEN 'department-professional-services' THEN 'department-management'
+        WHEN 'department-research-development' THEN 'department-management'
+        WHEN 'department-sales' THEN 'department-management'
+        WHEN 'department-rnd-usa' THEN 'department-research-development'
+        WHEN 'department-long-term-projects' THEN 'department-rnd-usa'
+        ELSE parent_id
+      END;
+      CREATE INDEX IF NOT EXISTS employee_departments_parent_idx ON employee_departments(parent_id, active, report_visible);
+    down: |
+      DROP INDEX IF EXISTS employee_departments_parent_idx;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS parent_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1459,3 +1459,19 @@ Focused test: `test/employees_org_chart.integration.test.ts` (3 tests, 15
 assertions). The full audit is blocked by unrelated concurrent page-schema
 errors, and the adjacent Work-tab test has a pre-existing expected-field
 mismatch for `Work Location Type`. No aggregate Employees sign-off is claimed.
+
+## EMP-DEPARTMENT-CHILDREN-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-061 | Odoo `child_of` department action, action name, and kanban menu mapping | pass from local Odoo source; live action observation blocked |
+| EMP-FUNC-061 | Selected department plus recursive descendants, search, active/archived filter, empty state, and child-detail navigation | pass; focused test covers recursive results, search empty, missing root, and transport error |
+| EMP-PERM-061 | Page datasource and navigation action require `employees.read` | pass from YAML contract |
+| EMP-DATA-061 | Parent relation migration replay, deterministic hierarchy, and file-backed restart | pass; focused test verifies replay and restart |
+| EMP-UI-061 | Authenticated Odoo/Core3 desktop and mobile comparison | blocked; tab `1770662590` was already borrowed by BrowserSkill session `zfuv` |
+
+Focused test: `test/employees_department_children.integration.test.ts` (3 tests,
+20 assertions). Adjacent department regression set passes 10 tests / 89
+assertions. UI audit and frontend/CSS build pass.
+Evidence: `evidence/employees/2026-09-22/EMP-DEPARTMENT-CHILDREN-001/`.
+No aggregate Employees sign-off is claimed.

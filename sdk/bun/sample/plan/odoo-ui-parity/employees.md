@@ -1942,6 +1942,36 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-DEPARTMENT-CHILDREN-001: Department Child departments action (2026-09-22)
+
+The next bounded missing department action is Odoo's kanban-menu `Child
+departments` action. The source implementation is
+`/home/nhanjs/projects/odoo/addons/hr/models/hr_department.py:205-215`:
+`get_children_department_ids` uses the `child_of` domain and
+`action_open_view_child_departments` opens `hr.department` in
+`kanban,list,form` with the action name `Child departments`. The menu anchor is
+in `addons/hr/views/hr_department_views.xml:89-94`.
+
+Core3 adds durable `employee_departments.parent_id` relations in migration
+`20260923040000-094-department-hierarchy.yaml`, including the stable seeded
+department hierarchy and an index for active/report-visible traversal. The
+department API exposes `open_department_children`, while the separate page and
+API contracts join on `page.id: employee-department-children`. The child query
+uses a recursive CTE, includes the selected department as Odoo's `child_of`
+does, and supports active/archived filtering, search, deterministic empty
+results, missing-root handling, and a 503 transport error contract. The slice
+is read-only and has no stale write path.
+
+Focused verification is `test/employees_department_children.integration.test.ts`:
+source/page/API mapping, recursive descendants with empty and error guards, and
+file-backed migration replay/restart. The live authenticated tab could not be
+borrowed: BrowserSkill instance `245ea108` reported tab `1770662590` was
+already borrowed by session `zfuv` when task session `zxox` requested it. No
+Odoo or Core3 desktop/mobile screenshot is claimed; recapture requirements and
+the exact blocker are recorded in
+`evidence/employees/2026-09-22/EMP-DEPARTMENT-CHILDREN-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-CONTRACT-FILTERS-001: Employees In Contract and Out of Contract filters (2026-09-22)
 
 The next distinct uncovered Employees list behavior after New Contract, Newly

@@ -10,6 +10,11 @@ actions:
     permission: employees.read
     navigate_to: /employees/departments/detail
     params: { id: '{row.id}' }
+  - id: open_department_children
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/departments/children
+    params: { root_department_id: '{row.id}' }
   - id: create_department
     type: server_form
     permission: employees.manage

@@ -1,0 +1,37 @@
+title: Child departments
+page: { id: employee-department-children, route: /employees/departments/children, breadcrumb: [Human Resources, Reporting, Departments, Child departments], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_department_children
+    search: { label: Search, placeholder: Search... }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card:
+          compact: true
+          title: name
+          subtitle: manager_name
+          avatar_field: manager_name
+          company_field: company_name
+          primary_metric: employee_count
+          primary_metric_label: Employees
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: file-text, mobile: false }
+    columns:
+      - { field: name, label: Department Name, type: PrimaryEntityCell }
+      - { field: company_name, label: Company }
+      - { field: manager_name, label: Manager, type: AvatarCell }
+      - { field: employee_count, label: Employees, align: right }
+      - { field: parent_name, label: Parent Department }
+    page_size: 50
+    row_key: id
+    row_open_action: view_child_department
+    row_double_click_action: view_child_department
+    row_actions: menu
+    empty_state: { title: No child departments found, description: This department has no child departments. }
