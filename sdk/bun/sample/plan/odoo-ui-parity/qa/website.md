@@ -151,3 +151,14 @@ evidence folder.
 | WEBSITE-UI-008 | Authenticated preview form and public themed page comparison | Browser instance `245ea108`; Odoo tab borrow remained pending, available tab was CRM without Website, and no Core3 captures were produced | blocked; no visual-parity claim |
 
 Scoped result: `bun test ./test/website_themes.integration.test.ts ./test/website_theme_preview.integration.test.ts ./test/website_public.integration.test.ts --timeout 20000` — 11 tests, 77 assertions, pass. `git diff --check` and `bun run frontend:build` pass. This checkpoint does not sign off the Website module.
+
+## 2026-09-22 Page Manager import checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-013 | Page Manager import contract and page/API separation | `test/website_page_import.integration.test.ts`; source-backed action, matching `page.id`, visible Import header action | pass: 4 tests / 17 assertions |
+| WEBSITE-DATA-008 | Import validation, two-site upsert, idempotence, and row-version advancement | `test/website_page_import.integration.test.ts`; durable Website/URL identity and row-version state | pass |
+| WEBSITE-PERM-010 | Read-only actor cannot import pages | `test/website_page_import.integration.test.ts`; action endpoint returns 403 and no row is written | pass |
+| WEBSITE-UI-014 | Authenticated Odoo desktop/mobile import comparison | `evidence/website/2026-09-22/website-page-import-001/browser-check.md` | blocked; tab `1770662590` already borrowed by BrowserSkill session `ftio` |
+
+Focused result: `bun test ./test/website_page_import.integration.test.ts --timeout 20000` — 4 tests, 17 assertions, pass. This checkpoint does not sign off the Website module or claim visual parity.

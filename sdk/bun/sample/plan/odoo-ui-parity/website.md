@@ -291,3 +291,38 @@ Website Page Manager import, page publish/unpublish browser proof, richer theme
 asset installation effects, and public/portal rendering remain open. This
 wave covers only the Website Page Manager export binding and does not claim
 Website module completion.
+
+## Wave 9 execution evidence — 2026-09-22 — Page Manager import
+
+The next missing concrete Website action is the Page Manager import binding,
+stable ID `WEBSITE-PAGE-IMPORT-001`. Odoo's `action_website_pages_list` targets
+`website.page` with list and kanban views, so the standard Web import affordance
+is available from that action. Core3 previously exposed only Page Manager
+export; it now declares a visible `Import` header action and matching
+`import_website_pages` YAML server form under the same `page.id:
+website-pages` contract.
+
+The bounded import accepts newline-separated
+`Website ID|Page Title|Page URL|State|Indexed|In Main Menu|SEO Optimized|Tracked`
+rows. Guards reject empty input, malformed rows, missing Website IDs, and
+duplicate Website/URL rows before mutation. Valid rows upsert durably by
+`(website_id, url)`, preserve the canonical Website name, and increment
+`row_version` when an existing page is updated. The endpoint and visible action
+require `website.write`; a read-only dispatcher request is covered by focused
+integration coverage.
+
+Focused coverage passes in `test/website_page_import.integration.test.ts`
+(4 tests, 17 assertions). Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-page-import-001/`.
+
+BrowserSkill instance `245ea108` was healthy, but borrowing the authenticated
+Odoo tab `1770662590` returned `tab is borrowed by another session` with owner
+`ftio`. The tab was not taken over or stopped. No Odoo desktop/mobile captures
+were available, and no visual-parity claim is made.
+
+### Updated next slice
+
+Page publish/unpublish browser workflow, richer theme asset installation
+effects, public/portal rendering, and paired Odoo desktop/mobile evidence
+remain open. This wave covers only the Page Manager import action and does not
+claim Website module completion.

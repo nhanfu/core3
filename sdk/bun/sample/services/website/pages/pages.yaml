@@ -43,6 +43,7 @@ components:
     row_key: id
     row_actions: menu
     row_open_action: open_website_page_detail
+    header_actions: [{ id: import_website_pages, label: Import, permission: website.write, variant: secondary }]
     actions:
       - { id: website.pages.export, label: Export, title: Export Website Pages, icon: download, permission: website.read }
       - { id: edit_website_page, label: Edit, permission: website.write, variant: secondary }
