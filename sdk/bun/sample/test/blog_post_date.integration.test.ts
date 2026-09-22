@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
@@ -10,6 +9,7 @@ import { createYamlApi } from '@core3/server/routes/yaml-api';
 const root = join(import.meta.dir, '../services/blog');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 const source = readFileSync('/home/nhanjs/projects/odoo/addons/website_blog/views/website_pages_views.xml', 'utf8');
+const modelSource = readFileSync('/home/nhanjs/projects/odoo/addons/website_blog/models/website_blog.py', 'utf8');
 
 const editValues = (published_date: string | null) => ({
   blog_id: 'blog-demo-001',
@@ -25,21 +25,29 @@ const editValues = (published_date: string | null) => ({
 });
 
 function apiFor(repository: YamlRepository, user: any) {
-  const discovered = discoverPages(join(import.meta.dir, '..'));
+  // Keep this focused API fixture scoped to Blog. The shared checkout can
+  // contain concurrent module YAML edits that should not make a Blog test
+  // fail during global discovery.
+  const page = yaml('pages/post-detail.yaml');
+  const api = yaml('api/post-detail.yaml');
+  const postsApi = yaml('api/posts.yaml');
+  const mergedPage = { ...page, actions: [...(api.actions || []), ...(page.actions || [])] };
+  const workflow = yaml('pages/blog-workflow.yaml').workflow;
+  const datasourceDefinitions = [...(api.datasources || []), ...(postsApi.datasources || [])];
   return createYamlApi({
     repository,
     authProvider: {
       async getCurrentUser() { return user; },
       hasPermission(currentUser: any, permission: string) { return currentUser.permissions.includes(permission); },
     },
-    sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('blog_'))),
-    pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'blog')),
-    pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'blog').map(([id, page]) => [id, page.config])),
-    catalogs: discovered.catalogs,
-    menus: discovered.menus,
-    workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'blog').map(([id, workflow]) => [id, workflow.config])),
-    workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'blog').map(([id, workflow]) => [id, workflow.file])),
-    permissions: discovered.permissions.get('blog')?.config || {},
+    sources: new Map(datasourceDefinitions.map((source: any) => [source.id, source])),
+    pageSources: new Map([[String(page.page.id), (api.datasources || []).map((source: any) => source.id)]]),
+    pages: new Map([[String(page.page.id), mergedPage]]),
+    catalogs: new Map(),
+    menus: new Map(),
+    workflows: new Map([[String(workflow.id), workflow]]),
+    workflowFiles: new Map([[String(workflow.id), join(root, 'pages/blog-workflow.yaml')]]),
+    permissions: yaml('permissions.yaml'),
     uploadRoot: '/tmp/core3-blog-post-date-uploads',
     eventStore: {},
     topics: {},
@@ -71,10 +79,14 @@ describe('BLOG-POST-DATE-001', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(source).toContain('<group name="publishing_details" string="Publishing Options">');
     expect(source).toContain('<field name="post_date"/>');
+    expect(modelSource).toContain("post_date = fields.Datetime('Publishing date', compute='_compute_post_date', inverse='_set_post_date', store=True");
+    expect(modelSource).toContain('blog_post.published_date = blog_post.post_date');
     expect(page.components[0].fields).toContainEqual(expect.objectContaining({ field: 'published_date', label: 'Publishing date', type: 'datetime' }));
     expect(edit.mutation.fields).toContain('published_date');
     expect(edit.mutation.normalize_empty).toEqual(['published_date']);
+    expect(edit.fields).toContainEqual(expect.objectContaining({ field: 'published_date', label: 'Publishing date', type: 'datetime' }));
     expect(edit.mutation.guards.map((guard: any) => guard.code)).toContain('BLOG_POST_DATE_INVALID');
+    expect(edit.mutation.guards.find((guard: any) => guard.code === 'BLOG_POST_DATE_INVALID').query).toContain('regexp_matches');
   });
 
   test('persists, clears, and projects the publishing date with optimistic concurrency', async () => {
@@ -117,6 +129,8 @@ describe('BLOG-POST-DATE-001', () => {
 
     await expect(reader(updateRequest('blog-post-demo-002', 1, editValues('2026-02-03 10:15:00')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 403 });
     await expect(writer(updateRequest('blog-post-demo-002', 1, editValues('not-a-date')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 422, code: 'BLOG_POST_DATE_INVALID' });
+    await expect(writer(updateRequest('blog-post-demo-002', 1, editValues('2026-2-03 10:15')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 422, code: 'BLOG_POST_DATE_INVALID' });
+    await expect(writer(updateRequest('blog-post-demo-002', 1, editValues('2026-02-30 10:15')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 422, code: 'BLOG_POST_DATE_INVALID' });
     await expect(writer(updateRequest('missing-post', 1, editValues('2026-02-03 10:15:00')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 404, code: 'BLOG_POST_NOT_FOUND' });
     await repository.run("UPDATE blog_blogs SET company_name = 'Other Company' WHERE id = 'blog-demo-001'");
     await expect(writer(updateRequest('blog-post-demo-002', 1, editValues('2026-02-03 10:15:00')), new URL('http://blog.test/api/actions/blog.posts.update'))).rejects.toMatchObject({ status: 403, code: 'BLOG_COMPANY_SCOPE_REQUIRED' });

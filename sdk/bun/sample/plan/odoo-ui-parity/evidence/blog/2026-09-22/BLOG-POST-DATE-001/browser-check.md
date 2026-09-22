@@ -16,3 +16,11 @@ captures were produced, and this slice makes no visual-parity claim.
 
 Cleanup: session `eaja` was explicitly stopped after the failed borrow; the
 user tab was not left borrowed.
+
+Fresh BrowserSkill attempt: the connected instance `245ea108` listed the same
+user-owned Odoo tab `1770662590` at `http://localhost:8069/odoo/contacts/9`.
+One borrow request was issued from session `rpdx`, but ownership was not
+granted by the confirmation flow. The tab was not read, navigated, or captured;
+session state is now empty and the user tab was not left borrowed. No
+credentials, cookies, tokens, independent login, or Playwright session were
+used.

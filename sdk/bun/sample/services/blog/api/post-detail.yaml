@@ -77,7 +77,7 @@ actions:
         - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
         - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
-        - { query: "SELECT 1 AS ok WHERE :published_date IS NULL OR TRY_CAST(CAST(:published_date AS VARCHAR) AS TIMESTAMP) IS NOT NULL", status: 422, code: BLOG_POST_DATE_INVALID, message: Publishing date must be a valid date and time. }
+        - { query: "SELECT 1 AS ok WHERE :published_date IS NULL OR (regexp_matches(CAST(:published_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}(T| )[0-9]{2}:[0-9]{2}(:[0-9]{2})?$') AND TRY_CAST(REPLACE(CAST(:published_date AS VARCHAR), 'T', ' ') AS TIMESTAMP) IS NOT NULL)", status: 422, code: BLOG_POST_DATE_INVALID, message: Publishing date must be a valid ISO date and time. }
       result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     fields:
       - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
