@@ -106,6 +106,55 @@ datasources:
       ORDER BY u.livechat_name, u.id
 
 actions:
+  - id: send_livechat_session_history
+    type: server_form
+    permission: livechat.write
+    title: Send Page History
+    description: Sends the visitor page history through Odoo's /im_livechat/history route; embedded clients use /im_livechat/cors/history.
+    action: /im_livechat/history
+    handler: yaml_mutation
+    operation: history
+    params: { id: '{state.id}' }
+    success_message: Page history sent to the visitor.
+    refresh: [livechat_session_messages]
+    fields:
+      - { field: partner_id, label: Visitor Partner, type: text, required: true, placeholder: visitor-demo-a }
+      - { field: page_history, label: Pages Visited, type: textarea, required: false, placeholder: '[/shop, /contactus]' }
+    mutation:
+      generated: [history_id]
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND visitor_id = TRIM(CAST(:partner_id AS VARCHAR))", status: 403, code: LIVECHAT_HISTORY_PARTNER_NOT_MEMBER, message: The selected visitor partner is not a member of this Live Chat conversation. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(COALESCE(CAST(:page_history AS VARCHAR), '')) <= 6000", status: 422, code: LIVECHAT_HISTORY_TOO_LARGE, message: Page history must be 6000 characters or fewer. }
+      steps:
+        - query: |
+            INSERT INTO livechat_session_messages
+              (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+            VALUES(
+              :history_id,
+              :id,
+              :current_user_id,
+              COALESCE(NULLIF(:current_user_name, ''), 'Live Chat operator'),
+              'system',
+              CASE
+                WHEN LENGTH(TRIM(COALESCE(CAST(:page_history AS VARCHAR), ''))) = 0 THEN 'No history found'
+                ELSE 'Page history: ' || TRIM(CAST(:page_history AS VARCHAR))
+              END,
+              'history',
+              'Page History',
+              CURRENT_TIMESTAMP
+            )
+          expect_changed: true
+          status: 409
+          code: LIVECHAT_HISTORY_NOT_SENT
+          message: The visitor page history could not be sent.
+      result:
+        query: |
+          SELECT id, session_id, author_name, author_type, body AS detail,
+            action, action_label, CAST(created_at AS VARCHAR) AS created_at
+          FROM livechat_session_messages
+          WHERE id = :history_id
   - id: email_livechat_session_transcript
     type: server_form
     permission: livechat.write

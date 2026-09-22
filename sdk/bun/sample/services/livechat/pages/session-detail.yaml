@@ -12,6 +12,7 @@ components:
       - { id: join_livechat_session_detail, label: Join, variant: primary, show_if: "record.status === 'Looking for Help'" }
       - { id: close_livechat_session_detail, label: Close, variant: danger, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer' || record.status === 'Looking for Help'" }
       - { id: email_livechat_session_transcript, label: Email transcript, variant: secondary, show_if: "record.status === 'Closed'" }
+      - { id: send_livechat_session_history, label: Send Page History, variant: secondary, permission: livechat.write }
       - { id: invite_livechat_session_member, label: Invite People, variant: secondary, permission: livechat.write, show_if: "record.status !== 'Closed'" }
       - { id: add_livechat_session_tag, label: Add Tag, variant: secondary }
       - { id: remove_livechat_session_tag, label: Remove Tag, variant: secondary }
@@ -38,6 +39,7 @@ components:
     message_label: Send message
     message_action: send_livechat_session_message
     message_action_field: action_label
+    message_action_labels: { history: Page History, message: Message, leave: Visitor left, welcome: Welcome, invite: Invite }
     message_detail_field: detail
     message_timestamp_field: created_at
 
