@@ -391,3 +391,37 @@ project/template/task copy, source archival, and missing/invalid/unconfirmed/
 stale/replay guards pass. The feature remains conditionally accepted pending
 authenticated live Odoo/Core3 desktop/mobile comparison and browser CRUD/request
 checks. Full Project sign-off is not claimed.
+
+## QA execution — PROJECT-TASK-SHARE-001 — 2026-09-22
+
+- Feature: Odoo Project task/kanban `Share Task` portal-share action
+  `portal_share_action`; evidence:
+  `../evidence/project/2026-09-22/project-task-share-001/`.
+- Source comparison: Odoo `project_task_views.xml` binds the action to
+  `portal_share_action`; `project_task_share_wizard.py` defines
+  `task.share.wizard` as a Portal share specialization.
+- Focused checks:
+  `bun test ./test/project_task_share.integration.test.ts --timeout 30000` —
+  3 passed, 0 failed, 22 assertions.
+- Project regression corpus:
+  `bun test ./test/project*.integration.test.ts --timeout 30000` — 84 passed,
+  0 failed, 833 assertions across 29 files.
+- Audit/build hygiene: `bun run audit` passed with 853 pages, 861 routes, and
+  1,797 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: the one permitted BrowserSkill borrow attempt
+  against the connected authenticated Odoo tab at `http://localhost:8069` was
+  denied at the confirmation boundary. No retry, alternate browser, login,
+  credentials, or desktop/mobile capture was used. The worker session was
+  stopped cleanly.
+
+### QA decision
+
+The YAML page/API/action contract, `project.task.publish` permission boundary,
+durable fixed-date task-share projection, row-version advancement, company and
+privacy scope, duplicate/invalid/stale guards, and file-backed replay pass.
+The feature remains conditionally accepted pending authenticated live browser
+CRUD/request checks and paired desktop/mobile comparison. Email delivery,
+portal provisioning/access-token side effects, collaborator revocation, and
+follower/chatter notification parity are not claimed.

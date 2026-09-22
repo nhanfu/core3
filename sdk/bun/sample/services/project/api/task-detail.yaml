@@ -15,6 +15,10 @@ datasources:
   - id: project_task_attachments
     permission: project.read
     query: "SELECT a.id, a.task_id, a.company_name, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM project_task_attachments a JOIN project_tasks t ON t.id = a.task_id WHERE t.id = :id AND t.company_name = :current_company_name ORDER BY a.created_at DESC, a.id"
+  - id: project_task_shares
+    permission: project.task.publish
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_SHARES_UNAVAILABLE, message: Task shares are temporarily unavailable. } }
+    query: "SELECT s.id, s.task_id, s.recipient_email, COALESCE(s.note, '') AS note, s.send_invitation, s.active, s.row_version, '/my/projects/task/detail?project_id=' || t.project_id || '&task_id=' || s.task_id AS share_link, CAST(s.created_at AS VARCHAR) AS created_at FROM project_task_shares s JOIN project_tasks t ON t.id = s.task_id JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND s.task_id = :id AND s.active = TRUE AND COALESCE(t.active, TRUE) = TRUE AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE AND (COALESCE(:current_company_name, '') = '' OR COALESCE(t.company_name, :current_company_name) = :current_company_name) ORDER BY s.created_at, s.id"
   - id: project_task_dependencies
     permission: project.read
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_DEPENDENCIES_UNAVAILABLE, message: Task dependencies are temporarily unavailable. } }
@@ -40,6 +44,37 @@ actions:
     permission: project.read
     navigate_to: /tasks/recurrence
     params: { task_id: '{state.id}' }
+  - id: share_project_task
+    type: server_form
+    permission: project.task.publish
+    title: Share Task
+    description: Send a portal link to a recipient so they can view this task.
+    submit_label: Share Task
+    cancel_label: Discard
+    success_message: Task shared with your recipient.
+    action: project.tasks.share
+    handler: yaml_mutation
+    operation: share
+    params: { task_id: '{state.project_task_detail.id}', expected_task_row_version: '{state.project_task_detail.row_version}', current_company_name: '{state.project_task_detail.company_name}' }
+    refresh: [project_task_detail, project_task_shares]
+    fields:
+      - { field: recipient_email, label: Recipient email, type: text, required: true, placeholder: name@example.com }
+      - { field: note, label: Note, type: textarea, placeholder: Add a note for the recipient. }
+      - { field: send_invitation, label: Send invitation, type: checkbox, default: true }
+    mutation:
+      generated: [id]
+      boolean_fields: [send_invitation]
+      required: [recipient_email]
+      guards:
+        - { query: "SELECT t.id FROM project_tasks t JOIN projects p ON p.id = t.project_id WHERE t.id = :task_id AND COALESCE(t.active, TRUE) = TRUE AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE AND COALESCE(p.privacy_visibility, 'portal') IN ('portal', 'invited_users')", status: 404, code: PROJECT_TASK_SHARE_NOT_FOUND, message: The task is not available for sharing. }
+        - { query: "SELECT t.id FROM project_tasks t WHERE t.id = :task_id AND (COALESCE(:current_company_name, '') = '' OR COALESCE(t.company_name, :current_company_name) = :current_company_name)", status: 403, code: PROJECT_TASK_SHARE_COMPANY_SCOPE_REQUIRED, message: The task is outside the current company. }
+        - { query: "SELECT t.id FROM project_tasks t WHERE t.id = :task_id AND t.row_version = :expected_task_row_version", status: 409, code: PROJECT_TASK_SHARE_STALE_TASK, message: The task changed before it was shared. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE POSITION('@' IN TRIM(COALESCE(:recipient_email, ''))) > 1 AND POSITION('.' IN SPLIT_PART(TRIM(COALESCE(:recipient_email, '')), '@', 2)) > 1", status: 422, code: PROJECT_TASK_SHARE_RECIPIENT_INVALID, message: Enter a valid recipient email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_task_shares WHERE task_id = :task_id AND LOWER(TRIM(recipient_email)) = LOWER(TRIM(:recipient_email)) AND active = TRUE)", status: 409, code: PROJECT_TASK_SHARE_ALREADY_EXISTS, message: This recipient already has access to the task. }
+      steps:
+        - { query: "INSERT INTO project_task_shares(id, task_id, recipient_email, note, send_invitation, active, row_version, created_at, updated_at) VALUES (:id, :task_id, LOWER(TRIM(:recipient_email)), NULLIF(TRIM(COALESCE(:note, '')), ''), COALESCE(:send_invitation, TRUE), TRUE, 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00')" }
+        - { query: "UPDATE project_tasks SET row_version = row_version + 1 WHERE id = :task_id AND row_version = :expected_task_row_version", expect_changed: true, status: 409, code: PROJECT_TASK_SHARE_STALE_TASK, message: The task changed before it was shared. Reload and try again. }
+      result: { query: "SELECT s.id, s.task_id, s.recipient_email, COALESCE(s.note, '') AS note, s.send_invitation, s.active, s.row_version, '/my/projects/task/detail?project_id=' || t.project_id || '&task_id=' || s.task_id AS share_link, s.created_at FROM project_task_shares s JOIN project_tasks t ON t.id = s.task_id WHERE s.id = :id" }
   - id: convert_task_to_subtask
     type: server_form
     permission: project.write

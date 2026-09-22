@@ -4,9 +4,25 @@ Module owner: project module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc
+Candidate commit: pending
 
-## Current bounded task — Project form Convert to Template (2026-09-22)
+## Current bounded task — Project Task Share (2026-09-22)
+
+Implemented stable ID `PROJECT-TASK-SHARE-001`: the Odoo `portal_share_action`
+task form/kanban action is now a page-id-bound Core3 server form using the
+`project.task.publish` permission. A durable `project_task_shares` projection
+stores normalized recipient, note, invitation intent, active state, row
+version, and a fixed-date portal task link. Missing/restricted, company-scope,
+stale, invalid-recipient, and duplicate guards pass, and task row versions are
+advanced atomically. The focused test passes 3 tests and 22 assertions; the
+full Project corpus passes 84 tests and 833 assertions.
+
+The single required BrowserSkill borrow attempt was denied at the confirmation
+boundary. No authenticated screenshot or visual-parity claim is made. Mail
+delivery, portal provisioning/token side effects, collaborator removal, and
+follower/chatter behavior remain open.
+
+## Prior bounded task — Project form Convert to Template (2026-09-22)
 
 Implemented stable ID `PROJECT-TEMPLATE-CONVERSION-001`: the manager-bound
 Project detail action now creates a durable template copy with top-level task
@@ -64,9 +80,9 @@ portal-sharing behavior remain outside this bounded slice.
 
 ## Next bounded task
 
-Run authenticated CRUD/workflow checks and paired Odoo desktop/mobile captures
-for the Share Project action, then select the next non-configuration Project
-action. Update this file only with evidence from the matching module owner.
+Select the next source-backed Project form or embedded workflow action after
+Task Share, preserving the open authenticated browser and dependency topology
+gates.
 
 ## QA checkpoint — c49d8cb6 (2026-09-13)
 

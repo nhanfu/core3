@@ -122,7 +122,7 @@ describe('Project task attachments', () => {
       pageSources: new Map([['project-task-detail', ['project_task_detail', 'project_task_attachments']]]),
       pages: new Map([['project-task-detail', { ...page, actions: api.actions }]]),
       catalogs: new Map(), menus: new Map(), workflows: new Map([['project_tasks', yaml('pages/project-workflow.yaml').workflow]]), workflowFiles: new Map(),
-      permissions: { permissions: ['project.read', 'project.write', 'project.manage'], tables: {}, endpoints: {} },
+      permissions: { permissions: ['project.read', 'project.write', 'project.manage', 'project.task.publish'], tables: {}, endpoints: {} },
       uploadRoot: '/tmp/core3-project-task-route-context-uploads', eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
     });
     const query = () => handle(new Request('http://project.test/api/query', {

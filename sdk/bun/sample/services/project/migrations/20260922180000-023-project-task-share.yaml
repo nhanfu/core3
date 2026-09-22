@@ -1,0 +1,26 @@
+version: 0.0.23
+kind: schema
+description: Durable Project task portal-share recipients
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_task_shares (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        task_id VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        note VARCHAR,
+        send_invitation BOOLEAN NOT NULL DEFAULT TRUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 12:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 12:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS project_task_shares_task_idx ON project_task_shares(task_id, active);
+      INSERT OR IGNORE INTO project_task_shares(id, task_id, recipient_email, note, send_invitation, active, row_version, created_at, updated_at)
+      VALUES ('project-task-share-demo-001', 'task-demo-001', 'task.customer@example.com', 'Review the current task status.', TRUE, TRUE, 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00');
+    down: |
+      DROP TABLE IF EXISTS project_task_shares;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

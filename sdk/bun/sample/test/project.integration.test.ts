@@ -91,7 +91,7 @@ describe('Project list and task navigation parity', () => {
   test('keeps permission and task workflow boundaries explicit', () => {
     for (const file of ['api/projects.yaml', 'api/project-detail.yaml', 'api/tasks.yaml', 'api/task-detail.yaml']) {
       for (const source of yaml(file).datasources) {
-        const allowed = file === 'api/task-detail.yaml' ? ['project.read', 'timesheets.read'] : ['project.read'];
+        const allowed = file === 'api/task-detail.yaml' ? ['project.read', 'timesheets.read', 'project.task.publish'] : ['project.read'];
         expect(allowed, file).toContain(source.permission);
       }
     }
@@ -103,6 +103,6 @@ describe('Project list and task navigation parity', () => {
       expect.objectContaining({ id: 'cancel', permission: 'project.manage' }),
     ]));
     expect(workflow.transitions.every((transition: any) => transition.mutation.steps?.length)).toBe(true);
-    expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['project.read', 'project.write', 'project.manage']));
+    expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['project.read', 'project.write', 'project.manage', 'project.task.publish']));
   });
 });

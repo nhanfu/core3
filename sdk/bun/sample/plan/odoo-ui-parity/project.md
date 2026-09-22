@@ -1258,3 +1258,41 @@ BrowserSkill instance `245ea108` was connected, but the authenticated Odoo tab
 was refused with a borrow conflict. The worker stopped only its own session and
 did not use independent credentials or another browser backend. No Odoo/Core3
 desktop/mobile capture or visual-parity claim is made.
+
+## Bounded slice: Project Task Share action (2026-09-22)
+
+Stable ID: `PROJECT-TASK-SHARE-001`.
+
+The next uncovered Project form/kanban workflow after grouped Configuration is
+Odoo's `Share Task` portal-share action `portal_share_action`, defined in
+`/home/nhanjs/projects/odoo/addons/project/views/project_task_views.xml` and
+backed by `task.share.wizard` in
+`/home/nhanjs/projects/odoo/addons/project/wizard/project_task_share_wizard.py`.
+The source task menu opens a portal-share form with a recipient, note, and
+share link; the Project wizard specializes the Portal share model and derives
+the task's project privacy boundary.
+
+Core3 adds the `Share Task` action to the existing task-detail action menu and
+binds it to the `project-task-detail` API fragment by page id. The durable
+`project_task_shares` projection stores normalized recipient, note, invitation
+intent, active state, row version, fixed-date metadata, and a deterministic
+portal task link. Migration
+`20260922180000-023-project-task-share.yaml` is idempotent and seeds one stable
+share row. The `project.task.publish` boundary protects the share datasource
+and mutation; guards reject missing/archived/template/restricted tasks,
+cross-company access, stale task versions, invalid recipients, and duplicate
+active recipients. The task row version advances atomically with the share.
+
+Focused coverage is `test/project_task_share.integration.test.ts` (3 tests,
+22 assertions), and the complete Project corpus passes 84 tests with 833
+assertions. Audit/build hygiene passes: UI audit 853 pages, 861 routes, and
+1,797 datasources; Project CSS build; frontend build with 184 transformed
+modules; and `git diff --check`.
+
+BrowserSkill made the one permitted attempt against the connected authenticated
+Odoo tab at `http://localhost:8069`; the required borrow confirmation was
+denied. No retry, independent login, alternate browser, credentials, or
+desktop/mobile capture was used. The slice therefore has no authenticated
+visual-parity claim. Odoo email delivery, portal-user provisioning/access-token
+side effects, collaborator removal, and follower/chatter notification behavior
+remain separate parity gaps.
