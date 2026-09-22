@@ -15,6 +15,8 @@ datasources:
         (SELECT COUNT(*) FROM mrp_productions b
           WHERE b.backorder_group_id = p.backorder_group_id
             AND b.company_name = p.company_name) AS backorder_count
+        ,(SELECT COUNT(*) FROM mrp_unbuild_orders u
+          WHERE u.mo_id = p.id AND u.company_name = p.company_name) AS unbuild_count
       FROM mrp_productions p
       LEFT JOIN mrp_boms b ON b.id = p.bom_id
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id
@@ -51,6 +53,11 @@ actions:
     type: navigate
     permission: manufacturing.read
     navigate_to: /manufacturing-orders/detail/backorders
+    params: { id: '{state.id}' }
+  - id: open_mrp_production_unbuilds
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/unbuilds
     params: { id: '{state.id}' }
   - id: back_to_mrp_productions
     type: navigate

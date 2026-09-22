@@ -1,5 +1,22 @@
 # manufacturing parity progress
 
+## 2026-09-22 bounded next slice — Manufacturing Order Unbuilds
+
+- Implemented `MANUFACTURING-MO-UNBUILDS-001` for Odoo's
+  `action_view_mrp_production_unbuilds`. The MO detail now exposes the
+  source-scoped Unbuilds stat action at
+  `/manufacturing-orders/detail/unbuilds`, with List/Kanban/Form/Activity
+  contracts joined by `page.id`.
+- Reused durable `mrp_unbuild_orders.mo_id` and existing unbuild workflow;
+  added the idempotent migration `0.0.29` scope index, selected-MO/company
+  query guards, permissioned create/delete actions, and row-state protection.
+- Focused feature verification passes 3 tests / 35 assertions. The full
+  Manufacturing regression passes 102 tests / 1,005 assertions across 31
+  files. Global UI audit passes at 853 pages / 861 routes / 1,797 datasources;
+  Manufacturing CSS build and diff check pass.
+- BrowserSkill was not started for this slice, per the audit/implementation
+  instruction to stop after code verification; no visual parity claim is made.
+
 ## 2026-09-22 bounded next slice — Manufacturing Orders picking-type dashboard
 
 - Implemented `MANUFACTURING-PICKING-DASHBOARD-001` for Odoo's

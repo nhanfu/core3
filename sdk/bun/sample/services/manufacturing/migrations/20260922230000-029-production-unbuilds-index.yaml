@@ -1,0 +1,13 @@
+version: 0.0.29
+description: Durable Manufacturing Order scope index for the unbuild stat action
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_mrp_unbuild_orders_mo_company_state
+        ON mrp_unbuild_orders(mo_id, company_name, state, created_at, id);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_unbuild_orders_mo_company_state;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

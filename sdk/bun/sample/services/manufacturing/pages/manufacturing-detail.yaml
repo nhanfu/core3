@@ -12,6 +12,7 @@ components:
       - { id: open_mrp_production_moves, label: Product Moves, value_field: move_count, permission: manufacturing.read, show_if: "record.state === 'In Progress' || record.state === 'Done'" }
       - { id: open_mrp_production_scraps, label: Scraps, value_field: scrap_count, permission: manufacturing.read, show_if: "record.scrap_count > 0" }
       - { id: open_mrp_production_backorders, label: Backorders, value_field: backorder_count, permission: manufacturing.read, show_if: "record.backorder_count >= 2" }
+      - { id: open_mrp_production_unbuilds, label: Unbuilds, value_field: unbuild_count, permission: manufacturing.read, show_if: "record.unbuild_count > 0" }
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_mrp_productions, label: Back to Manufacturing Orders, icon: arrow-left, permission: manufacturing.read }

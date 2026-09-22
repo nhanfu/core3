@@ -2,6 +2,38 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Manufacturing Order Unbuilds stat action (`MANUFACTURING-MO-UNBUILDS-001`)
+
+Local Odoo 19 source identifies `action_view_mrp_production_unbuilds` in
+`addons/mrp/models/mrp_production.py` and the `Unbuilds` stat button in
+`addons/mrp/views/mrp_production_views.xml`. The method opens the existing
+`mrp.mrp_unbuild` action for `mrp.unbuild`, scopes it with `mo_id = active_id`,
+and supplies `default_mo_id = active_id`. The installed action declares
+`list,kanban,form,activity`; this is a Manufacturing Order record action, not
+a second Unbuild Orders menu.
+
+Core3 adds `/manufacturing-orders/detail/unbuilds` with the presentation-only
+`pages/production-unbuilds.yaml` and page-id-bound
+`api/production-unbuilds.yaml`. The MO detail exposes the source `Unbuilds`
+stat button and durable count. The datasource joins `mrp_unbuild_orders` to
+the selected `mrp_productions` row and company, preserves the source four
+view modes, and carries the source action metadata. Create is seeded with the
+selected MO context; delete is scoped to that MO. Existing Draft-only Unbuild
+and Done protection remains in force, with write permission and row-version
+guards.
+
+Migration `20260922230000-029-production-unbuilds-index.yaml` adds the
+idempotent `(mo_id, company_name, state, created_at, id)` query index; no
+fixture-only rows are introduced. Focused coverage is
+`test/manufacturing_production_unbuilds.integration.test.ts`: source action
+identity, page/API separation, route discovery, MO/company scoping,
+search/status/empty/not-found/503 behavior, migration replay, restart
+persistence, create context, write permissions, and Done-delete protection.
+The full Manufacturing corpus passes 102 tests / 1,005 assertions across 31
+files. UI audit and Manufacturing CSS build also pass; no BrowserSkill visual
+attempt was made in this slice, so paired authenticated Odoo/Core3 visual
+evidence remains open.
+
 ## 2026-09-22 Manufacturing Order Backorders stat action (`MANUFACTURING-MO-BACKORDERS-001`)
 
 Local Odoo 19 source identifies `mrp.production.action_view_mrp_production_backorders`

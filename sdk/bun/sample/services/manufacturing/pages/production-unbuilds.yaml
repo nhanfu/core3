@@ -1,0 +1,54 @@
+title: Manufacturing Order Unbuilds
+page: { id: manufacturing-production-unbuilds, route: /manufacturing-orders/detail/unbuilds, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders, Unbuilds], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_production_unbuilds
+    create_action: create_mrp_production_unbuild
+    create_label: New
+    search: { label: Search Unbuild Orders, placeholder: 'Search reference, product, or lot...' }
+    filters:
+      - { field: state, label: Status, options_source: mrp_production_unbuild_states
+      }
+      - { field: product_name, label: Product, options_source: mrp_production_unbuild_products }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: state, label: Status }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        groups_source: mrp_production_unbuild_states
+        card: { title: name, subtitle: product_name, fields: [{ field: product_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: product_name
+        record_date_field: activity_date
+        activity_types: [{ id: todo, label: To-Do, icon: check }, { id: done, label: Done, icon: check }]
+    form_view: { page: apps/services/manufacturing/pages/unbuild-order-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_production_unbuild
+    row_double_click_action: view_mrp_production_unbuild
+    row_actions: menu
+    actions:
+      - { id: delete_mrp_production_unbuild, label: Delete, permission: manufacturing.write, variant: danger, show_if: "row.state === 'Draft'" }
+    empty_state: { title: No unbuild order found, description: This Manufacturing Order has no linked unbuild orders. }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
+      - { field: bom_name, label: Bill of Material, mobile: false }
+      - { field: mo_name, label: Manufacturing Order, mobile: false }
+      - { field: lot_name, label: Lot/Serial Number, mobile: false }
+      - { field: product_qty, label: Quantity, align: right, mobile: true }
+      - { field: product_uom, label: Unit, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_production_unbuild, label: Open, icon: eye }, { id: delete_mrp_production_unbuild, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }
+    page_size: 50
