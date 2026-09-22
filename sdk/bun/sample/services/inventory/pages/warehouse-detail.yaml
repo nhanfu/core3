@@ -15,6 +15,8 @@ components:
       - { id: archive_inventory_warehouse, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.state === 'Active'" }
       - { id: restore_inventory_warehouse, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.state === 'Archived'" }
       - { id: delete_inventory_warehouse, label: Delete, variant: danger, permission: inventory.manage }
+    stat_buttons:
+      - { id: view_inventory_warehouse_routes, label: Routes, icon: route, value_field: route_count, permission: inventory.manage }
     group_columns: 2
     groups:
       - title: Warehouse

@@ -1775,6 +1775,38 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Configuration > Warehouse form Routes stat action — `INV-WAREHOUSE-ROUTES-001` (2026-09-22)
+
+This bounded slice closes the previously uncovered Warehouse form `Routes`
+stat action. Odoo 19 declares `action_view_all_routes` at
+`addons/stock/views/stock_warehouse_views.xml:11-20`; the implementation at
+`addons/stock/models/stock_warehouse.py:1150-1161` opens the shared Routes
+list/form action for the selected warehouse, including configured, MTO, and
+resupply-linked routes with archived records available to the lookup.
+
+Core3 adds the manager-only `view_inventory_warehouse_routes` stat action to
+`pages/warehouse-detail.yaml` and its page-id-matched backend action in
+`api/warehouse-detail.yaml`. The existing Routes datasource accepts the
+warehouse context and filters both direct route ownership and warehouse-linked
+route rules. The warehouse detail datasource exposes a deterministic
+`route_count`, and company, status, search, empty, and transport boundaries
+remain intact.
+
+Focused verification passes 2 tests / 16 assertions in
+`test/inventory_warehouse_routes.integration.test.ts`, covering Odoo source
+mapping, page/API separation, permission and stable navigation params, route
+discovery, direct/rule-linked filtering, company/empty boundaries, and the
+detail count.
+
+BrowserSkill was stopped without borrowing a user tab after the user directed
+the bounded work to finish without waiting for confirmation. No authenticated
+Odoo interaction or desktop/mobile visual-parity claim is made; the exact gap
+is recorded under
+`evidence/inventory/2026-09-22/INV-WAREHOUSE-ROUTES-001/browser-blocker.md`.
+
+Feature evidence: `evidence/inventory/2026-09-22/INV-WAREHOUSE-ROUTES-001/`.
+Full Inventory sign-off remains open.
+
 ## Products > Product form Putaway Rules — `INV-PRODUCT-PUTAWAY-001` (2026-09-22)
 
 This bounded slice closes the next uncovered product-form action after Stock

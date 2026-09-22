@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_WAREHOUSE_DETAIL_UNAVAILABLE, message: Warehouse details are temporarily unavailable. } }
-    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COALESCE(w.reception_steps, 'one_step') AS reception_steps, COALESCE(w.delivery_steps, 'ship_only') AS delivery_steps, COUNT(DISTINCT l.id) AS location_count, COUNT(DISTINCT resupply.id) AS resupply_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' LEFT JOIN inventory_warehouse_resupply_links resupply ON resupply.supplied_warehouse_id = w.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state, w.reception_steps, w.delivery_steps"
+    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COALESCE(w.reception_steps, 'one_step') AS reception_steps, COALESCE(w.delivery_steps, 'ship_only') AS delivery_steps, COUNT(DISTINCT l.id) AS location_count, COUNT(DISTINCT resupply.id) AS resupply_count, (SELECT COUNT(DISTINCT route.id) FROM inventory_routes route WHERE route.warehouse_id = w.id OR EXISTS (SELECT 1 FROM inventory_route_rules warehouse_rule WHERE warehouse_rule.route_id = route.id AND warehouse_rule.warehouse_id = w.id)) AS route_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' LEFT JOIN inventory_warehouse_resupply_links resupply ON resupply.supplied_warehouse_id = w.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state, w.reception_steps, w.delivery_steps"
   - id: inventory_warehouse_resupply_warehouses
     single: false
     permission: inventory.read
@@ -19,6 +19,11 @@ actions:
     type: navigate
     permission: inventory.read
     navigate_to: /warehouses
+  - id: view_inventory_warehouse_routes
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /routes
+    params: { warehouse_id: '{state.inventory_warehouse_detail.id}', current_company_name: '{state.inventory_warehouse_detail.company_name}' }
   - id: edit_inventory_warehouse
     type: server_form
     permission: inventory.manage
