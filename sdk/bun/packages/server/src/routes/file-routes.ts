@@ -34,7 +34,15 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
     const targetPath = join(UPLOAD_ROOT, storageKey);
     writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
     try {
-      const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
+      const fileMeta = {
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        storageKey,
+        ...(meta.kind === 'website_favicon'
+          ? { contentBase64: Buffer.from(await file.arrayBuffer()).toString('base64') }
+          : {}),
+      };
       if (!action.topic) {
         if (!action?.mutation) return apiError(500, 'Order attachment mutation is not configured');
         return json(await repository.executeMutation(action.mutation, {

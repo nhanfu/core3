@@ -153,3 +153,24 @@ BrowserSkill instance `245ea108` was healthy, but borrowing the required
 authenticated Odoo tab `1770662590` returned `tab is borrowed by another
 session` with owner `wabp`. The tab was not taken over or stopped; no Odoo or
 Core3 desktop/mobile captures were made and no visual-parity claim is made.
+
+## 2026-09-22 owner checkpoint — Website Settings favicon
+
+Implemented stable ID `WEBSITE-SETTINGS-FAVICON-001`, the next genuinely
+missing Website setting after the completed import/export, name/domain,
+theme, analytics, tracking/SEO, content, asset, and public slices. Odoo's
+Website Identification form exposes a binary `favicon` image field; Core3 now
+has a declarative SettingsView image control, a `website.manage` upload action,
+durable favicon metadata/bytes, stale/version guards, authenticated download,
+and migration/restart persistence.
+
+Focused result: `test/website_favicon_settings.integration.test.ts` — 4 tests,
+20 assertions; existing Website Settings regression — 4 tests, 21 assertions.
+Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-settings-favicon-001/`.
+
+BrowserSkill instance `245ea108` was healthy, but authenticated Odoo tab
+`1770662590` was already borrowed by session `xigt`; the tab was not taken over
+or stopped. No truthful Odoo favicon desktop/mobile captures were available and
+no visual-parity claim is made. Website module sign-off and broader open slices
+remain pending.

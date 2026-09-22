@@ -19,6 +19,7 @@ recorded in [`../website.md`](../website.md).
 | YAML-driven presentation | page-owned API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, responsive layout and safe content binding |
 | Site/Reporting/Analytics | `/website-analysis`, `api/analysis.yaml`, `website_analytics_daily` | Odoo `backend_dashboard` route/menu identity, multi-site aggregates, daily traffic, durable migration replay, read permission and empty/error states |
 | Configuration/Settings | `/website-settings`, `api/settings.yaml`, `website_websites` | Odoo `action_website_configuration` → `menu_website_website_settings`; bounded Website Identification name/domain settings, validation, stale guards, and durable multi-site scope |
+| Configuration/Settings favicon | `/website-settings`, `api/settings.yaml`, `website_favicon` storage route | Odoo Website Identification binary favicon upload/replace, manager permission, validation, stale guards, durable bytes, and responsive image control |
 | Page Manager tracking/SEO filters | `/website-pages`, `api/pages.yaml`, `website_pages.track` | Odoo `Tracked`, `Not tracked`, and `Not SEO optimized` filters, durable page tracking edit, row-version guard, and responsive authenticated list |
 
 Actors are Website Manager, Website Editor, public visitor, wrong-company user
@@ -42,6 +43,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-010 | Page tracking and SEO filters | Odoo Page Manager filter labels map to API-owned `track` and `is_seo_optimized` predicates; tracked/untracked/not-optimized results are deterministic | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-FUNC-011 | Theme Manager catalog | Odoo `theme_install_kanban_action` maps to `/website-themes`; Theme/Category search, Author/Category grouping, installed state, and card actions are declarative and page/API-separated | pass: `website_themes.integration.test.ts` |
 | WEBSITE-FUNC-012 | Website Identification settings | Odoo Settings action maps to `/website-settings`; General and Website Identification sections expose durable name/domain controls through a SettingsView joined to the API by `page.id` | pass: `website_settings.integration.test.ts` |
+| WEBSITE-FUNC-013 | Website Identification favicon | Odoo binary image field maps to a declarative SettingsView image control and Website favicon upload/download action | pass: `website_favicon_settings.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -56,6 +58,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-WF-007 | Page tracking edit | `website.write` editor toggles `track`, row version increments, stale replay returns 409, and migration replay/file-backed restart preserve the value | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-WF-008 | Theme selection lifecycle | `website.manage` Use this theme, Update theme, and Remove theme persist `theme_id`/`theme_revision`, reject stale/duplicate/not-selected actions, and recover across restart | pass: `website_themes.integration.test.ts` |
 | WEBSITE-WF-009 | Website Identification save | `website.manage` saves name/domain with required row version, rejects invalid values atomically, increments `row_version`, and retains values after migration replay/restart | pass: `website_settings.integration.test.ts` |
+| WEBSITE-WF-010 | Favicon upload lifecycle | `website.manage` uploads/replaces validated image bytes, increments `row_version`, rejects stale writes, returns exact bytes, and survives migration replay/restart | pass: `website_favicon_settings.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -70,6 +73,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-PERM-007 | Page tracking editor boundary | `website.read` can list/filter pages but cannot mutate `track`; `website.write` is required at the action endpoint and no row changes on denial | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-PERM-008 | Theme manager actor boundary | `website.read` can discover the catalog but `website.manage` is required for theme actions; direct 403 leaves the Website row unchanged | pass: `website_themes.integration.test.ts` |
 | WEBSITE-PERM-009 | Settings actor boundary | `website.manage` is required for the datasource and save action; read-only actors cannot mutate the Website row | pass: declared YAML boundary; authenticated browser actor proof blocked by borrowed Odoo tab/Core3 startup state |
+| WEBSITE-PERM-010 | Favicon actor boundary | `website.manage` is required for favicon upload; `website.read` may download; read-only upload leaves the Website row unchanged | pass: `website_favicon_settings.integration.test.ts`; browser comparison blocked by tab ownership |
 
 ## Visual, responsive, and regression cases
 
@@ -83,6 +87,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-UI-006 | Page Manager tracking/SEO filters | 1440x900, 390x844 | Authenticated Core3 list exposes the Tracking/SEO filter group and stable rows without page/runtime errors; paired Odoo comparison is required when Website is available | pass for Core3 isolated runner; Odoo Website absent in authenticated session, so paired visual comparison blocked |
 | WEBSITE-UI-007 | Theme Manager | 1440x900, 390x844 | Theme cards, status, search/grouping, action visibility, and responsive layout match Odoo; Odoo availability and both Core3 sizes are required | blocked: Odoo Website absent; Core3 session closed before mobile capture |
 | WEBSITE-UI-008 | Website Settings | 1440x900, 390x844 | Settings toolbar, Website tab, General and Website Identification cards, save/error states and responsive layout match Odoo | blocked: authenticated Odoo tab was borrowed by session `wabp`; no Odoo or Core3 captures claimed |
+| WEBSITE-UI-009 | Website Settings favicon | 1440x900, 390x844 | Odoo image widget and Core3 image upload/preview/error states match responsively | blocked: authenticated Odoo tab `1770662590` was borrowed by BrowserSkill session `xigt`; no visual-parity claim |
 
 ## Exit criteria
 

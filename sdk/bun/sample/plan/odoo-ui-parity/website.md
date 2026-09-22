@@ -356,3 +356,31 @@ with owner `wabp`. The tab was not taken over or stopped. No truthful Odoo or
 Core3 desktop/mobile captures were available, and no visual-parity claim is
 made. Feature evidence is under
 `odoo-ui-parity/evidence/website/2026-09-22/website-settings-identification-001/`.
+
+## Wave 11 execution evidence — 2026-09-22 — Website Settings favicon
+
+The next genuinely missing stable-ID Website feature after the completed page
+import/export, settings name/domain, theme, analytics, tracking/SEO, content,
+asset, and public slices was `WEBSITE-SETTINGS-FAVICON-001`. Odoo's Website
+Identification setting exposes the editable binary `favicon` image field;
+Core3 previously exposed only an informational placeholder.
+
+Core3 now adds the page-only `SettingsView` image control and the matching API
+upload action under `page.id: website-settings`. The Website migration adds
+durable favicon metadata and bytes. Uploads require `website.manage`, validate
+image MIME and 1 MB size limits, reject stale Website row versions, return a
+data-URL preview, and expose exact bytes through the authenticated Website
+favicon download route. Migration replay and file-backed DuckDB restart are
+covered; no Odoo frontend code is copied.
+
+Focused coverage passes in
+`test/website_favicon_settings.integration.test.ts` (4 tests, 20 assertions),
+and the existing Website Settings regression passes (4 tests, 21 assertions).
+Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-settings-favicon-001/`.
+
+Browser comparison is blocked because on BrowserSkill instance `245ea108`, the
+authenticated Odoo tab `1770662590` was already borrowed by session `xigt`.
+The worker did not take over or stop that session and did not use an
+independent login. No truthful Odoo/favicon desktop or mobile captures are
+available, so this wave makes no visual-parity claim.

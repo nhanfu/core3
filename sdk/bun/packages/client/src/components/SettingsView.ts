@@ -6,12 +6,15 @@ type SettingField = {
   label: string;
   description?: string;
   placeholder?: string;
-  type?: 'checkbox' | 'select' | 'number' | 'text' | 'info';
+  type?: 'checkbox' | 'select' | 'number' | 'text' | 'info' | 'image';
   options?: Array<{ value: string; label: string }>;
   disabled?: boolean;
   action_label?: string;
   badge?: string;
   suffix?: string;
+  accept?: string;
+  upload_action?: string;
+  url_field?: string;
 };
 
 type SettingsTab = {
@@ -232,6 +235,47 @@ export class SettingsView extends BaseComponent {
       select.disabled = field.disabled === true;
       select.addEventListener('change', () => { this.state.draft[field.field!] = select.value; });
       control.appendChild(select);
+    } else if (field.type === 'image') {
+      card.classList.add('o-settings-image-card');
+      const preview = document.createElement('img');
+      preview.className = 'o-settings-image-preview';
+      preview.alt = field.label;
+      const previewUrl = field.url_field ? String(this.state.draft[field.url_field] || '') : '';
+      preview.hidden = !previewUrl;
+      if (previewUrl) preview.src = previewUrl;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.className = 'o-settings-image-input';
+      input.accept = field.accept || 'image/*';
+      input.disabled = field.disabled === true;
+      const status = document.createElement('span');
+      status.className = 'o-settings-image-status';
+      status.textContent = this.state.draft[field.field!] ? String(this.state.draft[field.field!]) : 'No image uploaded';
+      input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        if (!file || !field.upload_action) return;
+        input.disabled = true;
+        status.textContent = 'Uploading…';
+        try {
+          const result = await this.submit(field.upload_action, {
+            ...this.state.record,
+            ...this.state.draft,
+            id: this.state.record.id,
+            row_version: this.state.record.row_version,
+            file,
+          });
+          if (result && typeof result === 'object') {
+            this.state.record = { ...this.state.record, ...result };
+            this.state.draft = { ...this.state.draft, ...result };
+          }
+          this.redraw();
+        } catch (error: any) {
+          input.disabled = false;
+          status.textContent = error instanceof Error ? error.message : 'Upload failed';
+        }
+      });
+      control.classList.add('o-settings-image-control');
+      control.append(preview, input, status);
     } else if (field.type === 'text') {
       const input = document.createElement('input');
       input.type = 'text';

@@ -173,6 +173,12 @@
 }
 .o-settings-text:focus { outline: 2px solid rgb(37 99 235 / 28%); outline-offset: 1px; }
 
+.o-settings-card:has(.o-settings-image-control) { grid-template-columns: 150px minmax(0, 1fr); }
+.o-settings-image-control { flex-direction: column; align-items: flex-start; gap: 7px; }
+.o-settings-image-preview { width: 48px; height: 48px; object-fit: contain; border: 1px solid var(--color-border, #c7d0dd); border-radius: 6px; background: #fff; }
+.o-settings-image-input { width: min(100%, 220px); font: inherit; font-size: 0.76rem; }
+.o-settings-image-status { color: var(--color-text-muted, #68758a); font-size: 0.72rem; line-height: 1.3; }
+
 .o-settings-card-content { min-width: 0; }
 .o-settings-card-content h3 { margin: 0; font-size: 0.88rem; font-weight: 700; line-height: 1.3; }
 .o-settings-card-content p { margin: 5px 0 0; color: var(--color-text-muted, #68758a); font-size: 0.78rem; line-height: 1.45; }

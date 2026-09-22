@@ -10,3 +10,8 @@ attachments:
       route: /api/website/page-assets
       permission: website.read
       query: SELECT * FROM website_page_assets WHERE id = :attachment_id
+  website_favicon:
+    download:
+      route: /api/website/favicons
+      permission: website.read
+      query: SELECT id, favicon_file_name AS file_name, favicon_mime_type AS mime_type, favicon_size_bytes AS size_bytes, favicon_storage_key AS storage_key, favicon_content_base64 AS content_base64 FROM website_websites WHERE id = :attachment_id AND favicon_file_name IS NOT NULL

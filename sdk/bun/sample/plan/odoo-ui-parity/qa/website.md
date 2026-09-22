@@ -173,3 +173,16 @@ Focused result: `bun test ./test/website_page_import.integration.test.ts --timeo
 | WEBSITE-UI-008 | Authenticated Odoo/Core3 desktop/mobile settings comparison | `evidence/website/2026-09-22/website-settings-identification-001/browser-check.md` | blocked; tab `1770662590` was borrowed by session `wabp`, so no captures or visual-parity claim |
 
 Focused result: `bun test ./test/website_settings.integration.test.ts --timeout 20000` — 4 tests, 21 assertions, pass. The shared SettingsView now supports a styled text input used by this slice; the full frontend build and broader Website regression remain required before sign-off.
+
+## 2026-09-22 Website Settings favicon checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-013 | Odoo binary Website Identification favicon field, page/API join, upload/download contract | `evidence/website/2026-09-22/website-settings-favicon-001/`; `test/website_favicon_settings.integration.test.ts` | pass: 4 tests / 20 assertions |
+| WEBSITE-WF-010 | Favicon replace, MIME/size validation, stale guard, migration replay, and restart persistence | same focused test | pass |
+| WEBSITE-PERM-010 | Read-only actor cannot upload favicon; download remains read-bound | same focused test | pass |
+| WEBSITE-UI-009 | Authenticated Odoo/Core3 desktop/mobile favicon comparison | `evidence/website/2026-09-22/website-settings-favicon-001/browser-check.md` | blocked: tab `1770662590` is borrowed by BrowserSkill session `xigt`; no visual-parity claim |
+
+This is one bounded Website settings feature only. Website module sign-off,
+paired visual comparison, and the broader open workflow/public gates remain
+pending.
