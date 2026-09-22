@@ -1,0 +1,16 @@
+page: { id: pos-session-payments }
+datasources:
+  - id: pos_session_payments
+    single: false
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_PAYMENTS_UNAUTHORIZED, message: Sign in to view session payments. }
+      forbidden: { status: 403, code: POS_SESSION_PAYMENTS_FORBIDDEN, message: You do not have access to these session payments. }
+      transport_error: { status: 503, code: POS_SESSION_PAYMENTS_UNAVAILABLE, message: Session payments are temporarily unavailable. }
+    query: "SELECT p.id, p.order_id, o.name AS order_name, p.method, p.amount, p.state, p.actor_id, p.company, CAST(p.payment_date AS VARCHAR) AS payment_date FROM pos_payments p JOIN pos_orders o ON o.id = p.order_id JOIN pos_sessions s ON s.id = o.session_id WHERE o.session_id = :session_id AND p.company = :current_company_name AND o.company = :current_company_name AND s.company = :current_company_name AND o.state IN ('Paid', 'Invoiced', 'Done') AND (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR p.method ILIKE '%' || :q || '%') ORDER BY p.method, p.payment_date DESC, p.id"
+actions:
+  - id: view_pos_session_payment
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/payment-detail
+    params: { id: '{row.id}' }

@@ -19,6 +19,8 @@ components:
       In Progress: green
       Closing Control: amber
       Closed & Posted: neutral
+    stat_buttons:
+      - { id: open_session_payments, label: Payments, icon: dollar, value_field: total_payments_amount, permission: pos.read }
     header_actions:
       - { id: open_session_detail, label: Open, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control'" }
       - { id: start_closing_session_detail, label: Start Closing, variant: secondary, permission: pos.write, show_if: "state.pos_session_detail.state === 'In Progress'" }

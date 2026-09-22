@@ -1,0 +1,40 @@
+title: POS Session Payments
+page: { id: pos-session-payments, route: /point-of-sale/session-payments, breadcrumb: [Sales, Point of Sale, Sessions, Payments], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_session_payments
+    default_group_by: method
+    group_by: [{ field: method, label: Payment Method }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: order_name
+          subtitle: method
+          fields:
+            - { field: amount, label: Amount }
+            - { field: state, label: Status }
+            - { field: payment_date, label: Payment Date }
+    search: { label: Search session payments, placeholder: Search order or payment method... }
+    columns:
+      - { field: order_name, label: Order, type: PrimaryEntityCell }
+      - { field: method, label: Payment method }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: payment_date, label: Payment date }
+    page_size: 50
+    row_key: id
+    row_open_action: view_pos_session_payment
+    row_double_click_action: view_pos_session_payment
+    empty_state: { title: No session payments, description: This POS session has no captured payments. }
+actions:
+  - id: back_to_pos_session_from_payments
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/session-detail
+    params: { id: '{query.session_id}' }

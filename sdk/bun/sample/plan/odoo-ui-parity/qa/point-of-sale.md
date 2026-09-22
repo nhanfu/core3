@@ -1,5 +1,26 @@
 # Point of Sale QA ledger
 
+## 2026-09-22 — POS-SESSION-PAYMENTS-001
+
+- Status: bounded implementation and service verification complete; visual
+  sign-off is blocked by the required BrowserSkill tab borrow.
+- Source: Odoo 19 `pos_session_view.xml` Payments smart button and
+  `pos_session.py` `action_show_payments_list()` domain/context.
+- Implementation: session-detail Payments action, separate session-scoped
+  page/API list, company and captured-order-state guards, method grouping,
+  existing payment-detail row navigation, and explicit empty/error metadata.
+- Focused test: `bun test ./test/pos_session_payments.integration.test.ts
+  --timeout 30000` — 3 tests, 18 assertions passed.
+- Regression: session, actor/company, and session-report suites passed 27 tests
+  and 197 assertions combined; audit passed with 825 pages, 833 routes, and
+  1,716 datasources; frontend/CSS build and `git diff --check` passed.
+- BrowserSkill: instance `245ea108` was connected. Odoo tab `1770662590` was
+  already borrowed by session `olvm`; the fresh borrow in session `xrhq`
+  timed out waiting for human confirmation. No independent browser/login was
+  used. No desktop/mobile capture or visual-parity claim is made.
+- Evidence:
+  `../evidence/point_of_sale/2026-09-22/POS-SESSION-PAYMENTS-001/browser-evidence.md`
+
 ## 2026-09-22 — POS-ORDER-DELETE-001
 
 - Status: bounded feature verified; POS-only commit candidate.

@@ -1466,3 +1466,32 @@ existing Odoo user tab did not complete and the tab remained user-scoped. No
 Odoo/Core3 desktop/mobile screenshot or visual-parity claim is made; the exact
 borrow blocker is recorded under
 `odoo-ui-parity/evidence/point_of_sale/2026-09-22/POS-ORDER-DETAIL-SEND-EMAIL-001/`.
+
+## Current bounded batch: POS Session Payments smart button
+
+Feature ID: `POS-SESSION-PAYMENTS-001`. The local Odoo 19 source exposes the
+session-form `Payments` smart button through `action_show_payments_list()` in
+`addons/point_of_sale/models/pos_session.py`. Its domain is scoped to the
+selected session and captured orders in `paid`, `invoiced`, or `done` state,
+and its context groups the result by payment method. Core3's session detail
+had no equivalent action or session-scoped payment projection.
+
+Core3 now adds the read-only `Payments` action to `pos-session-detail` and a
+separate `/point-of-sale/session-payments` page/API pair. The projection is
+company- and session-scoped, keeps only captured POS order states, supports
+search, method grouping, explicit empty/unauthorized/forbidden/transport
+metadata, and reuses the existing payment detail route for row navigation.
+The implementation is a projection over durable `pos_payments` rows, so no
+schema migration is required.
+
+Focused coverage is `test/pos_session_payments.integration.test.ts`: 3 tests
+and 18 assertions cover the source action, page/API IDs, payment-state domain,
+company boundary, read permission, method grouping, and migration replay
+durability. Related POS session, actor/company, and report regressions pass.
+
+BrowserSkill instance `245ea108` was connected, but the Odoo tab
+`1770662590` was already borrowed by session `olvm`; a fresh borrow attempt in
+session `xrhq` timed out waiting for human confirmation. No independent
+browser or login was used, no desktop/mobile screenshot was captured, and no
+visual-parity claim is made. The exact blocker is recorded at
+`evidence/point_of_sale/2026-09-22/POS-SESSION-PAYMENTS-001/browser-evidence.md`.
