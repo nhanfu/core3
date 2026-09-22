@@ -1287,3 +1287,28 @@ BrowserSkill could not borrow the authenticated Odoo tab because it was already
 borrowed by session `ftio` on shared browser instance `245ea108`; no desktop or
 mobile live-reference capture was produced and no visual-parity claim is made.
 Full Live Chat parity remains planned.
+
+## Bounded implementation slice: Conversations — Invite People (2026-09-22)
+
+The next missing operator action is Odoo's Live Chat `Invite People` thread
+action. `addons/im_livechat/static/src/core/common/thread_actions_patch.js`
+keeps the shared Discuss `invite-people` action available for an open live chat
+and `addons/mail/static/src/discuss/core/common/channel_invitation.js` invokes
+`discuss.channel.add_members` for the selected operator. Core3 adds the
+bounded equivalent to `/livechat-session-detail` as stable action
+`invite_livechat_session_member`.
+
+The implementation persists `livechat_session_members`, exposes the participant
+roster and available operator options through separate API datasources joined
+to the existing `livechat-session-detail` page id, and records an invitation
+notification in the durable session timeline. Guards cover missing sessions,
+assigned-operator scope, closed conversations, stale row versions, unavailable
+invitees, duplicate membership, and missing actors. The migration is idempotent
+and the focused test checks restart persistence.
+
+Evidence is recorded under
+`plan/odoo-ui-parity/evidence/livechat/2026-09-22/livechat-invite-people-001/`.
+BrowserSkill could not borrow the authenticated Odoo tab on shared browser
+`245ea108` because the extension confirmation timed out; no desktop/mobile
+capture was produced and no visual-parity claim is made. Full Live Chat parity
+remains planned.

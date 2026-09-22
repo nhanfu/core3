@@ -1,0 +1,35 @@
+version: 0.0.54
+kind: data
+description: Persist Odoo Live Chat conversation members for Invite People
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_session_members (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL,
+        member_id VARCHAR NOT NULL,
+        member_name VARCHAR NOT NULL,
+        member_type VARCHAR NOT NULL DEFAULT 'agent',
+        email VARCHAR NOT NULL DEFAULT '',
+        language_names VARCHAR NOT NULL DEFAULT '',
+        expertise_names VARCHAR NOT NULL DEFAULT '',
+        invited_by VARCHAR NOT NULL DEFAULT '',
+        joined_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE(session_id, member_id)
+      );
+      CREATE INDEX IF NOT EXISTS livechat_session_members_session_idx
+        ON livechat_session_members(session_id, joined_at, id);
+      INSERT INTO livechat_session_members
+        (id, session_id, member_id, member_name, member_type, email, language_names, expertise_names, invited_by, joined_at)
+      VALUES
+        ('livechat-session-member-demo-002-agent', 'livechat-session-demo-002', 'livechat-agent', 'Support Agent', 'agent', 'support@example.com', 'English', 'Support', '', TIMESTAMP '2026-01-15 09:00:00'),
+        ('livechat-session-member-demo-002-visitor', 'livechat-session-demo-002', 'visitor-demo-b', 'Visitor B', 'visitor', '', '', '', '', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM livechat_session_members
+      WHERE id IN ('livechat-session-member-demo-002-agent', 'livechat-session-member-demo-002-visitor');
+      DROP TABLE IF EXISTS livechat_session_members;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

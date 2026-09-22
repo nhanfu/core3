@@ -180,3 +180,21 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   was already borrowed by session `ftio`; no desktop/mobile live-reference
   capture was produced and no visual-parity claim is made.
 - Full Live Chat sign-off remains open.
+
+## LIVECHAT-INVITE-PEOPLE-001 — 2026-09-22
+
+- Scope: operator Invite People action on an open Live Chat session.
+- Source: `im_livechat/static/src/core/common/thread_actions_patch.js` and
+  `mail/static/src/discuss/core/common/channel_invitation.js`.
+- Core3: persisted `livechat_session_members` roster and
+  `invite_livechat_session_member` action on `livechat-session-detail`,
+  joined through the existing page id.
+- Focused validation: `bun test test/livechat_session_invite.integration.test.ts`
+  — 3 passed, 20 assertions, 0 failed.
+- Live Chat regression corpus: passed after the page-schema fix; UI audit passed
+  with 831 pages, 839 routes, and 1,732 datasources.
+- Frontend/CSS build and `git diff --check`: passed.
+- Browser evidence: blocked. BrowserSkill borrow of Odoo tab `1770662590` on
+  browser `245ea108` timed out in session `wabp`; no desktop/mobile capture
+  and no visual-parity claim.
+- Open gate: authenticated Odoo/Core3 desktop and mobile action captures.

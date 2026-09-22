@@ -14,6 +14,11 @@ datasources:
           FROM livechat_session_tag_rel rel
           JOIN livechat_tags t ON t.id = rel.tag_id
           WHERE rel.session_id = livechat_sessions.id), '') AS tag_names,
+        COALESCE((SELECT string_agg(m.member_name, ', ' ORDER BY m.member_type, m.member_name)
+          FROM livechat_session_members m
+          WHERE m.session_id = livechat_sessions.id), '') AS member_names,
+        COALESCE((SELECT COUNT(*) FROM livechat_session_members m
+          WHERE m.session_id = livechat_sessions.id), 0) AS member_count,
         CAST(started_at AS VARCHAR) AS started_label,
         CAST(duration_minutes AS VARCHAR) AS duration_label,
         CASE
@@ -66,6 +71,39 @@ datasources:
         AND m.session_id = :id
         AND (COALESCE(:view_scope, 'all') = 'all' OR s.operator_id = :current_user_id)
       ORDER BY m.created_at, m.id
+  - id: livechat_session_members
+    single: false
+    permission: livechat.read
+    error_states:
+      transport_error: { status: 503, code: LIVECHAT_SESSION_MEMBERS_UNAVAILABLE, message: Conversation members are temporarily unavailable. }
+    query: |
+      SELECT m.id, m.session_id, m.member_id, m.member_name, m.member_type,
+        m.email, m.language_names, m.expertise_names, m.invited_by,
+        CAST(m.joined_at AS VARCHAR) AS joined_at
+      FROM livechat_session_members m
+      JOIN livechat_sessions s ON s.id = m.session_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND m.session_id = :id
+        AND (COALESCE(:view_scope, 'all') = 'all' OR s.operator_id = :current_user_id)
+      ORDER BY m.member_type, m.member_name, m.id
+  - id: livechat_session_invite_options
+    single: false
+    permission: livechat.write
+    error_states:
+      transport_error: { status: 503, code: LIVECHAT_SESSION_INVITE_OPTIONS_UNAVAILABLE, message: Available operators are temporarily unavailable. }
+    query: |
+      SELECT u.id AS value, u.id, u.livechat_name AS label, u.livechat_name AS member_name,
+        u.spoken_languages AS language_names, u.expertise_names,
+        u.livechat_name || ' · ' || COALESCE(NULLIF(u.spoken_languages, ''), 'No languages') AS option_label
+      FROM livechat_user_settings u
+      WHERE u.livechat_enabled = TRUE
+        AND u.id <> COALESCE(:current_user_id, '')
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND NOT EXISTS (
+          SELECT 1 FROM livechat_session_members m
+          WHERE m.session_id = :id AND m.member_id = u.id
+        )
+      ORDER BY u.livechat_name, u.id
 
 actions:
   - id: email_livechat_session_transcript
@@ -113,6 +151,71 @@ actions:
         - { query: "INSERT INTO livechat_session_messages(id, session_id, author_id, author_name, author_type, body, action, action_label, created_at) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'operator', TRIM(CAST(:content AS VARCHAR)), 'message', 'Message', CURRENT_TIMESTAMP)" }
         - { query: "UPDATE livechat_sessions SET message_count = COALESCE(message_count, 0) + 1, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }
       result: { query: "SELECT id, session_id, author_name, author_type, body AS detail, action, action_label, CAST(created_at AS VARCHAR) AS created_at FROM livechat_session_messages WHERE session_id = :id ORDER BY created_at DESC, id DESC LIMIT 1" }
+  - id: invite_livechat_session_member
+    type: server_form
+    permission: livechat.write
+    title: Invite People
+    action: discuss.channel.add_members
+    handler: yaml_mutation
+    operation: invite_member
+    params: { id: '{state.id}' }
+    refresh: [livechat_session_detail, livechat_session_members, livechat_session_messages, livechat_session_invite_options]
+    success_message: The operator was invited to the conversation.
+    fields:
+      - { field: member_id, label: Person, type: select, options_source: livechat_session_invite_options, required: true }
+      - { field: expected_row_version, label: Session version, type: number, readonly: true }
+    mutation:
+      concurrency: { required: true }
+      before_steps:
+        - query: |
+            SELECT 'livechat-session-member-' || CAST(:id AS VARCHAR) || '-' || CAST(:member_id AS VARCHAR) AS member_record_id,
+              'livechat-session-invite-' || CAST(:id AS VARCHAR) || '-' || CAST(:member_id AS VARCHAR) AS notification_id
+            FROM livechat_sessions
+            WHERE id = :id
+          assign: true
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND status <> 'Closed'", status: 409, code: LIVECHAT_SESSION_INVITE_CLOSED, message: Closed Live Chat conversations cannot receive new members. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_SESSION_INVITE_STALE, message: This conversation changed before the invitation was sent. Reload and try again. }
+        - { query: "SELECT id FROM livechat_user_settings WHERE id = :member_id AND livechat_enabled = TRUE", status: 404, code: LIVECHAT_INVITEE_NOT_FOUND, message: The selected Live Chat operator is not available. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_session_members WHERE session_id = :id AND member_id = :member_id)", status: 409, code: LIVECHAT_MEMBER_ALREADY_INVITED, message: This operator is already a member of the conversation. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: LIVECHAT_INVITE_ACTOR_REQUIRED, message: An authenticated Live Chat operator is required to invite a person. }
+      steps:
+        - query: |
+            INSERT INTO livechat_session_members
+              (id, session_id, member_id, member_name, member_type, email, language_names, expertise_names, invited_by, joined_at)
+            SELECT :member_record_id, s.id, u.id, u.livechat_name, 'agent', '',
+              u.spoken_languages, u.expertise_names, :current_user_id, CURRENT_TIMESTAMP
+            FROM livechat_sessions s
+            JOIN livechat_user_settings u ON u.id = :member_id AND u.livechat_enabled = TRUE
+            WHERE s.id = :id AND s.row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: LIVECHAT_SESSION_INVITE_STALE
+          message: This conversation changed before the invitation was sent. Reload and try again.
+        - query: |
+            INSERT INTO livechat_session_messages
+              (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+            SELECT :notification_id, :id, :current_user_id, COALESCE(:current_user_name, 'Live Chat operator'),
+              'system', 'invited ' || u.livechat_name || ' to the conversation', 'invite', 'Invite', CURRENT_TIMESTAMP
+            FROM livechat_user_settings u
+            WHERE u.id = :member_id
+        - query: |
+            UPDATE livechat_sessions
+            SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: LIVECHAT_SESSION_INVITE_STALE
+          message: This conversation changed before the invitation was completed. Reload and try again.
+      result:
+        query: |
+          SELECT m.id, m.session_id, m.member_id, m.member_name, m.member_type,
+            m.language_names, m.expertise_names, m.invited_by,
+            'The operator was invited to the conversation.' AS message
+          FROM livechat_session_members m
+          WHERE m.id = :member_record_id
   - id: add_livechat_session_tag
     type: server_form
     permission: livechat.write

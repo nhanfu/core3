@@ -12,12 +12,15 @@ components:
       - { id: join_livechat_session_detail, label: Join, variant: primary, show_if: "record.status === 'Looking for Help'" }
       - { id: close_livechat_session_detail, label: Close, variant: danger, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer' || record.status === 'Looking for Help'" }
       - { id: email_livechat_session_transcript, label: Email transcript, variant: secondary, show_if: "record.status === 'Closed'" }
+      - { id: invite_livechat_session_member, label: Invite People, variant: secondary, permission: livechat.write, show_if: "record.status !== 'Closed'" }
       - { id: add_livechat_session_tag, label: Add Tag, variant: secondary }
       - { id: remove_livechat_session_tag, label: Remove Tag, variant: secondary }
     fields:
       - { field: visitor_display, label: Visitor }
       - { field: channel_name, label: Channel }
       - { field: operator_name, label: Operator }
+      - { field: member_names, label: Participants }
+      - { field: member_count, label: Member count }
       - { field: status_label, label: Status, type: StatusChip }
       - { field: outcome, label: Outcome }
       - { field: tag_names, label: Conversation Tags }
@@ -37,6 +40,19 @@ components:
     message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+
+  - type: ListView
+    variant: odoo
+    source: livechat_session_members
+    row_key: id
+    empty_state: { title: No members yet, description: Invite an operator to collaborate on this conversation. }
+    columns:
+      - { field: member_name, label: Person }
+      - { field: member_type, label: Type }
+      - { field: language_names, label: Languages }
+      - { field: expertise_names, label: Expertise }
+      - { field: invited_by, label: Invited by }
+      - { field: joined_at, label: Joined }
 
 actions:
   - { id: wait_livechat_session_detail, type: server, permission: livechat.write, action: livechat.sessions.wait, handler: order_transition, workflow: livechat_sessions, operation: wait, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
