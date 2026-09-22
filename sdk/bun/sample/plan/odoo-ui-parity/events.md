@@ -1,5 +1,35 @@
 # Events UI parity
 
+## Current bounded batch: Responsive Html Full Page Ticket (2026-09-22)
+
+Stable feature ID: EVENTS-RESPONSIVE-HTML-TICKET-001.
+
+The next source-backed report after the existing event and attendee Full Page
+Ticket/Badge slices is Odoo's `action_report_event_registration_responsive_html_ticket`
+in `addons/event/report/event_event_reports.xml:88-94`. Its template at
+`addons/event/report/event_event_templates.xml:294-305` reuses the Full Page
+Ticket layout with `responsive_html=True`, adding the Download Tickets control,
+responsive answer badges, and omitting the print-only Ticket Instructions block.
+
+Core3 adds the page/API pair `/events/attendees/responsive-html-ticket`, joined
+by `page.id`, and a permissioned attendee-detail navigation action. The page
+uses the existing read-only OdooFormView and TemplatePreview primitives; the
+API projects the durable registration/barcode data and excludes Ticket
+Instructions from the responsive block projection. Missing, empty, transport,
+`events.read`, and deterministic/read-only boundaries are covered by
+`test/events_attendee_responsive_html_ticket.integration.test.ts`; no migration
+is needed because the report reuses the durable attendee and ticket-block
+fixtures from migrations 004, 030, and 033.
+
+Focused validation: 3 tests / 16 assertions; the related Events form/action
+regression passes. BrowserSkill loaded authenticated Odoo at
+`http://localhost:8069` with database `core3_reference` in task session `rzuu`
+and showed the Design Fair Los Angeles Events form. Borrowing the existing
+Odoo user tab was blocked exactly by `tab is borrowed by another session`; no
+credentials were requested or exposed, and no independent browser was used.
+The task session was stopped before handoff. No visual parity sign-off is
+claimed without a borrowed-tab responsive report capture.
+
 ## Current bounded batch: Event Template Notes and Ticket Instructions (2026-09-22)
 
 Stable feature ID: EVENTS-TEMPLATE-NOTES-001.

@@ -1,0 +1,35 @@
+title: Responsive Html Full Page Ticket
+page: { id: event-attendee-responsive-html-ticket, route: /events/attendees/responsive-html-ticket, breadcrumb: [Marketing, Events, Reporting, Attendees, Responsive Html Full Page Ticket], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_attendee_responsive_html_ticket
+    title_field: event_name
+    subtitle_field: event_schedule
+    editable: false
+    header_actions:
+      - { id: print_attendee_responsive_html_ticket_document, label: Print, permission: events.read, variant: primary }
+      - { id: back_to_event_attendee, label: Back to attendee, permission: events.read, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Event
+        fields: [{ field: event_name, label: Event }, { field: event_schedule, label: Date }, { field: venue, label: Venue }, { field: ticket_type, label: Ticket type }]
+      - title: Ticket
+        fields: [{ field: attendee_name, label: Attendee }, { field: barcode, label: Barcode }, { field: organizer, label: Organizer }, { field: download_label, label: Download }]
+  - type: TemplatePreview
+    id: attendee-responsive-html-ticket-preview
+    source: event_attendee_responsive_html_ticket_blocks
+    template_source: event_registration_report_template_responsive_html_ticket
+actions:
+  - id: print_attendee_responsive_html_ticket_document
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_event_attendee
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/detail
+    params: { id: '{row.registration_id}' }

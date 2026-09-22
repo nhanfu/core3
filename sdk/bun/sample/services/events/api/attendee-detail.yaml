@@ -33,6 +33,11 @@ actions:
     permission: events.read
     navigate_to: /events/attendees/full-page-ticket
     params: { id: '{row.id}' }
+  - id: print_attendee_responsive_html_ticket
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/responsive-html-ticket
+    params: { id: '{row.id}' }
   - id: edit_event_attendee
     type: server_form
     permission: events.write
