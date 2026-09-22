@@ -16,6 +16,16 @@ datasources:
     permission: recruitment.read
     single: false
     query: "SELECT id AS value, name AS label FROM recruitment_applicant_mail_templates WHERE active = TRUE ORDER BY name, id"
+  - id: recruitment_active_talent_pool_options
+    permission: recruitment.write
+    single: false
+    error_states: { unauthorized: { status: 401, code: RECRUITMENT_TALENT_POOL_ADD_UNAUTHENTICATED, message: Sign in to add applicants to a talent pool. }, forbidden: { status: 403, code: RECRUITMENT_TALENT_POOL_ADD_FORBIDDEN, message: You do not have permission to add applicants to a talent pool. }, transport_error: { status: 503, code: RECRUITMENT_TALENT_POOL_OPTIONS_UNAVAILABLE, message: Active talent pools are temporarily unavailable. } }
+    query: "SELECT id AS value, name AS label FROM recruitment_talent_pools WHERE active = TRUE AND (company_name = 'Visible to all' OR COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY name, id"
+  - id: recruitment_applicant_tag_options
+    permission: recruitment.write
+    single: false
+    error_states: { transport_error: { status: 503, code: RECRUITMENT_APPLICANT_TAG_OPTIONS_UNAVAILABLE, message: Applicant tags are temporarily unavailable. } }
+    query: "SELECT id AS value, name AS label FROM recruitment_tags ORDER BY sequence, name, id"
   - id: recruitment_applicant_follower_options
     permission: recruitment.write
     single: false
@@ -108,6 +118,42 @@ actions:
       - { field: partner_ids, label: Followers, type: multi-select, options_source: recruitment_applicant_follower_options, multiple: true, required: true, placeholder: Add contacts }
       - { field: notify, label: Notify Recipients, type: checkbox, default: false, show_if: "state.operation === 'add'" }
       - { field: message, label: Extra Comments, type: textarea, placeholder: Extra Comments ..., show_if: "state.operation === 'add' && state.notify === true" }
+  - id: add_recruitment_applicants_to_pool
+    type: server_form
+    permission: recruitment.write
+    title: Add Applicants to the Pool
+    submit_label: Add to Pool
+    cancel_label: Discard
+    success_message: Applicants added to the talent pool.
+    action: recruitment.applicants.add_to_pool
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [recruitment_applicants]
+    mutation:
+      fields: [pool_ids, tag_ids]
+      required: [pool_ids]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: RECRUITMENT_TALENT_POOL_ADD_SELECTION_REQUIRED, message: Select at least one applicant. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_TALENT_POOL_ADD_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to add applicants to a talent pool. }
+        - { query: "SELECT 1 AS ok WHERE :pool_ids IS NOT NULL AND CAST(:pool_ids AS VARCHAR) NOT LIKE '[]'", status: 400, code: RECRUITMENT_TALENT_POOL_ADD_POOL_REQUIRED, message: Select at least one active talent pool. }
+        - { query: "SELECT 1 AS ok FROM recruitment_applicants WHERE id IN :selectedIds", status: 404, code: RECRUITMENT_TALENT_POOL_ADD_APPLICANT_NOT_FOUND, message: One or more selected applicants were not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds AND a.archived = TRUE)", status: 409, code: RECRUITMENT_TALENT_POOL_ADD_APPLICANT_INACTIVE, message: Archived applicants cannot be added to a talent pool. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id IN :selectedIds AND COALESCE(:current_company_name, '') <> '' AND a.company_name <> :current_company_name)", status: 403, code: RECRUITMENT_TALENT_POOL_ADD_COMPANY_FORBIDDEN, message: One or more selected applicants belong to another company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_talent_pools p WHERE p.id IN :pool_ids AND (p.active = FALSE OR (p.company_name <> 'Visible to all' AND COALESCE(:current_company_name, '') <> '' AND p.company_name <> :current_company_name)))", status: 422, code: RECRUITMENT_TALENT_POOL_ADD_POOL_INVALID, message: Select only active talent pools in the current company. }
+      steps:
+        - query: "INSERT OR IGNORE INTO recruitment_applicants(id, name, opening_id, opening_name, email, phone, source, recruiter, stage, rating, priority, department_name, applied_date, interview_date, hired_date, notes, archived, company_name, pool_applicant_id, is_pool_profile, created_at, updated_at) SELECT 'recruitment-applicant-pool-' || a.id, a.name, a.opening_id, a.opening_name, a.email, a.phone, a.source, a.recruiter, 'New', a.rating, a.priority, a.department_name, a.applied_date, NULL, NULL, a.notes, FALSE, a.company_name, 'recruitment-applicant-pool-' || a.id, TRUE, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00' FROM recruitment_applicants a WHERE a.id IN :selectedIds AND a.pool_applicant_id IS NULL AND NOT EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = a.id)"
+        - query: "UPDATE recruitment_applicants SET pool_applicant_id = 'recruitment-applicant-pool-' || id, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id IN :selectedIds AND pool_applicant_id IS NULL AND NOT EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = recruitment_applicants.id)"
+        - query: "INSERT OR IGNORE INTO recruitment_talent_pool_members(id, pool_id, applicant_id, row_version, created_at, updated_at) SELECT 'talent-member-' || CASE WHEN a.pool_applicant_id IS NOT NULL THEN a.pool_applicant_id WHEN EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = a.id) THEN a.id ELSE 'recruitment-applicant-pool-' || a.id END || '-' || p.id, p.id, CASE WHEN a.pool_applicant_id IS NOT NULL THEN a.pool_applicant_id WHEN EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = a.id) THEN a.id ELSE 'recruitment-applicant-pool-' || a.id END, 1, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00' FROM recruitment_applicants a CROSS JOIN recruitment_talent_pools p WHERE a.id IN :selectedIds AND p.id IN :pool_ids"
+        - for_each:
+            input: tag_ids
+            as: selected_tag_id
+            steps:
+              - query: "INSERT OR IGNORE INTO recruitment_applicant_tags(id, applicant_id, tag_id, added_by) SELECT 'recruitment-applicant-tag-' || CASE WHEN a.pool_applicant_id IS NOT NULL THEN a.pool_applicant_id WHEN EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = a.id) THEN a.id ELSE 'recruitment-applicant-pool-' || a.id END || '-' || :selected_tag_id, CASE WHEN a.pool_applicant_id IS NOT NULL THEN a.pool_applicant_id WHEN EXISTS (SELECT 1 FROM recruitment_talent_pool_members existing WHERE existing.applicant_id = a.id) THEN a.id ELSE 'recruitment-applicant-pool-' || a.id END, :selected_tag_id, :current_user_name FROM recruitment_applicants a WHERE a.id IN :selectedIds"
+      result: { query: "SELECT m.id, m.pool_id, m.applicant_id, p.name AS pool_name FROM recruitment_talent_pool_members m JOIN recruitment_talent_pools p ON p.id = m.pool_id WHERE m.applicant_id IN (SELECT COALESCE(pool_applicant_id, id) FROM recruitment_applicants WHERE id IN :selectedIds) AND m.pool_id IN :pool_ids ORDER BY m.applicant_id, m.pool_id" }
+    fields:
+      - { field: applicant_names, label: Applications, type: mail_recipient, default: Selected applicants }
+      - { field: pool_ids, label: Talent Pools, type: multi-select, options_source: recruitment_active_talent_pool_options, multiple: true, required: true, placeholder: Add to... }
+      - { field: tag_ids, label: Tags, type: multi-select, options_source: recruitment_applicant_tag_options, multiple: true, placeholder: Optional tags }
   - id: create_recruitment_applicant
     type: server_form
     permission: recruitment.write

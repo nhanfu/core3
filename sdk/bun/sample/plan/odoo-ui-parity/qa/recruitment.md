@@ -1,5 +1,32 @@
 # recruitment QA ledger
 
+## Batch 20 QA — Applicant Add to Pool — 2026-09-22
+
+- Stable ID: `RECRUITMENT-APPLICANT-ADD-TO-POOL-001`.
+- Source boundary: Odoo 19 `hr_applicant.py::action_talent_pool_add_applicants`,
+  `wizard/talent_pool_add_applicants.py`, its form view, and applicant header/
+  kanban bindings, compared at source revision
+  `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused tests: `bun test
+  test/recruitment_applicant_add_to_pool.integration.test.ts
+  test/recruitment_talent_pools.integration.test.ts --timeout 20000` — 8
+  passed, 0 failed, 84 assertions. Recruitment regression: `bun test
+  ./test/recruitment*.integration.test.ts --timeout 20000` — green.
+- Functional coverage: separate page/API `page.id` contracts for applicant
+  list and detail, list/kanban bulk action, detail action, active pool and tag
+  choices, normal-applicant pool-profile creation, existing-pool membership,
+  optional tag persistence, idempotent replay, actor/company/archived/missing/
+  inactive-pool guards, and file-backed restart durability.
+- Browser result: BrowserSkill daemon was connected. The existing authenticated
+  Odoo tab was already borrowed by another session; the available PDF tab
+  borrow timed out without ownership and the session was auto-unregistered.
+  `bsk session list --json` then returned no active sessions. No credentials,
+  cookies, independent login, Playwright, or alternate browser was used; no
+  Odoo action or desktop/mobile capture was inspected.
+- QA decision: bounded functional batch complete after local verification;
+  live Odoo inspection and paired desktop/mobile evidence remain blocked.
+  Recruitment is not signed off.
+
 ## Batch 19 QA — Applicant Create Employee — 2026-09-22
 
 - Stable ID: `RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001`.

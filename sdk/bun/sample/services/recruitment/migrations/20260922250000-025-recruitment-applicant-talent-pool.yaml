@@ -1,0 +1,28 @@
+version: 0.0.25
+kind: schema
+description: Durable applicant Add to Pool wizard memberships, pool copies, and tags
+type:
+  postgres:
+    up: |
+      -- DuckDB protects the applicant table from dependent relation rewrites;
+      -- retain its historical required opening columns and mark pool copies
+      -- explicitly instead of rebuilding the table beneath those relations.
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS is_pool_profile BOOLEAN DEFAULT FALSE;
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_tags (
+        id VARCHAR PRIMARY KEY,
+        applicant_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        added_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE(applicant_id, tag_id)
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_tags_applicant_idx
+        ON recruitment_applicant_tags(applicant_id, tag_id);
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicant_tags_applicant_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_tags;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS is_pool_profile;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

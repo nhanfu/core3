@@ -6,6 +6,29 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: pending Recruitment applicant Create Employee commit
 
+## Batch 20 current state
+
+`RECRUITMENT-APPLICANT-ADD-TO-POOL-001` implements Odoo's
+`action_talent_pool_add_applicants` and `talent.pool.add.applicants` wizard. The
+applicant list/kanban bulk action and applicant detail action can add one or
+more applicants to one or more active, company-scoped talent pools, create a
+durable pool profile for a normal applicant, apply optional tags, and remain
+idempotent after reload/restart. Actor, company, archived-applicant, missing
+applicant, pool-state, and permission guards are covered by the focused suite.
+
+The focused slice plus the existing Recruitment talent-pool suite pass 8 tests
+and 84 assertions; the full Recruitment integration regression is green. The
+BrowserSkill session was auto-stopped after the borrowed-tab attempt timed out;
+the existing authenticated Odoo tab was owned by another session and no Odoo
+action or desktop/mobile capture could be inspected. No visual-parity claim is
+made.
+
+## Batch 20 remaining gap
+
+Live authenticated Odoo source-action inspection and paired desktop/mobile
+visual evidence remain blocked by shared user-tab ownership. Full Recruitment
+sign-off remains open.
+
 ## Batch 19 current state
 
 `RECRUITMENT-APPLICANT-CREATE-EMPLOYEE-001` implements Odoo's
