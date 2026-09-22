@@ -18,3 +18,10 @@ The owned session `vxou` was stopped immediately after the denial. No Odoo
 navigation, action inspection, screenshot, independent login, cookie/token
 access, or alternate browser backend was used. Therefore there are no truthful
 desktop/mobile captures for this feature and no visual-parity claim.
+
+Follow-up on 2026-09-22: session `hyan` listed the same user tab and made one
+explicit borrow request with the required confirmation flow. The request
+reached its 120-second timeout while the tab remained user-owned/occupied;
+the session was not allowed to navigate it. The tab was not taken over, no
+independent credentials or alternate browser backend were used, and no
+visual-parity claim is added.
