@@ -44,6 +44,11 @@ actions:
     permission: project.read
     navigate_to: /tasks/recurrence
     params: { task_id: '{state.id}' }
+  - id: open_parent_task
+    type: navigate
+    permission: project.read
+    navigate_to: /tasks/detail
+    params: { id: '{state.project_task_detail.parent_task_id}' }
   - id: share_project_task
     type: server_form
     permission: project.task.publish

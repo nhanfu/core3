@@ -456,3 +456,17 @@ source row-version increment, active/company scope, stale guard, and reopen
 persistence pass. The slice is conditionally accepted pending authenticated
 desktop/mobile Odoo/Core3 comparison. Chatter/follower/attachment/portal
 side effects and recurrence-rule copy remain open.
+
+## Conditional review — PROJECT-TASK-PARENT-001 (2026-09-22)
+
+- Odoo source/action identity: **PASS** — `action_open_parent_task`, the
+  `Parent Task` stat button, and form-only parent navigation are recorded in
+  the Project parity plan.
+- Contract and persistence checks: **PASS** — 2 focused tests cover page/API
+  ownership, `project.read`, the conditional stat, child-to-parent identity,
+  root-task absence, and missing-target behavior.
+- Browser comparison: **PENDING** — authenticated Odoo/Core3 desktop and
+  mobile captures require borrowing the shared Odoo tab through BrowserSkill.
+
+Disposition: conditionally accepted as a bounded navigation slice; full visual,
+portal, chatter, and authenticated actor-matrix parity remain open.

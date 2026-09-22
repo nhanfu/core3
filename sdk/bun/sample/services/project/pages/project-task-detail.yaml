@@ -20,6 +20,7 @@ components:
     stat_buttons:
       - { id: open_task_timesheets, label: Timesheets, value_field: spent_hours, permission: timesheets.read }
       - { id: open_recurring_tasks, label: Recurring Tasks, value_field: recurring_count, permission: project.read, show_if: 'record.recurring_count > 0' }
+      - { id: open_parent_task, label: Parent Task, value_field: parent_task_name, permission: project.read, show_if: 'record.parent_task_id !== null && record.parent_task_id !== ""' }
     header_actions:
       - { id: edit_task, label: Edit, variant: secondary, permission: project.write }
       - { id: start_task, label: Start, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'Todo'" }

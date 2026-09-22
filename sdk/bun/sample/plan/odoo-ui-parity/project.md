@@ -1328,3 +1328,27 @@ BrowserSkill session `urpe` listed the existing localhost Odoo tab but the
 required borrow confirmation timed out. The session was stopped cleanly. No
 authenticated visual-parity claim is made. Chatter/follower/attachment/portal
 side effects and recurrence-rule copying remain separate gaps.
+
+## Bounded slice: Project Task Parent Task action (2026-09-22)
+
+Stable ID: `PROJECT-TASK-PARENT-001`.
+
+Odoo 19 exposes `action_open_parent_task` as the task form's `Parent Task`
+stat button in `addons/project/views/project_task_views.xml`, backed by
+`project_task.py`. The button is visible only when `parent_id` is set and
+opens the parent `project.task` form with the normal task read boundary.
+
+Core3 already persisted `parent_task_id` and selected `parent_task_name` in the
+page-matched task detail datasource, but it had no corresponding stat button or
+navigation action. This slice adds the `Parent Task` stat button and
+`open_parent_task` navigate action to the existing `project-task-detail` page/
+API pair. The action navigates to the regular task detail route with the
+persisted parent ID and uses `project.read`; the target detail query remains
+the authority for missing or inaccessible parent records. No migration is
+required because the parent relation is already durable.
+
+Focused coverage is `test/project_task_parent.integration.test.ts`: page/API
+separation, exact Odoo label and conditional stat contract, parent identity for
+seeded child tasks, root-task absence, and missing-target behavior. Odoo's
+portal-specific parent-task URL behavior, chatter, and full authenticated
+desktop/mobile comparison remain open follow-up scope.

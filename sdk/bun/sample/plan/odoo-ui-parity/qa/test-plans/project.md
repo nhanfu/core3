@@ -41,6 +41,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-FUNC-011 | functional | Tasks > All Tasks | Open-task default, source view order, search/filter/group, row navigation, empty/error, and durable results | `PROJECT-ALL-TASKS-001`; focused suite | pass at contract level |
 | PROJECT-FUNC-012 | functional | Configuration > Projects | Sequence-ordered list/kanban/form, create/edit, archive/restore/delete guards, and reload persistence | `PROJECT-CONFIGURATION-001`; focused suite | pass at contract level |
 | PROJECT-FUNC-013 | functional | Project form > Convert to Template | Manager confirms conversion; durable template copy and top-level task templates are created, source is archived, replay/stale/invalid states are rejected, and reload preserves both records | `PROJECT-TEMPLATE-CONVERSION-001`; focused suite | pass at contract level; browser blocked |
+| PROJECT-FUNC-014 | functional | Task form > Parent Task | Child task exposes the Odoo Parent Task stat and opens the persisted parent task detail; root tasks hide it and missing targets resolve safely | `PROJECT-TASK-PARENT-001`; focused suite | pass at contract level; browser pending |
 
 ## Workflow and integration cases
 
@@ -81,6 +82,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-UI-006 | All Tasks action | 1440x900, 390x844 | Tasks submenu, open default, List/Kanban/Calendar/Activity/Pivot/Graph labels, row navigation and no-overflow state match | authenticated captures required; currently blocked | pending |
 | PROJECT-UI-007 | Configuration > Projects | 1440x900, 390x844 | Configuration menu, sequence-ordered list/kanban/form, archived filter, New/Edit dialogs, and no-overflow state match Odoo | authenticated captures required; currently blocked | pending |
 | PROJECT-UI-008 | Project form > Convert to Template | 1440x900, 390x844 | Project action menu exposes the manager-only Convert to Template flow, confirmation state, success refresh, and no-overflow behavior matching the Odoo form action | Odoo/Core3 captures required; authenticated tab borrow conflict | blocked |
+| PROJECT-UI-009 | Task form > Parent Task | 1440x900, 390x844 | Child task shows the Parent Task stat and parent form navigation without horizontal overflow; root task omits the stat | Odoo/Core3 captures required; BrowserSkill borrow gate | pending |
 
 ## Exit criteria
 
