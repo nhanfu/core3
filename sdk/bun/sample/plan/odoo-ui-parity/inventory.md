@@ -2942,3 +2942,37 @@ made. Exact evidence is under
 `evidence/inventory/2026-09-22/INV-PRODUCT-MOVES-001/`.
 
 Full Inventory sign-off remains open.
+
+## Products > Product form Lot/Serial Numbers — `INV-PRODUCT-LOTS-001` (2026-09-22)
+
+This bounded slice covers Odoo's `action_open_product_lot` stat action on both
+the `product.product` and `product.template` forms. The source buttons are
+declared at `addons/stock/views/product_views.xml:391-398` and
+`514-521`; the model methods at `addons/stock/models/product.py:647-660` and
+`1248-1264` open `stock.action_product_production_lot_form`, group by location,
+make the product read-only, and restrict the domain to the selected product or
+all variants of the selected template plus allowed-company locations.
+
+Core3 adds tracking-gated Lot/Serial Numbers actions to the existing product
+template and variant detail pages. The actions navigate to the existing
+`/lots` list with `product_template_id` or `product_id` context; the service
+owned Lots datasource applies the product, company, search, availability, and
+empty/503 predicates. Migration
+`20260923020000-092-inventory-product-lot-action.yaml` adds two stable,
+same-company Large Cabinet lot fixtures, and product detail datasources expose
+the durable `lot_count` stat value. No duplicate lot renderer or report surface
+was added.
+
+Focused verification passes 3 tests / 25 assertions in
+`test/inventory_product_lots.integration.test.ts`, covering both form actions,
+template/variant filtering, product detail counts, company/empty/transport
+boundaries, idempotent migration, and file-backed restart persistence.
+
+BrowserSkill connected to shared instance `245ea108`, but the authenticated
+Odoo tab was already borrowed by active session `ssyn`; the required borrow
+request was rejected. No live Odoo action interaction or desktop/mobile
+capture was possible, and no visual-parity claim is made. Exact blocker
+details are under
+`evidence/inventory/2026-09-22/INV-PRODUCT-LOTS-001/browser-blocker.md`.
+
+Full Inventory sign-off remains open.

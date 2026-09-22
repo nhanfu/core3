@@ -75,6 +75,7 @@ describe('Inventory Product Variants Odoo action parity', () => {
     expect(detailPage.components[0].header_actions.map((entry: any) => entry.id)).toEqual([
       'back_to_inventory_product_variants',
       'update_inventory_product_variant_quantity',
+      'view_inventory_product_variant_lots',
       'edit_inventory_product_variant',
       'archive_inventory_product_variant',
       'restore_inventory_product_variant',

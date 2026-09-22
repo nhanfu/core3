@@ -1662,3 +1662,13 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-22/INV-PRODUCT-MOVES-001/`.
 
 Full Inventory sign-off remains open.
+
+## `INV-PRODUCT-LOTS-001` — Product form Lot/Serial Numbers (2026-09-22)
+
+- Selected the next missing non-transfer, non-rule, non-reordering, non-move-history action: Odoo `action_open_product_lot` on both product forms, from `addons/stock/views/product_views.xml:391-398,514-521` and `addons/stock/models/product.py:647-660,1248-1264`.
+- Added tracking-gated Lot/Serial Numbers actions to Product and Product Variant detail. The existing `/lots` presentation/API pair remains the shared target; context is passed as `product_template_id` for all template variants or `product_id` for one variant, with current-company scope.
+- Added product-scoped datasource predicates and `lot_count` values, plus migration `20260923020000-092-inventory-product-lot-action.yaml` with two stable Large Cabinet lots across two locations. Migration replay and file-backed restart are covered.
+- Focused verification passes 3 tests / 25 assertions in `test/inventory_product_lots.integration.test.ts`; `bun run audit` also passes with 842 pages, 850 routes, and 1,755 datasources.
+- BrowserSkill connected to instance `245ea108`, but the Odoo tab was already borrowed by active session `ssyn`; no live action read, desktop/mobile captures, or visual-parity claim is made. Exact blocker is in `evidence/inventory/2026-09-22/INV-PRODUCT-LOTS-001/`.
+
+Full Inventory sign-off remains open.

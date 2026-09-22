@@ -1,0 +1,29 @@
+version: 0.0.92
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_lots(
+        id, name, product_id, product_name, ref, location_id, product_qty, unit_name,
+        tracking, company_name, partner_name, note, transfer_count, create_date
+      ) VALUES
+        (
+          'lot-inventory-cabinet-0001', 'CAB-LOT-0001', 'inventory-variant-cabinet',
+          'Large Cabinet', 'CAB/LOT/0001', 'location-stock', 120, 'Units', 'lot',
+          'Core3 Demo Company', NULL, 'Product form Lot/Serial Numbers fixture.', 1,
+          TIMESTAMP '2026-01-15 08:40:00'
+        ),
+        (
+          'lot-inventory-cabinet-0002', 'CAB-LOT-0002', 'inventory-variant-cabinet',
+          'Large Cabinet', 'CAB/LOT/0002', 'location-stock-shelf-2', 80, 'Units', 'lot',
+          'Core3 Demo Company', NULL, 'Second location for product lot grouping.', 0,
+          TIMESTAMP '2026-01-15 08:41:00'
+        )
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_lots
+      WHERE id IN ('lot-inventory-cabinet-0001', 'lot-inventory-cabinet-0002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

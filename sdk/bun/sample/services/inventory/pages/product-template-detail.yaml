@@ -46,6 +46,7 @@ components:
     stat_buttons:
       - { id: view_inventory_product_template_variants, label: Variants, icon: boxes, value_field: variant_count, permission: inventory.read }
       - { id: view_inventory_product_template_moves, label: Stock Moves, icon: transfer, value_field: move_count, permission: inventory.read, show_if: "record.move_count > 0" }
+      - { id: view_inventory_product_template_lots, label: Lot/Serial Numbers, icon: tag, value_field: lot_count, permission: inventory.tracking, show_if: "record.tracking !== 'none'" }
   - type: ListView
     variant: odoo
     source: inventory_product_template_variants

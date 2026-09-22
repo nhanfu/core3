@@ -2181,3 +2181,32 @@ sign-off remains open.
 QA disposition: PASS for the bounded durable Core3 Product Stock Moves action;
 PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
 Full Inventory sign-off remains open.
+
+## Inventory Product form Lot/Serial Numbers QA — `INV-PRODUCT-LOTS-001`
+
+- Odoo source/action: PASS. `action_open_product_lot` is declared on both
+  product forms at `addons/stock/views/product_views.xml:391-398,514-521`.
+  `product.product` and `product.template` implementations are at
+  `addons/stock/models/product.py:647-660,1248-1264`; the template action
+  includes every variant and both actions use the product lot action with
+  location grouping and allowed-company location scope.
+- Core3 contract: PASS. Product and Product Variant detail pages remain
+  presentation-only and expose tracking-gated actions joined to their backend
+  fragments by matching `page.id`. The Lots datasource accepts product or
+  template context and retains search, availability, empty, and 503 states.
+  Migration 0.0.92 provides two durable same-company lots in distinct
+  locations and product detail `lot_count` values.
+- Focused verification: PASS — 3 tests / 25 assertions in
+  `test/inventory_product_lots.integration.test.ts`, covering action wiring,
+  template/variant filtering, detail counts, company/empty/transport guards,
+  idempotent migration, and file-backed restart persistence.
+- Browser evidence: BLOCKED. BrowserSkill doctor passed for shared instance
+  `245ea108`, but borrowing the listed authenticated Odoo tab was rejected
+  because it was already borrowed by active session `ssyn`. No Odoo action
+  interaction or desktop/mobile capture was possible; no visual-parity claim
+  is made. Exact details are in
+  `evidence/inventory/2026-09-22/INV-PRODUCT-LOTS-001/browser-blocker.md`.
+
+QA disposition: PASS for the bounded durable Core3 Product Lot/Serial Numbers
+action; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
+comparison. Full Inventory sign-off remains open.

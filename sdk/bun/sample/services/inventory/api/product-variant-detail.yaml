@@ -13,6 +13,9 @@ datasources:
         CAST(on_hand - reserved_quantity AS DOUBLE) AS available_quantity,
         CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty,
         CAST(forecasted AS DOUBLE) AS forecasted, CAST(weight AS DOUBLE) AS weight,
+        (SELECT COUNT(*) FROM inventory_lots l WHERE l.product_id = inventory_product_variants.id
+          AND (l.company_name = inventory_product_variants.company_name OR l.company_name IS NULL
+            OR (inventory_product_variants.company_name = 'Core3 Demo Company' AND l.company_name = 'My Company (San Francisco)'))) AS lot_count,
         CAST(volume AS DOUBLE) AS volume
       FROM inventory_product_variants
       WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
@@ -32,6 +35,13 @@ actions:
     permission: inventory.manage
     navigate_to: /products/update-quantity
     params: { product_id: '{state.inventory_product_variant_detail.id}' }
+  - id: view_inventory_product_variant_lots
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /lots
+    params:
+      product_id: '{state.inventory_product_variant_detail.id}'
+      current_company_name: '{state.inventory_product_variant_detail.company_name}'
   - id: edit_inventory_product_variant
     type: server_form
     permission: inventory.manage
