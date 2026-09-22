@@ -11,6 +11,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: new_sms_campaign, label: New, variant: primary, permission: sms_marketing.write }
+      - { id: duplicate_sms_mailing, label: Duplicate, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Sent' && state.sms_marketing_mailing_detail.active === true" }
       - { id: send_sms_campaign_reload, label: Send, variant: primary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
       - { id: schedule_sms_campaign_reload, label: Schedule, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
       - { id: test_sms_mailing, label: Test, variant: secondary, permission: sms_marketing.write }

@@ -1,0 +1,15 @@
+version: 0.0.22
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      UPDATE sms_campaigns SET active = TRUE WHERE active IS NULL;
+      CREATE INDEX IF NOT EXISTS sms_campaigns_active_state_idx ON sms_campaigns(active, state, id);
+    down: |
+      DROP INDEX IF EXISTS sms_campaigns_active_state_idx;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

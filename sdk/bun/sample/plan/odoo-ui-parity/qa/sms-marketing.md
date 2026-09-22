@@ -204,6 +204,25 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 | SMS-FUNC-011 | UTM campaign SMS mailing notebook/list and duplicate contract | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/test-results.md` | pass | YAML/API/migration contract and persistence evidence |
 | SMS-BROWSER-005 | Authenticated Odoo campaign SMS notebook desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/verification.md` | blocked | BrowserSkill borrow confirmation timeout |
 
+## Bounded wave 11 - SMS mailing duplicate (2026-09-22)
+
+- Stable ID: `SMS-MAILING-DUPLICATE-001`.
+- Source comparison: **PASS**. The local Odoo 19 mass-mailing form exposes
+  `action_duplicate` for completed mailings, and the model returns a new form
+  for the copied `mailing.mailing` record; SMS inherits that action.
+- Core3 contract: **PASS**. The focused test covers 4 tests / 21 expectations:
+  page/API binding, deterministic active-state migration replay, Draft copy
+  persistence with reset counters, source preservation, stable copy IDs,
+  permissions, company/stale/active/list/content guards, and discovery.
+- Odoo BrowserSkill gate: **BLOCKED**. The authenticated `core3_reference`
+  Apps surface showed SMS Marketing as installable, but the launcher had no
+  SMS Marketing menu because `mass_mailing_sms` is not installed. The existing
+  user tab borrow timed out before capture; no credentials, cookies, tokens,
+  session takeover, or alternate browser backend was used.
+
+| SMS-FUNC-012 | SMS mailing duplicate page/API and durable Draft-copy contract | `evidence/sms-marketing/2026-09-22/SMS-MAILING-DUPLICATE-001/test-results.md` | pass | Core3 contract; Odoo form blocked by uninstalled addon |
+| SMS-BROWSER-006 | Authenticated Odoo SMS duplicate desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-MAILING-DUPLICATE-001/verification.md` | blocked | `mass_mailing_sms` not installed; existing-tab borrow timeout |
+
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

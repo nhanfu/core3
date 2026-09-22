@@ -410,6 +410,43 @@ The full SMS glob still reports an unrelated global page-schema blocker in
 has no `value_field`. The SMS implementation does not edit that concurrent,
 out-of-scope Inventory surface.
 
+## Bounded action: SMS mailing duplicate (wave 11)
+
+Stable ID: `SMS-MAILING-DUPLICATE-001`.
+
+The next uncovered SMS mailing-form action is Odoo's inherited
+`mailing.mailing.action_duplicate` from
+`mass_mailing/views/mailing_mailing_views.xml`. The shared form exposes
+**Duplicate** for completed mailings; `mass_mailing.models.mailing.MailingMailing`
+copies the mailing into a new form, while the SMS view keeps the inherited
+action and SMS-specific fields. The duplicate must start as a new Draft with
+delivery counters and sent/test state reset, while preserving the sender,
+active mailing list, content, recipient count, company, and campaign link.
+
+Core3 maps this to `duplicate_sms_mailing` in
+`services/sms-marketing/api/campaign-detail.yaml`, joined to
+`pages/sms-campaign-detail.yaml` by `page.id`. Migration
+`20260922170000-022-sms-mailing-duplicate.yaml` adds durable `active` state and
+an index so the Odoo active/sent guard is persisted and deterministic. The
+mutation requires `sms_marketing.write`, company scope, an active Sent source,
+an active SMS list, and the current row version; it creates stable
+`sms-mailing-copy-<source>-<n>` IDs and leaves the source unchanged.
+
+Focused coverage is
+`test/sms_marketing_mailing_duplicate.integration.test.ts`. The implementation
+does not send SMS, schedule the copy, or add a shared navigation primitive; the
+bounded server-form mapping refreshes the current detail/list surfaces after a
+successful copy.
+
+The Odoo browser gate is blocked for visual comparison. BrowserSkill reached
+the authenticated `core3_reference` Apps surface at `http://localhost:8069`;
+the app catalog showed **SMS Marketing** as an installable app, but the
+authenticated launcher had no SMS Marketing menu or mailing form because
+`mass_mailing_sms` is not installed. The authorized borrow request for the
+existing user Odoo tab timed out, so no user tab was accessed or taken over.
+Diagnostic desktop/mobile captures prove only that installation blocker; no
+visual-parity claim is made.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

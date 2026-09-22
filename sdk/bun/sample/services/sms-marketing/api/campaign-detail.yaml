@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: sms_marketing.read
     error_states: { unauthorized: { status: 401, code: SMS_MAILING_UNAUTHORIZED, message: Sign in to view this SMS mailing. }, forbidden: { status: 403, code: SMS_MAILING_FORBIDDEN, message: You do not have permission to view this SMS mailing. }, missing_record: { status: 404, code: SMS_MAILING_NOT_FOUND, message: Mailing not found. }, transport_error: { status: 503, code: SMS_MAILING_DETAIL_UNAVAILABLE, message: SMS Marketing details are temporarily unavailable. } }
-    query: "SELECT id, row_version, company_name, campaign_id, title AS subject, sender_name AS responsible, list_name AS mailing_list_names, list_name AS recipient_model_label, message AS body_plaintext, recipient_count, recipient_count AS sent, recipient_count AS expected, 0 AS scheduled, failed_count AS failed, failed_count AS bounced, CAST(scheduled_at AS VARCHAR) AS schedule_date, CAST(sent_at AS VARCHAR) AS sent_date, state, title AS campaign_name, true AS sms_allow_unsubscribe, last_test_numbers, last_test_valid_count, last_test_invalid_numbers, last_test_status, CAST(last_test_at AS VARCHAR) AS last_test_at FROM sms_campaigns WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:company_name IS NULL OR company_name = :company_name) AND id = :id"
+    query: "SELECT id, name, row_version, company_name, campaign_id, title AS subject, sender_name AS responsible, list_name AS mailing_list_names, list_name AS recipient_model_label, message AS body_plaintext, recipient_count, recipient_count AS sent, recipient_count AS expected, 0 AS scheduled, failed_count AS failed, failed_count AS bounced, CAST(scheduled_at AS VARCHAR) AS schedule_date, CAST(sent_at AS VARCHAR) AS sent_date, state, active, title AS campaign_name, true AS sms_allow_unsubscribe, last_test_numbers, last_test_valid_count, last_test_invalid_numbers, last_test_status, CAST(last_test_at AS VARCHAR) AS last_test_at FROM sms_campaigns WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:company_name IS NULL OR company_name = :company_name) AND id = :id"
 actions:
   - id: edit_sms_campaign
     type: server_form
@@ -34,6 +34,41 @@ actions:
       - { field: message, label: SMS Content, type: textarea, required: true }
       - { field: scheduled_at, label: Scheduled for, type: text }
       - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+  - id: duplicate_sms_mailing
+    type: server_form
+    permission: sms_marketing.write
+    title: Duplicate Mailing
+    action: mass_mailing.action_duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    prefill: state.sms_marketing_mailing_detail
+    refresh: [sms_marketing_mailing_detail, sms_marketing_mailings]
+    success_message: Mailing duplicated.
+    mutation:
+      table: sms_campaigns
+      before_steps:
+        - query: "SELECT 'sms-mailing-copy-' || CAST(:id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM sms_campaigns existing WHERE existing.id LIKE 'sms-mailing-copy-' || CAST(:id AS VARCHAR) || '-%') AS VARCHAR) AS duplicate_id, source.name || ' (copy ' || CAST((SELECT COUNT(*) + 1 FROM sms_campaigns existing WHERE existing.id LIKE 'sms-mailing-copy-' || CAST(:id AS VARCHAR) || '-%') AS VARCHAR) || ')' AS duplicate_name FROM sms_campaigns source WHERE source.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM sms_campaigns WHERE id = :id AND active = true AND state = 'Sent' AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_DUPLICATE_BLOCKED, message: Only an active sent mailing can be duplicated. Reload the mailing and try again. }
+        - { query: "SELECT 1 AS ok FROM sms_lists WHERE id = :list_id AND state = 'Active'", status: 422, code: SMS_MAILING_DUPLICATE_LIST_REQUIRED, message: Select an active SMS mailing list. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:message AS VARCHAR))) > 0 AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: SMS_MAILING_DUPLICATE_REQUIRED_FIELDS, message: Title, SMS Content, and a non-negative recipient count are required. }
+      steps:
+        - query: "INSERT INTO sms_campaigns (id, name, title, sender_name, list_id, list_name, message, scheduled_at, sent_at, recipient_count, delivered_count, failed_count, state, row_version, created_at, updated_at, company_name, campaign_id, active, last_test_valid_count) VALUES (:duplicate_id, :duplicate_name, :title, :sender_name, :list_id, :list_name, :message, :scheduled_at, NULL, :recipient_count, 0, 0, 'Draft', 1, TIMESTAMP '2026-09-22 17:00:00', TIMESTAMP '2026-09-22 17:00:00', :company_name, :campaign_id, TRUE, 0)"
+          expect_changed: true
+          status: 409
+          code: SMS_MAILING_DUPLICATE_FAILED
+          message: The SMS mailing could not be duplicated.
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :duplicate_id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: sender_name, label: Sender, type: text }
+      - { field: list_id, label: Mailing Lists, type: text, required: true }
+      - { field: list_name, label: Mailing List, type: text, required: true }
+      - { field: message, label: SMS Content, type: textarea, required: true }
+      - { field: scheduled_at, label: Scheduled for, type: text }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+      - { field: company_name, label: Company, type: text }
   - { id: view_sms_delivery_traces, type: navigate, permission: sms_marketing.read, navigate_to: /sms-delivery-traces, params: { campaign_id: '{state.id}' } }
   - id: retry_failed_sms_campaign
     type: server
