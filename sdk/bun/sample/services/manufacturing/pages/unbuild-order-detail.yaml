@@ -7,6 +7,8 @@ components:
     subtitle_field: product_name
     status_field: state
     editable: true
+    stat_buttons:
+      - { id: open_mrp_unbuild_moves, label: Product Moves, value_field: move_count, permission: manufacturing.read, show_if: "record.state === 'Done'" }
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_mrp_unbuild_orders, label: Back to Unbuild Orders, icon: arrow-left, permission: manufacturing.read }

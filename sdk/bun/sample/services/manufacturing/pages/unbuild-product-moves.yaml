@@ -1,0 +1,27 @@
+title: Unbuild Product Moves
+page: { id: manufacturing-unbuild-product-moves, route: /unbuild-orders/detail/product-moves, breadcrumb: [Supply Chain, Manufacturing, Operations, Unbuild Orders, Product Moves], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_unbuild_moves
+    search: { label: Search Product Moves, placeholder: 'Search reference, product, lot, or location...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/unbuild-product-move-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_unbuild_move
+    row_double_click_action: view_mrp_unbuild_move
+    empty_state: { title: No product moves, description: Components and finished products will appear here after this Unbuild Order is completed. }
+    columns:
+      - { field: move_date, label: Date, mobile: true, sortable: true }
+      - { field: reference, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: move_type }
+      - { field: move_type, label: Move Type, mobile: false }
+      - { field: lot_name, label: Lot/Serial Number, mobile: false }
+      - { field: location, label: From, mobile: false }
+      - { field: location_dest, label: To, mobile: false }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: uom, label: Unit, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }

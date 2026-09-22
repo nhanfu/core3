@@ -1,0 +1,41 @@
+page: { id: manufacturing-unbuild-product-moves }
+datasources:
+  - id: mrp_unbuild_moves
+    permission: manufacturing.read
+    meta:
+      source_action:
+        addon: mrp
+        external_id: action_mrp_unbuild_moves
+        model: stock.move.line
+        view_modes: [list, form]
+        domain: "['|', ('move_id.unbuild_id', '=', active_id), ('move_id.consume_unbuild_id', '=', active_id)]"
+    error_states:
+      unauthorized: { status: 401, code: MRP_UNBUILD_MOVES_UNAUTHORIZED, message: Sign in to view Unbuild Product Moves. }
+      forbidden: { status: 403, code: MRP_UNBUILD_MOVES_FORBIDDEN, message: You do not have permission to view Unbuild Product Moves. }
+      missing_record: { status: 404, code: MRP_UNBUILD_MOVES_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+      transport_error: { status: 503, code: MRP_UNBUILD_MOVES_UNAVAILABLE, message: Unbuild Product Moves are temporarily unavailable. }
+    query: |
+      SELECT m.id, CAST(m.move_date AS VARCHAR) AS move_date, m.reference, m.unbuild_id,
+        u.name AS unbuild_name, m.move_type, m.product_name, CAST(m.quantity AS DOUBLE) AS quantity,
+        m.uom, COALESCE(m.lot_name, '') AS lot_name, m.location, m.location_dest,
+        m.state, m.company_name
+      FROM mrp_unbuild_moves m
+      INNER JOIN mrp_unbuild_orders u
+        ON u.id = m.unbuild_id AND u.company_name = m.company_name
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND u.id = :id
+        AND (:q IS NULL OR m.reference ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(m.lot_name, '') ILIKE '%' || :q || '%' OR m.location ILIKE '%' || :q || '%'
+          OR m.location_dest ILIKE '%' || :q || '%')
+      ORDER BY m.sequence, m.id
+actions:
+  - id: view_mrp_unbuild_move
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /unbuild-orders/detail/product-moves/detail
+    params: { id: '{row.id}', unbuild_id: '{state.id}' }
+  - id: back_to_mrp_unbuild_moves
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /unbuild-orders/detail/product-moves
+    params: { id: '{state.mrp_unbuild_move_detail.unbuild_id}' }

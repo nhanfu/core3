@@ -2,6 +2,37 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Unbuild Order Product Moves stat action (`MANUFACTURING-UNBUILD-MOVES-001`)
+
+Local Odoo 19 source identifies `action_mrp_unbuild_moves` in
+`addons/mrp/views/mrp_unbuild_views.xml` as the Done Unbuild Order Product Moves
+stat action. It targets `stock.move.line`, uses `list,form`, and scopes the
+selected Unbuild Order through `move_id.unbuild_id = active_id` or
+`move_id.consume_unbuild_id = active_id`; the button is hidden until the
+Unbuild Order is Done.
+
+Core3 previously had Manufacturing Order Product Moves but no corresponding
+Unbuild Order action or durable unbuild-move scope. This slice adds the
+page-only `pages/unbuild-product-moves.yaml` and
+`pages/unbuild-product-move-detail.yaml`, their page-id-bound API/action
+contract, the Done-only `Product Moves` stat button on Unbuild Order detail,
+and migration `20260922240000-030-unbuild-product-moves.yaml` with the
+idempotent `mrp_unbuild_moves` table, scope index, and deterministic rows.
+The read-only contract enforces company-scoped joins and declares explicit
+401/403/404/503 states; create, delete, and workflow transitions are absent
+because the source action is a stock move-line window action.
+
+Focused coverage is `test/manufacturing_unbuild_product_moves.integration.test.ts`:
+source action identity, page/API separation, route discovery, Done-only stat
+navigation, durable move/company scoping, search/empty/not-found/503 behavior,
+migration replay, and file-backed restart persistence.
+
+BrowserSkill verification is pending after the implementation pass. Evidence
+will be recorded under
+`odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-UNBUILD-MOVES-001/`;
+no visual parity claim is made until the authenticated Odoo action and Core3
+route are both observed.
+
 ## 2026-09-22 Manufacturing Order Unbuilds stat action (`MANUFACTURING-MO-UNBUILDS-001`)
 
 Local Odoo 19 source identifies `action_view_mrp_production_unbuilds` in

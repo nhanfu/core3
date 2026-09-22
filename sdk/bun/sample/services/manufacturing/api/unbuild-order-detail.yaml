@@ -22,6 +22,11 @@ actions:
     type: navigate
     permission: manufacturing.read
     navigate_to: /unbuild-orders
+  - id: open_mrp_unbuild_moves
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /unbuild-orders/detail/product-moves
+    params: { id: '{state.id}' }
   - id: edit_mrp_unbuild
     type: server_form
     permission: manufacturing.write

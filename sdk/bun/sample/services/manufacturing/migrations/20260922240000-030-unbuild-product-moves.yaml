@@ -1,0 +1,56 @@
+version: 0.0.30
+description: Durable product moves for the Odoo Unbuild Order stat action
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_unbuild_moves (
+        id VARCHAR PRIMARY KEY,
+        unbuild_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        move_date DATE NOT NULL DEFAULT DATE '2026-01-15',
+        reference VARCHAR NOT NULL,
+        move_type VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        uom VARCHAR NOT NULL DEFAULT 'Units',
+        lot_name VARCHAR,
+        location VARCHAR NOT NULL,
+        location_dest VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Done',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS idx_mrp_unbuild_moves_scope
+        ON mrp_unbuild_moves(unbuild_id, company_name, sequence, id);
+      INSERT INTO mrp_unbuild_moves (
+        id, unbuild_id, sequence, move_date, reference, move_type, product_name,
+        quantity, uom, lot_name, location, location_dest, state, company_name
+      ) VALUES
+        ('ubmove-drawer-001', 'unbuild-drawer-done', 10, DATE '2026-01-15', 'UB/2026/0002', 'Component', 'Wood Panel', 2, 'Units', NULL, 'WH/Stock', 'Production', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-drawer-002', 'unbuild-drawer-done', 20, DATE '2026-01-15', 'UB/2026/0002', 'Component', 'Drawer Handle', 2, 'Units', NULL, 'WH/Stock', 'Production', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-drawer-003', 'unbuild-drawer-done', 30, DATE '2026-01-15', 'UB/2026/0002', 'Finished product', 'Drawer', 2, 'Units', NULL, 'Production', 'WH/Stock', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-drawer-004', 'unbuild-drawer-done', 40, DATE '2026-01-15', 'UB/2026/0002', 'Finished product', 'Drawer Frame', 2, 'Units', NULL, 'Production', 'WH/Stock', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-001', 'unbuild-desk-done', 10, DATE '2026-01-10', 'UB/2026/0004', 'Component', 'Desk Top', 1, 'Units', 'LOT-DESK-001', 'WH/Stock', 'Production', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-002', 'unbuild-desk-done', 20, DATE '2026-01-10', 'UB/2026/0004', 'Component', 'Desk Leg', 4, 'Units', NULL, 'WH/Stock', 'Production', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-003', 'unbuild-desk-done', 30, DATE '2026-01-10', 'UB/2026/0004', 'Component', 'Desk Drawer', 1, 'Units', NULL, 'WH/Stock', 'Production', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-004', 'unbuild-desk-done', 40, DATE '2026-01-10', 'UB/2026/0004', 'Finished product', 'Desk Combination', 1, 'Units', 'LOT-DESK-001', 'Production', 'Components', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-005', 'unbuild-desk-done', 50, DATE '2026-01-10', 'UB/2026/0004', 'Finished product', 'Desk Top', 1, 'Units', NULL, 'Production', 'Components', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-desk-006', 'unbuild-desk-done', 60, DATE '2026-01-10', 'UB/2026/0004', 'Finished product', 'Desk Drawer', 1, 'Units', NULL, 'Production', 'Components', 'Done', 'My Company (San Francisco)'),
+        ('ubmove-secondary-001', 'unbuild-secondary-done', 10, DATE '2026-01-15', 'UB/2026/0006', 'Component', 'Drawer Panel', 2, 'Units', 'LOT-DRAWER-001', 'WH/Stock', 'Production', 'Done', 'Core3 Vietnam'),
+        ('ubmove-secondary-002', 'unbuild-secondary-done', 20, DATE '2026-01-15', 'UB/2026/0006', 'Component', 'Drawer Handle', 2, 'Units', NULL, 'WH/Stock', 'Production', 'Done', 'Core3 Vietnam'),
+        ('ubmove-secondary-003', 'unbuild-secondary-done', 30, DATE '2026-01-15', 'UB/2026/0006', 'Finished product', 'Drawer', 2, 'Units', 'LOT-DRAWER-001', 'Production', 'Components', 'Done', 'Core3 Vietnam'),
+        ('ubmove-secondary-004', 'unbuild-secondary-done', 40, DATE '2026-01-15', 'UB/2026/0006', 'Finished product', 'Drawer Frame', 2, 'Units', NULL, 'Production', 'Components', 'Done', 'Core3 Vietnam')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_unbuild_moves
+      WHERE id IN (
+        'ubmove-drawer-001', 'ubmove-drawer-002', 'ubmove-drawer-003', 'ubmove-drawer-004',
+        'ubmove-desk-001', 'ubmove-desk-002', 'ubmove-desk-003', 'ubmove-desk-004', 'ubmove-desk-005', 'ubmove-desk-006',
+        'ubmove-secondary-001', 'ubmove-secondary-002', 'ubmove-secondary-003', 'ubmove-secondary-004'
+      );
+      DROP INDEX IF EXISTS idx_mrp_unbuild_moves_scope;
+      DROP TABLE IF EXISTS mrp_unbuild_moves;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
