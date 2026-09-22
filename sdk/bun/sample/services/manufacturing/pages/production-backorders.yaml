@@ -1,0 +1,32 @@
+title: Backorder Manufacturing Orders
+page: { id: manufacturing-production-backorders, route: /manufacturing-orders/detail/backorders, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders, Backorders], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_production_backorders
+    search: { label: Search backorders, placeholder: 'Search manufacturing order, product, or reference...' }
+    filters:
+      - { field: state, label: Status, options: [Draft, Confirmed, In Progress, To Close, Done, Cancelled] }
+      - { field: priority, label: Priority, options: [Normal, Urgent] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/manufacturing-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_production_backorder
+    row_double_click_action: view_mrp_production_backorder
+    row_actions: menu
+    empty_state: { title: No backorders found, description: This Manufacturing Order has no linked backorders. }
+    columns:
+      - { field: name, label: Manufacturing order, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
+      - { field: bom_name, label: Bill of Materials, mobile: false }
+      - { field: quantity, label: To produce, align: right, mobile: true }
+      - { field: qty_produced, label: Produced, align: right, mobile: false }
+      - { field: planned_date, label: Planned date, mobile: false }
+      - { field: priority, label: Priority, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: reference, label: Reference, mobile: false, optional: hide }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_production_backorder, label: Open, icon: eye }] }
+    page_size: 50

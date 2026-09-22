@@ -1,0 +1,35 @@
+page: { id: manufacturing-production-backorders }
+datasources:
+  - id: mrp_production_backorders
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCTION_BACKORDERS_UNAUTHORIZED, message: Sign in to view Manufacturing Order backorders. }
+      forbidden: { status: 403, code: MRP_PRODUCTION_BACKORDERS_FORBIDDEN, message: You do not have permission to view Manufacturing Order backorders. }
+      missing_record: { status: 404, code: MRP_PRODUCTION_BACKORDERS_PRODUCTION_NOT_FOUND, message: Manufacturing Order not found. }
+      transport_error: { status: 503, code: MRP_PRODUCTION_BACKORDERS_UNAVAILABLE, message: Manufacturing Order backorders are temporarily unavailable. }
+    query: |
+      SELECT b.id, b.row_version, b.name, b.product_id, b.product_name, bom.name AS bom_name,
+        b.bom_id, b.quantity, b.qty_produced, b.state, CAST(b.planned_date AS VARCHAR) AS planned_date,
+        b.reference, b.priority, b.company_name, b.warehouse_name, b.origin, b.availability, b.locked,
+        b.backorder_group_id
+      FROM mrp_productions selected
+      INNER JOIN mrp_productions b
+        ON b.backorder_group_id = selected.backorder_group_id
+       AND b.company_name = selected.company_name
+      LEFT JOIN mrp_boms bom ON bom.id = b.bom_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND selected.id = :id
+        AND selected.backorder_group_id IS NOT NULL
+        AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(b.reference, '') ILIKE '%' || :q || '%' OR COALESCE(b.origin, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR b.state = :state)
+        AND (:priority IS NULL OR b.priority = :priority)
+        AND (:company_name IS NULL OR b.company_name = :company_name)
+      ORDER BY b.name, b.id
+actions:
+  - id: view_mrp_production_backorder
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail
+    params: { id: '{row.id}' }

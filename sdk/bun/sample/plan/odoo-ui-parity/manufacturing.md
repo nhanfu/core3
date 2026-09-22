@@ -2,6 +2,37 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Manufacturing Order Backorders stat action (`MANUFACTURING-MO-BACKORDERS-001`)
+
+Local Odoo 19 source identifies `mrp.production.action_view_mrp_production_backorders`
+in `addons/mrp/models/mrp_production.py`. The Manufacturing Order form stat
+button in `addons/mrp/views/mrp_production_views.xml` is visible when the
+computed `mrp_production_backorder_count` is at least two; the action returns
+`mrp.production` rows in the selected `production_group_id` with the label
+`Backorder MO's` and `list,form` modes. This is distinct from Inventory's
+partial-transfer backorder wizard and does not create a Manufacturing menu.
+
+Core3 adds durable `backorder_group_id` scope in migration
+`20260922210000-028-production-backorders-index.yaml`, the
+`Backorders` stat and action on the existing Manufacturing Order detail, and
+the page/API pair `pages/production-backorders.yaml` and
+`api/production-backorders.yaml` at
+`/manufacturing-orders/detail/backorders`. The query joins the selected MO
+to its company-scoped group, supports search/status/priority/company filters,
+and reuses the existing Manufacturing Order form for the source form mode.
+No create/delete action is exposed from this read-oriented stat surface.
+
+Focused coverage is `test/manufacturing_production_backorders.integration.test.ts`:
+source action identity, page/API separation, isolated route discovery,
+durable group scoping, search/filter/empty/503 behavior, idempotent migration,
+file-backed restart persistence, and read-only permissions.
+
+BrowserSkill instance `245ea108` was healthy, but the one explicit borrow
+request for shared tab `1770662590` did not complete before the confirmation
+timeout. The tab was not navigated or bypassed, and no Odoo desktop/mobile
+visual-parity claim is made. Evidence is under
+`odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-MO-BACKORDERS-001/`.
+
 ## 2026-09-22 Manufacturing Orders picking-type dashboard action (`MANUFACTURING-PICKING-DASHBOARD-001`)
 
 ### Source analysis and current-source comparison

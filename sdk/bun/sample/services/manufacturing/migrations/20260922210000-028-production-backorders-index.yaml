@@ -1,0 +1,19 @@
+version: 0.0.28
+description: Durable Manufacturing Order backorder-group scope for the Odoo stat action
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS backorder_group_id VARCHAR;
+      UPDATE mrp_productions
+      SET backorder_group_id = 'backorder-group-001'
+      WHERE id IN ('mo-progress-001', 'mo-to-close-001', 'mo-done-001')
+        AND backorder_group_id IS NULL;
+      CREATE INDEX IF NOT EXISTS idx_mrp_productions_backorder_group
+        ON mrp_productions(backorder_group_id, company_name, planned_date, name, id);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_productions_backorder_group;
+      ALTER TABLE mrp_productions DROP COLUMN IF EXISTS backorder_group_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
