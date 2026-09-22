@@ -212,3 +212,25 @@ blocked because neither the expected frontend `127.0.0.1:3002` nor backend
 `127.0.0.1:3001` listener was present during the run, so no Core3 visual parity
 claim is made. Detailed source, behavior, and blocker records are under
 `evidence/order/2026-09-22/sales-order-display-lines-001/`.
+
+## Sales order portal Preview bounded slice (2026-09-22)
+
+Stable ID `SALES-ORDER-PREVIEW-001` covers the next missing order-form action:
+Odoo `sale.order.action_preview_sale_order`. The Odoo method is readonly and
+returns the record portal URL; `sale/views/sale_order_views.xml` exposes the
+`Preview` header button. Core3 now adds the permissioned `preview_sale_order`
+navigation action and a separate `sale-order-preview` page/API pair joined by
+`page.id`. The preview is read-only, branch-scoped, exposes Odoo portal-style
+order/customer/date/terms/order-line/total content, and provides `Back to edit
+mode`. Missing-order and transport-error contracts are explicit; no mutation or
+new credential/token is introduced.
+
+Focused verification: `bun test test/sales_order_preview.integration.test.ts`
+passes (2 tests, 18 assertions), `bun run scripts/audit-order-ui.ts` passes
+(813 pages, 822 routes, 1,694 datasources), and migration replay/file-backed
+reopen checks pass. The shared BrowserSkill instance `245ea108` was connected,
+but the signed-in Odoo tab `1770662590` was already borrowed by another session
+(`krcu`) and BrowserSkill refused the borrow; no Odoo screenshot was captured,
+no Core3/Odoo visual parity claim is made, and the tab remains owned by that
+session. Evidence is under
+`evidence/order/2026-09-22/sales-order-preview-001/`.

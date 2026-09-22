@@ -1,0 +1,71 @@
+title: This is a preview of the customer portal
+page: { id: sale-order-preview, route: /order/sale-order/preview, breadcrumb: [Sales, Orders, Sales Order, Preview], auth: { require: [orders.read] } }
+
+components:
+  - type: Html
+    tag: section
+    class: sales-order-preview-banner
+    children:
+      - { type: Html, tag: p, text: This is a preview of the customer portal. }
+      - { type: Html, tag: p, text: Back to edit mode }
+  - type: OdooFormView
+    source: sale_order_portal_preview
+    title_field: order_number
+    subtitle_field: customer_name
+    status_field: status_label
+    editable: false
+    header_actions:
+      - { id: back_to_sale_order, label: Back to edit mode, variant: secondary, permission: orders.read }
+    group_columns: 2
+    groups:
+      - title: Order
+        fields:
+          - { field: order_number, label: Sales Order }
+          - { field: customer_name, label: Customer }
+          - { field: customer_legal_name, label: Invoice Address }
+          - { field: customer_reference, label: Customer Reference }
+      - title: Dates and terms
+        fields:
+          - { field: order_date, label: Order Date }
+          - { field: validity_date, label: Expiration Date }
+          - { field: commitment_date, label: Delivery Date }
+          - { field: payment_term_name, label: Payment terms }
+    notebook:
+      active: terms
+      tabs:
+        - id: terms
+          label: Terms & Conditions
+          groups:
+            - title: Terms & Conditions
+              fields: [{ field: notes, label: Terms & Conditions, type: textarea, wide: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: sale_order_portal_preview_lines
+    parent_source: sale_order_portal_preview
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    empty_state: { title: No order lines, description: There are no order lines to display for this order. }
+    footer:
+      source: sale_order_portal_preview
+      stats:
+        - { label: Total, field: total_amount_display }
+    children:
+      - { type: LineItemField, id: product_name, field: product_name, label: Product, readonly: true }
+      - { type: LineItemField, id: description, field: description, label: Description, readonly: true }
+      - { type: LineItemField, id: quantity_display, field: quantity_display, label: Quantity, readonly: true }
+      - { type: LineItemField, id: unit, field: unit, label: Unit, readonly: true }
+      - { type: LineItemField, id: unit_price_display, field: unit_price_display, label: Unit Price, readonly: true }
+      - { type: LineItemField, id: discount_display, field: discount_display, label: Discount, readonly: true }
+      - { type: LineItemField, id: tax_rate_display, field: tax_rate_display, label: Taxes, readonly: true }
+      - { type: LineItemField, id: line_total_display, field: line_total_display, label: Amount, readonly: true }
+    columns:
+      - { field: product_name, label: Product, width: 220 }
+      - { field: description, label: Description, width: 280 }
+      - { field: quantity_display, label: Quantity, align: right, width: 110 }
+      - { field: unit, label: Unit, width: 100 }
+      - { field: unit_price_display, label: Unit Price, align: right, width: 140 }
+      - { field: discount_display, label: Discount, align: right, width: 100 }
+      - { field: tax_rate_display, label: Taxes, align: right, width: 90 }
+      - { field: line_total_display, label: Amount, align: right, width: 150 }
+    labels: { noRecords: No records found, columnChooser: Columns, selectAll: Select all lines, selectRow: Select line }

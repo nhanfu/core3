@@ -277,6 +277,11 @@ actions:
     permission: orders.read
     navigate_to: /order/invoices
     params: { order_id: '{row.id}' }
+  - id: preview_sale_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/sale-order/preview
+    params: { id: '{state.id}' }
   - id: add_sale_order_line
     type: server_form
     permission: orders.write

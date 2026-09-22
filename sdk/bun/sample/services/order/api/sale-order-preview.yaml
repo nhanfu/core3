@@ -1,0 +1,52 @@
+page: { id: sale-order-preview }
+
+datasources:
+  - id: sale_order_portal_preview
+    single: true
+    permission: orders.read
+    error_states:
+      not_found: { status: 404, code: SALE_ORDER_PREVIEW_NOT_FOUND, message: This sales order is not available for preview. }
+      transport_error: { status: 503, code: SALE_ORDER_PREVIEW_UNAVAILABLE, message: The sales order preview is temporarily unavailable. }
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
+        o.customer_reference, CAST(o.order_date AS VARCHAR) AS order_date,
+        CAST(o.validity_date AS VARCHAR) AS validity_date,
+        CAST(o.commitment_date AS VARCHAR) AS commitment_date,
+        o.pricelist_name, o.payment_term_name, o.notes,
+        COALESCE(o.total_amount, 0) AS total_amount,
+        printf('$%,.2f', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+          WHEN 'Draft' THEN 'Quotation'
+          WHEN 'Pending Approval' THEN 'Quotation Sent'
+          WHEN 'Approved' THEN 'Sales Order'
+          WHEN 'Cancelled' THEN 'Cancelled'
+          ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+        END AS status_label
+      FROM orders o
+      WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+  - id: sale_order_portal_preview_lines
+    single: false
+    permission: orders.read
+    query: |
+      SELECT l.id, l.order_id AS document_id, COALESCE(l.display_type, 'product') AS display_type,
+        COALESCE(p.name, '') AS product_name, l.description,
+        CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', l.quantity) AS quantity_display,
+        l.unit, CAST(l.unit_price AS DOUBLE) AS unit_price,
+        printf('$%,.2f', l.unit_price) AS unit_price_display,
+        CAST(COALESCE(l.discount, 0) AS DOUBLE) AS discount,
+        printf('%.2f%%', COALESCE(l.discount, 0)) AS discount_display,
+        CAST(l.tax_rate AS DOUBLE) AS tax_rate, printf('%.2f%%', l.tax_rate) AS tax_rate_display,
+        CAST(COALESCE(l.price_total, l.line_total) AS DOUBLE) AS line_total,
+        printf('$%,.2f', COALESCE(l.price_total, l.line_total)) AS line_total_display
+      FROM order_lines l
+      JOIN orders o ON o.id = l.order_id
+      LEFT JOIN sale_products p ON p.id = l.product_id
+      WHERE l.order_id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY l.sequence, l.id
+
+actions:
+  - id: back_to_sale_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/sale-order
+    params: { id: '{query.id}' }

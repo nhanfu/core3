@@ -103,6 +103,35 @@ discovery of datasource contracts outside Order ownership.
   contract slice; authenticated desktop/mobile composer interaction remains a
   planned gate. No screenshots were added to Git.
 
+## 2026-09-22 Sales order portal Preview slice
+
+- Stable ID: `SALES-ORDER-PREVIEW-001`.
+- Odoo source/action: `sale.order.action_preview_sale_order` in
+  `addons/sale/models/sale_order.py:1336-1343` returns an `ir.actions.act_url`
+  with `self.get_portal_url()`. The form button is `Preview` in
+  `addons/sale/views/sale_order_views.xml`.
+- Core3 implementation: `services/order/api/sale-order-detail.yaml` adds the
+  `preview_sale_order` navigation action; separate
+  `services/order/pages/sale-order-preview.yaml` and
+  `services/order/api/sale-order-preview.yaml` join at `page.id:
+  sale-order-preview`. The page is read-only and `orders.read` protected; both
+  preview sources enforce branch scope and expose not-found/transport states.
+- Focused gate: `bun test test/sales_order_preview.integration.test.ts` — **2
+  passed, 18 assertions**. It covers source/view mapping, page/API separation,
+  populated lines and totals, missing/scope-empty reads, migration replay, and
+  file-backed reopen.
+- Audit gate: `bun run scripts/audit-order-ui.ts` — **813 pages, 822 routes,
+  1,694 datasources**, passed. Existing Sales form regression assertion was
+  updated to include the new source-backed Preview header action.
+- Browser blocker: BrowserSkill daemon/extension were healthy on shared browser
+  `245ea108` (`bsk status --json` reported Chrome 145, extension 0.3.0,
+  protocol 1.3). The signed-in Odoo tab `1770662590` at
+  `http://localhost:8069/odoo/contacts/9` was already borrowed by session
+  `krcu`; `bsk tab borrow 1770662590 --session wfmw` returned `tab is borrowed by
+  another session`. No independent login, Playwright session, credential access,
+  or Odoo screenshot was used. Desktop/mobile visual evidence is blocked and no
+  visual parity claim is made.
+
 ## 2026-09-13 coordinator review: candidate `ecc15927`
 
 - Integrated only the bounded Order restart-persistence/idempotent-migration

@@ -19,6 +19,7 @@ in [`../order.md`](../order.md).
 | Reporting | `/order/reporting/customers`, `/order/reporting/salespersons` | Graph/pivot/list defaults, grouping, date filters and read-only boundaries |
 | Configuration | `/order/quotation-templates`, sales-team routes | Template/line CRUD, Sales Teams navigation, validation and manager permissions |
 | Order-line presentation rows | `/order/sale-order` | Add/edit/delete section and note rows, zero-total semantics, workflow/scope/concurrency guards, restart persistence |
+| Sales order Preview | `/order/sale-order/preview` | Read-only portal-style order preview, scoped source data, back navigation, not-found/transport contracts |
 
 Actors are Sales Manager, Sales User, Fleet ordinary user, wrong-company user
 and unauthenticated user. Fixtures use stable customers, products, orders,
@@ -41,6 +42,7 @@ databases and generated IDs.
 | ORDER-FUNC-010 | Quotation email composer | Compose and send a quotation email with recipient, subject, body, attachment, durable mail history, draft-to-sent transition, and stale/scope/content guards | pass: focused suite |
 | ORDER-FUNC-011 | Order-line presentation rows | Add section and note rows with Odoo `line_section`/`line_note` semantics, edit/delete descriptions, preserve totals, and survive migration replay/restart | pass: `sales_order_display_lines.integration.test.ts`, 4 tests / 24 assertions |
 | ORDER-FUNC-012 | Discount wizard | Apply percentage, global, and fixed discounts with durable totals, audit history, replay, and invalid/stale/scope/duplicate guards | pass: `sales_order_discount.integration.test.ts`, 3 tests / 18 assertions |
+| ORDER-FUNC-013 | Sales order Preview | Open Preview from the order form, render stable order/line data, handle missing and scoped records, and retain the read-only preview after restart | pass: `sales_order_preview.integration.test.ts`, 2 tests / 18 assertions |
 
 ## Workflow and integration cases
 
@@ -76,6 +78,7 @@ databases and generated IDs.
 | ORDER-UI-004 | Current route regression | all manifest-owned Order routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned fresh matrix |
 | ORDER-UI-005 | Order-line presentation rows | 1440x900, 390x844 | Odoo Add a section/Add a note controls, inline description row, zero total, and row overflow action match; Core3 capture pending runtime | Odoo pass; Core3 blocked by 3001/3002 unavailable |
 | ORDER-UI-006 | Discount wizard | 1440x900, 390x844 | Odoo Discount action and modal labels/options are mapped to the order page/API contract; Core3 capture pending runtime | Odoo reference captured; Core3 blocked by 3001/3002 unavailable |
+| ORDER-UI-007 | Sales order Preview | 1440x900, 390x844 | Odoo Preview button and portal-style order content match at desktop/mobile; Core3/Odoo captures required before any visual claim | blocked: signed-in Odoo tab already borrowed by session `krcu`; no captures |
 
 ## Exit criteria
 
