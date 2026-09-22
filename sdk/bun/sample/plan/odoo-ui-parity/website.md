@@ -484,3 +484,35 @@ Browser evidence is recorded under
 BrowserSkill navigation reached the authenticated Discuss shell for
 `core3_reference`; no borrowable Website tab was listed, so no visual-parity
 capture is claimed.
+
+## Wave 15 execution evidence — 2026-09-22 — Page detail publication workflow
+
+The next smallest uncovered stable-ID feature is
+`WEBSITE-PAGE-DETAIL-PUBLISH-001`. Odoo 19's `website_pages_form_view` is a
+`website.page` form with the `is_published` field; the underlying
+`website_page_properties` model applies the publish/unpublish state. Core3's
+page-only `pages/page-detail.yaml` and API/action-only `api/page-detail.yaml`
+are joined by `page.id: website-page-detail` and expose `Publish` for
+`website.write` and `Unpublish` for `website.manage` actors.
+
+This wave strengthens the focused integration test with the exact detail action
+endpoints, permission denial, deterministic draft data, row-version guards, and
+file-backed restart persistence. No schema migration is needed because the
+existing `website_pages` state/version columns and `website_pages` workflow are
+the durable contract.
+
+Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-page-detail-publish-001/`.
+BrowserSkill verification against `http://localhost:8069` / `core3_reference`
+was attempted. Both authenticated Odoo tabs were already borrowed by other
+sessions; the task-created authenticated tab showed Discuss, `/odoo/website-pages`
+returned Discuss, and `/website-pages` returned Odoo 404. The shared actor has
+no Website application, so Publish/Unpublish could not be exercised and no
+desktop/mobile visual-parity claim is made.
+
+### Updated next slice
+
+Paired authenticated Odoo/Core3 desktop and mobile evidence remains blocked by
+the reference actor's missing Website application and shared-tab ownership.
+Public cookie-banner rendering/consent persistence, richer theme asset effects,
+and the remaining public/portal Website behavior remain open.

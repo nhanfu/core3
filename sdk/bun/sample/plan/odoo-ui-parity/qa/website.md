@@ -201,3 +201,16 @@ regressions passed — 26 tests, 131 assertions. `bun run audit` passed with
 853 pages, 861 routes, and 1,797 datasources. `bun run css:build:website`
 passed. `git diff --check` passed. This checkpoint does not sign off the
 Website module.
+
+## 2026-09-22 Page detail publication checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-015 | Odoo Page form publish/unpublish source trace and page/API join | `test/website_page_detail_publish.integration.test.ts` | pass: 4 tests / 20 assertions |
+| WEBSITE-WF-011 | Exact detail action endpoints, row-version guards, restart persistence | same focused test; `/api/actions/website.pages.publish` and `unpublish` | pass |
+| WEBSITE-PERM-012 | Publish/unpublish actor boundary | same focused test; `website.write` / `website.manage` | pass |
+| WEBSITE-UI-016 | Authenticated Odoo Page detail workflow | `evidence/website/2026-09-22/website-page-detail-publish-001/browser-check.md` | blocked; authenticated tabs were borrowed and the actor exposed Discuss without Website |
+
+This checkpoint covers the YAML/service/data workflow and exact action
+dispatcher contract. It does not sign off the Website module: paired Odoo/Core3
+desktop/mobile evidence and the remaining public/portal gates are open.

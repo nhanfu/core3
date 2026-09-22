@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/website');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -51,6 +52,50 @@ describe('Website Page Manager detail publication parity', () => {
     expect((await secondRepository.query('SELECT state, row_version FROM website_pages WHERE id = ?', ['website-page-demo-002']))[0]).toEqual({ state: 'Draft', row_version: 3 });
     await expect(secondRepository.executeMutation(unpublish.mutation, { id: 'website-page-demo-002', expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'WEBSITE_PAGE_UNPUBLISH_STALE' });
     second.close();
+  });
+
+  test('routes the detail buttons through the exact permissioned action endpoints', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'website_page_detail_publish_api', ['schema', 'data']);
+    const page = yaml('pages/page-detail.yaml');
+    const pagesApi = yaml('api/pages.yaml');
+    const detailApi = yaml('api/page-detail.yaml');
+    const workflow = yaml('pages/website-workflow.yaml');
+    const permissions = yaml('permissions.yaml');
+    let currentUser: any = { sub: 'website-editor', email: 'editor@workspace.example', name: 'Website Editor', permissions: ['website.read', 'website.write'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: {
+        async getCurrentUser() { return currentUser; },
+        hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
+      },
+      sources: new Map([...pagesApi.datasources, ...detailApi.datasources].map((source: any) => [source.id, source])),
+      pageSources: new Map([['website-page-detail', detailApi.datasources.map((source: any) => source.id)]]),
+      pages: new Map([['website-page-detail', { ...page.page, components: page.components, actions: detailApi.actions }]]),
+      catalogs: new Map(),
+      menus: new Map(),
+      workflows: new Map([['website_pages', workflow.workflow]]),
+      workflowFiles: new Map([['website_pages', join(root, 'pages/website-workflow.yaml')]]),
+      permissions,
+      uploadRoot: '/tmp/core3-website-page-detail-publish-uploads', eventStore: {}, topics: {},
+    });
+    const pageId = 'website-page-demo-002';
+    const action = (name: string, expectedRowVersion?: number) => api(new Request(`http://website.test/api/actions/website.pages.${name}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pageId, ...(expectedRowVersion === undefined ? {} : { expected_row_version: expectedRowVersion }), values: {} }),
+    }), new URL(`http://website.test/api/actions/website.pages.${name}`));
+
+    const published = await action('publish', 1);
+    expect((await published.json())).toMatchObject({ id: pageId, state: 'Published', row_version: 2 });
+    currentUser = { ...currentUser, permissions: ['website.read', 'website.write', 'website.manage'] };
+    const unpublished = await action('unpublish', 2);
+    expect((await unpublished.json())).toMatchObject({ id: pageId, state: 'Draft', row_version: 3 });
+    currentUser = { ...currentUser, permissions: ['website.read'] };
+    await expect(action('publish', 3)).rejects.toMatchObject({ status: 403, message: 'Requires permission: website.write' });
+    expect(await repository.query('SELECT state, row_version FROM website_pages WHERE id = ?', [pageId])).toEqual([{ state: 'Draft', row_version: 3 }]);
+    database.close();
   });
 
   test('detail actions keep the Odoo manager permission boundary', () => {

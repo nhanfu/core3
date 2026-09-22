@@ -1,29 +1,31 @@
 # WEBSITE-PAGE-DETAIL-PUBLISH-001
 
-## Scope
+## Source trace
 
-This bounded Website slice adds the missing publication controls to the
-authenticated Page Manager detail form. It follows Odoo 19's
-`website_pages_form_view` (`website.page`, including `is_published`) and reuses
-the existing guarded `website_pages` workflow:
+Odoo 19 `addons/website/views/website_pages_views.xml` defines the
+`website_pages_form_view` for `website.page` and exposes the `is_published`
+field. `addons/website/models/website_page_properties.py` applies the
+published/unpublished state to the underlying page view. Core3 keeps the
+presentation contract in `services/website/pages/page-detail.yaml` and the
+action contract in `services/website/api/page-detail.yaml`, joined by
+`page.id: website-page-detail`.
 
-- Draft pages expose `Publish` to `website.write` actors.
-- Published pages expose `Unpublish` to `website.manage` actors.
-- Both actions refresh the detail record and its page assets.
-- Row-version guards prevent duplicate or stale transitions.
+## Core3 implementation
 
-The page contract remains in `services/website/pages/page-detail.yaml`; the
-action contract remains in `services/website/api/page-detail.yaml`. No Odoo
-frontend code or shared runtime files were changed.
+- Draft rows expose `Publish` to `website.write` users.
+- Published rows expose `Unpublish` to `website.manage` users.
+- Both detail actions use the shared `website_pages` workflow and refresh the
+  page detail and asset datasources.
+- Required row-version guards reject missing versions, duplicate transitions,
+  and stale writes with HTTP 400/409 responses.
+- Deterministic draft `Contact us` data is persisted by the Website migrations;
+  migration replay and file-backed DuckDB restart preserve state and version.
 
 ## Verification
 
-Focused test: `test/website_page_detail_publish.integration.test.ts`
+`test/website_page_detail_publish.integration.test.ts` traces the Odoo source,
+asserts page/API joining, exercises the exact `/api/actions/website.pages.publish`
+and `unpublish` endpoints, checks permission denial, and verifies restart-safe
+state transitions.
 
-The test traces the local Odoo form source, verifies page/API `page.id` joining,
-checks visible state and permission guards, and verifies publish/unpublish
-persistence and stale replay across a file-backed DuckDB restart.
-
-BrowserSkill was not borrowed in this slice because the requested shared-tab
-confirmation was interrupted before a borrow completed. No Odoo visual-parity
-claim is made; no credentials, cookies, or independent browser were used.
+Authenticated reference-browser evidence is blocked; see `browser-check.md`.
