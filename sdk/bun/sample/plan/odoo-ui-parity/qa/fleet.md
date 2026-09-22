@@ -10,6 +10,26 @@
 
 QA state: qa-in-progress
 
+## 2026-09-22 — Vehicles Activity action mode
+
+- Feature `FLEET-VEHICLE-ACTIVITY-001` adds the missing Activity mode from
+  Odoo's `fleet_vehicle_action` (`kanban,list,form,pivot,activity`) to the
+  existing Vehicles page/API seam.
+- Durable vehicle activity storage, deterministic fixtures, schedule form,
+  company/permission/date/type/stale guards, and migration replay are covered
+  by `fleet_vehicle_activity_action.integration.test.ts`: **3 passed, 21
+  assertions**.
+- Fleet regression suite: **95 passed, 959 assertions** across 29 files;
+  audit, Fleet Sass, frontend build, and diff-check passed.
+- BrowserSkill connected to `245ea108`, but borrowing the existing signed-in
+  Odoo tab `1770662590` timed out awaiting confirmation. The exact blank Agent
+  Window capture is in
+  `evidence/fleet/2026-09-22/fleet-vehicle-activity-action-20260922/`.
+  No authenticated Odoo or Core3 desktop/mobile parity claim is made.
+
+Disposition: **functionally accepted / visual gate blocked**. Do not treat
+this bounded slice as full Fleet sign-off.
+
 ## 2026-09-22 — Mail to Driver bounded slice
 
 - `fleet_vehicle_mail.integration.test.ts`: **3 passed, 27 assertions, 0

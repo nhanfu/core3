@@ -1,0 +1,26 @@
+version: 0.0.45
+kind: data
+description: Deterministic Fleet vehicle activity fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_activities(
+        id, row_version, vehicle_id, activity_type, summary, due_date,
+        assigned_user, state, created_by, created_at
+      ) VALUES
+        ('fleet-vehicle-activity-001', 1, 'fleet-demo-001', 'todo', 'Review vehicle insurance', DATE '2026-09-30', 'Admin User', 'Planned', 'Admin User', TIMESTAMP '2026-01-15 09:30:00'),
+        ('fleet-vehicle-activity-002', 1, 'fleet-demo-002', 'email', 'Send maintenance reminder', DATE '2026-09-15', 'Fleet Manager', 'Planned', 'Fleet Manager', TIMESTAMP '2026-01-15 09:30:00')
+      ON CONFLICT (id) DO UPDATE SET
+        vehicle_id = excluded.vehicle_id,
+        activity_type = excluded.activity_type,
+        summary = excluded.summary,
+        due_date = excluded.due_date,
+        assigned_user = excluded.assigned_user,
+        state = excluded.state;
+    down: |
+      DELETE FROM fleet_vehicle_activities
+      WHERE id IN ('fleet-vehicle-activity-001', 'fleet-vehicle-activity-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

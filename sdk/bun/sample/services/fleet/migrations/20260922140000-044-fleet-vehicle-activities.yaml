@@ -1,0 +1,29 @@
+version: 0.0.44
+kind: schema
+description: Durable Odoo fleet vehicle activities
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_activities (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        vehicle_id VARCHAR NOT NULL,
+        activity_type VARCHAR NOT NULL,
+        summary VARCHAR NOT NULL,
+        due_date DATE NOT NULL,
+        assigned_user VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Planned',
+        created_by VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00',
+        completed_by VARCHAR,
+        completed_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_activities_vehicle_idx
+        ON fleet_vehicle_activities(vehicle_id, state, due_date, id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_activities_vehicle_idx;
+      DROP TABLE IF EXISTS fleet_vehicle_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

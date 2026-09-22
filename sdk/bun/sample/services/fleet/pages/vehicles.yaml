@@ -22,6 +22,20 @@ components:
         groups_source: fleet_vehicle_states
         card: { title: name, subtitle: license_plate, fields: [{ field: model, label: Model }, { field: driver_name, label: Driver }, { field: odometer, label: Odometer }, { field: contract_end_date, label: Contract end }] }
       - { id: list, label: List, icon: table }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: license_plate
+        record_date_field: activity_date
+        schedule_action: schedule_fleet_vehicle_activity
+        empty_cell_action: schedule_fleet_vehicle_activity
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
     columns:
       - { field: name, label: Vehicle, type: PrimaryEntityCell }
       - { field: license_plate, label: License plate }

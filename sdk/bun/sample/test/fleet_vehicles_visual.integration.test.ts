@@ -18,7 +18,7 @@ describe('Fleet Vehicles visual contract', () => {
     expect(source).toMatch(/id=['"]fleet_vehicle_odometer_menu['"][^>]*sequence="10"/s);
 
     const page = yaml('pages/vehicles.yaml').components[0];
-    expect(page.views.map((view: any) => view.id)).toEqual(['kanban', 'list']);
+    expect(page.views.map((view: any) => view.id)).toEqual(['kanban', 'list', 'activity']);
     expect(source).toContain('<field name="view_mode">kanban,list,form,pivot,activity</field>');
   });
 });

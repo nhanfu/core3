@@ -6,7 +6,7 @@ datasources:
   - id: fleet_vehicles
     permission: fleet.read
     workflow: fleet_vehicles
-    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.driver_email, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name) ORDER BY v.name, v.id"
+    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.driver_email, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date, a.id AS activity_id, a.row_version AS activity_row_version, a.activity_type, a.summary AS activity_summary, CAST(a.due_date AS VARCHAR) AS activity_date, a.assigned_user AS activity_user, CASE WHEN a.state = 'Done' THEN 'done' WHEN a.due_date < DATE '2026-09-22' THEN 'overdue' WHEN a.due_date = DATE '2026-09-22' THEN 'today' ELSE 'planned' END AS activity_state, CASE WHEN a.id IS NULL THEN 0 ELSE 1 END AS activity_count FROM fleet_vehicles v LEFT JOIN LATERAL (SELECT id, row_version, activity_type, summary, due_date, assigned_user, state FROM fleet_vehicle_activities WHERE vehicle_id = v.id ORDER BY CASE WHEN state = 'Planned' THEN 0 ELSE 1 END, due_date, id LIMIT 1) a ON TRUE WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%' OR COALESCE(a.summary, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name) ORDER BY v.name, v.id"
   - id: fleet_vehicle_mail_templates
     permission: fleet.manage
     query: "SELECT id AS value, name AS label FROM fleet_vehicle_mail_templates WHERE active = TRUE ORDER BY name, id"
@@ -52,6 +52,33 @@ actions:
   - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
   - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }
   - { id: retire_fleet_vehicle, type: server, permission: fleet.manage, action: fleet.vehicles.retire, handler: order_transition, workflow: fleet_vehicles, operation: retire, refresh: [fleet_vehicles] }
+  - id: schedule_fleet_vehicle_activity
+    type: server_form
+    permission: fleet.write
+    title: Schedule activity
+    action: fleet.vehicles.activity.schedule
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.activity_id}', expected_row_version: '{row.activity_row_version}' }
+    refresh: [fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicle_activities
+      concurrency: { required: true }
+      fields: [activity_type, summary, due_date, assigned_user]
+      required: [activity_type, summary, due_date]
+      guards:
+        - { query: "SELECT a.id FROM fleet_vehicle_activities a JOIN fleet_vehicles v ON v.id = a.vehicle_id WHERE a.id = :id AND a.state = 'Planned' AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)", status: 404, code: FLEET_VEHICLE_ACTIVITY_NOT_FOUND, message: Planned vehicle activity was not found in the current company. }
+        - { query: "SELECT a.id FROM fleet_vehicle_activities a WHERE a.id = :id AND a.row_version = :expected_row_version AND a.state = 'Planned'", status: 409, code: STALE_RECORD, message: The vehicle activity changed before it was scheduled. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE :activity_type IN ('todo', 'email', 'call', 'meeting')", status: 422, code: FLEET_VEHICLE_ACTIVITY_TYPE_INVALID, message: Select a valid vehicle activity type. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: FLEET_VEHICLE_ACTIVITY_SUMMARY_REQUIRED, message: Activity summary is required. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:due_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: FLEET_VEHICLE_ACTIVITY_DATE_INVALID, message: Due date must use YYYY-MM-DD. }
+      result: { query: "SELECT id, row_version, vehicle_id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_user, state FROM fleet_vehicle_activities WHERE id = :id" }
+    fields:
+      - { field: activity_type, label: Activity Type, type: select, options: [{ value: todo, label: To-Do }, { value: email, label: Email }, { value: call, label: Call }, { value: meeting, label: Meeting }], required: true }
+      - { field: summary, label: Summary, type: textarea, required: true, placeholder: Describe the activity... }
+      - { field: due_date, label: Due Date, type: text, required: true, placeholder: YYYY-MM-DD }
+      - { field: assigned_user, label: Assigned to, type: text }
   - id: mail_fleet_vehicle_drivers
     type: server_form
     modal_style: mail_composer

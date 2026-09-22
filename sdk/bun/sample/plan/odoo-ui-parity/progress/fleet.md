@@ -8,6 +8,23 @@ Candidate commit: working tree after vehicle create contract slice
 
 ## Current state
 
+## Current wave: Vehicles Activity action mode `FLEET-VEHICLE-ACTIVITY-001` (2026-09-22)
+
+- Added the missing Odoo `fleet_vehicle_action` Activity mode to the existing
+  Vehicles page, with durable `fleet_vehicle_activities` schema/fixtures and a
+  permissioned schedule mutation.
+- Focused: **3 passed / 21 assertions**; Fleet regression: **95 passed / 959
+  assertions** across 29 files.
+- Audit: **834 pages / 842 routes / 1,739 datasources**; Fleet Sass,
+  frontend build, and diff-check pass.
+- Evidence:
+  `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-vehicle-activity-action-20260922/`.
+- Browser blocker: BrowserSkill borrow of authenticated Odoo tab
+  `1770662590` on shared instance `245ea108` timed out; only a blank Agent
+  Window was capturable. No authenticated desktop/mobile visual claim is made.
+
+This is a bounded feature result, not Fleet module completion or sign-off.
+
 ## QA-pending candidate `1e55ca16` (2026-09-13)
 
 Service company-scope candidate is queued for the existing Fleet QA owner; no
