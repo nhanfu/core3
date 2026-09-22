@@ -3,7 +3,7 @@
 Module owner: time-off module owner
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: `6300ab0a`
+Candidate commit: `75667fe0`
 
 ## 2026-09-22 bounded candidate: Time Off Summary QWeb-PDF report
 
