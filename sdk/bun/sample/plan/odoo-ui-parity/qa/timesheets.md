@@ -1276,3 +1276,21 @@ summary; the focused and related portal regression completed successfully.
 - Odoo evidence: BrowserSkill observed authenticated task 107 `Furniture Delivery`, its `View Details` workflow, the HTML report heading `Timesheets for Furniture Delivery`, and `Total (Hours) 45:00`. No screenshot is claimed because the browser session closed before capture export.
 - Core3 blocker: runtime readiness at `http://127.0.0.1:4012/api/modules` passed, but the BrowserSkill session then returned `error: requested resource does not exist` / `details: session not registered or already stopped` before authenticated Core3 navigation. Core3 desktop/mobile and Odoo mobile captures are unavailable; QWeb/PDF equivalence remains open.
 - Disposition: bounded implementation and contract verification pass; visual parity and module sign-off remain open. The BrowserSkill session is closed.
+
+## 2026-09-22 — `TIMESHEET-MY-BILLING-TYPE-GROUP-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `sale_timesheet` Billing Type Group By on the internal My Timesheets action | pass in focused source test and live Odoo inspection |
+| Paired YAML contract | layout-only `timesheets` page and separate API joined by `page.id` | pass |
+| Durable Billing Type projection | persisted `billing_type`, pivot field, group contract, and billable fallback | pass |
+| Permission/company/empty/stale guards | `timesheets.read`, current company, empty fixture, concurrent update freshness | pass |
+| Restart and migration replay | existing 0.0.5 billing column survives reopen and replay | pass |
+| Focused integration | 4/4 tests / 18 expectations | pass |
+| My Timesheets regression | 31/31 tests / 194 expectations | pass |
+| Audit/build/lint/diff | audit 842 pages / 850 routes / 1755 datasources; frontend and Timesheets CSS builds; focused ESLint and owned diff-check | pass |
+| Authenticated Odoo desktop/mobile evidence | live My Timesheets with Billing Type grouping | captured; required existing-tab borrow timed out |
+| Authenticated Core3 desktop/mobile evidence | matching Core3 action | blocked; no visual-parity claim |
+
+Evidence: `evidence/timesheets/2026-09-22/timesheet-my-billing-type-group-001/`.
+This is a bounded feature record, not Timesheets module sign-off.

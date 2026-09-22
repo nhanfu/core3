@@ -1190,6 +1190,20 @@ Evidence: `evidence/timesheets/2026-09-21/timesheet-task-action-portal-views-001
   evidence is blocked and no sign-off is claimed. Odoo Print/PDF/action
   blockers remain open.
 
+## 2026-09-22 `TIMESHEET-MY-BILLING-TYPE-GROUP-001`
+
+- Added the missing Odoo Sales Timesheet Billing Type Group By contract to
+  internal My Timesheets through the separate `timesheets` page/API pair.
+- Reused the existing durable `billing_type` migration and added a guarded
+  projection/query fallback, with focused persistence, restart, permission,
+  company, empty, and stale-state assertions.
+- Focused: 4/4 tests, 18 expectations. Isolated My regression: 31/31 tests,
+  194 expectations. Audit, frontend/CSS builds, ESLint, and owned diff-check
+  passed.
+- BrowserSkill live Odoo inspection and truthful desktop/mobile captures are
+  recorded, but the required existing signed-in tab borrow timed out. No
+  visual-parity claim or Timesheets module sign-off is made.
+
 ## 2026-09-21 — `TIMESHEET-TASK-ACTION-PIVOT-VIEW-001`
 
 - Selected the Pivot view inherited from Odoo `timesheet_action_all` by the

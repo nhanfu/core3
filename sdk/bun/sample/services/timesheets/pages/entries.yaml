@@ -37,6 +37,7 @@ components:
       - { field: parent_task_name, label: Parent Task }
       - { field: department_name, label: Department }
       - { field: manager_name, label: Manager }
+      - { field: billing_type, label: Billing Type }
       - { field: state, label: Status }
     view_navigation: tabs
     views:

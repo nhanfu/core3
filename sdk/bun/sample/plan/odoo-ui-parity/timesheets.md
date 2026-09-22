@@ -2398,3 +2398,27 @@ Odoo source and reference behavior were compared for the portal task `View Detai
 Core3 implements the distinct workflow through separate `portal-task-timesheet-detail` page/API contracts joined by `page.id`, a guarded durable `timesheet_portal_task_report_runs` migration, and a report-preview page/API rendering persisted lines with Print and Back actions. The mutation enforces portal task/company/actor scope, non-empty data, expected entry count, and task row-version guards; restart and migration replay are covered.
 
 Focused coverage is `test/timesheets_portal_task_report.integration.test.ts`: 4 tests / 32 expectations. The related portal regression is 22 tests / 174 expectations. UI audit (807 pages, 816 routes, 1671 datasources), frontend build, Timesheets CSS build, and diff checks passed. BrowserSkill captured the authenticated Odoo desktop flow, but the session closed before Core3 navigation/capture export; the exact `session not registered or already stopped` blocker is recorded in `evidence/timesheets/2026-09-22/timesheet-portal-task-report-001/`. No Core3 desktop/mobile or Odoo mobile capture, visual-parity claim, or QWeb/PDF equivalence claim is made.
+
+## 2026-09-22 `TIMESHEET-MY-BILLING-TYPE-GROUP-001`
+
+- Selected the next missing stable-ID behavior on the internal My Timesheets
+  action: Odoo's Sales Timesheet extension adds the `Billing Type` Group By
+  option through `sale_timesheet/views/hr_timesheet_views.xml`. This does not
+  repeat the completed dashboard, task, or report slices.
+- Core3 keeps the layout-only `pages/entries.yaml` and data/API
+  `api/entries.yaml` contracts separate and joined by `page.id: timesheets`.
+  The page now exposes Billing Type in the shared group control; the API
+  projects the durable `billing_type` value and declares its pivot/group
+  contract. Existing migration `0.0.5` already owns the replay-safe column,
+  so no duplicate migration was added.
+- Focused coverage passed 4/4 tests with 18 expectations. The isolated My
+  Timesheets regression passed 31/31 tests with 194 expectations. Audit,
+  frontend build, Timesheets CSS build, focused ESLint, and owned diff-check
+  passed.
+- BrowserSkill confirmed the live authenticated Odoo My Timesheets action and
+  Billing Type menu state, with desktop and iPhone 14 captures under the
+  feature evidence. The required existing-tab borrow timed out, so no
+  borrowed-tab or visual-parity claim is made; Core3 captures and module
+  sign-off remain open.
+- Evidence is under
+  `evidence/timesheets/2026-09-22/timesheet-my-billing-type-group-001/`.
