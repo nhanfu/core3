@@ -1,0 +1,15 @@
+description: Seed a Website Redirects manager row
+version: 0.0.21
+type:
+  postgres:
+    up: |
+      INSERT INTO website_page_redirects(id, row_version, page_id, website_id, website_name, name, url_from, url_to, redirect_type, active, sequence)
+      SELECT 'website-redirect-demo-001', 1, 'website-page-demo-002', 'website-demo-001', 'Core3 Storefront', 'Legacy contact URL', '/legacy-contact', '/contactus', '301', TRUE, 10
+      WHERE EXISTS (SELECT 1 FROM website_pages WHERE id = 'website-page-demo-002')
+        AND NOT EXISTS (SELECT 1 FROM website_page_redirects WHERE id = 'website-redirect-demo-001');
+    down: |
+      DELETE FROM website_page_redirects WHERE id = 'website-redirect-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

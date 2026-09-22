@@ -459,3 +459,28 @@ claim is made for this wave.
 Remaining gap: paired authenticated Odoo/Core3 desktop and mobile Website
 evidence remains blocked by the shared browser session exposing Discuss and no
 borrowable Website tab.
+
+## Wave 14 execution evidence — 2026-09-22 — Website Redirects manager
+
+The next uncovered Website action after Page Properties homepage selection is
+Odoo's `action_website_rewrite_list` from
+`addons/website/views/website_rewrite.xml`. It is the `/website-rewrite` Redirects
+manager, with URL/name search, 404/301/302/308 type filters, Archived filtering,
+and active list records. Core3 adds the joined page/API contracts at
+`page.id: website-redirects`, a Configuration > Redirects menu entry, and
+permissioned archive/restore actions over the durable redirects created by the
+Page Properties old-URL workflow.
+
+Migration `20260923100000-021-website-redirect-manager-demo.yaml` seeds one
+deterministic active 301 redirect. Archive/restore mutations require
+`website.manage`, row-version concurrency, and idempotent state guards;
+file-backed restart and migration replay preserve the state.
+
+Focused coverage is `test/website_redirect_manager.integration.test.ts` (3
+tests, including page/API discovery, Odoo source anchors, filtered listing,
+permission boundary, restart persistence, and archive/restore guards).
+Browser evidence is recorded under
+`odoo-ui-parity/evidence/website/2026-09-22/website-redirect-manager-001/`.
+BrowserSkill navigation reached the authenticated Discuss shell for
+`core3_reference`; no borrowable Website tab was listed, so no visual-parity
+capture is claimed.

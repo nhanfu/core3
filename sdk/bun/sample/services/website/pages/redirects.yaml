@@ -1,0 +1,33 @@
+title: Website Redirects
+page: { id: website-redirects, route: /website-rewrite, breadcrumb: [Website, Configuration, Redirects], auth: { require: [website.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: website_redirects
+    search: { label: Search Redirect, placeholder: Search URL or name... }
+    filters:
+      - field: redirect_type
+        label: Redirection Type
+        options:
+          - { id: '404', label: 404 Not Found }
+          - { id: '301', label: 301 Moved permanently }
+          - { id: '302', label: 302 Moved temporarily }
+          - { id: '308', label: 308 Redirect / Rewrite }
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: redirect_type, label: Redirection Type, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: url_from, label: URL from }
+      - { field: url_to, label: URL to }
+      - { field: website_name, label: Website }
+      - { field: active, label: Active, type: checkbox }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: archive_website_redirect, label: Archive, permission: website.manage, variant: secondary, show_if: "row.active === true" }
+      - { id: restore_website_redirect, label: Restore, permission: website.manage, variant: primary, show_if: "row.active !== true" }
+    page_size: 50
+    empty_state: { title: No redirects found, description: No Website redirects match the current search. }

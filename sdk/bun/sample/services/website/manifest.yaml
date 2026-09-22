@@ -21,6 +21,7 @@ menu:
       label: Configuration
       items:
         - { path: /website-settings, label: Settings, icon: settings, permission: website.manage }
+        - { path: /website-rewrite, label: Redirects, icon: link, permission: website.read }
     - id: content
       label: Content
       items:

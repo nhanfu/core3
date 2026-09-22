@@ -1,0 +1,40 @@
+page: { id: website-redirects, route: /website-rewrite }
+datasources:
+  - id: website_redirects
+    permission: website.read
+    query: "SELECT r.id, r.row_version, r.page_id, r.website_id, r.website_name, r.name, r.url_from, r.url_to, r.redirect_type, r.active, r.sequence, CAST(r.created_at AS VARCHAR) AS created_at, CAST(r.updated_at AS VARCHAR) AS updated_at FROM website_page_redirects r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.url_from ILIKE '%' || :q || '%' OR r.url_to ILIKE '%' || :q || '%') AND (COALESCE(CAST(:redirect_type AS VARCHAR), '') = '' OR r.redirect_type = CAST(:redirect_type AS VARCHAR)) AND (COALESCE(CAST(:active AS VARCHAR), '') = '' OR (CAST(:active AS VARCHAR) = 'active' AND r.active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND r.active = FALSE)) ORDER BY r.sequence, r.id"
+actions:
+  - id: archive_website_redirect
+    type: server
+    permission: website.manage
+    action: website.redirects.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [website_redirects]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: website_page_redirects
+      fields: [active]
+      boolean_fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM website_page_redirects WHERE id = :id AND active = TRUE", status: 409, code: WEBSITE_REDIRECT_ALREADY_ARCHIVED, message: This redirect is already archived. Reload before changing it. }
+      result: { query: "SELECT * FROM website_page_redirects WHERE id = :id" }
+  - id: restore_website_redirect
+    type: server
+    permission: website.manage
+    action: website.redirects.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [website_redirects]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: website_page_redirects
+      fields: [active]
+      boolean_fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM website_page_redirects WHERE id = :id AND active = FALSE", status: 409, code: WEBSITE_REDIRECT_ALREADY_ACTIVE, message: This redirect is already active. Reload before changing it. }
+      result: { query: "SELECT * FROM website_page_redirects WHERE id = :id" }
