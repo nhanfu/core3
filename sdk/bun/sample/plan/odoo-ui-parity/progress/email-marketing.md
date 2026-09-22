@@ -4,14 +4,33 @@ Module owner: email-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Mailing List Merge commit
+Candidate commit: pending Mailing A/B comparison commit
 
 ## Current state
 
 This module is registered in odoo-parity-plan.md and remains in-progress. The
-The 2026-09-22 Mailing Duplicate and Mailing List Merge bounded slices are
-implemented and contract-tested;
-no complete module parity claim is made.
+2026-09-22 Mailing Duplicate, Mailing List Merge, and Mailing A/B comparison
+bounded slices are implemented and contract-tested; no complete module parity
+claim is made.
+
+## Mailing A/B comparison bounded slice (2026-09-22)
+
+- Odoo source action: `mailing.mailing.action_compare_versions`, the A/B Tests
+  notebook's **Compare Version** action with
+  `list,kanban,form,calendar,graph` modes.
+- Core3: read-only `/email-mailings/ab-tests` page/API fragments joined by
+  `page.id`, campaign-scoped A/B rows, list/kanban/form/calendar/graph tabs,
+  search/status filters, empty state, and detail navigation. The detail action
+  is guarded by a durable two-variant count.
+- Focused validation: **3 passed, 23 assertions**; full Email Marketing
+  regression is blocked by an unrelated Inventory page-schema error during
+  global discovery (54 passed, 16 failed across 70 tests).
+- CSS and frontend builds pass. Global audit hits the same unrelated Inventory
+  `stat_buttons[3].value_field` schema error.
+- BrowserSkill instance `245ea108` was connected, but tab `1770662590` was
+  already borrowed by session `ebbh`; no tab navigation or visual claim was
+  made. Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-COMPARE-001/`.
 
 ## Mailing List Merge bounded slice (2026-09-22)
 

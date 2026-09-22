@@ -288,3 +288,37 @@ files; audit passed with **829 pages, 837 routes, 1,728 datasources**; Email
 Marketing CSS and full frontend/Vite builds passed; scoped ESLint and
 `git diff --check` passed. Concurrent CRM, Employees, and Events changes were
 left unstaged and untouched.
+
+## Bounded review handoff — Mailing A/B comparison (2026-09-22)
+
+- Source comparison: Odoo 19 `mailing.mailing.action_compare_versions` in
+  `mass_mailing/models/mailing.py`; the A/B Tests notebook button in
+  `mass_mailing/views/mailing_mailing_views.xml` returns `A/B Tests` with
+  `list,kanban,form,calendar,graph` modes over the current campaign's
+  A/B-enabled mailings.
+- Core3 implementation: `pages/ab-tests.yaml` and `api/ab-tests.yaml` add a
+  read-only, campaign-scoped comparison page with all five visible modes,
+  search/status filters, empty state, deterministic rows, and detail
+  navigation. `mailing-detail` adds the source action and a durable minimum-two
+  variant visibility guard.
+- Focused validation: **3 passed, 0 failed, 23 assertions** in
+  `test/email_marketing_mailing_ab_compare.integration.test.ts`.
+- Full regression: **54 passed, 16 failed, 504 assertions** across 20 files;
+  all 16 failures are discovery-time reports of the unrelated concurrent
+  Inventory schema defect `components[0].stat_buttons[3].value_field must be a
+  non-empty string`. No Inventory files were changed.
+- Builds: `bun run css:build:email-marketing` passed; `bun run frontend:build`
+  passed. `bun run audit` is blocked by the same unrelated Inventory schema
+  error. `git diff --check` passed after the implementation and documentation
+  edits.
+- Browser blocker: BrowserSkill instance `245ea108` was healthy and the
+  authenticated Odoo tab was `1770662590`, but the required borrow returned
+  `tab is borrowed by another session` with owner `ebbh`. The task did not
+  navigate or reuse the tab; no Odoo/Core3 desktop/mobile captures exist and
+  no visual-parity claim is made.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-COMPARE-001/`.
+
+Disposition: bounded comparison is contract-tested and build-verified; full
+module sign-off, global audit, paired installed-Odoo comparison, and complete
+route-tree evidence remain open.

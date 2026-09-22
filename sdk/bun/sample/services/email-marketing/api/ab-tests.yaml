@@ -1,0 +1,16 @@
+page: { id: email-mailing-ab-tests }
+datasources:
+  - id: email_mailing_ab_tests
+    single: false
+    permission: email_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_AB_TESTS_UNAUTHORIZED, message: Sign in to view A/B Tests. }
+      forbidden: { status: 403, code: EMAIL_AB_TESTS_FORBIDDEN, message: You do not have permission to view A/B Tests. }
+      transport_error: { status: 503, code: EMAIL_AB_TESTS_UNAVAILABLE, message: A/B Tests are temporarily unavailable. }
+    query: "SELECT m.id, m.row_version, m.subject, m.preview, CAST(m.calendar_date AS VARCHAR) AS calendar_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.responsible, m.recipient_model_label, m.recipient_count, m.sent, m.scheduled, m.expected, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.campaign_name, m.state, m.active, m.ab_testing_enabled, m.ab_testing_group_id, m.ab_testing_pc, m.ab_testing_winner_selection, m.ab_testing_completed, m.ab_testing_winner, m.ab_testing_is_winner_mailing FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END AND (:campaign_name IS NOT NULL AND m.campaign_name = :campaign_name) AND m.ab_testing_enabled = true AND (:q IS NULL OR m.subject ILIKE '%' || :q || '%' OR m.responsible ILIKE '%' || :q || '%' OR m.recipient_model_label ILIKE '%' || :q || '%') AND (:state IS NULL OR m.state = :state) ORDER BY m.calendar_date, m.subject, m.id"
+actions:
+  - id: view_ab_test_mailing
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-mailings/detail
+    params: { id: '{row.id}' }

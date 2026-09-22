@@ -1080,3 +1080,40 @@ remained user-owned. The tab was not navigated, the session was stopped, and no
 Odoo desktop/mobile action captures exist. No visual-parity claim is made.
 The exact blocker is recorded under
 `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-WINNER-001/`.
+
+## Mailing A/B comparison bounded slice (2026-09-22)
+
+The next independent missing Mass Mailing action is Odoo's
+`mailing.mailing.action_compare_versions`, exposed as **Compare Version** in
+the A/B Tests notebook. The source method returns an **A/B Tests** window over
+the current campaign's A/B-enabled mailings in `list,kanban,form,calendar,graph`
+modes. It is a read-only comparison surface; winner selection remains a
+separate action.
+
+Core3 implements the action at `/email-mailings/ab-tests` with a page/API join
+on `page.id: email-mailing-ab-tests`. The datasource scopes rows to the
+selected `campaign_name`, requires `ab_testing_enabled`, preserves the source
+campaign domain while exposing active/state fields, and supports deterministic search, status filtering, empty state,
+and row navigation back to the existing mailing detail form. The detail action
+now exposes **Compare Version** only when the durable A/B variant count is at
+least two, matching Odoo's `ab_testing_mailings_count >= 2` guard. No migration
+was needed because the existing mailing A/B columns are sufficient.
+
+Implementation and test paths:
+
+- `services/email-marketing/pages/ab-tests.yaml`
+- `services/email-marketing/api/ab-tests.yaml`
+- `services/email-marketing/pages/mailing-detail.yaml`
+- `services/email-marketing/api/mailing-detail.yaml`
+- `test/email_marketing_mailing_ab_compare.integration.test.ts`
+
+Focused validation is **3 passed, 0 failed, 23 assertions**. The full Email
+Marketing glob was attempted but 16 discovery cases are blocked by an
+unrelated concurrent Inventory YAML error:
+`components[0].stat_buttons[3].value_field must be a non-empty string`.
+Email Marketing CSS and frontend builds pass; the global audit reaches the
+same unrelated Inventory schema failure. BrowserSkill instance `245ea108` was
+connected, but the authenticated tab `1770662590` was already borrowed by
+session `ebbh`; the task session did not navigate or reuse it. No Odoo or Core3
+desktop/mobile capture exists and no visual-parity claim is made. Details are
+under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-COMPARE-001/`.

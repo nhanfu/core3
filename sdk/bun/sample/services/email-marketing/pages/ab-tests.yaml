@@ -1,0 +1,75 @@
+title: A/B Tests
+page: { id: email-mailing-ab-tests, route: /email-mailings/ab-tests, breadcrumb: [Marketing, Email Marketing, Mailings, A/B Tests], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_mailing_ab_tests
+    search: { label: Search mailings, placeholder: Search mailings... }
+    filters:
+      - { field: state, label: Status, options: [{ id: Draft, label: Draft }, { id: 'In Queue', label: In Queue }, { id: Sending, label: Sending }, { id: Sent, label: Sent }] }
+    group_by:
+      - { field: state, label: Status }
+      - { field: responsible, label: Responsible }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: true
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: state
+        card:
+          compact: true
+          title: subject
+          subtitle: state
+          company_field: responsible
+          primary_metric: opened_ratio
+          primary_metric_label: Opened (%)
+          fields:
+            - { field: recipient_model_label, label: Recipients }
+            - { field: ab_testing_pc, label: Audience (%) }
+          footer:
+            - { field: campaign_name, label: Campaign }
+      - id: form
+        label: Form
+        icon: form
+        mobile: true
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: calendar_date
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: subject
+        measure_field: opened
+        measure_label: Opened
+        type: bar
+        measures:
+          - { field: sent, label: Sent, aggregate: sum }
+          - { field: delivered, label: Delivered, aggregate: sum }
+          - { field: opened, label: Opened, aggregate: sum }
+          - { field: clicked, label: Clicked, aggregate: sum }
+          - { field: replied, label: Replied, aggregate: sum }
+    columns:
+      - { field: calendar_date, label: Date, type: DateTime, mobile: true }
+      - { field: subject, label: Subject, type: PrimaryEntityCell, mobile: true }
+      - { field: recipient_model_label, label: Recipients, mobile: false }
+      - { field: responsible, label: Responsible, mobile: false }
+      - { field: ab_testing_pc, label: A/B Test (%), align: right, mobile: true }
+      - { field: opened_ratio, label: Opened (%), align: right, mobile: true }
+      - { field: clicks_ratio, label: Clicked (%), align: right, mobile: false }
+      - { field: replied_ratio, label: Replied (%), align: right, optional: true, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+    row_key: id
+    row_open_action: view_ab_test_mailing
+    row_double_click_action: view_ab_test_mailing
+    row_actions: menu
+    page_size: 50
+    empty_state: { title: No A/B Tests yet!, description: Create at least two A/B mailing versions to compare their delivery results. }

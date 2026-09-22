@@ -38,6 +38,8 @@ deterministic and must not depend on current time.
 | EMAIL-FUNC-007 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit for every datasource | pass at contract level |
 | EMAIL-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate recipients, mailings or traces | planned restart/migration gate |
 | EMAIL-FUNC-009 | Upload/export/print | Exercise contact import upload validation, mailing export and exposed report/print actions | planned browser interaction gate |
+| EMAIL-FUNC-010 | A/B comparison | Compare Version opens a campaign-scoped, read-only A/B window; rows, filters, all five view modes, empty state, and detail navigation are deterministic and source rows remain unchanged | pass: focused contract suite; browser visual gate blocked |
+| EMAIL-FUNC-010 | A/B comparison | Compare Version scopes to the selected campaign's active A/B-enabled mailings, preserves read-only rows, filters deterministically, and returns an empty state for another campaign | pass: focused comparison suite |
 
 ## Workflow and integration cases
 
@@ -70,6 +72,8 @@ deterministic and must not depend on current time.
 | EMAIL-UI-003 | Reports/settings | both | Graph/pivot/list reports, traces, settings and configuration forms match Odoo | planned |
 | EMAIL-UI-004 | Current route regression | all manifest-owned Email Marketing routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 | EMAIL-UI-005 | Mailing duplicate form | 1440x900, 390x844 | Sent mailing exposes Duplicate and the copy form has no overflow; paired Odoo route is captured or the exact installed-reference blocker is recorded | planned |
+| EMAIL-UI-006 | A/B comparison window | 1440x900, 390x844 | Compare Version exposes Odoo List/Kanban/Form/Calendar/Graph tabs, campaign scope, populated/empty states, and no overflow; paired Odoo capture or exact BrowserSkill blocker is recorded | blocked: shared authenticated tab borrowed |
+| EMAIL-UI-006 | A/B comparison action | 1440x900, 390x844 | Compare Version exposes Odoo's list/kanban/form/calendar/graph modes without overflow; paired Odoo route is captured or the exact BrowserSkill blocker is recorded | blocked: tab owned by another BrowserSkill session |
 
 ## Exit criteria
 
