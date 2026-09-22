@@ -11,6 +11,8 @@ datasources:
     query: "SELECT id, row_version, page_id, file_name, mime_type, size_bytes, is_public, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM website_page_assets WHERE page_id = :id ORDER BY created_at DESC, id"
 actions:
   - { id: back_to_website_pages, type: navigate, permission: website.read, navigate_to: /website-pages, params: {} }
+  - { id: publish_website_page_detail, type: server, permission: website.write, action: website.pages.publish, handler: order_transition, workflow: website_pages, operation: publish, refresh: [website_page_detail, website_page_assets] }
+  - { id: unpublish_website_page_detail, type: server, permission: website.manage, action: website.pages.unpublish, handler: order_transition, workflow: website_pages, operation: unpublish, refresh: [website_page_detail, website_page_assets] }
   - id: upload_website_page_asset
     type: upload
     action: website.pages.assets.upload
