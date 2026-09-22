@@ -1,0 +1,23 @@
+title: Messages
+page: { id: chat-mail-messages, route: /chat/messages, breadcrumb: [Discuss, Technical, Messages], auth: { require: [chat.technical] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: chat_mail_messages
+    search: { label: Messages Search, placeholder: Search messages... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/chat/pages/message-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: view_chat_mail_message
+    empty_state: { title: No messages, description: Messages from Discuss and connected records will appear here. }
+    columns:
+      - { field: date, label: Date, type: DateTime, mobile: true }
+      - { field: subject, label: Subject, type: PrimaryEntityCell, mobile: true }
+      - { field: author_name, label: Author, type: Text, mobile: true }
+      - { field: model, label: Model, type: Text, mobile: false }
+      - { field: res_id, label: Record ID, type: Text, mobile: false }
+      - { field: id, label: '', sortable: false, actions: [{ id: view_chat_mail_message, label: Open, icon: eye }] }

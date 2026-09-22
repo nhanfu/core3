@@ -1,0 +1,33 @@
+page: { id: chat-mail-messages }
+
+datasources:
+  - id: chat_mail_messages
+    single: false
+    permission: chat.technical
+    error_states:
+      forbidden: { status: 403, code: CHAT_MAIL_MESSAGES_FORBIDDEN, message: You do not have permission to view technical messages. }
+      transport_error: { status: 503, code: CHAT_MAIL_MESSAGES_UNAVAILABLE, message: Technical messages are temporarily unavailable. }
+    query: |
+      SELECT m.id, CAST(m.created_at AS VARCHAR) AS date,
+        COALESCE(NULLIF(m.subject, ''), LEFT(m.body, 120)) AS subject,
+        m.body, m.sender_id AS author_id, COALESCE(u.name, m.sender_id) AS author_name,
+        COALESCE(m.email_from, u.email, m.sender_id || '@workspace.local') AS email_from,
+        COALESCE(m.message_type, 'comment') AS message_type,
+        COALESCE(m.model, 'discuss.channel') AS model,
+        COALESCE(m.res_id, m.thread_id) AS res_id,
+        COALESCE(m.record_name, t.title, m.thread_id) AS record_name,
+        m.parent_id, COALESCE(m.is_internal, FALSE) AS is_internal
+      FROM chat_messages m
+      LEFT JOIN chat_users u ON u.id = m.sender_id
+      LEFT JOIN chat_threads t ON t.id = m.thread_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR m.body ILIKE '%' || :q || '%' OR m.subject ILIKE '%' || :q || '%'
+          OR COALESCE(u.name, m.sender_id) ILIKE '%' || :q || '%' OR COALESCE(t.title, '') ILIKE '%' || :q || '%')
+      ORDER BY m.created_at DESC, m.id DESC
+
+actions:
+  - id: view_chat_mail_message
+    type: navigate
+    permission: chat.technical
+    navigate_to: /chat/messages/detail
+    params: { id: '{row.id}' }

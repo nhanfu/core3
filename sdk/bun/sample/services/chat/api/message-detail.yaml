@@ -1,0 +1,25 @@
+page: { id: chat-mail-message-detail }
+
+datasources:
+  - id: chat_mail_message_detail
+    single: true
+    permission: chat.technical
+    error_states:
+      forbidden: { status: 403, code: CHAT_MAIL_MESSAGE_DETAIL_FORBIDDEN, message: You do not have permission to view this technical message. }
+      missing_record: { status: 404, code: CHAT_MAIL_MESSAGE_NOT_FOUND, message: Technical message not found. }
+      transport_error: { status: 503, code: CHAT_MAIL_MESSAGE_DETAIL_UNAVAILABLE, message: Technical message details are temporarily unavailable. }
+    query: |
+      SELECT m.id, CAST(m.created_at AS VARCHAR) AS date,
+        COALESCE(NULLIF(m.subject, ''), LEFT(m.body, 120)) AS subject,
+        m.body, m.sender_id AS author_id, COALESCE(u.name, m.sender_id) AS author_name,
+        COALESCE(m.email_from, u.email, m.sender_id || '@workspace.local') AS email_from,
+        COALESCE(m.message_type, 'comment') AS message_type,
+        COALESCE(m.model, 'discuss.channel') AS model,
+        COALESCE(m.res_id, m.thread_id) AS res_id,
+        COALESCE(m.record_name, t.title, m.thread_id) AS record_name,
+        m.parent_id, COALESCE(m.is_internal, FALSE) AS is_internal
+      FROM chat_messages m
+      LEFT JOIN chat_users u ON u.id = m.sender_id
+      LEFT JOIN chat_threads t ON t.id = m.thread_id
+      WHERE m.id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END

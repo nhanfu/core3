@@ -1,0 +1,28 @@
+version: 0.0.13
+kind: schema
+description: Add technical Discuss message metadata for the mail.message action
+type:
+  postgres:
+    up: |
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS subject VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS email_from VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS message_type VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS model VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS res_id VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS record_name VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_internal BOOLEAN;
+      UPDATE chat_messages SET subject = COALESCE(NULLIF(subject, ''), LEFT(body, 120)), model = COALESCE(NULLIF(model, ''), 'discuss.channel'), res_id = COALESCE(NULLIF(res_id, ''), thread_id), record_name = COALESCE(NULLIF(record_name, ''), (SELECT title FROM chat_threads WHERE id = chat_messages.thread_id), thread_id), email_from = COALESCE(NULLIF(email_from, ''), sender_id || '@workspace.local'), message_type = COALESCE(NULLIF(message_type, ''), 'comment'), is_internal = COALESCE(is_internal, FALSE) WHERE subject IS NULL OR model IS NULL OR res_id IS NULL OR record_name IS NULL OR email_from IS NULL OR message_type IS NULL OR is_internal IS NULL;
+    down: |
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS is_internal;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS parent_id;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS record_name;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS res_id;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS model;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS message_type;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS email_from;
+      ALTER TABLE chat_messages DROP COLUMN IF EXISTS subject;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

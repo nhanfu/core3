@@ -27,4 +27,5 @@ menu:
     - id: technical
       label: Technical
       items:
+        - { path: /chat/messages, label: Messages, icon: message, permission: chat.technical }
         - { path: /chat/scheduled-messages, label: Scheduled Messages, icon: clock, permission: chat.technical }

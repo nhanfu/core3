@@ -1,0 +1,26 @@
+title: Message
+page: { id: chat-mail-message-detail, route: /chat/messages/detail, breadcrumb: [Discuss, Technical, Messages, Message], auth: { require: [chat.technical] } }
+
+components:
+  - type: OdooFormView
+    source: chat_mail_message_detail
+    title_field: subject
+    editable: false
+    groups:
+      - title: Message
+        fields:
+          - { field: subject, label: Subject, type: text, readonly: true }
+          - { field: date, label: Date, type: text, readonly: true }
+          - { field: email_from, label: From, type: text, readonly: true }
+          - { field: author_name, label: Author, type: text, readonly: true }
+          - { field: message_type, label: Message Type, type: text, readonly: true }
+          - { field: is_internal, label: Internal, type: checkbox, readonly: true }
+      - title: Related Record
+        fields:
+          - { field: model, label: Model, type: text, readonly: true }
+          - { field: res_id, label: Record ID, type: text, readonly: true }
+          - { field: record_name, label: Record Name, type: text, readonly: true }
+          - { field: parent_id, label: Parent Message, type: text, readonly: true }
+      - title: Body
+        fields:
+          - { field: body, label: Body, type: textarea, readonly: true }
