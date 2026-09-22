@@ -38,17 +38,23 @@ components:
     children:
       - { type: LineItemField, id: content, field: content, label: Answer, input_type: textarea, required: true }
       - { type: LineItemField, id: author_name, field: author_name, label: Author, readonly: true }
+      - { type: LineItemField, id: vote_count, field: vote_count, label: Votes, readonly: true }
+      - { type: LineItemField, id: user_vote, field: user_vote, label: My vote, readonly: true }
       - { type: LineItemField, id: state, field: state, label: Status, readonly: true }
       - type: LineItemActions
         id: forum_answer_actions
         actions:
           - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
+          - { id: upvote_forum_answer, label: Upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote !== 1" }
+          - { id: upvote_forum_answer, label: Remove upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote === 1" }
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
     columns:
       - { field: content, label: Answer, width: 480 }
       - { field: author_name, label: Author, width: 180 }
+      - { field: vote_count, label: Votes, width: 90 }
+      - { field: user_vote, label: My vote, width: 90 }
       - { field: state, label: Status, width: 120 }
       - field: actions
         label: ''
@@ -56,6 +62,8 @@ components:
         width: 180
         actions:
           - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
+          - { id: upvote_forum_answer, label: Upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote !== 1" }
+          - { id: upvote_forum_answer, label: Remove upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote === 1" }
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
