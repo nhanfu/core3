@@ -1,6 +1,6 @@
 page: { id: maintenance-request-detail }
 datasources:
-  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(scheduled_end AS VARCHAR) AS scheduled_end, duration, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
+  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, COALESCE(instruction_text, instructions) AS instructions, COALESCE(instruction_type, 'text') AS instruction_type, instruction_text, instruction_google_slide, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(scheduled_end AS VARCHAR) AS scheduled_end, duration, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
   - id: maintenance_request_activity
     single: false
     permission: maintenance.read
@@ -155,6 +155,32 @@ actions:
       - { field: scheduled_date, label: Scheduled date, type: text }
       - { field: scheduled_end, label: Scheduled end, type: text }
       - { field: recurrence, label: Recurrence, type: text }
+  - id: update_maintenance_request_instructions
+    type: server_form
+    permission: maintenance.write
+    title: Edit instructions
+    action: maintenance.requests.instructions.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.maintenance_request_detail.id}' }
+    prefill: state.maintenance_request_detail
+    refresh: [maintenance_request_detail, maintenance_requests]
+    fields:
+      - { field: instruction_type, label: Instruction type, type: select, options: [{ value: text, label: Text }, { value: google_slide, label: Google Slide }], required: true }
+      - { field: instruction_text, label: Instructions, type: textarea, required: true, show_if: "instruction_type === 'text'" }
+      - { field: instruction_google_slide, label: Google Slide link, type: text, required: true, show_if: "instruction_type === 'google_slide'" }
+    mutation:
+      operation: update
+      table: maintenance_requests
+      key: id
+      fields: [instruction_type, instruction_text, instruction_google_slide]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Active maintenance request was not found. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Maintenance request changed before instructions could be saved. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:instruction_type AS VARCHAR) IN ('text', 'google_slide')", status: 422, code: MAINTENANCE_INSTRUCTION_TYPE_INVALID, message: Choose Text or Google Slide instructions. }
+        - { query: "SELECT 1 AS ok WHERE (CAST(:instruction_type AS VARCHAR) = 'text' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) BETWEEN 1 AND 10000 AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) = 0) OR (CAST(:instruction_type AS VARCHAR) = 'google_slide' AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) BETWEEN 1 AND 2048 AND (LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'https://%' OR LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'http://%') AND TRIM(CAST(:instruction_google_slide AS VARCHAR)) NOT LIKE '% %' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) = 0)", status: 422, code: MAINTENANCE_INSTRUCTION_CONTENT_INVALID, message: Text instructions require content, and Google Slide instructions require an absolute HTTP or HTTPS link. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
   - id: generate_maintenance_request_recurrence
     type: server
     permission: maintenance.write

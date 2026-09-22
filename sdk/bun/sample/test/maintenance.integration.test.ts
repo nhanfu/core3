@@ -101,6 +101,7 @@ describe('Maintenance bounded Odoo parity batch', () => {
       { id: 'update_maintenance_request_kanban_state', label: 'Update kanban state', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false" },
       { id: 'schedule_maintenance_request_activity', label: 'Schedule activity', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false" },
       { id: 'generate_maintenance_request_recurrence', label: 'Generate next occurrence', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false && state.maintenance_request_detail.state === 'Repaired' && state.maintenance_request_detail.recurrence && !state.maintenance_request_detail.recurrence_generated_id" },
+      { id: 'update_maintenance_request_instructions', label: 'Edit instructions', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false" },
     ]);
     const api = yaml('api/request-detail.yaml');
     expect(api.actions.map((action: any) => action.id)).toEqual([
@@ -110,6 +111,7 @@ describe('Maintenance bounded Odoo parity batch', () => {
       'complete_maintenance_request_activity',
       'update_maintenance_request_kanban_state',
       'edit_maintenance_request_detail',
+      'update_maintenance_request_instructions',
       'generate_maintenance_request_recurrence',
       'assign_maintenance_request_detail',
       'start_maintenance_request_detail',

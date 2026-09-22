@@ -1,0 +1,23 @@
+version: 0.0.13
+kind: schema
+description: Persist Odoo maintenance request instruction modes and content
+type:
+  postgres:
+    up: |
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_type VARCHAR DEFAULT 'text';
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_text VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_google_slide VARCHAR;
+      UPDATE maintenance_requests
+      SET instruction_type = 'text'
+      WHERE instruction_type IS NULL OR TRIM(instruction_type) = '';
+      UPDATE maintenance_requests
+      SET instruction_text = instructions
+      WHERE instruction_text IS NULL AND instructions IS NOT NULL;
+    down: |
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_google_slide;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_text;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

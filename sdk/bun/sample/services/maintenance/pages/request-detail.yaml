@@ -15,8 +15,20 @@ components:
       - { id: update_maintenance_request_kanban_state, label: Update kanban state, variant: secondary, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === false" }
       - { id: schedule_maintenance_request_activity, label: Schedule activity, variant: secondary, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === false" }
       - { id: generate_maintenance_request_recurrence, label: Generate next occurrence, variant: secondary, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === false && state.maintenance_request_detail.state === 'Repaired' && state.maintenance_request_detail.recurrence && !state.maintenance_request_detail.recurrence_generated_id" }
+      - { id: update_maintenance_request_instructions, label: Edit instructions, variant: secondary, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === false" }
     group_columns: 2
-    groups: [{ title: Request, fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: kanban_state, label: Kanban state }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: request_type, label: Type }, { field: priority, label: Priority }] }, { title: Scheduling, fields: [{ field: assigned_to, label: Responsible }, { field: owner, label: Created by }, { field: request_date, label: Request date }, { field: scheduled_date, label: Scheduled date }, { field: scheduled_end, label: Scheduled end }, { field: duration, label: Duration (hours) }, { field: completed_date, label: Completed date }, { field: recurrence, label: Recurrence }, { field: recurrence_sequence, label: Occurrence number }, { field: instructions, label: Instructions }, { field: description, label: Description }] }]
+    groups: [{ title: Request, fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: kanban_state, label: Kanban state }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: request_type, label: Type }, { field: priority, label: Priority }] }, { title: Scheduling, fields: [{ field: assigned_to, label: Responsible }, { field: owner, label: Created by }, { field: request_date, label: Request date }, { field: scheduled_date, label: Scheduled date }, { field: scheduled_end, label: Scheduled end }, { field: duration, label: Duration (hours) }, { field: completed_date, label: Completed date }, { field: recurrence, label: Recurrence }, { field: recurrence_sequence, label: Occurrence number }, { field: instruction_type, label: Instruction type }, { field: instruction_text, label: Instructions }, { field: instruction_google_slide, label: Google Slide link }, { field: description, label: Description }] }]
+    notebook:
+      active: instructions
+      tabs:
+        - id: instructions
+          label: Instructions
+          groups:
+            - title: Maintenance instructions
+              fields:
+                - { field: instruction_type, label: Instruction type }
+                - { field: instruction_text, label: Instructions, type: textarea, wide: true, show_if: "record.instruction_type === 'text'" }
+                - { field: instruction_google_slide, label: Google Slide link, show_if: "record.instruction_type === 'google_slide'" }
     message_source: maintenance_request_activity
     activity_complete_action: complete_maintenance_request_activity
     message_action: send_maintenance_request_message
