@@ -1,0 +1,23 @@
+version: 0.0.27
+description: Durable picking type scope for the Manufacturing Orders dashboard action
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS picking_type_id VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS picking_type_name VARCHAR;
+      UPDATE mrp_productions
+      SET picking_type_id = CASE WHEN id IN ('mo-done-001', 'mo-cancelled-001') THEN 'operation-type-mrp-002' ELSE 'operation-type-mrp-001' END,
+          picking_type_name = CASE WHEN id IN ('mo-done-001', 'mo-cancelled-001') THEN 'Manufacturing - Secondary' ELSE 'Manufacturing' END
+      WHERE picking_type_id IS NULL;
+      ALTER TABLE mrp_productions ALTER COLUMN picking_type_id SET DEFAULT 'operation-type-mrp-001';
+      ALTER TABLE mrp_productions ALTER COLUMN picking_type_name SET DEFAULT 'Manufacturing';
+      CREATE INDEX IF NOT EXISTS idx_mrp_productions_picking_type_schedule
+        ON mrp_productions(picking_type_id, planned_date, created_at, id);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_productions_picking_type_schedule;
+      ALTER TABLE mrp_productions DROP COLUMN IF EXISTS picking_type_id;
+      ALTER TABLE mrp_productions DROP COLUMN IF EXISTS picking_type_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

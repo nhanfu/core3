@@ -2,6 +2,64 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Manufacturing Orders picking-type dashboard action (`MANUFACTURING-PICKING-DASHBOARD-001`)
+
+### Source analysis and current-source comparison
+
+Local Odoo 19 source identifies `mrp_production_action_picking_deshboard` in
+`addons/mrp/views/mrp_production_views.xml` as the Manufacturing Orders action
+launched from the Inventory / Operations / Transfers / Manufacturings picking
+type dashboard. It targets `mrp.production`, uses `list,kanban,form`, applies
+the domain `picking_type_id = active_id`, and passes
+`default_picking_type_id = active_id`. The action is linked from the MRP
+operation-type Kanban in `addons/mrp/views/stock_picking_views.xml`; it has no
+standalone Manufacturing menu item. This is distinct from the global
+`mrp_production_action` and from all already-covered Work Orders, Planning,
+and Scrap actions.
+
+Before this slice Core3 had only the global `/manufacturing-orders` contract;
+`mrp_productions` had no durable picking-type relation and no scoped action
+route. Core3 adds the module-qualified alias
+`/manufacturing/manufacturings`, preserving the source Inventory navigation in
+the breadcrumb while leaving the cross-module Inventory operation-type menu
+owned by Inventory. The presentation-only page
+`services/manufacturing/pages/manufacturing-dashboard.yaml` binds through
+`page.id` to `api/manufacturing-dashboard.yaml`. Migration
+`20260922200000-027-picking-dashboard-index.yaml` adds and backfills durable
+`picking_type_id`/`picking_type_name` values and an idempotent scope index.
+
+### Gap matrix and bounded acceptance
+
+| Odoo behavior | Current Core3 | Gap/change | Verification |
+| --- | --- | --- | --- |
+| `mrp_production_action_picking_deshboard` | No route/action; global MOs only | Add source metadata, `/manufacturing/manufacturings`, and List/Kanban/Form tabs | source/route discovery test |
+| Active picking-type domain | MOs had no durable operation-type relation | Backfill `picking_type_id` and query only the selected durable scope | scoped datasource test |
+| Dashboard create context | Global create did not retain operation type | Add permissioned scoped create action with operation-type fields/defaults | mutation/validation test |
+| Search/status/company/empty/error behavior | No scoped datasource | Add server-side filters and explicit 401/403/503 states | focused integration suite |
+| Restart and migration replay | No picking-type persistence | Add idempotent index/backfill and file-backed restart assertion | focused integration suite |
+| Odoo desktop/mobile comparison | Shared authenticated tab unavailable | Capture exact Discuss/OdooBot blocker states; no visual claim | evidence folder |
+
+Acceptance requires page/API separation, source action identity and modes,
+selected-picking-type/company scoping, durable create persistence, positive
+quantity validation, deterministic search/status/empty/503 behavior, read and
+write permissions, migration replay, file-backed restart, and no invented
+Manufacturing menu entry for this cross-module source action.
+
+Core3 implementation files are the page-only
+`services/manufacturing/pages/manufacturing-dashboard.yaml`, page-id-bound
+`services/manufacturing/api/manufacturing-dashboard.yaml`, migration
+`services/manufacturing/migrations/20260922200000-027-picking-dashboard-index.yaml`,
+and focused test
+`test/manufacturing_picking_dashboard.integration.test.ts`. Evidence is under
+`odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-PICKING-DASHBOARD-001/`.
+
+The authenticated Odoo probe used BrowserSkill browser instance `245ea108`.
+Borrowing the shared signed-in tab `1770662590` was rejected because active
+session `ssyn` already owned it. A task-created navigation to
+`/odoo/manufacturings?db=core3_reference` rendered Discuss/OdooBot at both
+desktop and mobile sizes. Exact blocker captures and hashes are retained in
+the evidence folder; no Odoo visual-parity claim is made.
+
 ## 2026-09-22 Manufacturing Order Scraps stat action (`MANUFACTURING-MO-SCRAPS-001`)
 
 Local Odoo 19 source identifies `mrp.production.action_see_move_scrap` in

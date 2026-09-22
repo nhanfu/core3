@@ -1,5 +1,39 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-PICKING-DASHBOARD-001 — Manufacturing Orders picking-type dashboard action (2026-09-22)
+
+- Source/action: local Odoo 19 `mrp_production_action_picking_deshboard` in
+  `addons/mrp/views/mrp_production_views.xml`; model `mrp.production`, modes
+  `list,kanban,form`, domain `picking_type_id = active_id`, and default
+  `picking_type_id = active_id`. The action is launched from the MRP operation
+  type dashboard in `addons/mrp/views/stock_picking_views.xml` under Inventory /
+  Operations / Transfers / Manufacturings.
+- Core3 paths: presentation
+  `services/manufacturing/pages/manufacturing-dashboard.yaml`; page-id-bound
+  API `services/manufacturing/api/manufacturing-dashboard.yaml`; durable
+  relation/index migration
+  `services/manufacturing/migrations/20260922200000-027-picking-dashboard-index.yaml`;
+  focused test `test/manufacturing_picking_dashboard.integration.test.ts`.
+- Functional/data result: PASS, 3 tests / 24 assertions. The page/API pair
+  exposes the source modes, filters durable orders by selected operation type
+  and company, supports search/To Do/empty states, and declares 503 transport
+  behavior.
+- Workflow/permission result: PASS at contract level. Reads require
+  `manufacturing.read`; scoped creation requires `manufacturing.write`, keeps
+  the selected picking type, and rejects non-positive quantities. Existing
+  lifecycle transitions remain available through the reused MO workflow.
+- Restart/migration result: PASS. The picking-type backfill and index replay
+  idempotently, and a created scoped MO remains queryable after file-backed
+  DuckDB close/reopen.
+- Odoo BrowserSkill result: BLOCKED, exact reason. On browser `245ea108`,
+  authenticated tab `1770662590` was already borrowed by active session `ssyn`;
+  the task-created navigation rendered Discuss/OdooBot instead of the MRP
+  dashboard. Desktop/mobile captures and hashes are in the feature evidence
+  folder. No credentials, cookies, tokens, independent login, or alternate
+  browser backend were used; no Odoo visual-parity claim is made.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-PICKING-DASHBOARD-001/`.
+
 ## MANUFACTURING-MO-SCRAPS-001 — Manufacturing Order Scraps stat action (2026-09-22)
 
 - Source/action: local Odoo 19 `mrp.production.action_see_move_scrap` in

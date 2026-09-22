@@ -5,10 +5,20 @@ QA owner: manufacturing-qa
 Developer owner: manufacturing module owner  
 Reference addon/version: mrp, Odoo 19 Community  
 Plan status: approved  
-Last reviewed: 2026-09-21
+Last reviewed: 2026-09-22
 
 This plan follows [`manufacturing.md`](../../manufacturing.md); executed
 evidence is recorded in [`../manufacturing.md`](../manufacturing.md).
+
+## MANUFACTURING-PICKING-DASHBOARD-001
+
+| Case | Class | Setup / actor | Action or route | Expected / persistence | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| MRP-PD-001 | source/contract | Local Odoo `mrp_production_action_picking_deshboard`; read actor | Discover `/manufacturing/manufacturings` | Page/API join by `manufacturing-picking-dashboard`; source modes are List/Kanban/Form and no duplicate menu is added | focused integration test |
+| MRP-PD-002 | data | Durable MOs assigned to two picking types | Query with selected `picking_type_id`, search, state, and company filters | Only selected operation-type rows return; To Do/search/company/empty states are deterministic | focused integration test |
+| MRP-PD-003 | workflow/permission | Manufacturing write actor and invalid values | Create from the scoped dashboard | Create requires `manufacturing.write`, retains picking type, rejects non-positive quantity, and remains durable | focused integration test |
+| MRP-PD-004 | migration | Fresh and replayed DuckDB; file-backed restart | Apply migrations twice, close/reopen, query scoped rows | Picking-type backfill/index is idempotent and created row persists | focused integration test |
+| MRP-PD-005 | responsive/visual | BrowserSkill instance `245ea108` | Borrow shared Odoo tab at desktop/mobile sizes | Shared tab was owned by `ssyn`; task-created tab rendered Discuss/OdooBot; blocker captures retained and no visual pass | feature evidence folder |
 
 ## MANUFACTURING-PRODUCTION-PLANNING-001
 
@@ -64,6 +74,7 @@ IDs/dates.
 | MRP-FUNC-013 | BoM `action_mrp_routing_time` | Scope completed work orders to the selected BoM across graph/pivot/list/form/calendar; filter by operation/work center/search and persist the BoM scope through restart | pass: focused bounded suite |
 | MRP-FUNC-014 | Work Center Waiting Availability | Scope durable Waiting work orders to the selected Work Center across list/form/calendar/pivot/graph; expose only the guarded Plan operator action | pass: focused bounded suite |
 | MRP-FUNC-015 | Work Center Late Orders | Start from the Overview Late link, scope durable late non-terminal work orders to the selected Work Center across list/form/calendar/pivot/graph, and preserve guarded operator actions | pass: focused bounded suite |
+| MRP-FUNC-016 | Manufacturing Orders picking-type dashboard | Scope durable Manufacturing Orders to the selected Inventory MRP operation type across list/kanban/form; support scoped create, search/status/company filters, and restart persistence | pass: focused bounded suite |
 
 ## Workflow and integration cases
 
@@ -95,6 +106,7 @@ IDs/dates.
 | MRP-PERM-010 | BoM Operations Performance | Report and filter datasources require `manufacturing.read`; the record-scoped action exposes no write/create/delete path and declares 401/403/503 responses | pass: focused contract |
 | MRP-PERM-011 | Waiting Availability | Scoped reads require `manufacturing.read`; Plan requires `manufacturing.write`; create/delete remain unavailable | pass: focused contract |
 | MRP-PERM-012 | Late Work Orders | Scoped reads require `manufacturing.read`; operator actions require `manufacturing.write`; create/delete remain unavailable | pass: focused contract |
+| MRP-PERM-013 | Manufacturing Orders picking-type dashboard | Scoped reads require `manufacturing.read`; dashboard create requires `manufacturing.write`; selected picking-type and company boundaries are enforced | pass: focused contract |
 
 ## Visual, responsive, and regression cases
 
@@ -110,6 +122,7 @@ IDs/dates.
 | MRP-UI-008 | BoM Operations Performance stat action | `/manufacturing/boms/detail/operations-performance` | 1440x900 and 390x844 | Operations Performance stat action and graph/pivot/list/form/calendar tabs match Odoo where the reference action is available; no overflow | blocked: shared Odoo profile redirects `/odoo/boms` to Discuss and exposes no Manufacturing menu |
 | MRP-UI-009 | Work Center Waiting Availability | `/manufacturing/work-centers/waiting-availability` | 1440x900 and 390x844 | Work Center-scoped Waiting row, visible List/Calendar/Pivot/Graph tabs, Plan action, and no overflow; paired Odoo capture required where action is available | conditional: Core3 pass; Odoo reference redirects to Discuss |
 | MRP-UI-010 | Work Center Late Orders | `/manufacturing/work-centers/late-orders` | 1440x900 and 390x844 | Overview Late navigation, selected-center late rows, visible List/Form/Calendar/Pivot/Graph tabs, guarded actions, and no overflow; paired Odoo capture required where the reference action is available | conditional: Core3 captures pass; Odoo reference redirects to Discuss |
+| MRP-UI-011 | Manufacturing Orders picking-type dashboard | `/manufacturing/manufacturings?picking_type_id=operation-type-mrp-001` | 1440x900 and 390x844 | Inventory-scoped Manufacturing Orders expose List/Kanban/Form tabs and no overflow; paired Odoo capture required where the source picking-type dashboard is available | blocked: shared Odoo tab owned by another session; Discuss/OdooBot blocker captures retained |
 
 ## Exit criteria
 

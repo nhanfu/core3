@@ -1,0 +1,48 @@
+title: Manufacturings
+page: { id: manufacturing-picking-dashboard, route: /manufacturing/manufacturings, breadcrumb: [Inventory, Operations, Transfers, Manufacturings], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_picking_manufacturings
+    create_action: create_mrp_picking_manufacturing
+    create_label: New
+    search: { label: Search manufacturing orders, placeholder: Search orders or products... }
+    filters:
+      - field: state
+        label: Status
+        options:
+          - { id: todo, label: To Do }
+          - { id: Draft, label: Draft }
+          - { id: Confirmed, label: Confirmed }
+          - { id: In Progress, label: In Progress }
+          - { id: To Close, label: To Close }
+          - { id: Done, label: Done }
+          - { id: Cancelled, label: Cancelled }
+      - { field: priority, label: Priority, options: [{ id: Urgent, label: Urgent }, { id: Normal, label: Normal }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        card: { title: name, subtitle: product_name, fields: [{ field: quantity, label: To produce }, { field: planned_date, label: Planned }, { field: workorder_count, label: Work orders }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/manufacturing-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_picking_manufacturing
+    row_double_click_action: view_mrp_picking_manufacturing
+    row_actions: menu
+    empty_state: { title: No manufacturing orders found, description: Create an order or change the current search and filters. }
+    columns:
+      - { field: name, label: Manufacturing order, type: PrimaryEntityCell, mobile: true, mobile_secondary: product_name, sortable: true }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: bom_name, label: Bill of Materials, mobile: false }
+      - { field: quantity, label: To produce, align: right, mobile: true }
+      - { field: qty_produced, label: Produced, align: right, mobile: false, optional: hide }
+      - { field: workorder_count, label: Work orders, align: right, mobile: false, optional: hide }
+      - { field: planned_date, label: Planned date, mobile: false }
+      - { field: priority, label: Priority, mobile: false, optional: hide }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_picking_manufacturing, label: Open, icon: eye }] }
+    page_size: 50

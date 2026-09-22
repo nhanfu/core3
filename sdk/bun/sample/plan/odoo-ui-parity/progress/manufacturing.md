@@ -1,5 +1,27 @@
 # manufacturing parity progress
 
+## 2026-09-22 bounded next slice — Manufacturing Orders picking-type dashboard
+
+- Implemented `MANUFACTURING-PICKING-DASHBOARD-001` for Odoo's
+  `mrp_production_action_picking_deshboard`, launched from Inventory /
+  Operations / Transfers / Manufacturings. The page/API pair adds
+  `/manufacturing/manufacturings` with List/Kanban/Form modes and preserves the
+  source action identity, selected `picking_type_id` domain, and create
+  context.
+- Added durable `picking_type_id`/`picking_type_name` backfill and the
+  idempotent migration 027 scope index. Scoped search/status/company/empty/503
+  behavior and permissioned create validation are covered without adding a
+  duplicate Manufacturing menu.
+- Focused verification passes 3 tests / 26 assertions; Manufacturing
+  regression passes 96 tests / 938 assertions across 29 files. Audit passes
+  at 842 pages / 850 routes / 1,755 datasources; frontend and global/
+  Manufacturing CSS builds, targeted ESLint, and `git diff --check` pass.
+- Odoo BrowserSkill verification is blocked: on browser `245ea108`, signed-in
+  tab `1770662590` was already borrowed by session `ssyn`; task-created
+  navigation rendered Discuss/OdooBot. Desktop/mobile blocker captures and
+  hashes are in the feature evidence folder. No Odoo visual-parity claim is
+  made.
+
 ## 2026-09-22 bounded next slice — Work Orders Planning
 
 - Implemented `MANUFACTURING-PRODUCTION-PLANNING-001` for the missing Odoo
