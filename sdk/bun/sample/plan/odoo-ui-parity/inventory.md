@@ -1775,6 +1775,37 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Products > Product form Reordering Rules — `INV-PRODUCT-REORDERING-001` (2026-09-22)
+
+Odoo 19 exposes `action_view_orderpoints` on both `product.product` and
+`product.template` in `addons/stock/models/product.py:601-615,1238-1240`, and
+the corresponding product-form Reordering Rules stat buttons are declared in
+`addons/stock/views/product_views.xml:476-497`. The action opens the existing
+`stock.action_orderpoint` list with the selected product context and keeps the
+not-snoozed filter.
+
+Core3 adds the stable product-template and product-variant Reordering Rules
+actions to the existing YAML detail forms. The presentation pages remain
+datasource-free and bind by their existing page IDs. The shared
+`inventory_reordering_rules` datasource now applies product/template context
+through `inventory_product_orderpoint_links`; migration
+`20260923050000-095-inventory-product-reordering-action.yaml` seeds three
+idempotent links for Storage Box and Corner Desk with `2026-01-15` timestamps.
+Product detail datasources expose active `reordering_rule_count` values, and
+the navigation remains `inventory.read` only.
+
+Focused verification passes 3 tests / 22 assertions in
+`test/inventory_product_reordering.integration.test.ts`; `git diff --check`
+passes. Evidence is under
+`evidence/inventory/2026-09-22/INV-PRODUCT-REORDERING-001/`.
+
+BrowserSkill connected to Chrome and listed the user-owned tabs, but the only
+Odoo tab was a PDF/report tab and the mandatory borrow confirmation timed out.
+The session was stopped cleanly without bypassing confirmation or using
+Playwright. No authenticated Odoo/Core3 desktop/mobile capture or visual
+parity claim is made; the exact blocker is recorded in the feature evidence.
+Full Inventory sign-off remains open.
+
 ## Products > Product form Storage Capacities — `INV-PRODUCT-STORAGE-CAPACITY-001` (2026-09-22)
 
 This bounded slice closes the next uncovered product-form action after the

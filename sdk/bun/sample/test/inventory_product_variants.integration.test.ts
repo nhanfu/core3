@@ -74,9 +74,12 @@ describe('Inventory Product Variants Odoo action parity', () => {
     expect(page.components[0]).toMatchObject({ source: 'inventory_product_variants', create_action: 'create_inventory_product_variant', row_open_action: 'view_inventory_product_variant' });
     expect(detailPage.components[0].header_actions.map((entry: any) => entry.id)).toEqual([
       'back_to_inventory_product_variants',
+      'view_inventory_product_variant_on_hand',
+      'view_inventory_product_variant_reordering_rules',
       'update_inventory_product_variant_quantity',
       'view_inventory_product_variant_lots',
       'view_inventory_product_variant_putaway_rules',
+      'view_inventory_product_variant_storage_capacities',
       'edit_inventory_product_variant',
       'archive_inventory_product_variant',
       'restore_inventory_product_variant',

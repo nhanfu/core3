@@ -13,6 +13,10 @@ datasources:
         CAST(on_hand - reserved_quantity AS DOUBLE) AS available_quantity,
         CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty,
         CAST(forecasted AS DOUBLE) AS forecasted, CAST(weight AS DOUBLE) AS weight,
+        (SELECT COUNT(*) FROM inventory_product_orderpoint_links pl JOIN inventory_orderpoints o ON o.id = pl.orderpoint_id
+          WHERE pl.product_id = inventory_product_variants.id AND o.active = TRUE
+            AND (pl.company_name = inventory_product_variants.company_name
+              OR (inventory_product_variants.company_name = 'Core3 Demo Company' AND pl.company_name = 'My Company (San Francisco)'))) AS reordering_rule_count,
         (SELECT COUNT(*) FROM inventory_lots l WHERE l.product_id = inventory_product_variants.id
           AND (l.company_name = inventory_product_variants.company_name OR l.company_name IS NULL
             OR (inventory_product_variants.company_name = 'Core3 Demo Company' AND l.company_name = 'My Company (San Francisco)'))) AS lot_count,
@@ -47,6 +51,13 @@ actions:
     type: navigate
     permission: inventory.tracking
     navigate_to: /lots
+    params:
+      product_id: '{state.inventory_product_variant_detail.id}'
+      current_company_name: '{state.inventory_product_variant_detail.company_name}'
+  - id: view_inventory_product_variant_reordering_rules
+    type: navigate
+    permission: inventory.read
+    navigate_to: /reordering-rules
     params:
       product_id: '{state.inventory_product_variant_detail.id}'
       current_company_name: '{state.inventory_product_variant_detail.company_name}'

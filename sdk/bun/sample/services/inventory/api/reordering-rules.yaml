@@ -36,6 +36,20 @@ datasources:
         AND (:q IS NULL OR o.rule_name ILIKE '%' || :q || '%' OR o.product_name ILIKE '%' || :q || '%'
           OR o.location_name ILIKE '%' || :q || '%' OR o.warehouse_name ILIKE '%' || :q || '%')
         AND (:trigger IS NULL OR :trigger = '' OR o.trigger = :trigger)
+        AND (COALESCE(:product_id, '') = '' OR EXISTS (
+          SELECT 1 FROM inventory_product_orderpoint_links pl
+          WHERE pl.orderpoint_id = o.id AND pl.product_id = :product_id
+            AND (pl.company_name = o.company_name
+              OR (pl.company_name = 'Core3 Demo Company' AND o.company_name = 'My Company (San Francisco)')
+              OR (pl.company_name = 'My Company (San Francisco)' AND o.company_name = 'Core3 Demo Company'))
+        ))
+        AND (COALESCE(:product_template_id, '') = '' OR EXISTS (
+          SELECT 1 FROM inventory_product_orderpoint_links pl
+          WHERE pl.orderpoint_id = o.id AND pl.template_id = :product_template_id
+            AND (pl.company_name = o.company_name
+              OR (pl.company_name = 'Core3 Demo Company' AND o.company_name = 'My Company (San Francisco)')
+              OR (pl.company_name = 'My Company (San Francisco)' AND o.company_name = 'Core3 Demo Company'))
+        ))
       ORDER BY o.location_name, o.company_name, o.product_name, o.id
 actions:
   - id: view_inventory_reordering_rule

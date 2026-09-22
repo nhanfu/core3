@@ -11,6 +11,7 @@ components:
     header_actions:
       - { id: back_to_inventory_product_variants, label: Back to Product Variants, icon: arrow-left, permission: inventory.read }
       - { id: view_inventory_product_variant_on_hand, label: On Hand, variant: secondary, value_field: on_hand, permission: inventory.read, show_if: "record.is_storable === true" }
+      - { id: view_inventory_product_variant_reordering_rules, label: Reordering Rules, variant: secondary, value_field: reordering_rule_count, permission: inventory.read, show_if: "record.reordering_rule_count > 0" }
       - { id: update_inventory_product_variant_quantity, label: Update Quantity, variant: secondary, permission: inventory.manage }
       - { id: view_inventory_product_variant_lots, label: Lot/Serial Numbers, variant: secondary, value_field: lot_count, permission: inventory.tracking, show_if: "record.tracking !== 'none'" }
       - { id: view_inventory_product_variant_putaway_rules, label: Putaway Rules, variant: secondary, permission: inventory.multi_location, show_if: "record.product_type !== 'Service'" }

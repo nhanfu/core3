@@ -1,0 +1,38 @@
+version: 0.0.95
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_orderpoint_links (
+        id VARCHAR PRIMARY KEY,
+        orderpoint_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        template_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(orderpoint_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_product_orderpoint_links_product_idx
+        ON inventory_product_orderpoint_links(product_id, company_name, orderpoint_id);
+      CREATE INDEX IF NOT EXISTS inventory_product_orderpoint_links_template_idx
+        ON inventory_product_orderpoint_links(template_id, company_name, orderpoint_id);
+      INSERT INTO inventory_product_orderpoint_links
+        (id, orderpoint_id, product_id, template_id, company_name, created_at)
+      VALUES
+        ('product-orderpoint-storage-box-auto-0001', 'orderpoint-storage-box-auto', 'inventory-variant-storage-box', 'inventory-template-storage-box', 'My Company (San Francisco)', TIMESTAMP '2026-01-15 08:00:00'),
+        ('product-orderpoint-quant-storage-box-0001', 'orderpoint-quant-replenish-0001', 'inventory-variant-storage-box', 'inventory-template-storage-box', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:01:00'),
+        ('product-orderpoint-corner-desk-0001', 'orderpoint-desk-right', 'inventory-variant-corner-desk', 'inventory-template-corner-desk', 'My Company (San Francisco)', TIMESTAMP '2026-01-15 08:02:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_orderpoint_links
+      WHERE id IN (
+        'product-orderpoint-storage-box-auto-0001',
+        'product-orderpoint-quant-storage-box-0001',
+        'product-orderpoint-corner-desk-0001'
+      );
+      DROP TABLE IF EXISTS inventory_product_orderpoint_links;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb
