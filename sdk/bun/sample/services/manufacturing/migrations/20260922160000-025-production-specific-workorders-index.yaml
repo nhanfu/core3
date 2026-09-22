@@ -1,0 +1,14 @@
+version: 0.0.25
+description: Index durable Work Orders for the Manufacturing Order scoped action
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_mrp_workorders_production_sequence
+        ON mrp_workorders(production_id, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_workorders_production_sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

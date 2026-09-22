@@ -1,5 +1,36 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-MO-WO-001 — Manufacturing Order Work Orders (2026-09-22)
+
+- Source/action: local Odoo 19 `action_mrp_workorder_production_specific` in
+  `addons/mrp/views/mrp_workorder_views.xml`; model `mrp.workorder`, modes
+  `list,form,calendar,pivot,graph`, and domain `production_id = active_id`.
+- Core3 paths: presentation
+  `services/manufacturing/pages/production-workorders.yaml`; page-id-bound API
+  `services/manufacturing/api/production-workorders.yaml`; MO detail binding
+  in `pages/manufacturing-detail.yaml` and
+  `api/manufacturing-order-detail.yaml`; durable index migration
+  `services/manufacturing/migrations/20260922160000-025-production-specific-workorders-index.yaml`;
+  focused test `test/manufacturing_production_workorders.integration.test.ts`.
+- Functional/data result: PASS, 4 tests / 29 assertions. The action returns
+  only the selected MO's durable work orders, supports state/search/late
+  filters, includes finished rows like the source domain, and covers empty,
+  missing, and 503 transport states.
+- Workflow/permission result: PASS at contract level. Reads require
+  `manufacturing.read`; Plan/Start/Pause/Continue/Block/Cancel require
+  `manufacturing.write` and reuse `mrp_workorders`. Create/delete actions are
+  absent.
+- Restart result: PASS. The production-scoped rows remain queryable after a
+  file-backed DuckDB close/reopen and migration replay.
+- Odoo BrowserSkill result: BLOCKED, exact reason. Daemon status was healthy
+  for browser `245ea108`, but signed-in Odoo tab `1770662590` was already
+  borrowed by active session `olvm`; session `mgnu` was rejected and stopped.
+  No navigation, credentials, cookies, tokens, or independent login were
+  used. Blocker captures are in the feature evidence folder; no Odoo visual
+  parity claim is made.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-MO-WO-001/`.
+
 ## MANUFACTURING-PRODUCTION-PLANNING-001 — Work Orders Planning (2026-09-22)
 
 - Source/action: local Odoo 19 `mrp.action_mrp_workorder_production` in

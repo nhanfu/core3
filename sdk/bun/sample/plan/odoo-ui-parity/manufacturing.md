@@ -2,6 +2,42 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Manufacturing Order Work Orders bounded action (`MANUFACTURING-MO-WO-001`)
+
+### Source analysis and current-source comparison
+
+Local Odoo 19 source identifies `action_mrp_workorder_production_specific` in
+`addons/mrp/views/mrp_workorder_views.xml` as the Manufacturing Order scoped
+Work Orders action. It targets `mrp.workorder`, uses
+`list,form,calendar,pivot,graph`, and applies the record domain
+`production_id = active_id`. Core3 previously rendered the same durable rows
+only as an inline MO notebook tab; it had no page/API contract for this
+installed action.
+
+Core3 adds `/manufacturing-orders/detail/work-orders`, binds the
+presentation-only page `pages/production-workorders.yaml` to the backend
+contract `api/production-workorders.yaml` through `page.id`, and adds the MO
+detail launcher. The datasource joins durable `mrp_workorders` to
+`mrp_productions`, preserves all work-order states for the selected MO, and
+reuses the existing guarded `mrp_workorders` workflow. Migration
+`20260922160000-025-production-specific-workorders-index.yaml` adds an
+idempotent production/sequence index; no fixture-only rows are introduced.
+
+### Bounded acceptance
+
+Focused coverage is `test/manufacturing_production_workorders.integration.test.ts`:
+4 tests / 29 assertions. It verifies source action identity and modes, page/API
+separation, MO scoping, state/search/empty/not-found/503 behavior, migration
+replay, file-backed restart, read/write permissions, guarded workflow actions,
+and absence of create/delete actions.
+
+The required BrowserSkill probe was blocked before navigation: on healthy
+browser instance `245ea108`, tab `1770662590` was already borrowed by active
+session `olvm`, so session `mgnu` received `tab is borrowed by another session`.
+The session was stopped without navigating or using another backend. Desktop
+and mobile blocker captures are retained in the feature evidence folder, but
+they are not action captures and no Odoo visual-parity claim is made.
+
 ## 2026-09-22 Work Orders Planning bounded action (`MANUFACTURING-PRODUCTION-PLANNING-001`)
 
 ### Source analysis and current-source comparison
