@@ -66,7 +66,6 @@ describe('Blog site/company actor boundary', () => {
     writeFileSync(join(uploadRoot, 'blog-actor-boundary.txt'), 'private attachment');
     await repository.run("INSERT INTO blog_post_attachments (id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) VALUES ('blog-attachment-demo-001', 'blog-post-demo-001', 'private.txt', 'text/plain', 18, 'blog-actor-boundary.txt', 'user-admin', 'Core3 Demo Company')");
 
-    const postsPage = yaml('pages/posts.yaml');
     const postsApi = yaml('api/posts.yaml');
     const detailPage = yaml('api/post-detail.yaml');
     const analysisPage = yaml('pages/analysis.yaml');

@@ -8,6 +8,7 @@ components:
     title_field: name
     header_actions:
       - { id: back_to_blog_posts, label: Back, variant: secondary }
+      - { id: open_blog_post_website, label: Open website, variant: secondary, permission: blog.read }
       - { id: edit_blog_post_detail, label: Edit, variant: primary, permission: blog.write }
       - { id: print_blog_post, label: Print, variant: secondary, permission: blog.read }
     fields:

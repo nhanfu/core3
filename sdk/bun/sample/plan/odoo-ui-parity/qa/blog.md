@@ -180,3 +180,12 @@ See [`evidence/blog/2026-09-21/BLOG-POST-ARCHIVE-001/`](../evidence/blog/2026-09
 | BLOG-TAG-POSTS-RESTART-001 | Restart durability | Same focused test closes/reopens file-backed DuckDB, reapplies migrations, and finds both reverse relation rows plus synchronized post tags | pass |
 | BLOG-TAG-POSTS-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-TAG-POSTS-001/browser-check.md` and `odoo-desktop-404.png`/`odoo-mobile-404.png` | blocked: authenticated `core3_reference` has no Website/Blog menu and `/blog` is Odoo Error 404; Core3 `:4311` probe was unavailable; no visual-parity claim |
 | BLOG-QA-012 | Scoped Blog regression/tooling gates | Focused relation test 4/26, full Blog wildcard 39/225, UI audit 802/811/1,656, Blog Sass, targeted ESLint, and `git diff --check` | pass; repository-wide TypeScript has unrelated pre-existing errors; paired visual parity remains blocked |
+
+## Blog Post website action slice — 2026-09-22
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-POST-WEBSITE-FUNC-001 | Odoo `open_website_url` mapping and Core3 public URL projection | `test/blog_post_website.integration.test.ts` — 3 tests / 22 assertions; source-backed list/kanban action mapping, page/API separation, durable URL projection, read-only action, and Published-only public predicates | pass |
+| BLOG-POST-WEBSITE-WF-001 | Public visibility guard for website action | Same focused test confirms active/published guards remain in both public list and detail SQL; draft/archived rows cannot be exposed by the action route | pass |
+| BLOG-POST-WEBSITE-UI-001 | Authenticated Odoo/Core3 desktop/mobile comparison | `evidence/blog/2026-09-22/BLOG-POST-WEBSITE-001/browser-check.md`, `odoo-blog-desktop-blocker.png`, and `odoo-blog-mobile-blocker.png` | blocked: shared signed-in tab was borrowed by session `wqul`; same-instance task tab showed Odoo `/blog` Error 404; no visual-parity claim |
+| BLOG-QA-013 | Focused regression/tooling gates | Focused test 3/22; full Blog suite 42/247; UI audit 811/820/1,689; targeted Blog ESLint, Blog Sass build, full frontend build, and `git diff --check` passed | pass; paired Odoo/Core3 visual parity remains blocked |

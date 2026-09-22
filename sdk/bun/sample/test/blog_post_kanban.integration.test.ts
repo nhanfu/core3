@@ -32,7 +32,7 @@ describe('BLOG-POST-KANBAN-001', () => {
       { field: 'author_name', label: 'Author' },
     ]);
     expect(api.actions.map((action: any) => action.id)).toEqual([
-      'import_blog_posts', 'create_blog_post', 'view_blog_post', 'publish_blog_post',
+      'import_blog_posts', 'create_blog_post', 'view_blog_post', 'open_blog_post_website', 'publish_blog_post',
       'unpublish_blog_post', 'archive_blog_post', 'unarchive_blog_post',
     ]);
   });

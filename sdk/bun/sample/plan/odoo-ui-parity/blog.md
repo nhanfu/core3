@@ -297,3 +297,52 @@ Stable ID: `BLOG-TAG-POSTS-001`.
   captured under the feature evidence folder. The current reference has no
   installed Website/Blog module and Core3 runtime availability is recorded
   exactly; no visual-parity claim is made when either side is unavailable.
+
+## Blog Post website action slice — 2026-09-22
+
+The next uncovered concrete action in Odoo's Blog Post Pages source is the
+website redirect action. `addons/website_blog/views/website_pages_views.xml`
+sets both the Blog Post list and kanban views to `type="object"
+action="open_website_url"`; the Blog Post form also exposes the same website
+redirect button through the `is_published` website widget. Core3 previously
+opened only the private post detail route and did not project a public website
+URL or expose the action.
+
+Stable ID: `BLOG-POST-WEBSITE-001`.
+
+### Gap matrix
+
+| Odoo behavior | Existing Core3 gap | Bounded change | Verification |
+| --- | --- | --- | --- |
+| Blog Post list/kanban records open `open_website_url` | Posts opened only the private `/blog-post-detail` route and had no URL projection | Project a durable row URL and add a shared read-only `Open website` client action | source-backed contract test and authenticated browser action when runtime is available |
+| Blog Post form exposes a website redirect affordance | Detail form had Back, Edit, and Print only | Add the same action to the YAML form header and use the existing public renderer route | detail contract and public published/draft guard assertions |
+| Public website action respects publication state | The action had no declared route contract | Use the existing `/blog/post?id=...` Core3 alias; public operations continue to require active Published rows | public SQL assertions and browser blocker captures |
+
+### Core3 contract
+
+- Presentation remains layout-only in `services/blog/pages/posts.yaml` and
+  `services/blog/pages/post-detail.yaml`.
+- `services/blog/api/posts.yaml` and `services/blog/api/post-detail.yaml`
+  remain the matching backend contracts and project `website_url` from the
+  durable post ID. The action requires `blog.read` and performs no mutation.
+- The Odoo slug path is represented by the existing Core3 public route alias
+  `/blog/post?id=<post-id>`; this deliberate route difference is documented
+  here rather than hiding it in page code.
+- Draft and archived posts can expose a manager URL, but the public route
+  continues to return the existing unavailable/404 behavior because
+  `operations.yaml` requires both `active = TRUE` and `state = 'Published'`.
+
+### Acceptance checklist
+
+- Posts list, kanban, and detail contracts expose the `Open website` action
+  with `blog.read` permission and no mutation fields.
+- Published and draft/archived post URL projections are durable and resolve to
+  the Core3 public route; public SQL never exposes inactive or unpublished
+  rows.
+- Focused integration coverage asserts page/API separation, Odoo source
+  action mapping, URL projection, permission, read-only behavior, and public
+  visibility guards.
+- BrowserSkill desktop/mobile captures are retained under
+  `evidence/blog/2026-09-22/BLOG-POST-WEBSITE-001/`. The shared authenticated
+  tab was already borrowed by another team session, and the same-instance
+  task tab showed Odoo `/blog` Error 404, so no visual-parity claim is made.

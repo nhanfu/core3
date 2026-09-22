@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: BLOG_POST_DETAIL_FORBIDDEN, message: You do not have permission to view this blog post. }
       missing_record: { status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
       transport_error: { status: 503, code: BLOG_POST_DETAIL_UNAVAILABLE, message: This blog post is temporarily unavailable. }
-    query: "SELECT * FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
+    query: "SELECT *, '/blog/post?id=' || id AS website_url FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
   - id: blog_post_attachments
     permission: blog.read
     query: "SELECT a.id, a.post_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id"
@@ -43,6 +43,16 @@ actions:
     permission: blog.read
     kind: blog_post_attachment
   - { id: back_to_blog_posts, type: navigate, permission: blog.read, navigate_to: /blog-posts, params: {} }
+  - id: open_blog_post_website
+    type: client
+    permission: blog.read
+    script: |
+      // js
+      async ({ row }) => {
+        const url = String(row?.website_url || '').trim();
+        if (!url) throw new Error('This blog post does not have a website URL.');
+        window.location.assign(url);
+      }
   - id: print_blog_post
     type: client
     permission: blog.read

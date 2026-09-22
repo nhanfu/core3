@@ -110,3 +110,12 @@ comparisons. Current contract evidence is not module completion.
 | BLOG-TAG-POSTS-PERM-001 | permission/security | Blog reader with `blog.read` only | Relation reads succeed by contract; add/remove actions return 403 and leave the relation unchanged | pass: focused API boundary test |
 | BLOG-TAG-POSTS-RESTART-001 | data/regression | File-backed DuckDB; add relation then close/reopen and replay migrations | Reverse relation, synchronized post tag names, and tag row version remain durable | pass: focused restart test |
 | BLOG-TAG-POSTS-UI-001 | responsive/visual | Authenticated Odoo reference, desktop and emulated mobile | Compare Blog Tag form and Used in relation at 1440x900 and 390x844; record exact blockers where unavailable | blocked: Website/Blog absent in `core3_reference`; Core3 runtime probe refused connection |
+
+## BLOG-POST-WEBSITE-001 — 2026-09-22
+
+| Case ID | Class | Setup / actor | Action and expected result | Status |
+| --- | --- | --- | --- | --- |
+| BLOG-POST-WEBSITE-FUNC-001 | functional/visual | Blog reader with `blog.read`; active published and draft seeded posts | Posts list/kanban and detail expose `Open website`; the action uses the read-only projected `/blog/post?id=...` URL | pass: focused 3-test slice, 21 assertions |
+| BLOG-POST-WEBSITE-PERM-001 | permission/security | Blog reader, forbidden actor, unauthenticated visitor | Action is declared `blog.read`; private datasource remains guarded by existing 401/403 contracts and no write action is introduced | pass: contract assertions; full authenticated actor/browser matrix remains open |
+| BLOG-POST-WEBSITE-WF-001 | workflow/data | Published, draft, and archived post rows | Published public detail resolves; draft/archived public reads remain unavailable because active Published predicates are unchanged | pass: public SQL and route contract assertions |
+| BLOG-POST-WEBSITE-UI-001 | responsive/visual | Authenticated Odoo reference, 1440x900 and emulated 390x844 | Compare Odoo `open_website_url` behavior and Core3 action at desktop/mobile | blocked: shared signed-in Odoo tab was borrowed by another session; same-instance task tab captured Odoo `/blog` Error 404 at both viewports |

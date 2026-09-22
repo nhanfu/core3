@@ -28,8 +28,15 @@ components:
           footer:
             - { field: publication_status, label: '' }
     columns:
-      - { field: name, label: Post, type: PrimaryEntityCell, secondary: subtitle }
+      - field: name
+        label: Post
+        type: PrimaryEntityCell
+        secondary: subtitle
+        actions:
+          - { id: open_blog_post_website, label: Open website, icon: external-link, permission: blog.read }
+          - { id: view_blog_post, label: Open editor, icon: edit, permission: blog.read }
       - { field: blog_name, label: Blog }
+      - { field: website_url, label: Website URL }
       - { field: author_name, label: Author }
       - { field: tags, label: Tags }
       - { field: visits, label: Views, align: right }
@@ -39,7 +46,7 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
-    row_open_action: view_blog_post
+    row_open_action: open_blog_post_website
     header_actions: [{ id: import_blog_posts, label: Import, permission: blog.write, variant: secondary }]
     actions:
       - { id: blog_posts.export, label: Export, title: Export, icon: download }
