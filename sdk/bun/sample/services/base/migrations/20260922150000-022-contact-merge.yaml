@@ -1,0 +1,35 @@
+version: 0.0.22
+kind: schema
+description: Seed merge candidates and persist contact merge audit records
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_contact_merge_log (
+        id VARCHAR PRIMARY KEY,
+        destination_id VARCHAR NOT NULL,
+        source_ids VARCHAR NOT NULL,
+        actor_id VARCHAR,
+        actor_name VARCHAR NOT NULL DEFAULT 'Administrator',
+        merged_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS base_contact_merge_log_destination_idx ON base_contact_merge_log(destination_id, merged_at);
+      INSERT INTO base_contacts(id, row_version, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, active, parent_company_id, website, language_code, company_id)
+      SELECT 'contact-merge-source', 1, 'Demo Contact Duplicate', 'person', 'demo@core3.local', '+1 555 0199', '200 Market Street', 'San Francisco', 'California', '94105', 'United States', 'USD', false, true, NULL, NULL, 'en_US', 'company-demo'
+      WHERE EXISTS (SELECT 1 FROM base_contacts WHERE id = 'company-demo' AND is_company = true AND active = true)
+      ON CONFLICT (id) DO UPDATE SET active = true, company_id = EXCLUDED.company_id;
+      INSERT INTO base_contact_categories_rel(contact_id, category_id, category_name)
+      VALUES ('contact-merge-source', 'category-vendor', 'Vendor')
+      ON CONFLICT (contact_id, category_id) DO NOTHING;
+      INSERT INTO base_activities(id, contact_id, summary, activity_type, state, due_date, assigned_user_name)
+      VALUES ('activity-merge-source', 'contact-merge-source', 'Review duplicate details', 'todo', 'planned', DATE '2026-09-22', 'Administrator')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM base_activities WHERE id = 'activity-merge-source';
+      DELETE FROM base_contact_categories_rel WHERE contact_id = 'contact-merge-source';
+      DELETE FROM base_contacts WHERE id = 'contact-merge-source';
+      DROP INDEX IF EXISTS base_contact_merge_log_destination_idx;
+      DROP TABLE IF EXISTS base_contact_merge_log;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

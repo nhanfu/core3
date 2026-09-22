@@ -19,6 +19,8 @@ components:
       - { id: people, label: People, filters: { company_type: person }, group_by: country_name }
     actions:
       - { id: contacts.export, label: Export, title: Export contacts, icon: download, permission: base.contacts.read }
+    bulk_actions:
+      - { id: merge_contacts, label: Merge, permission: base.contacts.manage }
     tree: { parent_field: parent_company_id }
     selectable: true
     column_chooser: true

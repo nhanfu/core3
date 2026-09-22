@@ -62,6 +62,21 @@ because its run had a transient `/api/apps` failure.
   Odoo or Core3 desktop/mobile captures exist, and no visual-parity claim is
   made. The worker session was stopped and no borrowed tab was left open.
 
+## QA verification: contact merge wizard `BASE-CONTACT-MERGE-001` (2026-09-22)
+
+- Focused merge suite: **3 tests / 22 assertions** passed, covering page/API
+  ownership, same-email duplicate fixtures, relation reparenting, audit log,
+  restart persistence, hierarchy/email/company/destination/stale guards, and
+  no partial writes.
+- Odoo source reviewed: `base_partner_merge_views.xml` action binding and
+  manual merge form, plus `base_partner_merge.py` merge constraints and
+  foreign-key update behavior.
+- Browser blocker `BASE-CONTACT-MERGE-QA-001`: BrowserSkill instance
+  `245ea108` was connected, but `bsk tab borrow 1770662590 --session xcvu`
+  remained pending/unknown and left the tab in user scope. The session was
+  stopped without navigation or independent login. No Odoo/Core3 desktop or
+  mobile captures exist, and no visual-parity claim is made.
+
 ## QA result: attachment panel candidate `bb3487c2` (2026-09-13)
 
 - Candidate branch: `agent/base-contact-attachments-qa`

@@ -16,6 +16,9 @@ datasources:
   - id: contact_parent_companies
     permission: base.contacts.read
     query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
+  - id: contact_merge_destinations
+    permission: base.contacts.manage
+    query: "SELECT id AS value, name || ' (' || COALESCE(email, 'no email') || ')' AS label FROM base_contacts WHERE active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
 actions:
   - id: contacts.export
     type: client
@@ -64,6 +67,50 @@ actions:
         anchor.remove();
         setTimeout(() => URL.revokeObjectURL(url), 0);
       }
+  - id: merge_contacts
+    type: server_form
+    title: Merge Contacts
+    submit_label: Merge Contacts
+    cancel_label: Cancel
+    permission: base.contacts.manage
+    action: base.contacts.merge
+    handler: yaml_mutation
+    operation: merge
+    refresh: [contacts]
+    fields:
+      - { field: destination_id, label: Destination contact, type: select, options_source: contact_merge_destinations, required: true }
+      - { field: expected_destination_row_version, label: Destination row version, type: hidden, default: 1, required: true }
+    mutation:
+      generated: [merge_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND (SELECT COUNT(*) FROM base_contacts WHERE id IN :selectedIds) BETWEEN 2 AND 3", status: 400, code: BASE_CONTACT_MERGE_SELECTION_REQUIRED, message: Select two or three contacts to merge. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE id IN :selectedIds AND (active = false OR (COALESCE(:current_company_id, '') <> '' AND company_id <> :current_company_id)))", status: 403, code: BASE_CONTACT_MERGE_SCOPE, message: All selected contacts must be active and in the current company. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(DISTINCT company_id) FROM base_contacts WHERE id IN :selectedIds) = 1", status: 403, code: BASE_CONTACT_MERGE_SCOPE, message: Contacts from different companies cannot be merged. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts selected_contact JOIN base_contacts related ON related.id = selected_contact.parent_company_id WHERE selected_contact.id IN :selectedIds AND related.id IN :selectedIds) AND NOT EXISTS (SELECT 1 FROM base_contacts selected_contact JOIN base_contacts child ON child.parent_company_id = selected_contact.id WHERE selected_contact.id IN :selectedIds AND child.id IN :selectedIds)", status: 409, code: BASE_CONTACT_MERGE_HIERARCHY, message: A contact cannot be merged with its parent or child. }
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(DISTINCT lower(COALESCE(email, ''))) FROM base_contacts WHERE id IN :selectedIds) = 1", status: 409, code: BASE_CONTACT_MERGE_EMAIL_MISMATCH, message: All contacts must have the same email to merge. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM base_contacts destination WHERE destination.id = :destination_id AND destination.id IN :selectedIds AND destination.active = true AND destination.row_version = :expected_destination_row_version)", status: 409, code: BASE_CONTACT_MERGE_DESTINATION_STALE, message: The destination contact changed. Reload and try again. }
+      steps:
+        - query: "UPDATE base_contacts AS child SET parent_company_id = :destination_id, updated_at = CURRENT_TIMESTAMP WHERE child.parent_company_id IN :selectedIds AND child.id NOT IN :selectedIds"
+        - query: "INSERT INTO base_contact_categories_rel(contact_id, category_id, category_name) SELECT :destination_id, category_id, category_name FROM base_contact_categories_rel WHERE contact_id IN :selectedIds ON CONFLICT (contact_id, category_id) DO NOTHING"
+        - query: "DELETE FROM base_contact_categories_rel WHERE contact_id IN :selectedIds AND contact_id <> :destination_id"
+        - query: "UPDATE base_activities SET contact_id = :destination_id WHERE contact_id IN :selectedIds AND contact_id <> :destination_id"
+        - query: "UPDATE base_contact_messages SET contact_id = :destination_id WHERE contact_id IN :selectedIds AND contact_id <> :destination_id"
+        - query: "UPDATE base_contact_attachments SET contact_id = :destination_id WHERE contact_id IN :selectedIds AND contact_id <> :destination_id"
+        - query: "INSERT INTO base_contact_followers(contact_id, user_id, name, email, added_by, created_at) SELECT :destination_id, user_id, name, email, added_by, created_at FROM base_contact_followers WHERE contact_id IN :selectedIds AND contact_id <> :destination_id ON CONFLICT (contact_id, user_id) DO NOTHING"
+        - query: "DELETE FROM base_contact_followers WHERE contact_id IN :selectedIds AND contact_id <> :destination_id"
+        - query: "UPDATE base_partner_bank_accounts SET partner_id = :destination_id, partner_name = (SELECT name FROM base_contacts WHERE id = :destination_id) WHERE partner_id IN :selectedIds AND partner_id <> :destination_id"
+        - query: "UPDATE base_contacts AS destination SET name = COALESCE(NULLIF(destination.name, ''), (SELECT name FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), email = COALESCE(NULLIF(destination.email, ''), (SELECT email FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), phone = COALESCE(NULLIF(destination.phone, ''), (SELECT phone FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), street = COALESCE(NULLIF(destination.street, ''), (SELECT street FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), street2 = COALESCE(NULLIF(destination.street2, ''), (SELECT street2 FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), city = COALESCE(NULLIF(destination.city, ''), (SELECT city FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), state_name = COALESCE(NULLIF(destination.state_name, ''), (SELECT state_name FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), zip = COALESCE(NULLIF(destination.zip, ''), (SELECT zip FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), country_name = COALESCE(NULLIF(destination.country_name, ''), (SELECT country_name FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), notes = COALESCE(NULLIF(destination.notes, ''), (SELECT notes FROM base_contacts source WHERE source.id IN :selectedIds AND source.id <> :destination_id ORDER BY source.id LIMIT 1)), row_version = destination.row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE destination.id = :destination_id AND destination.row_version = :expected_destination_row_version"
+          expect_changed: true
+          status: 409
+          code: BASE_CONTACT_MERGE_DESTINATION_STALE
+          message: The destination contact changed. Reload and try again.
+        - query: "INSERT INTO base_contact_merge_log(id, destination_id, source_ids, actor_id, actor_name, merged_at) SELECT :merge_id, :destination_id, string_agg(id, ',' ORDER BY id), :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Administrator'), CURRENT_TIMESTAMP FROM base_contacts WHERE id IN :selectedIds AND id <> :destination_id"
+        - query: "DELETE FROM base_contacts WHERE id IN :selectedIds AND id <> :destination_id AND active = true"
+          expect_changed: true
+          status: 409
+          code: BASE_CONTACT_MERGE_STALE
+          message: A selected contact changed before the merge completed. Reload and try again.
+      result: { query: "SELECT destination.id, destination.name, destination.row_version, :merge_id AS merge_id, (SELECT COUNT(*) FROM base_contacts WHERE id IN :selectedIds AND id <> :destination_id) AS remaining_sources FROM base_contacts destination WHERE destination.id = :destination_id" }
   - id: create_contact
     type: server_form
     permission: base.contacts.write

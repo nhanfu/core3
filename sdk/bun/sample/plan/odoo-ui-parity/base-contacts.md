@@ -442,3 +442,39 @@ The worker stopped its own session without opening an independent tab or
 reading credentials. No Odoo/Core3 desktop or mobile capture, and no visual
 parity claim, is made. Details are in
 `evidence/base/2026-09-22/BASE-CONTACT-HIERARCHY-CHILDREN-001/`.
+
+## Contact merge wizard bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-MERGE-001`.
+
+Odoo source comparison: Odoo 19 `odoo/addons/base/wizard/base_partner_merge_views.xml:103-110`
+binds `action_partner_merge` to the `res.partner` list and kanban action menu,
+opening the `Automatic Merge Wizard` in a modal. Its manual selection state
+chooses a destination contact, shows selected contact rows, and exposes
+`Merge Contacts` and `Cancel`; `odoo/addons/base/wizard/base_partner_merge.py:410-473`
+limits a merge to two or three contacts, rejects parent/child pairs and
+differing emails for normal users, redirects related records, and removes
+source contacts.
+
+Core3 was missing the list/kanban bulk action, destination form, durable
+mutation, related-record reparenting, and audit record. Core3 now keeps
+`pages/contacts.yaml` layout-only and joins it to `api/contacts.yaml` through
+`page.id: contacts`. The API owns `contact_merge_destinations` and the
+permissioned `merge_contacts` server form under `base.contacts.manage`.
+Migration `20260922150000-022-contact-merge.yaml` adds deterministic
+same-email merge candidates and `base_contact_merge_log`; the mutation
+reparents Base-owned activities, chatter messages, attachments, followers,
+bank accounts, categories, and child references before deleting sources.
+Active/current-company, two-or-three selection, same-email, hierarchy,
+destination membership, destination row-version, and stale-write guards are
+covered by `test/base_contact_merge.integration.test.ts` (3 tests / 22
+assertions), including file-backed restart and idempotent migration replay.
+
+BrowserSkill comparison blocker: Browser instance `245ea108` reported the
+signed-in Contacts tab `1770662590` in the user scope, but
+`bsk tab borrow 1770662590 --session xcvu` remained pending/unknown and never
+placed the tab in the agent scope. After state inspection the worker stopped
+session `xcvu`; it did not navigate, log in independently, inspect credentials,
+or use Playwright. Odoo/Core3 desktop and mobile captures are therefore not
+available for this feature and no visual-parity claim is made. Evidence is in
+`evidence/base/2026-09-22/BASE-CONTACT-MERGE-001/`.

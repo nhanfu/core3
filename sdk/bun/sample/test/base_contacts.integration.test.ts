@@ -39,7 +39,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban']);
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ label: 'Cards', card: { title: 'name', subtitle: 'email', image_field: 'avatar_url' } });
     expect(list.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'kanban']);
-    expect(yaml('api/contacts.yaml').datasources.map((item: any) => item.id)).toEqual(['contact_active_states', 'contacts', 'contact_types', 'contact_countries', 'contact_parent_companies']);
+    expect(yaml('api/contacts.yaml').datasources.map((item: any) => item.id)).toEqual(['contact_active_states', 'contacts', 'contact_types', 'contact_countries', 'contact_parent_companies', 'contact_merge_destinations']);
     expect(list.filters[0]).toMatchObject({ field: 'active', label: 'Status', options_source: 'contact_active_states' });
     expect(list.columns.find((column: any) => column.field === 'id').actions).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'archive_contact', label: 'Archive', show_if: 'row.active === true' }),
@@ -64,7 +64,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     const defaults = await repository.querySource(contacts, { q: null, active: null, company_type: null, country_name: null, fixture_state: null }, 0, 50);
     expect(defaults.data.map((row: any) => row.id)).toEqual([
       'company-azure', 'contact-azure-brandon', 'company-demo', 'contact-demo-child', 'company-vietnam', 'contact-demo',
-      'contact-gemini-edwin', 'company-gemini', 'contact-gemini-jesse', 'contact-berlin',
+      'contact-merge-source', 'contact-gemini-edwin', 'company-gemini', 'contact-gemini-jesse', 'contact-berlin',
       'company-northwind',
     ]);
     expect(defaults.data.find((row: any) => row.id === 'contact-demo')).toMatchObject({ name: 'Demo Contact', avatar_initials: 'D', category_count: 1, activity_count: 1 });
@@ -88,7 +88,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
   test('keeps read/write permissions and transport-error contracts explicit', () => {
     for (const file of ['api/contacts.yaml', 'api/contact-detail.yaml']) {
       for (const item of yaml(file).datasources) {
-        const expected = item.id === 'contact_follower_candidates' ? /^(base\.contacts)\.write$/ : /^(base\.(contacts|activities)|livechat)\.read$/;
+        const expected = item.id === 'contact_follower_candidates' ? /^(base\.contacts)\.write$/ : item.id === 'contact_merge_destinations' ? /^(base\.contacts)\.manage$/ : /^(base\.(contacts|activities)|livechat)\.read$/;
         expect(item.permission, `${file}:${item.id}`).toMatch(expected);
       }
     }
