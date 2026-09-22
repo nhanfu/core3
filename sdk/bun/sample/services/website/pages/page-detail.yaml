@@ -23,6 +23,8 @@ components:
       - { id: edit_website_page_detail, label: Edit, variant: primary, permission: website.write }
       - { id: publish_website_page_detail, label: Publish, variant: primary, permission: website.write, show_if: "row.state === 'Draft'" }
       - { id: unpublish_website_page_detail, label: Unpublish, variant: secondary, permission: website.manage, show_if: "row.state === 'Published'" }
+      - { id: set_website_page_homepage_detail, label: Set as homepage, variant: secondary, permission: website.write, show_if: "row.is_homepage !== true" }
+      - { id: clear_website_page_homepage_detail, label: Clear homepage, variant: secondary, permission: website.write, show_if: "row.is_homepage === true && row.url !== '/'" }
     groups:
       - { title: Page, columns: 2, fields: [{ field: name, label: Page Title }, { field: url, label: Page URL }, { field: website_name, label: Website }, { field: state, label: Status, type: StatusChip }, { field: track, label: Track, type: checkbox }] }
       - { title: Content, columns: 1, fields: [{ field: content_html, label: Page content, type: textarea }] }

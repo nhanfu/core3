@@ -49,4 +49,6 @@ components:
       - { id: edit_website_page, label: Edit, permission: website.write, variant: secondary }
       - { id: publish_website_page, label: Publish, permission: website.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: unpublish_website_page, label: Unpublish, permission: website.manage, variant: secondary, show_if: "row.state === 'Published'" }
+      - { id: set_website_page_homepage, label: Set as homepage, permission: website.write, variant: secondary, show_if: "row.is_homepage !== true" }
+      - { id: clear_website_page_homepage, label: Clear homepage, permission: website.write, variant: secondary, show_if: "row.is_homepage === true && row.url !== '/'" }
     empty_state: { title: No pages found, description: No website pages match the current search. }

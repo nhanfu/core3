@@ -5,7 +5,7 @@ datasources:
     permission: website.read
     error_states:
       missing_record: { status: 404, code: WEBSITE_PAGE_NOT_FOUND, message: Website page not found. }
-    query: "SELECT id, row_version, website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized, track, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE id = :id"
+    query: "SELECT p.id, p.row_version, p.website_id, p.website_name, p.name, p.url, p.content_html, p.is_indexed, p.is_homepage, p.is_in_menu, p.is_seo_optimized, p.track, CAST(p.date_publish AS VARCHAR) AS date_publish, p.state, w.row_version AS website_row_version FROM website_pages p JOIN website_websites w ON w.id = p.website_id WHERE p.id = :id"
   - id: website_page_assets
     permission: website.read
     query: "SELECT id, row_version, page_id, file_name, mime_type, size_bytes, is_public, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM website_page_assets WHERE page_id = :id ORDER BY created_at DESC, id"
@@ -13,6 +13,37 @@ actions:
   - { id: back_to_website_pages, type: navigate, permission: website.read, navigate_to: /website-pages, params: {} }
   - { id: publish_website_page_detail, type: server, permission: website.write, action: website.pages.publish, handler: order_transition, workflow: website_pages, operation: publish, refresh: [website_page_detail, website_page_assets] }
   - { id: unpublish_website_page_detail, type: server, permission: website.manage, action: website.pages.unpublish, handler: order_transition, workflow: website_pages, operation: unpublish, refresh: [website_page_detail, website_page_assets] }
+  - id: set_website_page_homepage_detail
+    type: server
+    permission: website.write
+    action: website.pages.homepage.set
+    handler: yaml_mutation
+    refresh: [website_page_detail, website_page_assets]
+    params: { website_id: '{state.website_page_detail.website_id}', expected_row_version: '{state.website_page_detail.row_version}', expected_website_row_version: '{state.website_page_detail.website_row_version}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM website_pages WHERE id = :id AND website_id = :website_id AND row_version = :expected_row_version AND is_homepage = FALSE", status: 409, code: WEBSITE_PAGE_HOMEPAGE_STALE, message: This page changed or is already the homepage. Reload before changing the homepage. }
+        - { query: "SELECT id FROM website_websites WHERE id = :website_id AND row_version = :expected_website_row_version", status: 409, code: WEBSITE_WEBSITE_HOMEPAGE_STALE, message: This website changed before the homepage could be changed. Reload before trying again. }
+      steps:
+        - { query: "UPDATE website_pages SET is_homepage = FALSE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE website_id = :website_id AND is_homepage = TRUE" }
+        - { query: "UPDATE website_pages SET is_homepage = TRUE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND website_id = :website_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: WEBSITE_PAGE_HOMEPAGE_STALE, message: This page changed before it could become the homepage. Reload before trying again. }
+        - { query: "UPDATE website_websites SET homepage_url = (SELECT url FROM website_pages WHERE id = :id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :website_id AND row_version = :expected_website_row_version", expect_changed: true, status: 409, code: WEBSITE_WEBSITE_HOMEPAGE_STALE, message: This website changed before the homepage could be changed. Reload before trying again. }
+      result: { query: "SELECT * FROM website_pages WHERE id = :id" }
+  - id: clear_website_page_homepage_detail
+    type: server
+    permission: website.write
+    action: website.pages.homepage.clear
+    handler: yaml_mutation
+    refresh: [website_page_detail, website_page_assets]
+    params: { website_id: '{state.website_page_detail.website_id}', expected_row_version: '{state.website_page_detail.row_version}', expected_website_row_version: '{state.website_page_detail.website_row_version}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM website_pages WHERE id = :id AND website_id = :website_id AND row_version = :expected_row_version AND is_homepage = TRUE AND url <> '/'", status: 409, code: WEBSITE_PAGE_HOMEPAGE_STALE, message: This page changed or cannot clear the homepage selection. Reload before changing the homepage. }
+        - { query: "SELECT id FROM website_websites WHERE id = :website_id AND row_version = :expected_website_row_version", status: 409, code: WEBSITE_WEBSITE_HOMEPAGE_STALE, message: This website changed before the homepage could be changed. Reload before changing the homepage. }
+      steps:
+        - { query: "UPDATE website_pages SET is_homepage = (url = '/'), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE website_id = :website_id AND (is_homepage = TRUE OR url = '/')" }
+        - { query: "UPDATE website_websites SET homepage_url = NULL, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :website_id AND row_version = :expected_website_row_version", expect_changed: true, status: 409, code: WEBSITE_WEBSITE_HOMEPAGE_STALE, message: This website changed before the homepage could be changed. Reload before trying again. }
+      result: { query: "SELECT * FROM website_pages WHERE id = :id" }
   - id: upload_website_page_asset
     type: upload
     action: website.pages.assets.upload

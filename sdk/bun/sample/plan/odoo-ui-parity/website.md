@@ -423,3 +423,39 @@ Page Manager URL redirect persistence is covered at the contract/data/API
 level. The broader Website module remains conditional on authenticated Odoo
 Website availability, paired desktop/mobile evidence, and the remaining public,
 theme-asset, and full workflow gates.
+
+## Wave 13 execution evidence — 2026-09-22 — Page Properties homepage selection
+
+The next uncovered Page Manager workflow is `WEBSITE-PAGE-HOMEPAGE-001`. Local
+Odoo 19 `addons/website/views/website_pages_views.xml` exposes the Page
+Properties `is_homepage` toggle, while
+`addons/website/models/website_page_properties.py` implements its inverse by
+setting or clearing `website.homepage_url`. Core3 now exposes permissioned
+`Set as homepage` and `Clear homepage` actions from both Page Manager and Page
+detail. The actions are separate API contracts under the matching
+`page.id: website-pages` and `page.id: website-page-detail` joins, and update
+the Website-owned homepage URL plus the site-scoped page flags atomically.
+
+The set action rejects stale page or Website row versions and clears any
+previous site homepage before selecting the target. The clear action is
+restricted to a non-root homepage and restores `/` as the Odoo-compatible
+fallback, while clearing `website_websites.homepage_url`. Both actions require
+`website.write`; focused coverage verifies source anchors, exclusivity, root
+fallback, restart persistence, stale guards, and a read-only action-endpoint
+403.
+
+Focused result: `bun test ./test/website_page_homepage.integration.test.ts
+--timeout 20000` — 3 tests / 17 assertions passed. The adjacent Website
+Page Manager, redirect, publication, Settings, and favicon regression set
+passed 23 tests / 115 assertions.
+
+BrowserSkill was used once for `http://localhost:8069/core3_reference`. No
+borrowable authenticated Website tab was listed; the task-created navigation
+resolved to the authenticated Discuss shell rather than a Website route. No
+credentials were requested or exposed, no independent browser backend was
+used, and the BrowserSkill session was stopped immediately. No visual-parity
+claim is made for this wave.
+
+Remaining gap: paired authenticated Odoo/Core3 desktop and mobile Website
+evidence remains blocked by the shared browser session exposing Discuss and no
+borrowable Website tab.
