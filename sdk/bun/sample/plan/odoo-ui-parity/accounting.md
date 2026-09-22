@@ -1693,3 +1693,39 @@ the frontend/CSS build passed. BrowserSkill instance `245ea108` was connected, b
 desktop/mobile captures were possible, so this slice makes no visual-parity
 claim. Exact evidence is under
 `evidence/accounting/2026-09-22/ACC-JOURNAL-REVIEW-001/`.
+
+## Current batch: payment receipt email action (2026-09-22)
+
+The local Odoo 19 `account` source exposes the form-bound
+`account_send_payment_receipt_by_email_action` action with the exact label
+`Send receipt by email`. It targets `mail.compose.message` in a modal form,
+uses `mail_template_data_payment_receipt`, attaches the
+`account.action_report_payment_receipt` report, and provides the standard
+composer `Send` and `Discard` controls. Core3's existing payment detail had no
+receipt action or durable receipt history.
+
+Stable feature ID `ACC-PAYMENT-RECEIPT-001` adds the
+`send_accounting_payment_receipt` action to the page/API-separated
+`payment-detail` contract. Migration
+`20260922210000-055-accounting-payment-receipts.yaml` adds receipt counters and
+the durable `accounting_payment_receipts` queue/history table. The composer
+prefills a partner recipient, Odoo-shaped subject/body, and PDF filename;
+submission requires `accounting.write`, a processed unchanged payment, a valid
+recipient, non-empty content, and a signed-in actor. It inserts one `Queued`
+receipt and increments the payment row version atomically. Missing, invalid,
+stale, draft, and blank-actor paths are guarded server-side and persisted
+receipt history is exposed through the matching API datasource.
+
+Focused validation passes 3 tests and 29 assertions. The full Accounting
+corpus passes 122 tests and 1,323 assertions with `--timeout 20000`; the UI
+audit passes with 842 pages, 850 routes, and 1,754 datasources; and the
+frontend/CSS production build plus `git diff --check` pass. `bun run lint` is
+not available in this checkout because no lint script is defined. BrowserSkill
+instance `245ea108` was connected, but borrowing the existing authenticated
+Odoo tab timed out waiting for confirmation, so no desktop/mobile capture or
+visual-parity claim is made. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-PAYMENT-RECEIPT-001/`.
+
+SMTP delivery, mail-queue worker execution, and generated payment-receipt PDF
+bytes remain explicit integration follow-up boundaries; this slice is not
+Accounting module sign-off.

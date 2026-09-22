@@ -892,3 +892,26 @@ sign-off is claimed.
   was stopped without changing the tab. No desktop/mobile capture was possible
   and no visual-parity claim is made.
 - Disposition: bounded candidate; Accounting module sign-off remains open.
+
+## QA disposition — payment receipt email candidate (2026-09-22)
+
+- **ACC-PAYMENT-RECEIPT-001:** focused coverage passes **3 tests / 29
+  assertions** for the Odoo form-bound `Send receipt by email` action, exact
+  source template/composer mapping, page/API `page.id` separation,
+  `accounting.write` action ownership, queued receipt persistence, recipient
+  and content validation, missing/stale/processed-payment guards, and
+  DuckDB restart plus idempotent migration replay.
+- Accounting regression passes **122 tests / 1,323 assertions** with an
+  explicit 20-second timeout. `bun run audit` passes at **842 pages / 850
+  routes / 1,754 datasources**; the frontend/CSS production build and
+  `git diff --check` pass. The checkout has no `lint` script, so the command
+  reports `Script not found "lint"`.
+- BrowserSkill instance `245ea108` was connected, but the required existing
+  authenticated Odoo tab remained user-owned when the borrow confirmation
+  timed out. The session was stopped without changing the tab; no independent
+  browser or login was used. No desktop/mobile capture or visual-parity claim
+  is made. Exact blocker evidence is under
+  `evidence/accounting/2026-09-22/ACC-PAYMENT-RECEIPT-001/`.
+- SMTP delivery, mail worker execution, PDF report generation, and attachment
+  transport remain integration follow-up boundaries. This is a bounded
+  candidate, not Accounting module sign-off.

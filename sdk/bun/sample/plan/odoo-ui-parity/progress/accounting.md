@@ -69,6 +69,24 @@ This file records accounting progress only. The aggregate `progress.md` is QA-ow
   the confirmation timeout. No visual-parity claim is made.
 - This is a bounded candidate and does not sign off the Accounting module.
 
+## Candidate: payment receipt email action (2026-09-22)
+
+- Stable ID: `ACC-PAYMENT-RECEIPT-001`; bounded source action:
+  `account_send_payment_receipt_by_email_action` / `Send receipt by email`.
+- Core3 implementation: `send_accounting_payment_receipt` on the
+  `payment-detail` page/API pair; durable migration
+  `20260922210000-055-accounting-payment-receipts.yaml`; processed-payment,
+  recipient/content, actor, missing, and row-version guards.
+- Focused verification: `accounting_payment_receipt.integration.test.ts` —
+  **3 tests / 29 assertions**, pass. Full Accounting regression: **122 tests /
+  1,323 assertions**, pass with `--timeout 20000`. Audit: **842 pages / 850
+  routes / 1,754 datasources**. Frontend/CSS build and diff-check pass.
+- Browser gate: BrowserSkill instance `245ea108` was connected, but borrowing
+  the required authenticated Odoo tab timed out waiting for confirmation. The
+  session was stopped without changing the tab; no visual-parity claim is made.
+- SMTP/PDF delivery remains deferred integration work. This is a bounded
+  candidate and does not sign off the Accounting module.
+
 ## QA verification: candidate `9c19f5a4` (2026-09-13)
 
 - Focused attachment test: **1 pass, 11 assertions, 0 failures**; read/write

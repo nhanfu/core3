@@ -12,6 +12,8 @@ components:
       - { value: Cancelled, label: Cancelled }
     status_colors: { Draft: neutral, In Process: blue, Posted: green, Cancelled: red }
     editable: false
+    header_actions:
+      - { id: send_accounting_payment_receipt, label: Send receipt by email, variant: secondary, permission: accounting.write, show_if: "state.accounting_payment_detail.state === 'Posted' || state.accounting_payment_detail.state === 'Paid' || state.accounting_payment_detail.state === 'In Process'" }
     group_columns: 2
     groups:
       - title: Payment
@@ -28,6 +30,8 @@ components:
           - { field: payment_method, label: Payment Method }
           - { field: amount, label: Amount }
           - { field: currency, label: Currency }
+          - { field: receipt_count, label: Receipts sent }
+          - { field: last_receipt_sent_at, label: Last receipt sent }
     notebook:
       active: other-info
       tabs:
@@ -37,3 +41,11 @@ components:
             - { field: reference, label: Memo }
             - { field: payment_type, label: Payment Type }
             - { field: currency, label: Currency }
+            - { field: receipt_count, label: Receipts sent }
+            - { field: last_receipt_sent_at, label: Last receipt sent }
+    message_source: accounting_payment_receipts
+    chatter_label: Payment receipts
+    chatter_empty: No payment receipts sent yet.
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at

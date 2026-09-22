@@ -3,4 +3,40 @@ datasources:
   - id: accounting_payment_detail
     single: true
     permission: accounting.read
-    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference FROM accounting_payments WHERE id = :id"
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference, COALESCE(receipt_count, 0) AS receipt_count, CAST(last_receipt_sent_at AS VARCHAR) AS last_receipt_sent_at, CASE partner_name WHEN 'Gemini Furniture' THEN 'gemini@example.com' WHEN 'Azure Interior' THEN 'azure@example.com' WHEN 'Ready Mat' THEN 'ready@example.com' WHEN 'Lumber Inc' THEN 'lumber@example.com' WHEN 'Wood Corner' THEN 'wood@example.com' ELSE 'billing@example.com' END AS recipient_email, 'My Company Payment Receipt (Ref ' || name || ')' AS subject, 'Thank you for your payment. Here is your payment receipt ' || name || ' attached.' AS body FROM accounting_payments WHERE id = :id"
+  - id: accounting_payment_receipts
+    single: false
+    permission: accounting.read
+    query: "SELECT id, actor_name, 'receipt' AS action, 'Send receipt by email' AS action_label, 'Queued to ' || recipient || ': ' || subject AS detail, CAST(created_at AS VARCHAR) AS created_at FROM accounting_payment_receipts WHERE payment_id = :id ORDER BY created_at DESC"
+actions:
+  - id: send_accounting_payment_receipt
+    type: server_form
+    permission: accounting.write
+    title: Send receipt by email
+    action: accounting.payments.send_receipt
+    handler: yaml_mutation
+    operation: send_receipt
+    params: { id: '{state.accounting_payment_detail.id}' }
+    prefill: state.accounting_payment_detail
+    refresh: [accounting_payment_detail, accounting_payment_receipts]
+    mutation:
+      generated: [receipt_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'accounting-payment-receipt-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS receipt_id FROM accounting_payment_receipts WHERE payment_id = :id"
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_RECEIPT_NOT_FOUND, message: Payment not found. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND state IN ('Posted', 'Paid', 'In Process') AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_PAYMENT_RECEIPT_UNAVAILABLE, message: Only an unchanged processed payment can send a receipt. Reload before sending. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:recipient_email AS VARCHAR))) BETWEEN 3 AND 320 AND regexp_matches(TRIM(CAST(:recipient_email AS VARCHAR)), '^[^ @]+@[^ @]+\\.[^ @]+$')", status: 422, code: ACCOUNTING_PAYMENT_RECEIPT_RECIPIENT_INVALID, message: Enter a valid email recipient. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 255 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) BETWEEN 1 AND 10000", status: 422, code: ACCOUNTING_PAYMENT_RECEIPT_CONTENT_INVALID, message: Subject and message are required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:current_user_name, '') AS VARCHAR))) > 0", status: 403, code: ACCOUNTING_PAYMENT_RECEIPT_ACTOR_REQUIRED, message: A signed-in Accounting user is required to send a receipt. }
+      steps:
+        - { query: "INSERT INTO accounting_payment_receipts(id, payment_id, actor_name, recipient, subject, body, attachment_name, status) VALUES(:receipt_id, :id, :current_user_name, CAST(:recipient_email AS VARCHAR), CAST(:subject AS VARCHAR), CAST(:body AS VARCHAR), replace((SELECT name FROM accounting_payments WHERE id = :id), '/', '_') || '.pdf', 'Queued')" }
+        - { query: "UPDATE accounting_payments SET receipt_count = COALESCE(receipt_count, 0) + 1, last_receipt_sent_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_PAYMENT_RECEIPT_STALE, message: The payment changed; reload before sending the receipt. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields:
+      - { field: row_version, label: Row version, type: hidden, default: 1 }
+      - { field: recipient_email, label: To, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body, label: Message, type: textarea, required: true }

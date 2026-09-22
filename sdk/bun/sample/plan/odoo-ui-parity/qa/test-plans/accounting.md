@@ -104,3 +104,14 @@ required; development migrations must be idempotent.
 | ACC-PREVIEW-PERM-002 | permission | `/accounting/invoice-preview` | `accounting.read` is required for datasource and Back/Download actions; direct unauthorised query returns 403 | `accounting_invoice_preview.integration.test.ts` | pass |
 | ACC-PREVIEW-DATA-003 | data/regression | invoice preview datasource | Invoice name, partner, dates, totals and payment state are read from persisted Accounting rows and survive close/reopen plus idempotent migration replay | `accounting_invoice_preview.integration.test.ts` | pass |
 | ACC-PREVIEW-UI-004 | visual/responsive | Odoo `/odoo/invoicing/10` preview | Odoo desktop/mobile preview banner, portal invoice body, Back to edit mode, Pay Now, Download and Communication history are captured; Core3 capture is required when an authenticated session is available | evidence `ACC-INVOICE-PREVIEW-001` | Odoo pass; Core3 auth blocked |
+
+## Payment receipt email addendum (2026-09-22)
+
+| Case ID | Class | Route/action | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| ACC-PAYMENT-RECEIPT-FUNC-001 | functional/data | `/accounting/payment-detail` → `Send receipt by email` | Processed payment opens an Odoo-shaped composer contract and queues exactly one durable receipt with recipient, subject, body, status, and PDF filename | `accounting_payment_receipt.integration.test.ts`; `ACC-PAYMENT-RECEIPT-001` | pass at contract/API level |
+| ACC-PAYMENT-RECEIPT-PERM-002 | permission/security | `send_accounting_payment_receipt` | Action requires `accounting.write`; missing actor and unauthorized mutation are rejected without a receipt row | `accounting_payment_receipt.integration.test.ts` | pass at contract/guard level |
+| ACC-PAYMENT-RECEIPT-WF-003 | workflow/concurrency | payment row version | Draft, missing, invalid recipient/content, and stale payment requests fail atomically; successful send increments the durable counter/version | `accounting_payment_receipt.integration.test.ts` | pass |
+| ACC-PAYMENT-RECEIPT-DATA-004 | data/regression | payment receipt migration | Receipt queue/history and counters survive DuckDB close/reopen and idempotent migration replay | `accounting_payment_receipt.integration.test.ts` | pass |
+| ACC-PAYMENT-RECEIPT-UI-005 | visual/responsive | Odoo payment form composer | Capture Odoo/Core3 desktop `1440x900` and mobile `390x844`, including Send/Discard and receipt history | `ACC-PAYMENT-RECEIPT-001/browser-check.md` | blocked; shared-tab borrow confirmation timed out, no visual claim |
+| ACC-PAYMENT-RECEIPT-INT-006 | integration | receipt attachment/delivery | SMTP/mail queue delivery and generated payment-receipt PDF bytes complete successfully with retry/timeout recovery | `ACC-PAYMENT-RECEIPT-001/source-comparison.md` | deferred integration boundary |

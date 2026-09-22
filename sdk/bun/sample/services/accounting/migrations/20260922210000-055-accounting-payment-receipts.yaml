@@ -1,0 +1,24 @@
+version: 0.0.55
+kind: data
+description: Add durable payment receipt email queue and payment receipt history
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS receipt_count INTEGER DEFAULT 0;
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS last_receipt_sent_at TIMESTAMP;
+      CREATE TABLE IF NOT EXISTS accounting_payment_receipts (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), payment_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, recipient VARCHAR NOT NULL, subject VARCHAR NOT NULL,
+        body VARCHAR NOT NULL, attachment_name VARCHAR NOT NULL DEFAULT '',
+        status VARCHAR NOT NULL DEFAULT 'Queued', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_payment_receipts_payment ON accounting_payment_receipts(payment_id, created_at);
+      UPDATE accounting_payments SET receipt_count = COALESCE(receipt_count, 0) WHERE receipt_count IS NULL;
+    down: |
+      DROP TABLE IF EXISTS accounting_payment_receipts;
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS last_receipt_sent_at;
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS receipt_count;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
