@@ -1,0 +1,22 @@
+title: Scheduled Messages
+page: { id: chat-scheduled-messages, route: /chat/scheduled-messages, breadcrumb: [Discuss, Technical, Scheduled Messages], auth: { require: [chat.technical] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: chat_scheduled_messages
+    search: { label: Scheduled Messages, placeholder: Search messages... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/chat/pages/scheduled-message-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_scheduled_message
+    row_actions: menu
+    empty_state: { title: No scheduled messages, description: Scheduled notifications will appear here before they are sent. }
+    columns:
+      - { field: message_label, label: Message, type: PrimaryEntityCell, mobile: true }
+      - { field: scheduled_datetime, label: Scheduled Send Date, type: DateTime, mobile: true }
+      - { field: status, label: Status, type: StatusChip, mobile: false }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_scheduled_message, label: Edit, icon: edit }, { id: force_send_scheduled_message, label: Force Send, icon: send, variant: primary }] }

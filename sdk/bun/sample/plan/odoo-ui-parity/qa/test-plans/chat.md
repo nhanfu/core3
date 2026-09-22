@@ -17,6 +17,7 @@ This plan follows [`chat.md`](../../chat.md); executed evidence is recorded in
 | Discuss workspace | `/chat/` | Inbox, Starred, History, channels, direct messages, search, threads, composer, unread/read and star state |
 | Channels | `/chat/channels`, `/chat/channels/detail` | Active/archived channels, member-sensitive Join/Leave, create/edit and membership |
 | Configuration | `/chat/notifications`, `/chat/voice-video`, `/chat/canned-responses`, `/chat/roles`, `/chat/roles/detail` | Notification settings, device preferences, canned responses, roles and member search |
+| Technical → Discuss → Scheduled Messages | `/chat/scheduled-messages`, `/chat/scheduled-messages/detail` | List/form queue, search, edit scheduling, notification parameters, Force Send |
 
 The authenticated topology is the Chat module process with Auth-owned users and
 persisted Chat tables. Actors are Chat Manager, ordinary Chat user, non-member,
@@ -36,6 +37,7 @@ archived, empty, no-results and offline states with stable IDs.
 | CHAT-FUNC-006 | Empty/error/offline | Empty, no-results, forbidden, transport-error and offline states are explicit and do not expose protected data | pass at contract level |
 | CHAT-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate channels, roles, messages or settings | pass at contract level; restart gate planned |
 | CHAT-FUNC-008 | Attachments/import/export | Exercise attachment picker, message file lifecycle and exposed import/export/print actions | planned browser interaction gate |
+| CHAT-SCHEDULED-MESSAGES-001 | Scheduled Messages action | Technical list/form maps `mail_message.schedule`; seeded rows persist, search and empty state work, future-date edit and Force Send guards are enforced | pass: focused integration; authenticated browser blocked |
 
 ## Workflow and integration cases
 
@@ -67,6 +69,7 @@ archived, empty, no-results and offline states with stable IDs.
 | CHAT-UI-002 | Thread/search/empty/offline | both | Thread panel, search/no-results and offline/empty states have correct geometry and labels | planned paired capture |
 | CHAT-UI-003 | Configuration dialogs/forms | both | Notifications, Voice & Video, Canned Responses and Roles match Odoo controls and overflow behavior | partial; static contracts only for latest batches |
 | CHAT-UI-004 | Current route regression | all manifest-owned Chat routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | planned fresh authenticated matrix |
+| CHAT-UI-005 | Scheduled Messages list/form | 1440x900, 390x844 | Technical menu, List/Form tabs, scheduled date fields, Force Send placement and mobile overflow match Odoo | blocked: authenticated tab already borrowed |
 
 ## Exit criteria
 

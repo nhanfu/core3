@@ -1,0 +1,19 @@
+title: Scheduled Message
+page: { id: chat-scheduled-message-detail, route: /chat/scheduled-messages/detail, breadcrumb: [Discuss, Technical, Scheduled Messages, Scheduled Message], auth: { require: [chat.technical] } }
+
+components:
+  - type: OdooFormView
+    source: chat_scheduled_message_detail
+    title_field: message_label
+    editable: true
+    groups:
+      - title: Scheduled Message
+        fields:
+          - { field: mail_message_id, label: Message, type: text, readonly: true }
+          - { field: scheduled_datetime, label: Scheduled Send Date, type: text, required: true }
+      - title: Notification
+        fields:
+          - { field: notification_parameters, label: Notification Parameter, type: textarea }
+    header_actions:
+      - { id: save_scheduled_message, label: Save, variant: primary, permission: chat.technical }
+      - { id: force_send_scheduled_message, label: Force Send, variant: secondary, permission: chat.technical }

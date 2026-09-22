@@ -24,3 +24,7 @@ menu:
         - { path: /chat/voice-video, label: Voice & Video, icon: video, permission: chat.read }
         - { path: /chat/canned-responses, label: Canned Responses, icon: message, permission: chat.read }
         - { path: /chat/roles, label: Roles, icon: users, permission: chat.read }
+    - id: technical
+      label: Technical
+      items:
+        - { path: /chat/scheduled-messages, label: Scheduled Messages, icon: clock, permission: chat.technical }

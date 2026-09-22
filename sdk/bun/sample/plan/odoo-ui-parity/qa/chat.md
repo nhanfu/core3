@@ -84,6 +84,29 @@ paired Odoo visual gates.
 | CHAT-BROWSER-001/CHAT-UI-001/002/003/004 | Authenticated desktop/mobile route and visual checks | runner `:4328`; login 200 followed by `/api/auth/me` 401 `INVALID_TOKEN`; no captures | blocked |
 | CHAT-LINT-001 | Repository lint | `bun run lint`; unrelated `website_public.integration.test.ts:31,33` errors | blocked by pre-existing repository lint errors |
 
+## 2026-09-22 — `CHAT-SCHEDULED-MESSAGES-001`
+
+- Odoo source comparison: `mail_message_schedule_action` is a Technical →
+  Discuss → Scheduled Messages `list,form` action for `mail.message.schedule`;
+  the form exposes Message, Scheduled Send Date, Notification Parameter, and
+  Force Send. The model's `force_send()` dispatches notifications and removes
+  the schedule row.
+- Core3 implementation: page/API fragments are joined by `chat-scheduled-messages`
+  and `chat-scheduled-message-detail`; durable migration `012` seeds two
+  linked schedules; `chat.technical` guards both reads and mutations.
+- Focused verification: `bun test ./test/chat_scheduled_messages.integration.test.ts`
+  — **3 passed, 23 assertions**. Coverage includes page/API/menu contracts,
+  idempotent seed/search/empty states, future-date validation, stale row
+  rejection, Force Send removal, missing-record rejection, and permission
+  declarations.
+- BrowserSkill blocker: browser `245ea108` was connected, but the existing
+  authenticated Odoo tab `1770662590` was already borrowed by session `expk`;
+  borrowing from session `jvxe` returned `tab is borrowed by another session`.
+  No independent login, Playwright session, credential extraction, or tab
+  takeover was attempted. No desktop/mobile screenshots were produced and no
+  visual-parity claim is made. Exact command/output and capture status are in
+  the feature evidence directory.
+
 ## Tester decision — candidate 137d77a0
 
 Conditional only. The bounded Chat suite, focused permission/persistence

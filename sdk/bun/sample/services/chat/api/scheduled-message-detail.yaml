@@ -1,0 +1,60 @@
+page: { id: chat-scheduled-message-detail }
+
+datasources:
+  - id: chat_scheduled_message_detail
+    single: true
+    permission: chat.technical
+    error_states:
+      forbidden: { status: 403, code: CHAT_SCHEDULED_MESSAGE_DETAIL_FORBIDDEN, message: You do not have permission to view this scheduled message. }
+      missing_record: { status: 404, code: CHAT_SCHEDULED_MESSAGE_NOT_FOUND, message: Scheduled message not found. }
+      transport_error: { status: 503, code: CHAT_SCHEDULED_MESSAGE_DETAIL_UNAVAILABLE, message: Scheduled message details are temporarily unavailable. }
+    query: |
+      SELECT s.id, s.row_version, s.message_id AS mail_message_id,
+        COALESCE(m.body, '') AS message_label,
+        CAST(s.scheduled_datetime AS VARCHAR) AS scheduled_datetime,
+        s.notification_parameters
+      FROM chat_message_schedules s
+      JOIN chat_messages m ON m.id = s.message_id
+      WHERE s.id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+
+actions:
+  - id: force_send_scheduled_message
+    type: server
+    permission: chat.technical
+    action: mail.message.schedule.force_send
+    handler: yaml_mutation
+    operation: delete
+    event: chat.scheduled_message.sent
+    refresh: [chat_scheduled_messages, chat_scheduled_message_detail]
+    mutation:
+      operation: delete
+      table: chat_message_schedules
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_message_schedules WHERE id = :id", status: 404, code: CHAT_SCHEDULED_MESSAGE_NOT_FOUND, message: Scheduled message not found. }
+      steps:
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES (CAST(gen_random_uuid() AS VARCHAR), :current_user_id, 'Technical User', 'force_send', 'mail.message.schedule', :id, 'Notification dispatch requested')" }
+      result: { query: "SELECT :id AS id, TRUE AS sent" }
+  - id: save_scheduled_message
+    type: server_form
+    permission: chat.technical
+    title: Save Scheduled Message
+    action: mail.message.schedule.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [chat_scheduled_messages, chat_scheduled_message_detail]
+    fields:
+      - { field: scheduled_datetime, label: Scheduled Send Date, type: text, required: true }
+      - { field: notification_parameters, label: Notification Parameter, type: textarea }
+    mutation:
+      operation: update
+      table: chat_message_schedules
+      fields: [scheduled_datetime, notification_parameters]
+      required: [scheduled_datetime]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_message_schedules WHERE id = :id", status: 404, code: CHAT_SCHEDULED_MESSAGE_NOT_FOUND, message: Scheduled message not found. }
+        - { query: "SELECT id FROM chat_message_schedules WHERE id = :id AND row_version = :expected_row_version", status: 409, code: CHAT_SCHEDULED_MESSAGE_STALE, message: The scheduled message changed; reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:scheduled_datetime AS TIMESTAMP) > CURRENT_TIMESTAMP", status: 422, code: CHAT_SCHEDULED_DATE_INVALID, message: A scheduled message must be set in the future. }
+      result: { query: "SELECT s.id, s.row_version, s.message_id AS mail_message_id, CAST(s.scheduled_datetime AS VARCHAR) AS scheduled_datetime, s.notification_parameters FROM chat_message_schedules s WHERE s.id = :id" }

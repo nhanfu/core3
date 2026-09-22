@@ -235,3 +235,35 @@ integration module enables it.
 - Authenticated browser verification remains blocked in this owner session:
   `js_repl` and the sample Playwright dependency are unavailable. No new
   screenshot or visual-parity claim is made.
+
+## Bounded batch — Technical Scheduled Messages action parity (`CHAT-SCHEDULED-MESSAGES-001`, 2026-09-22)
+
+Odoo's `mail_message_schedule_action` is the next missing concrete Mail action.
+`addons/mail/views/mail_message_schedule_views.xml` defines the
+`mail.message.schedule` list/form action with `mail_message_id`,
+`scheduled_datetime`, `notification_parameters`, and a form `Force Send`
+object action. `mail_menus.xml` places it under Technical → Discuss →
+Scheduled Messages (sequence 2); its access CSV restricts the model to the
+system group. The model sends queued bus notifications and removes the queue
+row after `force_send`.
+
+Core3 adds the technical permission `chat.technical`, a Technical → Scheduled
+Messages manifest entry, and `/chat/scheduled-messages` plus its detail route.
+The page YAML owns the List/Form layout and the API YAML owns the
+query/mutation contracts, joined by `page.id`. Migration
+`20260922100000-012-chat-scheduled-messages.yaml` creates durable
+`chat_message_schedules` rows linked to existing Chat messages and seeds two
+idempotent future schedules. Editing validates future dates and row versions;
+Force Send atomically removes the queue row and records a dispatch audit event.
+
+The bounded slice covers list ordering/search, empty/not-found/transport
+contracts, detail editing, stale and past-date guards, Force Send/delete
+behavior, idempotent migrations, and technical-permission enforcement. Core3
+records the notification dispatch request but does not claim an external mail
+or bus delivery integration in this slice.
+
+Focused test: `bun test ./test/chat_scheduled_messages.integration.test.ts`
+passes 3 tests and 23 assertions. BrowserSkill evidence is recorded under
+`evidence/chat/2026-09-22/CHAT-SCHEDULED-MESSAGES-001/`; the required
+authenticated tab was already borrowed by another BrowserSkill session, so no
+Odoo/Core3 screenshots were produced and no visual-parity claim is made.

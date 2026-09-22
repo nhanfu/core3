@@ -2,6 +2,7 @@
 permissions:
   - chat.read
   - chat.write
+  - chat.technical
 endpoints:
   upload.chat_attachment: chat.write
   chat.attachment.download: chat.read
