@@ -1,5 +1,19 @@
 # events parity progress
 
+## Bounded feature - Event Template Questions relation (2026-09-22)
+
+Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001. The Event Template detail
+form now exposes the source-backed reusable `question_ids` relation in its
+Questions notebook. The page/API pair remains joined by `event-template-detail`;
+the durable relation has stable Exhibition Name, Email, and Phone links, an
+available-question datasource, permissioned Add a line/Remove actions, parent
+and line stale guards, duplicate/invalid validation, and migration/restart
+coverage. Focused validation passes 2 tests / 24 assertions; related template
+regression passes 9 tests / 93 assertions. BrowserSkill instance 245ea108 was
+healthy, but the authenticated Odoo tab borrow timed out waiting for extension
+confirmation; no Odoo desktop/mobile captures or visual-parity claim were
+made. Evidence is under the event-template-questions evidence folder.
+
 ## Bounded feature - reopen cancelled attendee registration (2026-09-22)
 
 Stable feature ID: EVENTS-ATTENDEE-REOPEN-001. The attendee list and detail

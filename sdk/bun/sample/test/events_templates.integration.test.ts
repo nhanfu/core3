@@ -20,7 +20,7 @@ describe('Events Event Templates configuration slice', () => {
     expect(list.actions.find((candidate: any) => candidate.id === 'view_event_template')).toMatchObject({ navigate_to: '/events/templates/detail', permission: 'events.read' });
     expect(discovered.pages.get('event-template-detail')?.config.page.route).toBe('/events/templates/detail');
     expect(discovered.pageDatasources.get('event-template-detail')).toEqual([
-      'event_template_detail', 'event_template_communications',
+      'event_template_detail', 'event_template_communications', 'event_template_questions', 'event_template_question_options',
     ]);
     expect(detail.components[0].header_actions.map((candidate: any) => candidate.id)).toEqual([
       'back_to_event_templates', 'manage_event_template_tickets', 'edit_event_template', 'delete_event_template',

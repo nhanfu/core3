@@ -7,6 +7,16 @@ Reference addon/version: event, Odoo 19 Community
 Plan status: approved  
 Last reviewed: 2026-09-22
 
+## Latest bounded cases — Event Template Questions relation (2026-09-22)
+
+Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001.
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-018 | functional/data | Events > Configuration > Event Templates > Exhibition > Questions | Reusable questions render through the existing page/API pair; Add a line and Remove persist after migration replay and restart | pass: events_template_questions.integration.test.ts |
+| EVENTS-WF-013 | workflow/security | Template question relation mutations | `events.write`, duplicate, invalid question, stale parent/line, replay, and empty/transport contracts reject invalid writes atomically | pass: events_template_questions.integration.test.ts |
+| EVENTS-UI-011 | visual/responsive | Event Template Questions notebook | Authenticated Odoo and Core3 desktop/mobile captures at 1440x900 and 390x844 | blocked: authenticated Odoo tab borrow timed out; no visual claim |
+
 ## Latest bounded cases — reopen cancelled attendee registration (2026-09-22)
 
 Stable feature ID: EVENTS-ATTENDEE-REOPEN-001.

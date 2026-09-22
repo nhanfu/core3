@@ -1,0 +1,26 @@
+version: 0.0.40
+kind: schema
+description: Durable Odoo Events template question relation
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_template_questions (
+        id VARCHAR PRIMARY KEY,
+        template_id VARCHAR NOT NULL,
+        question_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS event_template_questions_unique_idx ON event_template_questions(template_id, question_id);
+      CREATE INDEX IF NOT EXISTS event_template_questions_template_idx ON event_template_questions(template_id, sequence, id);
+      INSERT INTO event_template_questions(id, template_id, question_id, sequence, row_version) VALUES
+        ('event-template-question-exhibition-name', 'template-exhibition', 'question-name', 10, 1),
+        ('event-template-question-exhibition-email', 'template-exhibition', 'question-email', 20, 1),
+        ('event-template-question-exhibition-phone', 'template-exhibition', 'question-phone', 30, 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_template_questions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

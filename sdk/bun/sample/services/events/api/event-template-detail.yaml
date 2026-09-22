@@ -9,6 +9,14 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_COMMUNICATIONS_UNAVAILABLE, message: Template communication schedules are temporarily unavailable. } }
     query: "SELECT id, row_version, template_id, sequence, template_name, interval_nbr, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN 'Hours' WHEN 'days' THEN 'Days' WHEN 'weeks' THEN 'Weeks' WHEN 'months' THEN 'Months' ELSE interval_unit END AS interval_unit, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type FROM event_template_communications WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND template_id = :id ORDER BY sequence, id"
+  - id: event_template_questions
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_QUESTIONS_UNAVAILABLE, message: Template questions are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.template_id, l.question_id, l.sequence, q.title, q.mandatory, q.once_per_order, q.question_type, COALESCE(q.answers, '') AS answers FROM event_template_questions l JOIN event_questions q ON q.id = l.question_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.template_id = :id ORDER BY l.sequence, l.id"
+  - id: event_template_question_options
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_QUESTION_OPTIONS_UNAVAILABLE, message: Reusable event questions are temporarily unavailable. } }
+    query: "SELECT q.id AS value, q.title AS label FROM event_questions q WHERE NOT EXISTS (SELECT 1 FROM event_template_questions l WHERE l.template_id = :id AND l.question_id = q.id) ORDER BY q.title, q.id"
 actions:
   - id: add_event_template_communication
     type: server_form
@@ -82,4 +90,47 @@ actions:
       steps:
         - { query: "DELETE FROM event_template_communications WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_TEMPLATE_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. Reload before deleting. }
         - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while deleting the communication schedule. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
+  - id: add_event_template_question
+    type: server_form
+    permission: events.write
+    title: Add a line
+    action: events.templates.questions.create
+    handler: line_item
+    operation: create
+    domain: event_template
+    params: { id: '{state.id}' }
+    refresh: [event_template_detail, event_template_questions, event_template_question_options]
+    fields:
+      - { field: question_id, label: Question, type: select, options_source: event_template_question_options, required: true }
+    mutation:
+      generated: [line_id, next_sequence]
+      before_steps:
+        - { query: "SELECT 'event-template-question-' || :id || '-' || CAST(:question_id AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_template_questions WHERE template_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before adding a question. }
+        - { query: "SELECT id FROM event_questions WHERE id = :question_id", status: 422, code: EVENT_TEMPLATE_QUESTION_INVALID, message: Select a valid reusable event question. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_questions WHERE template_id = :id AND question_id = :question_id)", status: 409, code: EVENT_TEMPLATE_QUESTION_EXISTS, message: This question is already linked to the template. }
+      steps:
+        - { query: "INSERT INTO event_template_questions(id, template_id, question_id, sequence, row_version) VALUES(:line_id, :id, :question_id, :next_sequence, 1)", expect_changed: true, status: 409, code: EVENT_TEMPLATE_QUESTION_NOT_CREATED, message: The template question could not be added. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while adding a question. Reload before saving. }
+      result: { query: "SELECT l.*, q.title, q.mandatory, q.once_per_order, q.question_type, COALESCE(q.answers, '') AS answers FROM event_template_questions l JOIN event_questions q ON q.id = l.question_id WHERE l.id = :line_id" }
+  - id: remove_event_template_question
+    type: server
+    permission: events.write
+    action: events.templates.questions.delete
+    handler: line_item
+    operation: delete
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Remove this question from the template?'
+    refresh: [event_template_detail, event_template_questions, event_template_question_options]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before removing the question. }
+        - { query: "SELECT id FROM event_template_questions WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_QUESTION_STALE, message: This template question changed or was removed. Reload before removing. }
+      steps:
+        - { query: "DELETE FROM event_template_questions WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_TEMPLATE_QUESTION_STALE, message: This template question changed or was removed. Reload before removing. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while removing a question. Reload before saving. }
       result: { query: "SELECT true AS deleted, :line_id AS id" }

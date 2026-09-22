@@ -21,14 +21,14 @@ describe('Events Event Template Communication parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Tickets', 'Communication', 'Questions', 'Notes']);
     expect(form.notebook.active).toBe('communication');
-    expect(form.notebook.tabs.filter((tab: any) => tab.content_slot).map((tab: any) => tab.id)).toEqual(['communication']);
+    expect(form.notebook.tabs.filter((tab: any) => tab.content_slot).map((tab: any) => tab.id)).toEqual(['communication', 'questions']);
     expect(grid).toMatchObject({ source: 'event_template_communications', parent_source: 'event_template_detail', variant: 'odoo_x2many' });
     expect(grid.children.filter((child: any) => child.type === 'LineItemField').map((field: any) => field.label)).toEqual(['Template', 'Interval', 'Unit', 'Trigger']);
     expect(grid.actions[0]).toMatchObject({ id: 'add_event_template_communication', label: 'Add a line', permission: 'events.write' });
     expect(action('add_event_template_communication')).toMatchObject({ permission: 'events.write', handler: 'line_item', domain: 'event_template' });
     expect(action('edit_event_template_communication')).toMatchObject({ permission: 'events.write', operation: 'update' });
     expect(action('delete_event_template_communication')).toMatchObject({ permission: 'events.write', operation: 'delete' });
-    expect(discovered.pageDatasources.get('event-template-detail')).toEqual(['event_template_detail', 'event_template_communications']);
+    expect(discovered.pageDatasources.get('event-template-detail')).toEqual(['event_template_detail', 'event_template_communications', 'event_template_questions', 'event_template_question_options']);
   });
 
   test('seeds the Odoo Exhibition schedules and explicit empty/error contracts', async () => {

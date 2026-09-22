@@ -1,5 +1,37 @@
 # Events UI parity
 
+## Current bounded batch: Event Template Questions relation (2026-09-22)
+
+Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001.
+
+The next missing stable-ID feature after the attendee, question/answer,
+registration, report, event-template ticket, and communication slices is the
+Odoo Event Template form's reusable `question_ids` relation. Odoo 19 declares
+the Questions notebook page in `addons/event/views/event_type_views.xml` and
+the `event.type.question_ids` many-to-many field in
+`addons/event/models/event_type.py`. Core3 previously exposed the Questions
+tab as a placeholder with no datasource or mutation contract.
+
+This bounded slice keeps the existing `event-template-detail` page/API pair
+joined by `page.id`. It adds a durable `event_template_questions` relation,
+stable Exhibition fixture links for Name, Email, and Phone, an available
+reusable-question option source, and an Odoo-shaped x2many grid with Add a
+line and Remove actions. Mutations require `events.write`, exclude duplicate
+links, validate question identity, increment the parent template version, and
+guard stale parent/line writes. Empty, transport, replay, migration replay,
+and file-backed restart behavior are covered by
+`test/events_template_questions.integration.test.ts`.
+
+Focused validation passes 2 tests / 24 assertions; the related template
+regression passes 9 tests / 93 assertions. Live Odoo comparison is blocked:
+BrowserSkill instance `245ea108` was healthy, but borrowing the authenticated
+user tab `1770662590` in session `vtjq` waited for the required extension
+confirmation and timed out. The session was stopped without borrowing the tab;
+no independent login or alternate browser was used, no desktop/mobile Odoo
+captures were produced, and no visual-parity claim is made. The exact blocker
+is recorded under
+`evidence/events/2026-09-22/event-template-questions/`.
+
 ## Current bounded batch: Reopen cancelled attendee registration (2026-09-22)
 
 Stable feature ID: EVENTS-ATTENDEE-REOPEN-001.

@@ -24,7 +24,7 @@ components:
       tabs:
         - { id: tickets, label: Tickets }
         - { id: communication, label: Communication, content_slot: true }
-        - { id: questions, label: Questions }
+        - { id: questions, label: Questions, content_slot: true }
         - { id: notes, label: Notes }
 
   - type: LineItemGrid
@@ -63,6 +63,42 @@ components:
         actions:
           - { id: edit_event_template_communication, label: Edit, icon: edit, variant: ghost, permission: events.write }
           - { id: delete_event_template_communication, label: Delete, icon: trash, variant: danger, permission: events.write }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_template_questions
+    parent_source: event_template_detail
+    title: Questions
+    description: Reuse attendee questions on every event created from this template.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_template_question, label: Add a line, variant: primary, permission: events.write }
+    empty_state: { title: No template questions, description: Add a line to reuse a question on this template. }
+    children:
+      - { type: LineItemField, id: title, field: title, label: Title, type: PrimaryEntityCell, readonly: true }
+      - { type: LineItemField, id: mandatory, field: mandatory, label: Mandatory, type: StatusChip, readonly: true }
+      - { type: LineItemField, id: once_per_order, field: once_per_order, label: Once per Order, type: StatusChip, readonly: true }
+      - { type: LineItemField, id: question_type, field: question_type, label: Type, readonly: true }
+      - { type: LineItemField, id: answers, field: answers, label: Answers, readonly: true }
+      - type: LineItemActions
+        id: event_template_question_actions
+        create_action: add_event_template_question
+        actions:
+          - { id: remove_event_template_question, label: Remove, icon: trash, variant: danger, permission: events.write }
+    columns:
+      - { field: title, label: Title, width: 320 }
+      - { field: mandatory, label: Mandatory, width: 140 }
+      - { field: once_per_order, label: Once per Order, width: 160 }
+      - { field: question_type, label: Type, width: 150 }
+      - { field: answers, label: Answers, width: 300 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_event_template_question, label: Remove, icon: trash, variant: danger, permission: events.write }
 actions:
   - id: back_to_event_templates
     type: navigate
