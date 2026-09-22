@@ -400,12 +400,13 @@ describe('CRM YAML lifecycle integration', () => {
     await repository.run(`
       CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, stage VARCHAR, lost_reason VARCHAR, probability INTEGER, row_version BIGINT, updated_at TIMESTAMP);
       CREATE TABLE crm_lost_reasons(id VARCHAR PRIMARY KEY, active BOOLEAN);
+      CREATE TABLE crm_activity_log(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), actor_id VARCHAR, actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL, resource VARCHAR NOT NULL, resource_id VARCHAR, detail VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       INSERT INTO crm_leads VALUES ('lead-loss', 'New', NULL, 10, 1, CURRENT_TIMESTAMP);
       INSERT INTO crm_lost_reasons VALUES ('reason-active', true), ('reason-off', false);
     `);
     const lost = yaml('pages/lead-workflow.yaml').workflow.transitions.find((transition: any) => transition.id === 'lost').mutation;
-    await expect(repository.executeMutation(lost, { id: 'lead-loss', lost_reason: 'reason-off' })).rejects.toThrow('Select an active lost reason');
-    const result = await repository.executeMutation(lost, { id: 'lead-loss', lost_reason: 'reason-active' });
+    await expect(repository.executeMutation(lost, { id: 'lead-loss', expected_row_version: 1, lost_reason: 'reason-off' })).rejects.toThrow('Select an active lost reason');
+    const result = await repository.executeMutation(lost, { id: 'lead-loss', expected_row_version: 1, lost_reason: 'reason-active' });
     expect(result).toMatchObject({ stage: 'Lost', lost_reason: 'reason-active', probability: 0 });
   });
 

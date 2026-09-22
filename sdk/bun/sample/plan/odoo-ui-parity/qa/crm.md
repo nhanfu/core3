@@ -256,6 +256,25 @@ Conditional bounded result; not signed off.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
 
+## Bounded feature checkpoint — CRM-LEAD-LOST-WIZARD-001 (2026-09-22)
+
+Selected gap: the existing Core3 lost transition had a lost-reason selector,
+but did not reproduce Odoo's `crm.lead.lost` closing-note field or persist that
+note in the lead chatter timeline.
+
+| Case | Result | Evidence |
+| --- | --- | --- |
+| Odoo source/modal mapping | pass | `evidence/crm/2026-09-22/CRM-LEAD-LOST-WIZARD-001/odoo-analysis.md`, `source-comparison.md` |
+| Page/API `page.id: lead-detail` binding | pass | `test/crm_lead_lost_wizard.integration.test.ts` |
+| Mark lost with active reason and optional closing note | pass | 3 tests / 20 assertions |
+| Atomic stale/closed/inactive guards | pass | same focused test; no partial state or timeline writes |
+| File-backed restart | pass | same focused test; lost reason and closing note remain present |
+| Authenticated Odoo desktop/mobile comparison | blocked | existing signed-in tab borrow confirmation timed out; no visual claim |
+
+Implementation is limited to the CRM lead-detail action/workflow and its CRM
+QA/evidence records. The known CRM AI allowlist failure for Lead Mining
+Requests and mass-convert actions remains outside this CRM-only change.
+
 ## 2026-09-22 — CRM-LEAD-MASS-CONVERT-001
 
 | Case | Odoo action/route | Core3 route/page | Fixture/state | Result/evidence | Blocker or repair |

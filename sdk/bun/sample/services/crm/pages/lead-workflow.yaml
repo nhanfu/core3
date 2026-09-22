@@ -66,12 +66,18 @@ workflow:
       permission: crm.write
       mutation:
         guards:
-          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('New', 'Qualified', 'Proposition')"
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('New', 'Qualified', 'Proposition') AND row_version = :expected_row_version"
             status: 409
-            message: Lead is already closed
+            code: STALE_RECORD
+            message: Lead was changed by another user. Reload it before marking it lost.
           - query: "SELECT id FROM crm_lost_reasons WHERE id = :lost_reason AND active = true"
             status: 400
             message: Select an active lost reason
         steps:
-          - query: "UPDATE crm_leads SET stage = 'Lost', lost_reason = :lost_reason, probability = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "UPDATE crm_leads SET stage = 'Lost', lost_reason = :lost_reason, probability = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            code: STALE_RECORD
+            message: Lead was changed by another user. Reload it before marking it lost.
+          - query: "INSERT INTO crm_activity_log(actor_id, actor_name, action, resource, resource_id, detail) SELECT :current_user_id, :current_user_name, 'crm.note', 'crm_leads', :id, 'Lost Comment: ' || TRIM(CAST(:lost_feedback AS VARCHAR)) WHERE NULLIF(TRIM(CAST(COALESCE(:lost_feedback, '') AS VARCHAR)), '') IS NOT NULL"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

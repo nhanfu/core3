@@ -306,14 +306,18 @@ actions:
   - id: mark_lead_lost_detail
     type: server_form
     permission: crm.write
-    title: Mark opportunity lost
+    title: Lost Lead
+    submit_label: Mark as Lost
+    cancel_label: Discard
     action: crm.leads.lost
     handler: order_transition
     workflow: crm_leads
     operation: lost
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     refresh: [crm_lead_detail, crm_lead_activities]
     fields:
       - { field: lost_reason, label: Lost reason, type: select, options_source: crm_lost_reason_lookup_detail, required: true }
+      - { field: lost_feedback, label: Closing Note, type: textarea, placeholder: What went wrong? }
   - id: reopen_lead_detail
     type: server
     permission: crm.write

@@ -914,3 +914,33 @@ Status: bounded implementation; not CRM sign-off.
   already borrowed by session `zfuv`. No Odoo or Core3 desktop/mobile capture
   was made and no visual-parity claim is recorded. Exact evidence is under
   `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-MASS-CONVERT-001/`.
+
+## 2026-09-22 — Lost Lead wizard
+
+Stable feature ID: `CRM-LEAD-LOST-WIZARD-001`.
+
+Status: bounded implementation; authenticated visual comparison blocked, so no
+visual parity claim is made.
+
+- Odoo 19 source: `addons/crm/wizard/crm_lead_lost_views.xml` defines the
+  `crm.lead.lost` modal titled `Lost Lead`, with the `Lost Reason` selector,
+  optional `Closing Note` textarea (`What went wrong?`), `Mark as Lost`, and
+  `Discard`. `crm_lead_lost.py` applies the reason and records a closing
+  comment through the lead thread before the lost transition.
+- The existing Core3 lead transition already required an active lost reason,
+  but its server form omitted the closing note and its mutation did not retain
+  that note in the lead timeline. The page/API join remains `lead-detail`;
+  `api/lead-detail.yaml` owns the modal action and
+  `pages/lead-workflow.yaml` owns the durable transition.
+- Core3 now carries `lost_feedback`, exact modal labels/placeholders, an
+  expected-row-version parameter, and an atomic `crm.note` activity-log entry
+  (`Lost Comment: ...`) after the guarded state update. Blank notes remain
+  optional; inactive reasons, closed/stale leads, and permission denial remain
+  guarded.
+- Focused coverage is `test/crm_lead_lost_wizard.integration.test.ts`:
+  **3 tests / 20 assertions**, including page/API validation, restart
+  persistence, inactive-reason, stale-row, closed-row, and no-partial-write
+  cases. The existing CRM fixture was updated to declare the already-required
+  `crm_activity_log` table for the valid transition test.
+- Evidence is under
+  `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-LOST-WIZARD-001/`.
