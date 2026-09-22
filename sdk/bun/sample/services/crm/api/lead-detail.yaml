@@ -318,6 +318,7 @@ actions:
     handler: order_transition
     workflow: crm_leads
     operation: won
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     refresh: [crm_lead_detail, crm_lead_activities]
   - id: mark_lead_lost_detail
     type: server_form

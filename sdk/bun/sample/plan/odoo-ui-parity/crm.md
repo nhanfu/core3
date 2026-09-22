@@ -944,3 +944,22 @@ visual parity claim is made.
   `crm_activity_log` table for the valid transition test.
 - Evidence is under
   `odoo-ui-parity/evidence/crm/2026-09-22/CRM-LEAD-LOST-WIZARD-001/`.
+
+## 2026-09-22 — Mark opportunity Won workflow
+
+Stable feature ID: `CRM-LEAD-WON-WORKFLOW-001`.
+
+Status: bounded implementation; browser parity remains conditional.
+
+- Odoo 19 source: `addons/crm/views/crm_lead_views.xml` exposes the `Won`
+  object action `action_set_won_rainbowman` only for active opportunities, and
+  `addons/crm/models/crm_lead.py` moves the opportunity to a won stage and
+  sets probability to 100.
+- Core3 keeps the page/API join on `page.id: lead-detail` and the
+  `crm_leads` workflow. The detail action now transports `row_version`, only
+  renders for opportunities in Qualified/Proposition, and the workflow
+  mutation requires an open opportunity with a matching version before setting
+  Won/100 and recording a durable stage-change activity.
+- Focused validation is `test/crm_lead_won_workflow.integration.test.ts`;
+  it covers source/action mapping, YAML workflow permission parity, successful
+  persistence across restart, lead/closed/stale guards, and activity history.

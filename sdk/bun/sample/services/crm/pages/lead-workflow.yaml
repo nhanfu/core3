@@ -54,11 +54,17 @@ workflow:
       permission: crm.write
       mutation:
         guards:
-          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('Qualified', 'Proposition')"
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'opportunity' AND stage IN ('Qualified', 'Proposition') AND row_version = :expected_row_version"
             status: 409
-            message: Lead must be qualified before it is won
+            code: STALE_RECORD
+            message: Only an open opportunity at a qualified stage can be marked won
         steps:
-          - query: "UPDATE crm_leads SET stage = 'Won', probability = 100, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "UPDATE crm_leads SET stage = 'Won', probability = 100, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND type = 'opportunity' AND stage IN ('Qualified', 'Proposition') AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            code: STALE_RECORD
+            message: Opportunity was changed before it could be marked won
+          - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Opportunity marked won', 'done', CURRENT_TIMESTAMP)"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     - id: lost
       from: [New, Qualified, Proposition]
