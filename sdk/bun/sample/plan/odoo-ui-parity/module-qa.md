@@ -146,6 +146,15 @@ ledger file.
 | BF-003 | Inline mutation in embedded task grid is deferred | timesheets plan | timesheets agent | — | pending | open |
 
 ### website
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| WEBSITE-PAGE-EXPORT-001 | `action_website_pages_list` / Website → Site → Content → Pages | `/website-pages` | implemented: permissioned XLSX export binding | blocked: signed-in tab already borrowed by `ddkr` | blocked: signed-in tab already borrowed by `ddkr` | focused regression passed before unrelated concurrent schema additions; current rerun is blocked by those additions; no visual-parity claim | Website worker / 2026-09-22 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| WEBSITE-BROWSER-001 | Shared authenticated Odoo tab was already borrowed by another active BrowserSkill session | `evidence/website/2026-09-22/website-page-export-001/browser-check.md` | shared browser session | — | pending tab release | open |
+
 ### ecommerce
 ### blog
 ### forum

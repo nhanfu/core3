@@ -186,6 +186,10 @@ describe('Website Page Manager parity', () => {
     expect(page.components[0].view_navigation).toBe('tabs');
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Kanban']);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Page Title', 'Page URL', 'Indexed', 'Is In Main Menu', 'Is SEO Optimized', 'Is Published']);
+    expect(page.components[0].actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'website.pages.export', label: 'Export', permission: 'website.read' }),
+    ]));
+    expect(api.actions.find((action: any) => action.id === 'website.pages.export')).toMatchObject({ type: 'client', permission: 'website.read' });
     expect(api.actions.find((action: any) => action.id === 'create_website_page')).toMatchObject({ permission: 'website.write' });
     expect(api.actions.find((action: any) => action.id === 'edit_website_page')).toMatchObject({ action: 'website.pages.update', permission: 'website.write' });
     expect(api.actions.find((action: any) => action.id === 'unpublish_website_page')).toMatchObject({ permission: 'website.manage' });

@@ -253,3 +253,41 @@ Theme preview/form and public asset-token effects are covered at the
 contract/data/runtime level. Page publish/unpublish browser workflow,
 import/export, richer theme asset installation effects, and public/portal
 rendering remain open; paired Odoo desktop/mobile evidence is still required.
+
+## Wave 8 execution evidence — 2026-09-22 — Page Manager export
+
+The next missing concrete Website action is the Page Manager export binding,
+stable ID `WEBSITE-PAGE-EXPORT-001`. Odoo's
+`action_website_pages_list` (`addons/website/views/website_pages_views.xml`)
+opens the standard Web export flow for the `website.page` list/kanban action;
+the shared implementation is in
+`addons/web/static/src/views/view_hook.js` and
+`addons/web/static/src/views/view_dialogs/export_data_dialog.xml`, with XLSX
+as the direct-export format. Core3 already provides the shared ListView export
+renderer, but Website Pages had no export action declaration.
+
+Core3 now binds `website.pages.export` as a `website.read` client action in
+`services/website/api/pages.yaml` and exposes the matching visible Export
+toolbar action in `services/website/pages/pages.yaml`. The existing renderer
+exports all rows matching the active Website Page Manager filters as XLSX,
+using the declared Page Title, Page URL, Indexed, menu, SEO, and publication
+columns. No schema or migration is needed for this read-only capability.
+
+Focused coverage remains in `test/website_pages.integration.test.ts` and now
+asserts the page/API action binding and read permission in addition to the
+existing CRUD, workflow, stale, empty, and restart checks. Feature evidence is
+under `odoo-ui-parity/evidence/website/2026-09-22/website-page-export-001/`.
+
+Authenticated Odoo comparison is blocked in this wave: BrowserSkill instance
+`245ea108` reported that the signed-in Odoo tab was already borrowed by another
+active session (`ddkr`). The tab was not taken over or stopped. Consequently no
+truthful Odoo desktop/mobile Page Manager export captures were available and no
+visual-parity claim is made. Core3 captures are likewise omitted until the
+shared tab/runtime can be owned without disrupting the other worker.
+
+### Updated next slice
+
+Website Page Manager import, page publish/unpublish browser proof, richer theme
+asset installation effects, and public/portal rendering remain open. This
+wave covers only the Website Page Manager export binding and does not claim
+Website module completion.
