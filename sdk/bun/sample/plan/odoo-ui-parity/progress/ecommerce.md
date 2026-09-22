@@ -4,6 +4,10 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 53 bounded slice: `ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`
+(implementation and focused verification complete: 3 tests, 20 assertions;
+authenticated Odoo/Core3 visual evidence is blocked as recorded; module
+sign-off remains open).
 Latest Wave 52 bounded slice: `ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`
 (implementation and focused verification complete; authenticated Odoo
 `/shop/wishlist` is an exact 404 because Website Sale/Wishlist is absent, and

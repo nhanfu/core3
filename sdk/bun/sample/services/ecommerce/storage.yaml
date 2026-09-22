@@ -10,7 +10,7 @@ attachments:
     download:
       route: /api/ecommerce/product-images
       permission: ecommerce.read
-      query: SELECT * FROM ecommerce_product_images WHERE id = :attachment_id
+      query: SELECT i.* FROM ecommerce_product_images i JOIN ecommerce_products p ON p.id = i.product_id WHERE i.id = :attachment_id AND p.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)
   ecommerce_product_tag_image:
     download:
       route: /api/ecommerce/product-tag-images

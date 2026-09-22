@@ -11,7 +11,7 @@ datasources:
     query: "SELECT p.id, p.row_version, p.name, p.internal_reference, p.product_type, p.category, p.sales_price, p.compare_list_price, CASE WHEN COALESCE(cp.show_compare_price, FALSE) AND p.compare_list_price > p.sales_price THEN p.compare_list_price ELSE NULL END AS compare_at_price, COALESCE(cp.show_compare_price, FALSE) AS show_compare_price, p.website_description, p.website_size_x, p.website_size_y, p.website_meta_title, p.website_meta_description, p.website_meta_keywords, p.website_meta_og_img, (NULLIF(p.website_meta_title, '') IS NOT NULL AND NULLIF(p.website_meta_description, '') IS NOT NULL AND NULLIF(p.website_meta_keywords, '') IS NOT NULL) AS is_seo_optimized, (SELECT COUNT(*) FROM ecommerce_product_reviews r WHERE r.product_id = p.id AND r.state = 'published' AND r.active = TRUE) AS review_count, COALESCE((SELECT ROUND(AVG(r.rating), 2) FROM ecommerce_product_reviews r WHERE r.product_id = p.id AND r.state = 'published' AND r.active = TRUE), 0) AS rating_average, p.website_sequence, p.is_published, CAST(p.publish_date AS VARCHAR) AS publish_date, p.active, p.company_name FROM ecommerce_products p LEFT JOIN ecommerce_product_compare_price_policies cp ON cp.company_name = p.company_name WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND p.id = :id AND (:company_name IS NULL OR p.company_name = :company_name)"
   - id: ecommerce_product_images
     permission: ecommerce.read
-    query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+    query: "SELECT id, row_version, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
   - id: ecommerce_product_extra_field_values
     permission: ecommerce.read
     error_states:
@@ -404,6 +404,22 @@ actions:
     type: download
     permission: ecommerce.read
     kind: ecommerce_product_image
+  - id: delete_ecommerce_product_image
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.images.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_detail, ecommerce_product_images]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT i.id FROM ecommerce_product_images i JOIN ecommerce_products p ON p.id = i.product_id WHERE i.id = :id AND i.row_version = :expected_row_version AND p.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_IMAGE_STALE, message: This product image changed or was removed. Reload before removing it. }
+        - { query: "SELECT i.id FROM ecommerce_product_images i JOIN ecommerce_products p ON p.id = i.product_id WHERE i.id = :id AND p.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_IMAGE_COMPANY_SCOPE_REQUIRED, message: This product image belongs to another company. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_images WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_IMAGE_STALE, message: This product image changed before removal. Reload before retrying. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }
   - id: create_ecommerce_product_variant
     type: server_form
     permission: ecommerce.write

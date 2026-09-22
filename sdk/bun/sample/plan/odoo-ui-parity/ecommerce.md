@@ -1,6 +1,34 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Wishlist Add to Cart slice; module sign-off remains open)
+Status: qa-in-progress (bounded Product Image Delete slice; module sign-off remains open)
+
+## Bounded feature — Product Image Delete (`ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`)
+
+Wave 53 selects the smallest missing Website Sale product-media action after
+the completed product-image upload/download boundary. Odoo's `product.image`
+records are owned by `product.template` with cascade deletion, the product
+form renders the `product_template_image_ids` “eCommerce Media” viewer, and
+the Website Sale image option removes non-primary `product.image` records
+through the ORM. Core3 previously exposed Product Detail image upload and
+download only; it had no durable removal action or optimistic media guard.
+
+Core3 migration `0.0.168` adds row-version persistence to
+`ecommerce_product_images`. The existing separate
+`pages/product-detail.yaml` / `api/product-detail.yaml` contracts remain
+joined by `page.id: ecommerce-product-detail`; the form attachment panel now
+exposes a permissioned `Remove` action. The API mutation requires
+`ecommerce.write`, checks active product and current-company ownership, rejects
+stale/missing rows, deletes only the selected image, refreshes Product Detail
+and the image datasource, and survives migration replay and DuckDB restart.
+
+The focused suite is
+`test/ecommerce_product_image_delete.integration.test.ts` (3 tests, 20
+assertions, 0 failures). The authenticated
+Odoo reference is being inspected through the borrowed BrowserSkill tab; if
+the supplied reference lacks Website Sale, the exact live route/capture is
+recorded as a blocker and no visual-parity claim is made. Core3 desktop/mobile
+capture remains subject to runtime availability. This bounded feature is not
+module sign-off.
 
 ## Bounded feature — Wishlist Add to Cart (`ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`)
 

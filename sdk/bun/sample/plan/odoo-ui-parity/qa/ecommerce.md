@@ -1,5 +1,23 @@
 # ecommerce QA ledger
 
+## Product Image Delete (`ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`, 2026-09-22)
+
+- Source comparison: pass. Odoo `product.image` is an owned media record;
+  `product_template_image_ids` renders the eCommerce Media viewer, and the
+  Website Sale image option unlinks removable extra media.
+- Core3 contract: migration 168 adds image row versions; Product Detail keeps
+  separate page/API YAML joined by `ecommerce-product-detail`; the attachment
+  panel exposes a permissioned Remove action with active-product,
+  company-scope, and stale guards.
+- Focused verification and evidence are recorded under
+  `evidence/ecommerce/2026-09-22/ecom-catalog-product-image-delete-001/`.
+- Focused suite: **3 tests, 20 assertions, 0 failures**; adjacent Product
+  Detail/Variant Media/Category Cover regression: **14 tests, 112 assertions,
+  0 failures**. Audit, build, scoped ESLint, and diff-check pass.
+- Browser/Odoo and Core3 visual status is recorded in that evidence directory;
+  no visual-parity or module-complete claim is made unless both runtimes are
+  available and captured.
+
 ## Wishlist Add to Cart (`ECOM-CATALOG-WISHLIST-ADD-TO-CART-001`, 2026-09-22)
 
 - Odoo source: pass. The local Odoo 19 Wishlist template renders a visible

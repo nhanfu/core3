@@ -7,6 +7,22 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001
+
+- ECOM-FUNC-092: compare Odoo's `product.image` cascade ownership, the
+  `product_template_image_ids` eCommerce Media viewer, and the Website Sale
+  image option's remove boundary with the separate Core3 Product Detail
+  page/API contracts.
+- ECOM-WF-092: upload a durable product image, remove the selected owned image,
+  refresh the image datasource, reject stale/replayed removal and inactive or
+  missing product rows, and preserve the schema/action across DuckDB restart.
+- ECOM-PERM-092: require `ecommerce.write` for removal and enforce current
+  company scope; keep image listing/download under `ecommerce.read`.
+- ECOM-UI-092: verify the Product Detail attachment panel exposes Remove at
+  desktop and mobile. The live Odoo route/capture and Core3 captures must be
+  recorded truthfully; unavailable Website Sale/Core3 runtime blocks visual
+  parity rather than permitting a claim.
+
 ## ECOM-CATALOG-WISHLIST-ADD-TO-CART-001
 
 - ECOM-FUNC-091: compare Odoo's Wishlist Page `o_wish_add` button and

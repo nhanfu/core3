@@ -1,0 +1,20 @@
+version: 0.0.168
+kind: schema
+description: durable Website Sale product image removal concurrency
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_product_images
+        ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE ecommerce_product_images
+      SET row_version = COALESCE(row_version, 1)
+      WHERE row_version IS NULL;
+      CREATE INDEX IF NOT EXISTS ecommerce_product_images_row_version_idx
+        ON ecommerce_product_images(id, row_version);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_images_row_version_idx;
+      ALTER TABLE ecommerce_product_images DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
