@@ -1784,3 +1784,40 @@ shared `core3_reference` tab, but ownership confirmation did not arrive before
 the borrow command became unavailable; no desktop/mobile screenshot or visual
 parity claim is made. Exact evidence is under
 `evidence/accounting/2026-09-22/ACC-INVOICE-ATTACHMENT-DELETE-001/`.
+
+## Current batch: invoice payment block action (2026-09-22)
+
+Stable feature ID `ACC-INVOICE-PAYMENT-BLOCK-001` covers Odoo's form-bound
+`action_move_block_payment` server action. The local Odoo source in
+`addons/account/views/account_move_views.xml` labels it `(Un)Block Payment`
+and calls `account.move.action_toggle_block_payment`; the model method in
+`addons/account/models/account_move.py` changes `blocked` to `not_paid` and
+rejects `paid` or `in_payment` invoices.
+
+Core3 adds `toggle_accounting_invoice_payment_block` to the page/API-matched
+`invoice-detail` contract. Migration
+`20260922240000-057-accounting-invoice-payment-block.yaml` persists
+`accounting_invoices.payment_state` and derives the initial state from the
+existing invoice state/residual. The `accounting.write` YAML mutation exposes
+the payment status, requires an unchanged non-cancelled non-journal invoice,
+increments `row_version`, and rejects missing, stale, paid, in-payment, and
+unauthorized requests without partial writes.
+
+Focused validation passes 2 tests and 23 assertions. The relevant invoice
+regression set passes 30 tests and 225 assertions; two source-mapping tests
+are blocked before their assertions by an unrelated concurrent Fleet page
+schema error (`success_message` is not allowed in
+`services/fleet/pages/model-detail.yaml`). The same error blocks the global
+Accounting audit; this slice does not edit or repair that concurrent work.
+
+BrowserSkill was attempted once against the connected Odoo instance for the
+existing user tab `1770662590` at `http://localhost:8069`/`core3_reference`.
+The 120-second borrow confirmation expired while the tab remained user-owned;
+session `lfvs` was stopped and the tab was not modified. No visual-parity
+claim is made. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-INVOICE-PAYMENT-BLOCK-001/`.
+
+The next boundary is the broader Odoo payment-state lifecycle: registering
+payments must synchronize blocked/unblocked status with payment transactions
+and settlement, rather than this bounded toggle alone. Accounting remains
+unsigned-off.

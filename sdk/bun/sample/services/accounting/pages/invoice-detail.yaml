@@ -23,6 +23,7 @@ components:
       - { id: download_accounting_invoice_pdf, label: Print, variant: secondary, permission: accounting.read, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Customer Credit Note')" }
       - { id: preview_accounting_invoice, label: Preview, variant: secondary, permission: accounting.read, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Customer Credit Note')" }
       - { id: review_accounting_invoice, label: Reviewed, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && !state.accounting_invoice_detail.checked" }
+      - { id: toggle_accounting_invoice_payment_block, label: (Un)Block Payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.invoice_type !== 'Journal Entry' && state.accounting_invoice_detail.state !== 'Cancelled'" }
     group_columns: 2
     groups:
       - title: Invoice
@@ -43,6 +44,7 @@ components:
           - { field: amount_tax, label: Tax }
           - { field: amount_total, label: Total }
           - { field: amount_residual, label: Amount due }
+          - { field: payment_state, label: Payment status }
       - title: Source link
         fields:
           - { field: source_service, label: Source service }

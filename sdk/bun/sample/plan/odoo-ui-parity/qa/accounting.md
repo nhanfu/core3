@@ -941,3 +941,13 @@ sign-off is claimed.
 - SMTP delivery, mail worker execution, PDF report generation, and attachment
   transport remain integration follow-up boundaries. This is a bounded
   candidate, not Accounting module sign-off.
+
+## Bounded QA event: ACC-INVOICE-PAYMENT-BLOCK-001 (2026-09-22)
+
+- Scope: Odoo `account_move.action_move_block_payment` /
+  `action_toggle_block_payment`, mapped to `/accounting/invoice-detail`.
+- Focused contract: `bun test ./test/accounting_invoice_payment_block.integration.test.ts --timeout 20000` — **2 passed, 23 assertions, 0 failures**.
+- Coverage: exact Odoo XML/model source mapping, page/API `page.id` separation, `accounting.write` ownership, durable payment-state migration, block/unblock transitions, paid and in-payment guards, missing/stale/uncancelled invoice guards, no-partial-write behavior, DuckDB restart persistence, and read-only actor denial.
+- Relevant invoice regression: **30 passed, 225 assertions; 2 failed before source assertions** because global page discovery rejects the unrelated concurrent Fleet `success_message` field in `services/fleet/pages/model-detail.yaml`; the persistence portions of those two files passed. The full Accounting glob and `bun run audit` are therefore not green in this shared checkout.
+- BrowserSkill: connected instance `245ea108`; one borrow attempt for existing authenticated tab `1770662590` timed out after 120 seconds, leaving the tab user-owned. Session `lfvs` was stopped; no credentials were requested/exposed, no tab mutation occurred, and no visual-parity claim is made.
+- Decision: bounded contract/data/permission pass; integration is conditional on resolving the unrelated global discovery blocker and the broader authenticated browser/visual gates. Exact evidence is under `evidence/accounting/2026-09-22/ACC-INVOICE-PAYMENT-BLOCK-001/`.

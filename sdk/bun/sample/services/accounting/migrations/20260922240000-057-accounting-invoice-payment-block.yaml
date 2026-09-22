@@ -1,0 +1,20 @@
+version: 0.0.57
+kind: schema
+description: Persist Odoo-compatible invoice payment block state
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS payment_state VARCHAR;
+      UPDATE accounting_invoices
+      SET payment_state = CASE
+        WHEN state = 'Paid' OR amount_residual <= 0 THEN 'paid'
+        WHEN state IN ('Draft', 'Posted') AND invoice_type <> 'Journal Entry' THEN 'not_paid'
+        ELSE NULL
+      END
+      WHERE payment_state IS NULL;
+    down: |
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS payment_state;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
