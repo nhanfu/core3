@@ -22,6 +22,23 @@ boundary. No authenticated screenshot or visual-parity claim is made. Mail
 delivery, portal provisioning/token side effects, collaborator removal, and
 follower/chatter behavior remain open.
 
+## Current bounded task — Project Task Duplicate (2026-09-22)
+
+Implemented stable ID `PROJECT-TASK-DUPLICATE-001`: the Odoo task-kanban
+`type="object" name="copy"` action is now a page-id-bound Core3 task-detail
+action using `project.write`. It creates a durable active `Task (copy)`, resets
+workflow state/deadline/spent time, recursively copies active child tasks with
+remapped parents, refreshes subtask summaries, and advances the source row
+version atomically. Active-record, company-scope, stale-version, and
+file-backed persistence checks pass in `test/project_task_duplicate.integration.test.ts`
+(3 tests, 20 expectations).
+
+The full Project corpus passes 87 tests with 853 expectations; audit, Project
+CSS, frontend build, and diff-check pass. BrowserSkill borrow confirmation
+timed out for the existing Odoo tab in session `urpe`; that session was stopped
+cleanly. No authenticated visual-parity claim is made. Evidence is under
+`evidence/project/2026-09-22/project-task-duplicate-001/`.
+
 ## Prior bounded task — Project form Convert to Template (2026-09-22)
 
 Implemented stable ID `PROJECT-TEMPLATE-CONVERSION-001`: the manager-bound

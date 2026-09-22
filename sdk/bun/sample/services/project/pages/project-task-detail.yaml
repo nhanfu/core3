@@ -30,6 +30,7 @@ components:
       aria_label: Task actions
       actions:
         - { id: share_project_task, label: Share Task, icon: share, permission: project.task.publish, show_if: "state.project_task_detail.active === true" }
+        - { id: duplicate_project_task, label: Duplicate, icon: copy, permission: project.write, show_if: "state.project_task_detail.active === true" }
         - { id: convert_task_to_subtask, label: Convert to Task/Sub-Task, icon: hierarchy, permission: project.write, show_if: "state.project_task_detail.active === true" }
     group_columns: 2
     groups:

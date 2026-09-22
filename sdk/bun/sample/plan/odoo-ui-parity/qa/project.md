@@ -425,3 +425,34 @@ The feature remains conditionally accepted pending authenticated live browser
 CRUD/request checks and paired desktop/mobile comparison. Email delivery,
 portal provisioning/access-token side effects, collaborator revocation, and
 follower/chatter notification parity are not claimed.
+
+## QA execution — PROJECT-TASK-DUPLICATE-001 — 2026-09-22
+
+- Feature: Odoo Project task-kanban `Duplicate` action (`type="object"
+  name="copy"`); evidence:
+  `../evidence/project/2026-09-22/project-task-duplicate-001/`.
+- Source comparison: Odoo `project_task_views.xml` and
+  `project_task.py` `copy_data`/`copy` behavior were verified before coding.
+- Focused checks:
+  `bun test ./test/project_task_duplicate.integration.test.ts --timeout
+  30000` — 3 passed, 0 failed, 20 expectations.
+- Project regression corpus:
+  `bun test ./test/project*.integration.test.ts --timeout 30000` — 87 passed,
+  0 failed, 853 expectations across 30 files.
+- Audit/build hygiene: `bun run audit` passed with 857 pages, 865 routes, and
+  1,810 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: BrowserSkill instance `245ea108` was connected,
+  but borrowing user tab `1770663154` for the `core3_reference` Odoo session
+  timed out waiting for human confirmation (`Timed out waiting for tab borrow
+  confirmation`). Session `urpe` was stopped cleanly. No credentials,
+  Playwright, alternate browser, or visual-parity claim was used.
+
+### QA decision
+
+The page/API contract, `project.write` boundary, recursive durable task clone,
+source row-version increment, active/company scope, stale guard, and reopen
+persistence pass. The slice is conditionally accepted pending authenticated
+desktop/mobile Odoo/Core3 comparison. Chatter/follower/attachment/portal
+side effects and recurrence-rule copy remain open.

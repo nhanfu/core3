@@ -1296,3 +1296,35 @@ desktop/mobile capture was used. The slice therefore has no authenticated
 visual-parity claim. Odoo email delivery, portal-user provisioning/access-token
 side effects, collaborator removal, and follower/chatter notification behavior
 remain separate parity gaps.
+
+## Bounded slice: Project Task Duplicate action (2026-09-22)
+
+Stable ID: `PROJECT-TASK-DUPLICATE-001`.
+
+The next uncovered task action after Share Task is Odoo's kanban menu
+`Duplicate` action (`type="object" name="copy"`) in
+`/home/nhanjs/projects/odoo/addons/project/views/project_task_views.xml`.
+The corresponding `project_task.py` `copy_data`/`copy` implementation names
+ordinary copies `Task (copy)`, restores inactive copies, recursively copies
+active child tasks, preserves active assignees, and clears dependencies.
+
+Core3 adds `duplicate_project_task` to the existing task-detail action menu and
+binds it to `api/task-detail.yaml` through `page.id: project-task-detail`. The
+`project.write` mutation copies the active task and all active descendants,
+remaps parent IDs, resets copied workflow state to `Todo`, clears deadline and
+spent time, refreshes denormalized subtask summaries, and increments the source
+row version atomically. Guards cover active project/task scope, company scope,
+and stale source versions; existing durable Project tables are sufficient, so
+no migration was needed.
+
+Focused coverage is `test/project_task_duplicate.integration.test.ts` (3
+tests, 20 expectations), including source identity, page/API separation,
+recursive child persistence, close/reopen durability, and guard/no-partial-copy
+behavior. The Project corpus passes 87 tests and 853 expectations; audit, CSS,
+frontend build, and diff-check pass. Evidence is under
+`evidence/project/2026-09-22/project-task-duplicate-001/`.
+
+BrowserSkill session `urpe` listed the existing localhost Odoo tab but the
+required borrow confirmation timed out. The session was stopped cleanly. No
+authenticated visual-parity claim is made. Chatter/follower/attachment/portal
+side effects and recurrence-rule copying remain separate gaps.
