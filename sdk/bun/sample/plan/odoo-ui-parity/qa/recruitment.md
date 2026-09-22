@@ -1,5 +1,26 @@
 # recruitment QA ledger
 
+## Batch 16 QA — Job Position New Application — 2026-09-22
+
+- Stable ID: `RECRUITMENT-JOB-NEW-APPLICATION-001`.
+- Source boundary: Odoo 19 `hr_recruitment/views/hr_job_views.xml` action
+  `action_hr_job_new_application` and `hr_applicant_views.xml` applicant form,
+  compared against source revision `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_job_new_application.integration.test.ts`
+  — 4 passed, 0 failed, 25 assertions. Recruitment regression: 68 passed,
+  0 failed, 584 assertions across 18 files.
+- Coverage: opening detail/API `page.id` join, company-scoped opening,
+  New Application fields, durable applicant persistence, counter refresh,
+  actor/opening state/company/stale/name/email/detail guards, atomic failures,
+  and file-backed restart.
+- Browser blocker: BrowserSkill connected to instance `245ea108` and listed
+  the authenticated Odoo tab, but borrowing it did not complete and the
+  session ended unregistered. No independent login, Playwright session,
+  credentials, or alternate browser was used; no Odoo desktop/mobile visual
+  parity claim is made. The exact command capture is in the Batch 16 evidence.
+- QA decision: bounded functional batch complete after local verification;
+  live Odoo comparison and broader Recruitment sign-off remain open.
+
 ## Batch 15 QA — Applicant Create Applications — 2026-09-22
 
 - Candidate scope: Odoo `job_add_applicants` from talent-pool members and

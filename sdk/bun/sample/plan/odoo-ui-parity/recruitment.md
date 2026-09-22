@@ -1,6 +1,29 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-14-implemented-applicant-followers-odoo-reference-blocked`
+## Batch 16 — Job Positions → New Application
+
+The next missing stable-ID Recruitment action is Odoo's
+`action_hr_job_new_application` from `addons/hr_recruitment/views/hr_job_views.xml`.
+It opens the `hr.applicant` form in `form` mode with `default_job_id` and
+`search_default_job_id` set from the active `hr.job`. Core3 adds the missing
+durable `/openings/detail` form and page-local
+`create_recruitment_application_from_opening` server form. The opening is
+company-scoped, the action requires a signed-in Recruitment writer, and the
+opening row version/state is checked before inserting a new applicant in the
+existing durable `recruitment_applicants` table. Applicant name, email, phone,
+source, recruiter, rating, priority, and notes persist with fixed dates and a
+deterministic action-derived ID; reload and file-backed restart prove the
+result remains visible.
+
+Stable ID: `RECRUITMENT-JOB-NEW-APPLICATION-001`.
+
+Focused verification: `bun test test/recruitment_job_new_application.integration.test.ts`
+passes 4 tests / 25 assertions; the Recruitment regression passes 68 tests /
+584 assertions across 18 files. BrowserSkill reference comparison was blocked
+before tab borrow completed; the exact blocker is recorded in the feature
+evidence. No Odoo desktop/mobile visual-parity claim is made.
+
+Status: `batch-16-implemented-job-new-application-odoo-borrow-blocked`
 
 ## Batch 15 — Applications → Create Applications from Talent Pool
 

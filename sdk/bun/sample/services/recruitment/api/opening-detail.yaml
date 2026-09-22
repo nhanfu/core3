@@ -1,0 +1,59 @@
+page: { id: recruitment-opening-detail }
+datasources:
+  - id: recruitment_opening_detail
+    single: true
+    permission: recruitment.read
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_OPENING_UNAUTHENTICATED, message: Sign in to view this job position. }
+      forbidden: { status: 403, code: RECRUITMENT_OPENING_FORBIDDEN, message: You do not have permission to view this job position. }
+      missing_record: { status: 404, code: RECRUITMENT_OPENING_NOT_FOUND, message: Job position not found in the current company. }
+      transport_error: { status: 503, code: RECRUITMENT_OPENING_UNAVAILABLE, message: Job position details are temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.company_name, o.state, CAST(o.opened_date AS VARCHAR) AS opened_date, CAST(o.closing_date AS VARCHAR) AS closing_date, COUNT(a.id) FILTER (WHERE a.archived = FALSE) AS application_count FROM recruitment_openings o LEFT JOIN recruitment_applicants a ON a.opening_id = o.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND o.id = :id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name) GROUP BY o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.company_name, o.state, o.opened_date, o.closing_date"
+actions:
+  - { id: back_to_recruitment_openings, type: navigate, permission: recruitment.read, navigate_to: /openings }
+  - { id: view_recruitment_opening_applications, type: navigate, permission: recruitment.read, navigate_to: /applicants, params: { opening_name: '{state.name}' } }
+  - id: create_recruitment_application_from_opening
+    type: server_form
+    permission: recruitment.write
+    title: New Application
+    submit_label: Create
+    cancel_label: Discard
+    success_message: Application created.
+    action: recruitment.job.new_application
+    handler: yaml_mutation
+    operation: create
+    params: { opening_id: '{state.id}', opening_name: '{state.name}', expected_row_version: '{state.row_version}' }
+    refresh: [recruitment_opening_detail, recruitment_openings, recruitment_applicants]
+    mutation:
+      fields: [name, email, phone, source, recruiter, rating, priority, notes, opening_id, opening_name]
+      required: [name, email, opening_id]
+      defaults: { priority: Normal, stage: New, archived: false, applied_date: '2026-01-15' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_JOB_NEW_APPLICATION_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to create an application. }
+        - { query: "SELECT o.name AS opening_name, o.company_name FROM recruitment_openings o WHERE o.id = :opening_id AND o.state IN ('Open', 'Draft')", status: 404, code: RECRUITMENT_JOB_NEW_APPLICATION_OPENING_NOT_FOUND, message: An active job position is required. }
+        - { query: "SELECT 1 AS ok FROM recruitment_openings WHERE id = :opening_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: RECRUITMENT_JOB_NEW_APPLICATION_COMPANY_FORBIDDEN, message: The job position belongs to another company. }
+        - { query: "SELECT id FROM recruitment_openings WHERE id = :opening_id AND row_version = :expected_row_version AND state IN ('Open', 'Draft')", status: 409, code: RECRUITMENT_JOB_NEW_APPLICATION_STALE, message: The job position changed before the application was created. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: RECRUITMENT_JOB_NEW_APPLICATION_NAME_INVALID, message: Enter an applicant name between 1 and 200 characters. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(TRIM(CAST(COALESCE(:email, '') AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: RECRUITMENT_JOB_NEW_APPLICATION_EMAIL_INVALID, message: Enter a valid applicant email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:phone, '') AS VARCHAR)) <= 100 AND LENGTH(CAST(COALESCE(:notes, '') AS VARCHAR)) <= 10000", status: 422, code: RECRUITMENT_JOB_NEW_APPLICATION_DETAILS_INVALID, message: Phone or notes exceed the allowed length. }
+      before_steps:
+        - query: "SELECT 'recruitment-applicant-job-' || :opening_id || '-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_applicants prior WHERE prior.opening_id = :opening_id), 0) + 1 AS VARCHAR) AS id"
+          assign: true
+      steps:
+        - query: "INSERT INTO recruitment_applicants(id, name, opening_id, opening_name, email, phone, source, recruiter, stage, rating, priority, applied_date, notes, archived, company_name, row_version, created_at, updated_at) VALUES(:id, TRIM(CAST(:name AS VARCHAR)), :opening_id, :opening_name, TRIM(CAST(:email AS VARCHAR)), NULLIF(TRIM(CAST(COALESCE(:phone, '') AS VARCHAR)), ''), NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), ''), NULLIF(TRIM(CAST(COALESCE(:recruiter, '') AS VARCHAR)), ''), 'New', NULLIF(TRIM(CAST(COALESCE(:rating, '') AS VARCHAR)), ''), COALESCE(NULLIF(TRIM(CAST(:priority AS VARCHAR)), ''), 'Normal'), DATE '2026-01-15', NULLIF(CAST(COALESCE(:notes, '') AS VARCHAR), ''), FALSE, :current_company_name, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')"
+          expect_changed: true
+          status: 409
+          code: RECRUITMENT_JOB_NEW_APPLICATION_CREATE_FAILED
+          message: The application could not be created. Reload the job position and try again.
+      result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
+    fields:
+      - { field: opening_id, label: Job Position, type: hidden }
+      - { field: opening_name, label: Job Position, type: hidden }
+      - { field: name, label: Applicant, type: text, required: true, placeholder: e.g. Alex Parker }
+      - { field: email, label: Email, type: email, required: true, placeholder: applicant@example.com }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: recruiter, label: Recruiter, type: text }
+      - { field: rating, label: Rating, type: select, options: [Excellent, Good, Average] }
+      - { field: priority, label: Priority, type: select, options: [Low, Normal, High], default: Normal }
+      - { field: notes, label: Notes, type: textarea }

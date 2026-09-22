@@ -4,7 +4,22 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment applicant Create Applications commit
+Candidate commit: pending Recruitment Job New Application commit
+
+## Batch 16 current state
+
+`RECRUITMENT-JOB-NEW-APPLICATION-001` implements Odoo's
+`action_hr_job_new_application` job-position-scoped applicant form. The new
+opening detail route/API is joined by `page.id`; creation is company-scoped,
+actor-checked, optimistic-version guarded, fixed-date, durable, and restart
+verified. The focused suite passes 4 tests / 25 assertions and the full
+Recruitment regression passes 68 tests / 584 assertions across 18 files.
+
+BrowserSkill connected to browser `245ea108` and listed the authenticated Odoo
+tab, but the required user-tab borrow did not complete and the session became
+unregistered. No Odoo action was inspected and no desktop/mobile feature
+capture was possible; the exact blocker command capture is under the Batch 16
+evidence directory. No visual parity sign-off is claimed.
 
 ## Current state
 

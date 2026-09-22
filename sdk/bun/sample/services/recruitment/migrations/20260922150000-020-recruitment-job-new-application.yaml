@@ -1,0 +1,19 @@
+version: 0.0.20
+kind: schema
+description: Durable company scope for job-position New Application action
+type:
+  postgres:
+    up: |
+      ALTER TABLE recruitment_openings ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE recruitment_openings
+      SET company_name = 'Core3 Demo Company'
+      WHERE company_name IS NULL;
+      CREATE INDEX IF NOT EXISTS recruitment_openings_company_idx
+        ON recruitment_openings(company_name, id);
+    down: |
+      DROP INDEX IF EXISTS recruitment_openings_company_idx;
+      ALTER TABLE recruitment_openings DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
