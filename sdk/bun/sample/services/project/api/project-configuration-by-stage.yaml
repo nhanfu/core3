@@ -1,0 +1,93 @@
+page: { id: project-configuration-by-stage }
+datasources:
+  - id: project_configuration_by_stage_states
+    single: false
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_CONFIGURATION_GROUPED_UNAVAILABLE, message: Grouped project configuration is temporarily unavailable. } }
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Active','Active'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: project_configuration_by_stage_groups
+    single: false
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_CONFIGURATION_GROUPED_UNAVAILABLE, message: Grouped project configuration is temporarily unavailable. } }
+    query: "SELECT name AS value, name AS label, sequence, folded FROM project_stages WHERE active = TRUE ORDER BY sequence, name"
+  - id: project_configuration_by_stage
+    single: false
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_CONFIGURATION_GROUPED_UNAVAILABLE, message: Grouped project configuration is temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, COALESCE(p.customer_name, '') AS customer_name, COALESCE(p.project_manager, '') AS project_manager, COALESCE(p.stage, 'Planning') AS stage, COALESCE(s.sequence, 999) AS stage_sequence, COALESCE(s.folded, FALSE) AS stage_folded, p.sequence, p.state, COALESCE(p.archived, FALSE) AS archived, COALESCE(p.favorite, FALSE) AS favorite, CAST(p.start_date AS VARCHAR) AS start_date, CAST(p.end_date AS VARCHAR) AS end_date, COALESCE(p.planned_hours, 0) AS planned_hours, COALESCE(p.spent_hours, 0) AS spent_hours, COUNT(t.id) AS task_count, COALESCE(ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.state = 'Done') / NULLIF(COUNT(t.id), 0)), 0) AS progress FROM projects p LEFT JOIN project_stages s ON s.name = COALESCE(p.stage, 'Planning') LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND COALESCE(p.is_template, FALSE) = FALSE AND ((COALESCE(:archived, '') IN ('', 'active') AND COALESCE(p.archived, FALSE) = FALSE) OR (:archived = 'archived' AND COALESCE(p.archived, FALSE) = TRUE)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.customer_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.project_manager, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR :state = '' OR p.state = :state) AND (:stage IS NULL OR :stage = '' OR p.stage = :stage) GROUP BY p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.stage, s.sequence, s.folded, p.sequence, p.state, p.archived, p.favorite, p.start_date, p.end_date, p.planned_hours, p.spent_hours ORDER BY COALESCE(s.sequence, 999), p.sequence, p.name, p.id"
+actions:
+  - id: create_project_configuration_by_stage
+    type: server_form
+    permission: project.manage
+    title: New Project
+    action: project.configuration.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [project_configuration_by_stage]
+    mutation:
+      operation: insert
+      table: projects
+      fields: [name, customer_name, project_manager, description, planned_hours, spent_hours, start_date, end_date, state, stage, sequence, favorite, archived, is_template]
+      required: [name]
+      defaults: { planned_hours: 0, spent_hours: 0, state: Draft, stage: Planning, sequence: 10, favorite: false, archived: false, is_template: false }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_CONFIGURATION_NAME_REQUIRED, message: A project name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:planned_hours, 0) AS DECIMAL(18,3)) >= 0 AND CAST(COALESCE(:spent_hours, 0) AS DECIMAL(18,3)) >= 0", status: 422, code: PROJECT_CONFIGURATION_HOURS_INVALID, message: Project hours cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM projects WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(is_template, FALSE) = FALSE)", status: 409, code: PROJECT_CONFIGURATION_NAME_EXISTS, message: A project with this name already exists. }
+      result: { query: "SELECT * FROM projects WHERE id = :id" }
+    fields: [{ field: name, label: Project, type: text, required: true }, { field: customer_name, label: Customer, type: text }, { field: project_manager, label: Project Manager, type: text }, { field: stage, label: Stage, type: select, options_source: project_configuration_by_stage_groups, default: Planning }, { field: planned_hours, label: Planned Hours, type: number, default: 0 }, { field: spent_hours, label: Spent Hours, type: number, default: 0 }, { field: start_date, label: Planned Date, type: date }, { field: end_date, label: Deadline, type: date }, { field: description, label: Description, type: textarea }]
+  - id: edit_project_configuration_by_stage
+    type: server_form
+    permission: project.manage
+    title: Edit Project
+    action: project.configuration.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [project_configuration_by_stage, project_configuration_detail]
+    mutation:
+      operation: update
+      table: projects
+      fields: [name, customer_name, project_manager, description, planned_hours, spent_hours, start_date, end_date, state, stage, sequence, favorite]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :id AND COALESCE(is_template, FALSE) = FALSE", status: 404, code: PROJECT_CONFIGURATION_NOT_FOUND, message: Project was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_CONFIGURATION_NAME_REQUIRED, message: A project name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:planned_hours, 0) AS DECIMAL(18,3)) >= 0 AND CAST(COALESCE(:spent_hours, 0) AS DECIMAL(18,3)) >= 0", status: 422, code: PROJECT_CONFIGURATION_HOURS_INVALID, message: Project hours cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM projects WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id AND COALESCE(is_template, FALSE) = FALSE)", status: 409, code: PROJECT_CONFIGURATION_NAME_EXISTS, message: A project with this name already exists. }
+      result: { query: "SELECT * FROM projects WHERE id = :id" }
+    fields: [{ field: name, label: Project, type: text, required: true }, { field: customer_name, label: Customer, type: text }, { field: project_manager, label: Project Manager, type: text }, { field: stage, label: Stage, type: select, options_source: project_configuration_by_stage_groups }, { field: planned_hours, label: Planned Hours, type: number }, { field: spent_hours, label: Spent Hours, type: number }, { field: start_date, label: Planned Date, type: date }, { field: end_date, label: Deadline, type: date }, { field: description, label: Description, type: textarea }]
+  - id: archive_project_configuration_by_stage
+    type: server
+    permission: project.manage
+    action: project.configuration.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_by_stage, project_configuration_detail]
+    params: { values: { archived: true } }
+    mutation: { operation: update, table: projects, fields: [archived], concurrency: { required: true }, guards: [{ query: "SELECT id FROM projects WHERE id = :id AND COALESCE(archived, FALSE) = FALSE AND COALESCE(is_template, FALSE) = FALSE", status: 409, code: PROJECT_CONFIGURATION_ARCHIVE_INVALID, message: Project is already archived or unavailable. }], result: { query: "SELECT * FROM projects WHERE id = :id" } }
+  - id: unarchive_project_configuration_by_stage
+    type: server
+    permission: project.manage
+    action: project.configuration.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_by_stage, project_configuration_detail]
+    params: { values: { archived: false } }
+    mutation: { operation: update, table: projects, fields: [archived], concurrency: { required: true }, guards: [{ query: "SELECT id FROM projects WHERE id = :id AND COALESCE(archived, FALSE) = TRUE AND COALESCE(is_template, FALSE) = FALSE", status: 409, code: PROJECT_CONFIGURATION_UNARCHIVE_INVALID, message: Project is already active or unavailable. }], result: { query: "SELECT * FROM projects WHERE id = :id" } }
+  - id: delete_project_configuration_by_stage
+    type: server
+    permission: project.manage
+    action: project.configuration.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_configuration_by_stage, project_configuration_detail]
+    mutation:
+      operation: delete
+      table: projects
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :id AND COALESCE(is_template, FALSE) = FALSE", status: 404, code: PROJECT_CONFIGURATION_NOT_FOUND, message: Project was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_tasks WHERE project_id = :id) AND NOT EXISTS (SELECT 1 FROM project_milestones WHERE project_id = :id)", status: 409, code: PROJECT_CONFIGURATION_HAS_DEPENDENCIES, message: Projects with tasks or milestones cannot be deleted. Archive the project instead. }
+      result: { query: "SELECT COUNT(*) AS count FROM projects WHERE id = :id" }

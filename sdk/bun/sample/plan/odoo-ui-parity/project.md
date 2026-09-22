@@ -1221,3 +1221,40 @@ session `ssyn`; a second borrow returned `permission_denied` with
 did not stop or return another worker's tab. No Odoo/Core3 desktop/mobile
 captures were produced and no visual-parity claim is made. Evidence is under
 `evidence/project/2026-09-22/project-template-conversion-001/`.
+
+## Bounded slice: Project Configuration grouped by stage (2026-09-22)
+
+Stable ID: `PROJECT-CONFIGURATION-GROUPED-001`.
+
+The next uncovered Project action after the manager-only Configuration >
+Projects action is Odoo's grouped configuration variant
+`menu_projects_config_group_stage` ->
+`open_view_project_all_config_group_stage`, defined in
+`/home/nhanjs/projects/odoo/addons/project/views/project_menus.xml` and
+`project_project_views.xml`. The source excludes template projects, defaults
+the list and kanban views to `stage_id` grouping, and exposes the ordered
+`list,kanban,form,calendar,activity` modes. The menu additionally requires
+`project.group_project_stages` beneath the manager-only Configuration menu.
+
+Core3 maps this distinct action to `/project-configuration-by-stage` with
+`page.id: project-configuration-by-stage`, a service-owned API fragment, and
+the same manager `project.manage` boundary used by the existing configuration
+surface. The durable query returns ordered stage groups and active project rows
+with archived filtering, project/customer/manager search, state/stage filters,
+task totals, progress, and the stable
+`PROJECT_CONFIGURATION_GROUPED_UNAVAILABLE` transport error. It reuses the
+existing guarded Project configuration create/edit/archive/restore/delete
+actions and detail form; no migration is needed.
+
+Focused coverage is
+`test/project_configuration_grouped.integration.test.ts`: source action and
+menu identity, page/API separation, exact view order and default grouping,
+deterministic stage/sequence ordering, filters, empty/not-found/503 branches,
+manager permissions, and reuse of all five CRUD guards. Evidence is under
+`evidence/project/2026-09-22/project-configuration-grouped-001/`.
+
+BrowserSkill instance `245ea108` was connected, but the authenticated Odoo tab
+`1770662590` was already borrowed by session `iqyf`; the explicit borrow request
+was refused with a borrow conflict. The worker stopped only its own session and
+did not use independent credentials or another browser backend. No Odoo/Core3
+desktop/mobile capture or visual-parity claim is made.

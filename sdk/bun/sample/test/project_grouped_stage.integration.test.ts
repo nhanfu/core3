@@ -14,7 +14,7 @@ describe('Project grouped-by-stage menu action parity', () => {
     const manifest = yaml('manifest.yaml');
     const menuItems = manifest.menu.groups.flatMap((group: any) => group.items);
     expect(menuItems).toContainEqual({ path: '/project-by-stage', label: 'Projects', icon: 'workflow', permission: 'project.read' });
-    expect(menuItems.filter((item: any) => item.label === 'Projects').map((item: any) => item.path)).toEqual(['/projects', '/project-by-stage', '/my/projects', '/project-configuration']);
+    expect(menuItems.filter((item: any) => item.label === 'Projects').map((item: any) => item.path)).toEqual(['/projects', '/project-by-stage', '/my/projects', '/project-configuration', '/project-configuration-by-stage']);
 
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const page = yaml('pages/project-by-stage.yaml');

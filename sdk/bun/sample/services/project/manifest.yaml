@@ -38,6 +38,7 @@ menu:
       items:
         - { path: /project/settings, label: Settings, icon: settings, permission: project.settings }
         - { path: /project-configuration, label: Projects, icon: project, permission: project.manage }
+        - { path: /project-configuration-by-stage, label: Projects, icon: workflow, permission: project.manage }
         - { path: /project-stages, label: Project Stages, icon: workflow, permission: project.manage }
         - { path: /task-tags, label: Tags, icon: tag, permission: project.manage }
         - { path: /project-roles, label: Project Roles, icon: users, permission: project.manage }
