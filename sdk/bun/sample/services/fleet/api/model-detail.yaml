@@ -125,4 +125,50 @@ actions:
         - { query: "SELECT 1 AS ok FROM fleet_vehicle_models WHERE id = :id AND vehicle_count = 0", status: 409, code: FLEET_MODEL_IN_USE, message: A model assigned to vehicles cannot be deleted; archive it instead. }
       before_steps: [{ query: "SELECT brand_id AS old_brand_id, active AS old_active FROM fleet_vehicle_models WHERE id = :id", assign: true }]
       steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :old_brand_id AND model_count > 0 AND :old_active = TRUE" }]
-  - { id: view_fleet_model_vehicles, type: navigate, permission: fleet.read, navigate_to: /vehicles, params: { model_id: '{state.fleet_model_detail.id}' } }
+  - id: create_fleet_vehicle_for_model
+    type: server_form
+    permission: fleet.write
+    title: New Vehicle
+    description: Create the first vehicle for this model.
+    action: fleet.vehicle.model.action_model_vehicle.create
+    handler: yaml_mutation
+    operation: create
+    params: { default_model_id: '{state.fleet_model_detail.id}', expected_model_row_version: '{state.fleet_model_detail.row_version}' }
+    prefill: { model_name: '{state.fleet_model_detail.name}' }
+    refresh: [fleet_model_detail]
+    mutation:
+      operation: insert
+      table: fleet_vehicles
+      fields: [name, license_plate, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook, company_name]
+      required: [name, license_plate]
+      defaults: { odometer: 0, trailer_hook: false, company_name: Core3 Demo Company }
+      before_steps:
+        - { query: "SELECT 'fleet-model-vehicle-' || :default_model_id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM fleet_vehicle_model_rel WHERE model_id = :default_model_id", assign: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :default_model_id AND active = TRUE", status: 404, code: FLEET_MODEL_NOT_FOUND, message: Active vehicle model was not found. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :default_model_id AND active = TRUE AND vehicle_count = 0", status: 409, code: FLEET_MODEL_VEHICLES_EXIST, message: This model already has a vehicle. Open the Vehicles action instead. }
+        - { query: "SELECT 1 AS ok WHERE :expected_model_row_version IS NOT NULL", status: 400, code: FLEET_MODEL_VERSION_REQUIRED, message: Reload the model before creating a vehicle. }
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :default_model_id AND row_version = :expected_model_row_version AND active = TRUE AND vehicle_count = 0", status: 409, code: STALE_RECORD, message: The model changed before the vehicle was created. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_VEHICLE_NAME_REQUIRED, message: Vehicle name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:license_plate AS VARCHAR))) BETWEEN 1 AND 32", status: 422, code: FLEET_VEHICLE_LICENSE_PLATE_REQUIRED, message: License plate is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:odometer AS DECIMAL(18,3)), 0) >= 0", status: 422, code: FLEET_VEHICLE_ODOMETER_INVALID, message: Odometer cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE (:acquisition_date IS NULL OR (regexp_matches(CAST(:acquisition_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:acquisition_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:contract_end_date IS NULL OR (regexp_matches(CAST(:contract_end_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:contract_end_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:acquisition_date IS NULL OR :contract_end_date IS NULL OR CAST(:contract_end_date AS DATE) >= CAST(:acquisition_date AS DATE))", status: 422, code: FLEET_VEHICLE_DATES_INVALID, message: Acquisition and contract dates are invalid. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_NAME_EXISTS, message: A vehicle with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(license_plate)) = LOWER(TRIM(CAST(:license_plate AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_LICENSE_PLATE_EXISTS, message: A vehicle with this license plate already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, 'Core3 Demo Company') = :current_company_name", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle must belong to the current company. }
+      steps:
+        - { query: "INSERT INTO fleet_vehicle_model_rel(vehicle_id, model_id) VALUES(:id, :default_model_id)", expect_changed: true, status: 409, code: FLEET_MODEL_VEHICLE_RELATION_FAILED, message: The vehicle model relation could not be created. }
+        - { query: "UPDATE fleet_vehicles SET model = (SELECT name FROM fleet_vehicle_models WHERE id = :default_model_id), manufacturer = (SELECT brand.name FROM fleet_vehicle_models model JOIN fleet_vehicle_model_brands brand ON brand.id = model.brand_id WHERE model.id = :default_model_id), vehicle_type = (SELECT CASE vehicle_type WHEN 'bike' THEN 'Bike' ELSE 'Car' END FROM fleet_vehicle_models WHERE id = :default_model_id), state = 'Available', updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id", expect_changed: true, status: 409, code: FLEET_MODEL_VEHICLE_UPDATE_FAILED, message: The vehicle could not be initialized from its model. }
+        - { query: "UPDATE fleet_vehicle_models SET vehicle_count = vehicle_count + 1, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :default_model_id AND active = TRUE AND vehicle_count = 0 AND row_version = :expected_model_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The model changed before the vehicle was created. Reload and try again. }
+      result: { query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.company_name, r.model_id FROM fleet_vehicles v JOIN fleet_vehicle_model_rel r ON r.vehicle_id = v.id WHERE v.id = :id" }
+    fields:
+      - { field: model_name, label: Model, type: text, readonly: true }
+      - { field: name, label: Vehicle, type: text, required: true, placeholder: Vehicle name }
+      - { field: license_plate, label: License plate, type: text, required: true, placeholder: e.g. PAE 326 }
+      - { field: odometer, label: Odometer, type: number, default: 0, min: 0 }
+      - { field: fuel_type, label: Fuel type, type: text }
+      - { field: acquisition_date, label: Registration date, type: text, placeholder: YYYY-MM-DD }
+      - { field: contract_end_date, label: Contract end date, type: text, placeholder: YYYY-MM-DD }
+      - { field: trailer_hook, label: Trailer Hitch, type: checkbox, default: false }
+      - { field: company_name, label: Company, type: hidden, default: Core3 Demo Company }
+  - { id: view_fleet_model_vehicles, type: navigate, permission: fleet.read, navigate_to: /vehicles, params: { model_id: '{state.fleet_model_detail.id}', default_model_id: '{state.fleet_model_detail.id}' } }

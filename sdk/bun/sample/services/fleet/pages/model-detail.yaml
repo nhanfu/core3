@@ -17,7 +17,8 @@ components:
       - { id: unarchive_fleet_model, label: Restore, variant: secondary, permission: fleet.manage, show_if: 'state.fleet_model_detail.active === false' }
       - { id: delete_fleet_model, label: Delete, variant: danger, permission: fleet.manage, confirm: Delete this model? }
     stat_buttons:
-      - { id: view_fleet_model_vehicles, label: Vehicles, value_field: vehicle_count, permission: fleet.read }
+      - { id: view_fleet_model_vehicles, label: Vehicles, value_field: vehicle_count, permission: fleet.read, show_if: 'state.fleet_model_detail.vehicle_count > 0' }
+      - { id: create_fleet_vehicle_for_model, label: New Vehicle, value_field: vehicle_count, hide_value: true, permission: fleet.write, show_if: 'state.fleet_model_detail.vehicle_count === 0' }
     group_columns: 2
     groups:
       - title: Model

@@ -1245,3 +1245,39 @@ the browser's required confirmation before the Odoo tab could be read. The
 contemporaneous desktop/mobile blocker captures from the same authenticated
 `core3_reference` tab are linked in the evidence folder; no live Odoo action
 screen, Core3 browser run, or visual-parity claim is made for this feature.
+
+## Model Vehicles zero-count form action bounded slice (2026-09-22)
+
+Feature ID: FLEET-MODEL-VEHICLES-CREATE-001.
+
+The pinned Odoo source implements fleet.vehicle.model.action_model_vehicle
+with default_model_id=self.id. When vehicle_count is non-zero it returns
+the filtered Vehicles action; when zero it returns a form action named
+Vehicle, preserving the model default. The source contract is in
+/home/nhanjs/projects/odoo/addons/fleet/views/fleet_vehicle_model_views.xml
+and models/fleet_vehicle_model.py at revision 65975996.
+
+Core3 keeps the existing read navigation for models with vehicles and adds a
+conditional New Vehicle stat action for zero-count models on the existing
+model-detail page/API page.id seam. The YAML server_form passes
+default_model_id and the model row version, creates the vehicle, inserts the
+durable fleet_vehicle_model_rel row, initializes model/manufacturer/type from
+the selected model, and increments the model vehicle count atomically. It is
+fleet.write protected while model reads remain fleet.read.
+
+Migration 20260922180000-052-fleet-model-vehicle-create-data.yaml adds the
+idempotent active zero-vehicle Ranger Zero fixture without overwriting later
+created vehicles. The action validates active/zero-count/model-version,
+company scope, duplicate identity, required fields, odometer, and date rules.
+
+Focused coverage is test/fleet_model_vehicle_create.integration.test.ts:
+3 tests / 28 assertions. The model regression set is 12 tests / 128
+assertions across four Fleet model suites. bun run audit passes with 853
+pages, 861 routes, and 1,799 datasources; git diff --check passes.
+
+BrowserSkill was attempted once against the connected Odoo browser. The
+requested tab was already borrowed by another session (rpdx), so no tab was
+taken over and no credentials, independent browser, or visual-parity claim
+was made. The owned session (aozk) was stopped immediately; the exact result
+is recorded under
+odoo-ui-parity/evidence/fleet/2026-09-22/fleet-model-vehicles-create-20260922/.

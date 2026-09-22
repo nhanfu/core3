@@ -1,0 +1,23 @@
+version: 0.0.52
+kind: data
+description: Deterministic zero-vehicle model fixture for the Odoo New Vehicle action
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_models(id, brand_id, category_id, name, vehicle_count, vehicle_type, model_year, seats, doors, color, trailer_hook, electric_assistance, default_fuel_type, transmission, drive_type, power, power_unit, vehicle_range, range_unit, default_co2, co2_emission_unit, co2_standard, active)
+      VALUES ('fleet-model-007', 'fleet-brand-020', 'fleet-category-004', 'Ranger Zero', 0, 'car', '2025', 5, 4, 'Silver', TRUE, FALSE, 'diesel', 'manual', '4wd', 120, 'power', 0, 'km', 170, 'g/km', 'WLTP', TRUE)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_vehicle_model_brands AS brand
+      SET model_count = (SELECT COUNT(*) FROM fleet_vehicle_models AS model WHERE model.brand_id = brand.id AND model.active = TRUE)
+      WHERE brand.id = 'fleet-brand-020';
+    down: |
+      DELETE FROM fleet_vehicle_models
+      WHERE id = 'fleet-model-007'
+        AND NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_rel WHERE model_id = 'fleet-model-007');
+      UPDATE fleet_vehicle_model_brands AS brand
+      SET model_count = (SELECT COUNT(*) FROM fleet_vehicle_models AS model WHERE model.brand_id = brand.id AND model.active = TRUE)
+      WHERE brand.id = 'fleet-brand-020';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

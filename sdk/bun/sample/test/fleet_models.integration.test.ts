@@ -35,7 +35,10 @@ describe('Fleet Models configuration parity', () => {
       { field: 'vehicle_type_label', label: 'Vehicle Type' },
     ]);
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'fleet_model_detail', title_field: 'name', subtitle_field: 'brand_name' });
-    expect(detailPage.components[0].stat_buttons).toEqual([{ id: 'view_fleet_model_vehicles', label: 'Vehicles', value_field: 'vehicle_count', permission: 'fleet.read' }]);
+    expect(detailPage.components[0].stat_buttons).toEqual([
+      { id: 'view_fleet_model_vehicles', label: 'Vehicles', value_field: 'vehicle_count', permission: 'fleet.read', show_if: 'state.fleet_model_detail.vehicle_count > 0' },
+      { id: 'create_fleet_vehicle_for_model', label: 'New Vehicle', value_field: 'vehicle_count', hide_value: true, permission: 'fleet.write', show_if: 'state.fleet_model_detail.vehicle_count === 0' },
+    ]);
     expect(detailPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['Information', 'Vendors']);
     expect(newPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'fleet_model_new', initial_editing: true });
 
@@ -46,7 +49,7 @@ describe('Fleet Models configuration parity', () => {
     expect(action(api, 'view_fleet_model')).toMatchObject({ permission: 'fleet.read', navigate_to: '/fleet/config/models/detail' });
     expect(action(newApi, 'create_fleet_model')).toMatchObject({ type: 'server_form', permission: 'fleet.manage', operation: 'insert', handler: 'yaml_mutation' });
     for (const definition of [api, detailApi, newApi]) {
-      for (const entry of definition.actions.filter((candidate: any) => !['view_fleet_model', 'back_to_fleet_models', 'view_fleet_model_vehicles', 'new_fleet_model'].includes(candidate.id))) expect(entry.permission).toBe('fleet.manage');
+      for (const entry of definition.actions.filter((candidate: any) => !['view_fleet_model', 'back_to_fleet_models', 'view_fleet_model_vehicles', 'new_fleet_model', 'create_fleet_vehicle_for_model'].includes(candidate.id))) expect(entry.permission).toBe('fleet.manage');
     }
   });
 
@@ -58,8 +61,8 @@ describe('Fleet Models configuration parity', () => {
     const api = yaml('api/models.yaml');
     const source = api.datasources.find((entry: any) => entry.id === 'fleet_models');
     const active = await repository.querySource(source, { q: null, active: null, contains_vehicle: null, vehicle_type: null, category_id: null, fixture_state: null }, 0, 50);
-    expect(active.data).toHaveLength(5);
-    expect(active.data.map((row: any) => `${row.brand_name}/${row.name}`)).toEqual(['Ford/Focus', 'Nissan/Micra', 'Renault/Clio', 'Toyota/Corolla TS', 'Volkswagen/Golf 8']);
+    expect(active.data).toHaveLength(6);
+    expect(active.data.map((row: any) => `${row.brand_name}/${row.name}`)).toEqual(['Ford/Focus', 'Ford/Ranger Zero', 'Nissan/Micra', 'Renault/Clio', 'Toyota/Corolla TS', 'Volkswagen/Golf 8']);
     expect((await repository.querySource(source, { q: 'ford', active: null, contains_vehicle: 'true', vehicle_type: 'car', category_id: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ brand_name: 'Ford', name: 'Focus', vehicle_count: 1, vehicle_type_label: 'Car' }]);
     expect((await repository.querySource(source, { q: null, active: 'archived', contains_vehicle: null, vehicle_type: null, category_id: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ name: 'Legacy 4x4', active: false }]);
     expect((await repository.querySource(source, { q: null, active: null, contains_vehicle: null, vehicle_type: null, category_id: 'fleet-category-003', fixture_state: null }, 0, 50)).data).toHaveLength(3);
