@@ -153,6 +153,7 @@ components:
       - { field: summary, label: Summary }
       - { field: activity_type, label: Type }
       - { field: state, label: Status }
+      - { field: feedback, label: Feedback }
       - { field: due_date, label: Due date }
       - { field: completed_at, label: Completed }
       - { field: assigned_user_name, label: Assigned to }
@@ -165,6 +166,7 @@ components:
           - { id: reschedule_contact_activity_next_week, label: Next Week, icon: calendar, show_if: "row.state === 'planned'" }
     actions:
       - { id: complete_contact_activity, label: Mark done, permission: base.activities.write, variant: primary, show_if: "row.state === 'planned'" }
+      - { id: complete_contact_activity_feedback, label: Mark done with feedback, permission: base.activities.write, show_if: "row.state === 'planned'" }
       - { id: cancel_contact_activity, label: Cancel, permission: base.activities.write, variant: danger, show_if: "row.state === 'planned'" }
       - { id: reschedule_contact_activity_today, label: Today, permission: base.activities.write, show_if: "row.state === 'planned'" }
       - { id: reschedule_contact_activity_tomorrow, label: Tomorrow, permission: base.activities.write, show_if: "row.state === 'planned'" }

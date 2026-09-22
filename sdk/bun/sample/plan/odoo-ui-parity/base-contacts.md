@@ -546,3 +546,27 @@ response `tab is borrowed by another session` from session `gvwd`. The worker
 did not retry, open an independent tab, inspect credentials, or use Playwright.
 Details are in
 `plan/odoo-ui-parity/evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-RESCHEDULE-001/`.
+
+## Contact activity feedback bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-ACTIVITY-FEEDBACK-001`.
+
+Odoo source comparison: `addons/mail/models/mail_activity.py:482-485`
+defines `action_feedback(feedback=False, attachment_ids=None)` and passes the
+feedback into `_action_done`; `addons/mail/models/mail_activity.py:514-600`
+posts the completion message and archives the activity. Core3 now exposes a
+`complete_contact_activity_feedback` server form from the contact activity
+list. It requires `base.activities.write`, an authenticated actor, current
+company scope, planned state, the expected row version, and 1-4000 characters
+of feedback. The mutation persists feedback, done state, completion time,
+row-version increment, and a chatter audit detail. Migration `0.0.24` adds the
+durable feedback field. The page remains layout-only and joins the API by
+`page.id: contact-detail`.
+
+Focused validation is
+`test/base_contact_activity_feedback.integration.test.ts`: 2 tests / 17
+assertions. Contacts regression remains green at 15 tests / 121 assertions.
+The implementation does not claim Odoo attachment transfer, standalone
+Activities-menu parity, activity form parity, or authenticated paired visual
+evidence. Evidence is in
+`evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-FEEDBACK-001/`.

@@ -1,0 +1,13 @@
+version: 0.0.24
+kind: schema
+description: Persist feedback recorded when contact activities are completed
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_activities ADD COLUMN IF NOT EXISTS feedback VARCHAR;
+    down: |
+      ALTER TABLE base_activities DROP COLUMN IF EXISTS feedback;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

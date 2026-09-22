@@ -8,7 +8,7 @@ datasources:
   - id: contact_activities
     permission: base.activities.read
     error_states: { transport_error: { status: 503, code: BASE_CONTACT_DETAIL_UNAVAILABLE, message: Contact activities are temporarily unavailable } }
-    query: "SELECT a.id, a.row_version, a.summary, a.activity_type, a.state, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_at AS VARCHAR) AS completed_at, a.assigned_user_name FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) ORDER BY a.due_date DESC"
+    query: "SELECT a.id, a.row_version, a.summary, a.activity_type, a.state, a.feedback, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_at AS VARCHAR) AS completed_at, a.assigned_user_name FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) ORDER BY a.due_date DESC"
   - id: contact_messages
     permission: base.contacts.read
     query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM (SELECT 'contact-message-created-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.created' AS action, 'Contact created' AS action_label, 'Created from the deterministic Core3 demo fixture for ' || c.name AS detail, TIMESTAMP '2026-09-01 09:00:00' AS created_at FROM base_contacts c WHERE c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT 'contact-message-note-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.note' AS action, 'Internal note' AS action_label, 'Confirm contact details before the next outreach' AS detail, TIMESTAMP '2026-09-03 14:30:00' AS created_at FROM base_contacts c WHERE c.id = :id AND c.id = 'contact-demo' AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT m.id, m.contact_id, m.actor_name, m.action, m.action_label, m.detail, m.created_at FROM base_contact_messages m JOIN base_contacts c ON c.id = m.contact_id WHERE m.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)) messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
@@ -259,6 +259,32 @@ actions:
       before_steps:
         - { query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) SELECT :message_id, a.contact_id, :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Administrator'), 'base.contacts.activity.cancel', 'Activity cancelled', a.summary FROM base_activities a WHERE a.id = :id" }
       result: { query: "SELECT :id AS id, true AS cancelled" }
+  - id: complete_contact_activity_feedback
+    type: server_form
+    permission: base.activities.write
+    title: Mark activity done
+    action: base.activities.feedback
+    handler: yaml_mutation
+    operation: complete_activity_feedback
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contact_detail, contact_activities, contact_messages]
+    fields: [{ field: feedback, label: Feedback, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      operation: update
+      table: base_activities
+      fields: [feedback]
+      concurrency: false
+      guards:
+        - { query: "SELECT id FROM base_activities WHERE id = :id", status: 404, code: BASE_CONTACT_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_CONTACT_ACTIVITY_COMPANY_FORBIDDEN, message: Activity is outside the current company. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity is already completed or changed. Reload before marking it done. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:feedback AS VARCHAR)), '') IS NOT NULL AND LENGTH(TRIM(CAST(:feedback AS VARCHAR))) <= 4000", status: 422, code: BASE_CONTACT_ACTIVITY_FEEDBACK_INVALID, message: Feedback must contain between 1 and 4000 characters. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_CONTACT_ACTIVITY_ACTOR_REQUIRED, message: An authenticated contact actor is required to complete an activity. }
+      steps:
+        - { query: "UPDATE base_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_ACTIVITY_STALE, message: The activity changed before it could be completed. Reload before trying again. }
+        - { query: "INSERT INTO base_contact_messages(id, contact_id, actor_id, actor_name, action, action_label, detail) SELECT :message_id, a.contact_id, :current_user_id, COALESCE(NULLIF(:current_user_name, ''), 'Administrator'), 'base.contacts.activity.feedback', 'Activity completed with feedback', a.summary || ' — ' || TRIM(CAST(:feedback AS VARCHAR)) FROM base_activities a WHERE a.id = :id" }
+      result: { query: "SELECT id, contact_id, summary, activity_type, state, feedback, row_version, CAST(due_date AS VARCHAR) AS due_date, CAST(completed_at AS VARCHAR) AS completed_at, assigned_user_name FROM base_activities WHERE id = :id" }
   - id: reschedule_contact_activities_today
     type: server
     permission: base.activities.write
