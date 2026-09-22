@@ -1,0 +1,30 @@
+{
+  "feature_id": "TIMESHEET-MY-SEARCH-SCOPE-001",
+  "date": "2026-09-22",
+  "reference": {
+    "url": "http://localhost:8069",
+    "database": "core3_reference",
+    "route": "/odoo/timesheets",
+    "browser": "BrowserSkill",
+    "borrowed_user_tab": false,
+    "borrow_blocker": "The visible Odoo tab was already borrowed by BrowserSkill session goea"
+  },
+  "desktop": {
+    "capture": "odoo-desktop-group-menu.png",
+    "width": 1916,
+    "height": 833,
+    "group_by_visible": ["Project", "Parent Task", "Task", "Sales Order Item", "Invoice", "Billing Type"],
+    "group_by_absent": ["Employee", "Department", "Manager"]
+  },
+  "mobile": {
+    "capture": "odoo-mobile-list.png",
+    "width": 390,
+    "height": 844,
+    "authenticated_route_loaded": true
+  },
+  "core3": {
+    "visual_verification": "blocked",
+    "blocker": "Conflicting declarations for named action: base.activities.reschedule_today"
+  },
+  "signoff": false
+}

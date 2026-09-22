@@ -23,10 +23,12 @@ describe('Timesheets My Timesheets Manager grouping parity', () => {
     expect(odooModel).toContain("manager_id = fields.Many2one('hr.employee', \"Manager\", related='employee_id.parent_id', store=True)");
     expect(odooView).toContain('<field name="manager_id"/>');
     expect(odooView).toContain("context=\"{'group_by': 'manager_id'}\"");
+    expect(odooView).toContain('<field name="manager_id" position="replace"/>');
+    expect(odooView).toContain('<filter name="groupby_manager" position="replace"/>');
     expect(page.page).toMatchObject({ id: 'timesheets', route: '/timesheets', auth: { require: ['timesheets.read'] } });
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'timesheets' });
-    expect(list.group_by).toContainEqual({ field: 'manager_name', label: 'Manager' });
+    expect(list.group_by).not.toContainEqual({ field: 'manager_name', label: 'Manager' });
     expect(source).toMatchObject({ id: 'timesheet_entries', permission: 'timesheets.read', workflow: 'timesheet_entries' });
     expect(source.pivot.fields).toEqual(expect.arrayContaining(['manager_id', 'manager_name']));
     expect(String(source.query)).toContain('e.manager_name');

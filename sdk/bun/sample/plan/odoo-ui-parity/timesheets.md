@@ -2450,3 +2450,33 @@ Focused coverage is `test/timesheets_portal_task_report.integration.test.ts`: 4 
 Evidence is under
 `evidence/timesheets/2026-09-22/timesheet-my-invoice-group-001/`.
 This is a bounded feature record, not Timesheets module sign-off.
+
+## 2026-09-22 `TIMESHEET-MY-SEARCH-SCOPE-001`
+
+- Selected the next smallest stable-ID gap on the internal My Timesheets
+  action. Odoo's primary `hr_timesheet_line_my_timesheet_search` view replaces
+  Employee, Department, and Manager fields and removes their group-by filters;
+  those controls were still exposed by the Core3 My Timesheets page even
+  though its durable API projection is valid for other actions and reports.
+- Core3 keeps `pages/entries.yaml` layout-only and `api/entries.yaml`
+  data/action-only, joined by `page.id: timesheets`. The page now exposes only
+  the Odoo My Timesheets groupings while retaining persisted employee,
+  department, and manager fields in the permissioned `timesheets.read`
+  datasource. No new migration was needed: the existing deterministic relation
+  data remains durable and restart-safe.
+- Focused coverage is
+  `test/timesheets_my_search_scope.integration.test.ts`: 3 tests / 19
+  expectations. The related My Timesheets suite passes 31 tests / 194
+  expectations after correcting the earlier department/manager UI assertions
+  to match Odoo's primary search view.
+- BrowserSkill task-owned authenticated Odoo verification against
+  `http://localhost:8069`, database `core3_reference`, confirmed the loaded
+  My Timesheets Group By menu at desktop width and a mobile loaded list. The
+  required user-tab borrow was blocked because the only visible Odoo tab was
+  already borrowed by session `goea`; no credentials or tokens were accessed.
+  Odoo captures are under
+  `evidence/timesheets/2026-09-22/timesheet-my-search-scope-001/`.
+- Core3 visual capture is blocked by the shared runtime startup failure
+  `Conflicting declarations for named action: base.activities.reschedule_today`;
+  the exact failure is recorded beside the captures. No Core3 visual parity or
+  module sign-off is claimed. Odoo Print/PDF/action-surface gaps remain open.

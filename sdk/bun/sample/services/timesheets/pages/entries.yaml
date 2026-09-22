@@ -31,12 +31,9 @@ components:
       - { field: state, label: Status, options_source: timesheet_states }
       - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
     group_by:
-      - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }
       - { field: parent_task_name, label: Parent Task }
-      - { field: department_name, label: Department }
-      - { field: manager_name, label: Manager }
       - { field: sales_order_item, label: Sales Order Item }
       - { field: invoice_name, label: Invoice }
       - { field: billing_type, label: Billing Type }
