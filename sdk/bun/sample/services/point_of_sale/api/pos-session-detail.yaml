@@ -77,6 +77,12 @@ datasources:
     query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"
 
 actions:
+  - id: open_session_orders
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/session-orders
+    params: { session_id: '{state.id}' }
+
   - id: open_session_payments
     type: navigate
     permission: pos.read

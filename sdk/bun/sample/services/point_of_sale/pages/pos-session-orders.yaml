@@ -1,0 +1,27 @@
+title: POS Session Orders
+page: { id: pos-session-orders, route: /point-of-sale/session-orders, breadcrumb: [Sales, Point of Sale, Sessions, Orders], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_session_scoped_orders
+    search: { label: Search session orders, placeholder: Search order number or customer... }
+    filters: [{ field: state, label: Status, options_source: pos_session_order_states }]
+    columns:
+      - { field: name, label: Order, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_paid, label: Paid, align: right }
+      - { field: payment_method, label: Payment method }
+      - { field: date_order, label: Order date }
+    page_size: 50
+    row_key: id
+    row_open_action: view_pos_session_order
+    row_double_click_action: view_pos_session_order
+    empty_state: { title: No orders, description: This POS session has no orders. }
+actions:
+  - id: back_to_pos_session_orders
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/session-detail
+    params: { id: '{query.session_id}' }

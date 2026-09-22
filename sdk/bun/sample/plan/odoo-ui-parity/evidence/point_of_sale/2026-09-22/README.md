@@ -10,3 +10,5 @@
   — linked invoice smart button and detail navigation.
 - [POS-ORDER-DETAIL-SEND-EMAIL-001](POS-ORDER-DETAIL-SEND-EMAIL-001/README.md)
   — order-detail Send Email action; BrowserSkill borrow blocker recorded.
+- [POS-SESSION-ORDERS-001](POS-SESSION-ORDERS-001/README.md) — session Orders
+  smart-button action and scoped list; BrowserSkill borrow blocker recorded.

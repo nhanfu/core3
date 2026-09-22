@@ -1,0 +1,34 @@
+page: { id: pos-session-orders }
+datasources:
+  - id: pos_session_order_states
+    single: false
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('Paid','Paid'), ('Invoiced','Invoiced'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: pos_session_scoped_orders
+    single: false
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_ORDERS_UNAUTHORIZED, message: Sign in to view session orders. }
+      forbidden: { status: 403, code: POS_SESSION_ORDERS_FORBIDDEN, message: You do not have access to this POS session's orders. }
+      not_found: { status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+      transport_error: { status: 503, code: POS_SESSION_ORDERS_UNAVAILABLE, message: Session orders are temporarily unavailable. }
+    query: |
+      SELECT o.id, o.row_version, o.name, o.session_id, o.partner_name, o.state,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        o.payment_method, o.cashier_id, o.company,
+        CAST(o.date_order AS VARCHAR) AS date_order
+      FROM pos_orders o
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE o.session_id = :session_id
+        AND o.company = :current_company_name
+        AND s.company = :current_company_name
+        AND (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.partner_name ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR o.state = :state)
+      ORDER BY o.date_order DESC, o.id
+actions:
+  - id: view_pos_session_order
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/order-detail
+    params: { id: '{row.id}' }

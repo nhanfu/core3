@@ -6,6 +6,19 @@ Status: in-progress
 Verification trigger: feature-complete
 Candidate commit: `b9eb2ea1`
 
+## Current bounded task: Session Orders smart button (2026-09-22)
+
+- Implemented Odoo's `pos.session.action_view_order()` action as
+  `POS-SESSION-ORDERS-001`: the session detail Orders stat button opens a
+  service-owned, current-session/current-company filtered Orders list and
+  reuses the existing order detail route.
+- Focused validation passes 4 tests and 23 assertions; related POS regression
+  suites pass 11 tests and 71 assertions. Audit, frontend build, POS CSS build,
+  and `git diff --check` pass.
+- BrowserSkill instance `245ea108` was healthy, but borrowing the existing
+  signed-in Odoo tab timed out waiting for user confirmation. No visual parity
+  claim is made; exact details are in the feature evidence verification file.
+
 ## QA-2 bounded verification of `b9eb2ea1` (2026-09-13)
 
 - Candidate regression: 2 tests passed, 7 assertions; launcher bounds and POS Orders row action contract pass.

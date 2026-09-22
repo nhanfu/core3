@@ -1,5 +1,28 @@
 # Point of Sale QA ledger
 
+## 2026-09-22 — POS-SESSION-ORDERS-001
+
+- Status: bounded implementation and service verification complete; visual
+  sign-off is blocked by the required BrowserSkill tab borrow.
+- Source: Odoo 19 `pos_session_view.xml` Orders stat button and
+  `pos_session.py` `action_view_order()` domain (`session_id in self.ids`).
+- Implementation: session-detail Orders stat action, separate
+  `/point-of-sale/session-orders` page/API pair, current-company/session scoped
+  read projection, search/status filters, row navigation, and explicit
+  empty/unauthorized/forbidden/not-found/transport metadata. No schema change
+  was needed; the projection uses durable POS orders and existing migrations.
+- Focused test: `bun test ./test/pos_session_orders.integration.test.ts
+  --timeout 30000` — 4 tests, 23 assertions passed.
+- Regression: session payments, order pickings, order delete, and refund-link
+  suites passed 11 tests and 71 assertions; UI audit passed with 837 pages,
+  845 routes, and 1,747 datasources; frontend build, POS CSS build, and
+  `git diff --check` passed.
+- BrowserSkill: instance `245ea108` was connected and the existing Odoo user
+  tab was listed, but the required borrow timed out waiting for confirmation;
+  the tab remained user-scoped. No independent login or alternate browser was
+  used. No desktop/mobile capture or visual-parity claim is made.
+- Evidence: `../evidence/point_of_sale/2026-09-22/POS-SESSION-ORDERS-001/`.
+
 ## 2026-09-22 — POS-SESSION-PAYMENTS-001
 
 - Status: bounded implementation and service verification complete; visual

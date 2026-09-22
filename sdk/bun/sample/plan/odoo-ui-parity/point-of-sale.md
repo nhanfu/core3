@@ -1497,3 +1497,30 @@ session `xrhq` timed out waiting for human confirmation. No independent
 browser or login was used, no desktop/mobile screenshot was captured, and no
 visual-parity claim is made. The exact blocker is recorded at
 `evidence/point_of_sale/2026-09-22/POS-SESSION-PAYMENTS-001/browser-evidence.md`.
+
+## Current bounded batch: Sessions > Orders smart button
+
+Feature ID: `POS-SESSION-ORDERS-001`. Odoo 19's session form exposes the
+`Orders` stat button through `pos.session.action_view_order()`. The action opens
+the `pos.order` list/form with a domain limited to the selected session's
+orders. Core3 previously showed session orders only as an inline detail grid;
+it had no equivalent action or session-scoped list surface.
+
+Core3 now adds the `Orders` stat action to `pos-session-detail` and a separate
+`/point-of-sale/session-orders` page/API pair joined by `page.id`. The list is
+scoped by `session_id` and current company, supports bounded search and status
+filtering, navigates rows to the existing POS order detail, and declares
+explicit empty, missing, unauthorized, forbidden, and transport states. It
+uses existing durable `pos_orders` data, so no schema migration was required.
+
+Focused coverage is `test/pos_session_orders.integration.test.ts`: 4 tests and
+23 assertions cover Odoo source/action mapping, page/API separation, selected
+session and company boundaries, row navigation, filters, empty state, and
+file-backed migration replay/restart durability.
+
+BrowserSkill instance `245ea108` was connected and the existing Odoo user tab
+was listed, but the required borrow timed out waiting for browser confirmation;
+the tab remained user-scoped. No independent login or alternate browser was
+used. No Odoo/Core3 desktop/mobile capture or visual-parity claim is made; the
+exact blocker is recorded under
+`evidence/point_of_sale/2026-09-22/POS-SESSION-ORDERS-001/`.
