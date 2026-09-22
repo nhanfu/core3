@@ -1,0 +1,42 @@
+version: 0.0.89
+kind: data
+description: Inventory procurement rules action fields and deterministic fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS name VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS picking_type_id VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS picking_type_name VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS procure_method VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS auto VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS delay_days INTEGER;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS warehouse_id VARCHAR;
+      ALTER TABLE inventory_route_rules ADD COLUMN IF NOT EXISTS warehouse_name VARCHAR;
+      UPDATE inventory_route_rules SET name = CASE id
+        WHEN 'route-buy-rule' THEN 'Buy from Vendors'
+        WHEN 'route-mto-rule' THEN 'Replenish from Vendors'
+        WHEN 'route-two-step-rule' THEN 'Store received goods'
+        ELSE 'Rule ' || id
+      END WHERE name IS NULL;
+      UPDATE inventory_route_rules SET active = TRUE WHERE id IN ('route-buy-rule', 'route-mto-rule');
+      UPDATE inventory_route_rules SET active = FALSE WHERE id = 'route-two-step-rule';
+      UPDATE inventory_route_rules SET picking_type_id = 'operation-receipts', picking_type_name = 'Receipts', procure_method = 'make_to_stock', auto = 'manual', delay_days = 0, warehouse_id = 'warehouse-main', warehouse_name = 'Main Warehouse' WHERE id = 'route-buy-rule';
+      UPDATE inventory_route_rules SET procure_method = 'make_to_order', auto = 'automatic', delay_days = 2 WHERE id = 'route-mto-rule';
+      UPDATE inventory_route_rules SET picking_type_id = 'operation-internal', picking_type_name = 'Internal Transfers', procure_method = 'make_to_stock', auto = 'automatic', delay_days = 1, warehouse_id = 'warehouse-main', warehouse_name = 'Main Warehouse' WHERE id = 'route-two-step-rule';
+      CREATE INDEX IF NOT EXISTS inventory_route_rules_active_idx ON inventory_route_rules(active, sequence_number, id);
+    down: |
+      DROP INDEX IF EXISTS inventory_route_rules_active_idx;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS warehouse_name;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS warehouse_id;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS delay_days;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS auto;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS procure_method;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS picking_type_name;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS picking_type_id;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS active;
+      ALTER TABLE inventory_route_rules DROP COLUMN IF EXISTS name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

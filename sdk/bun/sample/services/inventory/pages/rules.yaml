@@ -1,0 +1,28 @@
+title: Rules
+page: { id: rules, route: /rules, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Rules], auth: { require: [inventory.multi_location] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_rules
+    create_action: create_inventory_rule
+    create_label: New
+    search: { label: Search Rules, placeholder: 'Search rules, locations, or routes...' }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+      - { field: action, label: Action, options: [{ id: pull, label: Pull From }, { id: push, label: Push To }, { id: pull_push, label: Pull & Push }, { id: buy, label: Buy }] }
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: action, label: Action, type: StatusChip }
+      - { field: source_location_name, label: Source Location }
+      - { field: destination_location_name, label: Destination Location }
+      - { field: route_name, label: Route }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_rule
+    row_double_click_action: view_inventory_rule
+    form_view: { page: apps/services/inventory/pages/rule-detail.yaml, side_panel: false }
+    empty_state: { title: No rules found, description: Define procurement rules to move products through your warehouse. }

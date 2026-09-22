@@ -1,0 +1,96 @@
+page: { id: rule-detail }
+datasources:
+  - id: inventory_rule_detail
+    single: true
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_RULE_DETAIL_UNAVAILABLE, message: Rule details are temporarily unavailable. } }
+    query: "SELECT rr.id, rr.row_version, rr.name, rr.active, rr.sequence_number, rr.action, rr.route_id, COALESCE(r.name, '') AS route_name, rr.source_location_id, rr.destination_location_id, rr.source_location_name, rr.destination_location_name, COALESCE(rr.company_name, 'Shared') AS company_name, COALESCE(rr.picking_type_name, '') AS picking_type_name, rr.procure_method, rr.auto, rr.delay_days FROM inventory_route_rules rr JOIN inventory_routes r ON r.id = rr.route_id WHERE rr.id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (rr.company_name IS NULL OR rr.company_name = COALESCE(:current_company_name, rr.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND rr.company_name = 'My Company (San Francisco)'))"
+  - id: inventory_rule_detail_routes
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_routes WHERE active = TRUE ORDER BY name, id"
+  - id: inventory_rule_detail_locations
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_locations WHERE active = TRUE AND usage IN ('Internal', 'View', 'Transit', 'Supplier', 'Customer') ORDER BY name, id"
+actions:
+  - id: back_to_inventory_rules
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /rules
+  - id: edit_inventory_rule
+    type: server_form
+    permission: inventory.manage
+    title: Edit rule
+    action: inventory.rules.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_rule_detail
+    refresh: [inventory_rule_detail, inventory_rules]
+    mutation:
+      operation: update
+      table: inventory_route_rules
+      fields: [name, route_id, sequence_number, action, source_location_id, destination_location_id, source_location_name, destination_location_name, company_name, picking_type_id, picking_type_name, procure_method, auto, delay_days, warehouse_id, warehouse_name]
+      required: [name, route_id, action, source_location_id, destination_location_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_route_rules WHERE id = :id AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_RULE_NOT_FOUND, message: Rule not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:action AS VARCHAR) IN ('pull', 'push', 'pull_push', 'buy') AND :source_location_id <> :destination_location_id", status: 422, code: INVENTORY_RULE_FIELDS_INVALID, message: Enter a name, valid action, and different locations. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_routes WHERE id = :route_id AND active = TRUE)", status: 422, code: INVENTORY_RULE_ROUTE_INVALID, message: Select an active route. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_route_rules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(company_name, '') = COALESCE(:company_name, '') AND active = TRUE AND id <> :id)", status: 409, code: INVENTORY_RULE_EXISTS, message: An active rule with this name already exists for the company. }
+      result: { query: "SELECT * FROM inventory_route_rules WHERE id = :id" }
+    fields:
+      - { field: name, label: Rule, type: text, required: true }
+      - { field: route_id, label: Route, type: select, options_source: inventory_rule_detail_routes, required: true }
+      - { field: action, label: Action, type: select, options: [{ value: pull, label: Pull From }, { value: push, label: Push To }, { value: pull_push, label: Pull & Push }, { value: buy, label: Buy }], required: true }
+      - { field: source_location_id, label: Source Location, type: select, options_source: inventory_rule_detail_locations, required: true }
+      - { field: destination_location_id, label: Destination Location, type: select, options_source: inventory_rule_detail_locations, required: true }
+      - { field: sequence_number, label: Sequence, type: number }
+      - { field: procure_method, label: Supply Method, type: select, options: [{ value: make_to_stock, label: Make To Stock }, { value: make_to_order, label: Make To Order }] }
+      - { field: auto, label: Trigger, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }
+      - { field: delay_days, label: Delay (days), type: number }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_inventory_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.rules.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [inventory_rule_detail, inventory_rules]
+    mutation:
+      operation: update
+      table: inventory_route_rules
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_route_rules WHERE id = :id AND active = TRUE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_RULE_NOT_FOUND, message: Active rule not found. }]
+      result: { query: "SELECT * FROM inventory_route_rules WHERE id = :id" }
+  - id: restore_inventory_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.rules.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [inventory_rule_detail, inventory_rules]
+    mutation:
+      operation: update
+      table: inventory_route_rules
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_route_rules WHERE id = :id AND active = FALSE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_RULE_NOT_FOUND, message: Archived rule not found. }]
+      result: { query: "SELECT * FROM inventory_route_rules WHERE id = :id" }
+  - id: delete_inventory_rule
+    type: server
+    permission: inventory.manage
+    action: inventory.rules.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_rules]
+    mutation:
+      operation: delete
+      table: inventory_route_rules
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_route_rules WHERE id = :id AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_RULE_NOT_FOUND, message: Rule not found. }]

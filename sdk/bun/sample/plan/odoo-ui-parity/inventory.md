@@ -2836,3 +2836,35 @@ The authenticated Odoo tab was listed through bsk on browser instance
 expired; the Core3 shared runtime was not available for an authenticated
 capture in this bounded turn. Screenshots are omitted and no visual-parity or
 live Odoo execution sign-off is claimed. Full Inventory sign-off remains open.
+
+## Configuration > Warehouse Management > Rules — `INV-RULES-001` (2026-09-22)
+
+This bounded slice closes the uncovered Odoo `stock.action_rules_form` action
+from `addons/stock/views/stock_rule_views.xml:110-117`. Odoo exposes a
+list/form Rules surface under Warehouse Management, restricted to the advanced
+location group. Its list includes Action, Source Location, Destination
+Location, Route, Company, and optional Name; the form supports active state,
+operation type, supply method, trigger, sequence, and delay fields.
+
+Core3 adds presentation-only `pages/rules.yaml` and `pages/rule-detail.yaml`
+with matching backend `api/rules.yaml` and `api/rule-detail.yaml` fragments,
+joined by `page.id`. Migration
+`20260922390000-089-inventory-rules.yaml` extends the durable route-rule table
+with the standalone rule name/lifecycle and form fields, backfills stable demo
+rows, and adds the active index. The new Configuration > Warehouse Management
+> Rules menu is `inventory.multi_location`-visible; mutations require
+`inventory.manage`.
+
+The implementation covers list/form CRUD, active archive/restore, delete,
+search/action/status filters, company scope, active-route and distinct-location
+guards, duplicate names, missing/empty/503 states, optimistic row-version
+conflicts, and restart persistence. Focused verification passes 4 tests / 29
+assertions in `test/inventory_rules.integration.test.ts`.
+
+BrowserSkill connected to shared instance `245ea108` and listed the signed-in
+Odoo tab, but the required borrow confirmation expired before ownership was
+granted. No Odoo desktop/mobile Rules capture or visual-parity claim is made;
+the exact blocker is under
+`evidence/inventory/2026-09-22/INV-RULES-001/browser-blocker.md`.
+
+Full Inventory sign-off remains open.

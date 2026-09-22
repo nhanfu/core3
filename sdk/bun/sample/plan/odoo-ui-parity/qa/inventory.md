@@ -785,6 +785,28 @@ data, permission boundary, and browser evidence; PARTIAL for direct Odoo
 wizard comparison because of the exact source group gate. Full Inventory
 sign-off remains open.
 
+## Inventory Rules QA — `INV-RULES-001`
+
+- Odoo source/action: PASS for source mapping. `stock.action_rules_form` and
+  `stock.menu_action_rules_form` are recorded against
+  `stock_rule_views.xml:23-117`; the source list/form field inventory and
+  `stock.group_adv_location` boundary are in the feature evidence.
+- Core3 contract: PASS. Page/API fragments share `page.id` for both list and
+  detail routes. Migration 0.0.89 persists the rule fields and stable fixtures;
+  the manifest adds the Rules menu with the multi-location boundary.
+- Focused verification: PASS — `bun test
+  test/inventory_rules.integration.test.ts` (4 tests / 29 assertions), covering
+  discovery, deterministic filters/empty state, CRUD, duplicate/location/action
+  guards, company scope, permission, stale versions, archive/delete, and restart.
+- Browser evidence: BLOCKED. BrowserSkill connected to instance `245ea108` and
+  listed the authenticated Odoo tab, but its required borrow confirmation
+  expired before the tab became owned. No desktop/mobile Odoo capture or visual
+  parity pass is claimed. Exact details are in
+  `evidence/inventory/2026-09-22/INV-RULES-001/browser-blocker.md`.
+
+QA disposition: PASS for the bounded durable Core3 Rules contract; BLOCKED for
+authenticated Odoo visual comparison. Full Inventory sign-off remains open.
+
 ## Physical Inventory Clear/reset QA — `INV-PHYSICAL-RESET-001` (2026-09-20)
 
 - Odoo source/menu/action: `stock.menu_action_inventory_tree` →

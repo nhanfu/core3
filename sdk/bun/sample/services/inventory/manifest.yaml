@@ -104,6 +104,10 @@ menu:
           label: Routes
           icon: route
           permission: inventory.manage
+        - path: /rules
+          label: Rules
+          icon: route
+          permission: inventory.multi_location
         - path: /storage-categories
           label: Storage Categories
           icon: boxes

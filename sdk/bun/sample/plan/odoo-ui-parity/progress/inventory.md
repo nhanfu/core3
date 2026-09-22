@@ -1621,3 +1621,25 @@ Inventory sign-off remains open.
   not available. Exact evidence is under
   `evidence/inventory/2026-09-22/INV-TRANSFER-ALL-QUEUE-001/`.
 - Full Inventory sign-off remains open; no visual-parity claim is made.
+
+## `INV-RULES-001` — Warehouse Management Rules action (2026-09-22)
+
+- Selected Odoo `stock.action_rules_form` from
+  `addons/stock/views/stock_rule_views.xml:110-117`, the missing Rules list/form
+  action under Warehouse Management. The source list/form fields and advanced
+  location permission are recorded in the source comparison.
+- Added separate `pages/rules.yaml` + `api/rules.yaml` and
+  `pages/rule-detail.yaml` + `api/rule-detail.yaml`, all joined by matching
+  `page.id`. Migration `20260922390000-089-inventory-rules.yaml` adds durable
+  rule lifecycle/form fields to the existing route-rule table and stable
+  fixtures. The manifest now exposes `/rules` with `inventory.multi_location`.
+- Create, edit, archive, restore, and delete mutations require
+  `inventory.manage`; reads enforce multi-location scope. Guards cover active
+  routes, distinct locations, valid actions, duplicate names, company scope,
+  missing records, and optimistic row versions. Empty and transport-error
+  states are declared.
+- Focused test: 4 tests / 29 assertions passed in
+  `inventory_rules.integration.test.ts`; restart persistence and permission
+  boundary are included. Authenticated Odoo browser evidence is blocked because
+  the shared tab borrow confirmation expired; no visual-parity claim is made.
+- Evidence: `evidence/inventory/2026-09-22/INV-RULES-001/`.

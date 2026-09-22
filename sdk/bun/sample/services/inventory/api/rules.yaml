@@ -1,0 +1,59 @@
+page: { id: rules }
+datasources:
+  - id: inventory_rules
+    single: false
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_RULES_UNAVAILABLE, message: Rules are temporarily unavailable. } }
+    query: "SELECT rr.id, rr.row_version, rr.name, rr.active, rr.sequence_number, rr.action, rr.source_location_id, rr.destination_location_id, rr.source_location_name, rr.destination_location_name, COALESCE(r.name, '') AS route_name, rr.route_id, COALESCE(rr.company_name, 'Shared') AS company_name, COALESCE(rr.picking_type_name, '') AS picking_type_name, rr.procure_method, rr.auto, rr.delay_days FROM inventory_route_rules rr JOIN inventory_routes r ON r.id = rr.route_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND rr.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND rr.active = FALSE)) AND (rr.company_name IS NULL OR rr.company_name = COALESCE(:current_company_name, rr.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND rr.company_name = 'My Company (San Francisco)')) AND (:q IS NULL OR rr.name ILIKE '%' || :q || '%' OR rr.action ILIKE '%' || :q || '%' OR rr.source_location_name ILIKE '%' || :q || '%' OR rr.destination_location_name ILIKE '%' || :q || '%' OR r.name ILIKE '%' || :q || '%') AND (:action IS NULL OR :action = '' OR rr.action = :action) ORDER BY rr.sequence_number, rr.id"
+  - id: inventory_rule_routes
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_routes WHERE active = TRUE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)')) ORDER BY name, id"
+  - id: inventory_rule_locations
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_locations WHERE active = TRUE AND usage IN ('Internal', 'View', 'Transit', 'Supplier', 'Customer') ORDER BY name, id"
+  - id: inventory_rule_operation_types
+    single: false
+    permission: inventory.multi_location
+    query: "SELECT id AS value, name AS label FROM inventory_operation_types WHERE active = TRUE ORDER BY sequence_number, name, id"
+actions:
+  - id: view_inventory_rule
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /rules/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_rule
+    type: server_form
+    permission: inventory.manage
+    title: New rule
+    action: inventory.rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_rules]
+    mutation:
+      operation: insert
+      table: inventory_route_rules
+      generated: [id]
+      fields: [name, route_id, sequence_number, action, source_location_id, destination_location_id, source_location_name, destination_location_name, company_name, picking_type_id, picking_type_name, procure_method, auto, delay_days, warehouse_id, warehouse_name, active]
+      required: [name, route_id, action, source_location_id, destination_location_id]
+      defaults: { sequence_number: 10, action: pull, company_name: 'My Company (San Francisco)', procure_method: make_to_stock, auto: manual, delay_days: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_RULE_NAME_REQUIRED, message: A rule name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:action AS VARCHAR) IN ('pull', 'push', 'pull_push', 'buy')", status: 422, code: INVENTORY_RULE_ACTION_INVALID, message: Select a valid rule action. }
+        - { query: "SELECT 1 AS ok WHERE :source_location_id <> :destination_location_id", status: 422, code: INVENTORY_RULE_LOCATIONS_INVALID, message: Choose different source and destination locations. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_routes WHERE id = :route_id AND active = TRUE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)')))", status: 422, code: INVENTORY_RULE_ROUTE_INVALID, message: Select an active route in your company. }
+        - { query: "SELECT 1 AS ok WHERE :company_name IS NULL OR :company_name = COALESCE(:current_company_name, :company_name) OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_RULE_COMPANY_FORBIDDEN, message: The rule company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_route_rules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(company_name, '') = COALESCE(:company_name, '') AND active = TRUE)", status: 409, code: INVENTORY_RULE_EXISTS, message: An active rule with this name already exists for the company. }
+      result: { query: "SELECT * FROM inventory_route_rules WHERE id = :id" }
+    fields:
+      - { field: name, label: Rule, type: text, required: true }
+      - { field: route_id, label: Route, type: select, options_source: inventory_rule_routes, required: true }
+      - { field: action, label: Action, type: select, options: [{ value: pull, label: Pull From }, { value: push, label: Push To }, { value: pull_push, label: Pull & Push }, { value: buy, label: Buy }], required: true }
+      - { field: source_location_id, label: Source Location, type: select, options_source: inventory_rule_locations, required: true }
+      - { field: destination_location_id, label: Destination Location, type: select, options_source: inventory_rule_locations, required: true }
+      - { field: sequence_number, label: Sequence, type: number, default: 10 }
+      - { field: procure_method, label: Supply Method, type: select, options: [{ value: make_to_stock, label: Make To Stock }, { value: make_to_order, label: Make To Order }] }
+      - { field: auto, label: Trigger, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }
+      - { field: delay_days, label: Delay (days), type: number, default: 0 }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }
