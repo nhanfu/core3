@@ -18,6 +18,7 @@ components:
       - { id: view_pos_order_invoice, label: Invoice, variant: secondary, permission: pos.read, show_if: "state.pos_order_detail.invoice_id" }
       - { id: pay_pos_order_detail, label: Register payment, variant: primary, permission: pos.write, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Paid'" }
       - { id: invoice_pos_order_detail, label: Create invoice, variant: secondary, permission: pos.write, show_if: "state.pos_order_detail.state === 'Paid' && state.pos_order_detail.to_invoice === true && !state.pos_order_detail.invoice_id" }
+      - { id: send_pos_order_detail_email, label: Send Email, variant: secondary, permission: pos.write, show_if: "state.pos_order_detail.customer_email" }
       - { id: return_pos_order_detail, label: Return Products, variant: secondary, permission: pos.write, confirm: Return all refundable products from this order?, show_if: "(state.pos_order_detail.state === 'Paid' || state.pos_order_detail.state === 'Invoiced') && state.pos_order_detail.is_refund !== true" }
       - { id: cancel_pos_order_detail, label: Cancel, variant: danger, permission: pos.write, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Paid'" }
       - { id: delete_pos_order_detail, label: Delete, variant: danger, permission: pos.write, confirm: Delete this POS order?, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Cancelled'" }
@@ -32,6 +33,7 @@ components:
       - title: Customer and payment
         fields:
           - { field: partner_name, label: Customer }
+          - { field: customer_email, label: Email }
           - { field: payment_method, label: Payment method }
           - { field: amount_total, label: Total }
           - { field: amount_tax, label: Tax }

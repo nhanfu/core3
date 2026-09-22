@@ -1437,3 +1437,32 @@ blocked by the exact protected-page 401: browser instance `245ea108` has no
 reusable local Core3 QA session, while the authenticated Odoo session is
 available. No visual-parity claim is made for the Core3 page until that session
 is available.
+
+## Current bounded batch: Orders > Send Email from order detail
+
+Feature ID: `POS-ORDER-DETAIL-SEND-EMAIL-001`. The local Odoo 19 source exposes
+`action_send_mail` as an envelope action beside the `email` field in the POS
+order form’s Extra Info tab; Odoo hides it when the order has no customer email.
+This is distinct from the already implemented list-level `model_pos_order_send_mail`
+action and from the excluded refund-link and invoice-smart-button slices.
+
+Core3 now projects and displays `customer_email` on the existing
+`pos-order-detail` page, exposes a guarded `Send Email` detail action, and
+prefills To, Subject, and Message from the service-owned order projection. The
+page/API fragments remain separated and joined by `page.id`. The mutation
+reuses the durable `pos_order_email_runs` queue and operation audit with
+`pos.write`, current-company, signed-in actor, recipient/content, stale-row,
+missing-order, and restart guards; no new schema or outbound provider is added.
+
+Focused coverage is `test/pos_order_detail_email.integration.test.ts`: 4 tests
+and 25 assertions for source/action mapping, prefill and visibility metadata,
+durable queue/operation persistence, scope and validation guards, and
+file-backed restart replay. Related POS order/email/detail regression coverage
+passes 31 tests and 185 assertions. Audit, targeted ESLint, POS CSS, full
+frontend build, and `git diff --check` pass.
+
+BrowserSkill instance `245ea108` was connected, but the required borrow of the
+existing Odoo user tab did not complete and the tab remained user-scoped. No
+Odoo/Core3 desktop/mobile screenshot or visual-parity claim is made; the exact
+borrow blocker is recorded under
+`odoo-ui-parity/evidence/point_of_sale/2026-09-22/POS-ORDER-DETAIL-SEND-EMAIL-001/`.

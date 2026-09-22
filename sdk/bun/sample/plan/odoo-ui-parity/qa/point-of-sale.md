@@ -71,3 +71,27 @@
   401 without a reusable local QA login session.
 - Evidence:
   `../evidence/point_of_sale/2026-09-22/POS-ORDER-INVOICE-SMART-BUTTON-001/`.
+
+## 2026-09-22 — POS-ORDER-DETAIL-SEND-EMAIL-001
+
+- Status: bounded implementation and service verification complete; authenticated
+  Odoo/Core3 desktop/mobile evidence is blocked by the required BrowserSkill
+  tab borrow not completing, so no visual-parity claim is made.
+- Source: Odoo 19 `pos_order_view.xml` order-form `action_send_mail` envelope
+  action, hidden when the order has no customer email.
+- Implementation: added the `Send Email` action to `pos-order-detail`, projected
+  `customer_email` through the page/API pair, and reused the durable POS email
+  queue with `pos.write`, company, actor, recipient, content, stale-row, and
+  restart guards.
+- Focused test: `bun test ./test/pos_order_detail_email.integration.test.ts
+  --timeout 30000` — 4 tests, 25 assertions passed.
+- Regression: related POS order/email/detail suites passed 31 tests and 185
+  assertions; audit, frontend build, POS CSS build, targeted ESLint, and
+  `git diff --check` passed.
+- BrowserSkill: instance `245ea108` was connected and the Odoo user tab was
+  listed, but borrowing tab `1770662590` in session `wqul` waited for browser
+  confirmation and did not acquire the tab; it remained user-scoped. No
+  independent browser or login was used, and no Odoo/Core3 screenshots were
+  created or claimed.
+- Evidence:
+  `../evidence/point_of_sale/2026-09-22/POS-ORDER-DETAIL-SEND-EMAIL-001/`.

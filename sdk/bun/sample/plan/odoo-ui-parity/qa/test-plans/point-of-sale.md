@@ -41,6 +41,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-FUNC-011 | Orders bulk Create Invoices | Select eligible Orders, open Create Invoice(s), choose consolidated/separate mode, persist invoice links, and reject invalid/company/read-only selections atomically | pass: `pos_order_bulk_invoice.integration.test.ts`; Core3 browser blocked |
 | POS-FUNC-010 | Return Products | Paid/Invoiced order action creates a linked negative-line return in the active same-configuration session and survives restart | pass: focused contract/restart suite; browser action pending |
 | POS-FUNC-012 | Refund relationship smart buttons | Source order opens filtered Refund Orders and refund order opens its original order with company-scoped read access | planned: `pos_order_refund_links.integration.test.ts` |
+| POS-FUNC-013 | Order-detail Send Email | Odoo `action_send_mail` is exposed only when a customer email exists; queue recipient, subject, body and operation durably from the detail action | pass: `pos_order_detail_email.integration.test.ts`; browser evidence blocked |
 
 ## Workflow and integration cases
 
@@ -67,6 +68,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current order/session/configuration unchanged | pass at contract level |
 | POS-PERM-007 | Return Products boundary | Read-only, wrong-company, unauthenticated, stale, and closed-session callers cannot create a return or alter the source order | pass: focused contract suite |
 | POS-PERM-008 | Bulk Create Invoices boundary | `pos.write`, current company, paid/to-invoice/non-invoiced state, selection completeness, and consolidated customer guards hold atomically | pass: focused contract suite |
+| POS-PERM-009 | Order-detail Send Email boundary | `pos.write`, current company, signed-in actor, valid recipient/content, current row version, and existing customer email are required; failures are atomic | pass: `pos_order_detail_email.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -78,6 +80,7 @@ generated IDs; no test may depend on wall-clock dates or a prior test's rows.
 | POS-UI-004 | Current route regression | all manifest-owned POS routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | planned |
 | POS-UI-005 | Orders bulk invoice wizard | Odoo desktop shows selection, Create Invoices, Order Count, Create/Cancel; Odoo mobile hides bulk selection; Core3 paired capture remains blocked by runtime startup/auth | Odoo reference captured; Core3 pending |
 | POS-UI-006 | Refund relationship smart buttons | Odoo paid source shows Refunds and refund draft shows Refunded Orders; related list/detail fit desktop/mobile with no overflow | planned: paired authenticated captures or exact runtime blocker |
+| POS-UI-007 | Order-detail Send Email | Odoo order form email action and Core3 detail form/modal are checked at 1440x900 and 390x844 with no request/page errors or overflow | blocked: BrowserSkill tab borrow did not complete; no visual claim |
 
 ## Exit criteria
 

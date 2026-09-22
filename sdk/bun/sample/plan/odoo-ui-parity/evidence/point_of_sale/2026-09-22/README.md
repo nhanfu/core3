@@ -8,3 +8,5 @@
   relationship smart buttons.
 - [POS-ORDER-INVOICE-SMART-BUTTON-001](POS-ORDER-INVOICE-SMART-BUTTON-001/README.md)
   — linked invoice smart button and detail navigation.
+- [POS-ORDER-DETAIL-SEND-EMAIL-001](POS-ORDER-DETAIL-SEND-EMAIL-001/README.md)
+  — order-detail Send Email action; BrowserSkill borrow blocker recorded.
