@@ -2975,3 +2975,22 @@ no visual-parity claim is made.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-COLOR-001/`.
+
+## Bounded slice: `SURVEYS-CARD-QUESTION-COUNT-001` — 2026-09-22
+
+The next uncovered stable-ID behavior after the kanban participant counters is
+Odoo's `Questions` card metric. Odoo computes `question_count` from
+`question_ids`, which excludes section/page rows in
+`addons/survey/models/survey_survey.py:70-74,277-282`, and renders the value
+with the `Questions` label in `addons/survey/views/survey_survey_views.xml:260-262`.
+
+Core3 projects the same non-page question count from durable
+`survey_questions` in `api/surveys.yaml` and adds the `Questions` field to the
+Cards view in `pages/surveys.yaml`. The page/API remain joined by
+`page.id: surveys`; no migration or new renderer is required. Focused coverage
+checks the exact source contract, page/API binding, seeded counts, and
+exclusion of a section row.
+
+Focused verification and the single authenticated reference-browser attempt
+are recorded in
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-QUESTION-COUNT-001/`.

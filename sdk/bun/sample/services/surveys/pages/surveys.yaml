@@ -59,6 +59,7 @@ components:
           title: title
           subtitle: owner
           fields:
+            - { field: question_count, label: Questions }
             - { field: registered_count, label: Registered }
             - { field: completed_count, label: Completed }
             - { field: certified_count, label: Certified }
