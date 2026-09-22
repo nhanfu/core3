@@ -8,6 +8,7 @@ components:
     statusbar: [{ value: New, label: New }, { value: Screening, label: First screening }, { value: Interview, label: First interview }, { value: Offer, label: Contract proposal }, { value: Hired, label: Contract signed }, { value: Rejected, label: Refused }]
     status_colors: { New: neutral, Screening: amber, Interview: blue, Offer: violet, Hired: green, Rejected: red }
     group_columns: 2
+    stat_buttons: [{ id: schedule_recruitment_applicant_interview, label: Schedule Interview, value_field: meeting_display_text, permission: recruitment.write }]
     groups:
       - title: Applicant
         fields: [{ field: name, label: Applicant }, { field: stage, label: Stage }, { field: opening_name, label: Job position }, { field: department_name, label: Department }, { field: email, label: Email }, { field: phone, label: Phone }, { field: priority, label: Priority }, { field: rating, label: Rating }]
@@ -15,4 +16,27 @@ components:
         fields: [{ field: recruiter, label: Recruiter }, { field: source, label: Source }, { field: applied_date, label: Applied date }, { field: interview_date, label: Interview date }, { field: hired_date, label: Hired date }, { field: refused_date, label: Refused date }, { field: refuse_reason_name, label: Refuse reason }, { field: employee_name, label: Employee }, { field: notes, label: Notes }, { field: archived, label: Archived }]
       - title: Followers
         fields: [{ field: follower_count, label: Followers }, { field: follower_names, label: Following contacts }]
-    header_actions: [{ id: screen_applicant_detail, label: First screening, permission: recruitment.write, show_if: "record.stage === 'New'" }, { id: interview_applicant_detail, label: First interview, permission: recruitment.write, show_if: "record.stage === 'Screening'" }, { id: offer_applicant_detail, label: Contract proposal, permission: recruitment.write, show_if: "record.stage === 'Interview'" }, { id: hire_applicant_detail, label: Hire, permission: recruitment.manage, show_if: "record.stage === 'Offer'" }, { id: create_employee_from_recruitment_applicant, label: Create Employee, permission: employees.write, show_if: "record.stage === 'Hired' && !record.employee_id" }, { id: view_recruitment_applicant_employee, label: Employee, permission: employees.read, show_if: "!!record.employee_id" }, { id: create_recruitment_applications_from_detail, label: Create Applications, permission: recruitment.write, show_if: "record.is_pool_applicant === true" }, { id: reopen_applicant_detail, label: Restore, permission: recruitment.write, variant: secondary, show_if: "record.stage === 'Rejected' && record.archived === true" }, { id: reject_applicant_detail, label: Refuse, permission: recruitment.manage, variant: danger, show_if: "record.stage !== 'Hired' && record.stage !== 'Rejected'" }]
+    header_actions: [{ id: schedule_recruitment_applicant_interview, label: Schedule Interview, permission: recruitment.write, show_if: "record.archived === false" }, { id: screen_applicant_detail, label: First screening, permission: recruitment.write, show_if: "record.stage === 'New'" }, { id: interview_applicant_detail, label: First interview, permission: recruitment.write, show_if: "record.stage === 'Screening'" }, { id: offer_applicant_detail, label: Contract proposal, permission: recruitment.write, show_if: "record.stage === 'Interview'" }, { id: hire_applicant_detail, label: Hire, permission: recruitment.manage, show_if: "record.stage === 'Offer'" }, { id: create_employee_from_recruitment_applicant, label: Create Employee, permission: employees.write, show_if: "record.stage === 'Hired' && !record.employee_id" }, { id: view_recruitment_applicant_employee, label: Employee, permission: employees.read, show_if: "!!record.employee_id" }, { id: create_recruitment_applications_from_detail, label: Create Applications, permission: recruitment.write, show_if: "record.is_pool_applicant === true" }, { id: reopen_applicant_detail, label: Restore, permission: recruitment.write, variant: secondary, show_if: "record.stage === 'Rejected' && record.archived === true" }, { id: reject_applicant_detail, label: Refuse, permission: recruitment.manage, variant: danger, show_if: "record.stage !== 'Hired' && record.stage !== 'Rejected'" }]
+    notebook:
+      active: meetings
+      tabs:
+        - id: meetings
+          label: Meetings
+          components:
+            - type: LineItemGrid
+              source: recruitment_applicant_meetings
+              parent_source: recruitment_applicant_detail
+              title: Interviews
+              description: Meetings scheduled for this applicant.
+              variant: odoo_x2many
+              page_size: 20
+              row_key: id
+              actions: [{ id: schedule_recruitment_applicant_interview, label: Schedule Interview, variant: primary, permission: recruitment.write }]
+              empty_state: { title: No interviews, description: Schedule an interview from the applicant form. }
+              children:
+                - { type: LineItemField, id: name, field: name, label: Meeting, readonly: true }
+                - { type: LineItemField, id: start_at, field: start_at, label: Starts at, readonly: true }
+                - { type: LineItemField, id: end_at, field: end_at, label: Ends at, readonly: true }
+                - { type: LineItemField, id: location, field: location, label: Location, readonly: true }
+                - { type: LineItemField, id: attendee_names, field: attendee_names, label: Attendees, readonly: true }
+                - { type: LineItemField, id: state, field: state, label: Status, readonly: true }

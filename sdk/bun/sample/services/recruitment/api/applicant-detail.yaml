@@ -4,7 +4,12 @@ datasources:
     single: true
     permission: recruitment.read
     error_states: { unauthorized: { status: 401, code: RECRUITMENT_APPLICANT_UNAUTHENTICATED, message: Sign in to view this applicant. }, forbidden: { status: 403, code: RECRUITMENT_APPLICANT_FORBIDDEN, message: You do not have permission to view this applicant. }, missing_record: { status: 404, code: RECRUITMENT_APPLICANT_NOT_FOUND, message: Applicant not found. }, transport_error: { status: 503, code: RECRUITMENT_APPLICANT_UNAVAILABLE, message: Applicant details are temporarily unavailable. } }
-    query: "SELECT a.id, a.row_version, a.name, a.opening_id, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.employee_id, COALESCE(a.employee_name, '') AS employee_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id) AS is_pool_applicant, (SELECT COUNT(*) FROM recruitment_applicants created WHERE created.pool_applicant_id = a.id) AS created_application_count, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
+    query: "SELECT a.id, a.row_version, a.name, a.opening_id, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.employee_id, COALESCE(a.employee_name, '') AS employee_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id) AS is_pool_applicant, (SELECT COUNT(*) FROM recruitment_applicants created WHERE created.pool_applicant_id = a.id) AS created_application_count, (SELECT COUNT(*) FROM recruitment_applicant_meetings m WHERE m.applicant_id = a.id) AS meeting_count, COALESCE((SELECT CASE WHEN COUNT(*) = 0 THEN 'No Meeting' WHEN COUNT(*) = 1 THEN '1 Meeting' WHEN MIN(m.start_at) >= TIMESTAMP '2026-01-15 00:00:00' THEN 'Next Meeting' ELSE 'Last Meeting' END FROM recruitment_applicant_meetings m WHERE m.applicant_id = a.id), 'No Meeting') AS meeting_display_text, COALESCE(CAST(CAST((SELECT m.start_at FROM recruitment_applicant_meetings m WHERE m.applicant_id = a.id ORDER BY CASE WHEN m.start_at >= TIMESTAMP '2026-01-15 00:00:00' THEN 0 ELSE 1 END, m.start_at DESC, m.id DESC LIMIT 1) AS DATE) AS VARCHAR), '') AS meeting_display_date, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
+  - id: recruitment_applicant_meetings
+    permission: recruitment.read
+    single: false
+    error_states: { unauthorized: { status: 401, code: RECRUITMENT_APPLICANT_MEETINGS_UNAUTHENTICATED, message: Sign in to view applicant interviews. }, forbidden: { status: 403, code: RECRUITMENT_APPLICANT_MEETINGS_FORBIDDEN, message: You do not have permission to view applicant interviews. }, transport_error: { status: 503, code: RECRUITMENT_APPLICANT_MEETINGS_UNAVAILABLE, message: Applicant interviews are temporarily unavailable. } }
+    query: "SELECT m.id, m.row_version, m.applicant_id, m.applicant_name, m.name, CAST(m.start_at AS VARCHAR) AS start_at, CAST(m.end_at AS VARCHAR) AS end_at, m.location, m.attendee_names, m.state, m.organizer, m.company_name FROM recruitment_applicant_meetings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND m.applicant_id = :id AND (COALESCE(:current_company_name, '') = '' OR m.company_name = :current_company_name) ORDER BY m.start_at, m.id"
   - id: recruitment_applicant_refuse_reason_lookup
     permission: recruitment.read
     query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
@@ -46,6 +51,47 @@ actions:
           code: RECRUITMENT_CREATE_EMPLOYEE_STALE
           message: The applicant changed before the employee was created. Reload and try again.
       result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
+  - id: schedule_recruitment_applicant_interview
+    type: server_form
+    permission: recruitment.write
+    title: Schedule Interview
+    description: Open a calendar meeting for this applicant.
+    submit_label: Schedule
+    cancel_label: Discard
+    success_message: Interview scheduled.
+    action: recruitment.applicants.schedule_interview
+    handler: yaml_mutation
+    operation: create
+    prefill: state.recruitment_applicant_detail
+    params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
+    refresh: [recruitment_applicant_detail, recruitment_applicant_meetings, recruitment_applicants]
+    mutation:
+      fields: [name, start_at, end_at, location, attendee_names]
+      required: [name, start_at, end_at]
+      before_steps:
+        - query: "SELECT 'recruitment-applicant-meeting-' || a.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_applicant_meetings prior WHERE prior.applicant_id = a.id), 0) + 1 AS VARCHAR) AS meeting_id, a.name AS applicant_name, a.company_name AS applicant_company FROM recruitment_applicants a WHERE a.id = :id AND a.row_version = :expected_row_version"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM recruitment_applicants WHERE id = :id AND row_version = :expected_row_version AND archived = FALSE", status: 409, code: RECRUITMENT_APPLICANT_MEETING_STALE, message: Only a current active applicant can receive an interview. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:current_user_name, '') AS VARCHAR)), '') IS NOT NULL", status: 403, code: RECRUITMENT_APPLICANT_MEETING_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to schedule an interview. }
+        - { query: "SELECT 1 AS ok FROM recruitment_applicants WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: RECRUITMENT_APPLICANT_MEETING_COMPANY_FORBIDDEN, message: The applicant belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) BETWEEN 1 AND 200", status: 422, code: RECRUITMENT_APPLICANT_MEETING_NAME_REQUIRED, message: An interview subject is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:start_at, '') AS VARCHAR))) >= 16 AND LENGTH(TRIM(CAST(COALESCE(:end_at, '') AS VARCHAR))) >= 16 AND CAST(:start_at AS TIMESTAMP) < CAST(:end_at AS TIMESTAMP)", status: 422, code: RECRUITMENT_APPLICANT_MEETING_TIME_INVALID, message: Enter valid ISO start and end times with the end after the start. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicant_meetings WHERE applicant_id = :id AND start_at = CAST(:start_at AS TIMESTAMP) AND end_at = CAST(:end_at AS TIMESTAMP) AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: RECRUITMENT_APPLICANT_MEETING_EXISTS, message: This interview is already scheduled for the applicant. }
+      steps:
+        - query: "INSERT INTO recruitment_applicant_meetings(id, applicant_id, company_name, applicant_name, name, start_at, end_at, location, attendee_names, state, organizer, row_version, created_at, updated_at) VALUES(:meeting_id, :id, :applicant_company, :applicant_name, TRIM(CAST(:name AS VARCHAR)), CAST(:start_at AS TIMESTAMP), CAST(:end_at AS TIMESTAMP), TRIM(CAST(COALESCE(:location, '') AS VARCHAR)), TRIM(CAST(COALESCE(:attendee_names, '') AS VARCHAR)), 'Scheduled', NULLIF(TRIM(CAST(COALESCE(:current_user_name, '') AS VARCHAR)), ''), 1, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00')"
+        - query: "UPDATE recruitment_applicants SET interview_date = CAST(:start_at AS DATE), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: RECRUITMENT_APPLICANT_MEETING_STALE
+          message: The applicant changed before the interview was scheduled. Reload and try again.
+      result: { query: "SELECT m.id, m.applicant_id, m.applicant_name, m.name, CAST(m.start_at AS VARCHAR) AS start_at, CAST(m.end_at AS VARCHAR) AS end_at, m.location, m.attendee_names, m.state, m.organizer, m.company_name, m.row_version FROM recruitment_applicant_meetings m WHERE m.id = :meeting_id" }
+    fields:
+      - { field: name, label: Meeting, type: text, required: true, placeholder: Interview with the applicant }
+      - { field: start_at, label: Starts at, type: text, required: true, placeholder: '2026-01-20 09:00' }
+      - { field: end_at, label: Ends at, type: text, required: true, placeholder: '2026-01-20 10:00' }
+      - { field: location, label: Location, type: text, placeholder: Meeting room or video link }
+      - { field: attendee_names, label: Attendees, type: text, placeholder: Applicant and recruitment team }
   - id: reopen_applicant_detail
     type: server
     permission: recruitment.write

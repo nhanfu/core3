@@ -1,0 +1,44 @@
+version: 0.0.24
+kind: schema
+description: Durable Recruitment applicant interview meetings
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_applicant_meetings (
+        id VARCHAR PRIMARY KEY,
+        applicant_id VARCHAR NOT NULL,
+        company_name VARCHAR,
+        applicant_name VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        start_at TIMESTAMP NOT NULL,
+        end_at TIMESTAMP NOT NULL,
+        location VARCHAR NOT NULL DEFAULT '',
+        attendee_names VARCHAR NOT NULL DEFAULT '',
+        state VARCHAR NOT NULL DEFAULT 'Scheduled',
+        organizer VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_meetings_applicant_idx
+        ON recruitment_applicant_meetings(applicant_id, start_at, id);
+      CREATE INDEX IF NOT EXISTS recruitment_applicant_meetings_company_idx
+        ON recruitment_applicant_meetings(company_name, start_at, id);
+      INSERT OR IGNORE INTO recruitment_applicant_meetings(
+        id, applicant_id, company_name, applicant_name, name, start_at, end_at,
+        location, attendee_names, state, organizer, row_version, created_at, updated_at
+      ) VALUES (
+        'recruitment-applicant-meeting-demo-001', 'applicant-demo-001', 'Core3 Demo Company',
+        'Demo Candidate', 'Portfolio interview', TIMESTAMP '2026-01-20 10:00:00',
+        TIMESTAMP '2026-01-20 11:00:00', 'Core3 HQ - Room 2',
+        'Demo Candidate, Recruitment Team', 'Scheduled', 'Recruitment Team', 1,
+        TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'
+      );
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicant_meetings_company_idx;
+      DROP INDEX IF EXISTS recruitment_applicant_meetings_applicant_idx;
+      DROP TABLE IF EXISTS recruitment_applicant_meetings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
