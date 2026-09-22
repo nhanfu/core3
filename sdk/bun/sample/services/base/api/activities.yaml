@@ -206,10 +206,6 @@ actions:
     params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [activities]
     mutation:
-      operation: update
-      table: base_activities
-      fields: [due_date]
-      concurrency: { required: true }
       guards:
         - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_ACTIVITY_SCOPE, message: Activity is outside the current company. }
         - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: The activity changed; reload before rescheduling it. }
@@ -224,10 +220,6 @@ actions:
     params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [activities]
     mutation:
-      operation: update
-      table: base_activities
-      fields: [due_date]
-      concurrency: { required: true }
       guards:
         - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 403, code: BASE_ACTIVITY_SCOPE, message: Activity is outside the current company. }
         - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: The activity changed; reload before rescheduling it. }

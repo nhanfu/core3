@@ -42,17 +42,18 @@ actions:
     action: base.activities.detail.done
     handler: yaml_mutation
     operation: complete_activity
-    params: { id: '{state.activity_detail.id}', expected_row_version: '{state.activity_detail.row_version}' }
+    params: { id: '{state.activity_detail.id}', expected_row_version: '{state.activity_detail.row_version}', values: { state: done } }
     refresh: [activity_detail]
     mutation:
       operation: update
       table: base_activities
-      fields: [state, completed_at]
+      fields: [state]
       concurrency: { required: true }
       guards:
         - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 404, code: BASE_ACTIVITY_NOT_FOUND, message: Activity not found. }
         - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: Only an unchanged planned activity can be completed. }
-      steps: [{ query: "UPDATE base_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_ACTIVITY_STALE, message: The activity changed before it could be completed. }]
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: BASE_ACTIVITY_ACTOR_REQUIRED, message: An authenticated actor is required to complete an activity. }
+      steps: [{ query: "UPDATE base_activities SET completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'done'", expect_changed: true, status: 409, code: BASE_ACTIVITY_STALE, message: The activity changed before it could be completed. }]
       result: { query: "SELECT id, state, row_version, CAST(completed_at AS VARCHAR) AS completed_at FROM base_activities WHERE id = :id" }
   - id: cancel_activity_detail
     type: server
