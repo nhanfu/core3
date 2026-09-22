@@ -34,7 +34,7 @@ describe('Sales order form parity slice', () => {
   it('declares Odoo Sales labels, tabs, mapped states, and form sources', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     const lines = page.components.find((component: any) => component.type === 'LineItemGrid');
-    expect(form.header_actions.map((item: any) => item.label)).toEqual(['Edit', 'Apply Template', 'Send', 'Confirm', 'Confirm', 'Create Invoice', 'Lock', 'Unlock', 'Print', 'Cancel', 'Set to Quotation', 'Preview']);
+    expect(form.header_actions.map((item: any) => item.label)).toEqual(['Edit', 'Apply Template', 'Update Prices', 'Send', 'Confirm', 'Confirm', 'Create Invoice', 'Lock', 'Unlock', 'Print', 'Cancel', 'Set to Quotation', 'Preview']);
     expect(form.notebook.tabs.map((item: any) => item.label)).toEqual(['Order Lines', 'Other Information']);
     const formLabels = [
       ...form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label)),

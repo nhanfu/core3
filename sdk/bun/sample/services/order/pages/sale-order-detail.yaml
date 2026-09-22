@@ -19,6 +19,7 @@ components:
     header_actions:
       - { id: edit_sale_order, label: Edit, variant: secondary, show_if: "state.sale_order_detail.status !== 'Sales Order' && state.sale_order_detail.status !== 'Cancelled'" }
       - { id: apply_sale_quotation_template, label: Apply Template, variant: secondary, permission: orders.write, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
+      - { id: update_sale_order_prices, label: Update Prices, variant: secondary, permission: orders.write, show_if: "state.sale_order_detail.update_prices_available && (state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent')" }
       - { id: send_sale_quotation, label: Send, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_draft_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }

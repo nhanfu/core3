@@ -259,3 +259,26 @@ healthy, but borrowing signed-in user tab `1770662590` did not complete under
 the required confirmation flow; the session ended without ownership. No Odoo
 desktop/mobile capture or visual-parity claim is made. Details are under
 `evidence/order/2026-09-22/sales-order-print-001/`.
+
+## Sales order Update Prices bounded slice (2026-09-22)
+
+Stable ID `SALES-ORDER-UPDATE-PRICES-001` covers the next unmapped Sales order
+action after lock/unlock and Print: Odoo `sale.order.action_update_prices`.
+`sale/views/sale_order_views.xml` exposes `Update Prices` beside the pricelist
+for editable quotations, and `sale/models/sale_order.py` recomputes product
+line prices from the selected pricelist, resets discounts, recalculates line
+taxes/totals, and posts an audit message.
+
+Core3 adds the permissioned `update_sale_order_prices` action to the existing
+`sale-order-detail` page/API pair. Active pricelist rules and product list
+prices are applied durably to product lines, global discount lines remain
+untouched, order totals and row versions are persisted, and the existing
+Sales order timeline records the actor. Guards cover `orders.write`, branch
+scope, active pricelist, quotation state, actor presence, and stale row
+versions.
+
+Focused verification: `bun test test/sales_order_update_prices.integration.test.ts`
+passes (3 tests, 19 assertions). Source comparison and test evidence are under
+`evidence/order/2026-09-22/sales-order-update-prices-001/`. Browser evidence is
+subject to the single post-test BrowserSkill attempt; no visual-parity claim is
+made without authenticated desktop/mobile proof.

@@ -19,6 +19,7 @@ datasources:
         '<p>Hello ' || COALESCE(c.name, o.customer_name) || ',</p><p>Please find quotation ' || o.order_number || ' attached.</p>' AS body_html,
         'Quotation - ' || o.order_number || '.pdf' AS attachment_name,
         o.notes, COALESCE(o.total_amount, 0) AS total_amount, printf('$%,.2f', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        CASE WHEN o.pricelist_name IS NOT NULL AND EXISTS (SELECT 1 FROM sale_pricelists p WHERE p.name = o.pricelist_name AND p.active = true) THEN true ELSE false END AS update_prices_available,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
           WHEN 'Draft' THEN 'Quotation' WHEN 'Pending Approval' THEN 'Sent'
           WHEN 'Approved' THEN 'Sales Order' WHEN 'Cancelled' THEN 'Cancelled'
@@ -203,6 +204,28 @@ actions:
       - { field: subject, label: Subject, type: text, required: true }
       - { field: body_html, label: Message, type: mail_body, required: true }
       - { field: attachment_name, label: Attachments, type: mail_attachment, required: true }
+  - id: update_sale_order_prices
+    type: server
+    permission: orders.write
+    action: sale.orders.update_prices
+    handler: yaml_mutation
+    operation: update_prices
+    confirm: This will update the unit price of all products based on this pricelist.
+    params: { id: '{state.sale_order_detail.id}', expected_row_version: '{state.sale_order_detail.row_version}' }
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    mutation:
+      concurrency: { required: true }
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id", status: 404, code: SALE_ORDER_PRICE_UPDATE_NOT_FOUND, message: Sales order not found. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_PRICE_UPDATE_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT o.id FROM orders o JOIN sale_pricelists p ON p.name = o.pricelist_name AND p.active = true WHERE o.id = :id AND o.row_version = :expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_PRICE_UPDATE_NOT_ALLOWED, message: Only an unchanged quotation with an active pricelist can update prices. Reload before updating prices. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: SALE_ORDER_PRICE_UPDATE_ACTOR_REQUIRED, message: A signed-in Sales user is required to update prices. }
+      steps:
+        - { query: "UPDATE order_lines AS l SET unit_price = COALESCE((SELECT CASE WHEN i.fixed_price IS NOT NULL THEN i.fixed_price ELSE p.list_price * (1 - COALESCE(i.percentage_discount, 0) / 100) END FROM sale_pricelist_items i JOIN sale_pricelists pl ON pl.id = i.pricelist_id JOIN sale_products p ON p.id = l.product_id WHERE pl.name = (SELECT pricelist_name FROM orders WHERE id = :id) AND pl.active = true AND i.product_id = l.product_id AND i.min_quantity <= l.quantity ORDER BY i.min_quantity DESC LIMIT 1), (SELECT p.list_price FROM sale_products p WHERE p.id = l.product_id), l.unit_price), discount = 0, price_subtotal = ROUND(CAST(l.quantity AS DECIMAL(18,4)) * COALESCE((SELECT CASE WHEN i.fixed_price IS NOT NULL THEN i.fixed_price ELSE p.list_price * (1 - COALESCE(i.percentage_discount, 0) / 100) END FROM sale_pricelist_items i JOIN sale_pricelists pl ON pl.id = i.pricelist_id JOIN sale_products p ON p.id = l.product_id WHERE pl.name = (SELECT pricelist_name FROM orders WHERE id = :id) AND pl.active = true AND i.product_id = l.product_id AND i.min_quantity <= l.quantity ORDER BY i.min_quantity DESC LIMIT 1), (SELECT p.list_price FROM sale_products p WHERE p.id = l.product_id), l.unit_price) * (1 - 0 / 100), 2), price_tax = ROUND(CAST(l.quantity AS DECIMAL(18,4)) * COALESCE((SELECT CASE WHEN i.fixed_price IS NOT NULL THEN i.fixed_price ELSE p.list_price * (1 - COALESCE(i.percentage_discount, 0) / 100) END FROM sale_pricelist_items i JOIN sale_pricelists pl ON pl.id = i.pricelist_id JOIN sale_products p ON p.id = l.product_id WHERE pl.name = (SELECT pricelist_name FROM orders WHERE id = :id) AND pl.active = true AND i.product_id = l.product_id AND i.min_quantity <= l.quantity ORDER BY i.min_quantity DESC LIMIT 1), (SELECT p.list_price FROM sale_products p WHERE p.id = l.product_id), l.unit_price) * (1 - 0 / 100) * CAST(l.tax_rate AS DECIMAL(9,4)) / 100, 2), price_total = ROUND(CAST(l.quantity AS DECIMAL(18,4)) * COALESCE((SELECT CASE WHEN i.fixed_price IS NOT NULL THEN i.fixed_price ELSE p.list_price * (1 - COALESCE(i.percentage_discount, 0) / 100) END FROM sale_pricelist_items i JOIN sale_pricelists pl ON pl.id = i.pricelist_id JOIN sale_products p ON p.id = l.product_id WHERE pl.name = (SELECT pricelist_name FROM orders WHERE id = :id) AND pl.active = true AND i.product_id = l.product_id AND i.min_quantity <= l.quantity ORDER BY i.min_quantity DESC LIMIT 1), (SELECT p.list_price FROM sale_products p WHERE p.id = l.product_id), l.unit_price) * (1 - 0 / 100) * (1 + CAST(l.tax_rate AS DECIMAL(9,4)) / 100), 2), line_total = ROUND(CAST(l.quantity AS DECIMAL(18,4)) * COALESCE((SELECT CASE WHEN i.fixed_price IS NOT NULL THEN i.fixed_price ELSE p.list_price * (1 - COALESCE(i.percentage_discount, 0) / 100) END FROM sale_pricelist_items i JOIN sale_pricelists pl ON pl.id = i.pricelist_id JOIN sale_products p ON p.id = l.product_id WHERE pl.name = (SELECT pricelist_name FROM orders WHERE id = :id) AND pl.active = true AND i.product_id = l.product_id AND i.min_quantity <= l.quantity ORDER BY i.min_quantity DESC LIMIT 1), (SELECT p.list_price FROM sale_products p WHERE p.id = l.product_id), l.unit_price) * (1 - 0 / 100) * (1 + CAST(l.tax_rate AS DECIMAL(9,4)) / 100), 2), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE l.order_id = :id AND l.display_type IS NULL AND l.product_id IS NOT NULL AND l.product_id <> 'product-demo-discount'" }
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_PRICE_UPDATE_STALE, message: Sales order changed while updating prices. Reload before saving. }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sale.orders.update_prices', 'orders', :id, 'Recomputed product prices from ' || (SELECT pricelist_name FROM orders WHERE id = :id))" }
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
   - id: confirm_sale_order
     type: server
     permission: orders.approve
