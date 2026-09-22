@@ -1,0 +1,27 @@
+title: POS Customer Orders
+page: { id: pos-customer-orders, route: /point-of-sale/customer-orders, breadcrumb: [Sales, Point of Sale, Customers, Orders], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_customer_scoped_orders
+    search: { label: Search customer orders, placeholder: Search order number... }
+    filters: [{ field: state, label: Status, options_source: pos_customer_order_states }]
+    columns:
+      - { field: name, label: Order, type: PrimaryEntityCell }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_paid, label: Paid, align: right }
+      - { field: payment_method, label: Payment method }
+      - { field: cashier_id, label: Cashier }
+      - { field: date_order, label: Order date }
+    page_size: 50
+    row_key: id
+    row_open_action: view_pos_customer_order
+    row_double_click_action: view_pos_customer_order
+    empty_state: { title: No POS orders, description: This customer has no POS orders in the selected company. }
+actions:
+  - id: back_to_pos_customer
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/customer-detail
+    params: { id: '{query.customer_id}' }

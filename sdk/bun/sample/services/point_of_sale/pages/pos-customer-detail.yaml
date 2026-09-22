@@ -5,6 +5,8 @@ components:
     source: pos_customer_detail
     title_field: partner_name
     group_columns: 2
+    stat_buttons:
+      - { id: open_pos_customer_orders, label: PoS Orders, icon: shopping-bag, value_field: order_count, permission: pos.read, show_if: "state.pos_customer_detail.order_count > 0" }
     groups:
       - title: Customer
         fields:

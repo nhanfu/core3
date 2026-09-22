@@ -3,8 +3,19 @@ datasources:
   - id: pos_customer_detail
     single: true
     permission: pos.read
-    query: "SELECT c.id, c.name AS partner_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_customers c LEFT JOIN pos_orders o ON o.partner_name = c.name WHERE c.id = :id GROUP BY c.id, c.name"
+    error_states:
+      unauthorized: { status: 401, code: POS_CUSTOMER_DETAIL_UNAUTHORIZED, message: Sign in to view this POS customer. }
+      forbidden: { status: 403, code: POS_CUSTOMER_DETAIL_FORBIDDEN, message: You do not have access to this POS customer's orders. }
+      not_found: { status: 404, code: POS_CUSTOMER_NOT_FOUND, message: POS customer not found. }
+      transport_error: { status: 503, code: POS_CUSTOMER_DETAIL_UNAVAILABLE, message: POS customer details are temporarily unavailable. }
+    query: "SELECT c.id, c.name AS partner_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_customers c LEFT JOIN pos_orders o ON o.partner_name = c.name AND o.company = :current_company_name WHERE c.id = :id GROUP BY c.id, c.name"
   - id: pos_customer_detail_orders
     single: false
     permission: pos.read
-    query: "SELECT o.id, o.name, CAST(o.date_order AS VARCHAR) AS date_order, o.state, o.amount_total FROM pos_orders o JOIN pos_customers c ON c.name = o.partner_name WHERE c.id = :id ORDER BY o.date_order DESC"
+    query: "SELECT o.id, o.name, CAST(o.date_order AS VARCHAR) AS date_order, o.state, o.amount_total FROM pos_orders o JOIN pos_customers c ON c.name = o.partner_name WHERE c.id = :id AND o.company = :current_company_name ORDER BY o.date_order DESC"
+actions:
+  - id: open_pos_customer_orders
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/customer-orders
+    params: { customer_id: '{state.id}' }
