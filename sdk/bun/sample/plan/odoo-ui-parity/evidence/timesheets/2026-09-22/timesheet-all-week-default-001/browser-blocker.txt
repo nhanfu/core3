@@ -1,0 +1,17 @@
+BrowserSkill blocker for TIMESHEET-ALL-WEEK-DEFAULT-001
+
+Shared browser instance: 245ea108
+
+The authenticated Odoo tab was tab 1770662590. The borrow attempt using the
+existing session returned:
+
+error: tab is borrowed by another session
+hint: return tab from borrowing session via bsk tab return ...
+details: tab_borrow: tab 1770662590 is already borrowed or being borrowed by session augl
+
+A later borrow attempt from a fresh BrowserSkill session remained pending until
+the command timed out and did not confirm ownership or produce a capture. That
+session was stopped. No credentials, session data, or secret URL was recorded.
+
+Result: authenticated desktop/mobile browser evidence is blocked; no visual
+parity claim is made.

@@ -2367,6 +2367,30 @@ three unrelated invalid page-view fields (`graph.category_field`,
 `activity.title_field`, and `activity.activity_types`). No visual parity or
 module sign-off is claimed while that shared discovery error remains.
 
+## 2026-09-22 `TIMESHEET-ALL-WEEK-DEFAULT-001`
+
+The next non-portal internal action gap is Odoo's All Timesheets default-week
+context. `addons/hr_timesheet/views/hr_timesheet_views.xml:484-494` defines
+`timesheet_action_all` at `/odoo/all-timesheets` with `search_default_week: 1`
+and the `project_id != False` domain. The existing Core3 All Timesheets page
+already exposed a This Week filter and a durable fixed-date query, but opened
+without that action default.
+
+Core3 now declares `default_filters: { work_date: this_week }` on the
+layout-only `pages/all-timesheets.yaml`; the separate `api/all-timesheets.yaml`
+contract remains joined by `page.id: all-timesheets`. No persistence or
+migration change was needed. The focused test proves the seven deterministic
+week rows, current-company empty guard, manager permission and transport-error
+boundary, and migration replay/file restart.
+
+Focused coverage is
+`test/timesheets_all_week_default.integration.test.ts`: 4 tests / 17
+expectations. BrowserSkill could not borrow the authenticated Odoo tab: the
+tab was already borrowed by another session (`tab is borrowed by another
+session`) and a later borrow request timed out without confirmation. No Odoo
+desktop/mobile capture or visual-parity claim is made; the exact blocker is in
+`evidence/timesheets/2026-09-22/timesheet-all-week-default-001/`.
+
 ## Wave 49 — `TIMESHEET-PORTAL-TASK-REPORT-001`
 
 Odoo source and reference behavior were compared for the portal task `View Details` workflow: `addons/hr_timesheet/controllers/portal.py:175-180` scopes the task report to the portal actor and task, `views/project_task_portal_templates.xml:8-11` exposes the `View Details` link, and `report/report_timesheet_templates.xml:215-222` defines the `timesheet_report_task_timesheets` report. Authenticated Odoo observation confirmed task 107's `Furniture Delivery` report heading, Date/Employee/Description/Time Spent columns, and `Total (Hours) 45:00`.

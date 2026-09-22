@@ -6,6 +6,24 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## 2026-09-22 `TIMESHEET-ALL-WEEK-DEFAULT-001`
+
+Selected the next non-portal internal action gap: Odoo's
+`timesheet_action_all` opens `/odoo/all-timesheets` with
+`search_default_week: 1`. Core3 now declares the matching
+`default_filters: { work_date: this_week }` on the layout-only All Timesheets
+page; its API remains the separate `page.id: all-timesheets` durable query.
+
+Focused coverage passes 4/4 tests with 17 expectations, including the seven
+fixed-week rows, current-company empty guard, manager permission, transport
+error, migration replay, and file-backed restart.
+
+BrowserSkill could not borrow the authenticated Odoo tab: it was already held
+by another session, and the later borrow request timed out without confirmation.
+No Odoo desktop/mobile capture or visual-parity claim is made. Evidence and the
+exact blocker are under
+`evidence/timesheets/2026-09-22/timesheet-all-week-default-001/`.
+
 ## Wave 27 — `TIMESHEET-MY-IMPORT-TEMPLATE-001` (2026-09-21)
 
 The smallest uncovered source-backed behavior after the prior billing-type

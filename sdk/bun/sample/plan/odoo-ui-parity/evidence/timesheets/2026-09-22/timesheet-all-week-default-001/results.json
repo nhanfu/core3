@@ -1,0 +1,15 @@
+{
+  "feature_id": "TIMESHEET-ALL-WEEK-DEFAULT-001",
+  "focused_tests": {
+    "passed": 4,
+    "failed": 0,
+    "expectations": 17
+  },
+  "browser": {
+    "instance_id": "245ea108",
+    "authenticated_tab_borrowed": false,
+    "desktop_capture": null,
+    "mobile_capture": null,
+    "blocker": "Authenticated tab was already borrowed by another session; a later fresh-session borrow timed out without confirmation."
+  }
+}

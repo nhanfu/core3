@@ -355,6 +355,22 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
   comparison, remaining route/action comparison, and module sign-off remain
   pending**.
 
+## 2026-09-22 `TIMESHEET-ALL-WEEK-DEFAULT-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `timesheet_action_all` at `/odoo/all-timesheets` with `search_default_week: 1` | pass in focused source test |
+| Paired YAML contract | layout-only `all-timesheets` page, API `page.id: all-timesheets` | pass |
+| Deterministic week scope | seven fixed-seed rows between 2026-01-12 and 2026-01-18 | pass |
+| Permission/error/empty guards | `timesheets.manage`, current-company exclusion, empty fixture, 503 transport error | pass |
+| Restart | migration replay and file-backed week result | pass |
+| Focused regression | 4 tests / 17 expectations | pass |
+| BrowserSkill authenticated Odoo evidence | Borrow existing signed-in tab on browser instance `245ea108` | blocked; tab was already borrowed by another session and the later borrow timed out without confirmation |
+
+Evidence: `evidence/timesheets/2026-09-22/timesheet-all-week-default-001/`.
+No desktop/mobile capture or visual-parity claim is made. Existing Odoo
+Print/PDF/action-surface blockers and module sign-off remain open.
+
 ## 2026-09-20 `TIMESHEET-EMPLOYEE-REPORT-PREVIEW`
 
 - Source gate: Odoo `timesheet_action_from_employee`
