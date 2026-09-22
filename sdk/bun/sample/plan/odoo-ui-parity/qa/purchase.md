@@ -276,3 +276,41 @@ Disposition: **conditional bounded pass** for source-backed YAML contract,
 workflow/permission guards, durable persistence, restart coverage, and Odoo
 desktop/mobile evidence; Core3 composer browser integration remains blocked by
 the exact UI dispatch finding above.
+
+## 2026-09-22 candidate QA — Purchase Order Catalog action
+
+- Stable ID: `PURCHASE-CATALOG-001`.
+- Scope: Products-tab `Catalog` action only; no full Purchase sign-off.
+- Source: Odoo 19 `purchase_views.xml:240-255`,
+  `purchase_order.py:1149-1168`, and `purchase_order_line.py:531-533`.
+- Focused: Catalog + order-line regression **PASS**, 5 tests / 49 assertions.
+- Purchase regression: **PASS**, 86 tests / 743 assertions.
+- Audit: **PASS**, 824 pages / 832 routes / 1,714 datasources.
+- Frontend/CSS: **PASS**, Purchase Sass and `bun run frontend:build`.
+- Diff check: **PASS**.
+- Evidence: `evidence/purchase/2026-09-22/PURCHASE-CATALOG-001/`.
+
+### Contract and persistence result
+
+The page/API pair remains joined by `page.id: purchase-detail`. The Catalog
+options datasource filters active `purchase_ok` products and the `purchase.write`
+server form atomically adds or merges selected products. Fresh migration and
+replay, total/version recalculation, stale parent, locked/non-editable order,
+empty selection, missing product, and positive quantity guards are covered.
+
+### Browser result and open gates
+
+BrowserSkill instance `245ea108` was connected. The first borrow of signed-in
+Odoo tab `1770662590` was denied because session `lexx` held it. A new borrow
+request in session `jqlz` stayed pending until its 120-second timeout; the
+session was stopped. No Odoo tab was borrowed or returned, no desktop/mobile
+capture was produced, and no visual-parity claim is made.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-CATALOG-QA-001 | Authenticated live Odoo tab was unavailable through the required BrowserSkill borrow flow | open blocker; no visual claim |
+| PURCHASE-CATALOG-QA-002 | Core3 uses one quantity for a multi-select and fixture `cost_price`; Odoo has per-card seller-price behavior | bounded follow-up |
+
+Disposition: **conditional bounded pass** for the source-backed declarative
+contract, durable add/merge workflow, guards, tests, and build. This does not
+sign off the Purchase module or visual parity.

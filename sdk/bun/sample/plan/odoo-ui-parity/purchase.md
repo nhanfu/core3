@@ -1282,3 +1282,35 @@ while the console has no new application exception. This is recorded as an
 open shared `server_form`/mail-composer dispatch blocker, not visual-parity
 proof. Core3 detail captures and the exact network/console result are stored
 in the feature evidence folder.
+
+## 2026-09-22 bounded addendum — Purchase Order Catalog action
+
+The next genuinely missing source-defined Purchase action is the Products-tab
+`Catalog` control. Odoo declares it in
+`addons/purchase/views/purchase_views.xml:240-255` as
+`purchase.order.line.action_add_from_catalog`, delegates to the parent order
+at `purchase/models/purchase_order_line.py:531-533`, and restricts the source
+catalog to purchaseable products through
+`purchase/models/purchase_order.py:1149-1168`.
+
+Core3 adds the page/API-matched `add_purchase_order_catalog` server form to the
+existing `purchase-detail` page. Its `purchase_order_catalog_products`
+datasource is read-only and exposes active `purchase_ok` products. The shared
+modal accepts multiple products and a positive quantity. Migration
+`20260922150000-032-purchase-order-catalog.yaml` adds durable `product_id`
+identity to order lines. The mutation merges an existing product line or
+inserts a stable new line, then recalculates order quantity/total and increments
+the parent version atomically. Draft/Sent, unlocked, current-version,
+empty-selection, invalid-product, and positive-quantity guards are declared;
+the action requires `purchase.write`.
+
+Focused validation passed 5 tests / 49 assertions for Catalog plus the order
+line regression. The complete Purchase regression passed 86 tests / 743
+assertions; audit, Purchase Sass, frontend build, and diff-check passed. The
+stable-ID evidence manifest is under
+`evidence/purchase/2026-09-22/PURCHASE-CATALOG-001/`.
+
+BrowserSkill instance `245ea108` was connected, but the authenticated Odoo
+tab was initially borrowed by another session and the later borrow confirmation
+remained pending until timeout. The owned session was stopped. No live Odoo or
+Core3 desktop/mobile capture was obtained and no visual-parity claim is made.

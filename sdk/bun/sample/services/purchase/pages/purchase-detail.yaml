@@ -58,6 +58,7 @@ components:
     row_key: id
     actions:
       - { id: add_purchase_order_line, label: Add a product, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
+      - { id: add_purchase_order_catalog, label: Catalog, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
     empty_state: { title: No order lines, description: Add a product to calculate the purchase total. }
     footer:
       source: purchase_order_detail

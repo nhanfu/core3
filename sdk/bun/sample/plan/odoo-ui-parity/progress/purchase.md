@@ -72,3 +72,18 @@ The slice is conditional: Odoo's download completion is not DOM-observable,
 Core3 prepares report metadata rather than binary PDF bytes, and the active
 working tree has unrelated Email/SMS discovery failures. See the QA ledger and
 the Purchase-only evidence manifest for exact blockers and paths.
+
+## 2026-09-22 bounded slice: Purchase Order Catalog
+
+Implemented `PURCHASE-CATALOG-001` from Odoo's Products-tab
+`action_add_from_catalog`. Core3 adds a page/API-bound multi-product Catalog
+form, durable order-line product identity, add-or-merge behavior, total/version
+recalculation, and editable-state/selection guards. Focused Catalog + line
+regression passed 5/49; full Purchase passed 86/743; audit, frontend/CSS, and
+diff-check passed.
+
+Status remains **conditional**: BrowserSkill instance `245ea108` could not
+borrow the authenticated Odoo tab (first occupied by another session, then
+borrow confirmation pending until timeout). No desktop/mobile capture or
+visual-parity claim is made. Vendor-specific seller pricing and Odoo's richer
+per-card catalog quantity UI remain follow-up gaps.

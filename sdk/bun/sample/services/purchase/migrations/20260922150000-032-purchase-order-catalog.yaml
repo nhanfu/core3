@@ -1,0 +1,18 @@
+version: 0.0.32
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_order_lines ADD COLUMN IF NOT EXISTS product_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS purchase_order_lines_product_idx ON purchase_order_lines(order_id, product_id);
+      UPDATE purchase_order_lines l
+      SET product_id = p.id
+      FROM purchase_products p
+      WHERE l.product_id IS NULL AND l.display_type = 'product' AND l.product_name = p.name;
+    down: |
+      DROP INDEX IF EXISTS purchase_order_lines_product_idx;
+      ALTER TABLE purchase_order_lines DROP COLUMN IF EXISTS product_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
