@@ -1,0 +1,38 @@
+{
+  "feature": "SURVEYS-CARD-SEE-RESULTS-001",
+  "tool": "BrowserSkill",
+  "reference_url": "http://localhost:8069/odoo/surveys?db=core3_reference",
+  "database": "core3_reference",
+  "viewport": "1916x833",
+  "reference_cards": [
+    "Feedback Form … 7 Questions … Share Test See results End Live Session",
+    "MyCompany Vendor Certification … 14 Questions … Share Test See results"
+  ],
+  "clicked": "Feedback Form card button[name=action_result_survey]",
+  "result_url": "http://localhost:8069/survey/results/feedback-form-1",
+  "result_observed": [
+    "Feedback Form",
+    "All surveys 3",
+    "Completed surveys 3",
+    "ABOUT YOU",
+    "Where do you live? 3 / 3 Responded",
+    "When is your date of birth? 2 / 3 Responded"
+  ],
+  "screenshots": {
+    "cards": {
+      "path": "/tmp/odoo-surveys-card-see-results-20260922.png",
+      "sha256": "4fb5c2232fc1d4f04afafa05cf5f53cee11e1bd3d820b4b8c04e3933a4f6ae9b"
+    },
+    "results": {
+      "path": "/tmp/odoo-surveys-results-from-card-20260922.png",
+      "sha256": "e590703fc2910f13b3683c7142a500c8d46152620de756273f7c159f35c5f61b"
+    }
+  },
+  "browser_lifecycle": {
+    "borrow_attempt": "Existing user-tab borrow waited for confirmation and timed out; it was not retried.",
+    "verification": "Completed in an agent-owned BrowserSkill tab using the browser's existing authenticated state.",
+    "session_stopped": true,
+    "credentials_exposed": false
+  },
+  "core3_visual_signoff": "blocked: no Core3 runtime/authenticated QA state was available in this turn"
+}

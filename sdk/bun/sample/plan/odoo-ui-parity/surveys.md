@@ -3022,3 +3022,29 @@ claimed from that Odoo-targeted browser run.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.
+
+## Bounded slice: `SURVEYS-CARD-SEE-RESULTS-001` — 2026-09-22
+
+The next smallest uncovered stable-ID behavior after the card live-session
+action is Odoo's kanban `See results` action. Odoo renders the active survey
+card button with `action_result_survey`, which opens the authenticated
+`/survey/results/<survey_id>` report (`addons/survey/views/survey_survey_views.xml:311-315`;
+`addons/survey/models/survey_survey.py:1088-1096`).
+
+Core3 now exposes `open_survey_results_card` on the Cards view with the exact
+`See results` label and `surveys.read` permission. The page action navigates to
+the existing `/surveys/results?survey_id=<stable_id>` route, whose API-owned
+header, question, choice, and text datasources remain joined through their
+`page.id` contract. No duplicate result query, migration, or renderer was
+introduced; the seeded participant and answer-line rows are the durable result
+source and retain the existing All/Completed and Passed/Failed workflow.
+
+Focused coverage is in `test/surveys_card_results.integration.test.ts`: it
+checks the page/API joins, authenticated boundary, exact Odoo action contract,
+stable route parameters, deterministic seeded result counts, and filtered
+question rows. The feature evidence records the authenticated Odoo card
+surface and Core3 browser outcome separately; a visual sign-off requires both
+runtimes and an authenticated BrowserSkill tab.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-SEE-RESULTS-001/`.

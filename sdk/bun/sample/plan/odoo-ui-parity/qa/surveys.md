@@ -2007,3 +2007,27 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-SEE-RESULTS-001` — 2026-09-22
+
+- Source/UI: Odoo's active Surveys kanban cards expose `See results` and call
+  `action_result_survey`; the authenticated report rendered Feedback Form
+  statistics after the card action.
+- Contract: `pages/surveys.yaml` adds `open_survey_results_card` with the exact
+  label and `surveys.read`; it navigates by stable `survey_id` to the existing
+  `/surveys/results` page/API pair. The results API remains responsible for
+  durable participant/answer queries and cohort filters.
+- Verification: `bun test test/surveys_card_results.integration.test.ts
+  --timeout 20000` — **2 passed, 0 failed, 13 assertions**; `git diff --check`
+  passed. The deterministic Feedback Form fixture returned six all-cohort
+  participants and one completed/passed participant in the filtered cohort.
+- Browser evidence: authenticated Odoo Cards and results captures are under
+  `/tmp/odoo-surveys-card-see-results-20260922.png` and
+  `/tmp/odoo-surveys-results-from-card-20260922.png`; sanitized metadata is in
+  the feature evidence directory. The user-tab borrow timed out awaiting
+  confirmation and was not retried; the agent-owned BrowserSkill tab was
+  stopped after verification. Core3 visual sign-off remains blocked by the
+  unavailable authenticated Core3 runtime.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-SEE-RESULTS-001/`.

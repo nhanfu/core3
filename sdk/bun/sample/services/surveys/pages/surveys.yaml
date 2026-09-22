@@ -69,6 +69,7 @@ components:
             - { id: open_survey_registered_cards, label: Registered, label_field: registered_count, permission: surveys.read, show_if: 'row.registered_count > 0' }
             - { id: open_survey_completed_cards, label: Completed, label_field: completed_count, permission: surveys.read, show_if: 'row.completed_count > 0' }
             - { id: open_survey_certified_cards, label: Certified, label_field: certified_count, permission: surveys.read, show_if: 'row.certified_count > 0' }
+            - { id: open_survey_results_card, label: See results, permission: surveys.read, show_if: "row.state !== 'Archived'" }
             - { id: start_live_session_card, label: Start Live Session, permission: surveys.manage, show_if: "(row.state === 'Draft' || row.state === 'Published') && row.question_count > 0 && !row.session_state" }
       - id: list
         label: List
@@ -120,6 +121,11 @@ actions:
     permission: surveys.read
     navigate_to: /surveys/participants
     params: { survey_id: '{row.id}', quiz_status: Passed }
+  - id: open_survey_results_card
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/results
+    params: { survey_id: '{row.id}' }
   - id: delete_survey_card
     type: client
     permission: surveys.write
