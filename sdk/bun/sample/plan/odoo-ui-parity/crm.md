@@ -996,3 +996,38 @@ Status: bounded implementation; authenticated visual comparison is blocked.
   AI action-catalog invariant; it reports the new CRM action alongside older
   CRM actions missing from `services/ai/agent.yaml`. That file is outside this
   CRM-only change scope and was not edited.
+
+## 2026-09-22 — Lead email composer
+
+Stable feature ID: `CRM-LEAD-EMAIL-COMPOSER-001`.
+
+Status: bounded implementation; authenticated visual comparison is blocked.
+
+- Odoo 19 source: `addons/crm/views/crm_lead_views.xml` binds
+  `action_lead_mail_compose` to the lead form and
+  `action_lead_mass_mail` to the lead list/kanban. The actions open
+  `mail.compose.message` with `default_composition_mode: comment` for one
+  lead and `mass_mail` for selected leads. The composer supports recipient,
+  subject, body, template, and attachment inputs.
+- Core3 adds matching `Send email` detail and `Email` bulk actions under the
+  `lead-detail` and `leads` page/API joins. Both use `crm.write`; templates
+  use `crm.read`. Migration `0.0.36` creates and seeds
+  `crm_lead_mail_templates` and `crm_lead_mail_messages`, and the mutation
+  records a durable `crm.email` activity visible in the lead timeline.
+- Focused coverage is
+  `test/crm_lead_email_composer.integration.test.ts`: **2 tests / 24
+  assertions**, including source/action mapping, page/API validation,
+  migration replay, single and bulk sends, invalid-recipient/missing/lost
+  guards, activity history, and file-backed restart persistence.
+- The full CRM suite reports the new action in the pre-existing global AI
+  action/catalog invariants alongside older missing CRM entries; the global
+  AI file was intentionally not changed. The repository audit is also blocked
+  by an unrelated duplicate `activity_types` datasource in the base module.
+- BrowserSkill reached the connected Chrome instance, but borrowing the
+  existing authenticated Odoo tab timed out waiting for human confirmation.
+  Session `zrki` was stopped cleanly. No screenshots or visual-parity claim
+  are recorded, and no credential was requested or exposed.
+- Remaining gap: this bounded contract records the outbox/audit state but does
+  not perform SMTP/mail-gateway delivery. Attachment bytes and preview are
+  also outside this slice; paired authenticated desktop/mobile evidence is
+  pending the tab-borrow blocker.

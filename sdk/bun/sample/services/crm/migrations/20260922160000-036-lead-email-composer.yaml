@@ -1,0 +1,55 @@
+version: 0.0.36
+kind: data
+description: Durable CRM lead email composer history and deterministic templates
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_lead_mail_templates (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        created_by VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS crm_lead_mail_messages (
+        id VARCHAR PRIMARY KEY,
+        lead_id VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL DEFAULT '',
+        template_id VARCHAR,
+        attachment_name VARCHAR,
+        sent_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:30:00'
+      );
+      CREATE INDEX IF NOT EXISTS crm_lead_mail_templates_name_idx ON crm_lead_mail_templates(name, active);
+      CREATE INDEX IF NOT EXISTS crm_lead_mail_messages_lead_idx ON crm_lead_mail_messages(lead_id, sent_at, id);
+      INSERT INTO crm_lead_mail_templates(id, name, subject, body_html, created_by, active, row_version)
+      VALUES
+        ('crm-lead-mail-template-001', 'Opportunity follow-up', 'Following up on your opportunity', '<p>Hello,</p><p>I am following up on our opportunity discussion.</p>', 'CRM Team', TRUE, 1),
+        ('crm-lead-mail-template-002', 'Proposal next steps', 'Next steps for your proposal', '<p>Hello,</p><p>Here are the next steps for the proposal.</p>', 'CRM Team', TRUE, 1)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO crm_lead_mail_messages(id, lead_id, recipient_email, subject, body_html, template_id, sent_by, state, sent_at, row_version)
+      VALUES ('crm-lead-mail-demo-001', 'crm-demo-001', 'buyer@acme.test', 'Following up on your opportunity', '<p>Hello,</p><p>I am following up on our opportunity discussion.</p>', 'crm-lead-mail-template-001', 'Admin User', 'Sent', TIMESTAMP '2026-09-20 10:00:00', 1)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail)
+      VALUES ('crm-email-log-demo-001', 'user-admin', 'Admin User', 'crm.email', 'crm_leads', 'crm-demo-001', 'Sent email to buyer@acme.test: Following up on your opportunity')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_activity_log WHERE id = 'crm-email-log-demo-001';
+      DELETE FROM crm_lead_mail_messages WHERE id = 'crm-lead-mail-demo-001';
+      DROP INDEX IF EXISTS crm_lead_mail_messages_lead_idx;
+      DROP INDEX IF EXISTS crm_lead_mail_templates_name_idx;
+      DROP TABLE IF EXISTS crm_lead_mail_messages;
+      DROP TABLE IF EXISTS crm_lead_mail_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

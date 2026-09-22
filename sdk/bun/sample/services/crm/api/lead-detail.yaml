@@ -62,6 +62,22 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+  - id: crm_lead_email_templates_detail
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_EMAIL_TEMPLATES_UNAUTHORIZED, message: Sign in to view CRM email templates. }
+      forbidden: { status: 403, code: CRM_LEAD_EMAIL_TEMPLATES_FORBIDDEN, message: You do not have permission to view CRM email templates. }
+      transport_error: { status: 503, code: CRM_LEAD_EMAIL_TEMPLATES_UNAVAILABLE, message: CRM email templates are temporarily unavailable. }
+    query: "SELECT id AS value, name AS label FROM crm_lead_mail_templates WHERE active = true ORDER BY name, id"
+  - id: crm_lead_emails
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_EMAILS_UNAUTHORIZED, message: Sign in to view lead emails. }
+      forbidden: { status: 403, code: CRM_LEAD_EMAILS_FORBIDDEN, message: You do not have permission to view lead emails. }
+      transport_error: { status: 503, code: CRM_LEAD_EMAILS_UNAVAILABLE, message: Lead email history is temporarily unavailable. }
+    query: "SELECT id, lead_id, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, CAST(sent_at AS VARCHAR) AS sent_at, row_version FROM crm_lead_mail_messages WHERE lead_id = :id ORDER BY sent_at DESC, id DESC"
   - id: crm_lead_timeline
     single: false
     permission: crm.read
@@ -73,6 +89,7 @@ datasources:
           WHEN 'crm.followers.add' THEN 'Added follower'
           WHEN 'crm.followers.remove' THEN 'Removed follower'
           WHEN 'crm.attachments.upload' THEN 'Uploaded attachment'
+          WHEN 'crm.email' THEN 'Email sent'
           WHEN 'crm.leads.qualify' THEN 'Qualified'
           WHEN 'crm.leads.propose' THEN 'Moved to Proposition'
           WHEN 'crm.leads.won' THEN 'Marked won'
@@ -150,6 +167,43 @@ actions:
     permission: crm.read
     navigate_to: /crm/lead-meetings
     params: { id: '{state.id}' }
+  - id: send_lead_email_detail
+    type: server_form
+    modal_style: mail_composer
+    permission: crm.write
+    title: Send Email
+    submit_label: Send
+    cancel_label: Discard
+    success_message: Lead email sent.
+    action: crm.leads.email
+    handler: yaml_mutation
+    operation: send
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_detail, crm_lead_timeline, crm_lead_emails]
+    mutation:
+      fields: [lead_id, subject, body_html, template_id, attachment_name]
+      required: [lead_id, subject]
+      guards:
+        - { query: "SELECT id FROM crm_leads WHERE id = :lead_id", status: 404, code: CRM_LEAD_EMAIL_LEAD_NOT_FOUND, message: Lead or opportunity not found. }
+        - { query: "SELECT id FROM crm_leads WHERE id = :lead_id AND stage <> 'Lost'", status: 409, code: CRM_LEAD_EMAIL_CLOSED, message: Lost leads cannot receive email. }
+        - { query: "SELECT id FROM crm_leads WHERE id = :lead_id AND NULLIF(TRIM(COALESCE(email, '')), '') IS NOT NULL AND POSITION('@' IN TRIM(email)) > 1", status: 422, code: CRM_LEAD_EMAIL_RECIPIENT_REQUIRED, message: A valid lead email address is required before sending. }
+        - { query: "SELECT 1 AS ok WHERE (NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NOT NULL AND EXISTS (SELECT 1 FROM crm_lead_mail_templates WHERE id = :template_id AND active = true)) OR (LENGTH(TRIM(CAST(COALESCE(:subject, '') AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(TRIM(CAST(COALESCE(:body_html, '') AS VARCHAR))) BETWEEN 1 AND 10000)", status: 422, code: CRM_LEAD_EMAIL_CONTENT_INVALID, message: Enter a subject and a message, or load an active template. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NULL OR EXISTS (SELECT 1 FROM crm_lead_mail_templates WHERE id = :template_id AND active = true)", status: 422, code: CRM_LEAD_EMAIL_TEMPLATE_INVALID, message: Select an active CRM email template. }
+      steps:
+        - query: "INSERT INTO crm_lead_mail_messages(id, lead_id, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, sent_at, row_version) SELECT 'crm-lead-mail-' || l.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM crm_lead_mail_messages prior WHERE prior.lead_id = l.id), 0) + 1 AS VARCHAR), l.id, l.email, COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))), COALESCE(t.body_html, TRIM(CAST(COALESCE(:body_html, '') AS VARCHAR))), t.id, NULLIF(TRIM(CAST(COALESCE(:attachment_name, '') AS VARCHAR)), ''), :current_user_name, 'Sent', CURRENT_TIMESTAMP, 1 FROM crm_leads l LEFT JOIN crm_lead_mail_templates t ON t.id = :template_id AND t.active = true WHERE l.id = :lead_id AND l.stage <> 'Lost'"
+          expect_changed: true
+          status: 409
+          code: CRM_LEAD_EMAIL_SEND_FAILED
+          message: The lead email could not be sent. Reload the opportunity and try again.
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.email', 'crm_leads', l.id, 'Sent email to ' || l.email || ': ' || COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))) FROM crm_leads l LEFT JOIN crm_lead_mail_templates t ON t.id = :template_id AND t.active = true WHERE l.id = :lead_id"
+      result: { query: "SELECT id, lead_id, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, CAST(sent_at AS VARCHAR) AS sent_at, row_version FROM crm_lead_mail_messages WHERE lead_id = :lead_id ORDER BY sent_at DESC, id DESC LIMIT 1" }
+    fields:
+      - { field: lead_id, label: Lead, type: hidden, required: true }
+      - { field: recipient_email, label: To, type: mail_recipient, default: Current lead }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, placeholder: Write your message here... }
+      - { field: attachment_name, label: Attachments, type: mail_attachment }
+      - { field: template_id, label: Load template, type: select, options_source: crm_lead_email_templates_detail }
   - id: convert_lead_create_contact_detail
     type: server_form
     permission: crm.write

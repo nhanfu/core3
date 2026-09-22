@@ -46,6 +46,14 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT DISTINCT utm_campaign AS value, utm_campaign AS label FROM crm_leads WHERE NULLIF(TRIM(utm_campaign), '') IS NOT NULL ORDER BY utm_campaign"
+  - id: crm_lead_email_templates
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_EMAIL_TEMPLATES_UNAUTHORIZED, message: Sign in to view CRM email templates. }
+      forbidden: { status: 403, code: CRM_LEAD_EMAIL_TEMPLATES_FORBIDDEN, message: You do not have permission to view CRM email templates. }
+      transport_error: { status: 503, code: CRM_LEAD_EMAIL_TEMPLATES_UNAVAILABLE, message: CRM email templates are temporarily unavailable. }
+    query: "SELECT id AS value, name AS label FROM crm_lead_mail_templates WHERE active = true ORDER BY name, id"
   - id: crm_contacts
     type: service
     service: yaml.service.base
@@ -53,6 +61,47 @@ datasources:
     service_params: { query: q, limit: 100 }
     permission: base.contacts.read
 actions:
+  - id: send_leads_email
+    type: server_form
+    modal_style: mail_composer
+    permission: crm.write
+    title: Send Email
+    submit_label: Send
+    cancel_label: Discard
+    success_message: Lead emails sent.
+    action: crm.leads.email
+    handler: yaml_mutation
+    operation: bulk_send
+    refresh: [crm_leads]
+    mutation:
+      fields: [subject, body_html, template_id, attachment_name]
+      required: [subject]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL AND CAST(:selectedIds AS VARCHAR) NOT LIKE '[]'", status: 400, code: CRM_LEAD_EMAIL_SELECTION_REQUIRED, message: Select at least one lead or opportunity. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: CRM_LEAD_EMAIL_ACTOR_REQUIRED, message: A signed-in CRM user is required to send email. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM crm_leads WHERE id IN :selectedIds)", status: 404, code: CRM_LEAD_EMAIL_LEAD_NOT_FOUND, message: One or more selected leads were not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads WHERE id IN :selectedIds AND stage = 'Lost')", status: 409, code: CRM_LEAD_EMAIL_CLOSED, message: Lost leads cannot receive email. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads WHERE id IN :selectedIds AND (NULLIF(TRIM(COALESCE(email, '')), '') IS NULL OR POSITION('@' IN TRIM(email)) <= 1))", status: 422, code: CRM_LEAD_EMAIL_RECIPIENT_REQUIRED, message: Every selected lead must have a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE (NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NOT NULL AND EXISTS (SELECT 1 FROM crm_lead_mail_templates WHERE id = :template_id AND active = true)) OR (LENGTH(TRIM(CAST(COALESCE(:subject, '') AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(TRIM(CAST(COALESCE(:body_html, '') AS VARCHAR))) BETWEEN 1 AND 10000)", status: 422, code: CRM_LEAD_EMAIL_CONTENT_INVALID, message: Enter a subject and a message, or load an active template. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:template_id, '')), '') IS NULL OR EXISTS (SELECT 1 FROM crm_lead_mail_templates WHERE id = :template_id AND active = true)", status: 422, code: CRM_LEAD_EMAIL_TEMPLATE_INVALID, message: Select an active CRM email template. }
+      steps:
+        - for_each:
+            input: selectedIds
+            as: selected_lead_id
+            steps:
+              - query: "INSERT INTO crm_lead_mail_messages(id, lead_id, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, sent_at, row_version) SELECT 'crm-lead-mail-' || l.id || '-' || CAST(COALESCE((SELECT COUNT(*) FROM crm_lead_mail_messages prior WHERE prior.lead_id = l.id), 0) + 1 AS VARCHAR), l.id, l.email, COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))), COALESCE(t.body_html, TRIM(CAST(COALESCE(:body_html, '') AS VARCHAR))), t.id, NULLIF(TRIM(CAST(COALESCE(:attachment_name, '') AS VARCHAR)), ''), :current_user_name, 'Sent', CURRENT_TIMESTAMP, 1 FROM crm_leads l LEFT JOIN crm_lead_mail_templates t ON t.id = :template_id AND t.active = true WHERE l.id = :selected_lead_id AND l.stage <> 'Lost'"
+                expect_changed: true
+                status: 409
+                code: CRM_LEAD_EMAIL_SEND_FAILED
+                message: A selected lead changed before its email could be sent. Reload and try again.
+              - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.email', 'crm_leads', l.id, 'Sent email to ' || l.email || ': ' || COALESCE(t.subject, TRIM(CAST(:subject AS VARCHAR))) FROM crm_leads l LEFT JOIN crm_lead_mail_templates t ON t.id = :template_id AND t.active = true WHERE l.id = :selected_lead_id"
+      result: { query: "SELECT id, lead_id, recipient_email, subject, body_html, template_id, attachment_name, sent_by, state, CAST(sent_at AS VARCHAR) AS sent_at, row_version FROM crm_lead_mail_messages WHERE lead_id IN :selectedIds ORDER BY sent_at DESC, id DESC" }
+    fields:
+      - { field: lead_names, label: Leads and opportunities, type: mail_recipient, default: Selected leads }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, placeholder: Write your message here... }
+      - { field: attachment_name, label: Attachments, type: mail_attachment }
+      - { field: template_id, label: Load template, type: select, options_source: crm_lead_email_templates }
   - id: create_lead
     type: server_form
     permission: crm.write
