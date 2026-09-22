@@ -1555,3 +1555,24 @@ BrowserSkill instance `245ea108` was connected, but the signed-in Odoo tab
 `ppeq` received the exact ownership error and was stopped. No Odoo/Core3
 desktop/mobile capture or visual-parity claim is made. The complete record is
 under `evidence/point_of_sale/2026-09-22/POS-SESSION-PICKINGS-001/`.
+
+## Current bounded batch: Session > Continue Selling action
+
+Feature ID: `POS-SESSION-CONTINUE-SELLING-001`. Odoo 19 exposes the session-form
+`Continue Selling` header action through `open_frontend_cb`, which opens the
+selected session's Point of Sale frontend while the session is in Opening
+Control or In Progress. Core3's session detail had the opening/closing controls
+and the touch route, but no source-backed handoff from the session form.
+
+Core3 now adds a YAML-first `continue_session_selling` action to
+`pos-session-detail`. It is limited to `pos.write`, passes the selected durable
+session ID to `/point-of-sale/touch`, and relies on the existing company-scoped
+`pos_touch_session` datasource so another company's session cannot be handed
+off. No migration is required because this Odoo action is non-mutating; the
+focused test verifies the persisted session survives migration replay.
+
+Focused coverage is `test/pos_session_continue_selling.integration.test.ts`:
+2 tests cover the Odoo source/action mapping, page/API join, state visibility,
+write/read permissions, company boundary, touch datasource handoff, and
+file-backed session persistence. Browser verification remains pending the
+single post-test BrowserSkill attempt.

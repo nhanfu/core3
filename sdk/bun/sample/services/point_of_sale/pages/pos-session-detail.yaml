@@ -24,6 +24,7 @@ components:
       - { id: open_session_pickings, label: Pickings, icon: truck, value_field: picking_count, permission: pos.read, show_if: "state.pos_session_detail.picking_count > 0" }
       - { id: open_session_payments, label: Payments, icon: dollar, value_field: total_payments_amount, permission: pos.read }
     header_actions:
+      - { id: continue_session_selling, label: Continue Selling, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control' || state.pos_session_detail.state === 'In Progress'" }
       - { id: open_session_detail, label: Open, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control'" }
       - { id: start_closing_session_detail, label: Start Closing, variant: secondary, permission: pos.write, show_if: "state.pos_session_detail.state === 'In Progress'" }
       - { id: close_session_detail, label: Close & Post, variant: primary, permission: pos.manage, show_if: "state.pos_session_detail.state === 'Closing Control'" }
