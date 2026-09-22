@@ -2466,7 +2466,7 @@ This is a bounded feature record, not Timesheets module sign-off.
   data remains durable and restart-safe.
 - Focused coverage is
   `test/timesheets_my_search_scope.integration.test.ts`: 3 tests / 19
-  expectations. The related My Timesheets suite passes 31 tests / 194
+  expectations. The related My Timesheets suite passes 42 tests / 254
   expectations after correcting the earlier department/manager UI assertions
   to match Odoo's primary search view.
 - BrowserSkill task-owned authenticated Odoo verification against
