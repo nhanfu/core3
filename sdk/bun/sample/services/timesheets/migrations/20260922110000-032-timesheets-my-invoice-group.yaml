@@ -1,0 +1,36 @@
+version: 0.0.32
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_entries ADD COLUMN IF NOT EXISTS invoice_id VARCHAR;
+      ALTER TABLE timesheet_entries ADD COLUMN IF NOT EXISTS invoice_name VARCHAR;
+      UPDATE timesheet_entries SET invoice_id = CASE id
+        WHEN 'timesheet-demo-001' THEN 'invoice-demo-001'
+        WHEN 'timesheet-my-009' THEN 'invoice-demo-001'
+        WHEN 'timesheet-my-010' THEN 'invoice-demo-002'
+        WHEN 'timesheet-my-011' THEN 'invoice-demo-003'
+        WHEN 'timesheet-my-013' THEN 'invoice-demo-002'
+        WHEN 'timesheet-my-014' THEN 'invoice-demo-003'
+        ELSE invoice_id
+      END,
+      invoice_name = CASE id
+        WHEN 'timesheet-demo-001' THEN 'INV/2026/0001'
+        WHEN 'timesheet-my-009' THEN 'INV/2026/0001'
+        WHEN 'timesheet-my-010' THEN 'INV/2026/0002'
+        WHEN 'timesheet-my-011' THEN 'INV/2026/0003'
+        WHEN 'timesheet-my-013' THEN 'INV/2026/0002'
+        WHEN 'timesheet-my-014' THEN 'INV/2026/0003'
+        ELSE invoice_name
+      END,
+      updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE id IN ('timesheet-demo-001', 'timesheet-my-009', 'timesheet-my-010', 'timesheet-my-011', 'timesheet-my-013', 'timesheet-my-014');
+      CREATE INDEX IF NOT EXISTS timesheet_entries_invoice_idx ON timesheet_entries(invoice_id, company_name, employee_name);
+    down: |
+      DROP INDEX IF EXISTS timesheet_entries_invoice_idx;
+      ALTER TABLE timesheet_entries DROP COLUMN IF EXISTS invoice_name;
+      ALTER TABLE timesheet_entries DROP COLUMN IF EXISTS invoice_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

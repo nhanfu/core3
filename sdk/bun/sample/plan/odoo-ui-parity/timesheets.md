@@ -2422,3 +2422,31 @@ Focused coverage is `test/timesheets_portal_task_report.integration.test.ts`: 4 
   sign-off remain open.
 - Evidence is under
   `evidence/timesheets/2026-09-22/timesheet-my-billing-type-group-001/`.
+
+## 2026-09-22 `TIMESHEET-MY-INVOICE-GROUP-001`
+
+- Selected the next missing stable-ID behavior on the internal My Timesheets
+  action: `sale_timesheet` adds the Sales-user `Invoice` Group By option using
+  `timesheet_invoice_id`. The live Odoo action exposes Invoice beside Sales
+  Order Item and Billing Type; Core3 previously had no invoice projection or
+  group contract.
+- Core3 keeps the layout-only `pages/entries.yaml` and data/API
+  `api/entries.yaml` contracts separate and joined by `page.id: timesheets`.
+  Migration `0.0.32` adds replay-safe `invoice_id`/`invoice_name` fields and a
+  deterministic fixed-date invoice relation projection. The datasource exposes
+  both fields and declares Invoice grouping against the durable relation while
+  retaining current-user, company, empty-fixture, and restart guards.
+- Focused coverage is
+  `test/timesheets_my_invoice_group.integration.test.ts`: 4 tests covering
+  source mapping, deterministic grouping, concurrent relation freshness, and
+  migration replay/file-backed restart.
+- BrowserSkill observed authenticated Odoo `/odoo/timesheets` and checked the
+  live Invoice group menu. The required authenticated user-tab borrow was
+  blocked because tab `1770662590` was already borrowed by session `gvwd`.
+  A task-created authenticated tab was usable for observation, but screenshot
+  export was blocked first by a stopped session and then by `No space left on
+  device`; no screenshot or visual-parity claim is made.
+
+Evidence is under
+`evidence/timesheets/2026-09-22/timesheet-my-invoice-group-001/`.
+This is a bounded feature record, not Timesheets module sign-off.

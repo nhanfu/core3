@@ -1294,3 +1294,21 @@ summary; the focused and related portal regression completed successfully.
 
 Evidence: `evidence/timesheets/2026-09-22/timesheet-my-billing-type-group-001/`.
 This is a bounded feature record, not Timesheets module sign-off.
+
+## 2026-09-22 — `TIMESHEET-MY-INVOICE-GROUP-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `sale_timesheet` Invoice Group By on My Timesheets | pass in focused source test and BrowserSkill observation |
+| Paired YAML contract | layout-only `timesheets` page/API joined by `page.id` | pass |
+| Durable Invoice projection | fixed `invoice_id`/`invoice_name`, pivot field, group contract | pass |
+| Permission/company/empty guards | current user/company and empty fixture | pass |
+| Relation freshness | persisted invoice update visible on next read | pass |
+| Restart and migration replay | `0.0.32` survives replay and reopen | pass |
+| Focused integration | 4/4 tests / 19 expectations | pass |
+| Lint and diff | focused ESLint and `git diff --check` | pass |
+| Related My Timesheets regression | 38 pass / 1 shared discovery failure | blocked by unrelated `actions[7].success_message is not allowed` |
+| Authenticated Odoo desktop/mobile evidence | live My Timesheets Invoice group | blocked: user tab already borrowed by `gvwd`; screenshot export hit stopped-session and no-space errors |
+| Authenticated Core3 desktop/mobile evidence | matching Core3 action | blocked; no visual-parity claim |
+
+Evidence: `evidence/timesheets/2026-09-22/timesheet-my-invoice-group-001/`.

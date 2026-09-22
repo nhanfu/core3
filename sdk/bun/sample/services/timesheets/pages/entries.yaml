@@ -38,6 +38,7 @@ components:
       - { field: department_name, label: Department }
       - { field: manager_name, label: Manager }
       - { field: sales_order_item, label: Sales Order Item }
+      - { field: invoice_name, label: Invoice }
       - { field: billing_type, label: Billing Type }
       - { field: state, label: Status }
     view_navigation: tabs
