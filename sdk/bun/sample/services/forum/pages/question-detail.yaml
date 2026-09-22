@@ -47,6 +47,8 @@ components:
           - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
           - { id: upvote_forum_answer, label: Upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote !== 1" }
           - { id: upvote_forum_answer, label: Remove upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote === 1" }
+          - { id: downvote_forum_answer, label: Downvote, icon: thumb-down, variant: secondary, permission: forum.read, show_if: "row.user_vote !== -1" }
+          - { id: downvote_forum_answer, label: Remove downvote, icon: thumb-down, variant: secondary, permission: forum.read, show_if: "row.user_vote === -1" }
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
@@ -64,6 +66,8 @@ components:
           - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
           - { id: upvote_forum_answer, label: Upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote !== 1" }
           - { id: upvote_forum_answer, label: Remove upvote, icon: thumb-up, variant: secondary, permission: forum.read, show_if: "row.user_vote === 1" }
+          - { id: downvote_forum_answer, label: Downvote, icon: thumb-down, variant: secondary, permission: forum.read, show_if: "row.user_vote !== -1" }
+          - { id: downvote_forum_answer, label: Remove downvote, icon: thumb-down, variant: secondary, permission: forum.read, show_if: "row.user_vote === -1" }
           - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
           - { id: unaccept_forum_answer, label: Unaccept, icon: check, variant: secondary, permission: forum.manage, show_if: "row.state === 'Accepted'" }
           - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }

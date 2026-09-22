@@ -158,6 +158,30 @@ actions:
         - { query: "UPDATE forum_answers SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_VOTE_STALE, message: The answer changed while its vote state was updating. }
         - { query: "UPDATE forum_posts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while its answer vote was updating. }
       result: { query: "SELECT a.id, a.row_version, a.post_id, a.state, COALESCE((SELECT SUM(v.vote) FROM forum_post_votes v WHERE v.post_id = a.id), 0) AS vote_count, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = a.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_answers a WHERE a.id = :line_id AND a.post_id = :id" }
+  - id: downvote_forum_answer
+    type: server
+    permission: forum.read
+    action: forum.answers.downvote
+    handler: line_item
+    operation: update
+    domain: forum_post
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' }
+    refresh: [forum_post_detail, forum_post_answers]
+    mutation:
+      generated: [vote_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed before the answer vote was updated. Reload before trying again. }
+        - { query: "SELECT id FROM forum_answers WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version AND state IN ('Active', 'Accepted')", status: 409, code: FORUM_ANSWER_VOTE_UNAVAILABLE, message: Only active or accepted answers can be voted on. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:current_user_name AS VARCHAR))) > 0", status: 403, code: FORUM_ANSWER_VOTE_ACTOR, message: An authenticated user is required to vote on an answer. }
+        - { query: "SELECT id FROM forum_answers WHERE id = :line_id AND (author_name IS NULL OR LOWER(TRIM(author_name)) <> LOWER(TRIM(CAST(:current_user_name AS VARCHAR))))", status: 403, code: FORUM_ANSWER_VOTE_OWN_POST, message: You cannot vote on your own answer. }
+        - { query: "SELECT COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = :line_id AND v.user_id = :current_user_id), 0) AS current_vote", assign: true }
+      steps:
+        - { query: "DELETE FROM forum_post_votes WHERE post_id = :line_id AND user_id = :current_user_id AND COALESCE(CAST(:current_vote AS INTEGER), 0) <> 0" }
+        - { query: "INSERT INTO forum_post_votes(id, post_id, user_id, vote, row_version) SELECT :vote_id, :line_id, :current_user_id, -1, 1 WHERE COALESCE(CAST(:current_vote AS INTEGER), 0) <> -1" }
+        - { query: "UPDATE forum_answers SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_VOTE_STALE, message: The answer changed while its vote state was updating. }
+        - { query: "UPDATE forum_posts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while its answer vote was updating. }
+      result: { query: "SELECT a.id, a.row_version, a.post_id, a.state, COALESCE((SELECT SUM(v.vote) FROM forum_post_votes v WHERE v.post_id = a.id), 0) AS vote_count, COALESCE((SELECT v.vote FROM forum_post_votes v WHERE v.post_id = a.id AND v.user_id = :current_user_id), 0) AS user_vote FROM forum_answers a WHERE a.id = :line_id AND a.post_id = :id" }
   - id: toggle_forum_post_favorite
     type: server
     permission: forum.read

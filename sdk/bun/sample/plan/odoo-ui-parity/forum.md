@@ -289,6 +289,30 @@ available because it was already borrowed by session `mczn`. Desktop 1440x900
 and mobile 390x844 blocker captures are recorded, but no Odoo action screen or
 Core3 paired capture exists. No visual parity claim is made.
 
+## Wave 12 source-backed feature — Answer downvote toggle — 2026-09-22
+
+Odoo's authenticated `post_downvote` route applies to every `forum.post`,
+including answer posts (`controllers/website_forum.py:519-524`). Its model
+toggle removes a repeated downvote and switches an existing upvote to a
+downvote (`models/forum_post.py:607-620`). Core3 previously exposed answer
+upvote only, leaving the answer downvote controls and action uncovered.
+
+Stable ID: `FORUM-ANSWER-DOWNVOTE-001`.
+
+Core3 adds `downvote_forum_answer` to the question-detail answer relation and
+adds Downvote/Remove downvote controls to both YAML answer action surfaces.
+The action reuses the durable `forum_post_votes` relation, requires
+`forum.read`, injects the authenticated actor, guards own answers and
+active/accepted state, protects parent and answer row versions, atomically
+replaces/removes the signed vote, and refreshes the detail relation.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-ANSWER-DOWNVOTE-001/`.
+Focused coverage passed 4/4 tests and 20 assertions; the full Forum corpus
+passed 47/47 tests and 299 assertions. Real merged discovery confirms the new
+action is registered once. BrowserSkill recorded the authenticated Odoo 404
+because `website_forum` is absent from `core3_reference`; no visual parity
+claim is made.
+
 ## Runtime evidence and blockers — 2026-09-12
 
 - Odoo login was authenticated successfully with the local parity credentials
