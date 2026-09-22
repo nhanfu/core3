@@ -1,0 +1,31 @@
+page: { id: time-off-dashboard-calendar }
+
+datasources:
+  - id: time_off_dashboard_calendar_requests
+    permission: time_off.read
+    error_states:
+      transport_error: { status: 503, code: TIME_OFF_DASHBOARD_CALENDAR_UNAVAILABLE, message: Your time off calendar is temporarily unavailable. }
+    query: |
+      SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name,
+        CAST(r.date_from AS VARCHAR) AS date_from,
+        CAST(r.date_to AS VARCHAR) AS date_to,
+        r.days, r.reason, r.state
+      FROM leave_requests r
+      WHERE r.employee_name = 'Admin User'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND r.date_from < CAST(CAST(CAST(COALESCE(:year, 2026) AS INTEGER) + 1 AS VARCHAR) || '-01-01' AS DATE)
+        AND r.date_to >= CAST(CAST(CAST(COALESCE(:year, 2026) AS INTEGER) AS VARCHAR) || '-01-01' AS DATE)
+        AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%' OR r.reason ILIKE '%' || :q || '%')
+      ORDER BY r.date_from, r.id
+
+actions:
+  - id: back_to_time_off_dashboard
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off
+
+  - id: open_dashboard_calendar_request
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off/leave-request-detail
+    params: { id: '{row.id}' }

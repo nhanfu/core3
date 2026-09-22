@@ -1089,3 +1089,37 @@ borrow of an existing PDF tab was cancelled without navigation. No Odoo
 desktop/mobile capture was possible, so no visual-parity claim is made. The
 exact blocker and cleanup are recorded under
 `evidence/time-off/2026-09-22/TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001/`.
+
+## Personal dashboard calendar action (2026-09-22)
+
+The next eligible missing action is Odoo's installed
+`action_my_days_off_dashboard_calendar` from
+`addons/hr_holidays/report/hr_leave_report_calendar.xml`. It opens the
+personal `hr.leave.report.calendar` year view using
+`hr_leave_employee_view_dashboard`, with the empty help text `You have no time
+off yet!`. It is a calendar action, not an approval, activity, analysis, or
+summary action.
+
+Core3 adds the service-owned `/time-off/dashboard-calendar` route with page id
+`time-off-dashboard-calendar` and the matching API fragment. The dashboard now
+exposes a `My Calendar` entry action; the route is an explicit Core3 alias for
+Odoo's modal calendar action because the current declarative runtime has no
+standalone modal-calendar target. Its year-mode calendar reads only the
+authenticated employee fixture (`Admin User`), supports request drilldown to
+the existing leave detail, and declares deterministic empty and 503 states.
+The API remains separate from the page and is joined by `page.id`; no new
+schema or fixture mutation was needed because the durable leave request table
+is reused.
+
+Focused coverage is in `test/time_off_dashboard_calendar.integration.test.ts`:
+2 tests and 20 assertions pass for source/action mapping, page/API separation,
+personal and year filtering, empty/transport guards, migration replay, and
+file-backed restart persistence. The full Time Off regression passes 80 tests
+and 760 assertions.
+
+BrowserSkill instance `245ea108` was healthy, but the only ordinary
+authenticated Odoo tab (`1770662590`, already owned by another session) could
+not be borrowed within the requested confirmation window. No live Odoo
+navigation, mutation, desktop/mobile capture, or visual-parity claim was made.
+The exact blocker and cleanup are recorded under
+`evidence/time-off/2026-09-22/TIMEOFF-DASHBOARD-CALENDAR-001/`.

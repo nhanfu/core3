@@ -140,3 +140,19 @@ frontend build, and `git diff --check` pass. Evidence is under
 BrowserSkill instance `245ea108` was healthy, but the normal authenticated
 Odoo tab was already borrowed by another session; the pending PDF-tab borrow
 was cancelled. No Odoo desktop/mobile visual-parity claim is made.
+
+## 2026-09-22 bounded candidate: personal dashboard calendar action
+
+Implemented `TIMEOFF-DASHBOARD-CALENDAR-001`, the missing Odoo
+`action_my_days_off_dashboard_calendar` year-calendar action. Core3 adds the
+page/API-separated `/time-off/dashboard-calendar` route, a `My Calendar`
+dashboard entry, personal employee/year filtering, request drilldown, empty
+and 503 states, and durable reuse of `leave_requests` without a new migration.
+
+Focused verification passes **2 tests / 20 assertions**; the full Time Off
+regression passes **80 tests / 760 assertions**. BrowserSkill instance
+`245ea108` was healthy, but tab `1770662590` was already owned by another
+session and the required borrow confirmation did not complete within 120s.
+No Odoo navigation or mutation occurred, no desktop/mobile captures exist,
+and no visual-parity claim is made. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-DASHBOARD-CALENDAR-001/`.

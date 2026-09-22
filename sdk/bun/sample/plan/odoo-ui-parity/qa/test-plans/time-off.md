@@ -40,6 +40,7 @@ mutations use isolated databases and deterministic dates.
 | TIMEOFF-ACTIVITY-MYALLOC-001 | My Allocations exposes the Odoo Activity view, durable slots, scheduling guards, and restart persistence | pass: `time_off_my_allocations_activity.integration.test.ts`; Odoo/Core3 browser blocked as recorded in evidence |
 | TIMEOFF-ANALYSIS-001 | Time Off Analysis exposes the Odoo report union, signed measures, Graph/Pivot grouping, filters, empty/error states, read permission, and migration replay | pass: `time_off_analysis.integration.test.ts`; paired Odoo/Core3 browser blocked as recorded in evidence |
 | TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001 | By Employee report rows open the existing Leave Request form through the durable request ID, with read permission and existing not-found/error guards | pass: `time_off_report_employee_drilldown.integration.test.ts`; Odoo tab borrow blocked before navigation |
+| TIMEOFF-DASHBOARD-CALENDAR-001 | Dashboard `My Calendar` maps Odoo `action_my_days_off_dashboard_calendar` to a personal year calendar, filters the durable employee/year scope, opens request detail, and preserves empty/503/restart behavior | pass: `time_off_dashboard_calendar.integration.test.ts` (2 tests / 20 assertions); Odoo borrow confirmation timed out before navigation, so no visual claim |
 
 ## Exit criteria
 

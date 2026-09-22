@@ -23,3 +23,9 @@ datasources:
       FROM leave_requests r
       WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%')
       ORDER BY r.date_from
+
+actions:
+  - id: dashboard_open_calendar
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off/dashboard-calendar

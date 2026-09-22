@@ -1,0 +1,30 @@
+title: Dashboard
+page: { id: time-off-dashboard-calendar, route: /time-off/dashboard-calendar, breadcrumb: [Human Resources, Time Off, Dashboard], auth: { require: [time_off.read] } }
+
+toolbar:
+  - { id: back_to_time_off_dashboard, label: Time Off, action: back_to_time_off_dashboard, permission: time_off.read, variant: secondary }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_dashboard_calendar_requests
+    view_navigation: tabs
+    views:
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mode: year
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: leave_type_name }
+    columns:
+      - { field: name, label: Time Off, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: days, label: Duration, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: open_dashboard_calendar_request
+    empty_state: { title: You have no time off yet!, description: Create a time off request to see it on your calendar. }
