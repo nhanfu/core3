@@ -93,6 +93,8 @@ components:
     attachment_accept: image/*,.pdf,.jpg,.jpeg,.png
     attachment_upload_action: upload_expense_attachment
     attachment_download_action: download_expense_attachment
+    attachment_actions:
+      - { id: remove_expense_attachment, label: Remove, variant: danger, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft' || state.expense_detail.status === 'Submitted'" }
   - type: LineItemGrid
     mount_in: previous-panel
     source: expense_split_lines

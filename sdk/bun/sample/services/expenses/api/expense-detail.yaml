@@ -43,7 +43,7 @@ datasources:
     permission: expenses.read
     error_states: { transport_error: { status: 503, code: EXPENSE_ATTACHMENTS_UNAVAILABLE, message: Expense receipt data is temporarily unavailable } }
     query: |
-      SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by,
+      SELECT id, expense_id, row_version, file_name, mime_type, size_bytes, uploaded_by,
         CAST(created_at AS VARCHAR) AS created_at
       FROM expense_attachments WHERE expense_id = :id ORDER BY created_at DESC, id
   - id: expense_duplicate_review
@@ -281,7 +281,7 @@ actions:
           expect_changed: true
           code: EXPENSE_SPLIT_STALE
         - query: "INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name, tax_amount, analytic_distribution, journal_entry, duplicate_candidate, reimbursement_status, product_name, quantity, unit_name, manager_name, vendor_name, receipt_checksum, refusal_reason, split_expense_origin_id) SELECT 'expense-split-' || l.id, 1, e.sheet_id, l.name, e.category, e.expense_date, l.employee_name, l.total_amount, e.payment_method, e.description, e.receipt_reference, e.state, e.receipt_label, e.company_name, e.department_name, l.tax_amount, l.analytic_distribution, NULL, NULL, e.reimbursement_status, l.product_name, e.quantity, e.unit_name, e.manager_name, e.vendor_name, e.receipt_checksum, NULL, :id FROM expense_split_lines l JOIN expenses e ON e.id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
-        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, created_at) SELECT 'attachment-expense-split-' || l.id || '-' || a.id, 'expense-split-' || l.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.uploaded_by, a.created_at FROM expense_split_lines l JOIN expense_attachments a ON a.expense_id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
+        - query: "INSERT INTO expense_attachments(id, expense_id, row_version, file_name, mime_type, size_bytes, storage_key, uploaded_by, created_at) SELECT 'attachment-expense-split-' || l.id || '-' || a.id, 'expense-split-' || l.id, 1, a.file_name, a.mime_type, a.size_bytes, a.storage_key, a.uploaded_by, a.created_at FROM expense_split_lines l JOIN expense_attachments a ON a.expense_id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-split-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.split', 'Split Expense', 'Expense split into editable lines')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     fields:
@@ -437,12 +437,31 @@ actions:
     mutation:
       generated: [attachment_id]
       guards:
-        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, message: Receipts can only be attached to draft expenses }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state IN ('Draft', 'Submitted')", status: 409, code: EXPENSE_ATTACHMENT_STATE_INVALID, message: Receipts can only be attached to draft or submitted expenses }
       steps:
-        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
+        - query: "INSERT INTO expense_attachments(id, expense_id, row_version, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :id, 1, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
         - query: "UPDATE expenses SET receipt_reference = :fileName, receipt_label = 'Receipt attached', receipt_checksum = 'uploaded:' || :attachment_id, row_version = row_version + 1 WHERE id = :id"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-attachment-' || :attachment_id, :id, :current_user_name, 'expenses.attachments.upload', 'Receipt attached', :fileName)"
-      result: { query: "SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM expense_attachments WHERE id = :attachment_id" }
+      result: { query: "SELECT id, expense_id, row_version, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM expense_attachments WHERE id = :attachment_id" }
+  - id: remove_expense_attachment
+    type: server
+    permission: expenses.write
+    action: expenses.detail.attachments.remove
+    handler: line_item
+    operation: delete
+    domain: expense_attachment
+    params: { id: '{state.expense_detail.id}', line_id: '{row.id}', expected_row_version: '{row.row_version}', parent_expected_row_version: '{state.expense_detail.row_version}' }
+    refresh: [expense_detail, expense_detail_activity, expense_detail_attachments]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EXPENSE_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated expense actor is required. }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state IN ('Draft', 'Submitted') AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: EXPENSE_ATTACHMENT_STATE_INVALID, message: Receipts can only be removed from an unchanged draft or submitted expense. }
+        - { query: "SELECT id FROM expense_attachments WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", status: 409, code: EXPENSE_ATTACHMENT_STALE, message: This receipt changed before it was removed. Reload the expense and try again. }
+      steps:
+        - { query: "DELETE FROM expense_attachments WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EXPENSE_ATTACHMENT_STALE, message: This receipt changed before it was removed. Reload the expense and try again. }
+        - { query: "UPDATE expenses SET receipt_reference = (SELECT file_name FROM expense_attachments WHERE expense_id = :id ORDER BY created_at DESC, id LIMIT 1), receipt_label = CASE WHEN EXISTS (SELECT 1 FROM expense_attachments WHERE expense_id = :id) THEN 'Receipt attached' ELSE 'No receipt attached' END, receipt_checksum = CASE WHEN EXISTS (SELECT 1 FROM expense_attachments WHERE expense_id = :id) THEN receipt_checksum ELSE NULL END, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The expense changed before the receipt was removed. Reload and try again. }
+        - { query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-attachment-remove-' || :line_id, :id, :current_user_name, 'expenses.attachments.remove', 'Receipt removed', 'Receipt attachment removed')" }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: process_expense_receipt
     type: server_form
     permission: expenses.write
@@ -465,7 +484,7 @@ actions:
       steps:
         - query: "INSERT INTO expense_receipt_processing(id, expense_id, company_name, state, attempt_count, row_version) SELECT 'receipt-processing-' || id, id, COALESCE(company_name, 'Core3 Demo Company'), 'Pending', 0, 1 FROM expenses WHERE id = :id ON CONFLICT (id) DO NOTHING"
         - query: "UPDATE expense_receipt_processing SET state = CASE WHEN :provider_result = 'success' THEN 'Succeeded' ELSE 'Failed' END, attempt_count = CASE WHEN state = 'Succeeded' AND request_key = :request_key THEN attempt_count ELSE attempt_count + 1 END, request_key = :request_key, receipt_reference = :receipt_reference, attachment_id = CASE WHEN :provider_result = 'success' THEN 'receipt-processed-' || :id ELSE attachment_id END, provider_code = :provider_code, failure_reason = CASE WHEN :provider_result = 'failure' THEN COALESCE(NULLIF(TRIM(:failure_reason), ''), 'Receipt provider failed') ELSE NULL END, last_attempt_at = TIMESTAMP '2026-09-13 15:00:00', processed_at = CASE WHEN :provider_result = 'success' THEN TIMESTAMP '2026-09-13 15:00:00' ELSE NULL END, row_version = row_version + 1 WHERE expense_id = :id AND company_name = CASE WHEN COALESCE(:current_company_name, '') = '' THEN company_name ELSE :current_company_name END"
-        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT 'receipt-processed-' || :id, :id, :receipt_reference, COALESCE(NULLIF(:mime_type, ''), 'application/pdf'), COALESCE(CAST(:size_bytes AS BIGINT), 0), 'expenses/receipts/' || :id || '/' || :receipt_reference, :current_user_id WHERE :provider_result = 'success' ON CONFLICT (id) DO NOTHING"
+        - query: "INSERT INTO expense_attachments(id, expense_id, row_version, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT 'receipt-processed-' || :id, :id, 1, :receipt_reference, COALESCE(NULLIF(:mime_type, ''), 'application/pdf'), COALESCE(CAST(:size_bytes AS BIGINT), 0), 'expenses/receipts/' || :id || '/' || :receipt_reference, :current_user_id WHERE :provider_result = 'success' ON CONFLICT (id) DO NOTHING"
         - query: "UPDATE expenses SET receipt_reference = CASE WHEN :provider_result = 'success' THEN :receipt_reference ELSE receipt_reference END, receipt_label = CASE WHEN :provider_result = 'success' THEN 'Receipt processed' ELSE 'Receipt processing failed' END, receipt_checksum = CASE WHEN :provider_result = 'success' THEN 'processed:' || :id ELSE receipt_checksum END, row_version = CASE WHEN :provider_result = 'success' AND receipt_reference IS DISTINCT FROM :receipt_reference THEN row_version + 1 ELSE row_version END WHERE id = :id"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) SELECT 'expense-activity-' || :id || '-receipt-' || :request_key || '-' || :provider_result, :id, :current_user_name, CASE WHEN :provider_result = 'success' THEN 'expenses.receipt.processed' ELSE 'expenses.receipt.failed' END, CASE WHEN :provider_result = 'success' THEN 'Receipt processed' ELSE 'Receipt processing failed' END, CASE WHEN :provider_result = 'success' THEN 'Receipt processed by ' || COALESCE(:provider_code, 'provider') ELSE COALESCE(NULLIF(TRIM(:failure_reason), ''), 'Receipt provider failed') END WHERE NOT EXISTS (SELECT 1 FROM expense_activity WHERE id = 'expense-activity-' || :id || '-receipt-' || :request_key || '-' || :provider_result)"
       result: { query: "SELECT * FROM expense_receipt_processing WHERE expense_id = :id" }
