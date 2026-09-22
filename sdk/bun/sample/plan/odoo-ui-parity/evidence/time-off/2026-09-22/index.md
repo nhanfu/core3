@@ -3,3 +3,4 @@
 | Feature | Scope | Result | Evidence |
 | --- | --- | --- | --- |
 | `TIMEOFF-MY-ALLOCATIONS-ACTIVITY-001` | Odoo `hr_leave_allocation_action_my` Activity view and scheduling contract | Conditional bounded pass; Odoo/Core3 browser comparison blocked | [`TIMEOFF-MY-ALLOCATIONS-ACTIVITY-001`](TIMEOFF-MY-ALLOCATIONS-ACTIVITY-001/README.md) |
+| `TIMEOFF-ANALYSIS-001` | Odoo `hr_leave_report_action` Time Off Analysis Graph/Pivot report | Conditional bounded pass; Odoo route and Core3 runtime blocked | [`TIMEOFF-ANALYSIS-001`](TIMEOFF-ANALYSIS-001/README.md) |

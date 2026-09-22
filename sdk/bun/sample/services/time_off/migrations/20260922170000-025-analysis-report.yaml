@@ -1,0 +1,31 @@
+version: 0.0.25
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS department_name VARCHAR;
+      ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS department_name VARCHAR;
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE leave_requests SET department_name = CASE employee_id
+        WHEN 'employee-demo-001' THEN 'Administration'
+        WHEN 'employee-demo-002' THEN 'Engineering'
+        WHEN 'employee-demo-003' THEN 'Operations'
+        ELSE COALESCE(department_name, 'Operations') END,
+        company_name = COALESCE(company_name, 'Core3 Demo Company')
+        WHERE department_name IS NULL OR company_name IS NULL;
+      UPDATE leave_allocations SET department_name = CASE employee_id
+        WHEN 'employee-demo-001' THEN 'Administration'
+        WHEN 'employee-demo-002' THEN 'Engineering'
+        WHEN 'employee-demo-003' THEN 'Operations'
+        ELSE COALESCE(department_name, 'Operations') END,
+        company_name = COALESCE(company_name, 'Core3 Demo Company')
+        WHERE department_name IS NULL OR company_name IS NULL;
+      CREATE INDEX IF NOT EXISTS leave_requests_analysis_idx ON leave_requests(date_from, state, employee_id, leave_type_id);
+      CREATE INDEX IF NOT EXISTS leave_allocations_analysis_idx ON leave_allocations(date_from, state, employee_id, leave_type_id);
+    down: |
+      DROP INDEX IF EXISTS leave_allocations_analysis_idx;
+      DROP INDEX IF EXISTS leave_requests_analysis_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -61,10 +61,10 @@ describe('Time Off Odoo view navigation', () => {
     }
   });
 
-  test('declares the analysis pivot fields on its API datasource', () => {
+  test('declares the Odoo analysis report pivot fields on its API datasource', () => {
     const analysis = yaml('api/analysis.yaml');
-    expect(analysis.datasources.find((source: any) => source.id === 'time_off_analysis_states')?.pivot.fields)
-      .toEqual(['category', 'request_count']);
+    expect(analysis.datasources.find((source: any) => source.id === 'time_off_analysis_report')?.pivot.fields)
+      .toEqual(expect.arrayContaining(['employee_name', 'leave_type', 'month', 'number_of_days', 'number_of_hours']));
   });
 
   test('guards new requests against reversed dates', () => {

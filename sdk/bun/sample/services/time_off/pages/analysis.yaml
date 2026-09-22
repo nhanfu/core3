@@ -1,34 +1,53 @@
 title: Time Off Analysis
-page: { id: time-off-analysis, breadcrumb: [Human Resources, Time Off, Analysis], auth: { require: [time_off.read] } }
+page: { id: time-off-analysis, route: /time-off-analysis, breadcrumb: [Human Resources, Time Off, Analysis], auth: { require: [time_off.read] } }
 components:
-  - type: StatRow
-    source: time_off_analysis_totals
-    title: Leave overview
-    stats: [{ label: Requests, field: request_count }, { label: Approved days, field: approved_days }, { label: Pending, field: pending_count }, { label: Employees, field: employee_count }]
-  - type: Chart
-    source: time_off_analysis_states
-    title: Requests by status
-    label_field: category
-    value_field: request_count
-    variant: bar
   - type: ListView
     variant: odoo
-    source: time_off_analysis_states
+    source: time_off_analysis_report
+    search: { label: Search time off analysis, placeholder: 'Search employee, type, or description...' }
+    empty_state: { title: No data yet!, description: Check back later to overview all time off requests. }
+    filters:
+      - { field: state, label: Status, options_source: time_off_analysis_states }
+      - { field: leave_type, label: Request Type, options: [{ id: Allocation, label: Allocation }, { id: Time Off, label: Time Off }] }
+      - { field: employee_name, label: Employee, options_source: time_off_analysis_employees }
+      - { field: department_name, label: Department, options_source: time_off_analysis_departments }
     view_navigation: tabs
     views:
-      - id: list
-        label: List
-        icon: table
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: employee_name
+        series_field: leave_type
+        measure_field: number_of_days
+        measure_label: Number of Days
+        type: bar
+        mobile: false
       - id: pivot
         label: Pivot
         icon: pivot
         pivot:
-          fields: [{ field: category, column: Status }, { field: request_count, column: Requests }]
+          fields:
+            - { field: employee_name, column: Employee }
+            - { field: leave_type, column: Request Type }
+            - { field: leave_type_name, column: Time Off Type }
+            - { field: month, column: Month }
+            - { field: department_name, column: Department }
+            - { field: number_of_days, column: Number of Days }
+            - { field: number_of_hours, column: Number of Hours }
           default:
-            rows: [category]
-            measures: [{ field: request_count, aggregate: sum, label: Requests }]
+            rows: [employee_name, leave_type_name]
+            columns: [month]
+            measures:
+              - { field: number_of_days, aggregate: sum, column: Number of Days }
+              - { field: number_of_hours, aggregate: sum, column: Number of Hours }
     columns:
-      - { field: category, label: Status, type: PrimaryEntityCell }
-      - { field: request_count, label: Requests, align: right }
-    page_size: 25
-    row_key: category
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: leave_type, label: Request Type }
+      - { field: month, label: Month }
+      - { field: number_of_days, label: Number of Days, align: right }
+      - { field: number_of_hours, label: Number of Hours, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: department_name, label: Department }
+    page_size: 50
+    row_key: id

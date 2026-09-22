@@ -87,3 +87,22 @@ Focused verification passes **3/20**; full Time Off regression passes
 `evidence/time-off/2026-09-22/TIMEOFF-SECOND-APPROVAL-001/`. The authenticated
 `core3_reference` browser has no Time Off app/action surface, so paired Odoo
 desktop/mobile visual evidence is blocked and no parity claim is made.
+
+## 2026-09-22 bounded candidate: Time Off Analysis report action
+
+Implemented the source-backed Odoo `hr_leave_report_action` contract at
+`/time-off-analysis`. The former status-count approximation is now a durable
+allocation/request report with Odoo-signed day/hour measures, employee/type/
+month Graph/Pivot grouping, department/company context, filters, empty/503
+states, and a read-only `time_off.read` boundary. Migration `0.0.25` adds
+metadata and idempotent report indexes while preserving the stable route and
+page/API join.
+
+Focused verification passes **3 tests / 17 assertions** in
+`test/time_off_analysis.integration.test.ts`. Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-ANALYSIS-001/`. BrowserSkill Odoo
+desktop/mobile verification is blocked because the authenticated route resolves
+to Discuss; Core3 binds in the isolated runtime but the task-created tab has no
+Core3 auth session (401), so no independent login or credential-bearing capture
+was attempted. No paired visual parity claim is made; Time Off remains
+conditional and unsigned-off.

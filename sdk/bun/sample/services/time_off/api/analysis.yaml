@@ -1,11 +1,73 @@
 page: { id: time-off-analysis }
 datasources:
-  - id: time_off_analysis_totals
-    single: true
-    permission: time_off.read
-    query: "SELECT COUNT(*) AS request_count, COALESCE(SUM(days) FILTER (WHERE state = 'Approved'), 0) AS approved_days, COUNT(*) FILTER (WHERE state = 'Submitted') AS pending_count, COUNT(DISTINCT employee_id) AS employee_count FROM leave_requests"
   - id: time_off_analysis_states
     permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','To Approve'), ('Second Approval','Second Approval'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: time_off_analysis_employees
+    permission: time_off.read
+    single: false
+    query: "SELECT DISTINCT employee_name AS value, employee_name AS label FROM (SELECT employee_name FROM leave_requests UNION ALL SELECT employee_name FROM leave_allocations) employees WHERE employee_name IS NOT NULL ORDER BY employee_name"
+  - id: time_off_analysis_departments
+    permission: time_off.read
+    single: false
+    query: "SELECT DISTINCT department_name AS value, department_name AS label FROM (SELECT department_name FROM leave_requests UNION ALL SELECT department_name FROM leave_allocations) departments WHERE department_name IS NOT NULL ORDER BY department_name"
+  - id: time_off_analysis_report
+    permission: time_off.read
+    single: false
     pivot:
-      fields: [category, request_count]
-    query: "SELECT state AS category, COUNT(*) AS request_count FROM leave_requests GROUP BY state ORDER BY request_count DESC"
+      fields: [id, employee_id, employee_name, department_name, company_name, leave_type_id, leave_type_name, leave_type, date_from, date_to, month, number_of_days, number_of_hours, state, description]
+    error_states:
+      transport_error: { status: 503, code: TIME_OFF_ANALYSIS_UNAVAILABLE, message: Time Off Analysis is temporarily unavailable. }
+    query: |
+      WITH report_rows AS (
+        SELECT
+          'allocation-' || a.id AS id,
+          a.employee_id,
+          a.employee_name,
+          COALESCE(a.department_name, 'Operations') AS department_name,
+          COALESCE(a.company_name, 'Core3 Demo Company') AS company_name,
+          a.leave_type_id,
+          a.leave_type_name,
+          'Allocation' AS leave_type,
+          CAST(a.date_from AS DATE) AS date_from,
+          CAST(COALESCE(a.date_to, a.date_from) AS DATE) AS date_to,
+          CAST(a.days AS DOUBLE) AS number_of_days,
+          CAST(a.days * 7.6 AS DOUBLE) AS number_of_hours,
+          a.state,
+          a.name AS description
+        FROM leave_allocations a
+        UNION ALL
+        SELECT
+          'request-' || r.id AS id,
+          r.employee_id,
+          r.employee_name,
+          COALESCE(r.department_name, 'Operations') AS department_name,
+          COALESCE(r.company_name, 'Core3 Demo Company') AS company_name,
+          r.leave_type_id,
+          r.leave_type_name,
+          'Time Off' AS leave_type,
+          CAST(r.date_from AS DATE) AS date_from,
+          CAST(r.date_to AS DATE) AS date_to,
+          CAST(r.days * -1 AS DOUBLE) AS number_of_days,
+          CAST(r.days * -7.6 AS DOUBLE) AS number_of_hours,
+          r.state,
+          r.reason AS description
+        FROM leave_requests r
+      )
+      SELECT id, employee_id, employee_name, department_name, company_name,
+        leave_type_id, leave_type_name, leave_type,
+        CAST(date_from AS VARCHAR) AS date_from,
+        CAST(date_to AS VARCHAR) AS date_to,
+        CAST(strftime(date_from, '%Y-%m') AS VARCHAR) AS month,
+        number_of_days, number_of_hours, state, description
+      FROM report_rows
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR employee_name ILIKE '%' || :q || '%' OR leave_type_name ILIKE '%' || :q || '%' OR leave_type ILIKE '%' || :q || '%' OR COALESCE(description, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR :state = '' OR state = :state)
+        AND (:leave_type IS NULL OR :leave_type = '' OR leave_type = :leave_type)
+        AND (:employee_name IS NULL OR :employee_name = '' OR employee_name = :employee_name)
+        AND (:department_name IS NULL OR :department_name = '' OR department_name = :department_name)
+        AND (:date_from IS NULL OR date_from >= CAST(:date_from AS DATE))
+        AND (:date_to IS NULL OR date_from <= CAST(:date_to AS DATE))
+      ORDER BY date_from DESC, employee_name, leave_type_name, id

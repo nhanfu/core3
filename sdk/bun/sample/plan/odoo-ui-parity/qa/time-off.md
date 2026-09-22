@@ -176,3 +176,25 @@ blocker.
   Discuss. No paired desktop/mobile visual claim is made.
 - Evidence: `evidence/time-off/2026-09-22/TIMEOFF-SECOND-APPROVAL-001/`.
 - Disposition: conditional bounded PASS; no full Time Off sign-off.
+
+## 2026-09-22 bounded candidate: Time Off Analysis report action
+
+- Source action: Odoo `hr_leave_report_action` from
+  `addons/hr_holidays/report/hr_leave_reports.xml`; Graph/Pivot
+  `hr.leave.report` allocation/request union.
+- Core3 route: `/time-off-analysis`, page/API `page.id: time-off-analysis`.
+- Focused test: **PASS**, 3 tests / 17 assertions in
+  `test/time_off_analysis.integration.test.ts`.
+- Persistence: **PASS**; migration `0.0.25` adds report metadata and both
+  analysis indexes, and replay is idempotent.
+- Contract: **PASS**; signed days/hours, employee/type/month dimensions,
+  department/company context, filters, empty state, 503 state, and read-only
+  permission boundary are covered.
+- Odoo browser gate: **BLOCKED**; BrowserSkill instance `245ea108` loaded
+  `/odoo/time-off` as Discuss at desktop/mobile. Captures and exact details are
+  in `evidence/time-off/2026-09-22/TIMEOFF-ANALYSIS-001/`.
+- Core3 browser gate: **BLOCKED** by the task-created BrowserSkill tab's 401
+  response from `/api/auth/me`; no independent Core3 login was attempted and
+  no credential-bearing screenshot was retained.
+- Disposition: conditional bounded PASS; no paired visual parity or full module
+  sign-off.

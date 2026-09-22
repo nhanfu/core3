@@ -998,3 +998,40 @@ passes 69 tests and 689 assertions. Evidence is under
 The authenticated `core3_reference` database still has no Time Off menu or
 `hr_holidays` action; direct `/odoo/time-off-approval` resolves to Discuss.
 No Odoo visual-parity claim or mutation is made for this slice.
+
+## Time Off Analysis report action (2026-09-22)
+
+The next eligible report gap is Odoo's installed `hr_leave_report_action`
+(`addons/hr_holidays/report/hr_leave_reports.xml:94-111`). It is the
+employee-dashboard `Time Off Analysis` action over `hr.leave.report`, with
+Graph and Pivot modes, employee/type/month grouping, department context, and
+number-of-days/number-of-hours measures. Its report view is a durable union of
+active employee allocations and leave requests; requests are represented as
+negative measures while allocations are positive. It is read-only and has no
+create, edit, or delete operation.
+
+Core3 replaces the former status-count approximation at `/time-off-analysis`
+with a service-owned `time_off_analysis_report` datasource. The page and API
+remain separate and join through `page.id: time-off-analysis`; the page exposes
+visible Graph and Pivot tabs plus status, request-type, employee, and
+department filters, while the API adds signed day/hour measures, month,
+department, company, empty, and 503 transport states. Migration `0.0.25`
+adds durable department/company metadata to requests and allocations and
+idempotent report indexes. No mutation or report export is introduced in this
+bounded slice.
+
+Focused coverage is `test/time_off_analysis.integration.test.ts`: 3 tests and
+17 assertions pass for the Odoo action contract, page/API separation, signed
+allocation/request union, filters, empty state, migration replay, seeded
+department/company metadata, and durable indexes. The existing navigation
+regression was updated to assert the new report pivot fields.
+
+BrowserSkill instance `245ea108` was healthy and authenticated, but the
+task-created Odoo route `/odoo/time-off` resolved to the Discuss shell rather
+than the Time Off application at both 1916x833 desktop and 390x844 mobile.
+The desktop and mobile blocker captures are committed under the feature
+evidence folder; no Odoo data was changed. Core3's isolated Time Off runtime
+bound successfully, but the same BrowserSkill task-created tab had no Core3
+auth session (`/api/auth/me` returned 401), so the report route could not be
+loaded without an unauthorized independent login. No paired visual parity
+claim is made.
