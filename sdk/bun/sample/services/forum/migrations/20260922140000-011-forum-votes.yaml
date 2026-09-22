@@ -1,0 +1,19 @@
+version: 0.0.11
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS forum_post_votes (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        post_id VARCHAR NOT NULL, user_id VARCHAR NOT NULL, vote INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT forum_post_votes_value_check CHECK (vote IN (-1, 1))
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS forum_post_votes_post_user_idx ON forum_post_votes(post_id, user_id);
+      CREATE INDEX IF NOT EXISTS forum_post_votes_user_idx ON forum_post_votes(user_id);
+    down: |
+      DROP TABLE IF EXISTS forum_post_votes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

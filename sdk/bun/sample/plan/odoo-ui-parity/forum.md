@@ -235,6 +235,33 @@ session `ftio`; existing desktop/mobile launcher captures still show that
 `website_forum` is absent from `core3_reference`. No visual parity claim is
 made.
 
+## Wave 10 source-backed feature — Question upvote toggle — 2026-09-22
+
+Odoo 19's `WebsiteForum.post_upvote` route at
+`addons/website_forum/controllers/website_forum.py:512-517` toggles the
+authenticated user's positive vote, rejects votes on the user's own post, and
+returns `vote_count` and `user_vote`. The model implementation in
+`models/forum_post.py:61-62,193-206,607-615` stores one vote per user/post and
+updates the aggregate through the same toggle.
+
+Stable ID: `FORUM-QUESTION-UPVOTE-001`.
+
+Core3 adds `upvote_forum_post` to the existing question-detail API. The
+presentation page stays separate and adds Upvote/Remove upvote controls joined
+through `page.id: forum-question-detail`. Migration
+`20260922140000-011-forum-votes.yaml` adds the durable unique vote relation.
+The mutation requires `forum.read`, injects the authenticated actor, guards
+active/closed state, own-post attempts, missing actor, and stale row versions,
+then atomically toggles the relation and aggregate. The focused integration
+suite covers the contract, multi-user count, toggle/replay, guard/no-partial
+write, HTTP permission boundary, and file-backed restart.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-QUESTION-UPVOTE-001/`.
+The authenticated Odoo tab was unavailable because it was borrowed by another
+worker session, and Core3 runtime/browser navigation was blocked by an
+unrelated Website page-schema error (`page config.catalogs is not allowed` in
+`services/website/api/settings.yaml`). No visual parity claim is made.
+
 ## Runtime evidence and blockers — 2026-09-12
 
 - Odoo login was authenticated successfully with the local parity credentials

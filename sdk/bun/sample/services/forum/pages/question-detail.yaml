@@ -17,6 +17,8 @@ components:
       - { field: state, label: Status, type: StatusChip }
       - { field: closed_reason, label: Closed reason }
     header_actions:
+      - { id: upvote_forum_post, label: Upvote, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.user_vote !== 1" }
+      - { id: upvote_forum_post, label: Remove upvote, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.user_vote === 1" }
       - { id: toggle_forum_post_favorite, label: Favorite, variant: secondary, permission: forum.read, show_if: "!state.forum_post_detail.is_favorite" }
       - { id: toggle_forum_post_favorite, label: Remove favorite, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.is_favorite" }
       - { id: edit_forum_post_detail, label: Edit, variant: primary, permission: forum.write, show_if: "state.forum_post_detail.state !== 'Archived'" }
