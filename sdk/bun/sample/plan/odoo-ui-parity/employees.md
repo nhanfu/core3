@@ -1942,6 +1942,22 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-PROPERTIES-GROUP-001 execution (2026-09-22)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-062 | Odoo `group_by_employee_properties` search mapping | pass; exact local XML source and authenticated Employees menu observation |
+| EMP-FUNC-062 | Properties group-by/pivot projection and deterministic values | pass; current-company Employees datasource returns durable JSON values |
+| EMP-PERM-062 | Employees read permission and company guard | pass; datasource requires `employees.read` and filters foreign companies |
+| EMP-DATA-062 | Persistence/replay | pass; no new migration required; existing `0.0.54` Properties fixtures remain durable |
+| EMP-UI-062 | Authenticated Odoo/Core3 desktop and mobile comparison | conditional; Odoo desktop menu observed through BrowserSkill, no Core3 runtime capture claimed |
+
+Focused test: `test/employees_properties_group.integration.test.ts` (2 tests,
+11 assertions). Adjacent and broader regression results, build status, and the
+global audit blocker are recorded in
+`evidence/employees/2026-09-22/EMP-EMPLOYEE-PROPERTIES-GROUP-001/`.
+No aggregate Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-ANALYSIS-CONTRACT-START-001: Employees contract-start Graph/Pivot (2026-09-22)
 
 The next missing stable-ID view behavior after the landed organization-chart

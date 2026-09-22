@@ -26,6 +26,7 @@ components:
       - { field: employee_type, label: Employee Type }
       - { field: state, label: Status }
       - { field: birthday, label: Birthday }
+      - { field: employee_properties, label: Properties }
     view_navigation: tabs
     views:
       - id: kanban
