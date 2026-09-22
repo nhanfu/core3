@@ -1,0 +1,33 @@
+version: 0.0.15
+description: Durable links from posted expenses to their accounting move or originating payment
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS expense_accounting_links (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        target_type VARCHAR NOT NULL,
+        target_id VARCHAR NOT NULL,
+        target_label VARCHAR NOT NULL,
+        target_reference VARCHAR,
+        target_route VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-09-22 12:00:00'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_expense_accounting_links_expense ON expense_accounting_links(expense_id);
+      CREATE INDEX IF NOT EXISTS idx_expense_accounting_links_target ON expense_accounting_links(target_type, target_id);
+      INSERT INTO expense_accounting_links(
+        id, expense_id, company_name, target_type, target_id, target_label,
+        target_reference, target_route
+      ) VALUES
+        ('expense-accounting-link-in-payment', 'expense-demo-in-payment', 'Core3 Demo Company', 'journal_entry', 'accounting-entry-demo-001', 'Miscellaneous Operations', 'MISC/2026/0084', '/accounting/journal-entry-detail'),
+        ('expense-accounting-link-posted', 'expense-demo-posted', 'Core3 Demo Company', 'payment', 'accounting-payment-demo-001', 'PAY/2026/0001', 'MISC/2026/0079', '/accounting/payment-detail')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS idx_expense_accounting_links_target;
+      DROP INDEX IF EXISTS uq_expense_accounting_links_expense;
+      DROP TABLE IF EXISTS expense_accounting_links;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -193,3 +193,23 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 - Core3 authenticated browser verification remains conditional on the local
   Core3 listener and authenticated session; no Core3 visual parity claim is
   made if that runtime is unavailable.
+
+## Batch 11 - expense accounting document action (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-015`, Odoo `action_open_account_move` and the
+  Expense form Journal Entry/Payment smart button.
+- Source-backed behavior: Odoo chooses the linked `account.move` for
+  employee-paid expenses and the originating `account.payment` for
+  company-paid expenses. Core3 now persists typed target links, applies the
+  current-company read boundary, and opens the existing Accounting detail
+  route with `accounting.read`.
+- Focused evidence: `expenses_accounting_link.integration.test.ts` — 3 tests /
+  15 assertions passed when combined with the migration persistence gate. It
+  covers page/API separation, typed destinations, wrong-company/empty/error
+  behavior, stable seeded IDs, and replay-safe migration data.
+- `bun run audit`, Expenses CSS, frontend build, and `git diff --check` pass.
+- Browser blocker: on BrowserSkill instance `245ea108`, the signed-in Odoo tab
+  `1770662590` was already borrowed by session `wbjh`; no live Odoo DOM or
+  desktop/mobile capture was read, and no visual-parity claim is made.
+
+| EXPENSE-FUNC-015 | Expense accounting document action | Posted/in-payment detail exposes the correct typed Journal Entry or Payment destination with company and permission guards | pass: focused suite; visual browser gate blocked |

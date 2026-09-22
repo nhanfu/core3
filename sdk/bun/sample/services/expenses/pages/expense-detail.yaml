@@ -30,6 +30,8 @@ components:
       - { id: split_expense, label: Split Expense, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
     stat_buttons:
       - { id: open_split_expense, label: Split, value_field: split_expense_count, icon: split, permission: expenses.read, show_if: "state.expense_detail.split_expense_count > 0" }
+      - { id: open_expense_account_move, label: Journal Entry, value_field: accounting_link_label, icon: ledger, permission: accounting.read, show_if: "state.expense_accounting_link.target_type === 'journal_entry'" }
+      - { id: open_expense_origin_payment, label: Payment, value_field: accounting_link_label, icon: payment, permission: accounting.read, show_if: "state.expense_accounting_link.target_type === 'payment'" }
     group_columns: 2
     groups:
       - title: Expense details

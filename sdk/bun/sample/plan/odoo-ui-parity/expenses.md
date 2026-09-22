@@ -637,3 +637,30 @@ Focused evidence is under
 instance `245ea108` was connected, but the existing authenticated tab could
 not be borrowed into the agent window, which remained `about:blank`; no live
 desktop/mobile visual-parity claim is made.
+
+## Expense accounting document action follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-015`.
+
+The next non-activity, non-analytics source action after Employee Expenses is
+`hr.expense.action_open_account_move` in
+`/home/nhanjs/projects/odoo/addons/hr_expense/models/hr_expense.py:1351-1367`.
+The expense form smart button is declared at
+`/home/nhanjs/projects/odoo/addons/hr_expense/views/hr_expense_views.xml:149-166`:
+employee-paid expenses open the linked journal entry and company-paid expenses
+open the originating payment. Core3 previously rendered only the denormalized
+Journal entry text and had no durable relation or destination action.
+
+Core3 now adds `expense_accounting_links` through migration `0.0.15`, seeds
+stable links for the posted and in-payment fixtures, exposes the typed link
+through `expense_accounting_link` on the existing `expense-detail` page/API
+binding, and renders permissioned Journal Entry or Payment smart buttons that
+open the existing Accounting detail routes. The datasource enforces the
+current-company boundary and declares explicit empty, missing, and transport
+error behavior. No Accounting service files were changed.
+
+Focused evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-015/`. BrowserSkill
+instance `245ea108` was connected, but the signed-in Odoo tab was already
+borrowed by session `wbjh`; this worker did not seize or bypass that ownership.
+No Odoo desktop/mobile visual-parity claim is made.
