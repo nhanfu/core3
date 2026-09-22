@@ -1,0 +1,21 @@
+title: Applications
+page: { id: recruitment-applicant-applications, route: /applicants/applications, breadcrumb: [Human Resources, Recruitment, Applicant, Applications], auth: { require: [recruitment.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_applicant_applications
+    search: { label: Search applications, placeholder: 'Search applications, job positions, or stages...' }
+    columns:
+      - { field: name, label: Applicant, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: opening_name, label: Job position, sortable: true, mobile: true }
+      - { field: stage, label: Stage, type: StatusChip, sortable: true, mobile: true }
+      - { field: application_status, label: Status, type: StatusChip, mobile: true }
+      - { field: applied_date, label: Applied on, sortable: true, mobile: false }
+      - { field: source, label: Source, mobile: false }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: view_recruitment_applicant_application, label: Open, icon: external_link }] }
+    row_key: id
+    row_actions: menu
+    row_open_action: view_recruitment_applicant_application
+    row_double_click_action: view_recruitment_applicant_application
+    empty_state: { title: No related applications, description: This applicant has no other applications. }
+    page_size: 25

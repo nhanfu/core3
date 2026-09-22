@@ -8,7 +8,7 @@ components:
     statusbar: [{ value: New, label: New }, { value: Screening, label: First screening }, { value: Interview, label: First interview }, { value: Offer, label: Contract proposal }, { value: Hired, label: Contract signed }, { value: Rejected, label: Refused }]
     status_colors: { New: neutral, Screening: amber, Interview: blue, Offer: violet, Hired: green, Rejected: red }
     group_columns: 2
-    stat_buttons: [{ id: schedule_recruitment_applicant_interview, label: Schedule Interview, value_field: meeting_display_text, permission: recruitment.write }]
+    stat_buttons: [{ id: view_recruitment_applicant_applications, label: Applications, value_field: application_count, permission: recruitment.read, show_if: "record.application_count > 1 || record.is_pool_applicant === true" }, { id: schedule_recruitment_applicant_interview, label: Schedule Interview, value_field: meeting_display_text, permission: recruitment.write }]
     groups:
       - title: Applicant
         fields: [{ field: name, label: Applicant }, { field: stage, label: Stage }, { field: opening_name, label: Job position }, { field: department_name, label: Department }, { field: email, label: Email }, { field: phone, label: Phone }, { field: priority, label: Priority }, { field: rating, label: Rating }]

@@ -1,5 +1,16 @@
 # recruitment QA ledger
 
+## Batch 21 QA — Applicant Applications — 2026-09-22
+
+- Stable ID: `RECRUITMENT-APPLICANT-OPEN-APPLICATIONS-001`.
+- Source boundary: Odoo 19 `hr_recruitment/models/hr_applicant.py::action_open_applications`, `_get_similar_applicants_domain`, and `views/hr_applicant_views.xml` Applications stat button, source revision `659759969d535d286b656c96b675e4612b925ddd`.
+- Functional implementation: dedicated page/API contracts joined by `page.id`, read-only `recruitment.read` stat/navigation actions, same-person email/phone/pool-link query, archived application statuses, company scope, search, empty/missing/transport contracts, migration 026 deterministic fixtures, and restart persistence.
+- Focused test: `bun test test/recruitment_applicant_applications.integration.test.ts --timeout 30000` — 3 passed, 0 failed, 21 assertions.
+- Recruitment regression: `bun test ./test/recruitment*.integration.test.ts --timeout 30000` — 91 passed, 0 failed, 752 assertions across 24 files.
+- Static gates: `bun run audit` — 865 pages, 873 routes, 1,828 datasources; `git diff --check` passed.
+- Browser result: BrowserSkill daemon was connected on instance `245ea108`. Session `hvbx` listed Odoo tabs, but borrowing tab `1770663883` timed out waiting for human confirmation. A follow-up tab listing showed the tab remained unborrowed; session `hvbx` was stopped. No credentials, cookies, independent login, Playwright, or alternate browser was used, and no Odoo action or desktop/mobile capture was inspected.
+- QA decision: bounded functional/source batch complete after local verification; authenticated Odoo comparison remains blocked, so Recruitment is not signed off.
+
 ## Batch 20 QA — Applicant Add to Pool — 2026-09-22
 
 - Stable ID: `RECRUITMENT-APPLICANT-ADD-TO-POOL-001`.

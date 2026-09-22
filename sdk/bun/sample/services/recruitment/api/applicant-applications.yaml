@@ -1,0 +1,18 @@
+page: { id: recruitment-applicant-applications }
+datasources:
+  - id: recruitment_applicant_applications
+    permission: recruitment.read
+    single: false
+    workflow: recruitment_applicants
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_APPLICANT_APPLICATIONS_UNAUTHENTICATED, message: Sign in to view related applications. }
+      forbidden: { status: 403, code: RECRUITMENT_APPLICANT_APPLICATIONS_FORBIDDEN, message: You do not have permission to view related applications. }
+      missing_record: { status: 404, code: RECRUITMENT_APPLICANT_APPLICATIONS_NOT_FOUND, message: The source applicant was not found. }
+      transport_error: { status: 503, code: RECRUITMENT_APPLICANT_APPLICATIONS_UNAVAILABLE, message: Related applications are temporarily unavailable. }
+    query: "WITH source AS (SELECT id, email, phone, pool_applicant_id, company_name FROM recruitment_applicants WHERE id = :applicant_id) SELECT a.id, a.row_version, a.name, a.opening_id, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, CASE WHEN a.stage = 'Hired' THEN 'Hired' WHEN a.archived = TRUE THEN 'Archived' WHEN a.stage = 'Rejected' THEN 'Refused' ELSE 'Ongoing' END AS application_status, a.priority, a.rating, a.company_name, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, a.archived, (a.id = :applicant_id) AS is_source_application FROM recruitment_applicants a JOIN source s ON (a.id = s.id OR (NULLIF(TRIM(COALESCE(a.email, '')), '') IS NOT NULL AND a.email = s.email) OR (NULLIF(TRIM(COALESCE(a.phone, '')), '') IS NOT NULL AND a.phone = s.phone) OR a.pool_applicant_id = s.id OR a.id = s.pool_applicant_id) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND COALESCE(a.is_pool_profile, FALSE) = FALSE AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name) AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.opening_name ILIKE '%' || :q || '%' OR a.stage ILIKE '%' || :q || '%') ORDER BY a.applied_date DESC, a.id"
+actions:
+  - id: view_recruitment_applicant_application
+    type: navigate
+    permission: recruitment.read
+    navigate_to: /applicants/detail
+    params: { id: '{row.id}' }

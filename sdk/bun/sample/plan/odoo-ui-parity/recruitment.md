@@ -1,5 +1,46 @@
 # Odoo 19 UI parity — Recruitment
 
+## Batch 21 — Applicant → Applications
+
+The next smallest uncovered stable-ID Recruitment action is Odoo's
+`action_open_applications` from `addons/hr_recruitment/models/hr_applicant.py`.
+The applicant form exposes an Applications stat button when the candidate has
+multiple applications; the action opens `hr.applicant` in `list,form` mode,
+includes archived applications, preserves the current applicant context, and
+matches applications by email, phone, LinkedIn, or talent-pool linkage while
+excluding talent-pool profiles.
+
+Core3 adds stable ID `RECRUITMENT-APPLICANT-OPEN-APPLICATIONS-001`: a dedicated
+`/applicants/applications` list page and API fragment joined by
+`page.id`, a read-only detail stat action, deterministic same-person
+applications, archived/status presentation, company scope, search, empty and
+missing/error contracts, and file-backed restart coverage. The action leaves
+the existing Recruitment applicant workflow unchanged and opens each result
+through the existing applicant detail route.
+
+Source/gap matrix for `RECRUITMENT-APPLICANT-OPEN-APPLICATIONS-001`:
+
+| Odoo contract | Previous Core3 state | Batch 21 change | Verification |
+| --- | --- | --- | --- |
+| Applicant Applications stat / `action_open_applications` | Missing; applicant detail had no related-application action | Detail stat navigates to a dedicated related-applications list | Odoo source/view and page/API contract test |
+| Same-person application domain | Missing; applicant rows were only shown in the global list | Durable datasource matches email, phone, and pool links and excludes pool profiles | seeded query/search test |
+| Archived applications and workflow state | Missing | Related list includes archived rows with Ongoing/Hired/Refused/Archived status | populated/empty query assertions |
+| Company and transport boundaries | Missing | `recruitment.read` contract with company scope and 401/403/404/503 states | permission/error contract assertions |
+| Deterministic persistence | Missing fixture relationship | Migration 026 seeds two fixed related applications; reload verifies both rows | file-backed restart test |
+
+Focused verification: `bun test
+test/recruitment_applicant_applications.integration.test.ts` passes 3 tests /
+21 assertions. Recruitment regression passes 91 tests / 752 assertions across
+24 files; `bun run audit` passes with 865 pages, 873 routes, and 1,828
+datasources; `git diff --check` passes. BrowserSkill reference comparison was
+blocked when borrowing Odoo tab `1770663883` timed out waiting for human
+confirmation; the tab remained unborrowed and session `hvbx` was stopped. No
+Odoo action or desktop/mobile visual-parity claim is made. The exact blocker
+is recorded under
+`odoo-ui-parity/evidence/recruitment/2026-09-22/RECRUITMENT-APPLICANT-OPEN-APPLICATIONS-001/`.
+
+Status: `batch-21-implemented-applicant-open-applications-odoo-borrow-blocked`
+
 ## Batch 19 — Applicant → Create Employee
 
 The next missing stable-ID Recruitment action after the implemented interviewer
