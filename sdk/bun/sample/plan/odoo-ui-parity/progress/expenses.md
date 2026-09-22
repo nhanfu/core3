@@ -121,3 +121,17 @@ The Odoo reference was captured through BrowserSkill instance `245ea108` at
 1916x833 and 390x844. Core3 authenticated browser verification is recorded as
 blocked if the local listener/session is unavailable; this feature does not
 change the module's conditional sign-off status.
+
+## Batch 11 - Employee Expenses action analytics (2026-09-22)
+
+Implemented `EXPENSE-FUNC-014`, the source-backed Accounting/Payables Employee
+Expenses action. Core3 now declares list/kanban/form/pivot/graph in Odoo order,
+applies the approved/to-pay default scope, supports status/payment filters and
+grouping, and exposes explicit empty/error datasource behavior. Focused coverage
+is `expenses_employee_action.integration.test.ts` (2 tests / 10 assertions).
+
+Evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-014/`. BrowserSkill
+instance `245ea108` was reachable, but borrowing the existing authenticated
+Odoo tab did not transfer it into the agent window; the agent window stayed
+`about:blank`. No visual-parity claim is made for this batch.

@@ -613,3 +613,27 @@ summary, deadline, assignee, state, and count metadata; normal list filters
 and search remain intact. Empty and transport-error datasource states are
 explicit. Detail scheduling and completion remain owned by `EXPENSE-FUNC-011`;
 this slice does not duplicate that mutation contract.
+
+## Employee Expenses action follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-014`.
+
+The next non-activity, non-My-Expenses action gap is Odoo's Accounting/Payables
+`Employee Expenses` action, `action_hr_expense_account`, from
+`hr_expense/views/hr_expense_views.xml:585-605`. Odoo exposes
+`list,kanban,form,pivot,graph` and defaults to approved expenses plus posted
+employee-paid reimbursement candidates. Core3 previously exposed only a
+list/kanban read query without that scope, analytics modes, or action-local
+status/payment filters.
+
+Core3 now declares the Odoo mode order and shared analytics configuration in
+`pages/employee-expenses.yaml`. `api/employee-expenses.yaml` remains joined by
+`page.id: expenses-employee`, adds deterministic lookup sources, applies an
+approved/to-pay scope, exposes total/tax/payment fields, and declares an
+explicit transport error. No schema or migration change was required.
+
+Focused evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-014/`. BrowserSkill
+instance `245ea108` was connected, but the existing authenticated tab could
+not be borrowed into the agent window, which remained `about:blank`; no live
+desktop/mobile visual-parity claim is made.

@@ -1,13 +1,30 @@
 page: { id: expenses-employee }
 datasources:
+  - id: expense_employee_statuses
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Approved','Approved'), ('Posted','Posted'), ('In Payment','In payment'), ('Paid','Paid')) statuses(value, label)"
+  - id: expense_employee_payment_modes
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Company','Paid by Company'), ('Employee','Paid by Employee')) modes(value, label)"
   - id: expenses_employee
     single: false
     permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_EMPLOYEE_UNAVAILABLE, message: Employee expense data is temporarily unavailable } }
     query: |
       SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
         CAST(e.expense_date AS VARCHAR) AS expense_date,
-        printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
+        e.amount AS total_amount, printf('$%,.2f', e.amount) AS amount_display,
+        COALESCE(e.tax_amount, 0) AS tax_amount,
+        printf('$%,.2f', COALESCE(e.tax_amount, 0)) AS tax_amount_display,
+        e.payment_method AS payment_mode,
+        CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
         e.company_name, e.department_name, e.state AS status
       FROM expenses e
-      WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+      WHERE (:employee_expense_scope IS NULL OR :employee_expense_scope = '' OR :employee_expense_scope = 'all'
+        OR (:employee_expense_scope = 'approved_to_pay' AND (e.state = 'Approved' OR (e.state = 'Posted' AND e.payment_method = 'Employee'))))
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+        AND (:status IS NULL OR e.state = :status)
+        AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
       ORDER BY e.expense_date DESC, e.id

@@ -40,6 +40,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-FUNC-011 | Expense activities | Schedule and complete a company-scoped `mail.activity.mixin` activity from expense detail; persist deadline, assignee, state, versions, audit, and restart replay | pass: `expenses_activities.integration.test.ts`; paired browser evidence |
 | EXPENSE-FUNC-012 | Category cost propagation | Change an Expense Category cost/name as a manager; update only current-company draft linked expenses using quantity, relink display names, recalculate sheets, preserve non-draft amounts, and reject negative/stale writes | pass: `expenses_category_cost.integration.test.ts`; Odoo source/live captures |
 | EXPENSE-FUNC-013 | My Expenses Activity view | Switch My Expenses to Activity; render the six Odoo activity columns from durable scheduled activities, preserve row navigation/search, and expose explicit empty/error states | pass: `expenses_activity_view.integration.test.ts`; paired Odoo captures |
+| EXPENSE-FUNC-014 | Employee Expenses action | Read approved/to-pay scope with status/payment filters, list/kanban/form/pivot/graph order, stable total/tax fields, empty/error states, and permission boundary | pass: `expenses_employee_action.integration.test.ts`; visual browser gate blocked |
 
 ## Workflow and integration cases
 
@@ -75,6 +76,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-UI-005 | Activity chatter controls | 1440x900, 390x844 | Schedule activity and Mark done controls are usable without overflow; paired Odoo activity surface is captured | conditional; evidence folder |
 | EXPENSE-UI-006 | Expense Categories cost | 1916x833, 390x844 | Odoo Cost/Reference/Note category surface is captured; 1440x900 category-detail and Core3 authenticated interaction remain open | conditional; `EXPENSE-FUNC-012` evidence |
 | EXPENSE-UI-007 | My Expenses Activity view | 1916x833, 390x844 | Activity tab, six columns, scheduled row/empty state and responsive width match the authenticated Odoo reference | conditional; `EXPENSE-FUNC-013` evidence |
+| EXPENSE-UI-008 | Employee Expenses action | 1440x900, 390x844 | Accounting/Payables action exposes Odoo view order, default scope, analytics tabs, and responsive no-overflow layout | blocked; `EXPENSE-FUNC-014` evidence |
 
 ## Exit criteria
 
