@@ -6,6 +6,23 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc
 
+## Current bounded task — Project form Convert to Template (2026-09-22)
+
+Implemented stable ID `PROJECT-TEMPLATE-CONVERSION-001`: the manager-bound
+Project detail action now creates a durable template copy with top-level task
+templates, archives the source project atomically, and exposes the action only
+for active non-template records. Migration replay, file-backed reopen, missing/
+invalid/unconfirmed/stale/replay guards, and page/API separation pass in
+`test/project_template_conversion.integration.test.ts` (4 tests, 27
+assertions).
+
+BrowserSkill instance `245ea108` was connected, but authenticated Odoo tab
+`1770662590` was already borrowed by session `ssyn`; this worker's borrow was
+denied with `reason=borrow_conflict`. Own session `owvj` was stopped cleanly.
+No desktop/mobile captures or visual-parity claim is made. Odoo undo conversion,
+template-to-project creation, and full task-template/subtask mapping remain
+separate follow-up scope.
+
 ## Current state
 
 The focused Project suite passes 44 tests across 15 files with 506 assertions.

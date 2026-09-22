@@ -1,0 +1,13 @@
+version: 0.0.22
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS is_template BOOLEAN DEFAULT FALSE;
+      UPDATE project_tasks SET is_template = COALESCE(is_template, FALSE);
+    down: |
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS is_template;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

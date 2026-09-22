@@ -357,3 +357,37 @@ The bounded route/action contract and persisted report query pass. The slice is
 conditionally accepted only; authenticated Odoo/Core3 desktop and mobile
 comparison, request/error checks through the real browser, and Odoo historical
 stage-line parity remain open. Full Project sign-off is not claimed.
+
+## QA execution — PROJECT-TEMPLATE-CONVERSION-001 — 2026-09-22
+
+- Feature: Project form manager action `Convert to Template`; evidence:
+  `../evidence/project/2026-09-22/project-template-conversion-001/`.
+- Source comparison: Odoo 19 `action_server_convert_project_to_template`,
+  form-only binding, `action_toggle_project_template_mode`, and
+  `action_create_template_from_project` were verified in the local Project
+  addon source.
+- Focused checks:
+  `bun test ./test/project_template_conversion.integration.test.ts --timeout
+  30000` — 4 passed, 27 assertions.
+- Project regression corpus:
+  `bun test ./test/project*.integration.test.ts --timeout 30000` — 76 passed,
+  0 failed, 752 assertions across 26 files.
+- Audit/build hygiene: `bun run audit` passed with 842 pages, 850 routes, and
+  1,755 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: BrowserSkill instance `245ea108` was connected,
+  but authenticated Odoo tab `1770662590` was already borrowed by session
+  `ssyn`. The borrow returned `permission_denied` with
+  `reason=borrow_conflict`; this worker stopped only its own session `owvj`.
+  No credentials, independent login, PDF/access-token tab, or other worker
+  session was used. No Odoo/Core3 desktop/mobile captures were produced and
+  no visual-parity claim is made.
+
+### QA decision
+
+The page/API contract, manager boundary declaration, migration replay, durable
+project/template/task copy, source archival, and missing/invalid/unconfirmed/
+stale/replay guards pass. The feature remains conditionally accepted pending
+authenticated live Odoo/Core3 desktop/mobile comparison and browser CRUD/request
+checks. Full Project sign-off is not claimed.

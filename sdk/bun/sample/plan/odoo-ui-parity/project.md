@@ -1181,3 +1181,43 @@ owned by session `rjvi`. The worker session was not interrupted and no
 alternate PDF/access-token tab was used. No desktop/mobile captures were
 produced, and this slice makes no visual-parity claim. Evidence is under
 `evidence/project/2026-09-22/project-burndown-001/`.
+
+## Bounded slice: Project form Convert to Template action (2026-09-22)
+
+Stable ID: `PROJECT-TEMPLATE-CONVERSION-001`.
+
+The next missing non-excluded Project action selected from the Odoo source is
+the manager-bound form server action `action_server_convert_project_to_template`
+(`Convert to Template`) in
+`/home/nhanjs/projects/odoo/addons/project/views/project_project_views.xml`.
+The binding is form-only and manager-only; its server code calls
+`action_toggle_project_template_mode`, which routes regular projects through
+`action_create_template_from_project`. Odoo copies the project into a template,
+keeps reusable task-template records, and archives the source project. The
+template-to-regular-project undo flow remains a separate follow-up action.
+
+Core3 adds `convert_project_to_template` to the existing Project detail action
+menu and binds it to the page/API pair with `page.id: project-detail`. The
+manager-only server form requires explicit confirmation, derives a stable
+template ID from the source project and row version, copies the project fields
+and top-level task records as template tasks, then archives the source in one
+transaction. Migration
+`20260922160000-022-project-template-conversion.yaml` adds durable
+`project_tasks.is_template` provenance and is idempotent. Guards cover missing,
+archived/template, stale, unconfirmed, and replayed conversions; a failed copy
+or archive rolls back the transaction. The source detail datasource now exposes
+`archived` and `is_template` so the action is hidden after conversion.
+
+Focused coverage is
+`test/project_template_conversion.integration.test.ts`: 4 tests and 27
+assertions cover Odoo source identity, page/API separation, durable project and
+task-template copy, source archival, missing/invalid/unconfirmed/stale/replay
+guards, and file-backed close/reopen with migration replay.
+
+BrowserSkill live comparison is blocked for this wave. Instance `245ea108` was
+connected, but authenticated Odoo tab `1770662590` was already borrowed by
+session `ssyn`; a second borrow returned `permission_denied` with
+`reason=borrow_conflict`. This worker stopped only its own session `owvj` and
+did not stop or return another worker's tab. No Odoo/Core3 desktop/mobile
+captures were produced and no visual-parity claim is made. Evidence is under
+`evidence/project/2026-09-22/project-template-conversion-001/`.

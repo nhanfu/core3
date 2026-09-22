@@ -19,6 +19,7 @@ components:
       actions:
         - { id: open_project_burndown, label: Burndown Chart, icon: chart, permission: project.read }
         - { id: open_project_timesheets, label: Timesheets, icon: clock, permission: timesheets.read }
+        - { id: convert_project_to_template, label: Convert to Template, icon: copy, permission: project.manage, show_if: "state.project_detail.is_template !== true && state.project_detail.archived !== true" }
     group_columns: 2
     groups:
       - title: Project details

@@ -45,6 +45,37 @@ actions:
         - { query: "INSERT INTO project_shares(id, project_id, recipient_email, access_mode, send_invitation, active, row_version, created_at, updated_at) VALUES (:id, :project_id, LOWER(TRIM(:recipient_email)), :access_mode, COALESCE(:send_invitation, TRUE), TRUE, 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00')" }
         - { query: "UPDATE projects SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :project_id AND row_version = :expected_project_row_version", expect_changed: true, status: 409, code: PROJECT_SHARE_STALE_PROJECT, message: The project changed before it was shared. Reload and try again. }
       result: { query: "SELECT id, project_id, LOWER(TRIM(recipient_email)) AS recipient_email, access_mode, send_invitation, active, '/my/projects/detail?id=' || project_id AS share_link, row_version, created_at FROM project_shares WHERE id = :id" }
+  - id: convert_project_to_template
+    type: server_form
+    permission: project.manage
+    title: Convert to Template
+    description: Create a reusable project template from this project and archive the current project.
+    submit_label: Convert to Template
+    cancel_label: Discard
+    success_message: Project template created.
+    action: project.projects.convert_to_template
+    handler: yaml_mutation
+    operation: convert_to_template
+    params: { project_id: '{state.project_detail.id}', expected_row_version: '{state.project_detail.row_version}' }
+    refresh: [project_detail, project_tasks_detail, projects]
+    fields:
+      - { field: confirm_conversion, label: I understand that the current project will be archived., type: checkbox, required: true, default: false }
+    mutation:
+      boolean_fields: [confirm_conversion]
+      required: [confirm_conversion]
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :project_id", status: 404, code: PROJECT_TEMPLATE_NOT_FOUND, message: Project not found. }
+        - { query: "SELECT id FROM projects WHERE id = :project_id AND COALESCE(archived, FALSE) = FALSE AND COALESCE(is_template, FALSE) = FALSE", status: 409, code: PROJECT_TEMPLATE_INVALID_STATE, message: Only an active project can be converted to a template. }
+        - { query: "SELECT id FROM projects WHERE id = :project_id AND row_version = :expected_row_version", status: 409, code: PROJECT_TEMPLATE_STALE_PROJECT, message: The project changed before it could be converted. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:confirm_conversion, FALSE) = TRUE", status: 422, code: PROJECT_TEMPLATE_CONFIRMATION_REQUIRED, message: Confirm that the current project will be archived. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM projects WHERE id = 'project-template-' || CAST(:project_id AS VARCHAR) || '-' || CAST(:expected_row_version AS VARCHAR))", status: 409, code: PROJECT_TEMPLATE_ALREADY_EXISTS, message: A template has already been created from this project version. }
+      before_steps:
+        - { query: "SELECT 'project-template-' || CAST(:project_id AS VARCHAR) || '-' || CAST(row_version AS VARCHAR) AS template_id, name || ' Template' AS template_name FROM projects WHERE id = :project_id", assign: true }
+      steps:
+        - { query: "INSERT INTO projects(id, name, customer_name, project_manager, description, planned_hours, spent_hours, start_date, end_date, state, row_version, created_at, updated_at, stage, favorite, archived, is_template, sequence, privacy_visibility) SELECT :template_id, :template_name, NULL, project_manager, description, planned_hours, 0, start_date, end_date, 'Draft', 1, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00', stage, FALSE, FALSE, TRUE, sequence, privacy_visibility FROM projects WHERE id = :project_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PROJECT_TEMPLATE_STALE_PROJECT, message: The project changed before it could be converted. Reload and try again. }
+        - { query: "INSERT INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, due_date, row_version, created_at, stage, description, customer_name, company_name, tags, subtask_summary, subtask_names, blocked_by_summary, blocked_by_names, active, is_template, parent_task_id, recurring_task, recurrence_id, repeat_interval, repeat_unit, repeat_type, repeat_until) SELECT :template_id || '-task-' || t.id, :template_id, :template_name, t.name, t.assignee, t.milestone_name, t.priority, t.planned_hours, 0, 'Todo', t.due_date, 1, TIMESTAMP '2026-01-15 12:00:00', t.stage, t.description, NULL, t.company_name, t.tags, '0 / 0 (0%)', '', 'None', '', TRUE, TRUE, NULL, FALSE, NULL, 1, 'week', 'forever', NULL FROM project_tasks t WHERE t.project_id = :project_id AND COALESCE(t.parent_task_id, '') = ''", expect_changed: false }
+        - { query: "UPDATE projects SET archived = TRUE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :project_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: PROJECT_TEMPLATE_STALE_PROJECT, message: The project changed before it could be converted. Reload and try again. }
+      result: { query: "SELECT :project_id AS source_project_id, :template_id AS template_id, :template_name AS template_name, TRUE AS source_archived, CAST(:expected_row_version AS BIGINT) + 1 AS source_row_version" }
   - id: open_project_timesheets
     type: navigate
     permission: timesheets.read
@@ -54,7 +85,7 @@ datasources:
   - id: project_detail
     single: true
     permission: project.read
-    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(privacy_visibility, 'portal') AS privacy_visibility, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, CAST(COALESCE((SELECT COUNT(*) FROM project_updates WHERE project_id = p.id), 0) AS VARCHAR) || ' Status' AS update_summary FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(privacy_visibility, 'portal') AS privacy_visibility, COALESCE(archived, FALSE) AS archived, COALESCE(is_template, FALSE) AS is_template, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, CAST(COALESCE((SELECT COUNT(*) FROM project_updates WHERE project_id = p.id), 0) AS VARCHAR) || ' Status' AS update_summary FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: project_tasks_detail
     single: false
     permission: project.read

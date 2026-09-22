@@ -40,6 +40,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-FUNC-010 | functional | Task detail Sub-tasks | Add, edit, search, open and delete child tasks; reload preserves relation and parent completion summary | `PROJECT-TASK-SUBTASKS-001`; focused suite; Odoo/Core3 captures | conditional pass |
 | PROJECT-FUNC-011 | functional | Tasks > All Tasks | Open-task default, source view order, search/filter/group, row navigation, empty/error, and durable results | `PROJECT-ALL-TASKS-001`; focused suite | pass at contract level |
 | PROJECT-FUNC-012 | functional | Configuration > Projects | Sequence-ordered list/kanban/form, create/edit, archive/restore/delete guards, and reload persistence | `PROJECT-CONFIGURATION-001`; focused suite | pass at contract level |
+| PROJECT-FUNC-013 | functional | Project form > Convert to Template | Manager confirms conversion; durable template copy and top-level task templates are created, source is archived, replay/stale/invalid states are rejected, and reload preserves both records | `PROJECT-TEMPLATE-CONVERSION-001`; focused suite | pass at contract level; browser blocked |
 
 ## Workflow and integration cases
 
@@ -66,6 +67,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-PERM-007 | Stale/missing | 409/404/422 with unchanged current row | pass at contract level |
 | PROJECT-PERM-008 | Sub-task relation | `project.read` lists/opens; `project.write` adds/edits/deletes; wrong-company and inactive records are denied or empty | focused suite and API guards | pass at contract level |
 | PROJECT-PERM-009 | Configuration > Projects | `project.manage` opens the action and owns create/edit/archive/restore/delete; ordinary `project.read` users cannot mutate it | YAML boundary and focused mutation guards | contract pass; browser actor probe pending |
+| PROJECT-PERM-010 | Convert to Template | Only `project.manage` may invoke the manager-bound form action; missing, archived/template, unconfirmed, stale, and replayed requests are rejected without partial writes | `PROJECT-TEMPLATE-CONVERSION-001`; focused suite | pass at contract level; browser actor probe pending |
 
 ## Visual, responsive, and regression cases
 
@@ -78,6 +80,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-UI-005 | Task detail/Sub-tasks | 1440x833, 390x844 | Odoo tab/grid labels, Add a line affordance, child rows and responsive no-overflow state match | Odoo and Core3 evidence; task-detail gate blocked by missing Timesheets service | conditional |
 | PROJECT-UI-006 | All Tasks action | 1440x900, 390x844 | Tasks submenu, open default, List/Kanban/Calendar/Activity/Pivot/Graph labels, row navigation and no-overflow state match | authenticated captures required; currently blocked | pending |
 | PROJECT-UI-007 | Configuration > Projects | 1440x900, 390x844 | Configuration menu, sequence-ordered list/kanban/form, archived filter, New/Edit dialogs, and no-overflow state match Odoo | authenticated captures required; currently blocked | pending |
+| PROJECT-UI-008 | Project form > Convert to Template | 1440x900, 390x844 | Project action menu exposes the manager-only Convert to Template flow, confirmation state, success refresh, and no-overflow behavior matching the Odoo form action | Odoo/Core3 captures required; authenticated tab borrow conflict | blocked |
 
 ## Exit criteria
 
