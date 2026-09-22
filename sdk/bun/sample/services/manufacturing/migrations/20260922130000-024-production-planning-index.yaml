@@ -1,0 +1,13 @@
+version: 0.0.24
+description: Durable index for production-scoped Work Orders Planning action
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_mrp_workorders_production_schedule
+        ON mrp_workorders(production_id, state, planned_date, sequence);
+    down: |
+      DROP INDEX IF EXISTS idx_mrp_workorders_production_schedule;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

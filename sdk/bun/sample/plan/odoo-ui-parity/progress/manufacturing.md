@@ -1,5 +1,20 @@
 # manufacturing parity progress
 
+## 2026-09-22 bounded next slice — Work Orders Planning
+
+- Implemented `MANUFACTURING-PRODUCTION-PLANNING-001` for the missing Odoo
+  `action_mrp_workorder_production` action. The new page/API pair exposes
+  List/Form/Calendar/Pivot/Graph, defaults Ready/Blocked/In Progress, groups
+  by Manufacturing Order, and filters out work orders belonging to terminal
+  production orders.
+- The feature uses existing durable Manufacturing orders/work orders and the
+  guarded operator workflow. Migration `0.0.24` adds an idempotent
+  production/state/planned-date index; no fixture-only rows were added.
+- Focused functional, filter, restart, permission, and page/API tests are
+  recorded in the feature evidence folder. Odoo desktop/mobile verification
+  is blocked by the shared-tab borrow confirmation and carries no visual
+  parity claim.
+
 ## 2026-09-21 bounded Work Center Work Orders scoped action
 
 - Added the distinct source-backed `mrp.action_work_orders` record-scoped

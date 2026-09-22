@@ -1,5 +1,41 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-PRODUCTION-PLANNING-001 — Work Orders Planning (2026-09-22)
+
+- Source/action: local Odoo 19 `mrp.action_mrp_workorder_production` in
+  `addons/mrp/views/mrp_workorder_views.xml`; model `mrp.workorder`, path
+  `production-planning`, modes `list,form,calendar,pivot,graph`, domain
+  excluding Done/Cancelled production orders, and default Ready/Blocked/In
+  Progress filters grouped by Manufacturing Order. The source has no
+  standalone menu entry.
+- Core3 paths: presentation
+  `services/manufacturing/pages/production-planning.yaml`; page-id-bound API
+  `services/manufacturing/api/production-planning.yaml`; durable index
+  `services/manufacturing/migrations/20260922130000-024-production-planning-index.yaml`;
+  focused test `test/manufacturing_production_planning.integration.test.ts`.
+- Functional/data result: PASS after focused verification. The datasource
+  returns the three default active-production Ready/Progress/Blocked rows,
+  returns five rows when defaults are cleared, excludes Done/Cancelled
+  production orders, supports work-center/search filters, empty and 503
+  states, and replays the index migration idempotently.
+- Workflow/permission result: PASS at contract level. Read requires
+  `manufacturing.read`; Plan/Start/Pause/Continue/Block/Cancel require
+  `manufacturing.write` and reuse the durable `mrp_workorders` workflow. No
+  create/delete action is exposed.
+- Restart result: PASS. The production-scoped rows remain queryable after a
+  file-backed DuckDB close/reopen and migration replay.
+- Odoo BrowserSkill result: BLOCKED, exact reason. BrowserSkill daemon status
+  was healthy for browser instance `245ea108`; the existing signed-in Odoo
+  tab was `1770662590`. Borrow confirmation for session `rxce` never
+  completed, and the session was stopped. No unborrowed tab was navigated, no
+  independent login was used, and no credentials/cookies/tokens were read.
+  No desktop/mobile Odoo action capture was possible, so this feature has no
+  Odoo visual-parity claim. Current-wave shared-profile blocker captures from
+  the adjacent `MANUFACTURING-WCLATE-001` feature are not represented as
+  captures of this action.
+- Evidence: feature folder
+  `plan/odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-PRODUCTION-PLANNING-001/`.
+
 ## MANUFACTURING-WCWAIT-001 — Work Center Waiting Availability (2026-09-22)
 
 - Source/action: local Odoo 19 `mrp.action_work_orders` in

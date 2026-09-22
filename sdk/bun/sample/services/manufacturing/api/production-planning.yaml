@@ -1,0 +1,52 @@
+page: { id: manufacturing-production-planning }
+datasources:
+  - id: mrp_production_planning_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT * FROM (VALUES ('Waiting', 'Waiting'), ('Ready', 'Ready'), ('Progress', 'In Progress'), ('Finished', 'Finished'), ('Blocked', 'Blocked'), ('Cancelled', 'Cancelled')) AS states(value, label)"
+  - id: mrp_production_planning_workcenters
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id AS value, name AS label FROM mrp_workcenters WHERE active = TRUE ORDER BY name"
+  - id: mrp_production_planning_workorders
+    single: false
+    permission: manufacturing.read
+    workflow: mrp_workorders
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCTION_PLANNING_UNAUTHORIZED, message: Sign in to view Work Orders Planning. }
+      forbidden: { status: 403, code: MRP_PRODUCTION_PLANNING_FORBIDDEN, message: You do not have permission to view Work Orders Planning. }
+      transport_error: { status: 503, code: MRP_PRODUCTION_PLANNING_UNAVAILABLE, message: Work Orders Planning is temporarily unavailable. }
+    query: |
+      SELECT w.id, w.row_version, w.operation_name, w.name, w.workcenter,
+        p.id AS production_id, p.name AS production_name, p.product_name,
+        p.state AS production_state, w.expected_duration, w.actual_duration,
+        w.state, w.paused, w.planned, w.late, w.blocked_reason,
+        CAST(w.planned_date AS VARCHAR) AS planned_date,
+        CAST(w.date_start AS VARCHAR) AS date_start,
+        CAST(w.date_finished AS VARCHAR) AS date_finished
+      FROM mrp_workorders w
+      JOIN mrp_productions p ON p.id = w.production_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND p.state NOT IN ('Done', 'Cancelled')
+        AND (:q IS NULL OR w.operation_name ILIKE '%' || :q || '%' OR w.name ILIKE '%' || :q || '%'
+          OR p.name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR w.state = :state)
+        AND (:workcenter_id IS NULL OR w.workcenter = (SELECT name FROM mrp_workcenters WHERE id = :workcenter_id))
+        AND (:workcenter IS NULL OR w.workcenter = :workcenter)
+        AND ((COALESCE(:search_default_ready, FALSE) = FALSE AND COALESCE(:search_default_progress, FALSE) = FALSE AND COALESCE(:search_default_blocked, FALSE) = FALSE)
+          OR (w.state = 'Ready' AND COALESCE(:search_default_ready, FALSE) = TRUE)
+          OR (w.state = 'Progress' AND COALESCE(:search_default_progress, FALSE) = TRUE)
+          OR (w.state = 'Blocked' AND COALESCE(:search_default_blocked, FALSE) = TRUE))
+      ORDER BY p.name, w.planned_date, w.sequence, w.id
+actions:
+  - id: view_mrp_production_planning_workorder
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /workorders/detail
+    params: { id: '{row.id}' }
+  - { id: plan_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.plan, handler: order_transition, workflow: mrp_workorders, operation: plan, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }
+  - { id: start_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.start, handler: order_transition, workflow: mrp_workorders, operation: start, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }
+  - { id: pause_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.pause, handler: order_transition, workflow: mrp_workorders, operation: pause, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }
+  - { id: continue_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.continue, handler: order_transition, workflow: mrp_workorders, operation: continue, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }
+  - { id: block_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.block, handler: order_transition, workflow: mrp_workorders, operation: block, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }
+  - { id: cancel_mrp_production_planning_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.cancel, handler: order_transition, workflow: mrp_workorders, operation: cancel, params: { id: '{row.id}' }, refresh: [mrp_production_planning_workorders] }

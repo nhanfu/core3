@@ -10,6 +10,16 @@ Last reviewed: 2026-09-21
 This plan follows [`manufacturing.md`](../../manufacturing.md); executed
 evidence is recorded in [`../manufacturing.md`](../manufacturing.md).
 
+## MANUFACTURING-PRODUCTION-PLANNING-001
+
+| Case | Class | Setup / actor | Action or route | Expected / persistence | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| MRP-PP-001 | functional | Durable Manufacturing fixtures; `manufacturing.read` | Discover `/manufacturing/production-planning` | Page/API join by `manufacturing-production-planning`; List/Form/Calendar/Pivot/Graph and no create/delete | focused integration test |
+| MRP-PP-002 | data | Active and terminal MOs; read actor | Query with defaults, cleared defaults, work-center and search filters | Defaults return Ready/Progress/Blocked; cleared query excludes terminal productions | focused integration test |
+| MRP-PP-003 | workflow/permission | Admin and denied actor | Inspect Plan/Start/Pause/Continue/Block/Cancel | Mutations require `manufacturing.write`, use `mrp_workorders`, and retain CAS/state guards | API assertions |
+| MRP-PP-004 | data/regression | File-backed DuckDB | Migrate twice, close/reopen, query again | Index/migrations are idempotent and rows persist after restart | focused integration test |
+| MRP-PP-005 | responsive/visual | Shared authenticated BrowserSkill Odoo tab | Borrow existing tab at 1440x900 and 390x844 | Borrow did not complete; case is blocked and carries no visual pass | blocker record |
+
 ## Coverage inventory
 
 | Menu/action family | Core3 route families | Scope |

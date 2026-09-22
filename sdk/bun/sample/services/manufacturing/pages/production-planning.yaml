@@ -1,0 +1,67 @@
+title: Work Orders Planning
+page: { id: manufacturing-production-planning, route: /manufacturing/production-planning, breadcrumb: [Supply Chain, Manufacturing, Planning, Work Orders Planning], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_production_planning_workorders
+    search: { label: Search work orders, placeholder: 'Search operations, manufacturing orders, or products...' }
+    filters:
+      - { field: state, label: Status, options_source: mrp_production_planning_states }
+      - { field: workcenter, label: Work Center, options_source: mrp_production_planning_workcenters }
+    default_filters: { search_default_ready: true, search_default_progress: true, search_default_blocked: true }
+    group_by:
+      - { field: production_name, label: Manufacturing Order }
+      - { field: workcenter, label: Work Center }
+      - { field: state, label: Status }
+    default_group_by: production_name
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_start
+        end_date_field: date_finished
+        card: { title: operation_name, subtitle: production_name }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: production_name, column: Manufacturing Order }, { field: workcenter, column: Work Center }, { field: state, column: Status }, { field: planned_date, column: Planned Date, type: date }, { field: expected_duration, column: Expected minutes }, { field: actual_duration, column: Real minutes }]
+          default: { rows: [production_name], columns: [state], measures: [{ field: expected_duration, aggregate: sum, column: Expected minutes }, { field: actual_duration, aggregate: sum, column: Real minutes }] }
+          date_ranges: { planned_date: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: production_name
+        measure_field: expected_duration
+        type: bar
+        measures:
+          - { field: expected_duration, label: Expected minutes, aggregate: sum }
+          - { field: actual_duration, label: Real minutes, aggregate: sum }
+    actions:
+      - { id: plan_mrp_production_planning_workorder, label: Plan, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Waiting' || row.state === 'Blocked'" }
+      - { id: start_mrp_production_planning_workorder, label: Start, permission: manufacturing.write, variant: primary, show_if: "row.state === 'Ready'" }
+      - { id: pause_mrp_production_planning_workorder, label: Pause, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Progress' && row.paused === false" }
+      - { id: continue_mrp_production_planning_workorder, label: Continue, permission: manufacturing.write, variant: primary, show_if: "row.state === 'Progress' && row.paused === true || row.state === 'Blocked'" }
+      - { id: block_mrp_production_planning_workorder, label: Block, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Ready' || row.state === 'Progress'" }
+      - { id: cancel_mrp_production_planning_workorder, label: Cancel, permission: manufacturing.write, variant: danger, show_if: "row.state !== 'Finished' && row.state !== 'Cancelled'" }
+    form_view: { page: apps/services/manufacturing/pages/workorder-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_production_planning_workorder
+    row_double_click_action: view_mrp_production_planning_workorder
+    row_actions: menu
+    empty_state: { title: No work orders to do, description: Work orders are operations to do as part of a manufacturing order. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true, mobile_secondary: production_name, sortable: true }
+      - { field: workcenter, label: Work Center, mobile: false }
+      - { field: production_name, label: Manufacturing Order, mobile: false }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: expected_duration, label: Expected Duration, align: right, mobile: true }
+      - { field: actual_duration, label: Real Duration, align: right, mobile: false, optional: hide }
+      - { field: planned_date, label: Planned Date, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_production_planning_workorder, label: Open, icon: eye }] }
+    page_size: 50

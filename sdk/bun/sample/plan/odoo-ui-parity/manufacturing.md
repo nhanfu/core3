@@ -2,6 +2,44 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-22 Work Orders Planning bounded action (`MANUFACTURING-PRODUCTION-PLANNING-001`)
+
+### Source analysis and current-source comparison
+
+Local Odoo 19 source identifies `action_mrp_workorder_production` in
+`addons/mrp/views/mrp_workorder_views.xml` as the Work Orders Planning action.
+It targets `mrp.workorder`, uses `list,form,calendar,pivot,graph`, has the
+`production-planning` action path, filters out work orders whose production is
+Done or Cancelled, and opens with Ready, Blocked, and In Progress filters plus
+Manufacturing Order grouping. The action has no standalone menu entry; the
+source Planning parent is a scheduler/server-action surface, so this slice
+does not invent a new menu.
+
+Core3 already has the global Operations / Work Orders action and the scoped
+Work Center actions, but no production-planning page/API pair. The existing
+durable `mrp_workorders.production_id` and `mrp_productions.state` fields are
+the correct persistence boundary. This slice adds the missing production
+planning query, reuses the existing Work Order detail and `mrp_workorders`
+workflow, and adds an idempotent production/state/date index.
+
+### Gap matrix and acceptance checklist
+
+| Odoo behavior | Current Core3 | Gap/change | Verification |
+| --- | --- | --- | --- |
+| `action_mrp_workorder_production` | No route/action | Add `/manufacturing/production-planning` with the source five modes and default filters | source/route discovery test |
+| Active production scope | Global Work Orders includes terminal production rows when filters are cleared | Join durable productions and exclude Done/Cancelled production states | datasource query test |
+| Ready/Blocked/In Progress defaults and MO grouping | Only global Work Orders declares these defaults | Add server-side OR defaults and Manufacturing Order grouping | default/filter test |
+| Operator workflow | Existing guarded `mrp_workorders` workflow | Reuse Plan/Start/Pause/Continue/Block/Cancel with write permission | action/permission assertions |
+| Empty/error/restart behavior | No production-planning datasource | Add deterministic empty, 503, 401/403 contracts and restart assertion | focused integration suite |
+| Odoo desktop/mobile comparison | Shared signed-in tab borrow did not complete | Record exact BrowserSkill blocker; no visual parity claim | evidence verification record |
+
+Core3 implementation files are the page-only
+`services/manufacturing/pages/production-planning.yaml`, page-id-bound
+`services/manufacturing/api/production-planning.yaml`, migration
+`20260922130000-024-production-planning-index.yaml`, and focused test
+`test/manufacturing_production_planning.integration.test.ts`. Evidence is
+under `odoo-ui-parity/evidence/manufacturing/2026-09-22/MANUFACTURING-PRODUCTION-PLANNING-001/`.
+
 ## 2026-09-22 Work Center Late Orders bounded action (`MANUFACTURING-WCLATE-001`)
 
 ### Source analysis and current-source comparison
