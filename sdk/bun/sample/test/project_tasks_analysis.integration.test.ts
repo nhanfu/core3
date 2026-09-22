@@ -31,9 +31,9 @@ describe('Project Tasks Analysis parity', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'project_tasks_analysis_test_schema_migrations', ['schema', 'data']);
     const source = yaml('api/tasks-analysis.yaml').datasources[0];
     const rows = await repository.querySource(source, { q: null, state: null, stage: null, fixture_state: null }, 0, 50);
-    expect(rows.data).toHaveLength(13);
+    expect(rows.data).toHaveLength(15);
     expect(rows.data.map((row: any) => row.id)).toEqual([
-      'task-analysis-002', 'task-analysis-008', 'task-demo-003', 'task-analysis-001', 'task-demo-001', 'task-demo-002', 'task-analysis-003',
+      'task-analysis-002', 'task-analysis-008', 'task-demo-003', 'task-subtask-002', 'task-analysis-001', 'task-demo-001', 'task-demo-002', 'task-subtask-001', 'task-analysis-003',
       'task-analysis-005', 'task-analysis-004', 'task-analysis-006', 'task-analysis-007', 'task-demo-004', 'task-demo-005',
     ]);
     expect(rows.data.every((row: any) => Number(row.task_count) === 1)).toBe(true);

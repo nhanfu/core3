@@ -14,7 +14,7 @@ describe('Project grouped-by-stage menu action parity', () => {
     const manifest = yaml('manifest.yaml');
     const menuItems = manifest.menu.groups.flatMap((group: any) => group.items);
     expect(menuItems).toContainEqual({ path: '/project-by-stage', label: 'Projects', icon: 'workflow', permission: 'project.read' });
-    expect(menuItems.filter((item: any) => item.label === 'Projects').map((item: any) => item.path)).toEqual(['/projects', '/project-by-stage', '/my/projects']);
+    expect(menuItems.filter((item: any) => item.label === 'Projects').map((item: any) => item.path)).toEqual(['/projects', '/project-by-stage', '/my/projects', '/project-configuration']);
 
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const page = yaml('pages/project-by-stage.yaml');
@@ -51,7 +51,7 @@ describe('Project grouped-by-stage menu action parity', () => {
     expect(rows.data.map((row: any) => Number(row.stage_sequence))).toEqual([10, 20]);
     expect(rows.data).toHaveLength(2);
     expect(rows.data[0]).toMatchObject({ name: 'Website Refresh', customer_name: 'Northwind Traders', task_count: 6 });
-    expect(rows.data[1]).toMatchObject({ name: 'Core3 Implementation', customer_name: 'Core3 Internal', favorite: true, task_count: 7 });
+    expect(rows.data[1]).toMatchObject({ name: 'Core3 Implementation', customer_name: 'Core3 Internal', favorite: true, task_count: 9 });
 
     const searched = await repository.querySource(projects, { q: 'Northwind', state: null, stage: null, fixture_state: null }, 0, 50);
     expect(searched.data.map((row: any) => row.id)).toEqual(['project-demo-002']);

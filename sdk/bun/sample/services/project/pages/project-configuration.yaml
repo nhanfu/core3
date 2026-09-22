@@ -1,0 +1,45 @@
+title: Projects
+page: { id: project-configuration, route: /project-configuration, breadcrumb: [Project, Configuration, Projects], auth: { require: [project.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_configuration
+    create_action: create_project_configuration
+    create_label: New
+    search: { label: Search projects, placeholder: 'Search project or customer...' }
+    filters:
+      - { field: archived, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+      - { field: state, label: Project status, options_source: project_configuration_states }
+      - { field: stage, label: Stage, options_source: project_configuration_action_stages }
+    group_by: [{ field: stage, label: Stage }, { field: project_manager, label: Project Manager }, { field: state, label: Status }]
+    default_filters: { archived: active }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: stage
+        groups_source: project_configuration_action_stages
+        card: { title: name, subtitle: customer_name, fields: [{ field: project_manager, label: Project Manager }, { field: stage, label: Stage }, { field: task_count, label: Tasks }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/project/pages/project-configuration-detail.yaml, side_panel: true }
+    page_size: 25
+    column_chooser: true
+    selectable: true
+    row_key: id
+    row_open_action: edit_project_configuration
+    row_double_click_action: edit_project_configuration
+    row_actions: menu
+    empty_state: { title: No projects found. Let's create one!, description: Create projects to organize your tasks and define a different workflow for each project. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Project, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: customer_name, label: Customer }
+      - { field: project_manager, label: Project Manager }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: task_count, label: Tasks, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: archived, label: Archived, type: Boolean, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_configuration, label: Edit, icon: edit }, { id: archive_project_configuration, label: Archive, icon: archive, show_if: 'row.archived === false' }, { id: unarchive_project_configuration, label: Unarchive, icon: archive, show_if: 'row.archived === true' }, { id: delete_project_configuration, label: Delete, icon: trash, variant: danger }] }

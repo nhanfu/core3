@@ -1066,3 +1066,41 @@ alternate browser session were used. The Core3 runtime was not started for a
 visual check in this bounded batch, so no desktop/mobile capture or visual
 parity claim is made. Evidence is under
 `evidence/project/2026-09-22/project-all-tasks-001/`.
+
+## Bounded slice: Project Configuration > Projects action (2026-09-22)
+
+Stable ID: `PROJECT-CONFIGURATION-001`.
+
+The next distinct Project action outside the excluded All Tasks and Recurring
+Tasks slices is Odoo Configuration > Projects:
+`menu_projects_config` -> `open_view_project_all_config`, defined in
+`/home/nhanjs/projects/odoo/addons/project/views/project_menus.xml` and
+`project_project_views.xml`. The source action is manager-only, uses
+`/odoo/project-configuration`, filters template projects, orders by sequence,
+and exposes `list,kanban,form` views with the configuration list/kanban
+variants.
+
+Core3 adds the manager-only `/project-configuration` menu and a separate
+layout/API pair joined by `page.id`. The action uses the durable `projects`
+table, adds the missing persisted `sequence` column through the idempotent
+`20260922120000-020-project-configuration-action.yaml` migration, and supports
+create/edit, sequence-aware list/kanban rendering, active/archived filtering,
+archive/restore, dependency-safe delete, duplicate-name and non-negative-hours
+guards, missing/empty/transport states, and row-version conflict rejection.
+The detail form has its own page/API pair and does not change the existing
+delivery Projects or task-detail contracts.
+
+Focused coverage is `test/project_configuration_action.integration.test.ts`:
+4 tests and 29 assertions. The full Project regression corpus passes 67 tests
+and 690 assertions across 23 files; audit, Project CSS, frontend build, and
+diff-check pass. Existing stale Project fixture assertions for grouped-stage,
+milestone, dashboard, and task-analysis counts were updated to match the
+already-seeded analysis/subtask rows.
+
+BrowserSkill inspection was attempted on browser instance `245ea108`. The
+first borrow of authenticated Odoo tab `1770662590` was refused because it was
+already borrowed by session `expk`; after that session disappeared, a fresh
+borrow waited 30 seconds without confirmation and timed out. No Odoo or Core3
+desktop/mobile captures were produced, and this slice makes no authenticated
+visual-parity claim. No shared session was stopped or otherwise disturbed; the
+fresh session `ksja` was stopped cleanly.

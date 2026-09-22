@@ -1,0 +1,30 @@
+page: { id: project-configuration-detail }
+datasources:
+  - id: project_configuration_detail
+    single: true
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_CONFIGURATION_DETAIL_UNAVAILABLE, message: Project configuration details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, COALESCE(customer_name, '') AS customer_name, COALESCE(project_manager, '') AS project_manager, COALESCE(description, '') AS description, COALESCE(planned_hours, 0) AS planned_hours, COALESCE(spent_hours, 0) AS spent_hours, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, COALESCE(state, 'Draft') AS state, COALESCE(stage, 'Planning') AS stage, COALESCE(sequence, 10) AS sequence, COALESCE(favorite, FALSE) AS favorite, COALESCE(archived, FALSE) AS archived FROM projects WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id AND COALESCE(is_template, FALSE) = FALSE"
+actions:
+  - id: edit_project_configuration_detail
+    type: server_form
+    permission: project.manage
+    title: Edit Project
+    action: project.configuration.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [project_configuration_detail, project_configuration]
+    mutation:
+      operation: update
+      table: projects
+      fields: [name, customer_name, project_manager, description, planned_hours, spent_hours, start_date, end_date, state, stage, sequence, favorite]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :id AND COALESCE(is_template, FALSE) = FALSE", status: 404, code: PROJECT_CONFIGURATION_NOT_FOUND, message: Project was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_CONFIGURATION_NAME_REQUIRED, message: A project name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:planned_hours, 0) AS DECIMAL(18,3)) >= 0 AND CAST(COALESCE(:spent_hours, 0) AS DECIMAL(18,3)) >= 0", status: 422, code: PROJECT_CONFIGURATION_HOURS_INVALID, message: Project hours cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM projects WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id AND COALESCE(is_template, FALSE) = FALSE)", status: 409, code: PROJECT_CONFIGURATION_NAME_EXISTS, message: A project with this name already exists. }
+      result: { query: "SELECT * FROM projects WHERE id = :id" }
+    fields: [{ field: name, label: Project, type: text, required: true }, { field: customer_name, label: Customer, type: text }, { field: project_manager, label: Project Manager, type: text }, { field: stage, label: Stage, type: select, options: [{ value: Planning, label: Planning }, { value: In progress, label: In progress }, { value: Done, label: Done }] }, { field: planned_hours, label: Planned Hours, type: number }, { field: spent_hours, label: Spent Hours, type: number }, { field: start_date, label: Planned Date, type: date }, { field: end_date, label: Deadline, type: date }, { field: description, label: Description, type: textarea }]

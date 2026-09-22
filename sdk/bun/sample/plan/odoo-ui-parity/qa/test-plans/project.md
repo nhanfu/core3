@@ -16,7 +16,7 @@ This plan follows [`project.md`](../../project.md); executed evidence is in
 | --- | --- | --- |
 | Projects/tasks | `/project/projects`, `/project/my/projects`, `/project/projects/detail*`, `/project/tasks`, `/project/all-tasks`, `/project/tasks/detail` | List/grouped stages, My Tasks/All Tasks actions, project dashboard, task detail, milestones, updates, Sub-tasks/child_ids and Timesheets tab |
 | Reporting/portal | `/project/analysis`, `/project/tasks-analysis`, `/project/customer-ratings`, `/project/*/detail`, `/project/my/projects/task/detail` | Graph/pivot/list reports, ratings, customer portal project/task read-only views |
-| Configuration | stages, roles, tags, activity types/plans, settings routes | List/form CRUD, archive, manager settings and guards |
+| Configuration | projects, stages, roles, tags, activity types/plans, settings routes | Project list/kanban/form CRUD, archive, manager settings and guards |
 
 The browser topology is `project,timesheets`, because task detail invokes the
 declared `yaml.service.timesheets` service. Fixtures include stable projects,
@@ -39,6 +39,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-FUNC-009 | functional | Import/export/attachments | Exercise task/project file, attachment, import/export and print actions where exposed | browser interaction gate | planned |
 | PROJECT-FUNC-010 | functional | Task detail Sub-tasks | Add, edit, search, open and delete child tasks; reload preserves relation and parent completion summary | `PROJECT-TASK-SUBTASKS-001`; focused suite; Odoo/Core3 captures | conditional pass |
 | PROJECT-FUNC-011 | functional | Tasks > All Tasks | Open-task default, source view order, search/filter/group, row navigation, empty/error, and durable results | `PROJECT-ALL-TASKS-001`; focused suite | pass at contract level |
+| PROJECT-FUNC-012 | functional | Configuration > Projects | Sequence-ordered list/kanban/form, create/edit, archive/restore/delete guards, and reload persistence | `PROJECT-CONFIGURATION-001`; focused suite | pass at contract level |
 
 ## Workflow and integration cases
 
@@ -64,6 +65,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-PERM-006 | Unauthenticated/expired | Redirect/401/403 without data leakage | planned |
 | PROJECT-PERM-007 | Stale/missing | 409/404/422 with unchanged current row | pass at contract level |
 | PROJECT-PERM-008 | Sub-task relation | `project.read` lists/opens; `project.write` adds/edits/deletes; wrong-company and inactive records are denied or empty | focused suite and API guards | pass at contract level |
+| PROJECT-PERM-009 | Configuration > Projects | `project.manage` opens the action and owns create/edit/archive/restore/delete; ordinary `project.read` users cannot mutate it | YAML boundary and focused mutation guards | contract pass; browser actor probe pending |
 
 ## Visual, responsive, and regression cases
 
@@ -75,6 +77,7 @@ user, wrong-company user and unauthenticated user.
 | PROJECT-UI-004 | Current route regression | all 27 manifest routes | 54 dependency-aware authenticated checks with no errors, blank states or overflow | pass |
 | PROJECT-UI-005 | Task detail/Sub-tasks | 1440x833, 390x844 | Odoo tab/grid labels, Add a line affordance, child rows and responsive no-overflow state match | Odoo and Core3 evidence; task-detail gate blocked by missing Timesheets service | conditional |
 | PROJECT-UI-006 | All Tasks action | 1440x900, 390x844 | Tasks submenu, open default, List/Kanban/Calendar/Activity/Pivot/Graph labels, row navigation and no-overflow state match | authenticated captures required; currently blocked | pending |
+| PROJECT-UI-007 | Configuration > Projects | 1440x900, 390x844 | Configuration menu, sequence-ordered list/kanban/form, archived filter, New/Edit dialogs, and no-overflow state match Odoo | authenticated captures required; currently blocked | pending |
 
 ## Exit criteria
 

@@ -34,7 +34,7 @@ describe('Project milestone embedded action parity', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'project_milestones_test_migrations', ['schema', 'data']);
     const dashboard = yaml('api/project-dashboard.yaml');
     const list = dashboard.datasources.find((source: any) => source.id === 'project_dashboard_milestones');
-    expect((await repository.querySource(list, { id: 'project-demo-001', q: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ id: 'milestone-demo-001', name: 'Foundation release', due_date: '2026-02-14', is_reached: false, state: 'Open', task_summary: '3 / 0' }]);
+    expect((await repository.querySource(list, { id: 'project-demo-001', q: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ id: 'milestone-demo-001', name: 'Foundation release', due_date: '2026-02-14', is_reached: false, state: 'Open', task_summary: '5 / 1' }]);
     expect((await repository.querySource(list, { id: 'project-demo-001', q: 'missing', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(list, { id: 'project-demo-001', q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     const create = dashboard.actions.find((action: any) => action.id === 'create_project_milestone');

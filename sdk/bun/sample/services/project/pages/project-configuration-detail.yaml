@@ -1,0 +1,18 @@
+title: Project
+page: { id: project-configuration-detail, breadcrumb: [Project, Configuration, Projects], auth: { require: [project.manage] } }
+components:
+  - type: OdooFormView
+    source: project_configuration_detail
+    title_field: name
+    editable: true
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Active, label: Active }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Active: blue, Completed: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Project details
+        fields: [{ field: name, label: Project, type: text, required: true }, { field: customer_name, label: Customer, type: text }, { field: project_manager, label: Project Manager, type: text }, { field: stage, label: Stage, type: select, options: [{ value: Planning, label: Planning }, { value: In progress, label: In progress }, { value: Done, label: Done }] }]
+      - title: Schedule and effort
+        fields: [{ field: start_date, label: Planned Date, type: date }, { field: end_date, label: Deadline, type: date }, { field: planned_hours, label: Planned Hours, type: number }, { field: spent_hours, label: Spent Hours, type: number }, { field: favorite, label: Favorite, type: checkbox }]
+      - title: Description
+        fields: [{ field: description, label: Description, type: textarea, wide: true }]

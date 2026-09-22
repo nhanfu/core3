@@ -1,0 +1,18 @@
+version: 0.0.20
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      UPDATE projects SET sequence = CASE id
+        WHEN 'project-demo-001' THEN 10
+        WHEN 'project-demo-002' THEN 20
+        WHEN 'project-demo-003' THEN 30
+        ELSE COALESCE(sequence, 10)
+      END;
+    down: |
+      ALTER TABLE projects DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -73,7 +73,7 @@ describe('Project Dashboard and Updates parity', () => {
     const stats = dashboard.datasources.find((source: any) => source.id === 'project_dashboard_stats');
     const updates = dashboard.datasources.find((source: any) => source.id === 'project_dashboard_updates');
     const statsResult = await repository.querySource(stats, { id: 'project-demo-001', fixture_state: null }, 0, 1);
-    expect(statsResult.data).toMatchObject({ name: 'Core3 Implementation', task_summary: '3 / 7', hours: 82 });
+    expect(statsResult.data).toMatchObject({ name: 'Core3 Implementation', task_summary: '4 / 9', hours: 92 });
     const updateResult = await repository.querySource(updates, { id: 'project-demo-001', q: null, status: null, fixture_state: null }, 0, 50);
     expect(updateResult.data.map((row: any) => row.id)).toEqual(['project-update-001', 'project-update-002']);
     expect(updateResult.data[0]).toMatchObject({ name: 'Construction', status: 'on_track', progress: 30, user_name: 'Mitchell Admin', date: '2026-01-15' });

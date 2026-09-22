@@ -272,3 +272,35 @@ Contract, permission, deterministic query, and restart-equivalent persistence
 checks pass. The slice is conditionally accepted only; visual and authenticated
 runtime parity remain blocked by the unavailable borrowed tab and were not
 represented as passes.
+
+## QA execution — PROJECT-CONFIGURATION-001 — 2026-09-22
+
+- Feature: Odoo Configuration > Projects action; evidence:
+  `../evidence/project/2026-09-22/project-configuration-001/`.
+- Source comparison: Odoo 19 `menu_projects_config`,
+  `open_view_project_all_config`, `/odoo/project-configuration`, and
+  `list,kanban,form` view order verified in the local Project addon source.
+- Focused checks:
+  `bun test ./test/project_configuration_action.integration.test.ts --timeout 30000`
+  — 4 passed, 0 failed, 29 assertions.
+- Project regression corpus:
+  `bun test ./test/project*.integration.test.ts --timeout 30000` — 67 passed,
+  0 failed, 690 assertions across 23 files.
+- Audit/build hygiene: `bun run audit` passed with 819 pages, 828 routes, and
+  1,707 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: on connected instance `245ea108`, the first
+  borrow of authenticated Odoo tab `1770662590` was refused because session
+  `expk` already owned it. After that session disappeared, fresh session
+  `ksja` waited 30 seconds for borrow confirmation and timed out. No
+  credentials, cookies, tokens, or independent browser were used; no
+  desktop/mobile captures were produced or claimed. Session `ksja` was
+  stopped cleanly.
+
+### QA decision
+
+Contract, migration, CRUD, permission-boundary declarations, stale guards, and
+regression checks pass. The feature is conditionally accepted only; live
+authenticated desktop/mobile comparison, request-error checks, and browser
+CRUD evidence remain blocked by the borrowed-tab ownership boundary.
