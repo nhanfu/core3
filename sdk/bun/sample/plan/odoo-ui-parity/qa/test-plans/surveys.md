@@ -42,6 +42,7 @@ and the published public survey token.
 | SURVEYS-FUNC-011 | data/recovery | DuckDB migration rollback/replay | Preserve an access-token response row and its dependent indexes across `0.0.17` rollback and replay | `surveys_migrations.integration.test.ts` | pass |
 | SURVEYS-FUNC-012 | participant lifecycle | Send/resend invitation | Persist invitation state, count, deterministic sent-at, and reject invalid/stale replay requests | `surveys_participant_invitation.integration.test.ts` | pass |
 | SURVEYS-FUNC-013 | public response recovery | Token start/progress/submit across restart | Resume a durable in-progress response after DuckDB reopen and submit/replay exactly once | `surveys_public_response_restart.integration.test.ts` | pass |
+| SURVEYS-FUNC-014 | kanban/card action | Surveys Cards > Edit Survey | Write-permissioned card action opens the durable survey detail form for the selected row | `surveys_card_edit.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 

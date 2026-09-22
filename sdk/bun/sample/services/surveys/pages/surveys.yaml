@@ -80,6 +80,7 @@ components:
     row_actions: menu
     row_double_click_action: view_survey_detail
     actions:
+      - { id: edit_survey, label: Edit Survey, permission: surveys.write }
       - { id: share_survey, label: Share, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: manage_survey_invite_attachments, label: Invite attachments, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: test_survey, label: Test, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
@@ -89,6 +90,11 @@ components:
       - { id: archive_survey, label: Archive, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Draft' || row.state === 'Published' || row.state === 'Closed'" }
       - { id: reopen_survey, label: Reopen, permission: surveys.manage, variant: primary, show_if: "row.state === 'Archived'" }
 actions:
+  - id: edit_survey
+    type: navigate
+    permission: surveys.write
+    navigate_to: /surveys/detail
+    params: { id: '{row.id}' }
   - id: manage_survey_invite_attachments
     type: navigate
     permission: surveys.write

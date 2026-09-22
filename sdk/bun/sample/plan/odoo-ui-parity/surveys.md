@@ -2889,3 +2889,30 @@ generated PDF/temp answer workflow.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CERTIFICATION-PREVIEW-001/`.
+
+## Bounded slice: `SURVEYS-CARD-EDIT-001` — 2026-09-22
+
+The next missing concrete action selected from the Odoo source is the Survey
+kanban/card menu's `Edit Survey` entry. Odoo declares the action as an
+`open` menu item in `addons/survey/views/survey_survey_views.xml:237-240`.
+Core3's default Cards view had the Odoo-style row menu but omitted this visible
+entry; its existing `view_survey_detail` navigation was only bound to row
+open/double-click behavior.
+
+Core3 now declares stable action `edit_survey` on the `surveys` page with
+`surveys.write` permission and routes it to the existing durable
+`/surveys/detail?id=<survey_id>` form. The page remains layout-only and stays
+joined to `api/surveys.yaml` through `page.id: surveys`; no migration, duplicate
+renderer, or page-local record was added. Existing OdooFormView persistence,
+optimistic writes, archived state, and permission boundary remain authoritative
+after navigation.
+
+Focused coverage is in `test/surveys_card_edit.integration.test.ts`: it checks
+the source/API page join, exact `Edit Survey` label and permission, stable
+navigation target, discovery registration, and that the target is a durable
+seeded survey row. No visual-parity claim is made because BrowserSkill could
+not borrow the signed-in Odoo tab: tab `1770662590` was already borrowed by
+session `zfuv`.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-EDIT-001/`.

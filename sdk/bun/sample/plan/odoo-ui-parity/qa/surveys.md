@@ -1915,3 +1915,25 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-EDIT-001` — 2026-09-22
+
+- Source/UI: Odoo's Survey kanban menu exposes `Edit Survey` as an `open`
+  action before Share/Delete (`addons/survey/views/survey_survey_views.xml:237-240`).
+  Core3's Cards view had the menu shell and row open behavior but no explicit
+  edit menu item.
+- Contract: `pages/surveys.yaml` declares stable `edit_survey` with
+  `surveys.write` and navigates to `/surveys/detail` using the selected stable
+  survey ID. The destination is the existing page/API pair and durable survey
+  datasource; no migration is needed.
+- Verification: focused test covers exact label, permission, target, page/API
+  join, discovery registration, and a seeded durable target row.
+- Browser blocker: BrowserSkill session `gqfw` used browser instance
+  `245ea108`, but borrowing signed-in tab `1770662590` failed with the exact
+  error `tab is borrowed by another session` and hint that session `zfuv`
+  owns it. No Odoo desktop/mobile capture was produced, and no visual-parity
+  claim is made. See the feature evidence directory for the sanitized blocker
+  record.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-EDIT-001/`.
