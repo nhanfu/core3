@@ -28,6 +28,7 @@ components:
       - { id: refuse_expense_detail, label: Refuse, variant: danger, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' || state.expense_detail.status === 'Approved'" }
       - { id: reset_expense_detail, label: Reset to draft, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Refused'" }
       - { id: split_expense, label: Split Expense, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft' && !state.expense_split_wizard.product_has_cost" }
+      - { id: view_same_receipt_expenses, label: View same receipt, variant: secondary, permission: expenses.read, show_if: "state.expense_detail.same_receipt_count > 0" }
     stat_buttons:
       - { id: open_split_expense, label: Split, value_field: split_expense_count, icon: split, permission: expenses.read, show_if: "state.expense_detail.split_expense_count > 0" }
       - { id: open_expense_account_move, label: Journal Entry, value_field: accounting_link_label, icon: ledger, permission: accounting.read, show_if: "state.expense_accounting_link.target_type === 'journal_entry'" }

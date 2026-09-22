@@ -1,0 +1,18 @@
+version: 0.0.17
+description: Seed a deterministic same-receipt warning pair for the expense drilldown
+type:
+  postgres:
+    up: |
+      UPDATE expenses
+      SET receipt_checksum = 'sha256:receipt-air-duplicate'
+      WHERE id = 'expense-demo-submitted'
+        AND receipt_checksum = 'sha256:receipt-hotel-pdf';
+    down: |
+      UPDATE expenses
+      SET receipt_checksum = 'sha256:receipt-hotel-pdf'
+      WHERE id = 'expense-demo-submitted'
+        AND receipt_checksum = 'sha256:receipt-air-duplicate';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

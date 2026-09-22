@@ -18,6 +18,11 @@ datasources:
         e.company_name, e.department_name,
         e.analytic_distribution, e.journal_entry, e.posting_journal, e.accounting_date,
         e.duplicate_candidate,
+        (SELECT COUNT(*) FROM expenses same_receipt
+          WHERE same_receipt.id <> e.id
+            AND same_receipt.receipt_checksum IS NOT NULL
+            AND same_receipt.receipt_checksum = e.receipt_checksum
+            AND same_receipt.company_name = e.company_name) AS same_receipt_count,
         e.reimbursement_status, e.refusal_reason, e.state AS status,
         e.split_expense_origin_id,
         (SELECT COUNT(*) FROM expenses split WHERE split.split_expense_origin_id = e.id OR e.split_expense_origin_id = split.split_expense_origin_id) AS split_expense_count,
@@ -135,6 +140,7 @@ datasources:
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
+  - { id: view_same_receipt_expenses, type: navigate, permission: expenses.read, navigate_to: /expenses/same-receipt, params: { expense_id: '{state.expense_detail.id}' } }
   - { id: open_split_expense, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{state.expense_detail.split_expense_origin_id}' } }
   - { id: open_expense_account_move, type: navigate, permission: accounting.read, navigate_to: /accounting/journal-entry-detail, params: { id: '{state.expense_accounting_link.target_id}' } }
   - { id: open_expense_origin_payment, type: navigate, permission: accounting.read, navigate_to: /accounting/payment-detail, params: { id: '{state.expense_accounting_link.target_id}' } }

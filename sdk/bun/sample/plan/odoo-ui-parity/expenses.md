@@ -688,3 +688,34 @@ instance `245ea108` was connected, but authenticated tab `1770662590` was
 already borrowed by session `yabv`; this worker did not seize that tab. No
 Odoo DOM or desktop/mobile screenshot was captured, so visual parity remains
 blocked and is not claimed.
+
+## Same-receipt expense drilldown follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-019`.
+
+The next uncovered source-backed detail action is Odoo's
+`hr.expense.action_show_same_receipt_expense_ids` at
+`/home/nhanjs/projects/odoo/addons/hr_expense/models/hr_expense.py:1275-1279`.
+Its form warning is declared at
+`/home/nhanjs/projects/odoo/addons/hr_expense/views/hr_expense_views.xml:146`
+and is driven by the attachment-checksum computation at lines `698-719`.
+
+Core3 now projects `same_receipt_count` on the shared detail datasource and
+exposes a permissioned View same receipt action. The action opens the new
+read-only `/expenses/same-receipt` page, whose presentation/API contracts are
+joined by `page.id: expenses-same-receipt`. Its query derives the checksum from
+the source expense ID, excludes the source row, and enforces current-company
+scope. Migration `0.0.17` adds a deterministic same-receipt demo pair without
+adding a new table.
+
+Focused evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-019/`. The focused
+suite passed 4 tests / 25 assertions; the full Expenses corpus passed 63 tests
+/ 345 assertions. Audit, Expenses CSS, targeted ESLint, and `git diff --check`
+passed.
+
+BrowserSkill was connected on instance `245ea108`, but the existing user-tab
+borrow did not complete: a subsequent command reported `previous session
+command is still running`, and cleanup reported `session is not registered`.
+The session was stopped. No Odoo DOM or desktop/mobile screenshots were read,
+and visual parity remains unclaimed.

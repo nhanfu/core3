@@ -1,0 +1,25 @@
+page: { id: expenses-same-receipt }
+datasources:
+  - id: expense_same_receipt
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_SAME_RECEIPT_UNAVAILABLE, message: Matching receipt expenses are temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
+        printf('$%,.2f', e.amount) AS amount_display, e.receipt_reference,
+        e.state AS status, e.company_name
+      FROM expenses e
+      WHERE e.id <> :expense_id
+        AND e.receipt_checksum IS NOT NULL
+        AND e.receipt_checksum = (
+          SELECT origin.receipt_checksum
+          FROM expenses origin
+          WHERE origin.id = :expense_id
+            AND origin.receipt_checksum IS NOT NULL
+            AND (NULLIF(TRIM(CAST(:current_company_name AS VARCHAR)), '') IS NULL OR origin.company_name = :current_company_name)
+        )
+        AND (NULLIF(TRIM(CAST(:current_company_name AS VARCHAR)), '') IS NULL OR e.company_name = :current_company_name)
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+      ORDER BY e.expense_date DESC, e.id
+actions:
+  - { id: view_same_receipt_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }

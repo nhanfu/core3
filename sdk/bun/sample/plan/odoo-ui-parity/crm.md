@@ -963,3 +963,36 @@ Status: bounded implementation; browser parity remains conditional.
 - Focused validation is `test/crm_lead_won_workflow.integration.test.ts`;
   it covers source/action mapping, YAML workflow permission parity, successful
   persistence across restart, lead/closed/stale guards, and activity history.
+
+## 2026-09-22 — Restore automated probability action
+
+Stable feature ID: `CRM-LEAD-AUTOMATED-PROBABILITY-001`.
+
+Status: bounded implementation; authenticated visual comparison is blocked.
+
+- Odoo 19 source: `addons/crm/models/crm_lead.py` defines
+  `action_set_automated_probability`, which recomputes probabilities and writes
+  the computed value back to `probability`. The lead form exposes the action in
+  `addons/crm/views/crm_lead_views.xml` while the probability is manual and the
+  lead is not lost.
+- Core3 adds the persisted `automated_probability` field through migration
+  `0.0.35`, backfills it from the configured stage probability, and keeps the
+  YAML page/API join on `page.id: lead-detail`. The new
+  `set_automated_probability_detail` action is `crm.write` protected, carries
+  `row_version`, restores both values from the current stage, and rejects Won,
+  Lost, missing, and stale rows without partial updates.
+- Dedicated coverage is
+  `test/crm_automated_probability.integration.test.ts`: **2 tests / 17
+  assertions** for Odoo source/action mapping, separated page/API discovery,
+  permission declaration, migration replay, open/closed/stale guards, and
+  file-backed restart persistence. Combined with the Won regression it passes
+  **4 tests / 32 assertions**.
+- BrowserSkill was used once against `http://localhost:8069/web?db=core3_reference`.
+  The existing user tab borrow did not complete its required confirmation and
+  was stopped; a new agent tab could not navigate because BrowserSkill reported
+  `Cannot access a chrome:// URL`. No credentials were requested or exposed,
+  and no visual-parity claim is recorded.
+- The broader `test/crm.integration.test.ts` remains blocked by the existing
+  AI action-catalog invariant; it reports the new CRM action alongside older
+  CRM actions missing from `services/ai/agent.yaml`. That file is outside this
+  CRM-only change scope and was not edited.

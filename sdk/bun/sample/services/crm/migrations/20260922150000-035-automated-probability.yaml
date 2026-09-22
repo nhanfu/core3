@@ -1,0 +1,18 @@
+version: 0.0.35
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS automated_probability INTEGER;
+      UPDATE crm_leads
+      SET automated_probability = COALESCE(
+        (SELECT probability FROM crm_stages WHERE crm_stages.name = crm_leads.stage),
+        probability
+      )
+      WHERE automated_probability IS NULL;
+    down: |
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS automated_probability;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,25 @@
+title: Expenses with the Same Receipt
+page: { id: expenses-same-receipt, route: /expenses/same-receipt, breadcrumb: [Expenses, Expense, Same receipt], auth: { require: [expenses.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: expense_same_receipt
+    search: { label: Search matching expenses, placeholder: 'Search expense, employee, or category...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: status, card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] } }
+    page_size: 25
+    column_chooser: true
+    row_key: id
+    row_open_action: view_same_receipt_expense_detail
+    row_double_click_action: view_same_receipt_expense_detail
+    empty_state: { title: No matching receipts, description: No other expense uses the same receipt. }
+    columns:
+      - { field: name, label: Expense, type: PrimaryEntityCell, sortable: true }
+      - { field: employee_name, label: Employee }
+      - { field: category, label: Category }
+      - { field: expense_date, label: Expense Date, sortable: true }
+      - { field: amount_display, label: Total, align: right }
+      - { field: receipt_reference, label: Receipt }
+      - { field: status, label: Status, type: StatusChip }

@@ -68,6 +68,7 @@ components:
       - { id: propose_lead_detail, label: Move to Proposition, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Qualified'" }
       - { id: create_quotation_from_lead, label: Create quotation, variant: primary, permission: orders.write, show_if: "state.crm_lead_detail.type === 'opportunity' && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: mark_lead_won_detail, label: Mark won, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'opportunity' && (state.crm_lead_detail.stage === 'Qualified' || state.crm_lead_detail.stage === 'Proposition')" }
+      - { id: set_automated_probability_detail, label: Use automated probability, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost' && state.crm_lead_detail.probability !== state.crm_lead_detail.automated_probability" }
       - { id: mark_lead_lost_detail, label: Mark lost, variant: danger, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: reopen_lead_detail, label: Reopen, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Lost'" }
     stat_buttons:
@@ -81,6 +82,7 @@ components:
           - { field: type, label: Type }
           - { field: stage, label: Stage }
           - { field: probability, label: Probability }
+          - { field: automated_probability, label: Automated probability }
           - { field: priority, label: Priority }
           - { field: tags, label: Tags }
           - { field: expected_revenue, label: Expected revenue }

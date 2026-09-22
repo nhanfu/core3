@@ -5,7 +5,8 @@ datasources:
     permission: crm.read
     query: |
       SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email, l.phone, l.description,
-        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team,
+        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability,
+        automated_probability, salesperson, team,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at,
         (SELECT COUNT(*) FROM crm_leads duplicate
@@ -320,6 +321,27 @@ actions:
     operation: won
     params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     refresh: [crm_lead_detail, crm_lead_activities]
+  - id: set_automated_probability_detail
+    type: server
+    permission: crm.write
+    action: crm.leads.set_automated_probability
+    handler: yaml_mutation
+    operation: set_automated_probability
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [crm_lead_detail]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost') AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Only an open lead can use automated probability
+      steps:
+        - query: "UPDATE crm_leads SET automated_probability = COALESCE((SELECT probability FROM crm_stages WHERE name = crm_leads.stage), probability), probability = COALESCE((SELECT probability FROM crm_stages WHERE name = crm_leads.stage), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND stage NOT IN ('Won', 'Lost') AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: Lead was changed before automated probability could be restored
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
   - id: mark_lead_lost_detail
     type: server_form
     permission: crm.write

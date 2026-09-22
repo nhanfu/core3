@@ -252,3 +252,17 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
   already borrowed by session `yabv`; the borrow was denied. This worker
   stopped session `wryg`, captured no Odoo DOM or screenshots, and makes no
   desktop/mobile visual-parity claim.
+
+## Batch 14 - same-receipt expense drilldown (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-019`, Odoo's
+  `action_show_same_receipt_expense_ids` warning action on the expense form.
+- Core3 adds a shared detail `same_receipt_count`, a permissioned navigation
+  action, and the page/API pair `expenses-same-receipt`. Matching rows are
+  derived from the origin expense checksum, exclude the origin, and enforce
+  current-company scope. Migration `0.0.17` seeds an idempotent matching pair.
+- Focused coverage: `expenses_same_receipt.integration.test.ts` plus the
+  migration gate — 4 tests / 25 assertions. Full Expenses regression passes
+  63 tests / 345 assertions. Audit, CSS, targeted ESLint, and diff-check pass.
+- BrowserSkill borrow did not complete; the exact session errors and cleanup
+  result are recorded in `EXPENSE-FUNC-019/README.md`. No visual claim is made.
