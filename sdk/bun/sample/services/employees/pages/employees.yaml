@@ -25,6 +25,7 @@ components:
       - { field: job_title, label: Job Position }
       - { field: employee_type, label: Employee Type }
       - { field: state, label: Status }
+      - { field: birthday, label: Birthday }
     view_navigation: tabs
     views:
       - id: kanban
@@ -105,6 +106,7 @@ components:
       - { field: work_phone, label: Work Phone }
       - { field: state, label: Status, type: StatusChip }
       - { field: hr_presence_state, label: Presence, type: StatusChip, optional: hide }
+      - { field: birthday, label: Birthday, type: date, optional: hide }
     page_size: 50
     row_key: id
     selectable: true
