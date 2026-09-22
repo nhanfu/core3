@@ -1,5 +1,34 @@
 # Events UI parity
 
+## Current bounded batch: Event Template Notes and Ticket Instructions (2026-09-22)
+
+Stable feature ID: EVENTS-TEMPLATE-NOTES-001.
+
+The next concrete source-backed gap after the template tags, reusable questions,
+and communication slices is the Odoo Event Template form's Notes tab. Odoo 19
+defines `event.type.note` and `event.type.ticket_instructions` in
+`addons/event/models/event_type.py`; `addons/event/views/event_type_views.xml`
+renders both fields in the template form. Core3 previously exposed only a
+placeholder Notes tab and had no durable template note fields or save action.
+
+This bounded slice keeps the existing `event-template-detail` page/API pair
+joined by `page.id`. It adds durable `note` and `ticket_instructions` columns
+to `event_templates`, deterministic Exhibition values, a page-owned Notes tab,
+and one `events.write` `edit_event_template_notes` action. The mutation uses
+the parent `row_version`, rejects stale writes and unsafe or overlong HTML, and
+refreshes the template detail/list projections. Migration replay,
+file-backed restart persistence, validation, and stale-row behavior are covered
+by `test/events_template_notes.integration.test.ts`.
+
+Focused validation passes 2 tests / 16 assertions and `git diff --check` is
+clean. The related template regression's persistence test passes, but its
+global discovery assertion is blocked by an unrelated pre-existing schema
+error in `services/order/pages/sale-order-detail.yaml`: missing action
+`update_sale_order_prices`. BrowserSkill opened the authenticated Odoo shell
+at `http://localhost:8069` with database `core3_reference` in a task session;
+no user tab was borrowed and no feature-level desktop/mobile visual claim is
+made. The session was stopped before handoff.
+
 ## Current bounded batch: Event Template Questions relation (2026-09-22)
 
 Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001.

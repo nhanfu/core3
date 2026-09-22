@@ -1,0 +1,17 @@
+id: 20260922250000-043-event-template-notes
+description: Durable Odoo Events template notes and ticket instructions
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_templates ADD COLUMN IF NOT EXISTS note VARCHAR;
+      ALTER TABLE event_templates ADD COLUMN IF NOT EXISTS ticket_instructions VARCHAR;
+      UPDATE event_templates
+      SET note = COALESCE(NULLIF(note, ''), 'Coordinate the exhibition welcome desk.'),
+          ticket_instructions = COALESCE(NULLIF(ticket_instructions, ''), '<p>Bring your ticket to the registration desk.</p>')
+      WHERE id = 'template-exhibition';
+    down: |
+      ALTER TABLE event_templates DROP COLUMN IF EXISTS ticket_instructions;
+      ALTER TABLE event_templates DROP COLUMN IF EXISTS note;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres

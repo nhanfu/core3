@@ -12,6 +12,7 @@ components:
       - { id: back_to_event_templates, label: Back to event templates, variant: secondary, permission: events.read }
       - { id: manage_event_template_tickets, label: Tickets, variant: secondary, permission: events.read }
       - { id: edit_event_template, label: Edit, variant: primary, permission: events.write }
+      - { id: edit_event_template_notes, label: Edit notes, variant: secondary, permission: events.write }
       - { id: delete_event_template, label: Delete, variant: danger, permission: events.write, confirm: Delete this event template? }
     groups:
       - title: Event Template
@@ -25,7 +26,11 @@ components:
         - { id: tickets, label: Tickets }
         - { id: communication, label: Communication, content_slot: true }
         - { id: questions, label: Questions, content_slot: true }
-        - { id: notes, label: Notes }
+        - id: notes
+          label: Notes
+          fields:
+            - { field: ticket_instructions, label: Ticket Instructions, type: richtext, wide: true }
+            - { field: note, label: Note, type: textarea, wide: true, placeholder: 'Add some internal notes (to do lists, contact info, ...)' }
 
   - type: LineItemGrid
     mount_in: previous-panel
@@ -164,6 +169,29 @@ actions:
       - { field: name, label: Event Template, type: text, required: true }
       - { field: seats, label: Seats, type: number, min: 0 }
       - { field: active, label: Active, type: checkbox }
+  - id: edit_event_template_notes
+    type: server_form
+    permission: events.write
+    title: Edit event template notes
+    action: events.templates.notes.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_template_detail
+    refresh: [event_template_detail, event_templates]
+    mutation:
+      operation: update
+      table: event_templates
+      fields: [ticket_instructions, note]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_NOTES_STALE, message: This event template changed before its notes could be saved. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:ticket_instructions, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:ticket_instructions, '') AS VARCHAR)) NOT LIKE '%<script%'", status: 422, code: EVENT_TEMPLATE_TICKET_INSTRUCTIONS_INVALID, message: Ticket Instructions must be safe HTML up to 10000 characters. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:note, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:note, '') AS VARCHAR)) NOT LIKE '%<script%'", status: 422, code: EVENT_TEMPLATE_NOTE_INVALID, message: Note must be safe HTML up to 10000 characters. }
+      result: { query: "SELECT * FROM event_templates WHERE id = :id" }
+    fields:
+      - { field: ticket_instructions, label: Ticket Instructions, type: richtext, wide: true }
+      - { field: note, label: Note, type: textarea, wide: true, placeholder: 'Add some internal notes (to do lists, contact info, ...)' }
   - id: delete_event_template
     type: server
     permission: events.write

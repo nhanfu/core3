@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_DETAIL_UNAVAILABLE, message: Event template details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, seats, active, 'Event Template' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, seats, active, COALESCE(note, '') AS note, COALESCE(ticket_instructions, '') AS ticket_instructions, 'Event Template' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: event_template_tags
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_TAGS_UNAVAILABLE, message: Template tags are temporarily unavailable. } }
