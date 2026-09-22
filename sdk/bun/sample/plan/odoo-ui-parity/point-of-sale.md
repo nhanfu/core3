@@ -1606,3 +1606,35 @@ POS discovery registers the new route and datasource; POS CSS build and
 `git diff --check` pass. The repository-wide `bun run audit` remains blocked
 by unrelated duplicate Event actions
 `print_attendee_responsive_html_ticket_document` and `back_to_event_attendee`.
+
+## Current bounded batch: Session > Journal Items smart button
+
+Feature ID: `POS-SESSION-JOURNAL-ITEMS-001`. The local Odoo 19 session form
+exposes `show_journal_items` for `account.group_account_readonly`; the action
+opens the related `account.move.line` rows, groups them by journal entry, and
+defaults the list to posted entries. This is the next smallest uncovered
+stable-ID session action after Cash Register and is read-only, so no mutation
+workflow is applicable.
+
+Core3 completes the action with the existing `pos-session-detail` page/API
+pair and a separate `/point-of-sale/session-journal-items` page/API pair
+joined by `page.id`. The durable `pos_session_journal_items` projection is
+seeded by migration `0.0.53`, filtered by the selected session and current
+company, and exposed only with `accounting.read`. Search, posted-state
+filtering, journal-entry grouping, empty/error metadata, and return navigation
+are declared in YAML; no direct cross-service SQL or accounting mutation is
+introduced.
+
+Focused coverage is `test/pos_session_journal_items.integration.test.ts`:
+the Odoo source/action mapping, page/API join, accounting permission,
+session/company boundaries, deterministic four-line seed, search/filter
+contract, migration replay, and file-backed restart persistence pass in three
+tests. The stable feature ID is declared by the test and this plan.
+
+Browser verification is recorded at
+`evidence/point_of_sale/2026-09-22/POS-SESSION-JOURNAL-ITEMS-001/`.
+The authenticated Odoo reference is `core3_reference`; the current QA user
+can open Sessions but lacks the accounting group that makes Journal Items
+visible on the Odoo form. Core3 authenticated route verification therefore
+remains conditional on a reusable local Core3 QA session; no permission was
+bypassed and no Odoo data was mutated.

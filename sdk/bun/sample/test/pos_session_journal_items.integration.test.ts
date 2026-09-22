@@ -8,7 +8,9 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 const root = join(import.meta.dir, '../services/point_of_sale');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
-describe('POS session Journal Items smart button parity', () => {
+const FEATURE_ID = 'POS-SESSION-JOURNAL-ITEMS-001';
+
+describe(`${FEATURE_ID}: POS session Journal Items smart button parity`, () => {
   test('maps the Odoo show_journal_items action to an accounting-guarded page/API pair', () => {
     const sessionPage = yaml('pages/pos-session-detail.yaml');
     const sessionApi = yaml('api/pos-session-detail.yaml');
@@ -20,6 +22,7 @@ describe('POS session Journal Items smart button parity', () => {
     const action = sessionApi.actions.find((candidate: any) => candidate.id === 'open_session_journal_items');
 
     expect(journalApi.page.id).toBe(journalPage.page.id);
+    expect(journalPage.page.auth.require).toContain('accounting.read');
     expect(statButton).toMatchObject({ label: 'Journal Items', permission: 'accounting.read' });
     expect(action).toMatchObject({ type: 'navigate', permission: 'accounting.read', navigate_to: '/point-of-sale/session-journal-items' });
     expect(journalPage.components[0]).toMatchObject({ source: 'pos_session_journal_items', default_group_by: 'entry_name' });

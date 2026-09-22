@@ -1,5 +1,32 @@
 # Point of Sale QA ledger
 
+## 2026-09-22 — POS-SESSION-JOURNAL-ITEMS-001
+
+- Status: bounded implementation and service verification complete; browser
+  visual sign-off is conditional on the accounting permission and reusable
+  Core3 QA-session gates below.
+- Source: Odoo 19 `pos_session_view.xml` `show_journal_items` stat button and
+  `pos_session.py` action returning related `account.move.line` rows with
+  posted/group-by-journal-entry context.
+- Implementation: durable `pos_session_journal_items` migration/fixtures,
+  session-detail Journal Items stat action, separate page/API contracts joined
+  by `page.id`, `accounting.read` enforcement, session/company scoping,
+  search/posting filters, deterministic empty/error states, and restart-safe
+  persistence. This read-only action has no mutation workflow.
+- Focused test: `bun test ./test/pos_session_journal_items.integration.test.ts
+  --timeout 30000` — 3 tests passed; migration replay and file-backed restart
+  persistence are covered.
+- Odoo BrowserSkill: the authenticated `core3_reference` POS app rendered in
+  an agent-owned BrowserSkill tab. The required borrow of the existing user
+  tab timed out waiting for confirmation and was not retried; the QA user does
+  not expose the accounting-gated Journal Items button on the reference form.
+  No credentials, cookies, tokens, or permission bypass were used.
+- Core3 BrowserSkill: no authenticated local Core3 QA session was available
+  for the protected route, so no visual-parity claim is made. Exact requests,
+  viewport, and stop/borrow outcome are recorded in the feature evidence.
+- Evidence:
+  `../evidence/point_of_sale/2026-09-22/POS-SESSION-JOURNAL-ITEMS-001/`.
+
 ## 2026-09-22 — POS-SESSION-PICKINGS-001
 
 - Status: bounded implementation and service verification complete; visual
