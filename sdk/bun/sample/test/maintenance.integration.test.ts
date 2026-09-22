@@ -105,6 +105,8 @@ describe('Maintenance bounded Odoo parity batch', () => {
     ]);
     const api = yaml('api/request-detail.yaml');
     expect(api.actions.map((action: any) => action.id)).toEqual([
+      'upload_maintenance_request_instruction_pdf',
+      'download_maintenance_request_instruction_pdf',
       'send_maintenance_request_message',
       'log_maintenance_request_note',
       'schedule_maintenance_request_activity',
@@ -120,8 +122,8 @@ describe('Maintenance bounded Odoo parity batch', () => {
       'archive_maintenance_request_detail',
       'reopen_maintenance_request_detail',
     ]);
-    expect(api.actions.every((action: any) => action.permission === 'maintenance.write')).toBe(true);
-    expect(api.actions.every((action: any) => action.refresh.includes('maintenance_request_detail'))).toBe(true);
+    expect(api.actions.filter((action: any) => action.type !== 'download').every((action: any) => action.permission === 'maintenance.write')).toBe(true);
+    expect(api.actions.filter((action: any) => action.type !== 'download').every((action: any) => action.refresh.includes('maintenance_request_detail'))).toBe(true);
     expect(yaml('pages/maintenance-workflow.yaml').workflow.transitions.map((transition: any) => transition.mutation.guards[0].status)).toEqual([409, 409, 409, 409]);
   });
 

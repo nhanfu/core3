@@ -1877,3 +1877,30 @@ click was possible. The task-owned BrowserSkill session was stopped cleanly.
 No Core3 desktop/mobile capture or visual-parity claim is made because the
 Accounting runner could not start. Exact evidence is under
 `evidence/accounting/2026-09-22/ACC-INVOICE-LOCK-001/`.
+
+## Current batch: invoice Duplicate action (2026-09-22)
+
+Stable feature `ACC-INVOICE-DUPLICATE-001` maps Odoo's visible invoice action
+menu `Duplicate` to `account.move.action_duplicate()`, which opens a copied
+`account.move` form. Odoo's `copy_data()` resets copy-disabled lifecycle fields
+such as the number, dates, and state; `copy()` logs that the new entry was
+duplicated from the source.
+
+Core3 adds `duplicate_accounting_invoice` to the page/API-separated
+`invoice-detail` contract and exposes it in the OdooFormView Actions menu. The
+`accounting.write` YAML mutation requires the current invoice row version and a
+signed-in actor, creates a deterministic `accounting-invoice-copy-*` draft,
+resets payment/review/lock/PDF/source-link state, restores the amount due, and
+writes a durable duplicate-origin chatter message. The existing invoice schema
+already contains the required fields, so no migration or seed change is
+needed; replay and restart persistence are covered by the focused suite.
+
+Focused validation passes 3 tests and 25 assertions, including Odoo source
+mapping, page/API separation, permission and actor guards, stale/missing
+handling, reset lifecycle values, duplicate-origin chatter, restart
+persistence, and migration replay. BrowserSkill inspected the authenticated
+Odoo invoice and opened its Actions menu, where `Duplicate` was visible. The
+current UI audit passes, but no paired authenticated Core3/Odoo desktop/mobile
+captures were taken for this bounded contract slice, so no visual-parity claim
+is made. Exact evidence is under
+`evidence/accounting/2026-09-22/ACC-INVOICE-DUPLICATE-001/`.

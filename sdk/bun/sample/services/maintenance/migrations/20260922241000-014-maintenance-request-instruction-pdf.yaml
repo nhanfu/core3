@@ -1,0 +1,23 @@
+version: 0.0.14
+kind: schema
+description: Persist Odoo maintenance request PDF instruction metadata
+type:
+  postgres:
+    up: |
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_file_name VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_mime_type VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_size_bytes BIGINT;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_storage_key VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_uploaded_by VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS instruction_pdf_updated_at TIMESTAMP;
+    down: |
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_updated_at;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_uploaded_by;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_storage_key;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_size_bytes;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_mime_type;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS instruction_pdf_file_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

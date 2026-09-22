@@ -1,12 +1,35 @@
 page: { id: maintenance-request-detail }
 datasources:
-  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, COALESCE(instruction_text, instructions) AS instructions, COALESCE(instruction_type, 'text') AS instruction_type, instruction_text, instruction_google_slide, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(scheduled_end AS VARCHAR) AS scheduled_end, duration, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
+  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, COALESCE(instruction_text, instructions) AS instructions, COALESCE(instruction_type, 'text') AS instruction_type, instruction_text, instruction_google_slide, instruction_pdf_file_name, instruction_pdf_mime_type, instruction_pdf_size_bytes, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(scheduled_end AS VARCHAR) AS scheduled_end, duration, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
+  - id: maintenance_request_instruction_pdf
+    permission: maintenance.read
+    query: "SELECT id, id AS request_id, instruction_pdf_file_name AS file_name, instruction_pdf_mime_type AS mime_type, instruction_pdf_size_bytes AS size_bytes, instruction_pdf_uploaded_by AS uploaded_by, CAST(instruction_pdf_updated_at AS VARCHAR) AS created_at FROM maintenance_requests WHERE id = :id AND instruction_type = 'pdf' AND instruction_pdf_file_name IS NOT NULL"
   - id: maintenance_request_activity
     single: false
     permission: maintenance.read
     error_states: { transport_error: { status: 503, code: MAINTENANCE_REQUEST_CHATTER_UNAVAILABLE, message: Maintenance request messages are temporarily unavailable. } }
     query: "SELECT id, request_id, row_version, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_to, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, request_id, row_version, CAST(NULL AS VARCHAR) AS activity_type, CAST(NULL AS VARCHAR) AS summary, CAST(NULL AS DATE) AS due_date, CAST(NULL AS VARCHAR) AS assigned_to, 'done' AS state, CAST(NULL AS TIMESTAMP) AS completed_at, actor_name, action, action_label, detail, created_at FROM maintenance_request_messages WHERE request_id = :id UNION ALL SELECT id, request_id, row_version, activity_type, summary, due_date, assigned_to, state, completed_at, actor_name, action, action_label, detail, created_at FROM maintenance_request_activities WHERE request_id = :id) timeline ORDER BY due_date NULLS LAST, created_at DESC, id"
 actions:
+  - id: upload_maintenance_request_instruction_pdf
+    type: upload
+    action: maintenance.requests.instructions.pdf.upload
+    handler: attachment_metadata
+    permission: maintenance.write
+    kind: maintenance_request_instruction_pdf
+    params: { id: '{state.maintenance_request_detail.id}', expected_row_version: '{state.maintenance_request_detail.row_version}' }
+    refresh: [maintenance_request_detail, maintenance_request_instruction_pdf]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Active maintenance request was not found. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Maintenance request changed before the PDF instruction could be uploaded. }
+        - { query: "SELECT 1 AS ok WHERE LOWER(TRIM(CAST(:mimeType AS VARCHAR))) = 'application/pdf' AND LOWER(TRIM(CAST(:fileName AS VARCHAR))) LIKE '%.pdf' AND LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 10485760", status: 422, code: MAINTENANCE_INSTRUCTION_PDF_INVALID, message: Upload a non-empty PDF instruction up to 10 MB. }
+      steps:
+        - { query: "UPDATE maintenance_requests SET instruction_type = 'pdf', instruction_pdf_file_name = TRIM(CAST(:fileName AS VARCHAR)), instruction_pdf_mime_type = LOWER(TRIM(CAST(:mimeType AS VARCHAR))), instruction_pdf_size_bytes = CAST(:sizeBytes AS BIGINT), instruction_pdf_storage_key = :storageKey, instruction_pdf_uploaded_by = :current_user_id, instruction_pdf_updated_at = TIMESTAMP '2026-01-15 12:00:00', row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND archived = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Maintenance request changed before the PDF instruction could be uploaded. }
+      result: { query: "SELECT id, row_version, instruction_type, instruction_pdf_file_name AS file_name, instruction_pdf_mime_type AS mime_type, instruction_pdf_size_bytes AS size_bytes, instruction_pdf_storage_key AS storage_key FROM maintenance_requests WHERE id = :id" }
+  - id: download_maintenance_request_instruction_pdf
+    type: download
+    permission: maintenance.read
+    kind: maintenance_request_instruction_pdf
   - id: send_maintenance_request_message
     type: server_form
     permission: maintenance.write
@@ -166,9 +189,10 @@ actions:
     prefill: state.maintenance_request_detail
     refresh: [maintenance_request_detail, maintenance_requests]
     fields:
-      - { field: instruction_type, label: Instruction type, type: select, options: [{ value: text, label: Text }, { value: google_slide, label: Google Slide }], required: true }
+      - { field: instruction_type, label: Instruction type, type: select, options: [{ value: text, label: Text }, { value: google_slide, label: Google Slide }, { value: pdf, label: PDF }], required: true }
       - { field: instruction_text, label: Instructions, type: textarea, required: true, show_if: "instruction_type === 'text'" }
       - { field: instruction_google_slide, label: Google Slide link, type: text, required: true, show_if: "instruction_type === 'google_slide'" }
+      - { field: instruction_pdf_file_name, label: PDF instruction, type: text, readonly: true, show_if: "instruction_type === 'pdf'" }
     mutation:
       operation: update
       table: maintenance_requests
@@ -178,8 +202,8 @@ actions:
       guards:
         - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Active maintenance request was not found. }
         - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Maintenance request changed before instructions could be saved. }
-        - { query: "SELECT 1 AS ok WHERE CAST(:instruction_type AS VARCHAR) IN ('text', 'google_slide')", status: 422, code: MAINTENANCE_INSTRUCTION_TYPE_INVALID, message: Choose Text or Google Slide instructions. }
-        - { query: "SELECT 1 AS ok WHERE (CAST(:instruction_type AS VARCHAR) = 'text' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) BETWEEN 1 AND 10000 AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) = 0) OR (CAST(:instruction_type AS VARCHAR) = 'google_slide' AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) BETWEEN 1 AND 2048 AND (LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'https://%' OR LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'http://%') AND TRIM(CAST(:instruction_google_slide AS VARCHAR)) NOT LIKE '% %' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) = 0)", status: 422, code: MAINTENANCE_INSTRUCTION_CONTENT_INVALID, message: Text instructions require content, and Google Slide instructions require an absolute HTTP or HTTPS link. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:instruction_type AS VARCHAR) IN ('text', 'google_slide', 'pdf')", status: 422, code: MAINTENANCE_INSTRUCTION_TYPE_INVALID, message: Choose Text, Google Slide, or PDF instructions. }
+        - { query: "SELECT 1 AS ok WHERE (CAST(:instruction_type AS VARCHAR) = 'text' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) BETWEEN 1 AND 10000 AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) = 0) OR (CAST(:instruction_type AS VARCHAR) = 'google_slide' AND LENGTH(TRIM(CAST(COALESCE(:instruction_google_slide, '') AS VARCHAR))) BETWEEN 1 AND 2048 AND (LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'https://%' OR LOWER(TRIM(CAST(:instruction_google_slide AS VARCHAR))) LIKE 'http://%') AND TRIM(CAST(:instruction_google_slide AS VARCHAR)) NOT LIKE '% %' AND LENGTH(TRIM(CAST(COALESCE(:instruction_text, '') AS VARCHAR))) = 0) OR (CAST(:instruction_type AS VARCHAR) = 'pdf' AND EXISTS (SELECT 1 FROM maintenance_requests WHERE id = :id AND instruction_pdf_file_name IS NOT NULL AND instruction_pdf_mime_type = 'application/pdf' AND instruction_pdf_size_bytes > 0))", status: 422, code: MAINTENANCE_INSTRUCTION_CONTENT_INVALID, message: Text instructions require content, Google Slide instructions require an absolute HTTP or HTTPS link, and PDF instructions require an uploaded PDF. }
       result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
   - id: generate_maintenance_request_recurrence
     type: server

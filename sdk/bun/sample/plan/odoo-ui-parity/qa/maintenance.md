@@ -347,3 +347,15 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   1440x900 and 390x844. The required signed-in user-tab borrow confirmation
   timed out; the task-created BrowserSkill tab still rendered the live action,
   but no paired Core3/Odoo visual-parity claim is made.
+
+## 2026-09-22 bounded developer verification: `MAINT-REQUEST-INSTRUCTION-PDF-001`
+
+- Added the missing Odoo PDF instruction widget contract: PDF mode, durable
+  local-storage metadata, permissioned upload/download, 10 MB PDF validation,
+  and row-version guards.
+- Focused result: **14 tests, 148 assertions, 0 failures**; full Maintenance
+  corpus: **64 tests, 527 assertions, 0 failures**. Migration replay and
+  file-backed restart persistence passed.
+- BrowserSkill connected to Chrome instance `245ea108`, but confirmation to
+  borrow the existing authenticated Odoo tab remained pending until timeout.
+  No Odoo or Core3 desktop/mobile visual-parity claim is made.

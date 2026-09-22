@@ -107,6 +107,32 @@ actions:
         - { query: "UPDATE accounting_invoices SET locked = TRUE, locked_at = CURRENT_TIMESTAMP, locked_by = :current_user_name, row_version = row_version + 1 WHERE id = :id AND state = 'Posted' AND COALESCE(lock_enabled, TRUE) = TRUE AND COALESCE(locked, FALSE) = FALSE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_LOCK_STALE, message: The document changed before it could be locked. Reload and try again. }
         - { query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, status) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.invoices.lock', 'Locked journal entry', 'This journal entry has been secured.', 'Posted')" }
       result: { query: "SELECT id, row_version, state, locked, CAST(locked_at AS VARCHAR) AS locked_at, locked_by FROM accounting_invoices WHERE id = :id" }
+  - id: duplicate_accounting_invoice
+    type: server
+    permission: accounting.write
+    action: accounting.invoices.duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    params: { id: '{state.accounting_invoice_detail.id}', expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail, accounting_invoice_messages, accounting_invoices]
+    mutation:
+      table: accounting_invoices
+      generated: [duplicate_id]
+      before_steps:
+        - query: "SELECT 'accounting-invoice-copy-' || CAST(:id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS duplicate_id FROM accounting_invoices WHERE id LIKE 'accounting-invoice-copy-' || CAST(:id AS VARCHAR) || '-%'"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id", status: 404, code: ACCOUNTING_INVOICE_DUPLICATE_NOT_FOUND, message: Invoice not found. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_DUPLICATE_STALE, message: The invoice changed before it could be duplicated. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: ACCOUNTING_INVOICE_DUPLICATE_ACTOR_REQUIRED, message: A signed-in Accounting user is required to duplicate the invoice. }
+      steps:
+        - query: "INSERT INTO accounting_invoices(id, row_version, name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id, reversal_id, reversal_of_id, reversal_reason, send_count, last_sent_at, pdf_content_base64, checked, payment_state, lock_enabled, locked, locked_at, locked_by) SELECT :duplicate_id, 1, name || ' (copy)', partner_name, invoice_type, CURRENT_DATE, CURRENT_DATE + INTERVAL '30' DAY, amount_untaxed, amount_tax, amount_total, amount_total, 'Draft', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, FALSE, 'not_paid', COALESCE(lock_enabled, TRUE), FALSE, NULL, NULL FROM accounting_invoices WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: ACCOUNTING_INVOICE_DUPLICATE_FAILED
+          message: The invoice could not be duplicated. Reload and try again.
+        - query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, status) SELECT gen_random_uuid(), :duplicate_id, :current_user_name, 'accounting.invoices.duplicate', 'Duplicated', 'This invoice was duplicated from ' || name || '.', 'Posted' FROM accounting_invoices WHERE id = :id"
+      result: { query: "SELECT * FROM accounting_invoices WHERE id = :duplicate_id" }
   - id: edit_accounting_invoice
     type: server_form
     permission: accounting.write

@@ -64,7 +64,7 @@ describe('Maintenance Request instructions parity', () => {
     const update = action();
     const base = { id: 'maintenance-demo-001', expected_row_version: 1, values: { instruction_type: 'text', instruction_text: 'Valid service steps.', instruction_google_slide: '' } };
 
-    await expect(repository.executeMutation(update.mutation, { ...base, values: { ...base.values, instruction_type: 'pdf' } })).rejects.toMatchObject({ status: 422, code: 'MAINTENANCE_INSTRUCTION_TYPE_INVALID' });
+    await expect(repository.executeMutation(update.mutation, { ...base, values: { ...base.values, instruction_type: 'pdf' } })).rejects.toMatchObject({ status: 422, code: 'MAINTENANCE_INSTRUCTION_CONTENT_INVALID' });
     await expect(repository.executeMutation(update.mutation, { ...base, values: { ...base.values, instruction_text: '   ' } })).rejects.toMatchObject({ status: 422, code: 'MAINTENANCE_INSTRUCTION_CONTENT_INVALID' });
     await expect(repository.executeMutation(update.mutation, { ...base, values: { instruction_type: 'google_slide', instruction_text: '', instruction_google_slide: 'not a url' } })).rejects.toMatchObject({ status: 422, code: 'MAINTENANCE_INSTRUCTION_CONTENT_INVALID' });
     await expect(repository.executeMutation(update.mutation, { ...base, expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });

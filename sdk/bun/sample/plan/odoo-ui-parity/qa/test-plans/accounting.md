@@ -124,3 +124,12 @@ required; development migrations must be idempotent.
 | ACC-PAYMENT-RECEIPT-DATA-004 | data/regression | payment receipt migration | Receipt queue/history and counters survive DuckDB close/reopen and idempotent migration replay | `accounting_payment_receipt.integration.test.ts` | pass |
 | ACC-PAYMENT-RECEIPT-UI-005 | visual/responsive | Odoo payment form composer | Capture Odoo/Core3 desktop `1440x900` and mobile `390x844`, including Send/Discard and receipt history | `ACC-PAYMENT-RECEIPT-001/browser-check.md` | blocked; shared-tab borrow confirmation timed out, no visual claim |
 | ACC-PAYMENT-RECEIPT-INT-006 | integration | receipt attachment/delivery | SMTP/mail queue delivery and generated payment-receipt PDF bytes complete successfully with retry/timeout recovery | `ACC-PAYMENT-RECEIPT-001/source-comparison.md` | deferred integration boundary |
+
+## Invoice Duplicate addendum (2026-09-22)
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| ACC-INVOICE-DUPLICATE-FUNC-001 | functional/data | `/accounting/invoice-detail` → Actions → Duplicate | Current invoice creates one deterministic new draft with reset dates/payment/review/lock/PDF/source-link fields and the original amount due; `accounting_invoice_duplicate.integration.test.ts` | pass at contract/API level |
+| ACC-INVOICE-DUPLICATE-PERM-002 | permission/security | `duplicate_accounting_invoice` | `accounting.write`, signed-in actor, missing invoice, and stale row guards reject unauthorized/invalid mutations without partial rows | pass; focused integration test |
+| ACC-INVOICE-DUPLICATE-DATA-003 | data/regression | duplicate migration/restart | Duplicate row and origin chatter survive DuckDB close/reopen and idempotent migration replay without duplicate seed rows | pass; focused integration test |
+| ACC-INVOICE-DUPLICATE-UI-004 | visual/responsive | Odoo/Core3 invoice Actions menu | Authenticated Odoo desktop/mobile and Core3 desktop/mobile captures compare the menu/action placement and resulting draft form | not executed in this bounded contract pass; no visual claim |

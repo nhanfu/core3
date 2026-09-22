@@ -1,3 +1,9 @@
 database:
   storage:
     driver: duckdb
+attachments:
+  maintenance_request_instruction_pdf:
+    download:
+      route: /api/maintenance/request-instruction-pdfs
+      permission: maintenance.read
+      query: SELECT id, instruction_pdf_file_name AS file_name, instruction_pdf_mime_type AS mime_type, instruction_pdf_size_bytes AS size_bytes, instruction_pdf_storage_key AS storage_key FROM maintenance_requests WHERE id = :attachment_id AND instruction_pdf_file_name IS NOT NULL

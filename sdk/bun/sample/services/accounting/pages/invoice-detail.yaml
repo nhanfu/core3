@@ -25,6 +25,12 @@ components:
       - { id: review_accounting_invoice, label: Reviewed, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && !state.accounting_invoice_detail.checked" }
       - { id: toggle_accounting_invoice_payment_block, label: (Un)Block Payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.invoice_type !== 'Journal Entry' && state.accounting_invoice_detail.state !== 'Cancelled'" }
       - { id: lock_accounting_invoice, label: Lock, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.hash_lock_enabled && !state.accounting_invoice_detail.locked" }
+    action_menu:
+      label: Actions
+      aria_label: Actions menu
+      icon: more-vertical
+      actions:
+        - { id: duplicate_accounting_invoice, label: Duplicate, icon: copy, permission: accounting.write }
     group_columns: 2
     groups:
       - title: Invoice

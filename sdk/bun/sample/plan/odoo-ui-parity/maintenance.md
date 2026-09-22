@@ -761,3 +761,32 @@ pending and the session became unregistered; the tab was not touched. No
 desktop/mobile visual-parity claim is made. Full authenticated comparison,
 source schedule-widget behavior, instruction widgets, and whole-module
 sign-off remain open.
+
+## Bounded batch: Maintenance Request PDF instruction widget (2026-09-22)
+
+Feature ID: `MAINT-REQUEST-INSTRUCTION-PDF-001`.
+
+The Odoo `maintenance.request` model exposes `instruction_type` values PDF,
+Google Slide, and Text, with `instruction_pdf` rendered by the `pdf_viewer`
+widget in the Instructions notebook. Core3 already covered Text and Google
+Slide modes; this slice adds the missing PDF mode as a durable YAML upload and
+download contract. The upload is restricted to active requests, PDF MIME and
+filename, non-empty files up to 10 MB, and the current request row version. It
+sets the active mode to PDF, persists local-storage metadata, increments the
+request revision, and is visible through the request detail attachment panel.
+
+Implementation and verification are recorded in the Maintenance-owned
+`request-detail.yaml`, `storage.yaml`, migration
+`20260922241000-014-maintenance-request-instruction-pdf.yaml`, and focused
+`maintenance_request_instruction_pdf.integration.test.ts`. The full
+Maintenance integration corpus passed **64 tests / 527 assertions**; the
+focused instruction/API regression passed **14 tests / 148 assertions**;
+`git diff --check` passed.
+
+BrowserSkill connected to Chrome instance `245ea108` and found the user-owned
+Odoo tab at `http://localhost:8069/survey/results/feedback-form-1`. Borrow
+confirmation for that tab remained pending until the bounded request expired;
+the tab was not touched and no authenticated Odoo desktop/mobile capture is
+claimed. Core3 visual parity and PDF viewer rendering therefore remain open;
+the API/storage persistence and guard behavior are evidenced by the focused
+tests. See `odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-REQUEST-INSTRUCTION-PDF-001/`.
