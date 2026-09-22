@@ -1,0 +1,31 @@
+version: 0.0.19
+kind: schema
+description: Durable Recruitment talent-to-job application cloning
+type:
+  postgres:
+    up: |
+      -- Odoo permits several applications for the same person. The original
+      -- development fixture made applicant.name unique, which prevented the
+      -- job.add.applicants wizard from preserving the source applicant name.
+      -- Rebuild the small development table without that accidental limit.
+      CREATE TABLE recruitment_applicants_job_application_migration AS
+        SELECT * FROM recruitment_applicants;
+      ALTER TABLE recruitment_applicants_job_application_migration
+        ADD COLUMN IF NOT EXISTS pool_applicant_id VARCHAR;
+      DROP TABLE recruitment_applicants;
+      ALTER TABLE recruitment_applicants_job_application_migration
+        RENAME TO recruitment_applicants;
+      ALTER TABLE recruitment_applicants ADD PRIMARY KEY (id);
+      CREATE INDEX IF NOT EXISTS recruitment_applicants_opening_idx
+        ON recruitment_applicants(opening_id);
+      CREATE INDEX IF NOT EXISTS recruitment_applicants_stage_idx
+        ON recruitment_applicants(stage);
+      CREATE INDEX IF NOT EXISTS recruitment_applicants_pool_applicant_idx
+        ON recruitment_applicants(pool_applicant_id);
+    down: |
+      DROP INDEX IF EXISTS recruitment_applicants_pool_applicant_idx;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS pool_applicant_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

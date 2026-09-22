@@ -2,6 +2,57 @@
 
 Status: `batch-14-implemented-applicant-followers-odoo-reference-blocked`
 
+## Batch 15 — Applications → Create Applications from Talent Pool
+
+The next missing stable-ID Recruitment action is Odoo's `job_add_applicants`
+wizard (`RECRUITMENT-APPLICANT-JOB-APPLICATIONS-001`). Local Odoo 19 source
+revision `659759969d535d286b656c96b675e4612b925ddd` defines the transient
+`job.add.applicants` model with required `applicant_ids` and `job_ids` fields.
+Its `action_add_applicants_to_job` copies each selected talent-pool applicant
+once per selected job position, clears talent-pool membership on the new
+application, chooses the first non-folded stage, and returns the new form or a
+success notification. The list form exposes `Create Applications` and
+`Discard`; the applicant form exposes the same action only for pool applicants.
+
+Core3 adds the page-local `Create Applications` server form to the talent-pool
+members list and the pool-applicant detail form. A durable Recruitment
+migration adds `pool_applicant_id` and removes the accidental development-only
+unique constraint on applicant names so one candidate can hold multiple
+applications, while retaining the applicant primary key and indexes. The
+mutation preserves applicant profile fields, creates one row per talent/job
+pair with the deterministic first open stage, records the source relation, and
+exposes the resulting application count after reload. Empty selection,
+missing/archived/cross-company source, actor, invalid position, and stale
+detail-row guards are explicit. The talent-pool surface maps this manager-only
+action to `recruitment.manage`; the detail action remains on the existing
+`recruitment.write` boundary.
+
+Source/gap matrix for `RECRUITMENT-APPLICANT-JOB-APPLICATIONS-001`:
+
+| Odoo contract | Previous Core3 state | Batch 15 change | Verification |
+| --- | --- | --- | --- |
+| Pool applicant `Create Applications` action | Missing | Talent list bulk action and detail header action | page/API contract test |
+| Required multi-job wizard | Missing | YAML server form with multi-select job positions | focused mutation test |
+| Copy one application per applicant/job | Missing | durable clone rows linked by `pool_applicant_id` | 2×2 creation assertion |
+| First non-folded stage and preserved profile | Missing | deterministic stage/profile copy | row field assertions |
+| Invalid, missing, scope, actor, and stale guards | Missing | atomic 400/403/404/409/422 guards | guard and stale tests |
+| Visible persisted result | Missing | source member application count and detail count | restart/reload assertion |
+
+Focused verification:
+
+- `bun test test/recruitment_applicant_job_applications.integration.test.ts` —
+  5 passed, 0 failed, 23 assertions.
+- Recruitment regression — 64 passed, 0 failed, 559 assertions across 17 files.
+- Audit, frontend/CSS builds, targeted ESLint, and `git diff --check` are
+  required before commit.
+
+Live-reference status: BrowserSkill browser instance `245ea108` was available,
+but the existing authenticated Odoo tab was already borrowed by another team
+session. The exact borrow error was `tab is borrowed by another session`; no
+independent login or alternate browser was used. No Odoo desktop/mobile
+visual-parity claim is made for this batch; the blocker is recorded under the
+feature evidence directory.
+
 ## Batch 14 — Applications → Add/Remove Followers
 
 The next distinct bounded Recruitment workflow is Odoo's applicant-bound

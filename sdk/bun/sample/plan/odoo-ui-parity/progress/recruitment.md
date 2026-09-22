@@ -4,9 +4,18 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment applicant followers commit
+Candidate commit: pending Recruitment applicant Create Applications commit
 
 ## Current state
+
+Batch 15 implements `RECRUITMENT-APPLICANT-JOB-APPLICATIONS-001`, the Odoo
+`job_add_applicants` action. Pool talent list and applicant detail now expose a
+guarded multi-job wizard that durably clones one application per selected
+talent/job pair, preserves source profile data, selects the first open stage,
+and survives restart. Focused and module regression verification are recorded
+in the feature evidence. Live Odoo desktop/mobile comparison remains blocked
+because the authenticated tab on browser `245ea108` was already borrowed by
+another team session; no visual parity sign-off is claimed.
 
 Batch 14 implements the next uncovered Recruitment workflow, applicant
 Add/Remove Followers wizard. Its focused suite passes 4 tests / 19 assertions

@@ -11,6 +11,9 @@ components:
     row_open_action: view_recruitment_pool_applicant
     row_double_click_action: view_recruitment_pool_applicant
     row_actions: menu
+    selectable: true
+    bulk_actions:
+      - { id: create_recruitment_applications, label: Create Applications, permission: recruitment.manage }
     columns:
       - { field: applicant_name, label: Name, type: PrimaryEntityCell, sortable: true, mobile: true }
       - { field: applied_date, label: Applied on, sortable: true, mobile: true }
@@ -18,6 +21,7 @@ components:
       - { field: matching, label: Matching, mobile: true }
       - { field: tags, label: Tags, mobile: true }
       - { field: recruiter, label: Recruiter, mobile: true }
+      - { field: created_application_count, label: Applications, mobile: true }
       - { field: id, label: '', sortable: false, actions: [{ id: view_recruitment_pool_applicant, label: Open Applicant, icon: external-link }, { id: remove_recruitment_pool_talent, label: Remove from Pool, icon: delete, permission: recruitment.manage, variant: danger }] }
     page_size: 25
     empty_state: { title: No Talents in the pool yet, description: Add applicants to keep a shortlist ready for future openings. }

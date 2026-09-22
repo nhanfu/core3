@@ -1,5 +1,26 @@
 # recruitment QA ledger
 
+## Batch 15 QA — Applicant Create Applications — 2026-09-22
+
+- Candidate scope: Odoo `job_add_applicants` from talent-pool members and
+  pool-applicant detail; followers and email remain prior bounded batches.
+- Stable ID: `RECRUITMENT-APPLICANT-JOB-APPLICATIONS-001`.
+- Source boundary: Odoo 19 `wizard/job_add_applicants.py`,
+  `wizard/job_add_applicants_views.xml`, `models/hr_applicant.py`, and
+  `views/hr_applicant_views.xml`, compared at source revision
+  `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused coverage: page/API `page.id` join, manager permission mapping,
+  multi-job form, 2×2 durable clone creation, profile/stage/source linkage,
+  empty/missing/archived/cross-company/actor/invalid-position guards, stale
+  detail replay, source counter, and file-backed restart.
+- Browser blocker: BrowserSkill status confirmed instance `245ea108`, but
+  borrowing the existing authenticated Odoo tab returned `tab is borrowed by
+  another session`. No independent login or alternate browser was used; no
+  desktop/mobile visual-parity claim is made.
+- QA decision: functional batch complete after final local gates; live Odoo
+  reference and authenticated desktop/mobile captures remain blocked. Broader
+  Recruitment sign-off remains pending.
+
 ## Batch 14 QA — Applicant Add/Remove Followers — 2026-09-22
 
 - Candidate scope: applicant list/kanban follower wizard, durable

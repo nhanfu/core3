@@ -4,10 +4,15 @@ datasources:
     single: true
     permission: recruitment.read
     error_states: { unauthorized: { status: 401, code: RECRUITMENT_APPLICANT_UNAUTHENTICATED, message: Sign in to view this applicant. }, forbidden: { status: 403, code: RECRUITMENT_APPLICANT_FORBIDDEN, message: You do not have permission to view this applicant. }, missing_record: { status: 404, code: RECRUITMENT_APPLICANT_NOT_FOUND, message: Applicant not found. }, transport_error: { status: 503, code: RECRUITMENT_APPLICANT_UNAVAILABLE, message: Applicant details are temporarily unavailable. } }
-    query: "SELECT a.id, a.row_version, a.name, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
+    query: "SELECT a.id, a.row_version, a.name, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.department_name, a.notes, a.archived, a.company_name, a.refuse_reason_id, COALESCE(rr.name, '') AS refuse_reason_name, COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM recruitment_applicant_followers f JOIN recruitment_follower_contacts c ON c.id = f.contact_id WHERE f.applicant_id = a.id), '') AS follower_names, (SELECT COUNT(*) FROM recruitment_applicant_followers f WHERE f.applicant_id = a.id) AS follower_count, EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id) AS is_pool_applicant, (SELECT COUNT(*) FROM recruitment_applicants created WHERE created.pool_applicant_id = a.id) AS created_application_count, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date, CAST(a.hired_date AS VARCHAR) AS hired_date, CAST(a.refused_date AS VARCHAR) AS refused_date FROM recruitment_applicants a LEFT JOIN recruitment_refuse_reasons rr ON rr.id = a.refuse_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND a.id = :id AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name)"
   - id: recruitment_applicant_refuse_reason_lookup
     permission: recruitment.read
     query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
+  - id: recruitment_applicant_job_application_options
+    permission: recruitment.write
+    single: false
+    error_states: { unauthorized: { status: 401, code: RECRUITMENT_JOB_APPLICATIONS_UNAUTHENTICATED, message: Sign in to create applications. }, forbidden: { status: 403, code: RECRUITMENT_JOB_APPLICATIONS_FORBIDDEN, message: You do not have permission to create applications. }, transport_error: { status: 503, code: RECRUITMENT_JOB_APPLICATIONS_UNAVAILABLE, message: Job positions are temporarily unavailable. } }
+    query: "SELECT id AS value, name || ' — ' || job_title AS label FROM recruitment_openings WHERE state <> 'Archived' ORDER BY name, id"
 actions:
   - id: reopen_applicant_detail
     type: server
@@ -25,6 +30,33 @@ actions:
   - { id: interview_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
   - { id: offer_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
   - { id: hire_applicant_detail, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+  - id: create_recruitment_applications_from_detail
+    type: server_form
+    permission: recruitment.write
+    title: Create Applications
+    description: Create a new application for each selected job position.
+    submit_label: Create Applications
+    cancel_label: Discard
+    success_message: Applications created.
+    action: recruitment.applicants.create_applications
+    handler: yaml_mutation
+    operation: bulk_create
+    params: { source_applicant_id: '{state.id}' }
+    refresh: [recruitment_applicant_detail, recruitment_applicants, recruitment_openings]
+    mutation:
+      fields: [job_ids]
+      required: [job_ids]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :job_ids IS NOT NULL AND CAST(:job_ids AS VARCHAR) NOT LIKE '[]'", status: 400, code: RECRUITMENT_JOB_APPLICATIONS_JOB_REQUIRED, message: Select at least one job position. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_name, '')), '') IS NOT NULL", status: 403, code: RECRUITMENT_JOB_APPLICATIONS_ACTOR_REQUIRED, message: A signed-in Recruitment user is required to create applications. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id = :source_applicant_id AND a.archived = FALSE AND EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.applicant_id = a.id))", status: 404, code: RECRUITMENT_JOB_APPLICATIONS_APPLICANT_NOT_FOUND, message: The selected applicant is not a talent-pool applicant. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM recruitment_applicants a WHERE a.id = :source_applicant_id AND a.row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR a.company_name = :current_company_name))", status: 409, code: RECRUITMENT_JOB_APPLICATIONS_STALE, message: The applicant changed before applications were created. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM recruitment_openings o WHERE o.id IN :job_ids AND o.state <> 'Archived')", status: 422, code: RECRUITMENT_JOB_APPLICATIONS_JOB_INVALID, message: Select an active job position. }
+      steps:
+        - query: "INSERT INTO recruitment_applicants(id, name, opening_id, opening_name, email, phone, source, recruiter, stage, rating, priority, department_name, applied_date, interview_date, hired_date, notes, archived, company_name, pool_applicant_id, created_at, updated_at) SELECT 'recruitment-applicant-job-' || regexp_replace(lower(a.id || '-' || o.id), '[^a-z0-9]+', '-', 'g') || '-' || CAST(COALESCE((SELECT COUNT(*) FROM recruitment_applicants prior WHERE prior.pool_applicant_id = a.id AND prior.opening_id = o.id), 0) + 1 AS VARCHAR), a.name, o.id, o.name, a.email, a.phone, a.source, a.recruiter, COALESCE((SELECT s.name FROM recruitment_stages s WHERE s.fold = FALSE ORDER BY s.sequence, s.id LIMIT 1), 'New'), a.rating, a.priority, a.department_name, DATE '2026-01-15', NULL, NULL, a.notes, FALSE, a.company_name, a.id, TIMESTAMP '2026-01-15 09:30:00', TIMESTAMP '2026-01-15 09:30:00' FROM recruitment_applicants a CROSS JOIN recruitment_openings o WHERE a.id = :source_applicant_id AND o.id IN :job_ids AND o.state <> 'Archived'"
+      result: { query: "SELECT created.id, created.pool_applicant_id, created.name, created.opening_id, created.opening_name, created.stage, created.company_name FROM recruitment_applicants created WHERE created.pool_applicant_id = :source_applicant_id AND created.opening_id IN :job_ids ORDER BY created.id" }
+    fields:
+      - { field: job_ids, label: Job Positions, type: multi-select, options_source: recruitment_applicant_job_application_options, multiple: true, required: true, placeholder: Move to... }
   - id: reject_applicant_detail
     type: server_form
     permission: recruitment.manage
