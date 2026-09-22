@@ -29,7 +29,7 @@ describe('eCommerce Delivery Methods parity', () => {
     const manifest = yaml('manifest.yaml');
     const page = yaml('pages/delivery-methods.yaml');
     const api = yaml('api/delivery-methods.yaml');
-    expect(manifest.menu.groups[2].items).toEqual(expect.arrayContaining([
+    expect(manifest.menu.groups.find((group: any) => group.id === 'configuration').items).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/ecommerce/delivery-methods', label: 'Delivery Methods', permission: 'ecommerce.read' }),
     ]));
     expect(page.page).toMatchObject({ id: 'ecommerce-delivery-methods', route: '/ecommerce/delivery-methods' });
@@ -37,6 +37,7 @@ describe('eCommerce Delivery Methods parity', () => {
     expect(api.page).toEqual({ id: 'ecommerce-delivery-methods' });
     expect(api.datasources.map((source: any) => source.id)).toEqual([
       'ecommerce_delivery_methods_catalog',
+      'ecommerce_delivery_zip_prefix_options',
       'ecommerce_delivery_method_active',
       'ecommerce_delivery_method_type',
     ]);

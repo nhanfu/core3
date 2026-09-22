@@ -6,7 +6,10 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_DELIVERY_METHODS_UNAUTHENTICATED, message: Sign in to view delivery methods. }
       forbidden: { status: 403, code: ECOMMERCE_DELIVERY_METHODS_FORBIDDEN, message: You do not have permission to view delivery methods. }
       transport_error: { status: 503, code: ECOMMERCE_DELIVERY_METHODS_UNAVAILABLE, message: Delivery methods are temporarily unavailable. }
-    query: "SELECT id, row_version, name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active FROM ecommerce_delivery_methods WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR delivery_type ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:delivery_type IS NULL OR delivery_type = :delivery_type) AND (:company_name IS NULL OR NULLIF(company_name, '') IS NULL OR company_name = :company_name) ORDER BY sequence, name, id"
+    query: "SELECT d.id, d.row_version, d.name, d.sequence, d.company_name, d.delivery_type, d.allow_cash_on_delivery, d.fixed_price, d.margin, d.fixed_margin, d.free_over, d.free_over_amount, d.tracking_url, d.carrier_description, d.active, COALESCE(d.zip_prefix_ids, '') AS zip_prefix_ids, COALESCE((SELECT STRING_AGG(z.name, ', ' ORDER BY z.name) FROM ecommerce_delivery_zip_prefixes z WHERE POSITION(',' || z.id || ',' IN ',' || COALESCE(d.zip_prefix_ids, '') || ',') > 0), '') AS zip_prefix_names FROM ecommerce_delivery_methods d WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.delivery_type ILIKE '%' || :q || '%') AND (:active IS NULL OR d.active = :active) AND (:delivery_type IS NULL OR d.delivery_type = :delivery_type) AND (:company_name IS NULL OR NULLIF(d.company_name, '') IS NULL OR d.company_name = :company_name) ORDER BY d.sequence, d.name, d.id"
+  - id: ecommerce_delivery_zip_prefix_options
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_delivery_zip_prefixes ORDER BY name, id"
   - id: ecommerce_delivery_method_active
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
@@ -26,7 +29,7 @@ actions:
       operation: insert
       table: ecommerce_delivery_methods
       generated: [id]
-      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active]
+      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active, zip_prefix_ids]
       required: [name]
       defaults: { sequence: 100, company_name: null, delivery_type: fixed, allow_cash_on_delivery: false, fixed_price: 0, margin: 0, fixed_margin: 0, free_over: false, free_over_amount: 1000, tracking_url: '', carrier_description: '', active: true }
       guards:
@@ -35,6 +38,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE COALESCE(:fixed_price, 0) >= 0 AND COALESCE(:fixed_margin, 0) >= 0 AND COALESCE(:free_over_amount, 0) >= 0 AND COALESCE(:margin, 0) >= -1", status: 422, code: ECOMMERCE_DELIVERY_METHOD_PRICE_INVALID, message: Delivery prices and margin must be valid non-negative values. }
         - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:company_name AS VARCHAR)), '') IS NULL OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Delivery methods can only be configured for the current company or all companies. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(NULLIF(company_name, ''), '') = COALESCE(NULLIF(:company_name, ''), ''))", status: 409, code: ECOMMERCE_DELIVERY_METHOD_EXISTS, message: A delivery method with this name already exists for this company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT TRIM(unnest(string_split(COALESCE(CAST(:zip_prefix_ids AS VARCHAR), ''), ','))) AS id) selected WHERE id <> '' AND NOT EXISTS (SELECT 1 FROM ecommerce_delivery_zip_prefixes z WHERE z.id = selected.id))", status: 422, code: ECOMMERCE_DELIVERY_METHOD_ZIP_PREFIX_INVALID, message: Choose valid delivery zip prefixes. }
       result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" }
     fields:
       - { field: name, label: Delivery Method, type: text, required: true }
@@ -49,6 +53,7 @@ actions:
       - { field: free_over_amount, label: Free Above Amount, type: number, default: 1000, min: 0, step: 0.01 }
       - { field: tracking_url, label: Tracking URL, type: text }
       - { field: carrier_description, label: Description, type: textarea }
+      - { field: zip_prefix_ids, label: Zip Prefixes, type: multi-select, options_source: ecommerce_delivery_zip_prefix_options, wide: true }
       - { field: active, label: Active, type: checkbox, default: true }
   - id: edit_ecommerce_delivery_method
     type: server_form
@@ -61,7 +66,7 @@ actions:
     mutation:
       operation: update
       table: ecommerce_delivery_methods
-      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active]
+      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active, zip_prefix_ids]
       required: [name]
       concurrency: { required: true }
       guards:
@@ -70,6 +75,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE COALESCE(:fixed_price, 0) >= 0 AND COALESCE(:fixed_margin, 0) >= 0 AND COALESCE(:free_over_amount, 0) >= 0 AND COALESCE(:margin, 0) >= -1", status: 422, code: ECOMMERCE_DELIVERY_METHOD_PRICE_INVALID, message: Delivery prices and margin must be valid non-negative values. }
         - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:company_name AS VARCHAR)), '') IS NULL OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Delivery methods can only be configured for the current company or all companies. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(NULLIF(company_name, ''), '') = COALESCE(NULLIF(:company_name, ''), '') AND id <> :id)", status: 409, code: ECOMMERCE_DELIVERY_METHOD_EXISTS, message: A delivery method with this name already exists for this company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT TRIM(unnest(string_split(COALESCE(CAST(:zip_prefix_ids AS VARCHAR), ''), ','))) AS id) selected WHERE id <> '' AND NOT EXISTS (SELECT 1 FROM ecommerce_delivery_zip_prefixes z WHERE z.id = selected.id))", status: 422, code: ECOMMERCE_DELIVERY_METHOD_ZIP_PREFIX_INVALID, message: Choose valid delivery zip prefixes. }
       result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" }
     fields:
       - { field: name, label: Delivery Method, type: text, required: true }
@@ -84,6 +90,7 @@ actions:
       - { field: free_over_amount, label: Free Above Amount, type: number, min: 0, step: 0.01 }
       - { field: tracking_url, label: Tracking URL, type: text }
       - { field: carrier_description, label: Description, type: textarea }
+      - { field: zip_prefix_ids, label: Zip Prefixes, type: multi-select, options_source: ecommerce_delivery_zip_prefix_options, wide: true }
       - { field: active, label: Active, type: checkbox }
   - id: archive_ecommerce_delivery_method
     type: server

@@ -2,6 +2,33 @@
 
 Status: qa-in-progress (bounded Delivery Zip Prefix slice; module sign-off remains open)
 
+## Bounded feature — Delivery Zip Prefix Assignment and Matching (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIX-MATCHING-001`)
+
+This is the next smallest uncovered behavior after the technical Zip Prefix
+catalog. Odoo's `delivery.carrier.zip_prefix_ids` Many2many field appears in the
+Delivery Method form's Destination section, and `_match_address()` makes a
+carrier available only when the shipping zip matches one of its assigned
+prefixes. Prefixes are uppercased before matching and may contain regular
+expression anchors such as `700$`.
+
+Core3 adds durable `zip_prefix_ids` assignment storage to the Ecommerce
+delivery-method contract (migration `0.0.171`), a multi-select backed by the
+existing technical Zip Prefix catalog, and a visible Zip Prefixes column. The
+checkout delivery datasource and both authenticated/guest checkout guards now
+apply the Odoo prefix rule using the new `shipping_postal_code` field; methods
+without assignments remain available. Assignments are company-scoped through
+the existing delivery-method write permission and survive migration replay and
+DuckDB restart.
+
+Focused verification is in
+`test/ecommerce_delivery_zip_prefix_matching.integration.test.ts` (3 tests,
+15 assertions) plus the delivery-method regression suite. Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-checkout-delivery-zip-prefix-matching-001/`.
+BrowserSkill reached the authenticated Odoo login surface in a task-created
+tab, but local QA password entry was not completed before the requested
+checkpoint; the existing user tab borrow also did not complete. No authenticated
+desktop/mobile visual-parity claim is made.
+
 ## Bounded feature — Delivery Zip Prefixes (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001`)
 
 Wave 55 selects the next missing Website Sale configuration action after the

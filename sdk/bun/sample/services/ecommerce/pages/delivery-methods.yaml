@@ -15,6 +15,7 @@ components:
       - { field: delivery_type, label: Provider }
       - { field: company_name, label: Company }
       - { field: fixed_price, label: Fixed Price, type: Money }
+      - { field: zip_prefix_names, label: Zip Prefixes }
       - { field: allow_cash_on_delivery, label: Cash on Delivery }
       - { field: active, label: Active, type: StatusChip }
     row_actions: menu

@@ -7,6 +7,25 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-CHECKOUT-DELIVERY-ZIP-PREFIX-MATCHING-001
+
+- ECOM-FUNC-095: compare Odoo `delivery.carrier.zip_prefix_ids`, the Delivery
+  Method Destination form field, and `_match_address()` prefix/regex behavior
+  with the Ecommerce delivery-method and checkout YAML contracts.
+- ECOM-DATA-095: persist carrier assignments against the deterministic Zip
+  Prefix catalog, project assigned names, replay migration `0.0.171`, and
+  verify assignments and filtering after DuckDB restart.
+- ECOM-WF-095: allow unassigned methods, match `10099` to `100`, match exact
+  `700` to `700$`, reject `701`, and reject checkout confirmation when the
+  selected method does not serve the supplied postal code.
+- ECOM-PERM-095: keep assignment edits behind `ecommerce.write`, prefix
+  options behind `ecommerce.read`, and preserve existing company ownership and
+  guest/authenticated checkout boundaries.
+- ECOM-UI-095: compare Delivery Method Destination and checkout Postal Code
+  states at authenticated desktop and iPhone-14 mobile sizes. BrowserSkill
+  reached Odoo login but could not complete local QA authentication before the
+  checkpoint; visual sign-off is withheld.
+
 ## ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001
 
 - ECOM-FUNC-094: compare Odoo's technical-only `menu_delivery_zip_prefix` →

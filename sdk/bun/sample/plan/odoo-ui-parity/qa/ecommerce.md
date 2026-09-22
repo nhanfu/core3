@@ -1,5 +1,26 @@
 # ecommerce QA ledger
 
+## Delivery Zip Prefix Assignment and Matching (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIX-MATCHING-001`, 2026-09-22)
+
+- Source comparison: pass. Odoo's `delivery.carrier.zip_prefix_ids` Many2many
+  field is exposed in the Delivery Method Destination form, and
+  `_match_address()` requires an assigned prefix to match the shipping zip,
+  including anchored expressions such as `700$`.
+- Core3 contract: pass. Migration 171 persists assignments; delivery-method
+  YAML exposes read options and a write-protected multi-select; checkout
+  delivery options and both confirmation paths enforce the postal-code rule.
+- Focused verification: `bun test --timeout 20000
+  ./test/ecommerce_delivery_zip_prefix_matching.integration.test.ts
+  ./test/ecommerce_delivery_methods.integration.test.ts` — **7 passed, 49
+  assertions, 0 failures**. The new feature suite alone is **3 passed, 15
+  assertions**.
+- Browser/Odoo status: BrowserSkill reached the `core3_reference` login page
+  in task-created tab `1770663948`; local QA password entry was requested
+  through BrowserSkill but did not complete before the checkpoint. An existing
+  user-tab borrow also did not complete. The owned session was stopped; no
+  authenticated desktop/mobile visual-parity claim is made.
+- Evidence: `evidence/ecommerce/2026-09-22/ecom-checkout-delivery-zip-prefix-matching-001/`.
+
 ## Delivery Zip Prefixes (`ECOM-CHECKOUT-DELIVERY-ZIP-PREFIXES-001`, 2026-09-22)
 
 - Source comparison: pass. Odoo 19 `website_sale_menus.xml` registers the

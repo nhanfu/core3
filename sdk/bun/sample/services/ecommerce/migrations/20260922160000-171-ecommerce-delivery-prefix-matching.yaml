@@ -1,0 +1,15 @@
+version: 0.0.171
+kind: schema
+description: Website Sale delivery method zip-prefix assignments
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_delivery_methods ADD COLUMN IF NOT EXISTS zip_prefix_ids VARCHAR;
+      CREATE INDEX IF NOT EXISTS ecommerce_delivery_methods_zip_prefix_idx ON ecommerce_delivery_methods(zip_prefix_ids);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_delivery_methods_zip_prefix_idx;
+      ALTER TABLE ecommerce_delivery_methods DROP COLUMN IF EXISTS zip_prefix_ids;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
