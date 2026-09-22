@@ -1,0 +1,19 @@
+version: 0.0.11
+kind: data
+description: Seed a deterministic Maintenance request chatter message
+type:
+  postgres:
+    up: |
+      INSERT INTO maintenance_request_messages(id, request_id, row_version, actor_id, actor_name, action, action_label, detail, created_at)
+      SELECT 'maintenance-message-maintenance-demo-003-2', r.id, 1, 'odoo-demo-user', 'Maintenance User', 'maintenance.requests.chatter.message', 'Message', 'Please confirm the repaired equipment is ready for handover.', TIMESTAMP '2026-01-15 10:30:00'
+      FROM maintenance_requests r
+      WHERE r.id = 'maintenance-demo-003'
+        AND NOT EXISTS (SELECT 1 FROM maintenance_request_messages m WHERE m.id = 'maintenance-message-maintenance-demo-003-2');
+    down: |
+      DELETE FROM maintenance_request_messages
+      WHERE id = 'maintenance-message-maintenance-demo-003-2';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

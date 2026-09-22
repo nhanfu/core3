@@ -7,6 +7,30 @@ datasources:
     error_states: { transport_error: { status: 503, code: MAINTENANCE_REQUEST_CHATTER_UNAVAILABLE, message: Maintenance request messages are temporarily unavailable. } }
     query: "SELECT id, request_id, row_version, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date, assigned_to, state, CAST(completed_at AS VARCHAR) AS completed_at, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, request_id, row_version, CAST(NULL AS VARCHAR) AS activity_type, CAST(NULL AS VARCHAR) AS summary, CAST(NULL AS DATE) AS due_date, CAST(NULL AS VARCHAR) AS assigned_to, 'done' AS state, CAST(NULL AS TIMESTAMP) AS completed_at, actor_name, action, action_label, detail, created_at FROM maintenance_request_messages WHERE request_id = :id UNION ALL SELECT id, request_id, row_version, activity_type, summary, due_date, assigned_to, state, completed_at, actor_name, action, action_label, detail, created_at FROM maintenance_request_activities WHERE request_id = :id) timeline ORDER BY due_date NULLS LAST, created_at DESC, id"
 actions:
+  - id: send_maintenance_request_message
+    type: server_form
+    permission: maintenance.write
+    title: Send message
+    action: maintenance.requests.chatter.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{state.maintenance_request_detail.id}', expected_row_version: '{state.maintenance_request_detail.row_version}' }
+    refresh: [maintenance_request_detail, maintenance_request_activity]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'maintenance-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM maintenance_request_messages WHERE request_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: MAINTENANCE_MESSAGE_ACTOR_REQUIRED, message: An authenticated Maintenance actor is required to send a message. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE AND row_version = :expected_row_version", status: 409, code: MAINTENANCE_MESSAGE_PARENT_CHANGED, message: This maintenance request changed or was cancelled. Reload before sending a message. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: MAINTENANCE_MESSAGE_CONTENT_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO maintenance_request_messages(id, request_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Maintenance User'), 'maintenance.requests.chatter.message', 'Message', TRIM(CAST(:content AS VARCHAR)), TIMESTAMP '2026-01-15 11:00:00')", expect_changed: true, status: 409, code: MAINTENANCE_MESSAGE_NOT_CREATED, message: The maintenance request message could not be sent. }
+        - { query: "UPDATE maintenance_requests SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: MAINTENANCE_MESSAGE_PARENT_CHANGED, message: The maintenance request changed while sending the message. Reload before retrying. }
+      result: { query: "SELECT * FROM maintenance_request_messages WHERE id = :message_id" }
   - id: log_maintenance_request_note
     type: server_form
     permission: maintenance.write

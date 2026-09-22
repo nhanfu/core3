@@ -718,3 +718,22 @@ this batch. Evidence and source comparison are recorded under
 The live Odoo desktop/mobile captures are truthful, but the required
 user-owned-tab borrow confirmation timed out; no paired Core3/Odoo visual
 parity claim is made.
+
+## Bounded batch: Maintenance Request Chatter public message (2026-09-22)
+
+Feature ID: `MAINT-REQUEST-CHATTER-MESSAGE-001`.
+
+The Odoo `maintenance.request` model inherits `mail.thread.cc` and its form
+contains `<chatter/>`; the standard chatter composer supports sending a public
+message to followers. Core3 previously exposed only `Log note`. This bounded
+slice adds the page-id-owned `send_maintenance_request_message` action using
+the same durable request message timeline as internal notes, with authenticated
+actor, active-request, row-version, content-length, atomic insert/version, and
+idempotent seed guards.
+
+Implementation and evidence are recorded in the Maintenance-owned API/page,
+`20260922233000-011-maintenance-request-chatter-message.yaml`, focused test,
+and `odoo-ui-parity/evidence/maintenance/2026-09-22/MAINT-REQUEST-CHATTER-MESSAGE-001/`.
+Followers, attachments, outbound mail delivery, notification/provider behavior,
+and whole-module sign-off remain outside this batch. The explicit shared-tab
+borrow timed out, so no authenticated Core3/Odoo visual-parity claim is made.
