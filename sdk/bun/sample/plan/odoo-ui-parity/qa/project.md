@@ -457,6 +457,39 @@ persistence pass. The slice is conditionally accepted pending authenticated
 desktop/mobile Odoo/Core3 comparison. Chatter/follower/attachment/portal
 side effects and recurrence-rule copy remain open.
 
+## QA execution — PROJECT-DUPLICATE-001 — 2026-09-22
+
+- Feature: Odoo Project kanban `Duplicate` object action; evidence:
+  `../evidence/project/2026-09-22/project-duplicate-001/`.
+- Source comparison: `project_project_views.xml` `name="copy"` action and
+  `project_project.py` `copy`/`map_tasks` behavior verified against local Odoo
+  19 source.
+- Focused checks:
+  `bun test ./test/project_duplicate.integration.test.ts --timeout 30000` —
+  3 passed, 0 failed, 23 assertions.
+- Project regression:
+  `bun test ./test/project*.integration.test.ts --timeout 30000` — 95 passed,
+  0 failed, 907 assertions across 33 files.
+- Audit/build hygiene: `bun run audit` passed with 865 pages, 873 routes, and
+  1,829 datasources; `bun run css:build:project` passed; `bun run
+  frontend:build` passed with 184 modules transformed; `git diff --check`
+  passed.
+- Browser/reference blocker: BrowserSkill instance `245ea108` was connected.
+  The existing authenticated Odoo user tab was listed, but the one borrow
+  attempt did not return a successful confirmation before the window closed;
+  follow-up state left the tab user-scoped. Session `hytm` was stopped cleanly.
+  No credentials, independent browser, or Odoo/Core3 desktop/mobile capture
+  was used.
+
+### QA decision
+
+The YAML page/API separation, manager permission boundary, durable project and
+task-tree copy, milestone/dependency mapping, fixed-date persistence, and
+active/company/stale guards pass. The slice remains conditionally accepted;
+authenticated desktop/mobile comparison and real browser mutation proof remain
+blocked by the borrowed-tab confirmation boundary. Chatter/follower,
+attachment/portal side effects, and full Odoo history parity are not claimed.
+
 ## Conditional review — PROJECT-TASK-PARENT-001 (2026-09-22)
 
 - Odoo source/action identity: **PASS** — `action_open_parent_task`, the

@@ -13,3 +13,6 @@
 - [project-burndown-001](project-burndown-001/README.md) — Project card
   Burndown Chart action; contract/report query passes, authenticated comparison
   blocked because the required Odoo tab was owned by session `rjvi`.
+- [project-duplicate-001](project-duplicate-001/README.md) — Project kanban
+  Duplicate action; durable project/task-tree copy and guards pass, while
+  authenticated desktop/mobile proof is blocked by tab-borrow confirmation.

@@ -50,7 +50,7 @@ components:
       - { field: end_date, label: Deadline, sortable: true }
       - { field: state, label: Status, type: StatusChip }
       - { field: favorite, label: Favorite, type: Boolean }
-      - { field: id, label: ' ', sortable: false, actions: [{ id: open_project_burndown, label: Burndown Chart, icon: chart }] }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: open_project_burndown, label: Burndown Chart, icon: chart }, { id: duplicate_project, label: Duplicate, icon: copy, permission: project.manage }] }
 actions:
   - { id: view_project, type: navigate, permission: project.read, navigate_to: /projects/detail, params: { id: '{row.id}' } }
   - { id: open_project_burndown, type: navigate, permission: project.read, navigate_to: /projects/detail/burndown, params: { project_id: '{row.id}' } }

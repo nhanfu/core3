@@ -11,4 +11,186 @@ datasources:
   - id: projects
     single: false
     permission: project.read
-    query: "SELECT p.id, p.row_version, p.name, p.customer_name, p.project_manager, COALESCE(p.stage, 'Planning') AS stage, p.planned_hours, p.spent_hours, p.state, CAST(p.start_date AS VARCHAR) AS start_date, CAST(p.end_date AS VARCHAR) AS end_date, COUNT(t.id) AS task_count, COALESCE(ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.state = 'Done') / NULLIF(COUNT(t.id), 0)), 0) AS progress, COALESCE(p.favorite, FALSE) AS favorite FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.customer_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:stage IS NULL OR p.stage = :stage) AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE GROUP BY p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.stage, p.planned_hours, p.spent_hours, p.state, p.start_date, p.end_date, p.favorite ORDER BY p.favorite DESC, p.start_date DESC, p.id"
+    query: "SELECT p.id, p.row_version, p.name, p.customer_name, p.project_manager, COALESCE(p.stage, 'Planning') AS stage, p.planned_hours, p.spent_hours, p.state, CAST(p.start_date AS VARCHAR) AS start_date, CAST(p.end_date AS VARCHAR) AS end_date, COUNT(t.id) AS task_count, COALESCE(MAX(t.company_name), 'Core3 Demo Company') AS company_name, COALESCE(ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.state = 'Done') / NULLIF(COUNT(t.id), 0)), 0) AS progress, COALESCE(p.favorite, FALSE) AS favorite FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.customer_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:stage IS NULL OR p.stage = :stage) AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE GROUP BY p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.stage, p.planned_hours, p.spent_hours, p.state, p.start_date, p.end_date, p.favorite ORDER BY p.favorite DESC, p.start_date DESC, p.id"
+actions:
+  - id: duplicate_project
+    type: server
+    permission: project.manage
+    action: project.projects.duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    params: { project_id: '{row.id}', expected_row_version: '{row.row_version}', current_company_name: '{row.company_name}' }
+    refresh: [projects, project_detail]
+    mutation:
+      generated: [id]
+      guards:
+        - { query: "SELECT p.id FROM projects p WHERE p.id = :project_id AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE", status: 404, code: PROJECT_DUPLICATE_NOT_FOUND, message: The active project is not available for duplication. }
+        - { query: "SELECT p.id FROM projects p WHERE p.id = :project_id AND (COALESCE(:current_company_name, '') = '' OR NOT EXISTS (SELECT 1 FROM project_tasks scope WHERE scope.project_id = p.id AND COALESCE(scope.company_name, :current_company_name) <> :current_company_name))", status: 403, code: PROJECT_DUPLICATE_COMPANY_SCOPE_REQUIRED, message: The project is outside the current company. }
+        - { query: "SELECT p.id FROM projects p WHERE p.id = :project_id AND p.row_version = :expected_row_version", status: 409, code: PROJECT_DUPLICATE_STALE_PROJECT, message: The project changed before it was duplicated. Reload and try again. }
+      steps:
+        - query: |
+            INSERT INTO projects(
+              id, name, customer_name, project_manager, description, planned_hours,
+              spent_hours, start_date, end_date, state, row_version, created_at,
+              updated_at, stage, favorite, archived, is_template, sequence,
+              privacy_visibility
+            )
+            SELECT
+              :id, p.name || ' (copy)', p.customer_name, p.project_manager,
+              p.description, p.planned_hours, 0, p.start_date, p.end_date,
+              p.state, 1, TIMESTAMP '2026-01-15 00:00:00',
+              TIMESTAMP '2026-01-15 00:00:00', p.stage, FALSE, FALSE, FALSE,
+              p.sequence, COALESCE(p.privacy_visibility, 'portal')
+            FROM projects p
+            WHERE p.id = :project_id AND p.row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: PROJECT_DUPLICATE_STALE_PROJECT
+          message: The project changed before it was duplicated.
+        - query: |
+            INSERT INTO project_milestones(id, project_id, name, due_date, state)
+            SELECT :id || '-milestone-' || m.id, :id, m.name, m.due_date, m.state
+            FROM project_milestones m
+            WHERE m.project_id = :project_id
+        - query: |
+            INSERT INTO project_tasks(
+              id, project_id, project_name, name, assignee, milestone_name,
+              priority, planned_hours, spent_hours, state, stage, due_date,
+              row_version, created_at, customer_name, company_name, tags,
+              subtask_summary, subtask_names, blocked_by_summary,
+              blocked_by_names, active, description, parent_task_id,
+              recurring_task, recurrence_id, repeat_interval, repeat_unit,
+              repeat_type, repeat_until, is_template
+            )
+            SELECT
+              :id || '-task-' || t.id, :id, p.name || ' (copy)', t.name,
+              t.assignee, t.milestone_name, t.priority, t.planned_hours, 0,
+              'In Progress', t.stage, t.due_date, 1,
+              TIMESTAMP '2026-01-15 00:00:00', t.customer_name,
+              t.company_name, t.tags, t.subtask_summary, t.subtask_names,
+              'None', '', TRUE, t.description, NULL, FALSE,
+              CASE WHEN t.recurrence_id IS NULL THEN NULL ELSE :id || '-recurrence-' || t.recurrence_id END,
+              COALESCE(t.repeat_interval, 1), COALESCE(t.repeat_unit, 'week'),
+              COALESCE(t.repeat_type, 'forever'), t.repeat_until, FALSE
+            FROM project_tasks t
+            JOIN projects p ON p.id = :project_id
+            WHERE t.project_id = :project_id
+              AND COALESCE(t.parent_task_id, '') = ''
+              AND COALESCE(t.active, TRUE) = TRUE
+        - query: |
+            WITH RECURSIVE descendants(id, parent_task_id) AS (
+              SELECT child.id, child.parent_task_id
+              FROM project_tasks child
+              WHERE child.project_id = :project_id
+                AND child.parent_task_id IN (
+                  SELECT id FROM project_tasks
+                  WHERE project_id = :project_id
+                    AND COALESCE(parent_task_id, '') = ''
+                    AND COALESCE(active, TRUE) = TRUE
+                )
+                AND COALESCE(child.active, TRUE) = TRUE
+              UNION ALL
+              SELECT child.id, child.parent_task_id
+              FROM project_tasks child
+              JOIN descendants ancestor ON child.parent_task_id = ancestor.id
+              WHERE COALESCE(child.active, TRUE) = TRUE
+            )
+            INSERT INTO project_tasks(
+              id, project_id, project_name, name, assignee, milestone_name,
+              priority, planned_hours, spent_hours, state, stage, due_date,
+              row_version, created_at, customer_name, company_name, tags,
+              subtask_summary, subtask_names, blocked_by_summary,
+              blocked_by_names, active, description, parent_task_id,
+              recurring_task, recurrence_id, repeat_interval, repeat_unit,
+              repeat_type, repeat_until, is_template
+            )
+            SELECT
+              :id || '-task-' || child.id, :id, p.name || ' (copy)', child.name,
+              child.assignee, child.milestone_name, child.priority,
+              child.planned_hours, 0, 'In Progress', child.stage, child.due_date,
+              1, TIMESTAMP '2026-01-15 00:00:00', child.customer_name,
+              child.company_name, child.tags, '0 / 0 (0%)', '', 'None', '',
+              TRUE, child.description,
+              :id || '-task-' || child.parent_task_id, FALSE,
+              CASE WHEN child.recurrence_id IS NULL THEN NULL ELSE :id || '-recurrence-' || child.recurrence_id END,
+              COALESCE(child.repeat_interval, 1), COALESCE(child.repeat_unit, 'week'),
+              COALESCE(child.repeat_type, 'forever'), child.repeat_until, FALSE
+            FROM descendants
+            JOIN project_tasks child ON child.id = descendants.id
+            JOIN projects p ON p.id = :project_id
+        - query: |
+            INSERT INTO project_task_recurrences(
+              id, root_task_id, repeat_interval, repeat_unit, repeat_type,
+              repeat_until, row_version, active, created_at
+            )
+            SELECT
+              :id || '-recurrence-' || r.id,
+              :id || '-task-' || r.root_task_id,
+              r.repeat_interval, r.repeat_unit, r.repeat_type, r.repeat_until,
+              1, TRUE, TIMESTAMP '2026-01-15 00:00:00'
+            FROM project_task_recurrences r
+            JOIN project_tasks t ON t.recurrence_id = r.id
+            WHERE t.project_id = :project_id
+              AND COALESCE(t.active, TRUE) = TRUE
+        - query: |
+            INSERT INTO project_task_dependencies(
+              id, task_id, depends_on_id, row_version, created_at
+            )
+            SELECT
+              :id || '-dependency-' || d.id,
+              :id || '-task-' || d.task_id,
+              CASE WHEN source_depends.project_id = :project_id
+                   THEN :id || '-task-' || d.depends_on_id
+                   ELSE d.depends_on_id END,
+              1, TIMESTAMP '2026-01-15 00:00:00'
+            FROM project_task_dependencies d
+            JOIN project_tasks source_task ON source_task.id = d.task_id
+            JOIN project_tasks source_depends ON source_depends.id = d.depends_on_id
+            WHERE source_task.project_id = :project_id
+              AND COALESCE(source_task.active, TRUE) = TRUE
+              AND EXISTS (SELECT 1 FROM project_tasks copied WHERE copied.id = :id || '-task-' || d.task_id)
+        - query: |
+            UPDATE project_tasks copied
+            SET subtask_summary =
+                  CAST((SELECT COUNT(*) FROM project_tasks child
+                        WHERE child.parent_task_id = copied.id
+                          AND COALESCE(child.active, TRUE) = TRUE
+                          AND child.state IN ('Done', 'Cancelled')) AS VARCHAR)
+                  || ' / ' ||
+                  CAST((SELECT COUNT(*) FROM project_tasks child
+                        WHERE child.parent_task_id = copied.id
+                          AND COALESCE(child.active, TRUE) = TRUE) AS VARCHAR)
+                  || ' (' ||
+                  CAST(CASE WHEN (SELECT COUNT(*) FROM project_tasks child
+                                  WHERE child.parent_task_id = copied.id
+                                    AND COALESCE(child.active, TRUE) = TRUE) = 0
+                            THEN 0 ELSE CAST(ROUND(100.0 *
+                              (SELECT COUNT(*) FROM project_tasks child
+                               WHERE child.parent_task_id = copied.id
+                                 AND COALESCE(child.active, TRUE) = TRUE
+                                 AND child.state IN ('Done', 'Cancelled')) /
+                              (SELECT COUNT(*) FROM project_tasks child
+                               WHERE child.parent_task_id = copied.id
+                                 AND COALESCE(child.active, TRUE) = TRUE)) AS INTEGER)
+                       END AS VARCHAR) || '%)',
+                subtask_names = COALESCE((SELECT STRING_AGG(child.name, ', ' ORDER BY child.name, child.id)
+                                          FROM project_tasks child
+                                          WHERE child.parent_task_id = copied.id
+                                            AND COALESCE(child.active, TRUE) = TRUE), ''),
+                blocked_by_summary = CAST((SELECT COUNT(*) FROM project_task_dependencies d
+                                           WHERE d.task_id = copied.id) AS VARCHAR) || ' task(s)',
+                blocked_by_names = COALESCE((SELECT STRING_AGG(dep.name, ', ' ORDER BY dep.name, dep.id)
+                                             FROM project_task_dependencies d
+                                             JOIN project_tasks dep ON dep.id = d.depends_on_id
+                                             WHERE d.task_id = copied.id), '')
+            WHERE copied.project_id = :id
+        - query: |
+            UPDATE project_tasks
+            SET recurring_task = TRUE
+            WHERE project_id = :id AND recurrence_id IS NOT NULL
+      result:
+        query: |
+          SELECT p.id, p.name, p.row_version, p.archived, p.is_template,
+            (SELECT COUNT(*) FROM project_tasks t WHERE t.project_id = p.id) AS task_count,
+            (SELECT COUNT(*) FROM project_milestones m WHERE m.project_id = p.id) AS milestone_count
+          FROM projects p WHERE p.id = :id

@@ -1329,6 +1329,42 @@ required borrow confirmation timed out. The session was stopped cleanly. No
 authenticated visual-parity claim is made. Chatter/follower/attachment/portal
 side effects and recurrence-rule copying remain separate gaps.
 
+## Bounded slice: Project Duplicate action (2026-09-22)
+
+Stable ID: `PROJECT-DUPLICATE-001`.
+
+The next uncovered Project action after task duplication is Odoo's Project
+kanban `Duplicate` object action (`type="object" name="copy"`) in
+`addons/project/views/project_project_views.xml`. The model implementation in
+`addons/project/models/project_project.py` names ordinary copies
+`Project (copy)`, copies milestones, maps top-level tasks and active
+descendants to the new project, preserves task names/stages, starts copied
+tasks in progress, and remaps internal task dependencies.
+
+Core3 adds the manager-bound `duplicate_project` action to the Projects
+collection UI and owns its server mutation in `api/projects.yaml`, joined by
+`page.id: projects`; the page YAML contains only the row action binding. The
+mutation creates a fresh active project with deterministic fixed-date metadata,
+copies milestones, recursively maps active task trees, clones recurrence rules
+when present, remaps dependency IDs, refreshes task summaries, and persists
+through close/reopen. Active/project scope, company scope, and source
+row-version guards reject unavailable, cross-company, or stale copies without
+partial writes. Existing tables are sufficient; no migration was needed.
+
+Focused coverage is `test/project_duplicate.integration.test.ts` (3 tests,
+23 assertions), covering source action identity, page/API separation, durable
+project/milestone/task/dependency copies, fixed workflow reset, reopen
+persistence, and guard atomicity. Audit, Project CSS, frontend build, and
+`git diff --check` pass.
+
+BrowserSkill connected to instance `245ea108` and listed authenticated Odoo
+user tabs at `localhost:8069`. The single borrow attempt for an existing Odoo
+tab did not return a successful borrow before the confirmation window; a
+follow-up tab listing left the tab user-scoped. The owned session was stopped
+cleanly. No credentials, independent browser, or desktop/mobile visual claim
+was used. Odoo chatter/follower/attachment/portal side effects and complete
+recurrence/dependency history parity remain separate gaps.
+
 ## Bounded slice: Project Task Parent Task action (2026-09-22)
 
 Stable ID: `PROJECT-TASK-PARENT-001`.
