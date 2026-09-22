@@ -43,6 +43,7 @@ databases and generated IDs.
 | ORDER-FUNC-011 | Order-line presentation rows | Add section and note rows with Odoo `line_section`/`line_note` semantics, edit/delete descriptions, preserve totals, and survive migration replay/restart | pass: `sales_order_display_lines.integration.test.ts`, 4 tests / 24 assertions |
 | ORDER-FUNC-012 | Discount wizard | Apply percentage, global, and fixed discounts with durable totals, audit history, replay, and invalid/stale/scope/duplicate guards | pass: `sales_order_discount.integration.test.ts`, 3 tests / 18 assertions |
 | ORDER-FUNC-013 | Sales order Preview | Open Preview from the order form, render stable order/line data, handle missing and scoped records, and retain the read-only preview after restart | pass: `sales_order_preview.integration.test.ts`, 2 tests / 18 assertions |
+| ORDER-FUNC-014 | Sales order Print report | Prepare Odoo `Quotation / Order` PDF report metadata from the form Print action for quotation/sent/cancelled states; reject confirmed, missing, stale, wrong-scope, and unsigned actors without changing the order; retain print history after replay/restart | pass: `sales_order_print.integration.test.ts`, 4 tests / 25 assertions |
 
 ## Workflow and integration cases
 
@@ -79,6 +80,7 @@ databases and generated IDs.
 | ORDER-UI-005 | Order-line presentation rows | 1440x900, 390x844 | Odoo Add a section/Add a note controls, inline description row, zero total, and row overflow action match; Core3 capture pending runtime | Odoo pass; Core3 blocked by 3001/3002 unavailable |
 | ORDER-UI-006 | Discount wizard | 1440x900, 390x844 | Odoo Discount action and modal labels/options are mapped to the order page/API contract; Core3 capture pending runtime | Odoo reference captured; Core3 blocked by 3001/3002 unavailable |
 | ORDER-UI-007 | Sales order Preview | 1440x900, 390x844 | Odoo Preview button and portal-style order content match at desktop/mobile; Core3/Odoo captures required before any visual claim | blocked: signed-in Odoo tab already borrowed by session `krcu`; no captures |
+| ORDER-UI-008 | Sales order Print report | 1440x900, 390x844 | Odoo Print action and Core3 report action remain permissioned, state-aware, and available without horizontal overflow; paired captures required before visual claim | blocked: BrowserSkill borrow of signed-in tab `1770662590` did not complete; no Odoo/Core3 captures |
 
 ## Exit criteria
 

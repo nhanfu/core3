@@ -1,0 +1,12 @@
+BrowserSkill evidence for SALES-ORDER-PRINT-001
+
+Status: daemon 0.3.0, protocol 1.3, Chrome 145, browser instance 245ea108.
+User tab listed: 1770662590, title Acme Corporation,
+http://localhost:8069/odoo/contacts/9.
+Borrow command: bsk tab borrow 1770662590 --session ahhi --timeout 120s
+Outcome: command did not complete under the required borrow-confirmation flow;
+the session subsequently stopped and the tab remained in user scope.
+
+No credentials, cookies, tokens, independent login, Playwright, or screenshots
+were used. Desktop and mobile captures are unavailable because ownership was
+not obtained.

@@ -268,3 +268,27 @@ discovery of datasource contracts outside Order ownership.
   `/tmp/core3-odoo-parity/sales-discount-20260922/`. Core3 visual capture is
   blocked because the required local UI listeners on `127.0.0.1:3001` and
   `127.0.0.1:3002` were unavailable; no visual-parity claim is made.
+
+## 2026-09-22 Sales order Print report slice
+
+- Stable ID: `SALES-ORDER-PRINT-001`.
+- Odoo source contract: `sale/views/sale_order_views.xml` exposes the `Print`
+  action `sale.action_report_saleorder` while `state != 'sale'`; the report
+  source `sale/report/ir_actions_report.xml` names it `Quotation / Order`,
+  model `sale.order`, report type `qweb-pdf`, and template `sale.report_saleorder`.
+- Core3 implementation is limited to the Order module: the existing paired
+  `sale-order-detail` page/API fragments, migration
+  `20260922150000-024-sales-order-print.yaml`, and
+  `test/sales_order_print.integration.test.ts`. The action records a durable
+  print run and leaves order status/version unchanged.
+- Focused suite: **4 passed, 25 assertions, 0 failures**. It covers source
+  mapping, quotation/cancelled report preparation, unchanged state, scope,
+  state, actor, missing, stale, migration replay, and file-backed restart.
+- BrowserSkill status: daemon `0.3.0`, protocol `1.3`, Chrome `145`, browser
+  `245ea108`. User tabs listed included signed-in Odoo tab `1770662590` at
+  `http://localhost:8069/odoo/contacts/9`. `bsk tab borrow 1770662590 --session
+  ahhi --timeout 120s` did not complete under the required confirmation flow;
+  the tab remained in the user scope and was never controlled by this worker.
+  No credentials, cookies, tokens, independent login, Playwright session, or
+  Odoo desktop/mobile capture was used. No visual-parity claim is made.
+- Evidence: `evidence/order/2026-09-22/sales-order-print-001/`.

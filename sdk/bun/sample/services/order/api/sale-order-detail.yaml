@@ -87,6 +87,11 @@ datasources:
     permission: orders.read
     error_states: { transport_error: { status: 503, code: SALE_ORDER_QUOTATION_MAILS_UNAVAILABLE, message: Quotation email history is temporarily unavailable. } }
     query: "SELECT id, order_id, row_version, recipient_name, recipient_email, subject, body_html, attachment_name, state, sent_by, CAST(sent_at AS VARCHAR) AS sent_at FROM sale_order_quotation_mails WHERE order_id = :id ORDER BY sent_at DESC, id"
+  - id: sale_order_print_runs
+    single: false
+    permission: orders.read
+    error_states: { transport_error: { status: 503, code: SALE_ORDER_PRINTS_UNAVAILABLE, message: Sales order print history is temporarily unavailable. } }
+    query: "SELECT r.id, r.order_id, o.order_number, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, CAST(r.printed_at AS VARCHAR) AS printed_at, r.row_version FROM sale_order_print_runs r JOIN orders o ON o.id = r.order_id WHERE r.order_id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id) ORDER BY r.printed_at DESC, r.id DESC"
 
 actions:
   - id: edit_sale_order
@@ -282,6 +287,29 @@ actions:
     permission: orders.read
     navigate_to: /order/sale-order/preview
     params: { id: '{state.id}' }
+  - id: print_sale_order
+    type: server
+    permission: orders.read
+    action: sale.orders.print
+    handler: yaml_mutation
+    operation: print_report
+    params: { id: '{state.sale_order_detail.id}', expected_row_version: '{state.sale_order_detail.row_version}' }
+    refresh: [sale_order_detail, sale_order_print_runs]
+    mutation:
+      generated: [print_run_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'sale-print-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS print_run_id FROM sale_order_print_runs WHERE order_id = :id"
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :id", status: 404, code: SALE_ORDER_PRINT_NOT_FOUND, message: Sales order not found. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_PRINT_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :id AND row_version = :expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval', 'Cancelled')", status: 409, code: SALE_ORDER_PRINT_NOT_ALLOWED, message: Only an unchanged quotation, sent quotation, or cancelled order can be printed. Reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: SALE_ORDER_PRINT_ACTOR_REQUIRED, message: A signed-in Sales user is required to print the report. }
+      steps:
+        - { query: "INSERT INTO sale_order_print_runs(id, order_id, report_name, report_action, report_template, output_format, filename, printed_by, printed_at, row_version) SELECT :print_run_id, id, 'Quotation / Order', 'sale.action_report_saleorder', 'sale.report_saleorder', 'PDF', CASE WHEN COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval') THEN 'Quotation - ' || order_number || '.pdf' ELSE 'Order - ' || order_number || '.pdf' END, :current_user_name, CURRENT_TIMESTAMP, 1 FROM orders WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_PRINT_FAILED, message: The Quotation / Order report could not be prepared. }
+      result: { query: "SELECT r.id, r.order_id, r.report_name, r.report_action, r.report_template, r.output_format, r.filename, r.printed_by, r.row_version FROM sale_order_print_runs r WHERE r.id = :print_run_id" }
   - id: add_sale_order_line
     type: server_form
     permission: orders.write

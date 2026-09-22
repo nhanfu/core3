@@ -234,3 +234,28 @@ but the signed-in Odoo tab `1770662590` was already borrowed by another session
 no Core3/Odoo visual parity claim is made, and the tab remains owned by that
 session. Evidence is under
 `evidence/order/2026-09-22/sales-order-preview-001/`.
+
+## Sales order Print report bounded slice (2026-09-22)
+
+Stable ID `SALES-ORDER-PRINT-001` covers Odoo's `sale.action_report_saleorder`
+form action. The Odoo form exposes `Print` for quotations, sent quotations,
+and cancelled orders (`state != 'sale'`); the report definition is
+`Quotation / Order`, QWeb PDF, using `sale.report_saleorder`.
+
+Core3 adds the permissioned `print_sale_order` action to the existing
+`sale-order-detail` page/API pair. It prepares a durable PDF print-run record
+with report metadata, actor, row-version, branch-scope, missing-record, state,
+and signed-in-actor guards; it never changes the order state. The idempotent
+schema migration is `20260922150000-024-sales-order-print.yaml`.
+
+Focused verification is in
+`test/sales_order_print.integration.test.ts`: 4 tests and 25 assertions pass,
+covering page/API binding, Odoo report-source mapping, quotation and cancelled
+order runs, unchanged state, scope/stale/missing/actor guards, migration
+replay, and file-backed restart persistence.
+
+Browser comparison is blocked. BrowserSkill daemon/browser `245ea108` was
+healthy, but borrowing signed-in user tab `1770662590` did not complete under
+the required confirmation flow; the session ended without ownership. No Odoo
+desktop/mobile capture or visual-parity claim is made. Details are under
+`evidence/order/2026-09-22/sales-order-print-001/`.

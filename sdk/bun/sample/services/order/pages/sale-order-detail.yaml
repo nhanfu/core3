@@ -23,6 +23,7 @@ components:
       - { id: confirm_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_draft_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
       - { id: create_sale_invoice, label: Create Invoice, variant: primary, show_if: "state.sale_order_detail.status === 'Sales Order' && state.sale_order_detail.invoice_status !== 'Invoiced'" }
+      - { id: print_sale_order, label: Print, variant: secondary, permission: orders.read, show_if: "state.sale_order_detail.status !== 'Sales Order'" }
       - { id: cancel_sale_order, label: Cancel, variant: secondary, show_if: "state.sale_order_detail.status !== 'Cancelled'" }
       - { id: reset_sale_quotation, label: Set to Quotation, variant: secondary, show_if: "state.sale_order_detail.status === 'Cancelled'" }
       - { id: preview_sale_order, label: Preview, variant: secondary, permission: orders.read }
