@@ -48,11 +48,6 @@ components:
     row_open_action: dashboard_open_request
 
 actions:
-  - id: dashboard_new_request
-    type: navigate
-    permission: time_off.write
-    navigate_to: /leave-requests
-
   - id: dashboard_open_request
     type: navigate
     permission: time_off.read

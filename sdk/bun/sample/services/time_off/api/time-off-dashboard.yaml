@@ -1,6 +1,11 @@
 page: { id: time-off-dashboard }
 
 datasources:
+  - id: time_off_dashboard_leave_types
+    permission: time_off.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
+
   - id: time_off_dashboard_totals
     single: true
     permission: time_off.read
@@ -25,6 +30,39 @@ datasources:
       ORDER BY r.date_from
 
 actions:
+  - id: dashboard_new_request
+    type: server_form
+    permission: time_off.write
+    title: Time Off Request
+    action: hr_leave_action_my_request
+    handler: yaml_mutation
+    operation: create
+    refresh: [time_off_dashboard_requests, time_off_dashboard_totals]
+    submit_label: Save
+    cancel_label: Discard
+    mutation:
+      before_steps:
+        - query: "SELECT 'leave-request-dashboard-' || CAST(CAST(:date_from AS DATE) AS VARCHAR) || '-' || :holiday_status_id AS id, 'LEAVE/DASHBOARD/' || CAST(CAST(:date_from AS DATE) AS VARCHAR) || '/' || :holiday_status_id AS name, 'employee-demo-001' AS employee_id, 'Admin User' AS employee_name, t.name AS leave_type_name FROM leave_types t WHERE t.id = :holiday_status_id AND t.state = 'Active'"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :holiday_status_id AND state = 'Active'", status: 422, code: TIME_OFF_DASHBOARD_REQUEST_TYPE_INVALID, message: Select an active Time Off Type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:days AS DECIMAL(18,3)) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_DASHBOARD_REQUEST_VALUES_INVALID, message: Time Off Request needs a positive duration and valid dates. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests WHERE id = 'leave-request-dashboard-' || CAST(CAST(:date_from AS DATE) AS VARCHAR) || '-' || :holiday_status_id)", status: 409, code: TIME_OFF_DASHBOARD_REQUEST_EXISTS, message: A request for this Time Off Type and date already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests WHERE employee_id = 'employee-demo-001' AND date_from <= CAST(:date_to AS DATE) AND date_to >= CAST(:date_from AS DATE) AND state NOT IN ('Refused', 'Cancelled'))", status: 409, code: TIME_OFF_DASHBOARD_REQUEST_OVERLAP, message: The employee already has time off during these dates. }
+      steps:
+        - query: "INSERT INTO leave_requests(id, name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days, reason, state) VALUES (:id, :name, :employee_id, :employee_name, :holiday_status_id, :leave_type_name, CAST(:date_from AS DATE), CAST(:date_to AS DATE), CAST(:days AS DECIMAL(18,3)), NULLIF(TRIM(CAST(COALESCE(:reason, '') AS VARCHAR)), ''), 'Draft')"
+          expect_changed: true
+          status: 409
+          code: TIME_OFF_DASHBOARD_REQUEST_EXISTS
+          message: The request could not be created because it already exists.
+      result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    fields:
+      - { field: holiday_status_id, label: Time Off Type, type: select, options_source: time_off_dashboard_leave_types, required: true }
+      - { field: date_from, label: From, type: date, required: true, default: '2026-09-21' }
+      - { field: date_to, label: To, type: date, required: true, default: '2026-09-21' }
+      - { field: days, label: Duration (days), type: number, required: true, min: 0.001, step: 0.5, default: 1 }
+      - { field: reason, label: Description, type: textarea, placeholder: No description provided }
+
   - id: dashboard_open_calendar
     type: navigate
     permission: time_off.read

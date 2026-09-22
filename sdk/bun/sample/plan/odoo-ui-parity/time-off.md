@@ -1153,3 +1153,38 @@ BrowserSkill instance `245ea108` was healthy, but authenticated tab
 `http://localhost:8069/odoo/time-off-approval?db=core3_reference` and showed
 the Discuss shell without a Time Off surface; the session was stopped and no
 tab was retained. No Odoo mutation or visual-parity claim is made.
+
+## Dashboard Time Off Request modal (2026-09-22)
+
+The next smallest uncovered stable-ID action was Odoo's installed
+`hr_leave_action_my_request` from `addons/hr_holidays/views/hr_leave_views.xml`.
+It targets `hr.leave`, uses the `hr_leave_view_form_dashboard_new_time_off`
+form, and opens as a new `Time Off Request` modal. Core3 previously routed the
+dashboard `New` toolbar item to the full Leave Requests page, so it did not
+preserve this modal contract.
+
+Core3 now exposes `dashboard_new_request` in the dashboard API fragment as a
+`time_off.write` YAML server form titled `Time Off Request`, with active Time
+Off Type lookup, From/To dates, duration, description, Save, and Discard. The
+page remains layout-only and the API remains separate, joined by
+`page.id: time-off-dashboard`. Submission inserts a deterministic Draft for
+the fixed `Admin User` employee into durable `leave_requests`; the stable ID is
+derived from the date and type. Archived types, invalid dates/durations,
+duplicate requests, and overlapping employee dates return deterministic
+422/409 errors. Migration `0.0.28` adds an idempotent employee/date/state/type
+index; existing fixed 2026 fixtures are reused without live or random data.
+
+Focused coverage is `test/time_off_dashboard_request_modal.integration.test.ts`:
+3 tests and 21 assertions pass. The full Time Off regression passes 88 tests
+and 827 assertions; CSS build, frontend build, and `git diff --check` pass.
+Evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-DASHBOARD-REQUEST-MODAL-001/`.
+
+BrowserSkill session `lvan` used the connected Chrome instance `245ea108` and
+borrowed user tab `1770663883`. The required authenticated Odoo database
+`core3_reference` resolved `/odoo/time-off` to the Discuss shell at both
+desktop `1916x833` and mobile `390x844`; no Time Off menu or
+`hr_leave_action_my_request` surface was available. Desktop/mobile blocker
+captures are outside Git under `/tmp/core3-odoo-parity/`. The borrowed tab was
+returned, the session was stopped, and no Odoo mutation or credential access
+occurred; no live visual-parity claim is made.

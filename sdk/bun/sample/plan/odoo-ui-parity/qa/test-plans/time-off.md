@@ -41,6 +41,7 @@ mutations use isolated databases and deterministic dates.
 | TIMEOFF-ANALYSIS-001 | Time Off Analysis exposes the Odoo report union, signed measures, Graph/Pivot grouping, filters, empty/error states, read permission, and migration replay | pass: `time_off_analysis.integration.test.ts`; paired Odoo/Core3 browser blocked as recorded in evidence |
 | TIMEOFF-REPORT-EMPLOYEE-ROW-OPEN-001 | By Employee report rows open the existing Leave Request form through the durable request ID, with read permission and existing not-found/error guards | pass: `time_off_report_employee_drilldown.integration.test.ts`; Odoo tab borrow blocked before navigation |
 | TIMEOFF-DASHBOARD-CALENDAR-001 | Dashboard `My Calendar` maps Odoo `action_my_days_off_dashboard_calendar` to a personal year calendar, filters the durable employee/year scope, opens request detail, and preserves empty/503/restart behavior | pass: `time_off_dashboard_calendar.integration.test.ts` (2 tests / 20 assertions); Odoo borrow confirmation timed out before navigation, so no visual claim |
+| TIMEOFF-DASHBOARD-REQUEST-MODAL-001 | Dashboard `New` maps Odoo `hr_leave_action_my_request` to a page/API-joined Time Off Request modal with durable Draft creation, active-type lookup, deterministic dates, overlap/duplicate guards, and write permission | pass: `time_off_dashboard_request_modal.integration.test.ts` (3 tests / 21 assertions); authenticated Odoo tab reached Discuss without Time Off, so desktop/mobile visual proof is blocked |
 
 ## Exit criteria
 
