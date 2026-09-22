@@ -28,6 +28,7 @@ components:
       - { id: email_mailing_replied, label: Replied, value_field: replied_ratio }
       - { id: email_mailing_clicked, label: Clicked, value_field: clicks_ratio }
       - { id: email_mailing_received, label: Received, value_field: received_ratio }
+      - { id: view_failed_email_mailing, label: Failed, value_field: failed, permission: email_marketing.settings, show_if: "state.email_mailing_detail.failed > 0" }
     group_columns: 2
     groups:
       - title: Mailing

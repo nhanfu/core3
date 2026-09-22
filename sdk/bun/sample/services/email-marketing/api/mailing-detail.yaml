@@ -87,6 +87,7 @@ actions:
   - { id: email_mailing_replied, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: replied } }
   - { id: email_mailing_clicked, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: clicked } }
   - { id: email_mailing_received, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: received } }
+  - { id: view_failed_email_mailing, type: navigate, permission: email_marketing.settings, navigate_to: /email-traces, params: { mass_mailing_id: '{state.email_mailing_detail.id}', trace_status: error } }
   - id: edit_email_mailing
     type: server_form
     permission: email_marketing.write

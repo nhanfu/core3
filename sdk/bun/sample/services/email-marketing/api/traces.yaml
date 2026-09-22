@@ -17,6 +17,7 @@ datasources:
         CAST(updated_at AS VARCHAR) AS updated_at
       FROM email_mailing_traces
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:mass_mailing_id IS NULL OR mass_mailing_id = :mass_mailing_id)
         AND (:q IS NULL OR email ILIKE '%' || :q || '%' OR mass_mailing_name ILIKE '%' || :q || '%' OR message_id ILIKE '%' || :q || '%' OR COALESCE(failure_reason, '') ILIKE '%' || :q || '%')
         AND (:trace_status IS NULL OR trace_status = :trace_status)
         AND (:is_test_trace IS NULL OR is_test_trace = CAST(:is_test_trace AS BOOLEAN))

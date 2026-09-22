@@ -1147,3 +1147,32 @@ was connected, but authenticated Odoo tab `1770662590` was already borrowed by
 session `fngy`; it was not navigated or inspected. No Odoo or Core3 visual
 capture exists and no installed-reference parity claim is made. Details are
 under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-AB-AUTO-WINNER-001/`.
+
+## Mailing failed traces action bounded slice (2026-09-22)
+
+The next uncovered mailing-form action is Odoo
+`MailingMailing.action_view_traces_failed`. The source method opens the existing
+Mailing Traces window with the current mailing in context and the `filter_failed`
+search filter, whose domain is `trace_status = 'error'`.
+
+Core3 adds the read-only `view_failed_email_mailing` navigation action to the
+existing `mailing-detail` page/API contract. It routes to `/email-traces` with
+`mass_mailing_id` and `trace_status=error`; the existing trace datasource now
+honors the mailing scope before applying the failed-status filter. The action
+uses `email_marketing.settings`, matching the existing technical Mailing Traces
+page/API permission boundary. No migration or new persistence was needed.
+
+Focused validation is recorded in
+`test/email_marketing_mailing_failed_traces.integration.test.ts`: **3 passed,
+0 failed, 17 assertions**. The full Email Marketing regression is **77 passed,
+0 failed, 645 assertions across 22 files**. Email Marketing CSS, frontend build,
+UI audit, and `git diff --check` passed. The audit reported **854 pages, 862
+routes, and 1,806 datasources**. Evidence is under
+`evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-FAILED-TRACES-001/`.
+
+The required BrowserSkill check reached authenticated
+`http://localhost:8069/odoo?db=core3_reference` and showed Discuss only; no
+Email Marketing menu/action was exposed. No user tab for `core3_reference` was
+available to borrow, so no credentials were requested and no installed-reference
+desktop/mobile capture or visual-parity claim is made. The task session was
+stopped after this check.
