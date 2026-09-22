@@ -352,3 +352,36 @@ captures; no visual-parity claim is made and no credentials were accessed.
 Evidence manifest: `evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.
 This is a conditional bounded pass for source-backed persistence and guards,
 not a visual or module sign-off.
+
+## 2026-09-22 candidate QA — Purchase Order Add a note
+
+- Stable ID: `PURCHASE-ORDER-NOTE-001`.
+- Scope: Purchase Order Products-tab `Add a note` line action only; no full
+  Purchase sign-off.
+- Source: Odoo 19 `addons/purchase/views/purchase_views.xml:250-253` and
+  `addons/purchase/models/purchase_order_line.py:91-104,287-307`.
+- Focused validation: `bun test ./test/purchase_order_notes.integration.test.ts
+  --timeout 30000` — **PASS**, 4 tests / 21 assertions.
+- Contract coverage: `purchase-detail` page/API join, `purchase.write`,
+  Draft/Sent unlocked state guard, stable `line_note` fixture, atomic parent
+  row version and zero-total behavior, note edit/delete, invalid/stale/locked/
+  non-note guards, migration replay, and file-backed restart.
+- Full Purchase regression: **PASS**, 94 tests / 785 assertions. UI audit,
+  Purchase Sass, frontend build, and `git diff --check` also passed.
+
+### Browser result and open gates
+
+BrowserSkill instance `245ea108` was connected. The required signed-in Odoo
+tab `1770662590` was requested for borrowing in session `cqvt`, but the borrow
+confirmation did not complete; `bsk tab list --scope all` subsequently showed
+the tab still in user scope. The session was stopped without borrowing or
+returning a tab. No live Odoo/Core3 desktop/mobile capture was obtained and no
+visual-parity claim is made.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-NOTE-QA-001 | Required BrowserSkill borrow confirmation did not complete before the tab remained user-scoped | open blocker; no visual claim |
+
+Evidence manifest: `evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.
+This is a conditional bounded pass for source-backed persistence and guards,
+not a visual or module sign-off.

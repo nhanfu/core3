@@ -29,6 +29,7 @@ describe('Purchase order line editor parity', () => {
     expect(lines.actions).toEqual([
       expect.objectContaining({ id: 'add_purchase_order_line', label: 'Add a product', permission: 'purchase.write' }),
       expect.objectContaining({ id: 'add_purchase_order_section', label: 'Add a section', permission: 'purchase.write' }),
+      expect.objectContaining({ id: 'add_purchase_order_note', label: 'Add a note', permission: 'purchase.write' }),
       expect.objectContaining({ id: 'add_purchase_order_catalog', label: 'Catalog', permission: 'purchase.write' }),
     ]);
     expect(lines.columns.map((entry: any) => entry.label)).toEqual(['Product', 'Description', 'Quantity', 'Unit', 'Unit Price', 'Taxes', 'Amount', '']);

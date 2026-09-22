@@ -30,7 +30,7 @@ describe('Purchase order section-line parity', () => {
     expect(api.page).toEqual({ id: 'purchase-detail' });
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('purchase-detail'))
       .toEqual(expect.arrayContaining(['purchase_order_detail', 'purchase_order_lines']));
-    expect(grid.actions.map((item: any) => item.label)).toEqual(['Add a product', 'Add a section', 'Catalog']);
+    expect(grid.actions.map((item: any) => item.label)).toEqual(['Add a product', 'Add a section', 'Add a note', 'Catalog']);
     expect(action('add_purchase_order_section')).toMatchObject({
       permission: 'purchase.write', handler: 'line_item', operation: 'create',
       action: 'purchase.orders.lines.section.create',
@@ -39,7 +39,8 @@ describe('Purchase order section-line parity', () => {
       expect.objectContaining({ field: 'description', label: 'Section', type: 'text', required: true }),
     ]);
     expect(lineActions.actions.map((item: any) => item.id)).toEqual([
-      'edit_purchase_order_line', 'edit_purchase_order_section', 'delete_purchase_order_line', 'delete_purchase_order_section',
+      'edit_purchase_order_line', 'edit_purchase_order_section', 'edit_purchase_order_note',
+      'delete_purchase_order_line', 'delete_purchase_order_section', 'delete_purchase_order_note',
     ]);
     expect(source('purchase_order_lines').query).toContain('l.display_type');
   });
@@ -74,7 +75,7 @@ describe('Purchase order section-line parity', () => {
   test('serves the seeded section and rejects invalid, stale, locked, and non-section writes', async () => {
     const { database, repository } = await repositoryForTest();
     expect(await repository.querySource(source('purchase_order_lines'), { id: 'po-demo-008', fixture_state: null }, 0, 50)).toMatchObject({
-      data: [expect.objectContaining({ id: 'purchase-section-demo-008-10', display_type: 'line_section', description: 'Warehouse labelling' })],
+      data: expect.arrayContaining([expect.objectContaining({ id: 'purchase-section-demo-008-10', display_type: 'line_section', description: 'Warehouse labelling' })]),
     });
     const create = action('add_purchase_order_section');
     const before = (await repository.query("SELECT row_version FROM purchase_orders WHERE id = 'po-demo-001'"))[0] as any;

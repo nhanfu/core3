@@ -389,6 +389,75 @@ actions:
         - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_section' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_LINE_STALE, message: This section changed or was deleted. Reload before deleting. }
         - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_SECTION_STALE, message: This purchase order changed while deleting the section. Reload before saving. }
       result: { query: "SELECT true AS deleted, :line_id AS id" }
+  - id: add_purchase_order_note
+    type: server_form
+    permission: purchase.write
+    title: Add a note
+    submit_label: Add
+    success_message: Note added to the purchase order.
+    action: purchase.orders.lines.note.create
+    handler: line_item
+    operation: create
+    domain: purchase_order
+    params: { id: '{state.purchase_order_detail.id}' }
+    refresh: [purchase_order_detail, purchase_order_lines]
+    fields:
+      - { field: description, label: Note, type: text, required: true, placeholder: Note }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'purchase-note-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM purchase_order_lines WHERE order_id = :id", assign: true }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed or is no longer editable. Reload before adding a note. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: PURCHASE_ORDER_NOTE_INVALID, message: Note must be between 1 and 500 characters. }
+      steps:
+        - { query: "INSERT INTO purchase_order_lines(id, order_id, product_id, row_version, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total) VALUES(:line_id, :id, NULL, 1, :next_sequence, 'line_note', NULL, TRIM(CAST(:description AS VARCHAR)), 0, 0, 0, '', 0, 0, 0)" }
+        - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed while adding the note. Reload before saving. }
+      result: { query: "SELECT * FROM purchase_order_lines WHERE id = :line_id" }
+  - id: edit_purchase_order_note
+    type: server_form
+    permission: purchase.write
+    title: Edit note
+    submit_label: Save
+    action: purchase.orders.lines.note.update
+    handler: line_item
+    operation: update
+    domain: purchase_order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [purchase_order_detail, purchase_order_lines]
+    fields:
+      - { field: description, label: Note, type: text, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed or is no longer editable. Reload before saving the note. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_note' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_LINE_STALE, message: This note changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: PURCHASE_ORDER_NOTE_INVALID, message: Note must be between 1 and 500 characters. }
+      steps:
+        - { query: "UPDATE purchase_order_lines SET description = TRIM(CAST(:description AS VARCHAR)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id AND display_type = 'line_note' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_NOTE_LINE_STALE, message: This note changed or was deleted. Reload before saving. }
+        - { query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed while saving the note. Reload before saving. }
+      result: { query: "SELECT * FROM purchase_order_lines WHERE id = :line_id" }
+  - id: delete_purchase_order_note
+    type: server
+    permission: purchase.write
+    action: purchase.orders.lines.note.delete
+    handler: line_item
+    operation: delete
+    domain: purchase_order
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete note {{row.description}}?'
+    refresh: [purchase_order_detail, purchase_order_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent') AND COALESCE(locked, false) = false AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed or is no longer editable. Reload before deleting the note. }
+        - { query: "SELECT id FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_note' AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_NOTE_LINE_STALE, message: This note changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM purchase_order_lines WHERE id = :line_id AND order_id = :id AND display_type = 'line_note' AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_NOTE_LINE_STALE, message: This note changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_ORDER_NOTE_STALE, message: This purchase order changed while deleting the note. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: edit_purchase_order_line
     type: server_form
     permission: purchase.write

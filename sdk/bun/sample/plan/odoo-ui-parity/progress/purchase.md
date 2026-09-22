@@ -100,3 +100,19 @@ Status remains **conditional**: BrowserSkill instance `245ea108` could not
 borrow signed-in Odoo tab `1770662590` before the confirmation request timed
 out. No desktop/mobile capture or visual-parity claim is made. `Add a note`
 remains a separate Purchase follow-up.
+
+## 2026-09-22 bounded slice: Purchase Order Add a note
+
+Implemented `PURCHASE-ORDER-NOTE-001` from Odoo's Products-tab
+`add_note_control`. Core3 adds a page/API-bound note-line form, durable
+`line_note` identity, atomic parent version/total handling, note edit/delete
+guards, and a deterministic migration seed. Focused note validation passed
+4/21 with restart and migration replay; full Purchase regression passed
+94/785, with audit, Purchase Sass, frontend build, and diff-check green.
+
+Status remains **conditional**: BrowserSkill instance `245ea108` could not
+complete the required borrow of signed-in Odoo tab `1770662590`; the tab
+remained user-scoped and the owned session was stopped. No desktop/mobile
+capture or visual-parity claim is made.
+Evidence is under
+`evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.

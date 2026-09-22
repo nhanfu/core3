@@ -59,6 +59,7 @@ components:
     actions:
       - { id: add_purchase_order_line, label: Add a product, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
       - { id: add_purchase_order_section, label: Add a section, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
+      - { id: add_purchase_order_note, label: Add a note, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
       - { id: add_purchase_order_catalog, label: Catalog, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
     empty_state: { title: No order lines, description: Add a product to calculate the purchase total. }
     footer:
@@ -80,8 +81,10 @@ components:
         actions:
           - { id: edit_purchase_order_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "(row.display_type === 'product' || !row.display_type) && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
           - { id: edit_purchase_order_section, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.display_type === 'line_section' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: edit_purchase_order_note, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.display_type === 'line_note' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
           - { id: delete_purchase_order_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "(row.display_type === 'product' || !row.display_type) && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
           - { id: delete_purchase_order_section, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.display_type === 'line_section' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: delete_purchase_order_note, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.display_type === 'line_note' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
     columns:
       - { field: product_name, label: Product, width: 260 }
       - { field: description, label: Description, width: 260 }
@@ -95,5 +98,9 @@ components:
         sortable: false
         width: 84
         actions:
-          - { id: edit_purchase_order_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }
-          - { id: delete_purchase_order_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }
+          - { id: edit_purchase_order_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "(row.display_type === 'product' || !row.display_type) && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: edit_purchase_order_section, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.display_type === 'line_section' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: delete_purchase_order_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "(row.display_type === 'product' || !row.display_type) && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: delete_purchase_order_section, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.display_type === 'line_section' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: edit_purchase_order_note, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.display_type === 'line_note' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }
+          - { id: delete_purchase_order_note, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.display_type === 'line_note' && (row.parent_state === 'Draft' || row.parent_state === 'Sent')" }

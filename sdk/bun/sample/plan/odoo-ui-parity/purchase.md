@@ -1350,3 +1350,36 @@ enter the agent scope before the confirmation request timed out. No live Odoo
 or Core3 desktop/mobile capture was obtained and no visual-parity claim is
 made. The exact blocker and evidence boundary are recorded in
 `evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.
+
+## 2026-09-22 bounded addendum — Purchase Order Add a note
+
+The next missing Products-tab action after Catalog and Add a section, excluding
+the receipt work, is Odoo's `Add a note` control. The source view at
+`addons/purchase/views/purchase_views.xml:250-253` declares
+`add_note_control` with `default_display_type: line_note`. The source model at
+`addons/purchase/models/purchase_order_line.py:91-104,287-307` stores the note
+as a non-accountable `purchase.order.line` display row with text in `name` and
+zero product, quantity, UoM, price, and amount fields.
+
+Core3 adds stable feature ID `PURCHASE-ORDER-NOTE-001` to the existing
+`purchase-detail` page/API pair. The Products grid exposes `Add a note`, and
+the `purchase.orders.lines.note.create` server form requires `purchase.write`,
+an editable Draft/Sent unlocked order, a current parent row version, and a
+1–500 character note. It persists a `line_note` row with a stable generated
+ID, zero total, and atomically increments the parent version. Created notes
+can be edited or deleted with the same stale/locked guards; product and
+section actions reject note rows. Migration
+`20260922170000-034-purchase-order-notes.yaml` seeds and replays the stable
+`purchase-note-demo-008-20` fixture.
+
+Focused verification is in `test/purchase_order_notes.integration.test.ts`:
+4 tests / 21 assertions cover page/API separation, durable note CRUD, seeded
+data, zero-total semantics, invalid/stale/locked/non-note guards, migration
+replay, and file-backed restart.
+
+BrowserSkill instance `245ea108` was connected, but the required borrow of
+signed-in Odoo tab `1770662590` did not complete in session `cqvt`; the tab
+remained user-scoped when checked and the session was stopped. No live Odoo or
+Core3 desktop/mobile capture was obtained and no visual-parity claim is made.
+Evidence is under
+`evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.
