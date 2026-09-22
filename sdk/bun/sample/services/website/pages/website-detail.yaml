@@ -6,6 +6,7 @@ components:
     title_field: name
     header_actions:
       - { id: open_website_themes, label: Pick a Theme, variant: secondary, permission: website.manage }
+      - { id: open_website_settings, label: Settings, variant: secondary, permission: website.manage }
     fields:
       - { field: name, label: Website name }
       - { field: domain, label: Domain }

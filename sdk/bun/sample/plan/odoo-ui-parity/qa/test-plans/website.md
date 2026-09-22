@@ -18,6 +18,7 @@ recorded in [`../website.md`](../website.md).
 | Page Manager | `/website/pages`, page detail/edit routes | Published/draft pages, search, route metadata, CRUD and visibility |
 | YAML-driven presentation | page-owned API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, responsive layout and safe content binding |
 | Site/Reporting/Analytics | `/website-analysis`, `api/analysis.yaml`, `website_analytics_daily` | Odoo `backend_dashboard` route/menu identity, multi-site aggregates, daily traffic, durable migration replay, read permission and empty/error states |
+| Configuration/Settings | `/website-settings`, `api/settings.yaml`, `website_websites` | Odoo `action_website_configuration` → `menu_website_website_settings`; bounded Website Identification name/domain settings, validation, stale guards, and durable multi-site scope |
 | Page Manager tracking/SEO filters | `/website-pages`, `api/pages.yaml`, `website_pages.track` | Odoo `Tracked`, `Not tracked`, and `Not SEO optimized` filters, durable page tracking edit, row-version guard, and responsive authenticated list |
 
 Actors are Website Manager, Website Editor, public visitor, wrong-company user
@@ -40,6 +41,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-009 | Website Analytics | Odoo `Website > Reporting > Analytics` maps to `/website-analysis`; Website API owns totals, site lookup and daily traffic; deterministic two-site metrics and empty branch survive idempotent migration replay | pass: `website_analytics.integration.test.ts` (2 tests, 17 assertions); browser route blocked by unrelated startup error |
 | WEBSITE-FUNC-010 | Page tracking and SEO filters | Odoo Page Manager filter labels map to API-owned `track` and `is_seo_optimized` predicates; tracked/untracked/not-optimized results are deterministic | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-FUNC-011 | Theme Manager catalog | Odoo `theme_install_kanban_action` maps to `/website-themes`; Theme/Category search, Author/Category grouping, installed state, and card actions are declarative and page/API-separated | pass: `website_themes.integration.test.ts` |
+| WEBSITE-FUNC-012 | Website Identification settings | Odoo Settings action maps to `/website-settings`; General and Website Identification sections expose durable name/domain controls through a SettingsView joined to the API by `page.id` | pass: `website_settings.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -53,6 +55,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-WF-006 | Menu Editor | Menu changes persist through declared YAML mutation contracts and do not permit duplicate routes within a website | pass: focused integration suite, including second-site restart replay |
 | WEBSITE-WF-007 | Page tracking edit | `website.write` editor toggles `track`, row version increments, stale replay returns 409, and migration replay/file-backed restart preserve the value | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-WF-008 | Theme selection lifecycle | `website.manage` Use this theme, Update theme, and Remove theme persist `theme_id`/`theme_revision`, reject stale/duplicate/not-selected actions, and recover across restart | pass: `website_themes.integration.test.ts` |
+| WEBSITE-WF-009 | Website Identification save | `website.manage` saves name/domain with required row version, rejects invalid values atomically, increments `row_version`, and retains values after migration replay/restart | pass: `website_settings.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -66,6 +69,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-PERM-006 | Analytics reader/forbidden/transport failure | `website.read` is required; 403 and 503 contracts are explicit and do not expose metrics | pass for YAML contract; live actor proof blocked by Core3 startup |
 | WEBSITE-PERM-007 | Page tracking editor boundary | `website.read` can list/filter pages but cannot mutate `track`; `website.write` is required at the action endpoint and no row changes on denial | pass: `website_page_tracking.integration.test.ts` |
 | WEBSITE-PERM-008 | Theme manager actor boundary | `website.read` can discover the catalog but `website.manage` is required for theme actions; direct 403 leaves the Website row unchanged | pass: `website_themes.integration.test.ts` |
+| WEBSITE-PERM-009 | Settings actor boundary | `website.manage` is required for the datasource and save action; read-only actors cannot mutate the Website row | pass: declared YAML boundary; authenticated browser actor proof blocked by borrowed Odoo tab/Core3 startup state |
 
 ## Visual, responsive, and regression cases
 
@@ -78,6 +82,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-UI-005 | Analytics dashboard | 1440x900, 390x844 | Website selector/analytics totals and traffic chart render responsively; compare Odoo dashboard labels and empty Plausible state | blocked: Odoo Website absent in authenticated browser; Core3 startup returns HTTP 502 from unrelated CRM discovery error |
 | WEBSITE-UI-006 | Page Manager tracking/SEO filters | 1440x900, 390x844 | Authenticated Core3 list exposes the Tracking/SEO filter group and stable rows without page/runtime errors; paired Odoo comparison is required when Website is available | pass for Core3 isolated runner; Odoo Website absent in authenticated session, so paired visual comparison blocked |
 | WEBSITE-UI-007 | Theme Manager | 1440x900, 390x844 | Theme cards, status, search/grouping, action visibility, and responsive layout match Odoo; Odoo availability and both Core3 sizes are required | blocked: Odoo Website absent; Core3 session closed before mobile capture |
+| WEBSITE-UI-008 | Website Settings | 1440x900, 390x844 | Settings toolbar, Website tab, General and Website Identification cards, save/error states and responsive layout match Odoo | blocked: authenticated Odoo tab was borrowed by session `wabp`; no Odoo or Core3 captures claimed |
 
 ## Exit criteria
 

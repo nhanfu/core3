@@ -126,3 +126,30 @@ process restart, and Odoo comparison remain open.
 - Module status remains active/conditional. Open work includes Odoo Website
   availability, Core3 startup repair outside Website scope, paired comparison,
   and the previously listed Website follow-ups.
+
+## 2026-09-22 owner checkpoint — Website Settings Identification
+
+Implemented stable ID `WEBSITE-SETTINGS-IDENTIFICATION-001`, the next missing
+concrete Odoo Website action after the completed theme/page-manager slices.
+Odoo `action_website_configuration` → `menu_website_website_settings` is mapped
+to `/website-settings` with a Website Configuration > Settings entry and a
+Website detail Settings action. The bounded SettingsView covers the Odoo
+Website Identification surface's durable Name and Domain controls; favicon
+binary upload remains a separate follow-up.
+
+The page contract is `services/website/pages/settings.yaml`, the API/action
+contract is `services/website/api/settings.yaml`, and both join by
+`page.id: website-settings`. Updates reuse `website_websites` with
+`website.manage`, required `row_version`, invalid-name/domain guards, and
+file-backed DuckDB restart/migration replay coverage. The shared SettingsView
+primitive now renders styled text settings fields, which was required because
+the existing component otherwise treated text settings as checkboxes.
+
+Focused result: `test/website_settings.integration.test.ts` — 4 tests / 21
+assertions pass. Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-settings-identification-001/`.
+
+BrowserSkill instance `245ea108` was healthy, but borrowing the required
+authenticated Odoo tab `1770662590` returned `tab is borrowed by another
+session` with owner `wabp`. The tab was not taken over or stopped; no Odoo or
+Core3 desktop/mobile captures were made and no visual-parity claim is made.

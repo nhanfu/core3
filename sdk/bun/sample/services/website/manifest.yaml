@@ -17,6 +17,10 @@ menu:
       items:
         - { path: /website-homepage, label: Homepage, icon: home, permission: website.read }
         - { path: /website-themes, label: Themes, icon: palette, permission: website.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /website-settings, label: Settings, icon: settings, permission: website.manage }
     - id: content
       label: Content
       items:

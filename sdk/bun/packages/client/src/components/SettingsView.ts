@@ -5,7 +5,8 @@ type SettingField = {
   field?: string;
   label: string;
   description?: string;
-  type?: 'checkbox' | 'select' | 'number' | 'info';
+  placeholder?: string;
+  type?: 'checkbox' | 'select' | 'number' | 'text' | 'info';
   options?: Array<{ value: string; label: string }>;
   disabled?: boolean;
   action_label?: string;
@@ -231,6 +232,15 @@ export class SettingsView extends BaseComponent {
       select.disabled = field.disabled === true;
       select.addEventListener('change', () => { this.state.draft[field.field!] = select.value; });
       control.appendChild(select);
+    } else if (field.type === 'text') {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'o-settings-text';
+      input.placeholder = field.placeholder || '';
+      input.value = this.state.draft[field.field] == null ? '' : String(this.state.draft[field.field]);
+      input.disabled = field.disabled === true;
+      input.addEventListener('input', () => { this.state.draft[field.field!] = input.value; });
+      control.appendChild(input);
     } else {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';

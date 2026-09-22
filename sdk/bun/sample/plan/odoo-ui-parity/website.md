@@ -326,3 +326,33 @@ Page publish/unpublish browser workflow, richer theme asset installation
 effects, public/portal rendering, and paired Odoo desktop/mobile evidence
 remain open. This wave covers only the Page Manager import action and does not
 claim Website module completion.
+
+## Wave 10 execution evidence — 2026-09-22 — Website Settings Identification
+
+The next missing concrete Website action is Odoo's Website Settings entry,
+stable ID `WEBSITE-SETTINGS-IDENTIFICATION-001`. Local Odoo 19 source
+`addons/website/views/res_config_settings_views.xml` binds
+`action_website_configuration` to `menu_website_website_settings`; its Website
+app settings form includes the General Domain field and Website Identification
+Name/Favicon controls. Core3 adds the deliberate `/website-settings` route and
+Configuration > Settings menu alias, plus a Settings action on Website detail.
+
+This bounded slice implements durable Name and Domain updates against the
+existing `website_websites` rows. `services/website/pages/settings.yaml` is
+presentation-only and `services/website/api/settings.yaml` owns the datasource
+and save action, joined by `page.id: website-settings`. The `website.manage`
+boundary, required Website name, http/https domain validation, stale row
+version guard, per-site scope, and file-backed restart/migration replay are
+covered. Favicon binary upload is explicitly not claimed here.
+
+Focused coverage passes in `test/website_settings.integration.test.ts` (4
+tests, 21 assertions). The shared SettingsView gained a styled text field
+control because Odoo Website settings expose text inputs and the previous
+primitive rendered all non-select/non-number settings as checkboxes.
+
+BrowserSkill instance `245ea108` was healthy, but borrowing authenticated Odoo
+tab `1770662590` returned the exact blocker `tab is borrowed by another session`
+with owner `wabp`. The tab was not taken over or stopped. No truthful Odoo or
+Core3 desktop/mobile captures were available, and no visual-parity claim is
+made. Feature evidence is under
+`odoo-ui-parity/evidence/website/2026-09-22/website-settings-identification-001/`.

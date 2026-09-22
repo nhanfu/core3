@@ -159,6 +159,20 @@
 
 .o-settings-select:focus { outline: 2px solid rgb(37 99 235 / 28%); outline-offset: 1px; }
 
+.o-settings-card:has(.o-settings-text) { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); }
+.o-settings-card:has(.o-settings-text) .o-settings-card-control { justify-content: flex-start; }
+.o-settings-text {
+  width: min(100%, 280px);
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border, #c7d0dd);
+  border-radius: 6px;
+  color: var(--color-text, #172033);
+  background: #fff;
+  font: inherit;
+}
+.o-settings-text:focus { outline: 2px solid rgb(37 99 235 / 28%); outline-offset: 1px; }
+
 .o-settings-card-content { min-width: 0; }
 .o-settings-card-content h3 { margin: 0; font-size: 0.88rem; font-weight: 700; line-height: 1.3; }
 .o-settings-card-content p { margin: 5px 0 0; color: var(--color-text-muted, #68758a); font-size: 0.78rem; line-height: 1.45; }

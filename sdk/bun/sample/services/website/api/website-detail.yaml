@@ -10,3 +10,8 @@ actions:
     permission: website.manage
     navigate_to: /website-themes
     params: { website_id: '{state.website_detail.id}' }
+  - id: open_website_settings
+    type: navigate
+    permission: website.manage
+    navigate_to: /website-settings
+    params: { website_id: '{state.website_detail.id}' }
