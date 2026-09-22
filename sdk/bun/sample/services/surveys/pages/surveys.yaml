@@ -59,9 +59,15 @@ components:
           title: title
           subtitle: owner
           fields:
-            - { field: response_count, label: Completed }
+            - { field: registered_count, label: Registered }
+            - { field: completed_count, label: Completed }
+            - { field: certified_count, label: Certified }
             - { field: published_at, label: Published at }
             - { field: state, label: Status }
+          actions:
+            - { id: open_survey_registered_cards, label: Registered, label_field: registered_count, permission: surveys.read, show_if: 'row.registered_count > 0' }
+            - { id: open_survey_completed_cards, label: Completed, label_field: completed_count, permission: surveys.read, show_if: 'row.completed_count > 0' }
+            - { id: open_survey_certified_cards, label: Certified, label_field: certified_count, permission: surveys.read, show_if: 'row.certified_count > 0' }
       - id: list
         label: List
         icon: table
@@ -97,6 +103,21 @@ actions:
     permission: surveys.write
     navigate_to: /surveys/detail
     params: { id: '{row.id}' }
+  - id: open_survey_registered_cards
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participants
+    params: { survey_id: '{row.id}' }
+  - id: open_survey_completed_cards
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participants
+    params: { survey_id: '{row.id}', state: Completed }
+  - id: open_survey_certified_cards
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participants
+    params: { survey_id: '{row.id}', quiz_status: Passed }
   - id: delete_survey_card
     type: client
     permission: surveys.write
