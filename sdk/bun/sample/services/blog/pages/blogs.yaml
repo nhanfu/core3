@@ -11,6 +11,11 @@ components:
     filters:
       - { field: active, label: Records, options_source: blog_active_states }
     row_actions: menu
+    actions:
+      - { id: move_blog_top, label: Move to Top, permission: blog.write, show_if: "row.active === true" }
+      - { id: move_blog_up, label: Move Up, permission: blog.write, show_if: "row.active === true" }
+      - { id: move_blog_down, label: Move Down, permission: blog.write, show_if: "row.active === true" }
+      - { id: move_blog_bottom, label: Move to Bottom, permission: blog.write, show_if: "row.active === true" }
     columns:
       - { field: sequence, label: Sequence, align: right }
       - { field: name, label: Blog Name, type: PrimaryEntityCell }

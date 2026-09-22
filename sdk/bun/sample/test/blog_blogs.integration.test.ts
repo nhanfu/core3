@@ -54,9 +54,12 @@ describe('Blog Blogs parity slice', () => {
     const api = yaml('api/blogs.yaml');
     expect(page.components[0].columns.map((column: any) => column.field)).toEqual(['sequence', 'name', 'post_count', 'active']);
     expect(page.components[0].row_open_action).toBe('edit_blog');
-    expect(api.actions.map((action: any) => action.id)).toEqual(['create_blog', 'edit_blog', 'archive_blog', 'unarchive_blog']);
-    expect(api.actions.slice(0, 2).every((action: any) => action.permission === 'blog.write')).toBe(true);
-    expect(api.actions.slice(2).every((action: any) => action.permission === 'blog.manage')).toBe(true);
+    expect(api.actions.map((action: any) => action.id)).toEqual([
+      'create_blog', 'edit_blog', 'move_blog_top', 'move_blog_bottom', 'move_blog_up', 'move_blog_down',
+      'archive_blog', 'unarchive_blog',
+    ]);
+    expect(api.actions.filter((action: any) => ['create_blog', 'edit_blog', 'move_blog_top', 'move_blog_bottom', 'move_blog_up', 'move_blog_down'].includes(action.id)).every((action: any) => action.permission === 'blog.write')).toBe(true);
+    expect(api.actions.filter((action: any) => ['archive_blog', 'unarchive_blog'].includes(action.id)).every((action: any) => action.permission === 'blog.manage')).toBe(true);
     expect(api.actions[0].mutation.guards.map((guard: any) => guard.code)).toEqual(['BLOG_NAME_REQUIRED', 'BLOG_COMPANY_SCOPE_REQUIRED', 'BLOG_EXISTS']);
     expect(api.actions.slice(0, 2).map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle', 'company_name'], ['name', 'subtitle', 'company_name']]);
     expect(api.datasources[1].error_states.transport_error.status).toBe(503);

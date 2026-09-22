@@ -68,6 +68,68 @@ actions:
       - { field: name, label: Blog Name, type: text, required: true }
       - { field: subtitle, label: Blog Subtitle, type: text }
       - { field: company_name, label: Company, type: text }
+  - id: move_blog_top
+    type: server
+    permission: blog.write
+    action: blog.blogs.sequence.top
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [blog_blogs, blog_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This blog belongs to another company. }
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be reordered. Reload before retrying. }
+      steps:
+        - { query: "UPDATE blog_blogs SET sequence = COALESCE((SELECT MIN(other_blog.sequence) - 5 FROM blog_blogs other_blog WHERE other_blog.active = TRUE AND other_blog.company_name = blog_blogs.company_name AND other_blog.id <> blog_blogs.id), 0), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be moved. }
+      result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
+  - id: move_blog_bottom
+    type: server
+    permission: blog.write
+    action: blog.blogs.sequence.bottom
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [blog_blogs, blog_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This blog belongs to another company. }
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be reordered. Reload before retrying. }
+      steps:
+        - { query: "UPDATE blog_blogs SET sequence = COALESCE((SELECT MAX(other_blog.sequence) + 5 FROM blog_blogs other_blog WHERE other_blog.active = TRUE AND other_blog.company_name = blog_blogs.company_name AND other_blog.id <> blog_blogs.id), 10), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be moved. }
+      result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
+  - id: move_blog_up
+    type: server
+    permission: blog.write
+    action: blog.blogs.sequence.up
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [blog_blogs, blog_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This blog belongs to another company. }
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be reordered. Reload before retrying. }
+        - { query: "SELECT previous_blog.id FROM blog_blogs current_blog JOIN blog_blogs previous_blog ON previous_blog.active = TRUE AND previous_blog.company_name = current_blog.company_name AND (previous_blog.sequence < current_blog.sequence OR (previous_blog.sequence = current_blog.sequence AND (previous_blog.name < current_blog.name OR (previous_blog.name = current_blog.name AND previous_blog.id < current_blog.id)))) WHERE current_blog.id = :id ORDER BY previous_blog.sequence DESC, previous_blog.name DESC, previous_blog.id DESC LIMIT 1", status: 409, code: BLOG_SEQUENCE_EDGE, message: This blog is already at the top of its active sequence. }
+      steps:
+        - { query: "WITH current_blog AS (SELECT id, sequence, company_name, name FROM blog_blogs WHERE id = :id), previous_blog AS (SELECT b.id, b.sequence FROM blog_blogs b JOIN current_blog c ON b.active = TRUE AND b.company_name = c.company_name AND (b.sequence < c.sequence OR (b.sequence = c.sequence AND (b.name < c.name OR (b.name = c.name AND b.id < c.id)))) ORDER BY b.sequence DESC, b.name DESC, b.id DESC LIMIT 1) UPDATE blog_blogs AS blog SET sequence = CASE WHEN blog.id = current_blog.id THEN previous_blog.sequence WHEN blog.id = previous_blog.id THEN current_blog.sequence END, row_version = blog.row_version + 1, updated_at = CURRENT_TIMESTAMP FROM current_blog, previous_blog WHERE blog.id IN (current_blog.id, previous_blog.id) AND current_blog.id = :id AND current_blog.id IN (SELECT id FROM blog_blogs WHERE row_version = :expected_row_version)", expect_changed: true, status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be moved. }
+      result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
+  - id: move_blog_down
+    type: server
+    permission: blog.write
+    action: blog.blogs.sequence.down
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [blog_blogs, blog_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_SEQUENCE_COMPANY_SCOPE_REQUIRED, message: This blog belongs to another company. }
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be reordered. Reload before retrying. }
+        - { query: "SELECT next_blog.id FROM blog_blogs current_blog JOIN blog_blogs next_blog ON next_blog.active = TRUE AND next_blog.company_name = current_blog.company_name AND (next_blog.sequence > current_blog.sequence OR (next_blog.sequence = current_blog.sequence AND (next_blog.name > current_blog.name OR (next_blog.name = current_blog.name AND next_blog.id > current_blog.id)))) WHERE current_blog.id = :id ORDER BY next_blog.sequence ASC, next_blog.name ASC, next_blog.id ASC LIMIT 1", status: 409, code: BLOG_SEQUENCE_EDGE, message: This blog is already at the bottom of its active sequence. }
+      steps:
+        - { query: "WITH current_blog AS (SELECT id, sequence, company_name, name FROM blog_blogs WHERE id = :id), next_blog AS (SELECT b.id, b.sequence FROM blog_blogs b JOIN current_blog c ON b.active = TRUE AND b.company_name = c.company_name AND (b.sequence > c.sequence OR (b.sequence = c.sequence AND (b.name > c.name OR (b.name = c.name AND b.id > c.id)))) ORDER BY b.sequence ASC, b.name ASC, b.id ASC LIMIT 1) UPDATE blog_blogs AS blog SET sequence = CASE WHEN blog.id = current_blog.id THEN next_blog.sequence WHEN blog.id = next_blog.id THEN current_blog.sequence END, row_version = blog.row_version + 1, updated_at = CURRENT_TIMESTAMP FROM current_blog, next_blog WHERE blog.id IN (current_blog.id, next_blog.id) AND current_blog.id = :id AND current_blog.id IN (SELECT id FROM blog_blogs WHERE row_version = :expected_row_version)", expect_changed: true, status: 409, code: BLOG_SEQUENCE_STALE, message: This blog changed before it could be moved. }
+      result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
   - id: archive_blog
     type: server
     permission: blog.manage
