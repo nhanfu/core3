@@ -1,0 +1,31 @@
+title: Job Positions
+page: { id: recruitment-openings-interviewer, route: /openings/interviewer, breadcrumb: [Human Resources, Recruitment, Applications, By Job Positions], auth: { require: [recruitment.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_interviewer_openings
+    search: { label: Search job positions, placeholder: Search positions or roles... }
+    filters: [{ field: state, label: Status, options: [Open, Draft, Closed, Archived] }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: recruitment_opening_states
+        card:
+          title: name
+          subtitle: job_title
+          fields: [{ field: department_name, label: Department }, { field: application_count, label: Applications }, { field: hired_count, label: Hired }, { field: recruiter, label: Recruiter }]
+    columns:
+      - { field: name, label: Job position, type: PrimaryEntityCell, sortable: true }
+      - { field: job_title, label: Job title }
+      - { field: department_name, label: Department }
+      - { field: application_count, label: Applications, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 40
+    row_key: id
+    row_open_action: view_recruitment_interviewer_opening
+    row_double_click_action: view_recruitment_interviewer_opening
+    row_actions: menu
+    empty_state: { title: No assigned job positions, description: You are not assigned as an interviewer for any job position. }

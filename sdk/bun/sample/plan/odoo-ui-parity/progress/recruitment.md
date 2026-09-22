@@ -4,7 +4,18 @@ Module owner: recruitment module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending Recruitment Job Trackers commit
+Candidate commit: pending Recruitment Job Positions (Interviewer) commit
+
+## Batch 18 current state
+
+`RECRUITMENT-JOB-INTERVIEWER-001` implements Odoo's
+`action_hr_job_interviewer`: durable interviewer assignments, a signed-in
+interviewer/company-scoped Kanban page, and an assignment-guarded read-only
+form. The focused suite passes 4 tests / 28 assertions; the Recruitment
+regression passes 76 tests / 658 assertions and the UI audit passes.
+BrowserSkill instance `245ea108` was connected, but tab `1770662590` was
+borrowed by team session `cqvt`; the exact borrow blocker was recorded and the
+session was stopped. No Odoo visual-parity claim is made.
 
 ## Batch 17 current state
 

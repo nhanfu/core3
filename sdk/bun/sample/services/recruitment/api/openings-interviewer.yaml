@@ -1,0 +1,11 @@
+page: { id: recruitment-openings-interviewer }
+datasources:
+  - id: recruitment_interviewer_openings
+    permission: recruitment.read
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_INTERVIEWER_OPENINGS_UNAUTHENTICATED, message: Sign in to view assigned job positions. }
+      forbidden: { status: 403, code: RECRUITMENT_INTERVIEWER_OPENINGS_FORBIDDEN, message: You do not have permission to view assigned job positions. }
+      transport_error: { status: 503, code: RECRUITMENT_INTERVIEWER_OPENINGS_UNAVAILABLE, message: Assigned job positions are temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, COUNT(a.id) AS application_count, o.recruiter, o.company_name, o.state, CAST(o.opened_date AS VARCHAR) AS opened_date, CAST(o.closing_date AS VARCHAR) AS closing_date FROM recruitment_openings o JOIN recruitment_opening_interviewers i ON i.opening_id = o.id AND LOWER(TRIM(i.interviewer_name)) = LOWER(TRIM(COALESCE(:current_user_name, ''))) LEFT JOIN recruitment_applicants a ON a.opening_id = o.id AND a.archived = FALSE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name) AND (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.job_title ILIKE '%' || :q || '%' OR o.department_name ILIKE '%' || :q || '%') AND (:state IS NULL OR o.state = :state) GROUP BY o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.company_name, o.state, o.opened_date, o.closing_date ORDER BY o.opened_date DESC, o.id"
+actions:
+  - { id: view_recruitment_interviewer_opening, type: navigate, permission: recruitment.read, navigate_to: /openings/interviewer/detail, params: { id: '{row.id}' } }

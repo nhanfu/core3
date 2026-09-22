@@ -15,7 +15,7 @@ is recorded in [`../recruitment.md`](../recruitment.md).
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
 | Applicants | `/recruitment/applicants`, `/recruitment/applicants/detail` | Search/filter, applicant CRUD, activities, stage transitions and hiring data |
-| Job positions and reporting | `/recruitment/openings`, `/recruitment/recruitment-analysis` | Position CRUD, published/open state, grouped analysis and empty/error states |
+| Job positions and reporting | `/recruitment/openings`, `/openings/interviewer`, `/openings/interviewer/detail`, `/recruitment/recruitment-analysis` | Position CRUD, interviewer-scoped read-only action, published/open state, grouped analysis and empty/error states |
 | Configuration | `/recruitment/contract-types`, `/recruitment/degrees`, `/recruitment/emails`, `/recruitment/refuse-reasons`, `/recruitment/settings`, `/recruitment/stages`, `/recruitment/stages/detail`, `/recruitment/tags`, `/recruitment/activity-types`, `/recruitment/activity-plans` | Catalog CRUD, archive/restore, validation, activity configuration, and manager-only settings |
 | Talent pools | `/recruitment/talent-pools`, `/recruitment/talent-pools/detail`, `/recruitment/talent-pools/talents` | Pool CRUD, talent membership, scoped reads and removal |
 
@@ -41,6 +41,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-FUNC-010 | Activity Plans | Create, edit, search, archive/restore, delete, validate model/step shape, and reload ordered activity steps | pass: focused Activity Plans suite; Odoo browser blocked |
 | RECRUITMENT-FUNC-011 | Applicant email | Bulk composer validates recipients/templates/content, persists one sent audit row per applicant, and survives restart | pass: focused applicant email suite; Odoo browser blocked |
 | RECRUITMENT-FUNC-012 | Applicant followers | Bulk Add/Remove Followers validates active contacts, persists subscriptions and notification audit, and survives restart | pass: focused applicant followers suite; Odoo browser blocked |
+| RECRUITMENT-FUNC-013 | Interviewer job positions | Assigned interviewer sees only durable same-company positions in Kanban and read-only form; no create action is exposed | pass: focused interviewer suite; Odoo browser blocked |
 
 ## Workflow and integration cases
 
@@ -67,6 +68,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-PERM-007 | Activity Plans manager boundary | Manager mutations work; non-manager/anonymous access is rejected without data | pass: contract declaration; live actor/browser gate pending |
 | RECRUITMENT-PERM-008 | Applicant email actor/company boundary | Recruitment write actor can send only selected same-company applicants with recipient email; actor/company/recipient violations are rejected atomically | pass: focused integration; live actor/browser gate pending |
 | RECRUITMENT-PERM-009 | Applicant follower actor/company/contact boundary | Recruitment write actor can manage only selected same-company applicants and active contacts; invalid contact/company/notify requests are rejected atomically | pass: focused integration; live actor/browser gate pending |
+| RECRUITMENT-PERM-010 | Interviewer job-position boundary | Assigned interviewer can read assigned same-company positions; unassigned, wrong-company, and direct detail access return no record; mutations are absent | pass: focused interviewer suite; live actor/browser gate pending |
 
 ## Visual, responsive, and regression cases
 
@@ -79,6 +81,7 @@ mutations and clean them up or isolate their database.
 | RECRUITMENT-UI-005 | Activity Plans list/form | 1440x900, 390x844 | Recruitment Plans menu, List/Kanban tabs, empty/form labels and responsive state match Odoo | blocked: live reference has no Recruitment action |
 | RECRUITMENT-UI-006 | Applicant email composer | 1440x900, 390x844 | Applicant list bulk Send Email opens composer with subject/body/template/attachment controls and sends selected applicants | partial: authenticated Core3 desktop capture; mobile and paired Odoo blocked |
 | RECRUITMENT-UI-007 | Applicant follower wizard | 1440x900, 390x844 | Applicant list bulk Add/Remove Followers opens source-shaped modal, updates selected records, and detail shows persisted followers | partial: source-backed Core3 contract; live Odoo and Core3 runtime capture blocked/pending |
+| RECRUITMENT-UI-008 | Interviewer Job Positions | 1440x900, 390x844 | Recruitment Applications → By Job Positions exposes Kanban/form only, no create control, assigned-row filtering, and responsive read-only detail | blocked: authenticated Odoo tab borrow is owned by another team session |
 
 ## Exit criteria
 

@@ -1,5 +1,41 @@
 # Odoo 19 UI parity — Recruitment
 
+## Batch 18 — Applications → By Job Positions (Interviewer)
+
+The next missing stable-ID Recruitment action after the implemented job-position
+Trackers slice is Odoo's `action_hr_job_interviewer` from
+`addons/hr_recruitment/views/hr_job_views.xml`. It opens the Job Positions
+action in `kanban,form` mode with creation disabled and a domain limited to
+jobs where the current user is an interviewer or extended interviewer. The
+interviewer group has read-only access to job positions and may not create or
+delete them.
+
+Core3 adds stable ID `RECRUITMENT-JOB-INTERVIEWER-001`: a durable interviewer
+assignment table, `/openings/interviewer` kanban page/API pair, and an
+assignment-scoped read-only form at `/openings/interviewer/detail`. The
+datasource joins each page by its matching `page.id`, filters by signed-in
+interviewer and company, and keeps search, status, empty, missing, and
+transport states explicit. This bounded slice does not claim interviewer
+applicant-domain filtering, meeting/refusal actions, assignment CRUD, or the
+ordinary Job Positions mutation surface.
+
+Source/gap matrix for `RECRUITMENT-JOB-INTERVIEWER-001`:
+
+| Odoo contract | Previous Core3 state | Batch 18 change | Verification |
+| --- | --- | --- | --- |
+| Applications → By Job Positions interviewer action / `action_hr_job_interviewer` | Missing; ordinary `/openings` was available to every Recruitment reader | Read-only `/openings/interviewer` action with `kanban,form`, create disabled | Odoo XML/source contract and page/API test |
+| Interviewer job domain | Missing; no durable assignment relation | Durable per-opening interviewer assignments and signed-in actor filter | scoped datasource test for assigned, unassigned, and wrong-company rows |
+| Interviewer form read | Missing | Assignment-guarded read-only form and back navigation | detail datasource test and page contract |
+| Empty/error/security states | Missing | Explicit empty, 401/403/404/503 contracts and no mutation actions | focused transport, direct-access, and action-shape assertions |
+
+Focused verification: `bun test test/recruitment_interviewer_openings.integration.test.ts`
+passes 4 tests / 28 assertions; the full Recruitment regression passes 76 tests /
+658 assertions. BrowserSkill reference borrowing was blocked by team session
+`cqvt` already owning tab `1770662590`; the exact blocker and cleanup are in
+the feature evidence. No Odoo desktop/mobile visual-parity claim is made.
+
+Status: `batch-18-implemented-job-interviewer-odoo-borrow-blocked`
+
 ## Batch 17 — Job Positions → Trackers
 
 The next missing stable-ID Recruitment action after the implemented New

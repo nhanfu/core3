@@ -1,0 +1,29 @@
+version: 0.0.22
+kind: schema
+description: Durable Recruitment interviewer job-position assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_opening_interviewers (
+        id VARCHAR PRIMARY KEY,
+        opening_id VARCHAR NOT NULL,
+        interviewer_name VARCHAR NOT NULL,
+        company_name VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE(opening_id, interviewer_name)
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_opening_interviewers_lookup_idx ON recruitment_opening_interviewers(interviewer_name, opening_id);
+      INSERT OR IGNORE INTO recruitment_opening_interviewers(id, opening_id, interviewer_name, company_name)
+      VALUES
+        ('opening-interviewer-demo-001-maya-singh', 'opening-demo-001', 'Maya Singh', 'Core3 Demo Company'),
+        ('opening-interviewer-demo-002-maya-singh', 'opening-demo-002', 'Maya Singh', 'Core3 Demo Company'),
+        ('opening-interviewer-demo-003-alex-chen', 'opening-demo-003', 'Alex Chen', 'Core3 Demo Company');
+    down: |
+      DROP INDEX IF EXISTS recruitment_opening_interviewers_lookup_idx;
+      DROP TABLE IF EXISTS recruitment_opening_interviewers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

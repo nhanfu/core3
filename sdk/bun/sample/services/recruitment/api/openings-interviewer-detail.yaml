@@ -1,0 +1,13 @@
+page: { id: recruitment-opening-interviewer-detail }
+datasources:
+  - id: recruitment_interviewer_opening_detail
+    permission: recruitment.read
+    single: true
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_INTERVIEWER_OPENING_UNAUTHENTICATED, message: Sign in to view this job position. }
+      forbidden: { status: 403, code: RECRUITMENT_INTERVIEWER_OPENING_FORBIDDEN, message: This job position is not assigned to you. }
+      missing_record: { status: 404, code: RECRUITMENT_INTERVIEWER_OPENING_NOT_FOUND, message: Assigned job position not found. }
+      transport_error: { status: 503, code: RECRUITMENT_INTERVIEWER_OPENING_UNAVAILABLE, message: Job position details are temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.company_name, o.state, CAST(o.opened_date AS VARCHAR) AS opened_date, CAST(o.closing_date AS VARCHAR) AS closing_date, COUNT(a.id) FILTER (WHERE a.archived = FALSE) AS application_count FROM recruitment_openings o JOIN recruitment_opening_interviewers i ON i.opening_id = o.id AND LOWER(TRIM(i.interviewer_name)) = LOWER(TRIM(COALESCE(:current_user_name, ''))) LEFT JOIN recruitment_applicants a ON a.opening_id = o.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND o.id = :id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name) GROUP BY o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.company_name, o.state, o.opened_date, o.closing_date"
+actions:
+  - { id: back_to_recruitment_interviewer_openings, type: navigate, permission: recruitment.read, navigate_to: /openings/interviewer }

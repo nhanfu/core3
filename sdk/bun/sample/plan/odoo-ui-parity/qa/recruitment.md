@@ -1,5 +1,33 @@
 # recruitment QA ledger
 
+## Batch 18 QA — Job Positions (Interviewer) — 2026-09-22
+
+- Stable ID: `RECRUITMENT-JOB-INTERVIEWER-001`.
+- Source boundary: Odoo 19 `hr_recruitment/views/hr_job_views.xml` action
+  `action_hr_job_interviewer`, the interviewer domain/context, and
+  `security/ir.model.access.csv`, compared at source revision
+  `659759969d535d286b656c96b675e4612b925ddd`.
+- Focused test: `bun test test/recruitment_interviewer_openings.integration.test.ts`
+  — 4 passed, 0 failed, 28 assertions. Recruitment regression: 76 passed,
+  0 failed, 658 assertions across 20 files.
+- Functional coverage: durable interviewer assignments, page/API `page.id`
+  separation for list and detail, kanban-only `kanban,form` surface, create
+  disabled, actor/company/search/status scope, empty and transport states,
+  assignment-guarded direct detail access, and idempotent seeded persistence.
+- Static gate: `bun run audit` passed with 839 pages, 847 routes, and 1,749
+  datasources; frontend/CSS build and `git diff --check` are recorded in the
+  feature evidence.
+- Browser blocker: BrowserSkill instance `245ea108` was connected. Borrowing
+  authenticated Odoo tab `1770662590` from session `rpmb` returned
+  `error: tab is borrowed by another session` and identified owner session
+  `cqvt`. The session was stopped; no tab was borrowed, no live Odoo action was
+  inspected, and no desktop/mobile captures were possible. No independent
+  login, Playwright session, credentials, or alternate browser was used; no
+  Odoo visual-parity claim is made.
+- QA decision: bounded functional batch complete after local verification;
+  live Odoo inspection and paired desktop/mobile evidence remain blocked.
+  Recruitment is not signed off.
+
 ## Batch 17 QA — Job Position Trackers — 2026-09-22
 
 - Stable ID: `RECRUITMENT-JOB-TRACKERS-001`.

@@ -1,0 +1,29 @@
+title: Job Position
+page: { id: recruitment-opening-interviewer-detail, route: /openings/interviewer/detail, breadcrumb: [Human Resources, Recruitment, Applications, By Job Positions, Job Position], auth: { require: [recruitment.read] } }
+components:
+  - type: OdooFormView
+    source: recruitment_interviewer_opening_detail
+    title_field: name
+    subtitle_field: job_title
+    status_field: state
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: back_to_recruitment_interviewer_openings, label: Job Positions, variant: secondary, permission: recruitment.read }
+    group_columns: 2
+    groups:
+      - title: Job Position
+        fields:
+          - { field: name, label: Job Position }
+          - { field: job_title, label: Job Title }
+          - { field: department_name, label: Department }
+          - { field: company_name, label: Company }
+          - { field: recruiter, label: Recruiter }
+      - title: Hiring
+        fields:
+          - { field: employment_type, label: Employment Type }
+          - { field: target_hires, label: Expected New Employees }
+          - { field: hired_count, label: Hired }
+          - { field: application_count, label: Applications }
+          - { field: opened_date, label: Opened Date }
+          - { field: closing_date, label: Closing Date }
