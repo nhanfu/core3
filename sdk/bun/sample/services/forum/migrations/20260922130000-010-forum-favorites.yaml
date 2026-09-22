@@ -1,0 +1,18 @@
+version: 0.0.10
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS forum_post_favorites (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        post_id VARCHAR NOT NULL, user_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS forum_post_favorites_post_user_idx ON forum_post_favorites(post_id, user_id);
+      CREATE INDEX IF NOT EXISTS forum_post_favorites_user_idx ON forum_post_favorites(user_id);
+    down: |
+      DROP TABLE IF EXISTS forum_post_favorites;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

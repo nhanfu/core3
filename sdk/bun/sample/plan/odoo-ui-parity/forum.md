@@ -205,6 +205,36 @@ screen exists to pair. The final runtime check reached Core3 backend/frontend
 readiness, but an authenticated Core3 desktop/mobile capture was not completed
 before finalization. No visual parity or module sign-off is claimed.
 
+## Wave 9 source-backed feature — Question favorite toggle — 2026-09-22
+
+Odoo 19's next distinct question action is
+`WebsiteForum.question_toggle_favorite`, exposed at
+`/forum/<forum>/<question>/toggle_favourite` in
+`addons/website_forum/controllers/website_forum.py`. It is an authenticated
+JSON-RPC action that adds or removes the current user from
+`forum.post.favourite_ids` and returns the resulting boolean state. The source
+form/list surfaces expose `favourite_count` for question statistics.
+
+Stable ID: `FORUM-QUESTION-FAVORITE-001`.
+
+Core3 now persists a user-scoped `forum_post_favorites` relation in migration
+`20260922130000-010-forum-favorites.yaml`. The question-detail API derives
+`favourite_count` and the authenticated user's `is_favorite`; the presentation
+page remains separate and joins through `page.id: forum-question-detail`.
+`toggle_forum_post_favorite` requires `forum.read`, an authenticated actor,
+the current question row version, and active/closed state. The transaction
+inserts or deletes one `(post_id, user_id)` relation, increments the question
+version, returns the new state, and rejects stale, archived, missing, or
+unauthenticated requests without partial writes.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-QUESTION-FAVORITE-001/`.
+Focused functional, HTTP permission, stale/archived, and restart coverage is
+in `test/forum_question_favorite.integration.test.ts`. The live BrowserSkill
+borrow was blocked because the authenticated Odoo tab was already borrowed by
+session `ftio`; existing desktop/mobile launcher captures still show that
+`website_forum` is absent from `core3_reference`. No visual parity claim is
+made.
+
 ## Runtime evidence and blockers — 2026-09-12
 
 - Odoo login was authenticated successfully with the local parity credentials

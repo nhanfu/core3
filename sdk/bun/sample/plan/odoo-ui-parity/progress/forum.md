@@ -107,3 +107,23 @@ Odoo's local source confirms the list/form action, but the live `core3_reference
 app launcher has no Website/Forum menu because `website_forum` is not installed;
 paired Odoo captures remain blocked. Forum archive/restore is intentionally
 deferred until the Core3 post `active` model can mirror Odoo's cascade safely.
+
+## Wave 9 — Question favorite toggle (2026-09-22)
+
+The next distinct source action after the accepted-answer reversal was Odoo's
+authenticated `question_toggle_favorite` JSON-RPC route. Core3 now adds the
+stable `FORUM-QUESTION-FAVORITE-001` slice: a durable per-user favorite
+relation, `favourite_count`/`is_favorite` detail projection, and a separate
+YAML API action joined to the existing detail page by `page.id`.
+
+The toggle is `forum.read`-bound, requires the authenticated actor and current
+question version, supports active/closed questions, increments the parent
+version atomically, and rejects stale, archived, missing, and replayed writes.
+The focused suite passed 4/4 tests and 19 assertions, including HTTP
+permission enforcement and file-backed restart persistence.
+
+Evidence: `evidence/forum/2026-09-22/FORUM-QUESTION-FAVORITE-001/`.
+BrowserSkill instance `245ea108` was reachable, but borrow of the shared
+authenticated Odoo tab was denied because session `ftio` already owned it.
+The reference addon is also absent from `core3_reference`; desktop/mobile
+visual pairing remains blocked and no visual sign-off is claimed.

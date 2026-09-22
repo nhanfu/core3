@@ -41,6 +41,7 @@ databases and deterministic IDs.
 | FORUM-FUNC-009 | Forum Tags CRUD | List/search tags, create/edit name/color/forum, exact post counts, duplicate and required guards | pass: `forum_tags.integration.test.ts` |
 | FORUM-FUNC-010 | Post Close Reasons CRUD | List/search Odoo reasons, inline create/edit/delete name/type, required/invalid/stale guards, migration reapply and restart persistence | pass: `forum_close_reasons.integration.test.ts` |
 | FORUM-FUNC-011 | Reverse accepted answer | Question-detail answer relation exposes Unaccept, changes Accepted → Active, preserves relations, and survives restart | pass: `forum_answer_moderation.integration.test.ts` |
+| FORUM-FUNC-012 | Question favorite toggle | Authenticated user can favorite/unfavorite active or closed questions; count/state persist and stale/archived/actor guards reject safely | pass: `forum_question_favorite.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -54,6 +55,7 @@ databases and deterministic IDs.
 | FORUM-WF-006 | Tag rename relation | Rename updates the denormalized comma-delimited post token atomically and preserves counts after reload/restart | pass: `forum_tags.integration.test.ts` |
 | FORUM-WF-007 | Close reason state contract | Only `basic`/`offensive` reason types persist; stale edits/deletes fail without changing the current row | pass: `forum_close_reasons.integration.test.ts` |
 | FORUM-WF-008 | Accepted-answer toggle | Accept then unaccept is atomic; only one accepted answer exists; stale and repeated reverse transitions fail | pass: `forum_answer_moderation.integration.test.ts` |
+| FORUM-WF-009 | Question favorite relation | Per-user insert/delete is atomic with the question version; a second user changes the count without changing the first user's state | pass: `forum_question_favorite.integration.test.ts` |
 
 ## Permission and security cases
 
@@ -68,6 +70,7 @@ databases and deterministic IDs.
 | FORUM-PERM-007 | Tag manager boundary | `forum.write` can create/edit; `forum.read` only is denied; invalid/inactive forum and duplicate `(forum_id,name)` are rejected | pass: `forum_tags.integration.test.ts` |
 | FORUM-PERM-008 | Close reason manager boundary | `forum.read` can list; only `forum.manage` can create/edit/delete; direct action calls remain forbidden without it | pass: `forum_close_reasons.integration.test.ts` |
 | FORUM-PERM-009 | Accepted-answer manager boundary | `forum.manage` is required for accept and unaccept; direct action denial leaves answer/post versions unchanged | pass: `forum_answer_moderation.integration.test.ts` |
+| FORUM-PERM-010 | Favorite actor boundary | `forum.read` is required; missing actor, stale row, archived question, and direct denied action leave favorite data unchanged | pass: `forum_question_favorite.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -80,6 +83,7 @@ databases and deterministic IDs.
 | FORUM-UI-005 | Tags list/form | 1440x900, 390x844 | Paired Odoo/Core3 captures for list and form; Odoo addon and Core3 runtime must be available | blocked: `FORUM-TAG-001` |
 | FORUM-UI-006 | Close Reasons editable list | 1440x900, 390x844 | Odoo list labels/columns and Core3 editable list must be paired when the addon and Core3 runtime are available | blocked: `FORUM-CLOSE-REASONS-001` |
 | FORUM-UI-007 | Accepted-answer relation action | 1440x900, 390x844 | Odoo answer accepted state and reverse action paired with Core3 question detail | blocked: `FORUM-ANSWER-UNACCEPT-001` |
+| FORUM-UI-008 | Question favorite action | 1440x900, 390x844 | Odoo question favorite control/count paired with Core3 question detail after authenticated toggle/reload | blocked: `FORUM-QUESTION-FAVORITE-001` |
 
 ## Exit criteria
 

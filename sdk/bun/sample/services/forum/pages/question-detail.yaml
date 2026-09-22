@@ -13,9 +13,12 @@ components:
       - { field: views, label: Views }
       - { field: vote_count, label: Votes }
       - { field: answer_count, label: Answers }
+      - { field: favourite_count, label: Favorites }
       - { field: state, label: Status, type: StatusChip }
       - { field: closed_reason, label: Closed reason }
     header_actions:
+      - { id: toggle_forum_post_favorite, label: Favorite, variant: secondary, permission: forum.read, show_if: "!state.forum_post_detail.is_favorite" }
+      - { id: toggle_forum_post_favorite, label: Remove favorite, variant: secondary, permission: forum.read, show_if: "state.forum_post_detail.is_favorite" }
       - { id: edit_forum_post_detail, label: Edit, variant: primary, permission: forum.write, show_if: "state.forum_post_detail.state !== 'Archived'" }
       - { id: archive_forum_post_detail, label: Archive, variant: danger, permission: forum.manage, show_if: "state.forum_post_detail.state !== 'Archived'" }
   - type: LineItemGrid

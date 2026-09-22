@@ -3,7 +3,7 @@ datasources:
   - id: forum_post_detail
     permission: forum.read
     single: true
-    query: "SELECT * FROM forum_posts WHERE id = :id"
+    query: "SELECT p.*, COALESCE((SELECT COUNT(*) FROM forum_post_favorites f WHERE f.post_id = p.id), 0) AS favourite_count, EXISTS (SELECT 1 FROM forum_post_favorites f WHERE f.post_id = p.id AND f.user_id = :current_user_id) AS is_favorite FROM forum_posts p WHERE p.id = :id"
   - id: forum_post_answers
     permission: forum.read
     query: "SELECT id, row_version, post_id, forum_id, forum_name, content, author_name, state, created_at FROM forum_answers WHERE post_id = :id ORDER BY created_at, id"
@@ -134,3 +134,22 @@ actions:
         - { query: "UPDATE forum_answers SET state = 'Flagged', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_STALE, message: The answer changed while flagging. }
         - { query: "UPDATE forum_posts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while flagging. }
       result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }
+  - id: toggle_forum_post_favorite
+    type: server
+    permission: forum.read
+    action: forum.posts.toggle_favourite
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.forum_post_detail.row_version}' }
+    refresh: [forum_post_detail]
+    mutation:
+      generated: [favorite_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_id AS VARCHAR))) > 0", status: 403, code: FORUM_FAVORITE_ACTOR, message: An authenticated user is required to favorite a question. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND state IN ('Active', 'Closed')", status: 409, code: FORUM_FAVORITE_UNAVAILABLE, message: Only active or closed questions can be favorited. }
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :expected_row_version", status: 409, code: FORUM_FAVORITE_STALE, message: This question changed before its favorite state was updated. Reload before trying again. }
+        - { query: "SELECT EXISTS (SELECT 1 FROM forum_post_favorites WHERE post_id = :id AND user_id = :current_user_id) AS is_favorite", assign: true }
+      steps:
+        - { query: "DELETE FROM forum_post_favorites WHERE post_id = :id AND user_id = :current_user_id AND COALESCE(CAST(:is_favorite AS BOOLEAN), FALSE) = TRUE" }
+        - { query: "INSERT INTO forum_post_favorites(id, post_id, user_id, row_version) SELECT :favorite_id, :id, :current_user_id, 1 WHERE COALESCE(CAST(:is_favorite AS BOOLEAN), FALSE) = FALSE" }
+        - { query: "UPDATE forum_posts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: FORUM_FAVORITE_STALE, message: This question changed before its favorite state was updated. Reload before trying again. }
+      result: { query: "SELECT p.id, p.row_version, COALESCE((SELECT COUNT(*) FROM forum_post_favorites f WHERE f.post_id = p.id), 0) AS favourite_count, EXISTS (SELECT 1 FROM forum_post_favorites f WHERE f.post_id = p.id AND f.user_id = :current_user_id) AS is_favorite FROM forum_posts p WHERE p.id = :id" }

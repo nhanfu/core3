@@ -128,3 +128,23 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
   route evidence was not completed before finalization. No visual parity claim
   is made.
 - Evidence: `../evidence/forum/2026-09-22/FORUM-CLOSE-REASONS-001/`.
+
+## Wave 9 developer handoff — Question favorite toggle (2026-09-22)
+
+- Implemented stable feature `FORUM-QUESTION-FAVORITE-001` from Odoo's
+  `question_toggle_favorite` route in
+  `addons/website_forum/controllers/website_forum.py`.
+- Added durable `forum_post_favorites` schema, current-user favorite/count
+  projections, page/API separation, and visible Favorite/Remove favorite
+  detail actions.
+- Focused suite: `bun test test/forum_question_favorite.integration.test.ts
+  --timeout 20000` — 4 tests, 19 assertions, passed.
+- Coverage includes per-user toggle/count behavior, stale and actor guards,
+  archived-state rejection, authenticated HTTP permission enforcement, reload,
+  migration replay, and file-backed restart persistence.
+- BrowserSkill instance `245ea108` status was healthy. Borrowing tab
+  `1770662590` was denied because it was already borrowed by session `ftio`;
+  the worker session was stopped (`xwxz`) after the blocker was recorded.
+  Existing authenticated desktop/mobile launcher captures show the reference
+  database lacks `website_forum`; no Odoo/Core3 visual parity claim is made.
+- Evidence: `../evidence/forum/2026-09-22/FORUM-QUESTION-FAVORITE-001/`.
