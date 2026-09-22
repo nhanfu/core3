@@ -1,0 +1,30 @@
+title: Campaign
+page: { id: email-utm-campaign-detail, route: /email-marketing/campaigns/detail, breadcrumb: [Marketing, Email Marketing, Campaigns, Campaign], auth: { require: [email_marketing.manage] } }
+
+components:
+  - type: OdooFormView
+    source: email_utm_campaign_detail
+    title_field: title
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Stage }
+    header_actions:
+      - { id: new_utm_campaign_detail, label: New, variant: primary, permission: email_marketing.manage }
+      - { id: edit_utm_campaign_detail, label: Edit, variant: secondary, permission: email_marketing.manage }
+      - { id: archive_utm_campaign_detail, label: Archive, variant: danger, permission: email_marketing.manage, show_if: "state.email_utm_campaign_detail.active === true" }
+      - { id: restore_utm_campaign_detail, label: Restore, variant: secondary, permission: email_marketing.manage, show_if: "state.email_utm_campaign_detail.active === false" }
+    stat_buttons:
+      - { id: utm_campaign_mailings, label: Mailings, value_field: mailing_mail_count }
+    group_columns: 2
+    groups:
+      - title: Campaign
+        fields:
+          - { field: title, label: Campaign Name }
+          - { field: user_name, label: Responsible }
+          - { field: stage_name, label: Stage }
+          - { field: tag_names, label: Tags, wide: true }
+      - title: Mailing results
+        fields:
+          - { field: mailing_mail_count, label: Mailings }
+          - { field: active, label: Active }
+          - { field: is_auto_campaign, label: Automatically Generated }
+          - { field: name, label: Campaign Identifier }

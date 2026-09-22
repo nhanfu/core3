@@ -1,0 +1,33 @@
+version: 0.0.21
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_utm_campaigns (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        title VARCHAR NOT NULL,
+        name VARCHAR NOT NULL UNIQUE,
+        user_name VARCHAR NOT NULL DEFAULT 'Administrator',
+        stage_id VARCHAR NOT NULL,
+        stage_name VARCHAR NOT NULL,
+        tag_names VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT true,
+        color INTEGER NOT NULL DEFAULT 0,
+        mailing_mail_count INTEGER NOT NULL DEFAULT 0,
+        is_auto_campaign BOOLEAN NOT NULL DEFAULT false,
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Vietnam',
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      INSERT INTO email_marketing_utm_campaigns (id, row_version, title, name, user_name, stage_id, stage_name, tag_names, active, color, mailing_mail_count, is_auto_campaign, company_name, created_at, updated_at) VALUES
+        ('email-utm-campaign-newsletter', 1, 'Newsletter', 'newsletter', 'Administrator', 'email-campaign-stage-schedule', 'Schedule', 'Marketing', true, 2, 1, false, 'Core3 Vietnam', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('email-utm-campaign-product-launch', 1, 'Product Launch', 'product-launch', 'Marketing User', 'email-campaign-stage-design', 'Design', 'Product, Newsletter', true, 4, 2, false, 'Core3 Vietnam', TIMESTAMP '2026-01-15 09:05:00', TIMESTAMP '2026-01-15 09:05:00'),
+        ('email-utm-campaign-event-follow-up', 1, 'Event Follow-up', 'event-follow-up', 'Marketing User', 'email-campaign-stage-sent', 'Sent', 'Event', true, 6, 1, false, 'Core3 Vietnam', TIMESTAMP '2026-01-15 09:10:00', TIMESTAMP '2026-01-15 09:10:00'),
+        ('email-utm-campaign-archived', 1, 'Archived Campaign', 'archived-campaign', 'Administrator', 'email-campaign-stage-new', 'New', 'Legacy', false, 0, 0, false, 'Core3 Vietnam', TIMESTAMP '2026-01-15 09:15:00', TIMESTAMP '2026-01-15 09:15:00')
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, user_name = EXCLUDED.user_name, stage_id = EXCLUDED.stage_id, stage_name = EXCLUDED.stage_name, tag_names = EXCLUDED.tag_names, active = EXCLUDED.active, color = EXCLUDED.color, mailing_mail_count = EXCLUDED.mailing_mail_count, updated_at = EXCLUDED.updated_at;
+    down: DROP TABLE IF EXISTS email_marketing_utm_campaigns;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1009,3 +1009,37 @@ session was not navigated, so no live Odoo merge route/action screen or
 desktop/mobile capture exists and no visual-parity claim is made. The exact
 attempt and cleanup are indexed in
 `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-MAILING-LIST-MERGE-001/`.
+
+## Odoo UTM Campaigns bounded slice (2026-09-22)
+
+The next independent source-backed action after the selected-contact and mailing
+workflows is Odoo `mass_mailing.action_view_utm_campaigns`, the Email Marketing
+Campaigns window over `utm.campaign`. The Mass Mailing override uses
+`kanban,list,form`, filters out `is_auto_campaign`, exposes Stage/Responsible/
+Tags search groupings, and adds the mailing count/stat surface. Access is the
+campaign-manager group.
+
+Core3 keeps the existing synthetic mailing surface at `/email-campaigns` and
+implements this distinct action at `/email-marketing/campaigns`:
+
+- Layout: `services/email-marketing/pages/utm-campaigns.yaml` and
+  `pages/utm-campaign-detail.yaml`.
+- API: `services/email-marketing/api/utm-campaigns.yaml` and
+  `api/utm-campaign-detail.yaml`, joined by matching `page.id`.
+- Persistence: migration
+  `migrations/20260922180000-021-email-utm-campaigns.yaml` creates durable
+  campaign records with stable IDs, fixed stages/tags, active state, mailing
+  counts, and idempotent fixtures.
+- Contract: `test/email_marketing_utm_campaigns.integration.test.ts` covers
+  source action identity, page/API discovery, Kanban/List modes, filtering,
+  empty state, create/update, duplicate/invalid/stale guards, and
+  archive/restore persistence.
+- Mailing stat navigation adds an optional `campaign_name` filter to the
+  existing mailing datasource without changing its existing default behavior.
+
+The authenticated Odoo comparison is blocked: BrowserSkill instance `245ea108`
+was healthy, but the authenticated tab `1770662590` was already borrowed by
+session `lexx`; the required borrow returned `tab is borrowed by another
+session`. The tab was not navigated, no desktop/mobile captures exist, and no
+visual-parity claim is made. Exact BrowserSkill output and cleanup are recorded
+under `evidence/email-marketing/2026-09-22/EMAIL-MARKETING-UTM-CAMPAIGNS-001/`.

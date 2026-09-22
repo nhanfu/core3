@@ -231,3 +231,30 @@ Add-and-Send follow-up remain open. Do not sign off the module.
 Disposition: bounded merge workflow is implementation- and contract-tested;
 paired authenticated Odoo/Core3 visual proof, full route-tree coverage, and
 module sign-off remain open.
+
+## Bounded review handoff — Odoo UTM Campaigns (2026-09-22)
+
+- Source comparison: Odoo 19 `mass_mailing.action_view_utm_campaigns` from
+  `mass_mailing/views/utm_campaign_views.xml`, inheriting the UTM campaign
+  Kanban/List/Form contract and restricted to non-automatic campaigns.
+- Core3 implementation: new `email_utm_campaigns` durable storage, page/API
+  fragments joined by `page.id`, Campaigns menu route
+  `/email-marketing/campaigns`, deterministic stage/tag fixtures, CRUD,
+  search/group/filter, row-version guards, archive/restore, and mailing stat
+  navigation. The existing synthetic `/email-campaigns` mailing route remains
+  unchanged.
+- Focused validation: **4 passed, 0 failed, 33 assertions** in
+  `test/email_marketing_utm_campaigns.integration.test.ts`.
+- Regression/build: Email Marketing suite passed (**63 tests, 568 assertions**);
+  `bun run audit` passed with 824 pages, 832 routes, and 1,715 datasources; Email Marketing Sass and full
+  frontend builds passed; `git diff --check` passed.
+- Browser blocker: BrowserSkill instance `245ea108` was connected, but the
+  authenticated Odoo tab `1770662590` was already borrowed by session `lexx`.
+  The required borrow returned `tab is borrowed by another session`; no tab was
+  navigated, no screenshots were produced, and no visual-parity claim is made.
+- Evidence:
+  `plan/odoo-ui-parity/evidence/email-marketing/2026-09-22/EMAIL-MARKETING-UTM-CAMPAIGNS-001/`.
+
+Disposition: bounded Campaigns action is implementation- and contract-tested;
+installed-Odoo desktop/mobile comparison, full Campaigns parity, and module
+sign-off remain open.
