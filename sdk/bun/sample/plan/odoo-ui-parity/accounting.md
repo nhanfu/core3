@@ -1898,7 +1898,9 @@ needed; replay and restart persistence are covered by the focused suite.
 Focused validation passes 3 tests and 25 assertions, including Odoo source
 mapping, page/API separation, permission and actor guards, stale/missing
 handling, reset lifecycle values, duplicate-origin chatter, restart
-persistence, and migration replay. BrowserSkill inspected the authenticated
+persistence, and migration replay. The related invoice regression set passes
+10 tests and 99 assertions across Duplicate, Lock, payment blocking, and
+Cancel. BrowserSkill inspected the authenticated
 Odoo invoice and opened its Actions menu, where `Duplicate` was visible. The
 current UI audit passes, but no paired authenticated Core3/Odoo desktop/mobile
 captures were taken for this bounded contract slice, so no visual-parity claim

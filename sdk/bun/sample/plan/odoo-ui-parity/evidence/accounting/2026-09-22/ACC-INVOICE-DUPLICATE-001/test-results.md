@@ -2,6 +2,9 @@
 
 - `bun test ./test/accounting_invoice_duplicate.integration.test.ts --timeout 20000`
   — **3 passed, 25 assertions**.
+- Related invoice regression set:
+  `bun test ./test/accounting_invoice_duplicate.integration.test.ts ./test/accounting_invoice_lock.integration.test.ts ./test/accounting_invoice_payment_block.integration.test.ts ./test/accounting_invoice_cancel.integration.test.ts --timeout 20000`
+  — **10 passed, 99 assertions**.
 - The focused test covers page/API binding, Odoo source mapping, action-menu
   contract, permission/actor/stale/missing guards, draft lifecycle resets,
   origin chatter, restart persistence, and idempotent migration replay.
