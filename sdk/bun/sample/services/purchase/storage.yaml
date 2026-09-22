@@ -1,3 +1,14 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: .data/uploads
+
+attachments:
+  purchase_bill_attachment:
+    download:
+      route: /api/purchase/bill-attachments
+      permission: purchase.read
+      query: SELECT * FROM purchase_order_bill_uploads WHERE id = :attachment_id

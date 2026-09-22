@@ -1,0 +1,34 @@
+version: 0.0.35
+kind: schema
+description: Persist Purchase Upload Bill attachment and vendor-bill links
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_order_bill_uploads (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        accounting_invoice_id VARCHAR NOT NULL,
+        invoice_number VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL DEFAULT 0,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS purchase_order_bill_uploads_order_uq ON purchase_order_bill_uploads(purchase_order_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS purchase_order_bill_uploads_invoice_uq ON purchase_order_bill_uploads(accounting_invoice_id);
+      CREATE INDEX IF NOT EXISTS purchase_order_bill_uploads_order_idx ON purchase_order_bill_uploads(purchase_order_id, created_at);
+    down: |
+      DROP INDEX IF EXISTS purchase_order_bill_uploads_order_idx;
+      DROP INDEX IF EXISTS purchase_order_bill_uploads_invoice_uq;
+      DROP INDEX IF EXISTS purchase_order_bill_uploads_order_uq;
+      DROP TABLE IF EXISTS purchase_order_bill_uploads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

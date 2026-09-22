@@ -1383,3 +1383,33 @@ remained user-scoped when checked and the session was stopped. No live Odoo or
 Core3 desktop/mobile capture was obtained and no visual-parity claim is made.
 Evidence is under
 `evidence/purchase/2026-09-22/PURCHASE-ORDER-NOTE-001/`.
+
+## 2026-09-22 bounded addendum — Purchase Order Upload Bill
+
+The next missing source-defined Purchase action after the Products-tab line
+controls is Odoo's `purchase_file_uploader` widget. Odoo declares the widget
+in `addons/purchase/views/purchase_views.xml:139`, renders `Upload Bill` only
+for confirmed orders, and `static/src/components/purchase_file_uploader/`
+calls `purchase.order.action_create_invoice` with the uploaded attachment. The
+model creates a draft vendor bill, attaches the uploaded file to it, and opens
+the bill.
+
+Core3 adds stable feature ID `PURCHASE-UPLOAD-BILL-001` to the existing
+`purchase-detail` page/API pair. The page exposes the Odoo-labeled Upload Bill
+header action and a durable vendor-bill attachment panel. The upload contract
+uses `kind: purchase_bill_attachment`, requires `purchase.write`, validates the
+current confirmed/received order, file metadata, actor, and one-bill-per-order
+boundary, calls `yaml.service.accounting` to create a draft Vendor Bill, then
+persists the attachment metadata, Purchase bill link, and order row-version
+increment atomically. Migration
+`20260922180000-035-purchase-order-bill-upload.yaml` is idempotent and indexed.
+
+Focused validation is
+`test/purchase_order_bill_upload.integration.test.ts`: 5 tests / 28
+assertions cover page/API binding, Accounting creation, billing refresh,
+missing/stale/state/file/actor/duplicate guards, Accounting failure atomicity,
+and file-backed restart plus migration replay. Odoo's existing desktop/mobile
+detail captures under `/tmp/odoo-purchase/desktop-order-p00012.png` and
+`/tmp/odoo-purchase/mobile-order-p00012.png` show the source Upload Bill
+control. A fresh BrowserSkill borrow of tab `1770662590` was not obtained in
+this run, so there are no new Core3 captures and no visual-parity claim.

@@ -353,6 +353,40 @@ Evidence manifest: `evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.
 This is a conditional bounded pass for source-backed persistence and guards,
 not a visual or module sign-off.
 
+## 2026-09-22 candidate QA — Purchase Order Upload Bill
+
+- Stable ID: `PURCHASE-UPLOAD-BILL-001`.
+- Scope: confirmed/received Purchase Order `Upload Bill` action only; PDF
+  rendering, OCR/vendor-price extraction, multi-vendor batch upload, and full
+  Purchase sign-off remain outside this slice.
+- Source: Odoo 19 `addons/purchase/views/purchase_views.xml:139` and
+  `static/src/components/purchase_file_uploader/purchase_file_uploader.js`.
+- Focused validation: `bun test ./test/purchase_order_bill_upload.integration.test.ts
+  --timeout 30000` — **PASS**, 5 tests / 28 assertions.
+- Contract coverage: `purchase-detail` page/API join, `purchase.write`, upload
+  metadata and actor guards, confirmed/received state and row-version guards,
+  Accounting Vendor Bill creation, durable attachment/bill link, billing
+  refresh, Accounting failure atomicity, migration replay, and restart.
+- Evidence: `evidence/purchase/2026-09-22/PURCHASE-UPLOAD-BILL-001/`.
+
+### Browser result and open gates
+
+BrowserSkill instance `245ea108` was connected, but the required borrow of
+authenticated Odoo tab `1770662590` remained user-scoped. The single borrow
+request was pending in session `yabv` until BrowserSkill cleanup; no tab was
+borrowed, so no new live desktop/mobile capture or authenticated Core3 click
+proof was obtained. Existing Odoo detail captures are referenced in the
+feature manifest only. No visual-parity claim is made.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-UPLOAD-BILL-QA-001 | Required authenticated tab borrow did not enter agent scope | open blocker; no visual claim |
+| PURCHASE-UPLOAD-BILL-QA-002 | Core3 persists attachment metadata and bill linkage but does not yet expose binary download/OCR/vendor-extracted invoice values | bounded follow-up |
+
+Disposition: **conditional bounded pass** for the source-backed upload action,
+Accounting integration, durable persistence, guards, and focused tests; not a
+visual or module sign-off.
+
 ## 2026-09-22 candidate QA — Purchase Order Add a note
 
 - Stable ID: `PURCHASE-ORDER-NOTE-001`.

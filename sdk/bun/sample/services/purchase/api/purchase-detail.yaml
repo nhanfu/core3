@@ -20,6 +20,10 @@ datasources:
       FROM purchase_orders
       WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
       AND id = :id AND state IN ('Confirmed', 'Received')
+  - id: purchase_order_bill_uploads
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_BILL_UPLOADS_UNAVAILABLE, message: Uploaded vendor bills are temporarily unavailable. } }
+    query: "SELECT u.id, u.purchase_order_id, p.name AS purchase_order_name, u.accounting_invoice_id, u.invoice_number, u.file_name, u.mime_type, u.size_bytes, u.uploaded_by, u.state, u.amount, CAST(u.created_at AS VARCHAR) AS created_at, u.row_version FROM purchase_order_bill_uploads u JOIN purchase_orders p ON p.id = u.purchase_order_id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND u.purchase_order_id = :id ORDER BY u.created_at DESC, u.id DESC"
   - id: purchase_order_lines
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_LINES_UNAVAILABLE, message: Purchase order lines are temporarily unavailable. } }
@@ -41,6 +45,59 @@ actions:
   - { id: open_purchase_price_comparison, type: navigate, permission: purchase.read, navigate_to: /purchase/price-comparison, params: { id: '{row.id}' } }
   - { id: open_purchase_receipt, type: navigate, permission: purchase.read, navigate_to: /purchase/receipt, params: { id: '{row.receipt_id}' } }
   - { id: open_purchase_vendor_bill, type: navigate, permission: purchase.read, navigate_to: /accounting/invoice-detail, params: { id: '{row.vendor_bill_id}' } }
+  - id: upload_purchase_bill
+    type: upload
+    action: purchase.orders.bill.upload
+    handler: attachment_metadata
+    permission: purchase.write
+    kind: purchase_bill_attachment
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [purchase_order_detail, purchase_order_bill_uploads, purchase_order_lines]
+    mutation:
+      generated: [attachment_id]
+      before_steps:
+        - assign: true
+          query: "SELECT p.vendor_name, p.name AS order_name, CAST(p.total_amount AS DECIMAL(18,2)) AS total_amount, 'BILL/UPLOAD/' || p.name AS bill_number, CAST(DATE '2026-09-22' AS VARCHAR) AS invoice_date, CAST(DATE '2026-10-22' AS VARCHAR) AS due_date, 'purchase-bill-upload-' || p.id || '-' || :attachment_id AS upload_id FROM purchase_orders p WHERE p.id = :id"
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id", status: 404, code: PURCHASE_ORDER_BILL_UPLOAD_NOT_FOUND, message: Purchase order not found. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Confirmed', 'Received') AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_BILL_UPLOAD_STALE, message: Only an unchanged confirmed purchase order can receive a bill upload. Reload before uploading. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_vendor_bills WHERE purchase_order_id = :id) AND NOT EXISTS (SELECT 1 FROM purchase_order_bill_uploads WHERE purchase_order_id = :id)", status: 409, code: PURCHASE_ORDER_BILL_UPLOAD_ALREADY_BILLED, message: This purchase order already has a vendor bill. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:fileName, ''))) BETWEEN 1 AND 255 AND LENGTH(TRIM(COALESCE(:mimeType, ''))) BETWEEN 1 AND 160 AND COALESCE(CAST(:sizeBytes AS BIGINT), 0) BETWEEN 1 AND 5242880 AND LENGTH(TRIM(COALESCE(:storageKey, ''))) > 0", status: 422, code: PURCHASE_ORDER_BILL_UPLOAD_INVALID, message: Upload a non-empty vendor bill file no larger than 5 MB. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:current_user_id, ''))) > 0 AND LENGTH(TRIM(COALESCE(:current_user_name, ''))) > 0", status: 403, code: PURCHASE_ORDER_BILL_UPLOAD_ACTOR_REQUIRED, message: A signed-in Purchase user is required to upload a bill. }
+      steps:
+        - type: service
+          service: yaml.service.accounting
+          operation: accounting.invoices.create_from_source
+          request:
+            name: bill_number
+            partner_name: vendor_name
+            invoice_type: Vendor Bill
+            invoice_date: invoice_date
+            due_date: due_date
+            amount_untaxed: total_amount
+            amount_total: total_amount
+            amount_residual: total_amount
+            reference: order_name
+            source_service: purchase
+            source_type: purchase_order_upload
+            source_id: upload_id
+          assign: true
+        - query: "INSERT INTO purchase_order_bill_uploads(id, purchase_order_id, accounting_invoice_id, invoice_number, file_name, mime_type, size_bytes, storage_key, uploaded_by, state, amount, row_version) SELECT :attachment_id, :id, :accounting_invoice_id, :bill_number, :fileName, :mimeType, CAST(:sizeBytes AS BIGINT), :storageKey, :current_user_id, 'Draft', :total_amount, 1 FROM purchase_orders WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: PURCHASE_ORDER_BILL_UPLOAD_STALE
+          message: The purchase order changed before its vendor bill could be attached. Reload and try again.
+        - query: "INSERT INTO purchase_vendor_bills(id, purchase_order_id, accounting_invoice_id, invoice_number, state, amount, invoice_date, due_date) SELECT 'purchase-vendor-bill-upload-' || :id, :id, :accounting_invoice_id, :bill_number, 'Draft', :total_amount, CAST(:invoice_date AS DATE), CAST(:due_date AS DATE) WHERE NOT EXISTS (SELECT 1 FROM purchase_vendor_bills WHERE purchase_order_id = :id)"
+          expect_changed: true
+          status: 409
+          code: PURCHASE_ORDER_BILL_UPLOAD_ALREADY_BILLED
+          message: This purchase order already has a vendor bill.
+        - query: "UPDATE purchase_orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: PURCHASE_ORDER_BILL_UPLOAD_STALE
+          message: The purchase order changed before its vendor bill could be attached. Reload and try again.
+      result: { query: "SELECT * FROM purchase_order_bill_uploads WHERE id = :attachment_id" }
   - id: preview_purchase_reminder_detail
     type: server
     permission: purchase.write

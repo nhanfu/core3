@@ -3,6 +3,15 @@ page: { id: purchase-detail, route: /purchase/detail, breadcrumb: [Supply Chain,
 components:
   - type: OdooFormView
     source: purchase_order_detail
+    attachment_source: purchase_order_bill_uploads
+    attachment_panel_open: true
+    attachment_label: Vendor bill
+    add_attachment_label: Upload Bill
+    no_attachments_label: No vendor bill uploaded
+    uploading_label: Uploading bill…
+    upload_failed_label: Bill upload failed
+    attachment_accept: application/pdf,image/*,.pdf,.jpg,.jpeg,.png
+    attachment_upload_action: upload_purchase_bill
     title_field: name
     subtitle_field: vendor_name
     status_field: state
@@ -16,6 +25,7 @@ components:
     header_actions:
       - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
       - { id: send_confirmed_purchase_order_detail, label: Send PO, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received'" }
+      - { id: upload_purchase_bill, label: Upload Bill, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received'" }
       - { id: preview_purchase_reminder_detail, label: Send Reminder, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.receipt_reminder_email && state.purchase_order_detail.state !== 'Cancelled'" }
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
       - { id: approve_purchase_order_detail, label: Approve Order, variant: primary, permission: purchase.manage, show_if: "state.purchase_order_detail.state === 'To Approve'" }
