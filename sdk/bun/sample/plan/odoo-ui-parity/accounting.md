@@ -1613,3 +1613,29 @@ under `evidence/accounting/2026-09-22/ACC-INVOICE-PAY-NOW-001/`. No new live
 desktop/mobile screenshot or visual-parity claim is made. Provider completion,
 external portal access tokens, public sharing, and invoice settlement remain
 follow-up integration work.
+
+## Current batch: invoice Cancel workflow (2026-09-22)
+
+Odoo 19 exposes `button_cancel` as the `Cancel` object action on draft
+customer invoices, credit notes, vendor bills, and refunds in
+`addons/account/views/account_move_views.xml`. The action is hidden for
+posted records until they are reset to draft, and the model writes the
+document to `cancel` after removing reconciliation/payment effects. The local
+source contract and live-reference attempt are recorded under
+`evidence/accounting/2026-09-22/ACC-INVOICE-CANCEL-001/`.
+
+Core3 now exposes `Cancel` on the page/API-separated invoice detail form for
+unchanged Draft non-journal invoices. The matching list action now sends the
+row version as well. The Accounting invoice workflow has an explicit guarded
+Draft → Cancelled mutation with `accounting.write`, atomic row-version
+increment, stale/missing/invalid-state rejection, and persisted state after
+restart. Posted documents remain on the Reset to Draft path before Cancel,
+matching Odoo's visible form contract.
+
+Focused validation passes 2 tests and 22 assertions, including Odoo source
+mapping, page/API separation, detail/list action contracts, workflow guards,
+permission denial, stale/posted/paid rejection, and DuckDB restart
+persistence. BrowserSkill connected to instance `245ea108`, but borrowing the
+existing authenticated Odoo tab timed out waiting for human confirmation;
+therefore this batch has no new desktop/mobile capture and makes no visual
+parity claim. The exact blocker is recorded in the feature evidence.

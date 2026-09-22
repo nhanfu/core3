@@ -49,6 +49,15 @@ actions:
       - { field: amount_residual, label: Amount due, type: number }
       - { field: reference, label: Reference, type: text }
   - { id: post_accounting_invoice_detail, type: server, permission: accounting.write, action: accounting.invoices.post, handler: order_transition, workflow: accounting_invoices, operation: post, refresh: [accounting_invoice_detail] }
+  - id: cancel_accounting_invoice_detail
+    type: server
+    permission: accounting.write
+    action: accounting.invoices.cancel
+    handler: order_transition
+    workflow: accounting_invoices
+    operation: cancel
+    params: { id: '{state.accounting_invoice_detail.id}', expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail]
   - id: reset_accounting_invoice_to_draft
     type: server
     permission: accounting.write

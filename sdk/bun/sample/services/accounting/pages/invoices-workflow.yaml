@@ -31,4 +31,22 @@ workflow:
             message: The invoice changed; reload before resetting to draft.
         result:
           query: "SELECT * FROM accounting_invoices WHERE id = :id"
-    - { id: cancel, from: [Draft, Posted], to: Cancelled, permission: accounting.write }
+    - id: cancel
+      from: [Draft]
+      to: Cancelled
+      permission: accounting.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version"
+            status: 409
+            code: ACCOUNTING_INVOICE_CANCEL_UNAVAILABLE
+            message: Only an unchanged draft invoice can be cancelled. Reload before cancelling.
+        steps:
+          - query: "UPDATE accounting_invoices SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version"
+            expect_changed: true
+            status: 409
+            code: ACCOUNTING_INVOICE_CANCEL_STALE
+            message: The invoice changed; reload before cancelling.
+        result:
+          query: "SELECT * FROM accounting_invoices WHERE id = :id"

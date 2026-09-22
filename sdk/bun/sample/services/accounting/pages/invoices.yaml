@@ -50,7 +50,7 @@ components:
     actions:
       - { id: post_accounting_invoice, label: Post, permission: accounting.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: register_invoice_payment, label: Register payment, permission: accounting.write, variant: secondary, show_if: "row.state === 'Posted' && row.amount_residual > 0" }
-      - { id: cancel_accounting_invoice, label: Cancel, permission: accounting.write, variant: danger, show_if: "row.state !== 'Paid' && row.state !== 'Cancelled'" }
+      - { id: cancel_accounting_invoice, label: Cancel, permission: accounting.write, variant: danger, show_if: "row.state === 'Draft' && row.invoice_type !== 'Journal Entry'" }
 actions:
   - id: view_accounting_invoice
     type: navigate
@@ -98,4 +98,12 @@ actions:
       result: { query: "SELECT id AS accounting_invoice_id, name, state, amount_total, source_service, source_type, source_id FROM accounting_invoices WHERE id = :id" }
   - { id: post_accounting_invoice, type: server, permission: accounting.write, action: accounting.invoices.post, handler: order_transition, workflow: accounting_invoices, operation: post, refresh: [accounting_invoices] }
   - { id: register_invoice_payment, type: server_form, permission: accounting.write, title: Register invoice payment, action: accounting.invoices.pay, handler: yaml_mutation, operation: pay, refresh: [accounting_invoices], mutation: { generated: [payment_id], guards: [{ query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND amount_residual > 0", status: 409, message: Only posted invoices with a balance can be paid }], steps: ["UPDATE accounting_invoices SET amount_residual = 0, state = 'Paid', row_version = row_version + 1 WHERE id = :id"], result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" } }, fields: [{ field: payment_amount, label: Payment amount, type: number, required: true }] }
-  - { id: cancel_accounting_invoice, type: server, permission: accounting.write, action: accounting.invoices.cancel, handler: order_transition, workflow: accounting_invoices, operation: cancel, refresh: [accounting_invoices] }
+  - id: cancel_accounting_invoice
+    type: server
+    permission: accounting.write
+    action: accounting.invoices.cancel
+    handler: order_transition
+    workflow: accounting_invoices
+    operation: cancel
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [accounting_invoices]

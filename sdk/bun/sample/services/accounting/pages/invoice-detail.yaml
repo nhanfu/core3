@@ -15,6 +15,7 @@ components:
     header_actions:
       - { id: edit_accounting_invoice, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft'" }
       - { id: post_accounting_invoice_detail, label: Post, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft'" }
+      - { id: cancel_accounting_invoice_detail, label: Cancel, variant: danger, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft' && state.accounting_invoice_detail.invoice_type !== 'Journal Entry'" }
       - { id: reset_accounting_invoice_to_draft, label: Reset to Draft, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' || state.accounting_invoice_detail.state === 'Cancelled'" }
       - { id: register_accounting_invoice_payment, label: Register payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.amount_residual > 0" }
       - { id: reverse_accounting_invoice, label: Credit Note, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && (state.accounting_invoice_detail.invoice_type === 'Customer Invoice' || state.accounting_invoice_detail.invoice_type === 'Vendor Bill') && !state.accounting_invoice_detail.reversal_id" }

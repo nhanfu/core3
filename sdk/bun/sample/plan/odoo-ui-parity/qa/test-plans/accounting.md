@@ -61,6 +61,14 @@ required; development migrations must be idempotent.
 | ACC-WF-006 | integration | Durable/external boundary | Payment provider, email, webhook, bank import or long-running close uses Temporal when activated | retry/timeout/compensation/replay/restart/shutdown required | planned |
 | ACC-WF-008 | workflow | Invoice Reset to Draft | Posted/Cancelled invoice detail resets to Draft with write permission, stale guard, row-version increment, and restart persistence | invalid state or stale row leaves invoice unchanged | pass; accounting_invoice_reset_to_draft.integration.test.ts |
 
+### Invoice Cancel addendum (2026-09-22)
+
+| Case ID | Class | Surface | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| ACC-WF-009 | workflow | Draft invoice Cancel | Draft non-journal invoice transitions to Cancelled with a guarded atomic row-version increment; posted/paid/stale states remain unchanged | pass; `accounting_invoice_cancel.integration.test.ts` |
+| ACC-PERM-008 | permission | Invoice Cancel write boundary | Direct cancel action requires `accounting.write` and rejects an unauthorized actor | pass; focused integration test |
+| ACC-UI-006 | visual/responsive | Invoice detail Cancel | Odoo/Core3 desktop/mobile Cancel placement and refreshed Cancelled state are captured | blocked; BrowserSkill tab-borrow confirmation timed out |
+
 ## Permission and security cases
 
 | Case ID | Actor/scope | Expected result | Status |
