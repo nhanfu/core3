@@ -1,0 +1,52 @@
+title: Leads
+page: { id: crm-team-leads, route: /crm/team-leads, breadcrumb: [CRM, Sales Teams, Team, Leads], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_team_leads
+    create_action: create_crm_team_lead
+    create_label: New lead
+    search: { label: Search leads, placeholder: Search leads and customers... }
+    filters:
+      - { field: stage, label: Stage, options_source: crm_team_lead_stages }
+      - { field: salesperson, label: Salesperson, options_source: crm_team_lead_salespeople }
+    default_filters: { type: lead }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        groups_source: crm_team_lead_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: priority, label: Priority }
+            - { field: salesperson, label: Salesperson }
+            - { field: expected_revenue, label: Expected revenue }
+    columns:
+      - { field: name, label: Lead, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: priority, label: Priority }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: expected_closing, label: Expected closing }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_crm_team_lead
+    row_double_click_action: view_crm_team_lead
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+    row_actions: menu
+    actions:
+      - { id: edit_crm_team_lead, label: Edit, permission: crm.write, variant: ghost, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: assign_crm_team_lead_to_me, label: Assign to me, permission: crm.write, variant: secondary, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+    empty_state: { title: Create a lead, description: Use leads to qualify prospects before creating opportunities. }

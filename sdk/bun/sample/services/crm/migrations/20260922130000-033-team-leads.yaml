@@ -1,0 +1,18 @@
+version: 0.0.33
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_crm_team_leads ON crm_leads(team, type, stage);
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing, created_at)
+      VALUES
+        ('crm-team-lead-enterprise-001', 'Enterprise security assessment', 'lead', 'Umbrella Health', 'security@umbrella.test', 'Website', 18000, 'New', 10, 'Dispatcher User', 'Enterprise', DATE '2026-10-05', TIMESTAMP '2026-06-02 09:00:00'),
+        ('crm-team-lead-north-001', 'North America partner inquiry', 'lead', 'Stark Industries', 'partners@stark.test', 'Referral', 24000, 'Qualified', 35, '', 'North America', DATE '2026-10-12', TIMESTAMP '2026-06-08 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_leads WHERE id IN ('crm-team-lead-enterprise-001', 'crm-team-lead-north-001');
+      DROP INDEX IF EXISTS idx_crm_team_leads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
