@@ -1775,6 +1775,37 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Products > Product form Putaway Rules — `INV-PRODUCT-PUTAWAY-001` (2026-09-22)
+
+This bounded slice closes the next uncovered product-form action after Stock
+Moves and Lot/Serial Numbers. Odoo's `action_view_related_putaway_rules` is
+declared in `addons/stock/views/product_views.xml:522-533`. The variant method
+at `addons/stock/models/product.py:620-633` filters by the selected variant or
+its category; the template method at `:1226-1233` filters by any template
+variant or the template category. Both return the existing list action from
+`:1031-1038`, so this is a contextual report action rather than a duplicate
+Putaway Rules page.
+
+Core3 adds `Putaway Rules` actions to the existing product template and product
+variant forms. The actions navigate to `/putaway-rules` with
+`product_template_id` or `product_id` and company context. The service-owned
+Putaway Rules datasource applies the same product-or-category domain while
+retaining its existing active/search/company/empty/503 behavior. Migration
+`20260923030000-093-inventory-product-putaway-action.yaml` seeds the stable
+same-company Storage Box rule used by the contextual branch; no page-local SQL
+or duplicate renderer is introduced.
+
+Focused verification passes 3 tests / 19 assertions in
+`test/inventory_product_putaway.integration.test.ts`, including action
+wiring, product/category results, unrelated-product empty state, company
+scope, migration replay, and file-backed restart. Evidence is under
+`evidence/inventory/2026-09-22/INV-PRODUCT-PUTAWAY-001/`.
+
+BrowserSkill instance `245ea108` was connected and the authenticated Odoo tab
+was listed, but the required borrow confirmation timed out. No Odoo or Core3
+desktop/mobile capture and no visual-parity claim are made; the exact blocker
+is recorded in the feature evidence. Full Inventory sign-off remains open.
+
 ## Operations > Transfer Return for Exchange — `INV-TRANSFER-EXCHANGE-001`
 
 Odoo's Return wizard declares a distinct `Return for Exchange` button in

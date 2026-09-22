@@ -1,0 +1,22 @@
+version: 0.0.93
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_putaway_rules(
+        id, sequence_number, product_id, product_name, category_name,
+        location_in_id, location_in_name, location_out_id, location_out_name,
+        package_type_name, storage_category_id, storage_category_name,
+        sublocation, company_name, active
+      ) VALUES (
+        'putaway-product-storage-box', 15, 'inventory-variant-storage-box',
+        'Storage Box', NULL, 'location-input', 'Input',
+        'location-stock-shelf-1', 'Stock / Shelf 1', NULL, NULL, NULL,
+        'no', 'Core3 Demo Company', TRUE
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_putaway_rules WHERE id = 'putaway-product-storage-box';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

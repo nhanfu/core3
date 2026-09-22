@@ -2210,3 +2210,30 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded durable Core3 Product Lot/Serial Numbers
 action; PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo
 comparison. Full Inventory sign-off remains open.
+
+## Inventory Product form Putaway Rules QA — `INV-PRODUCT-PUTAWAY-001`
+
+- Odoo source/action: PASS. `action_view_related_putaway_rules` is declared at
+  `addons/stock/views/product_views.xml:522-533`; variant and template domain
+  implementations are at `addons/stock/models/product.py:620-633,1226-1233`,
+  returning the existing list action from `:1031-1038`.
+- Core3 contract: PASS. Product template and variant pages remain
+  presentation-only; API actions join their matching `page.id` fragments and
+  navigate to the existing `/putaway-rules` datasource with product context.
+  The datasource implements the product/product-category domain and retains
+  company, empty, search, and 503 states. Migration `0.0.93` adds one stable
+  product-specific rule without duplicating the Putaway Rules surface.
+- Focused verification: PASS — 3 tests / 19 assertions in
+  `inventory_product_putaway.integration.test.ts`, covering action wiring,
+  product/category filtering, empty/company guards, migration replay, and
+  file-backed restart persistence.
+- Browser evidence: BLOCKED. BrowserSkill instance `245ea108` was healthy and
+  the authenticated Odoo tab was listed, but borrowing timed out waiting for
+  human confirmation. The exact command/result is recorded in
+  `evidence/inventory/2026-09-22/INV-PRODUCT-PUTAWAY-001/browser-blocker.md`.
+  No desktop/mobile capture or visual-parity claim is made, and no independent
+  login/browser was used.
+
+QA disposition: PASS for the bounded durable Core3 contextual action;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.

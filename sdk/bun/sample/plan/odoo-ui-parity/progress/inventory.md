@@ -1663,6 +1663,19 @@ Inventory sign-off remains open.
 
 Full Inventory sign-off remains open.
 
+## `INV-PRODUCT-PUTAWAY-001` — Product form Putaway Rules (2026-09-22)
+
+- Added the Odoo `action_view_related_putaway_rules` action to Product and
+  Product Variant forms, reusing the existing Putaway Rules page with stable
+  product/template and company context.
+- Added product-or-category filtering to the service-owned Putaway Rules API
+  and idempotent migration `0.0.93` with a same-company Storage Box fixture.
+- Focused verification: 3 tests / 19 assertions passed; evidence is under
+  `evidence/inventory/2026-09-22/INV-PRODUCT-PUTAWAY-001/`.
+- BrowserSkill comparison is blocked because borrowing the listed authenticated
+  Odoo tab on shared instance `245ea108` timed out awaiting human confirmation.
+  No desktop/mobile or visual-parity claim is made.
+
 ## `INV-PRODUCT-LOTS-001` — Product form Lot/Serial Numbers (2026-09-22)
 
 - Selected the next missing non-transfer, non-rule, non-reordering, non-move-history action: Odoo `action_open_product_lot` on both product forms, from `addons/stock/views/product_views.xml:391-398,514-521` and `addons/stock/models/product.py:647-660,1248-1264`.

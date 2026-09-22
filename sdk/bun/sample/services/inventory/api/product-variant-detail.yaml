@@ -42,6 +42,13 @@ actions:
     params:
       product_id: '{state.inventory_product_variant_detail.id}'
       current_company_name: '{state.inventory_product_variant_detail.company_name}'
+  - id: view_inventory_product_variant_putaway_rules
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /putaway-rules
+    params:
+      product_id: '{state.inventory_product_variant_detail.id}'
+      current_company_name: '{state.inventory_product_variant_detail.company_name}'
   - id: edit_inventory_product_variant
     type: server_form
     permission: inventory.manage
