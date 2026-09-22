@@ -163,6 +163,21 @@ Authenticated desktop/mobile browser interaction and paired Odoo captures
 remain open for the next browser-capable QA run; no visual parity claim is
 made for this backend/form contract slice. Image artifacts remain outside Git.
 
+### 2026-09-22 quotation-send contract verification
+
+The existing bounded implementation was source-hardened after the Update
+Prices slice: the page-level `Send` action now declares `orders.write`, and the
+focused test asserts Odoo's `mail.compose.message` modal target, sent-marking
+context, quotation/sent view bindings from the local Odoo source, and validates
+both the standalone API and joined page/API YAML contracts. The focused suite
+passes **3 tests, 28 assertions**. Evidence is under
+`evidence/order/2026-09-22/sales-quotation-email-001/`.
+
+BrowserSkill reached the authenticated Odoo shell at the exact requested
+`http://localhost:8069/core3_reference` URL, but Odoo returned 404 for that
+path. The borrowed user tab confirmation did not complete; the session was
+stopped and no visual-parity claim is made.
+
 ## Sales order quotation template field (2026-09-21)
 
 The next source-backed Sales order-form gap is the `sale_management` quotation

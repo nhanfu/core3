@@ -103,6 +103,25 @@ discovery of datasource contracts outside Order ownership.
   contract slice; authenticated desktop/mobile composer interaction remains a
   planned gate. No screenshots were added to Git.
 
+### 2026-09-22 quotation-send contract verification
+
+- Stable ID: `SALES-QUOTATION-EMAIL-001`.
+- The already-persisted quotation composer contract was source-hardened: the
+  page `Send` action explicitly declares `orders.write`, and the focused test
+  now checks Odoo's `mail.compose.message` modal target, sent-marking context,
+  quotation/sent `action_quotation_send` view bindings, and validates the
+  standalone API plus joined page/API YAML contracts.
+- Focused verification: `bun test
+  test/sales_quotation_email.integration.test.ts --timeout 30000` — **3
+  passed, 28 assertions, 0 failures**. Existing assertions continue to cover
+  migration replay, durable mail history, draft-to-sent transition, actor
+  timeline, stale/invalid/scope/missing guards, atomic rejection, and restart
+  persistence.
+- BrowserSkill attempt: the exact `http://localhost:8069/core3_reference` URL
+  reached the authenticated Odoo shell but returned Odoo 404. The existing
+  user-tab borrow confirmation did not complete; session was stopped and no
+  visual-parity claim is made. Details: `evidence/order/2026-09-22/sales-quotation-email-001/`.
+
 ## 2026-09-22 Sales order portal Preview slice
 
 - Stable ID: `SALES-ORDER-PREVIEW-001`.

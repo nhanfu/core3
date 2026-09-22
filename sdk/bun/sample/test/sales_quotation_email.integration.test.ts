@@ -4,6 +4,7 @@ import { describe, expect, it } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { validatePageDefinition } from '@core3/server/yaml/schema';
 
 const serviceRoot = join(import.meta.dir, '../services/order');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -24,7 +25,11 @@ async function repositoryForTest(databaseName = ':memory:') {
 describe('Sales quotation email parity slice', () => {
   it('maps Odoo action_quotation_send to a separate mail-composer contract', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
-    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'send_sale_quotation', label: 'Send' }));
+    const source = readFileSync('/home/nhanjs/projects/odoo/addons/sale/models/sale_order.py', 'utf8');
+    const view = readFileSync('/home/nhanjs/projects/odoo/addons/sale/views/sale_order_views.xml', 'utf8');
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'send_sale_quotation', label: 'Send', permission: 'orders.write' }));
+    expect(() => validatePageDefinition(api, { allowExternalSources: true })).not.toThrow();
+    expect(() => validatePageDefinition({ ...page, actions: api.actions }, { allowExternalSources: true })).not.toThrow();
     expect(send).toMatchObject({
       type: 'server_form',
       modal_style: 'mail_composer',
@@ -40,6 +45,13 @@ describe('Sales quotation email parity slice', () => {
     ]);
     expect(mails.query).toContain('FROM sale_order_quotation_mails');
     expect(detail.query).toContain('AS recipient_email');
+    expect(source).toContain('def action_quotation_send(self):');
+    expect(source).toContain("'res_model': 'mail.compose.message'");
+    expect(source).toContain("'target': 'new'");
+    expect(source).toContain("'mark_so_as_sent': True");
+    expect(view).toContain('name="action_quotation_send"');
+    expect(view).toContain('string="Send"');
+    expect(view).toContain("invisible=\"state not in ('sent', 'sale')\"");
   });
 
   it('sends a durable quotation email, transitions draft quotations, and preserves restart state', async () => {
