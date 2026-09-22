@@ -1,0 +1,21 @@
+version: 0.0.21
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS last_test_numbers VARCHAR;
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS last_test_valid_count INTEGER;
+      UPDATE sms_campaigns SET last_test_valid_count = 0 WHERE last_test_valid_count IS NULL;
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS last_test_invalid_numbers VARCHAR;
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS last_test_status VARCHAR;
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS last_test_at TIMESTAMP;
+    down: |
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS last_test_at;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS last_test_status;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS last_test_invalid_numbers;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS last_test_valid_count;
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS last_test_numbers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

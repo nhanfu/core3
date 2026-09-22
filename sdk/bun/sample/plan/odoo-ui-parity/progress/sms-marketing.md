@@ -80,3 +80,19 @@ The real browser transition sequence hung during post-Schedule reload and was
 stopped. Mobile, browser actor/company permissions, reload/restart persistence,
 and paired authenticated Odoo evidence remain unverified. This checkpoint is
 evidence only and does not sign off the module.
+
+## Wave 10 checkpoint (2026-09-22)
+
+`SMS-MAILING-TEST-001` adds the source-backed Odoo SMS mailing Test action and
+sample-SMS wizard contract. The existing mailing detail page exposes a
+`Send a Sample SMS` server form; YAML guards normalize multiline phone input,
+persist valid/skipped results, enforce `sms_marketing.write`, company scope, and
+row-version concurrency, and migrations replay idempotently. Focused coverage
+passes 4 tests / 19 expectations. SMS-specific ESLint, Sass, and diff-check
+pass. The full SMS glob reaches 37 passing tests but is blocked by the
+unrelated Inventory page-schema defect recorded in the evidence ledger.
+
+BrowserSkill was used against `http://localhost:8069` / `core3_reference`; the
+existing authenticated tab borrow confirmation did not complete, and the
+reference does not install `mass_mailing_sms`. No authenticated SMS visual
+claim is made.

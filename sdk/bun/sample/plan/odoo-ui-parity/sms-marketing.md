@@ -380,6 +380,36 @@ used. No authenticated Odoo desktop/mobile capture or visual-parity claim is
 made. Evidence is under
 `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGN-MAILINGS-001/`.
 
+## Bounded action: SMS mailing test wizard (wave 10)
+
+Stable ID: `SMS-MAILING-TEST-001`.
+
+The next uncovered SMS mailing-form workflow is Odoo's `Test` action. The SMS
+override of `mailing.mailing.action_test()` in
+`/home/nhanjs/projects/odoo/addons/mass_mailing_sms/models/mailing_mailing.py`
+opens the `mailing.sms.test` transient wizard. Its form in
+`wizard/mailing_sms_test_views.xml` accepts carriage-return-separated phone
+numbers and submits `action_send_sms`; the wizard sanitizes valid numbers,
+sends them through the provider, and reports invalid numbers.
+
+Core3 maps the wizard to `test_sms_mailing` in
+`services/sms-marketing/api/campaign-detail.yaml`, joined to the existing
+`sms-campaign-detail` page. Migration
+`20260922160000-021-sms-mailing-test.yaml` persists the normalized request,
+valid count, skipped numbers, deterministic test status, and timestamp on the
+SMS mailing. The action requires `sms_marketing.write`, the mailing company
+scope, non-empty input, and an optimistic row version. Provider transport is
+explicitly outside this bounded fixture contract; no real SMS is sent.
+
+Focused coverage is
+`test/sms_marketing_mailing_test.integration.test.ts`. Evidence is under
+`evidence/sms-marketing/2026-09-22/SMS-MAILING-TEST-001/`.
+
+The full SMS glob still reports an unrelated global page-schema blocker in
+`services/inventory/pages/product-template-detail.yaml`: its sixth stat button
+has no `value_field`. The SMS implementation does not edit that concurrent,
+out-of-scope Inventory surface.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

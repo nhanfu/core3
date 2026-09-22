@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: sms_marketing.read
     error_states: { unauthorized: { status: 401, code: SMS_MAILING_UNAUTHORIZED, message: Sign in to view this SMS mailing. }, forbidden: { status: 403, code: SMS_MAILING_FORBIDDEN, message: You do not have permission to view this SMS mailing. }, missing_record: { status: 404, code: SMS_MAILING_NOT_FOUND, message: Mailing not found. }, transport_error: { status: 503, code: SMS_MAILING_DETAIL_UNAVAILABLE, message: SMS Marketing details are temporarily unavailable. } }
-    query: "SELECT id, row_version, company_name, campaign_id, title AS subject, sender_name AS responsible, list_name AS mailing_list_names, list_name AS recipient_model_label, message AS body_plaintext, recipient_count, recipient_count AS sent, recipient_count AS expected, 0 AS scheduled, failed_count AS failed, failed_count AS bounced, CAST(scheduled_at AS VARCHAR) AS schedule_date, CAST(sent_at AS VARCHAR) AS sent_date, state, title AS campaign_name, true AS sms_allow_unsubscribe FROM sms_campaigns WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:company_name IS NULL OR company_name = :company_name) AND id = :id"
+    query: "SELECT id, row_version, company_name, campaign_id, title AS subject, sender_name AS responsible, list_name AS mailing_list_names, list_name AS recipient_model_label, message AS body_plaintext, recipient_count, recipient_count AS sent, recipient_count AS expected, 0 AS scheduled, failed_count AS failed, failed_count AS bounced, CAST(scheduled_at AS VARCHAR) AS schedule_date, CAST(sent_at AS VARCHAR) AS sent_date, state, title AS campaign_name, true AS sms_allow_unsubscribe, last_test_numbers, last_test_valid_count, last_test_invalid_numbers, last_test_status, CAST(last_test_at AS VARCHAR) AS last_test_at FROM sms_campaigns WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:company_name IS NULL OR company_name = :company_name) AND id = :id"
 actions:
   - id: edit_sms_campaign
     type: server_form
@@ -49,6 +49,53 @@ actions:
         - { query: "UPDATE sms_delivery_attempts SET status = 'pending', failure_type = NULL, failure_reason = NULL, attempt_no = attempt_no + 1, row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-21 10:00:00' WHERE campaign_id = :id AND status IN ('error', 'bounce')" }
         - { query: "UPDATE sms_campaigns SET state = 'In Queue', failed_count = 0, scheduled_at = TIMESTAMP '2026-09-21 10:00:00', row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-21 10:00:00' WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'Sent' AND failed_count > 0 AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_RETRY_STALE, message: The SMS mailing changed before failed recipients could be retried. Reload before retrying. }
       result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+  - id: test_sms_mailing
+    type: server_form
+    permission: sms_marketing.write
+    title: Send a Sample SMS
+    description: Send a sample SMS for testing purpose to the numbers below.
+    submit_label: Send Test
+    cancel_label: Discard
+    action: mass_mailing_sms.mailing_sms_test_action
+    handler: yaml_mutation
+    operation: update
+    prefill: state.sms_marketing_mailing_detail
+    refresh: [sms_marketing_mailing_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name)", status: 404, code: SMS_MAILING_NOT_FOUND, message: Mailing not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:numbers AS VARCHAR))) > 0", status: 422, code: SMS_MAILING_TEST_NUMBERS_REQUIRED, message: Enter at least one phone number. }
+      steps:
+        - query: |
+            UPDATE sms_campaigns
+            SET last_test_numbers = TRIM(REPLACE(CAST(:numbers AS VARCHAR), chr(13), '')),
+                last_test_valid_count = (
+                  SELECT COUNT(*)
+                  FROM (SELECT TRIM(UNNEST(string_split(REPLACE(CAST(:numbers AS VARCHAR), chr(13), ''), chr(10)))) AS line) lines
+                  WHERE line <> '' AND regexp_matches(regexp_replace(line, '[^0-9+]', '', 'g'), '^\+?[1-9][0-9]{6,14}$')
+                ),
+                last_test_invalid_numbers = (
+                  SELECT string_agg(line, chr(10) ORDER BY line)
+                  FROM (SELECT TRIM(UNNEST(string_split(REPLACE(CAST(:numbers AS VARCHAR), chr(13), ''), chr(10)))) AS line) lines
+                  WHERE line <> '' AND NOT regexp_matches(regexp_replace(line, '[^0-9+]', '', 'g'), '^\+?[1-9][0-9]{6,14}$')
+                ),
+                last_test_status = CASE WHEN (
+                  SELECT COUNT(*)
+                  FROM (SELECT TRIM(UNNEST(string_split(REPLACE(CAST(:numbers AS VARCHAR), chr(13), ''), chr(10)))) AS line) lines
+                  WHERE line <> '' AND regexp_matches(regexp_replace(line, '[^0-9+]', '', 'g'), '^\+?[1-9][0-9]{6,14}$')
+                ) > 0 THEN 'Sent' ELSE 'Skipped' END,
+                last_test_at = TIMESTAMP '2026-09-22 16:00:00',
+                row_version = row_version + 1,
+                updated_at = TIMESTAMP '2026-09-22 16:00:00'
+            WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: SMS_MAILING_TEST_STATE_CHANGED
+          message: This mailing changed before its test could be sent. Reload and try again.
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    fields:
+      - { field: numbers, label: Number(s), type: textarea, required: true, placeholder: "+32 495 85 85 77\n+33 545 55 55 55" }
   - { id: send_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.send, handler: order_transition, workflow: sms_campaigns, operation: send, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
   - { id: schedule_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.schedule, handler: order_transition, workflow: sms_campaigns, operation: schedule, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
   - { id: cancel_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.cancel, handler: order_transition, workflow: sms_campaigns, operation: cancel, params: { id: '{state.id}', expected_row_version: '{state.sms_marketing_mailing_detail.row_version}' }, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
