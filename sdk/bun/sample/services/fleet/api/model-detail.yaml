@@ -75,4 +75,4 @@ actions:
         - { query: "SELECT 1 AS ok FROM fleet_vehicle_models WHERE id = :id AND vehicle_count = 0", status: 409, code: FLEET_MODEL_IN_USE, message: A model assigned to vehicles cannot be deleted; archive it instead. }
       before_steps: [{ query: "SELECT brand_id AS old_brand_id, active AS old_active FROM fleet_vehicle_models WHERE id = :id", assign: true }]
       steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :old_brand_id AND model_count > 0 AND :old_active = TRUE" }]
-  - { id: view_fleet_model_vehicles, type: navigate, permission: fleet.read, navigate_to: /vehicles, params: { model: '{state.fleet_model_detail.name}' } }
+  - { id: view_fleet_model_vehicles, type: navigate, permission: fleet.read, navigate_to: /vehicles, params: { model_id: '{state.fleet_model_detail.id}' } }

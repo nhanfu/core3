@@ -147,3 +147,17 @@ remain open; no full Fleet sign-off is claimed.
   has no Fleet app/menu; isolated Core3 port 4322 reached protected login but
   the authorized human-help login did not complete. No visual parity claim is
   made; Fleet remains conditionally accepted, not signed off.
+
+## Current wave: model Vehicles stat action `FLEET-MODEL-VEHICLES-001` (2026-09-22)
+
+- Repaired the existing Odoo `action_model_vehicle` navigation so the selected
+  model ID scopes the Vehicles list through durable Fleet relation storage.
+- Focused: **2 passed / 18 assertions**; targeted Models/Vehicles regression:
+  **6 passed / 76 assertions**.
+- Evidence:
+  `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-model-vehicles-action-20260922/`.
+- Browser blocker: signed-in Odoo tab `1770662590` on instance `245ea108` was
+  already borrowed by session `cqvt`; exact blocker and desktop/mobile Agent
+  Window captures are recorded. No visual parity claim is made.
+
+This is a bounded feature result, not Fleet module completion or sign-off.

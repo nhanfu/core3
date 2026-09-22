@@ -43,6 +43,7 @@ deterministic.
 | FLEET-FUNC-012 | Vehicle tag assignment | Vehicle `tag_ids` options, add/remove, color projection, company/archive/duplicate/stale guards, and restart persistence | pass: `fleet_vehicle_tags.integration.test.ts`; visual gate blocked by missing Odoo Fleet |
 | FLEET-FUNC-013 | Manufacturer Models stat action | Manufacturer detail opens the existing Models action with the selected `brand_id`; durable model reads remain filtered after migration replay | pass: `fleet_manufacturer_models_action.integration.test.ts`; Odoo tab borrow blocked |
 | FLEET-FUNC-014 | Vehicle clickable statusbar | Vehicle form statusbar stages update the durable vehicle state with row-version, company, invalid-status, and stale-write guards | pass: `fleet_vehicle_statusbar.integration.test.ts`; BrowserSkill borrow timeout blocks visual gate |
+| FLEET-FUNC-015 | Model Vehicles stat action | Model detail opens the Vehicles action with `model_id`; durable vehicle reads are scoped after migration replay and preserve company/empty/transport guards | pass: `fleet_model_vehicles_action.integration.test.ts`; visual gate blocked by tab ownership |
 
 ## Workflow and integration cases
 
@@ -59,6 +60,7 @@ deterministic.
 | FLEET-WF-008 | Vehicle attachment lifecycle | Vehicle detail → attachment metadata upload → authenticated download/remove; invalid, duplicate, wrong-company, and stale attempts do not write | pass: `fleet_vehicle_attachments.integration.test.ts`; authenticated panel render captured |
 | FLEET-WF-009 | Vehicle tag lifecycle | Vehicle detail → select unassigned tag → add → reload → remove; parent row version and relation guards prevent stale writes | pass: `fleet_vehicle_tags.integration.test.ts`; browser visual gate blocked |
 | FLEET-WF-010 | Manufacturer model navigation | Manufacturer detail → Models stat → `/fleet/config/models?brand_id=...`; only the selected manufacturer’s models are returned | pass: `fleet_manufacturer_models_action.integration.test.ts`; live browser route blocked |
+| FLEET-WF-011 | Model vehicle navigation | Model detail → Vehicles stat → `/vehicles?model_id=...`; only the selected model’s vehicles are returned | pass: `fleet_model_vehicles_action.integration.test.ts`; live browser route blocked |
 
 ## Permission and security cases
 
@@ -85,6 +87,7 @@ deterministic.
 | FLEET-UI-005 | Vehicle attachment panel | 1916x833, 390x844 | Vehicle detail renders seeded attachment cards, Add attachment, Download, Remove, and responsive chatter without horizontal overflow | pass: Core3 captures; Odoo blocked by missing Fleet app |
 | FLEET-UI-006 | Vehicle tag panel | 1440x900, 390x844 | Vehicle detail renders seeded colored tags, Add a tag, Remove, and responsive line-item state without overflow | blocked: no authenticated Core3 runtime and no Odoo Fleet app |
 | FLEET-UI-007 | Manufacturer Models stat action | 1440x900, 390x844 | Manufacturer detail Models stat opens the Odoo list/form Models surface scoped to the selected manufacturer without overflow | blocked: BrowserSkill tab borrow timed out; blocker captures in feature evidence |
+| FLEET-UI-008 | Model Vehicles stat action | 1440x900, 390x844 | Model detail Vehicles stat opens the Vehicles list scoped to the selected model without overflow | blocked: signed-in Odoo tab already borrowed by session `cqvt`; blocker captures in feature evidence |
 
 ## Exit criteria
 

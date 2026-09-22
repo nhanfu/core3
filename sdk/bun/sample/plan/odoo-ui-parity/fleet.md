@@ -1183,6 +1183,37 @@ cleanup record are under
 `odoo-ui-parity/evidence/fleet/2026-09-22/fleet-manufacturer-models-action-20260922/`.
 No live Odoo or Core3 visual parity claim is made.
 
+## Model Vehicles stat action bounded slice (2026-09-22)
+
+Feature ID: `FLEET-MODEL-VEHICLES-001`.
+
+The next missing behavior was Odoo's `fleet.vehicle.model.action_model_vehicle`
+button in `fleet_vehicle_model_views.xml`. Odoo returns the `fleet.vehicle`
+action and sets `search_default_model_id=self.id`; this is a read action, not a
+new menu. Core3 already exposed the model detail `Vehicles` stat, but it passed
+the display name to `/vehicles` and the vehicle datasource ignored it, so the
+selected model did not scope the result.
+
+Core3 now passes `model_id={state.fleet_model_detail.id}` and filters the
+existing `fleet_vehicles` datasource through the durable
+`fleet_vehicle_model_rel` relation. Migrations
+`20260922150000-046-fleet-vehicle-model-rel.yaml` and
+`20260922151000-047-fleet-vehicle-model-rel-data.yaml` are deterministic and
+idempotent. The datasource retains `fleet.read`, company scoping, explicit
+empty/unknown-model results, and `503 FLEET_VEHICLES_UNAVAILABLE` transport
+behavior.
+
+Focused coverage is `test/fleet_model_vehicles_action.integration.test.ts`:
+**2 passed / 18 assertions**; the targeted Models/Vehicles regression set is
+**6 passed / 76 assertions**. Evidence is under
+`odoo-ui-parity/evidence/fleet/2026-09-22/fleet-model-vehicles-action-20260922/`.
+
+BrowserSkill is connected to instance `245ea108`, but the signed-in Odoo tab
+`1770662590` was already borrowed by session `cqvt`; the exact ownership error
+and desktop/mobile Agent Window blocker captures are recorded in the evidence
+directory. The tab was not taken over, and no authenticated Odoo/Core3 visual
+parity claim is made.
+
 ## Vehicle clickable statusbar bounded action (2026-09-22)
 
 Feature ID: `fleet-vehicle-statusbar-20260922`.

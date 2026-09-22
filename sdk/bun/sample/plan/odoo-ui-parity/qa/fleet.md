@@ -331,6 +331,28 @@ or duplicate QA was created.
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
 
+## 2026-09-22 — Model Vehicles stat action
+
+- Feature `FLEET-MODEL-VEHICLES-001` repairs the existing model detail
+  `Vehicles` stat action. It now passes the stable model ID and scopes the
+  Vehicles datasource through durable Fleet model relations.
+- Focused test: `bun test
+  test/fleet_model_vehicles_action.integration.test.ts` — **2 passed / 18
+  assertions**. Targeted Models/Vehicles regression: **6 passed / 76
+  assertions**.
+- Coverage includes local Odoo action mapping, page/API separation, read
+  permission, idempotent relation migration, selected-model filtering,
+  wrong-company isolation, unknown/empty results, and transport error.
+- BrowserSkill blocker: instance `245ea108` listed signed-in Odoo tab
+  `1770662590`, but borrow failed because it was already borrowed by session
+  `cqvt`. Desktop and mobile Agent Window blocker captures plus the exact error
+  are under
+  `evidence/fleet/2026-09-22/fleet-model-vehicles-action-20260922/`.
+  No authenticated Odoo/Core3 visual parity claim is made.
+
+QA state: **conditional bounded functional pass; live visual gate blocked**.
+Fleet remains unsigned-off.
+
 ## 2026-09-22 — Vehicle chatter attachments bounded slice
 
 - Feature `fleet-vehicle-attachments-20260922` adds the Odoo vehicle-form

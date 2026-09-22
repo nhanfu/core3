@@ -1,0 +1,16 @@
+version: 0.0.47
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_model_rel(vehicle_id, model_id, created_at, updated_at) VALUES
+        ('fleet-demo-001', 'fleet-model-001', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-demo-002', 'fleet-model-002', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-demo-003', 'fleet-model-003', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (vehicle_id) DO UPDATE SET model_id = excluded.model_id, updated_at = excluded.updated_at;
+    down: |
+      DELETE FROM fleet_vehicle_model_rel WHERE vehicle_id IN ('fleet-demo-001', 'fleet-demo-002', 'fleet-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,18 @@
+version: 0.0.46
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_model_rel (
+        vehicle_id VARCHAR PRIMARY KEY,
+        model_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_model_rel_model_idx ON fleet_vehicle_model_rel(model_id, vehicle_id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_model_rel;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
