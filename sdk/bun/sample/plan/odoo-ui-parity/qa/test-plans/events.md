@@ -7,6 +7,16 @@ Reference addon/version: event, Odoo 19 Community
 Plan status: approved  
 Last reviewed: 2026-09-22
 
+## Latest bounded cases — reopen cancelled attendee registration (2026-09-22)
+
+Stable feature ID: EVENTS-ATTENDEE-REOPEN-001.
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-017 | functional/data | Events > Reporting > Attendees > cancelled registration > Reopen registration | Cancelled registration becomes Unconfirmed, row version advances, and state persists after reload/restart | pass: events_attendee_reopen.integration.test.ts |
+| EVENTS-WF-012 | workflow/security | List/detail reopen action | `events.write`, missing, non-cancelled, stale, and replay guards reject invalid writes without partial persistence | pass: events_attendee_reopen.integration.test.ts |
+| EVENTS-UI-010 | visual/responsive | Attendee list/detail | Authenticated Odoo and Core3 desktop/mobile captures at 1440x900 and 390x844 | blocked: authenticated Odoo tab borrowed by another BrowserSkill session; no visual claim |
+
 ## Latest bounded cases — event tag category tag_ids editor (2026-09-22)
 
 Stable feature ID: EVENTS-TAGS-001.

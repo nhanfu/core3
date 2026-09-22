@@ -26,3 +26,4 @@ components:
           - { id: confirm_event_attendee, label: Registered, variant: primary, permission: events.write, show_if: "row.state === 'Unconfirmed'" }
           - { id: mark_attendee_attended, label: Mark attended, variant: primary, permission: events.write, show_if: "row.state === 'Registered'" }
           - { id: cancel_event_attendee, label: Cancel registration, variant: danger, permission: events.write, show_if: "row.state !== 'Cancelled'" }
+          - { id: reopen_event_attendee, label: Reopen registration, variant: secondary, permission: events.write, show_if: "row.state === 'Cancelled'" }

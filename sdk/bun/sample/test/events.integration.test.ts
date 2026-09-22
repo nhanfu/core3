@@ -82,15 +82,15 @@ describe('Events attendee parity batch', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     expect(form.statusbar.map((state: any) => state.value)).toEqual(['Unconfirmed', 'Registered', 'Attended', 'Cancelled']);
     expect(form.groups.map((group: any) => group.title)).toEqual(['Attendee', 'Event Information']);
-    expect(form.header_actions.map((action: any) => action.id)).toEqual(['print_attendee_badge', 'print_attendee_full_page_ticket', 'send_attendee_email', 'edit_event_attendee', 'confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
+    expect(form.header_actions.map((action: any) => action.id)).toEqual(['print_attendee_badge', 'print_attendee_full_page_ticket', 'send_attendee_email', 'edit_event_attendee', 'confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail', 'reopen_event_attendee_detail']);
   });
 
   test('guards attendee transitions and seeds answer-line fields', () => {
     const api = yaml('api/attendee-detail.yaml');
-    for (const id of ['mark_attendee_attended_detail', 'cancel_event_attendee_detail']) {
+    for (const id of ['mark_attendee_attended_detail', 'cancel_event_attendee_detail', 'reopen_event_attendee_detail']) {
       const action = api.actions.find((candidate: any) => candidate.id === id);
       expect(action.permission).toBe('events.write');
-      expect(action.mutation.guards[0].status).toBe(409);
+      expect(action.mutation.guards.at(-1).status).toBe(409);
       expect(action.mutation.steps[0].query).toContain('row_version = COALESCE(row_version, 0) + 1');
     }
     const migration = yaml('migrations/20260910110000-004-attendee-detail.yaml');

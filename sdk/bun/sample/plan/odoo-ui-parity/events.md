@@ -1,5 +1,38 @@
 # Events UI parity
 
+## Current bounded batch: Reopen cancelled attendee registration (2026-09-22)
+
+Stable feature ID: EVENTS-ATTENDEE-REOPEN-001.
+
+The next uncovered concrete registration workflow after attendee creation,
+editing, confirmation, attendance, cancellation, email, and answer editing is
+Odoo's `event.registration.action_set_draft`. The Odoo 19 registration form
+keeps the `state` statusbar editable (`readonly="False"`, clickable) and the
+model action writes a cancelled registration back to `draft` / `Unconfirmed`.
+Core3 previously exposed cancellation but had no durable reopen action on the
+attendee list or detail form.
+
+Core3 now adds page-owned `Reopen registration` actions to the existing
+`attendees` and `event-attendee-detail` pages. The matching API fragments own
+the action contracts and use `events.registrations.reset_draft`; a cancelled
+registration is reopened only when its row version is current, the state is
+`Cancelled`, and the actor has `events.write`. The update increments the
+existing durable `event_registrations.row_version`, returns the record, and
+refreshes both list/detail projections. Missing, stale, non-cancelled, and
+replay cases are covered without a new migration because the existing
+registration state/version columns already provide durable storage.
+
+Focused validation is in
+`test/events_attendee_reopen.integration.test.ts` and passes 4 tests / 20
+assertions, including file-backed restart persistence. Live Odoo inspection is
+blocked for this checkpoint: BrowserSkill instance `245ea108` is healthy, but
+the authenticated Odoo tab `1770662590` was initially borrowed by team session
+`wbjh`; the follow-up borrow attempt timed out waiting for human confirmation.
+No independent login or alternate browser was used, no new Odoo desktop/mobile
+captures were produced, and no visual-parity claim is made.
+The exact blocker is recorded under
+`evidence/events/2026-09-22/event-attendee-reopen/`.
+
 ## Current bounded batch: Event tag category tag_ids editor (2026-09-22)
 
 Stable feature ID: EVENTS-TAGS-001.

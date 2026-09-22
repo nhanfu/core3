@@ -1,5 +1,29 @@
 # events QA ledger
 
+## Bounded QA - reopen cancelled attendee registration (2026-09-22)
+
+- Stable feature ID: **EVENTS-ATTENDEE-REOPEN-001**.
+- Source contract: **PASS by local source**. Odoo 19 `event.registration` has
+  `action_set_draft`, and its form state field is editable/clickable; the
+  action writes `draft` (Core3 `Unconfirmed`).
+- YAML ownership and permissions: **PASS**. The list and detail pages own only
+  presentation/actions; matching `attendees` and `event-attendee-detail` API
+  fragments own the `events.registrations.reset_draft` mutations. Both require
+  `events.write`.
+- Durable data and guards: **PASS**. Existing registration state and
+  `row_version` columns persist the transition. Missing, stale, replay, and
+  non-cancelled guards pass without partial writes; file-backed restart retains
+  `Unconfirmed` and row version 3.
+- Focused tests: **PASS**, 4 tests / 20 assertions in
+  `events_attendee_reopen.integration.test.ts`.
+- Odoo browser evidence: **BLOCKED**. BrowserSkill instance `245ea108` was
+  healthy, but tab `1770662590` was initially borrowed by session `wbjh`; the
+  follow-up borrow attempt returned `timed out waiting for human confirmation`.
+  No independent login, Playwright session, credential access, or Odoo
+  screenshot was used.
+- Full module sign-off: **OPEN**. Paired Odoo/Core3 desktop/mobile visual
+  evidence and the broader Events actor matrix remain outstanding.
+
 ## Bounded QA - Event tag category tag_ids editor (2026-09-22)
 
 - Stable feature ID: EVENTS-TAGS-001.

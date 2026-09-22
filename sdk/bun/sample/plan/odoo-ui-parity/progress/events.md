@@ -1,5 +1,18 @@
 # events parity progress
 
+## Bounded feature - reopen cancelled attendee registration (2026-09-22)
+
+Stable feature ID: EVENTS-ATTENDEE-REOPEN-001. The attendee list and detail
+form now expose the source-backed Odoo `action_set_draft` workflow as
+`Reopen registration`, moving only a current cancelled registration to
+Unconfirmed with an optimistic row-version increment. Both page/API pairs stay
+separate, the mutation requires `events.write`, and missing, stale,
+non-cancelled, replay, and file-backed restart cases are covered. Focused
+validation passes 4 tests / 20 assertions. BrowserSkill instance 245ea108 was
+healthy, but the authenticated Odoo tab was borrowed by another team session;
+no Odoo desktop/mobile capture or visual-parity claim is made. Evidence is
+under the event-attendee-reopen evidence folder.
+
 ## Bounded feature - event tag category tag_ids editor (2026-09-22)
 
 Stable feature ID: EVENTS-TAGS-001. The Event Tags Categories detail form now
