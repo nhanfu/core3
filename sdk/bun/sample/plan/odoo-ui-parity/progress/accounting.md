@@ -54,6 +54,21 @@ Owner batch: bank statement attachment workflow (pending verification)
 
 This file records accounting progress only. The aggregate `progress.md` is QA-owned and is not edited by the module owner.
 
+## Candidate: invoice Reviewed action (2026-09-22)
+
+- Stable ID: `ACC-INVOICE-REVIEWED-001`; bounded source action:
+  `account.move.button_set_checked` / `Reviewed`.
+- Core3 implementation: `review_accounting_invoice` on the `invoice-detail`
+  page/API pair; durable `accounting_invoices.checked` migration
+  `20260922170000-053-accounting-invoice-reviewed.yaml`; posted-only,
+  unchecked-only, stale, missing, and permission contracts.
+- Focused verification: `accounting_invoice_reviewed.integration.test.ts` —
+  **3 tests / 24 assertions**, pass.
+- Browser gate: BrowserSkill instance `245ea108` was connected, but the
+  authenticated Odoo tab could not be borrowed; it remained user-owned after
+  the confirmation timeout. No visual-parity claim is made.
+- This is a bounded candidate and does not sign off the Accounting module.
+
 ## QA verification: candidate `9c19f5a4` (2026-09-13)
 
 - Focused attachment test: **1 pass, 11 assertions, 0 failures**; read/write

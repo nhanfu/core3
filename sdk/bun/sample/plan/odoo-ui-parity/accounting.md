@@ -1639,3 +1639,31 @@ persistence. BrowserSkill connected to instance `245ea108`, but borrowing the
 existing authenticated Odoo tab timed out waiting for human confirmation;
 therefore this batch has no new desktop/mobile capture and makes no visual
 parity claim. The exact blocker is recorded in the feature evidence.
+
+## Current batch: invoice Reviewed action (2026-09-22)
+
+Odoo 19 exposes the `Reviewed` object action on posted account moves through
+`addons/account/views/account_move_views.xml`. The button calls
+`account.move.button_set_checked`, is restricted to the Accounting User group,
+and is hidden when the move is not Posted or is already checked. The model
+delegates to `set_moves_checked()`, which marks posted moves as reviewed.
+
+Core3 now adds the stable `review_accounting_invoice` action to the
+page/API-separated `invoice-detail` contract. Migration
+`20260922170000-053-accounting-invoice-reviewed.yaml` adds the durable
+`accounting_invoices.checked` flag. The action requires `accounting.write`,
+accepts only an unchanged posted and unchecked invoice, increments
+`row_version`, refreshes the detail source, and rejects missing, stale,
+non-posted, and already reviewed records without a partial write.
+
+Focused validation passes 3 tests and 24 assertions, including the Odoo source
+mapping, page/API separation, permission/action contract, persistence after
+DuckDB close/reopen, migration replay, and invalid-state guards. The bounded
+evidence index is
+`evidence/accounting/2026-09-22/ACC-INVOICE-REVIEWED-001/README.md`.
+
+BrowserSkill status confirmed connected instance `245ea108`, but the required
+authenticated Odoo tab remained in `scope user` after two borrow attempts and
+never became owned by this session. No live Reviewed click or desktop/mobile
+capture was possible, so this slice makes no visual-parity claim; the exact
+blocker is recorded in the feature evidence.

@@ -856,3 +856,20 @@ sign-off is claimed.
 - Core3 adds `/accounting/invoice-payment` and a Preview `Pay Now` navigation action. The mutation requires `accounting.write`, while the read form and navigation require `accounting.read`; it writes only a pending transaction and does not mark the invoice paid.
 - BrowserSkill connected to instance `245ea108`, but the existing authenticated Odoo tab `1770662590` was already borrowed by session `ddkr`; the session was busy when inspected. The feature did not interrupt or take over that session. No new Pay Now click or desktop/mobile capture was possible, so no visual-parity claim is made. The exact blocker is in the feature evidence browser-check.
 - External provider completion, public access-token sharing, and invoice settlement remain open integration boundaries. This is a bounded candidate, not Accounting module sign-off.
+
+## QA disposition — invoice Reviewed candidate (2026-09-22)
+
+- **ACC-INVOICE-REVIEWED-001:** focused coverage passes (**3 tests / 24
+  assertions**) for Odoo `button_set_checked` source mapping, matching
+  page/API IDs, `accounting.write` action metadata, Posted → reviewed durable
+  state, row-version concurrency, missing/non-posted/already-reviewed guards,
+  and DuckDB restart plus idempotent migration replay.
+- Core3 exposes `Reviewed` only when the invoice detail is Posted and not yet
+  checked. The mutation is service-owned YAML and refreshes the detail query;
+  no client-only state is used.
+- BrowserSkill instance `245ea108` was connected. The required authenticated
+  Odoo tab `1770662590` remained in `scope user` after the borrow confirmation
+  timeout; no borrow ownership or live action result was obtained. The session
+  was stopped without changing the tab. No desktop/mobile capture was possible
+  and no visual-parity claim is made.
+- Disposition: bounded candidate; Accounting module sign-off remains open.

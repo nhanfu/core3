@@ -1,0 +1,14 @@
+version: 0.0.53
+kind: data
+description: Add durable reviewed flag for posted accounting invoices
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS checked BOOLEAN;
+      UPDATE accounting_invoices SET checked = FALSE WHERE checked IS NULL;
+    down: |
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS checked;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
