@@ -568,6 +568,32 @@ mobile.
 - Core3 desktop 1440x900: `/tmp/core3-time-off-summary-desktop-1440x900.png`, SHA-256 `04b3d0dae282d84c85645d6f47ea96cff45600ffbc9507577575a2415e40dd84`
 - Core3 mobile 390x844: `/tmp/core3-time-off-summary-mobile-390x844.png`, SHA-256 `333a1cef0403c810e1ea6d5bb7280762b84c5ecbace64f389eedf517680329e5`
 
+### Current batch: Time Off Summary QWeb-PDF report action
+
+The installed Odoo `action_report_holidayssummary` report action was the next
+eligible missing action after the Summary wizard. The local source declares a
+`qweb-pdf` report named `hr_holidays.report_holidayssummary` using
+`paperformat_hrsummary`; the wizard's `print_report` method sends the selected
+employee context and 60-day date/type parameters to that report.
+
+Core3 keeps the existing By Employee page/API join and Summary modal, changes
+the action contract to `operation: print_report`, and adds migration `0.0.26`
+for durable report metadata and history. A successful print now persists a
+stable run ID, 60-day end date, report/template/paper-format IDs, PDF output,
+filename, matching leave count, total days, actor, and fixed report timestamp.
+The report history datasource is read-bound to `time_off.read`; existing
+missing employee, invalid year/type, and deterministic mutation guards remain
+in place. The migration is idempotent and the history survives file-backed
+restart.
+
+Focused evidence is under
+`evidence/time-off/2026-09-22/TIMEOFF-SUMMARY-REPORT-001/`. BrowserSkill
+instance `245ea108` was healthy, but the authenticated Odoo tab was already
+borrowed by another session and a task-created tab resolved to Discuss without
+`hr_holidays`; the Core3 task tab had no auth session and returned 401. The
+blocker captures are outside Git under `/tmp/core3-odoo-parity/`, so no paired
+desktop/mobile visual-parity claim is made.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

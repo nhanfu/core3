@@ -1,0 +1,24 @@
+version: 0.0.26
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS date_to DATE;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS report_name VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS report_action VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS report_template VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS paperformat VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS output_format VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS filename VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS leave_count INTEGER;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS total_days DECIMAL(18,3);
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS printed_by VARCHAR;
+      ALTER TABLE time_off_summary_runs ADD COLUMN IF NOT EXISTS printed_at TIMESTAMP;
+      CREATE INDEX IF NOT EXISTS time_off_summary_runs_report_idx
+        ON time_off_summary_runs(employee_id, printed_at, id);
+    down: |
+      DROP INDEX IF EXISTS time_off_summary_runs_report_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

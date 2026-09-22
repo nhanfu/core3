@@ -220,3 +220,25 @@ blocker.
   session. A pending existing PDF-tab borrow was cancelled. No Odoo mutation
   or visual-parity claim was made.
 - Disposition: conditional bounded pass; no full Time Off sign-off.
+
+## 2026-09-22 bounded candidate: Time Off Summary QWeb-PDF report
+
+- Stable ID: `TIMEOFF-SUMMARY-REPORT-001`.
+- Source action: Odoo `action_report_holidayssummary`, a `qweb-pdf` report
+  using `hr_holidays.report_holidayssummary` and `paperformat_hrsummary`.
+- Core3 contract: existing `report-by-employee` page/API joined by
+  `page.id: time-off-report-by-employee`; the Summary action now uses
+  `operation: print_report` and persists durable report metadata/history.
+- Focused verification: **PASS**, 4 tests / 19 assertions in
+  `test/time_off_summary_report.integration.test.ts`.
+- Regression: **PASS**, 78 tests / 737 assertions across the Time Off glob
+  after the final query and guard-order validation.
+- Persistence/guards: **PASS**; migration `0.0.26` is replay-safe, history
+  survives file-backed restart, and read/employee/date/type guards remain.
+- Browser gate: **BLOCKED**; BrowserSkill instance `245ea108` was healthy,
+  but the authenticated Odoo tab was borrowed by another session. A task tab
+  resolved to Discuss and the Core3 task route returned 401 without an auth
+  session. Desktop/mobile blocker captures are linked from the evidence
+  README; no visual-parity claim is made.
+- Evidence: `evidence/time-off/2026-09-22/TIMEOFF-SUMMARY-REPORT-001/`.
+- Disposition: conditional bounded pass; no full Time Off sign-off.

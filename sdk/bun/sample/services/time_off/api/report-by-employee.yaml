@@ -13,6 +13,12 @@ datasources:
     pivot:
       fields: [employee_id, employee_name, leave_type_name, date_from, days, request_count, state]
     query: "SELECT r.id, r.employee_id, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.approver, 1 AS request_count FROM leave_requests r WHERE r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01' AND (:q IS NULL OR r.employee_name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from, r.employee_name, r.leave_type_name"
+  - id: time_off_summary_runs
+    permission: time_off.read
+    single: false
+    error_states:
+      transport_error: { status: 503, code: TIME_OFF_SUMMARY_REPORT_UNAVAILABLE, message: Time Off Summary report history is temporarily unavailable. }
+    query: "SELECT id, employee_id, employee_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, holiday_type, report_name, report_action, report_template, paperformat, output_format, filename, leave_count, total_days, printed_by, CAST(printed_at AS VARCHAR) AS printed_at FROM time_off_summary_runs WHERE employee_id = :employee_id ORDER BY printed_at DESC, id DESC"
 actions:
   - id: open_employee_report_request
     type: navigate
@@ -29,7 +35,7 @@ actions:
     success_message: Time Off Summary printed.
     action: time_off.summary.print
     handler: yaml_mutation
-    operation: create
+    operation: print_report
     prefill:
       employee_id: '{row.employee_id}'
       employee_name: '{row.employee_name}'
@@ -37,14 +43,18 @@ actions:
     mutation:
       operation: insert
       table: time_off_summary_runs
-      generated: [id]
-      fields: [employee_id, employee_name, date_from, holiday_type]
+      fields: [employee_id, employee_name, date_from, holiday_type, date_to, report_name, report_action, report_template, paperformat, output_format, filename, leave_count, total_days, printed_by, printed_at]
       required: [employee_id, employee_name, date_from, holiday_type]
       defaults: { date_from: '2026-09-01', holiday_type: Approved }
       guards:
+        - assign: true
+          query: "SELECT 'time-off-summary-' || :employee_id || '-' || CAST((SELECT COUNT(*) + 1 FROM time_off_summary_runs WHERE employee_id = :employee_id) AS VARCHAR) AS id, CAST(CAST(:date_from AS DATE) + INTERVAL '59 days' AS DATE) AS date_to, 'Time Off Summary' AS report_name, 'hr_holidays.action_report_holidayssummary' AS report_action, 'hr_holidays.report_holidayssummary' AS report_template, 'paperformat_hrsummary' AS paperformat, 'PDF' AS output_format, 'time-off-summary-' || LOWER(REPLACE(TRIM(CAST(:employee_name AS VARCHAR)), ' ', '-')) || '-' || CAST(:date_from AS VARCHAR) || '.pdf' AS filename, (SELECT COUNT(*) FROM leave_requests WHERE employee_id = :employee_id AND date_from <= CAST(:date_from AS DATE) + INTERVAL '59 days' AND date_to >= CAST(:date_from AS DATE) AND ((:holiday_type = 'Approved' AND state = 'Approved') OR (:holiday_type = 'Confirmed' AND state = 'Submitted') OR (:holiday_type = 'both' AND state IN ('Submitted', 'Approved')))) AS leave_count, COALESCE((SELECT SUM(days) FROM leave_requests WHERE employee_id = :employee_id AND date_from <= CAST(:date_from AS DATE) + INTERVAL '59 days' AND date_to >= CAST(:date_from AS DATE) AND ((:holiday_type = 'Approved' AND state = 'Approved') OR (:holiday_type = 'Confirmed' AND state = 'Submitted') OR (:holiday_type = 'both' AND state IN ('Submitted', 'Approved')))), 0) AS total_days, COALESCE(NULLIF(CAST(:current_user_name AS VARCHAR), ''), 'Time Off User') AS printed_by, TIMESTAMP '2026-01-15 08:00:00' AS printed_at"
+          status: 422
+          code: TIME_OFF_SUMMARY_REPORT_DERIVATION_FAILED
+          message: Could not prepare the Time Off Summary report.
         - { query: "SELECT id FROM leave_requests WHERE employee_id = :employee_id LIMIT 1", status: 404, code: TIME_OFF_SUMMARY_EMPLOYEE_NOT_FOUND, message: Employee not found for this summary. }
         - { query: "SELECT 1 AS ok WHERE CAST(:date_from AS DATE) >= DATE '2026-01-01' AND CAST(:date_from AS DATE) < DATE '2027-01-01'", status: 422, code: TIME_OFF_SUMMARY_DATE_INVALID, message: Summary date must be in 2026. }
-        - { query: "SELECT 1 AS ok WHERE CAST(:holiday_type AS VARCHAR) IN ('Approved', 'Confirmed', 'both')", status: 422, code: TIME_OFF_SUMMARY_TYPE_INVALID, message: Select an approved, confirmed, or combined time off type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:holiday_type AS VARCHAR) IN ('Approved', 'Confirmed', 'both')", status: 422, code: TIME_OFF_SUMMARY_TYPE_INVALID, message: 'Select an approved, confirmed, or combined time off type.' }
       result: { query: "SELECT * FROM time_off_summary_runs WHERE id = :id" }
     fields:
       - { field: employee_id, label: Employee, type: hidden, required: true }

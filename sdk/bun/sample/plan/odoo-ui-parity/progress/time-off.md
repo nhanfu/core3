@@ -5,6 +5,23 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: `6300ab0a`
 
+## 2026-09-22 bounded candidate: Time Off Summary QWeb-PDF report
+
+Implemented stable ID `TIMEOFF-SUMMARY-REPORT-001` for Odoo's installed
+`action_report_holidayssummary`. The existing employee Summary wizard now uses
+the declarative `print_report` operation and records durable Odoo report
+metadata, PDF output, the 60-day period, matching leave measures, filename,
+actor, and deterministic run history. Migration `0.0.26` is replay-safe; page
+and API remain separate and joined by `page.id`.
+
+Focused verification passes 4 tests / 19 assertions; the full Time Off glob
+passes 78 tests / 737 assertions. BrowserSkill instance `245ea108` was
+healthy, but the authenticated Odoo tab was already borrowed by another
+session; task-created Odoo navigation resolved to Discuss and the task-created
+Core3 route returned 401 without an auth session. Desktop/mobile blocker
+captures are documented in the evidence directory and no visual-parity claim
+is made. Time Off remains conditional and unsigned-off.
+
 ## Bounded draft deletion slice
 
 ## QA-pending candidate `047cbd03` (2026-09-13)
