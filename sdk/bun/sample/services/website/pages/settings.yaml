@@ -20,3 +20,7 @@ components:
             fields:
               - { field: website_name, label: Website, description: Settings on this page apply to the selected website., type: info }
               - { field: favicon_file_name, label: Favicon, description: Set your website's name and favicon, displayed in the browser tab next to the page title., type: image, accept: 'image/*,.ico', upload_action: upload_website_favicon, url_field: favicon_data_url }
+          - title: Tracking & Consent
+            fields:
+              - { field: cookies_bar, label: Cookies bar, description: Display a customizable cookies bar on your website., type: checkbox }
+              - { field: block_third_party_domains, label: Block tracking 3rd-party services, description: Block third-party services that track users until they give consent., type: checkbox }

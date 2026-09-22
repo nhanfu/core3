@@ -7,7 +7,7 @@ datasources:
       unauthorized: { status: 401, code: WEBSITE_SETTINGS_UNAUTHENTICATED, message: Sign in to view Website settings. }
       forbidden: { status: 403, code: WEBSITE_SETTINGS_FORBIDDEN, message: You do not have permission to manage Website settings. }
       transport_error: { status: 503, code: WEBSITE_SETTINGS_UNAVAILABLE, message: Website settings are temporarily unavailable. }
-    query: "SELECT id, row_version, name, name AS website_name, domain, favicon_file_name, favicon_mime_type, favicon_size_bytes, CASE WHEN COALESCE(favicon_content_base64, '') <> '' THEN 'data:' || favicon_mime_type || ';base64,' || favicon_content_base64 ELSE NULL END AS favicon_data_url FROM website_websites WHERE id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001')"
+    query: "SELECT id, row_version, name, name AS website_name, domain, cookies_bar, COALESCE(block_third_party_domains, TRUE) AS block_third_party_domains, favicon_file_name, favicon_mime_type, favicon_size_bytes, CASE WHEN COALESCE(favicon_content_base64, '') <> '' THEN 'data:' || favicon_mime_type || ';base64,' || favicon_content_base64 ELSE NULL END AS favicon_data_url FROM website_websites WHERE id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001')"
     meta: { empty_state: { title: Website settings unavailable, description: Select an existing website before editing its settings. } }
 actions:
   - id: save_website_identification
@@ -20,7 +20,7 @@ actions:
           body: {
             id: row.id,
             expected_row_version: row.row_version,
-            values: { name: row.name, domain: row.domain },
+            values: { name: row.name, domain: row.domain, cookies_bar: row.cookies_bar, block_third_party_domains: row.block_third_party_domains },
           },
         });
       }
@@ -34,14 +34,15 @@ actions:
       operation: update
       table: website_websites
       key_field: id
-      fields: [name, domain]
+      fields: [name, domain, cookies_bar, block_third_party_domains]
+      boolean_fields: [cookies_bar, block_third_party_domains]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM website_websites WHERE id = :id", status: 404, code: WEBSITE_SETTINGS_NOT_FOUND, message: Website settings no longer exist. }
         - { query: "SELECT id FROM website_websites WHERE id = :id AND row_version = :expected_row_version", status: 409, code: WEBSITE_SETTINGS_STALE, message: Website settings changed before they could be saved. Reload before saving. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) <= 120", status: 422, code: WEBSITE_SETTINGS_NAME_INVALID, message: Enter a website name between 1 and 120 characters. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(TRIM(CAST(:domain AS VARCHAR)), '') = '' OR regexp_matches(TRIM(CAST(:domain AS VARCHAR)), '^(http|https)://[^ ]+$')", status: 422, code: WEBSITE_SETTINGS_DOMAIN_INVALID, message: Enter a valid http or https website address. }
-      result: { query: "SELECT id, row_version, name, name AS website_name, domain FROM website_websites WHERE id = :id" }
+      result: { query: "SELECT id, row_version, name, name AS website_name, domain, cookies_bar, block_third_party_domains FROM website_websites WHERE id = :id" }
   - id: upload_website_favicon
     type: upload
     permission: website.manage

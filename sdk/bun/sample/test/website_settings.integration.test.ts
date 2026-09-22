@@ -27,7 +27,7 @@ describe('Website settings identification parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(api.datasources.map((source: any) => source.id)).toContain('website_settings');
     expect(config.items).toContainEqual({ path: '/website-settings', label: 'Settings', icon: 'settings', permission: 'website.manage' });
-    expect(page.components[0].tabs[0].sections.map((section: any) => section.title)).toEqual(['General', 'Website Identification']);
+    expect(page.components[0].tabs[0].sections.map((section: any) => section.title)).toEqual(['General', 'Website Identification', 'Tracking & Consent']);
     expect(api.actions.find((action: any) => action.id === 'website_settings_update_server')).toMatchObject({ permission: 'website.manage', action: 'website.settings.update' });
   });
 
