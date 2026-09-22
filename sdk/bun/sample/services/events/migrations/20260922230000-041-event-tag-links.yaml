@@ -1,0 +1,34 @@
+version: 0.0.41
+kind: schema
+description: Durable Odoo Events event.event tag_ids relation
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_event_tags (
+        id VARCHAR PRIMARY KEY,
+        event_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        UNIQUE (event_id, tag_id)
+      );
+      CREATE INDEX IF NOT EXISTS event_event_tags_event_idx ON event_event_tags(event_id, sequence, id);
+      CREATE INDEX IF NOT EXISTS event_event_tags_tag_idx ON event_event_tags(tag_id, event_id);
+      INSERT INTO event_event_tags(id, event_id, tag_id, sequence, row_version)
+      SELECT 'event-tag-link-event-demo-001-music', 'event-demo-001', t.id, 10, 1
+      FROM event_tags t
+      WHERE t.id = 'event-tag-culture-music'
+        AND EXISTS (SELECT 1 FROM events WHERE id = 'event-demo-001')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_event_tags(id, event_id, tag_id, sequence, row_version)
+      SELECT 'event-tag-link-event-demo-001-conference', 'event-demo-001', t.id, 20, 1
+      FROM event_tags t
+      WHERE t.id = 'event-tag-activity-conference'
+        AND EXISTS (SELECT 1 FROM events WHERE id = 'event-demo-001')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_event_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

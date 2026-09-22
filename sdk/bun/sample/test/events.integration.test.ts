@@ -57,12 +57,13 @@ describe('Events attendee parity batch', () => {
     const page = yaml('pages/event-detail.yaml');
     const tabs = page.components.find((component: any) => component.type === 'TabGroup');
     expect(tabs).toMatchObject({ mount_in: 'previous-panel' });
-    expect(tabs.tabs.map((tab: any) => tab.label)).toEqual(['Tickets', 'Communication', 'Questions', 'Slots']);
+    expect(tabs.tabs.map((tab: any) => tab.label)).toEqual(['Tickets', 'Communication', 'Questions', 'Tags', 'Slots']);
     expect(yaml('api/event-detail.yaml').datasources.map((source: any) => source.id)).toEqual([
-      'event_detail', 'event_registrations', 'event_tickets', 'event_detail_questions', 'event_detail_question_options', 'event_detail_slots', 'event_detail_communications', 'event_badge_background', 'event_detail_activities', 'event_detail_chatter',
+      'event_detail', 'event_registrations', 'event_detail_tags', 'event_detail_tag_options', 'event_tickets', 'event_detail_questions', 'event_detail_question_options', 'event_detail_slots', 'event_detail_communications', 'event_badge_background', 'event_detail_activities', 'event_detail_chatter',
     ]);
     expect(tabs.tabs.find((tab: any) => tab.id === 'tickets').components[0].source).toBe('event_tickets');
     expect(tabs.tabs.find((tab: any) => tab.id === 'questions').components[0].source).toBe('event_detail_questions');
+    expect(tabs.tabs.find((tab: any) => tab.id === 'tags').components[0].source).toBe('event_detail_tags');
     expect(tabs.tabs.find((tab: any) => tab.id === 'slots').components[0].source).toBe('event_detail_slots');
   });
 

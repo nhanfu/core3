@@ -165,6 +165,28 @@ components:
             page_size: 50
             row_actions: menu
             empty_state: { title: No questions, description: Registration questions will appear here. }
+      - id: tags
+        label: Tags
+        components:
+          - type: LineItemGrid
+            source: event_detail_tags
+            parent_source: event_detail
+            title: Tags
+            description: Assign the reusable event tags defined in Event Tags Categories.
+            variant: odoo_x2many
+            page_size: 50
+            row_key: id
+            actions:
+              - { id: add_event_detail_tag, label: Add a tag, variant: primary, permission: events.write }
+            empty_state: { title: No tags, description: Add a tag to classify this event. }
+            children:
+              - { type: LineItemField, id: name, field: name, label: Tag, readonly: true }
+              - { type: LineItemField, id: category, field: category, label: Category, readonly: true }
+              - { type: LineItemField, id: color, field: color, label: Color, readonly: true }
+              - type: LineItemActions
+                id: event_detail_tag_actions
+                actions:
+                  - { id: remove_event_detail_tag, label: Remove, icon: trash, variant: danger, permission: events.write }
       - id: slots
         label: Slots
         components:
