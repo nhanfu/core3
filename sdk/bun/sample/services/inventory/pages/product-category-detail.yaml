@@ -23,7 +23,9 @@ components:
         fields:
           - { field: product_count, label: Products, type: number, readonly: true }
           - { field: child_count, label: Child Categories, type: number, readonly: true }
-    stat_buttons: [{ id: view_inventory_product_category_products, label: Products, icon: boxes, value_field: product_count, permission: inventory.read }]
+    stat_buttons:
+      - { id: view_inventory_product_category_products, label: Products, icon: boxes, value_field: product_count, permission: inventory.read }
+      - { id: view_inventory_product_category_putaway_rules, label: Putaway Rules, icon: route, value_field: putaway_rule_count, permission: inventory.multi_location, show_if: "record.putaway_rule_count > 0" }
   - type: ListView
     variant: odoo
     source: inventory_product_category_children

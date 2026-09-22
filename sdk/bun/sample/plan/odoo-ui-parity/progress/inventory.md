@@ -1663,6 +1663,27 @@ Inventory sign-off remains open.
 
 Full Inventory sign-off remains open.
 
+## `INV-CATEGORY-PUTAWAY-001` — Product Category Putaway Rules (2026-09-22)
+
+- Compared Odoo's Product Category form button in
+  `addons/stock/views/product_views.xml:8-14` with
+  `stock.category_open_putaway` in
+  `addons/stock/views/product_strategy_views.xml:101-107`. The source action
+  opens the existing Putaway Rules list with the active category context and
+  is gated by the multi-location group.
+- Added the category detail `Putaway Rules` stat action and active rule count;
+  it navigates through the existing `/putaway-rules` page/API pair with stable
+  category and company parameters. The existing datasource now resolves the
+  category ID to the durable category rule relation and preserves its
+  company, empty, search, and transport states.
+- Focused verification: `bun test
+  test/inventory_product_category_putaway.integration.test.ts --timeout 30000`
+  — 3 tests / 15 assertions passed. Evidence:
+  `evidence/inventory/2026-09-22/INV-CATEGORY-PUTAWAY-001/`.
+- BrowserSkill blocker: shared authenticated Odoo tab was listed but could not
+  be borrowed because it was already owned by session `jqig`; no visual parity
+  sign-off is claimed.
+
 ## `INV-PRODUCT-PUTAWAY-001` — Product form Putaway Rules (2026-09-22)
 
 - Added the Odoo `action_view_related_putaway_rules` action to Product and

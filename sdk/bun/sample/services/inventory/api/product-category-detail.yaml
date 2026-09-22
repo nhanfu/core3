@@ -17,7 +17,11 @@ datasources:
       )
       SELECT c.id, c.row_version, c.name, c.parent_id, COALESCE(parent.name, '') AS parent_name,
         COALESCE(paths.complete_name, c.name) AS complete_name, c.company_name,
-        COUNT(DISTINCT child.id) AS child_count, COUNT(DISTINCT v.id) AS product_count
+        COUNT(DISTINCT child.id) AS child_count, COUNT(DISTINCT v.id) AS product_count,
+        (SELECT COUNT(*) FROM inventory_putaway_rules r
+          WHERE r.active = TRUE AND r.category_name = c.name
+            AND (c.company_name = 'Shared' OR r.company_name = c.company_name
+              OR (c.company_name = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)'))) AS putaway_rule_count
       FROM inventory_product_categories c
       LEFT JOIN inventory_product_categories parent ON parent.id = c.parent_id
       LEFT JOIN category_paths paths ON paths.id = c.id
@@ -42,6 +46,14 @@ actions:
     permission: inventory.read
     navigate_to: /product-variants
     params: { q: '{state.inventory_product_category_detail.name}' }
+  - id: view_inventory_product_category_putaway_rules
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /putaway-rules
+    params:
+      category_id: '{state.inventory_product_category_detail.id}'
+      category_name: '{state.inventory_product_category_detail.name}'
+      current_company_name: '{state.inventory_product_category_detail.company_name}'
   - id: edit_inventory_product_category
     type: server_form
     permission: inventory.manage

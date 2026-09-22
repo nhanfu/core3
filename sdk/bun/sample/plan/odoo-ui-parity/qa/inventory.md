@@ -426,6 +426,38 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Product Category Putaway Rules QA — `INV-CATEGORY-PUTAWAY-001`
+
+- Odoo source/action: PASS. The Product Category form declares the
+  `category_open_putaway` stat action at
+  `addons/stock/views/product_views.xml:8-14`; its action definition at
+  `addons/stock/views/product_strategy_views.xml:101-107` filters the existing
+  `stock.putaway.rule` list by the active category and fixes the category
+  context.
+- Core3 contract: PASS. `pages/product-category-detail.yaml` remains
+  presentation-only and `api/product-category-detail.yaml` adds the
+  multi-location `Putaway Rules` navigation action, joined by `page.id`.
+  `api/putaway-rules.yaml` consumes `category_id` and the category detail
+  exposes `putaway_rule_count` from durable rules.
+- Focused verification: PASS — 3 tests / 15 assertions in
+  `inventory_product_category_putaway.integration.test.ts`; adjacent Product
+  Categories and Product/Putaway Rules contract tests pass except for the
+  pre-existing global discovery schema failure from unrelated `success_message`
+  action fields.
+- Persistence/permissions: PASS. Existing deterministic category-rule data
+  survives migration replay and file-backed restart; the navigation requires
+  `inventory.multi_location`, while the existing contextual list remains
+  read-only and CRUD stays manager-owned.
+- Browser evidence: BLOCKED. BrowserSkill listed the authenticated Odoo tab on
+  `http://localhost:8069` for `core3_reference`, but borrow was denied because
+  another session already owned it. No authenticated desktop/mobile captures or
+  visual-parity claim is made. Exact details are under
+  `evidence/inventory/2026-09-22/INV-CATEGORY-PUTAWAY-001/`.
+
+QA disposition: PASS for the bounded durable Core3 category action;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.
+
 ## Inventory Product form Storage Capacities QA — `INV-PRODUCT-STORAGE-CAPACITY-001`
 
 - Odoo source/action: PASS. Product and product-template forms expose

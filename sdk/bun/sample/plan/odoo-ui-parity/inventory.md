@@ -1775,6 +1775,38 @@ comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
 
+## Configuration > Products > Category Putaway Rules — `INV-CATEGORY-PUTAWAY-001` (2026-09-22)
+
+This bounded slice closes the uncovered Product Category form `Putaway Rules`
+stat action. Odoo adds the button in
+`addons/stock/views/product_views.xml:8-14`; `stock.category_open_putaway` in
+`addons/stock/views/product_strategy_views.xml:101-107` opens the existing
+`stock.putaway.rule` list with `search_default_category_id` set to the active
+category and `fixed_category` enabled. It is restricted to multi-location
+users and is a contextual action, not a second Putaway Rules surface.
+
+Core3 adds the `view_inventory_product_category_putaway_rules` stat action to
+the existing `product-category-detail` page/API pair. It navigates to the
+existing `/putaway-rules` page with stable category ID, category name, and
+company context. The service-owned Putaway Rules datasource applies the
+category ID to the durable category-name rule relation while retaining its
+active/search/empty/503/company behavior. The category detail datasource
+exposes the active category rule count. No new migration or page renderer is
+needed because the deterministic `Office Supplies` category rule already
+exists in the Inventory foundation fixture.
+
+Focused verification is in
+`test/inventory_product_category_putaway.integration.test.ts`: 3 tests / 15
+assertions cover source/action mapping, page/API separation, stat count,
+category filtering, empty/company/transport boundaries, migration replay, and
+file-backed restart persistence. Evidence is under
+`evidence/inventory/2026-09-22/INV-CATEGORY-PUTAWAY-001/`.
+
+BrowserSkill reached the shared Chrome instance and listed the authenticated
+`core3_reference` Odoo tab, but borrowing was denied because another session
+already owned it. No authenticated desktop/mobile capture or visual-parity
+claim is made; the exact blocker is recorded in the feature evidence.
+
 ## Products > Product form Reordering Rules — `INV-PRODUCT-REORDERING-001` (2026-09-22)
 
 Odoo 19 exposes `action_view_orderpoints` on both `product.product` and
