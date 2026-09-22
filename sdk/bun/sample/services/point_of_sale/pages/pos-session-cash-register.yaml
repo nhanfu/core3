@@ -1,0 +1,26 @@
+title: Cash Register
+page:
+  id: pos-session-cash-register
+  route: /point-of-sale/session-cash-register
+  breadcrumb: [Sales, Point of Sale, Session, Cash Register]
+  auth: { require: [accounting.read] }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_session_cash_register
+    search:
+      label: Search cash lines
+      placeholder: Search movement or reason...
+    page_size: 50
+    row_key: id
+    columns:
+      - { field: session_name, label: Session, type: PrimaryEntityCell }
+      - { field: movement_type, label: Type }
+      - { field: amount, label: Amount, align: right }
+      - { field: reason, label: Reason }
+      - { field: cashier_id, label: Cashier }
+      - { field: created_at, label: Date }
+    empty_state:
+      title: No cash register lines
+      description: This session has no cash register lines.

@@ -1,0 +1,23 @@
+page: { id: pos-session-cash-register }
+
+datasources:
+  - id: pos_session_cash_register
+    single: false
+    permission: accounting.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_CASH_REGISTER_UNAUTHORIZED, message: Sign in to view the cash register. }
+      forbidden: { status: 403, code: POS_SESSION_CASH_REGISTER_FORBIDDEN, message: You do not have access to this cash register. }
+      transport_error: { status: 503, code: POS_SESSION_CASH_REGISTER_UNAVAILABLE, message: The cash register is temporarily unavailable. }
+    query: |
+      SELECT m.id, m.session_id, s.name AS session_name, s.config,
+        m.movement_type,
+        CAST(m.amount AS DOUBLE) AS amount,
+        m.reason, m.cashier_id,
+        CAST(m.created_at AS VARCHAR) AS created_at
+      FROM pos_cash_movements m
+      JOIN pos_sessions s ON s.id = m.session_id
+      WHERE m.session_id = :session_id
+        AND s.id = :session_id
+        AND s.company = :current_company_name
+        AND (:q IS NULL OR m.reason ILIKE '%' || :q || '%' OR m.movement_type ILIKE '%' || :q || '%')
+      ORDER BY m.created_at DESC, m.id

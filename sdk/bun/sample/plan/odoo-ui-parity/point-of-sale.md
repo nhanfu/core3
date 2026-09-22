@@ -1576,3 +1576,33 @@ Focused coverage is `test/pos_session_continue_selling.integration.test.ts`:
 write/read permissions, company boundary, touch datasource handoff, and
 file-backed session persistence. Browser verification remains pending the
 single post-test BrowserSkill attempt.
+
+## Current bounded batch: Session > Cash Register action
+
+Feature ID: `POS-SESSION-CASH-REGISTER-001`. The local Odoo 19 session form
+exposes `show_cash_register` as a `Cash Register` stat button for
+`account.group_account_readonly`; `pos.session.show_cash_register()` opens the
+selected session's `account.bank.statement.line` records. This action was not
+covered by the preceding Payments, Orders, Pickings, or Continue Selling
+batches.
+
+Core3 now adds the matching `open_session_cash_register` stat action to the
+existing `pos-session-detail` page/API pair and a separate
+`pos-session-cash-register` page/API pair. The selected session and current
+company are both required by the read query, the route and datasource require
+`accounting.read`, and the existing durable POS cash-movement projection is
+used as the service-owned cash-line representation. No migration is required.
+
+Focused coverage is `test/pos_session_cash_register.integration.test.ts`:
+2 tests cover the Odoo view/model mapping, page/API join, accounting-read
+permission, selected-session search, company boundary, and migration replay
+durability. BrowserSkill reached the authenticated Odoo POS app in the
+`core3_reference` database without credentials; no reusable Odoo user tab was
+available to borrow, and the owned session was stopped after the check.
+
+Validation: the two session-focused files pass 4 tests and 39 assertions;
+`test/point_of_sale.integration.test.ts` passes 13 tests and 69 assertions;
+POS discovery registers the new route and datasource; POS CSS build and
+`git diff --check` pass. The repository-wide `bun run audit` remains blocked
+by unrelated duplicate Event actions
+`print_attendee_responsive_html_ticket_document` and `back_to_event_attendee`.

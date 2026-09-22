@@ -25,6 +25,8 @@ datasources:
         CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company AND o.state = 'Paid') AS DOUBLE) AS total_paid,
         CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id AND EXISTS (SELECT 1 FROM pos_sessions ms WHERE ms.id = m.session_id AND ms.company = s.company)) AS DOUBLE) AS net_cash_movements
         ,CAST((SELECT COALESCE(SUM(p.amount), 0) FROM pos_payments p JOIN pos_orders po ON po.id = p.order_id WHERE po.session_id = s.id AND po.company = s.company AND p.company = s.company AND po.state IN ('Paid', 'Invoiced', 'Done')) AS DOUBLE) AS total_payments_amount
+        ,(SELECT COUNT(*) FROM pos_cash_movements m WHERE m.session_id = s.id) AS cash_register_line_count
+        ,TRUE AS cash_control
       FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name
 
   - id: pos_session_orders
@@ -83,6 +85,12 @@ actions:
     permission: pos.write
     navigate_to: /point-of-sale/touch
     params: { id: '{state.id}' }
+
+  - id: open_session_cash_register
+    type: navigate
+    permission: accounting.read
+    navigate_to: /point-of-sale/session-cash-register
+    params: { session_id: '{state.id}' }
 
   - id: open_session_orders
     type: navigate
