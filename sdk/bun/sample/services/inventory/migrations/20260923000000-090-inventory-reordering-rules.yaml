@@ -1,0 +1,16 @@
+version: 0.0.90
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS idx_inventory_orderpoints_rule_surface ON inventory_orderpoints(active, trigger, location_name, product_name, id);
+      INSERT INTO inventory_orderpoints (id, rule_name, product_id, product_name, category_name, location_name, warehouse_name, on_hand, forecast, route, min_qty, max_qty, to_order, unit_name, trigger, state, active, company_name, lead_days, created_at, updated_at)
+      VALUES ('orderpoint-reorder-archived', 'Archived Reordering Rule', 'product-furn-8900', '[FURN_8900] Drawer Black', 'Furniture / Office', 'WH/Stock/Shelf 1', 'WH', 0, 0, 'Buy', 5, 10, 0, 'Units', 'auto', 'Open', FALSE, 'My Company (San Francisco)', 7, TIMESTAMP '2026-01-15 08:10:00', TIMESTAMP '2026-01-15 08:10:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_orderpoints WHERE id = 'orderpoint-reorder-archived';
+      DROP INDEX IF EXISTS idx_inventory_orderpoints_rule_surface;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

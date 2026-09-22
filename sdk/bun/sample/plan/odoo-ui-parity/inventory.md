@@ -2868,3 +2868,45 @@ the exact blocker is under
 `evidence/inventory/2026-09-22/INV-RULES-001/browser-blocker.md`.
 
 Full Inventory sign-off remains open.
+
+## Procurement > Reordering Rules — INV-REORDERING-RULES-001 (2026-09-22)
+
+This bounded slice closes the distinct Odoo stock.action_orderpoint action,
+not the existing Replenishment report. The local Odoo 19 source at
+addons/stock/views/stock_orderpoint_views.xml:193-205 defines a
+list/kanban/form stock.warehouse.orderpoint action named Reordering Rules
+with the automatic-trigger default. The model contract in
+addons/stock/models/stock_orderpoint.py:21-104,252-308 is company-scoped,
+unique by product/location/company, defaults to automatic triggering, validates
+minimum/maximum quantities, and supports archive instead of destructive
+removal.
+
+Core3 adds presentation-only pages/reordering-rules.yaml and
+pages/reordering-rule-detail.yaml, paired with api/reordering-rules.yaml and
+api/reordering-rule-detail.yaml by page.id. The existing durable
+inventory_orderpoints domain table is reused rather than duplicated; migration
+20260923000000-090-inventory-reordering-rules.yaml adds the action-surface
+index and a stable archived fixture. The list defaults to active automatic
+rules and supports archived/all and manual filters; the form supports
+create/edit, archive/restore, and guarded delete.
+
+Guards cover active product/location/warehouse selection, company scope,
+min/max and trigger/route validation, product/location uniqueness even when a
+previous rule is archived, replenishment-history protection, empty/not-found
+and transport datasource states, and optimistic row-version conflicts.
+Focused verification passes 4 tests / 29 assertions in
+test/inventory_reordering_rules.integration.test.ts; UI audit, Inventory
+Sass, full frontend build, focused ESLint, and git diff --check pass.
+
+The Core3 route /reordering-rules is a deliberate discoverable alias for the
+source action: the supplied current stock addon defines stock.action_orderpoint
+but does not contain a current XML menuitem binding for that action. No
+source-menu parity claim is made for the added Core3 navigation item.
+
+BrowserSkill used shared browser instance 245ea108. The signed-in Odoo tab was
+listed but could not be borrowed because it was already owned or being
+borrowed by another active session; no independent login or Playwright
+fallback was used. Desktop/mobile Odoo captures and visual-parity sign-off
+are omitted. The exact blocker is under
+evidence/inventory/2026-09-22/INV-REORDERING-RULES-001/browser-blocker.md.
+Full Inventory sign-off remains open.

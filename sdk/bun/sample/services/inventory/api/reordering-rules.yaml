@@ -1,0 +1,81 @@
+page: { id: reordering-rules }
+datasources:
+  - id: inventory_reordering_rule_products
+    single: false
+    permission: inventory.read
+    query: "SELECT DISTINCT product_name AS value, product_name AS label FROM inventory_stock_report WHERE active = TRUE ORDER BY product_name"
+  - id: inventory_reordering_rule_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT DISTINCT CASE WHEN l.parent_location_id IS NULL THEN w.code || '/' || l.name ELSE w.code || '/Stock/' || l.name END AS value, CASE WHEN l.parent_location_id IS NULL THEN w.code || '/' || l.name ELSE w.code || '/Stock/' || l.name END AS label FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE l.active = TRUE AND l.usage IN ('Internal', 'View') ORDER BY label"
+  - id: inventory_reordering_rule_warehouses
+    single: false
+    permission: inventory.read
+    query: "SELECT code AS value, code AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY code"
+  - id: inventory_reordering_rules
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_REORDERING_RULES_FORBIDDEN, message: You do not have permission to view reordering rules. }
+      transport_error: { status: 503, code: INVENTORY_REORDERING_RULES_UNAVAILABLE, message: Reordering rules are temporarily unavailable. }
+    query: |
+      SELECT o.id, o.row_version, o.rule_name, o.product_id, o.product_name, o.category_name,
+        o.location_name, o.warehouse_name, CAST(o.on_hand AS DOUBLE) AS on_hand,
+        CAST(o.forecast AS DOUBLE) AS forecast, CAST(o.min_qty AS DOUBLE) AS min_qty,
+        CAST(o.max_qty AS DOUBLE) AS max_qty, CAST(o.to_order AS DOUBLE) AS to_order,
+        o.unit_name, o.trigger, CASE o.trigger WHEN 'auto' THEN 'Automatic' ELSE 'Manual' END AS trigger_label,
+        o.active, o.route, o.state, o.company_name, o.lead_days
+      FROM inventory_orderpoints o
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (COALESCE(:active, 'active') = 'all'
+          OR (COALESCE(:active, 'active') = 'active' AND o.active = TRUE)
+          OR (COALESCE(:active, 'active') = 'archived' AND o.active = FALSE))
+        AND (COALESCE(:current_company_name, '') = ''
+          OR o.company_name = :current_company_name
+          OR (:current_company_name = 'Core3 Demo Company' AND o.company_name = 'My Company (San Francisco)'))
+        AND (:q IS NULL OR o.rule_name ILIKE '%' || :q || '%' OR o.product_name ILIKE '%' || :q || '%'
+          OR o.location_name ILIKE '%' || :q || '%' OR o.warehouse_name ILIKE '%' || :q || '%')
+        AND (:trigger IS NULL OR :trigger = '' OR o.trigger = :trigger)
+      ORDER BY o.location_name, o.company_name, o.product_name, o.id
+actions:
+  - id: view_inventory_reordering_rule
+    type: navigate
+    permission: inventory.read
+    navigate_to: /reordering-rules/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_reordering_rule
+    type: server_form
+    permission: inventory.manage
+    title: New Reordering Rule
+    action: inventory.reordering_rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_reordering_rules]
+    success_message: Reordering rule created.
+    mutation:
+      operation: insert
+      table: inventory_orderpoints
+      generated: [id]
+      fields: [rule_name, product_id, product_name, category_name, location_name, warehouse_name, on_hand, forecast, route, min_qty, max_qty, to_order, unit_name, trigger, state, active, company_name, lead_days, created_at, updated_at]
+      required: [product_name, location_name, warehouse_name, min_qty, max_qty]
+      before_steps:
+        - query: "SELECT 'reordering-rule-' || trim(regexp_replace(lower(trim(CAST(:product_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g'), '-') || '-' || trim(regexp_replace(lower(trim(CAST(:location_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g'), '-') AS id FROM inventory_stock_report r WHERE r.product_name = :product_name LIMIT 1"
+          assign: true
+      defaults: { rule_name: Reordering Rule, category_name: Furniture, unit_name: Units, on_hand: 0, forecast: 0, route: Buy, to_order: 0, trigger: auto, state: Open, active: true, company_name: 'My Company (San Francisco)', lead_days: 1, created_at: '2026-01-15 08:00:00', updated_at: '2026-01-15 08:00:00' }
+      guards:
+        - { query: "SELECT r.id AS product_id, r.category_name, r.unit_name, TRIM(CAST(:product_name AS VARCHAR)) || ' / ' || TRIM(CAST(:location_name AS VARCHAR)) AS rule_name FROM inventory_stock_report r WHERE r.product_name = :product_name AND r.active = TRUE", status: 422, code: INVENTORY_REORDERING_RULE_PRODUCT_INVALID, message: Select an active storable product., assign: true }
+        - { query: "SELECT l.id FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE l.active = TRUE AND l.usage IN ('Internal', 'View') AND (w.code || '/' || l.name = :location_name OR w.code || '/Stock/' || l.name = :location_name)", status: 422, code: INVENTORY_REORDERING_RULE_LOCATION_INVALID, message: Select an active internal or virtual location. }
+        - { query: "SELECT id FROM inventory_warehouses WHERE code = :warehouse_name AND state = 'Active'", status: 422, code: INVENTORY_REORDERING_RULE_WAREHOUSE_INVALID, message: Select an active warehouse. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:min_qty AS DECIMAL(18,3)) >= 0 AND CAST(:max_qty AS DECIMAL(18,3)) >= CAST(:min_qty AS DECIMAL(18,3))", status: 422, code: INVENTORY_REORDERING_RULE_RANGE_INVALID, message: Maximum quantity must be greater than or equal to minimum quantity. }
+        - { query: "SELECT 1 AS ok WHERE :trigger IN ('auto', 'manual') AND :route IN ('Buy', 'Manufacture', 'MTO')", status: 422, code: INVENTORY_REORDERING_RULE_OPTIONS_INVALID, message: Choose a valid trigger and route. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_orderpoints WHERE product_name = :product_name AND location_name = :location_name AND company_name = COALESCE(:company_name, 'My Company (San Francisco)'))", status: 409, code: INVENTORY_REORDERING_RULE_EXISTS, message: A reordering rule already exists for this product and location. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, 'My Company (San Francisco)') = COALESCE(NULLIF(:current_company_name, ''), 'My Company (San Francisco)') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND COALESCE(:company_name, 'My Company (San Francisco)') = 'My Company (San Francisco)')", status: 403, code: INVENTORY_REORDERING_RULE_COMPANY_FORBIDDEN, message: The reordering rule company is outside the current company. }
+      result: { query: "SELECT * FROM inventory_orderpoints WHERE id = :id" }
+    fields:
+      - { field: product_name, label: Product, type: select, options_source: inventory_reordering_rule_products, required: true }
+      - { field: location_name, label: Location, type: select, options_source: inventory_reordering_rule_locations, required: true }
+      - { field: warehouse_name, label: Warehouse, type: select, options_source: inventory_reordering_rule_warehouses, required: true }
+      - { field: min_qty, label: Minimum Quantity, type: number, required: true, min: 0, default: 0 }
+      - { field: max_qty, label: Maximum Quantity, type: number, required: true, min: 0, default: 0 }
+      - { field: trigger, label: Trigger, type: select, options: [{ value: auto, label: Automatic }, { value: manual, label: Manual }], default: auto }
+      - { field: route, label: Route, type: select, options: [{ value: Buy, label: Buy }, { value: Manufacture, label: Manufacture }, { value: MTO, label: Make To Order }], default: Buy }

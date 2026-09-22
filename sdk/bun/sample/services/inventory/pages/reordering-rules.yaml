@@ -1,0 +1,45 @@
+title: Reordering Rules
+page: { id: reordering-rules, route: /reordering-rules, breadcrumb: [Supply Chain, Inventory, Configuration, Reordering Rules], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_reordering_rules
+    responsive_card: true
+    create_action: create_inventory_reordering_rule
+    create_label: New
+    search: { label: Search reordering rules, placeholder: 'Search rules, products, or locations...' }
+    default_filters: { active: active, trigger: auto }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+      - { field: trigger, label: Trigger, options: [{ id: auto, label: Automatic }, { id: manual, label: Manual }] }
+    group_by:
+      - { field: warehouse_name, label: Warehouse }
+      - { field: location_name, label: Location }
+      - { field: product_name, label: Product }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card: { title: rule_name, subtitle: product_name, fields: [{ field: min_qty, label: Min qty }, { field: max_qty, label: Max qty }, { field: trigger_label, label: Trigger }] }
+    columns:
+      - { field: rule_name, label: Reordering Rule, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: product_name, label: Product, mobile: true }
+      - { field: location_name, label: Location, mobile: true }
+      - { field: warehouse_name, label: Warehouse, mobile: false }
+      - { field: on_hand, label: On Hand, align: right, mobile: false }
+      - { field: forecast, label: Forecast, align: right, mobile: false }
+      - { field: min_qty, label: Min, align: right, mobile: true }
+      - { field: max_qty, label: Max, align: right, mobile: true }
+      - { field: unit_name, label: Unit, mobile: true }
+      - { field: trigger_label, label: Trigger, type: StatusChip, mobile: true }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide, mobile: false }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_reordering_rule
+    row_double_click_action: view_inventory_reordering_rule
+    form_view: { page: apps/services/inventory/pages/reordering-rule-detail.yaml, side_panel: false }
+    empty_state: { title: No reordering rule found, description: Define a minimum stock rule to automatically replenish your inventory. }

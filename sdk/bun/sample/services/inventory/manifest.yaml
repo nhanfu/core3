@@ -47,6 +47,10 @@ menu:
     - id: procurement
       label: Procurement
       items:
+        - path: /reordering-rules
+          label: Reordering Rules
+          icon: refresh
+          permission: inventory.read
         - path: /replenishment
           label: Replenishment
           icon: refresh
