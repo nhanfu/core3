@@ -80,6 +80,19 @@ components:
             - { field: last_sent_at, label: Last sent }
             - { field: checked, label: Reviewed }
     message_source: accounting_invoice_messages
+    attachment_source: accounting_invoice_attachments
+    attachment_panel_open: true
+    attachment_page_size: 100
+    attachment_label: Attachments
+    add_attachment_label: Attach files
+    no_attachments_label: No attachments
+    uploading_label: Uploading…
+    upload_failed_label: Upload failed
+    download_label: Download
+    preview_label: Preview
+    attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
+    attachment_upload_action: upload_accounting_invoice_attachment
+    attachment_download_action: download_accounting_invoice_attachment
     chatter_label: Messages and activities
     chatter_empty: No messages or activities yet.
     message_label: Send message

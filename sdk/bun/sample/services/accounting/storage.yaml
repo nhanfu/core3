@@ -11,6 +11,11 @@ attachments:
       route: /api/accounting/bank-statement-attachments
       permission: accounting.read
       query: SELECT id, attachment_name AS file_name, attachment_type AS mime_type, storage_key FROM accounting_bank_statements WHERE id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR company = :current_company_name) AND attachment_name IS NOT NULL
+  accounting_invoice_attachment:
+    download:
+      route: /api/accounting/invoice-attachments
+      permission: accounting.read
+      query: SELECT id, file_name, mime_type, size_bytes, storage_key, content_base64 FROM accounting_invoice_attachments WHERE id = :attachment_id AND active = TRUE
   accounting_invoice_pdf:
     download:
       route: /api/accounting/invoice-pdfs

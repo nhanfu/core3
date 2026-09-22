@@ -10,6 +10,13 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT id, actor_name, action, action_label, detail, delivery_method, recipient, subject, status, CAST(created_at AS VARCHAR) AS created_at FROM accounting_invoice_messages WHERE invoice_id = :id ORDER BY created_at DESC"
+  - id: accounting_invoice_attachments
+    single: false
+    permission: accounting.read
+    error_states:
+      forbidden: { status: 403, code: ACCOUNTING_INVOICE_ATTACHMENTS_FORBIDDEN, message: You do not have permission to view invoice attachments. }
+      transport_error: { status: 503, code: ACCOUNTING_INVOICE_ATTACHMENTS_UNAVAILABLE, message: Invoice attachments are temporarily unavailable. }
+    query: "SELECT id, invoice_id, row_version, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM accounting_invoice_attachments WHERE active = TRUE AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND invoice_id = :id ORDER BY created_at DESC, id DESC"
   - id: accounting_invoice_print_runs
     single: false
     permission: accounting.read
@@ -21,6 +28,31 @@ datasources:
     error_states: { transport_error: { status: 503, code: ACCOUNTING_INVOICE_PDF_UNAVAILABLE, message: Invoice PDF data is temporarily unavailable } }
     query: "SELECT id, replace(name, '/', '_') || '.pdf' AS file_name, 'application/pdf' AS mime_type, COALESCE(NULLIF(pdf_content_base64, ''), 'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA5OCA+PgpzdHJlYW0KQlQKL0YxIDE4IFRmCjcyIDc2MCBUZAooSW52b2ljZSBQREZcXG5JTlYvMjAyNi8wMDAxXFxuQ29yZTMgQWNjb3VudGluZ1xcblRvdGFsICQgMSw2NTAuMDApIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjQxIDAwMDAwIG4gCjAwMDAwMDAzODcgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo0NTcKJSVFT0YK') AS content_base64 FROM accounting_invoices WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND id = :id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note')"
 actions:
+  - id: upload_accounting_invoice_attachment
+    type: upload
+    action: accounting.invoices.attachments.upload
+    handler: attachment_metadata
+    permission: accounting.write
+    kind: accounting_invoice_attachment
+    params: { invoice_id: '{state.accounting_invoice_detail.id}', expected_row_version: '{state.accounting_invoice_detail.row_version}' }
+    refresh: [accounting_invoice_detail, accounting_invoice_attachments, accounting_invoice_messages]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:current_user_id AS VARCHAR))) > 0", status: 403, code: ACCOUNTING_INVOICE_ATTACHMENT_ACTOR_REQUIRED, message: An authenticated Accounting user is required. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :invoice_id", status: 404, code: ACCOUNTING_INVOICE_NOT_FOUND, message: Invoice not found. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :invoice_id AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_STALE, message: The invoice changed. Reload it before uploading an attachment. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND CAST(:sizeBytes AS BIGINT) BETWEEN 1 AND 5242880", status: 422, code: ACCOUNTING_INVOICE_ATTACHMENT_INVALID, message: Upload a non-empty attachment up to 5 MB. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_invoice_attachments WHERE invoice_id = :invoice_id AND active = TRUE AND LOWER(file_name) = LOWER(TRIM(CAST(:fileName AS VARCHAR))))", status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_DUPLICATE, message: This attachment already exists for the invoice. }
+      steps:
+        - { query: "INSERT INTO accounting_invoice_attachments(id, invoice_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :invoice_id, TRIM(CAST(:fileName AS VARCHAR)), :mimeType, CAST(:sizeBytes AS BIGINT), :storageKey, :current_user_id)", expect_changed: true, status: 404, code: ACCOUNTING_INVOICE_NOT_FOUND, message: Invoice not found. }
+        - { query: "UPDATE accounting_invoices SET row_version = row_version + 1 WHERE id = :invoice_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ACCOUNTING_INVOICE_ATTACHMENT_STALE, message: The invoice changed before the attachment was uploaded. Reload and try again. }
+        - { query: "INSERT INTO accounting_invoice_messages(id, invoice_id, actor_name, action, action_label, detail, status) VALUES(gen_random_uuid(), :invoice_id, :current_user_name, 'accounting.invoices.attachments.upload', 'Uploaded attachment', :fileName, 'Posted')" }
+      result: { query: "SELECT id, invoice_id, row_version, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM accounting_invoice_attachments WHERE id = :attachment_id" }
+  - id: download_accounting_invoice_attachment
+    type: download
+    permission: accounting.read
+    kind: accounting_invoice_attachment
   - id: edit_accounting_invoice
     type: server_form
     permission: accounting.write

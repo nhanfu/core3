@@ -8,6 +8,28 @@ Verification trigger: merge-candidate
 Candidate commit: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
 Owner batch: bank statement attachment workflow (pending verification)
 
+## Candidate: invoice attachment workflow (2026-09-22)
+
+- Stable ID: `ACC-INVOICE-ATTACHMENT-001`; source capability is the Odoo
+  `account.move` attachment/chatter contract, not a duplicate invoice or
+  payment action.
+- Core3 implementation: `invoice-detail` page/API pair, protected storage
+  kind `accounting_invoice_attachment`, and migration
+  `20260922230000-056-accounting-invoice-attachments.yaml`.
+- Focused verification: `accounting_invoice_attachments.integration.test.ts` —
+  **2 tests / 16 assertions**, pass.
+- Regression gates: Accounting **124 tests / 1,339 assertions**, audit **845 /
+  853 / 1,767**, frontend/CSS build, targeted ESLint, and `git diff --check`
+  pass. The package-wide lint script still exposes four pre-existing errors in
+  unrelated files; the new test is clean under direct ESLint.
+- Browser gate: BrowserSkill instance `245ea108` could not borrow tab
+  `1770662590` after the 120-second confirmation deadline. No visual-parity
+  claim; exact blocker and omitted captures are recorded in the feature
+  evidence folder.
+- Remaining slice boundaries: attachment deletion, external delivery, and
+  PDF/report integration are not included. Accounting module sign-off remains
+  blocked by broader browser/actor/visual gates.
+
 ## Scope inventory
 
 - Odoo source: `account` (Odoo 19 Community, demo-enabled reference).

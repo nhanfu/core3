@@ -1729,3 +1729,32 @@ visual-parity claim is made. Exact evidence is under
 SMTP delivery, mail-queue worker execution, and generated payment-receipt PDF
 bytes remain explicit integration follow-up boundaries; this slice is not
 Accounting module sign-off.
+
+## Current batch: invoice attachment workflow (2026-09-22)
+
+Stable feature ID `ACC-INVOICE-ATTACHMENT-001` covers the Odoo `account.move`
+attachment/chatter capability. The local Odoo source declares
+`attachment_ids` on `account.move`, renders the draft attachment preview, and
+uses `<chatter reload_on_attachment="True"/>`; this is a form capability, not a
+standalone menu action.
+
+Core3 now adds the page/API-matched `accounting_invoice_attachments` source to
+`invoice-detail`, shared OdooFormView attachment labels and controls, and
+permissioned `upload_accounting_invoice_attachment` /
+`download_accounting_invoice_attachment` actions. Migration
+`20260922230000-056-accounting-invoice-attachments.yaml` persists file metadata,
+storage keys, active state, row versions, and one deterministic attachment.
+Upload requires `accounting.write`, a signed-in actor, a current invoice row
+version, a non-empty file up to 5 MB, and a unique filename; it increments the
+invoice row version and records an `Uploaded attachment` chatter message.
+Downloads require `accounting.read` and use the Accounting storage contract.
+
+Focused validation passes 2 tests and 16 assertions, including page/API/storage
+separation, read-only denial, duplicate/stale guards, exact download bytes, and
+DuckDB restart persistence. The authenticated Odoo desktop/mobile comparison
+is blocked: BrowserSkill instance `245ea108` could not obtain ownership of the
+user tab `1770662590` before the 120-second confirmation deadline. Exact
+evidence and the no-claim boundary are under
+`evidence/accounting/2026-09-22/ACC-INVOICE-ATTACHMENT-001/`; no screenshots are
+claimed. Attachment deletion, external delivery, and PDF/report integration
+remain outside this bounded slice.

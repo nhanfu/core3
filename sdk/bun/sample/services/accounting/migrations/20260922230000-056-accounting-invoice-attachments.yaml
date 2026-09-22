@@ -1,0 +1,23 @@
+version: 0.0.56
+kind: schema
+description: Persist Accounting invoice attachments and deterministic chatter fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_invoice_attachments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), invoice_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1, file_name VARCHAR NOT NULL,
+        mime_type VARCHAR, size_bytes BIGINT NOT NULL DEFAULT 0, storage_key VARCHAR NOT NULL,
+        content_base64 VARCHAR, uploaded_by VARCHAR, active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_invoice_attachments_invoice ON accounting_invoice_attachments(invoice_id, active, created_at);
+      INSERT INTO accounting_invoice_attachments(id, invoice_id, file_name, mime_type, size_bytes, storage_key, content_base64, uploaded_by)
+      VALUES ('accounting-invoice-attachment-demo-001', 'accounting-invoice-demo-001', 'supplier-quote.txt', 'text/plain', 30, '', 'QWNjb3VudGluZyBpbnZvaWNlIGF0dGFjaG1lbnQK', 'user-admin')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_invoice_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

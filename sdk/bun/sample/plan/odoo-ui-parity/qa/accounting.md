@@ -131,6 +131,32 @@ QA state: qa-verified-partial
 - Desktop/mobile visual parity: all 80 routes render at both viewports; paired Odoo toolbar/layout comparison remains open
 - Tester decision: not signed off; runtime and browser gates remain open
 
+## Bounded QA event: ACC-INVOICE-ATTACHMENT-001 (2026-09-22)
+
+- Scope: Odoo `account.move` attachment/chatter capability mapped to
+  `/accounting/invoice-detail`.
+- Focused contract: `bun test
+  ./test/accounting_invoice_attachments.integration.test.ts --timeout 20000`
+  — **2 passed, 16 assertions, 0 failures**.
+- Full Accounting regression after the change: **124 tests / 1,339 assertions,
+  0 failures** across 47 files with `--timeout 20000`; audit **845 pages / 853
+  routes / 1,767 datasources**; frontend/CSS build and `git diff --check` pass.
+- Targeted ESLint passes for the new Accounting attachment test. The sample
+  package-wide lint command still reports four pre-existing unused-variable
+  errors in unrelated Accounting reset-to-draft, Inventory, and Purchase test
+  files; no lint error remains in this feature's file.
+- Coverage: page/API/storage `page.id` binding, deterministic fixture,
+  read-only upload denial, successful upload, duplicate/stale/actor guards,
+  parent row-version increment, exact protected download bytes, and DuckDB
+  close/reopen persistence.
+- BrowserSkill: instance `245ea108` was connected. The existing Odoo tab
+  `1770662590` remained user-owned after the single 120-second borrow attempt;
+  the session was not allowed to bypass confirmation and the tab was not
+  modified. No authenticated Odoo click or desktop/mobile capture was possible.
+- Decision: bounded functional/data/permission pass; visual case blocked and
+  Accounting remains unsigned-off. Exact evidence is under
+  `evidence/accounting/2026-09-22/ACC-INVOICE-ATTACHMENT-001/`.
+
 ## Bounded QA event: ACC-JOURNAL-REVIEW-001 (2026-09-22)
 
 - Scope: Odoo `accountant_confirm_entries_action` / Review Entries mapped to

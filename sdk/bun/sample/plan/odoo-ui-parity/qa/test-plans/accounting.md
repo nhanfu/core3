@@ -40,6 +40,15 @@ required; development migrations must be idempotent.
 | ACC-FUNC-008 | data | Schema/demo | Reapply migrations on clean/existing development DB without duplicates or moving fixture values | focused suite | pass |
 | ACC-FUNC-009 | functional | Import/export/attachments/print | Exercise available import/export, attachment, report and print actions | Journal Items export contract; Bank Statement attachment contract: `accounting_bank_statement_attachments.integration.test.ts` | partial; Journal Items export and Bank Statement attachment pass, broader actions planned |
 
+### Invoice attachment addendum (2026-09-22)
+
+| Case ID | Class | Surface | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| ACC-INVOICE-ATTACHMENT-001 | functional/data | `/accounting/invoice-detail` attachment panel | Upload/download uses the page/API `invoice-detail` contract, persists metadata and records an invoice chatter event | pass; `accounting_invoice_attachments.integration.test.ts` |
+| ACC-INVOICE-ATTACHMENT-002 | permission/security | Invoice attachment upload/download | `accounting.write` is required for upload; `accounting.read` is required for list/download; no unauthorised mutation | pass at focused API boundary |
+| ACC-INVOICE-ATTACHMENT-003 | data/workflow | Attachment validation and concurrency | Missing actor/invoice, duplicate filename, invalid size, and stale invoice row return guarded errors without partial state | pass at focused mutation contract; invalid-size assertion remains a declared guard |
+| ACC-INVOICE-ATTACHMENT-004 | responsive/visual | Invoice detail attachment panel | Authenticated Odoo/Core3 desktop `1440x900` and mobile `390x844` captures compare attachment/chatter layout | blocked by BrowserSkill user-tab borrow timeout; no visual claim |
+
 ### Invoice Print report addendum (2026-09-21)
 
 | Case ID | Class | Surface | Expected result and evidence | Status |
