@@ -135,3 +135,24 @@ Evidence is under
 instance `245ea108` was reachable, but borrowing the existing authenticated
 Odoo tab did not transfer it into the agent window; the agent window stayed
 `about:blank`. No visual-parity claim is made for this batch.
+
+## Batch 15 - My Expenses dashboard cards (2026-09-22)
+
+Implemented `EXPENSE-FUNC-020`, the Odoo My Expenses dashboard aggregate.
+`pages/expenses.yaml` now starts with the shared `StatRow` cards for To Submit,
+Waiting Approval, and Waiting Reimbursement. `api/expenses.yaml` owns the
+permissioned `expense_dashboard` aggregate, with current-company scope,
+deterministic currency formatting, empty behavior, and an explicit transport
+error. The query mirrors Odoo's `get_expense_dashboard` state rules.
+
+Focused Expenses verification passed 68 tests / 379 assertions across 20
+files; `bun run audit` passed with 865 pages, 873 routes, and 1,832
+datasources; `git diff --check` passed. The Expenses CSS script was not
+available under the current sample package scripts, so no CSS build result is
+claimed.
+
+BrowserSkill read the authenticated Odoo dashboard on the shared reference
+service at 1916x833, but the owned session stopped before screenshot capture;
+the replacement borrow remained pending. No authenticated mobile or Core3
+visual comparison is claimed. Evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-020/`.

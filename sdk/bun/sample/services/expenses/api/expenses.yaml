@@ -16,6 +16,18 @@ datasources:
     single: false
     permission: expenses.read
     query: "SELECT value, label FROM (VALUES ('Company','Paid by Company'), ('Employee','Paid by Employee')) modes(value, label)"
+  - id: expense_dashboard
+    single: true
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_DASHBOARD_UNAVAILABLE, message: Expense dashboard data is temporarily unavailable } }
+    query: |
+      SELECT
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state = 'Draft' THEN e.amount ELSE 0 END), 0)) AS to_submit,
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state = 'Submitted' THEN e.amount ELSE 0 END), 0)) AS waiting_approval,
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state = 'Approved' AND e.payment_method = 'Employee' THEN e.amount ELSE 0 END), 0)) AS waiting_reimbursement
+      FROM expenses e
+      WHERE (:current_company_name IS NULL OR :current_company_name = '' OR e.company_name = :current_company_name)
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
   - id: expense_employees
     single: false
     permission: expenses.read

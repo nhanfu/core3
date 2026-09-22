@@ -13,8 +13,9 @@ describe('Expenses import, export, and print parity slice', () => {
   test('keeps the list page presentation-only and exposes permissioned utility actions', () => {
     const page = yaml('pages/expenses.yaml');
     const api = yaml('api/expenses.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
     expect(page.actions).toBeUndefined();
-    expect(page.components[0].header_actions.map((item: any) => item.id)).toEqual(['import_expenses', 'export_expenses', 'print_expenses']);
+    expect(list.header_actions.map((item: any) => item.id)).toEqual(['import_expenses', 'export_expenses', 'print_expenses']);
     expect(action('import_expenses')).toMatchObject({ type: 'server_form', permission: 'expenses.write', handler: 'yaml_mutation' });
     expect(action('export_expenses')).toMatchObject({ type: 'client', permission: 'expenses.read' });
     expect(action('print_expenses')).toMatchObject({ type: 'client', permission: 'expenses.read' });

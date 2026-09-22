@@ -719,3 +719,36 @@ borrow did not complete: a subsequent command reported `previous session
 command is still running`, and cleanup reported `session is not registered`.
 The session was stopped. No Odoo DOM or desktop/mobile screenshots were read,
 and visual parity remains unclaimed.
+
+## My Expenses dashboard follow-up (2026-09-22)
+
+Feature ID: `EXPENSE-FUNC-020`.
+
+The next uncovered smallest source-backed behavior is the My Expenses dashboard
+summary. Odoo's `hr.expense.get_expense_dashboard` in
+`/home/nhanjs/projects/odoo/addons/hr_expense/models/hr_expense.py:1282-1314`
+returns the three cards shown above the list: `To Submit`, `Waiting Approval`,
+and `Waiting Reimbursement`. The last card is limited to approved,
+employee-paid (`own_account`) expenses. Core3 previously rendered the list and
+activity views without an aggregate dashboard source.
+
+Core3 now adds a presentation-only `StatRow` to `pages/expenses.yaml` and the
+page-bound `expense_dashboard` datasource in `api/expenses.yaml`. The query is
+permissioned, current-company scoped, deterministic, and exposes explicit
+empty and transport-error behavior. It sums Draft, Submitted, and Approved /
+Employee rows according to the Odoo state rules and formats the three values as
+currency cards. No migration is needed because the aggregate reads the
+existing persisted expense rows.
+
+Focused coverage is `test/expenses_dashboard.integration.test.ts`; existing
+Expenses tests that index the list component were updated to locate the shared
+`ListView` by type after the dashboard was added. Evidence is under
+`odoo-ui-parity/evidence/expenses/2026-09-22/EXPENSE-FUNC-020/`.
+
+BrowserSkill observed the authenticated Odoo `/odoo/expenses` dashboard at the
+same `http://localhost:8069` service and `core3_reference` session at a
+1916x833 desktop viewport, including all three cards and the five view tabs.
+The owned session then stopped unexpectedly before a screenshot, and a fresh
+borrow remained pending until cleanup; no authenticated mobile capture or
+Core3 authenticated desktop/mobile comparison was obtained. Visual parity is
+therefore not claimed for this feature.

@@ -13,7 +13,8 @@ describe('Expenses Activity view parity slice', () => {
   test('declares the Odoo Activity view on My Expenses and keeps page/API ownership separate', () => {
     const page = yaml('pages/expenses.yaml');
     const api = yaml('api/expenses.yaml');
-    const activity = page.components[0].views.find((view: any) => view.id === 'activity');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const activity = list.views.find((view: any) => view.id === 'activity');
     expect(page.datasources).toBeUndefined();
     expect(page.page.id).toBe('expenses');
     expect(activity).toMatchObject({

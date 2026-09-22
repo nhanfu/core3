@@ -7,3 +7,4 @@
 - [EXPENSE-FUNC-015](EXPENSE-FUNC-015/README.md) — accounting document smart-button action
 - [EXPENSE-FUNC-016](EXPENSE-FUNC-016/README.md) — Split Expense wizard field, guard, tax, and attachment parity
 - [EXPENSE-FUNC-017](EXPENSE-FUNC-017/README.md) — department approval Form mode and detail binding
+- [EXPENSE-FUNC-020](EXPENSE-FUNC-020/README.md) — My Expenses dashboard cards

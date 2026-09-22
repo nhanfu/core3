@@ -1,6 +1,12 @@
 title: My Expenses
 page: { id: expenses, route: /expenses, breadcrumb: [Expenses, My Expenses], auth: { require: [expenses.read] } }
 components:
+  - type: StatRow
+    source: expense_dashboard
+    stats:
+      - { label: To Submit, field: to_submit }
+      - { label: Waiting Approval, field: waiting_approval }
+      - { label: Waiting Reimbursement, field: waiting_reimbursement }
   - type: ListView
     variant: odoo
     source: expenses_my

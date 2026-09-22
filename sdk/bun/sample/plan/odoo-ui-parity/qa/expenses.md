@@ -266,3 +266,18 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
   63 tests / 345 assertions. Audit, CSS, targeted ESLint, and diff-check pass.
 - BrowserSkill borrow did not complete; the exact session errors and cleanup
   result are recorded in `EXPENSE-FUNC-019/README.md`. No visual claim is made.
+
+## Batch 15 - My Expenses dashboard cards (2026-09-22)
+
+- Candidate scope: `EXPENSE-FUNC-020`, Odoo's `get_expense_dashboard` summary
+  cards on My Expenses.
+- Functional result: **pass**. The focused and full Expenses suites passed 68
+  tests / 379 assertions. Dashboard binding, company scope, Odoo state rules,
+  deterministic currency totals, empty state, and transport error are covered.
+- `bun run audit` passed: 865 pages, 873 routes, 1,832 datasources.
+- `git diff --check` passed. The requested Expenses CSS build command is not a
+  script in the current sample package and was not run successfully.
+- BrowserSkill read the authenticated Odoo `/odoo/expenses` dashboard at
+  1916x833 and confirmed the three dashboard cards. The owned session stopped
+  before screenshot capture; the replacement borrow remained pending. No
+  authenticated mobile capture, Core3 capture, or visual-parity claim exists.
