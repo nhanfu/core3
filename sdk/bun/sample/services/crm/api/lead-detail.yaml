@@ -12,7 +12,18 @@ datasources:
           WHERE duplicate.id <> l.id
             AND ((NULLIF(TRIM(l.email), '') IS NOT NULL AND LOWER(TRIM(duplicate.email)) = LOWER(TRIM(l.email)))
               OR (NULLIF(TRIM(l.phone), '') IS NOT NULL AND REGEXP_REPLACE(duplicate.phone, '[^0-9]+', '', 'g') = REGEXP_REPLACE(l.phone, '[^0-9]+', '', 'g'))
-              OR (l.partner_id IS NOT NULL AND duplicate.partner_id = l.partner_id))) AS duplicate_lead_count
+              OR (l.partner_id IS NOT NULL AND duplicate.partner_id = l.partner_id))) AS duplicate_lead_count,
+        (SELECT COUNT(*) FROM crm_meetings m WHERE m.lead_id = l.id) AS meeting_count,
+        CASE
+          WHEN EXISTS (SELECT 1 FROM crm_meetings m WHERE m.lead_id = l.id AND m.start_at >= CURRENT_TIMESTAMP) THEN 'Next Meeting'
+          WHEN EXISTS (SELECT 1 FROM crm_meetings m WHERE m.lead_id = l.id) THEN 'Last Meeting'
+          ELSE 'No Meeting'
+        END AS meeting_display_label,
+        (SELECT CAST(CASE
+          WHEN EXISTS (SELECT 1 FROM crm_meetings m WHERE m.lead_id = l.id AND m.start_at >= CURRENT_TIMESTAMP)
+            THEN (SELECT MIN(m.start_at) FROM crm_meetings m WHERE m.lead_id = l.id AND m.start_at >= CURRENT_TIMESTAMP)
+          ELSE (SELECT MAX(m.start_at) FROM crm_meetings m WHERE m.lead_id = l.id)
+        END AS VARCHAR)) AS meeting_display_date
       FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.id = :id
   - id: crm_lead_activities
     single: false
@@ -132,6 +143,11 @@ actions:
     type: navigate
     permission: crm.read
     navigate_to: /crm/lead-duplicates
+    params: { id: '{state.id}' }
+  - id: view_crm_lead_meetings
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm/lead-meetings
     params: { id: '{state.id}' }
   - id: convert_lead_create_contact_detail
     type: server_form

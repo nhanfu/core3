@@ -72,6 +72,7 @@ components:
       - { id: reopen_lead_detail, label: Reopen, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Lost'" }
     stat_buttons:
       - { id: view_crm_lead_duplicates, label: Similar Leads, value_field: duplicate_lead_count, permission: crm.read, show_if: "state.crm_lead_detail.duplicate_lead_count > 0" }
+      - { id: view_crm_lead_meetings, label: Meetings, value_field: meeting_count, permission: crm.read, show_if: "state.crm_lead_detail.type === 'opportunity'" }
     group_columns: 2
     groups:
       - title: Opportunity

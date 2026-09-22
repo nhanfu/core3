@@ -1,0 +1,60 @@
+page: { id: crm-lead-meetings }
+
+datasources:
+  - id: crm_lead_meetings_context
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_MEETINGS_UNAUTHORIZED, message: Sign in to view meetings. }
+      forbidden: { status: 403, code: CRM_LEAD_MEETINGS_FORBIDDEN, message: You do not have permission to view meetings. }
+      transport_error: { status: 503, code: CRM_LEAD_MEETINGS_UNAVAILABLE, message: Meeting context is temporarily unavailable. }
+    query: "SELECT id, name, COALESCE(partner_name, '') AS partner_name, COALESCE(salesperson, '') AS salesperson FROM crm_leads WHERE id = :id AND type = 'opportunity'"
+  - id: crm_lead_meetings
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEAD_MEETINGS_UNAUTHORIZED, message: Sign in to view meetings. }
+      forbidden: { status: 403, code: CRM_LEAD_MEETINGS_FORBIDDEN, message: You do not have permission to view meetings. }
+      transport_error: { status: 503, code: CRM_LEAD_MEETINGS_UNAVAILABLE, message: Meeting data is temporarily unavailable. }
+    query: |
+      SELECT m.id, m.row_version, m.lead_id, l.name AS opportunity, m.name,
+        CAST(m.start_at AS VARCHAR) AS start_at, CAST(m.end_at AS VARCHAR) AS end_at,
+        m.location, m.attendee_names, m.state, m.organizer,
+        CAST(m.created_at AS VARCHAR) AS created_at
+      FROM crm_meetings m JOIN crm_leads l ON l.id = m.lead_id
+      WHERE m.lead_id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR m.name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%' OR COALESCE(m.location, '') ILIKE '%' || :q || '%')
+      ORDER BY m.start_at, m.id
+
+actions:
+  - id: create_crm_lead_meeting
+    type: server_form
+    permission: crm.write
+    title: New Meeting
+    submit_label: Create Meeting
+    cancel_label: Discard
+    success_message: Meeting created.
+    action: crm.meetings.create
+    handler: yaml_mutation
+    operation: create
+    params: { lead_id: '{query.id}' }
+    refresh: [crm_lead_meetings, crm_lead_meetings_context]
+    mutation:
+      operation: insert
+      table: crm_meetings
+      generated: [id]
+      fields: [lead_id, name, start_at, end_at, location, attendee_names, description, state, organizer]
+      required: [lead_id, name, start_at, end_at]
+      defaults: { state: Scheduled }
+      guards:
+        - { query: "SELECT id FROM crm_leads WHERE id = :lead_id AND type = 'opportunity' AND stage NOT IN ('Won', 'Lost')", status: 409, code: CRM_LEAD_MEETING_LEAD_INVALID, message: Meetings can only be scheduled for open opportunities. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:name, '') AS VARCHAR))) BETWEEN 1 AND 200 AND TRY_CAST(:start_at AS TIMESTAMP) IS NOT NULL AND TRY_CAST(:end_at AS TIMESTAMP) IS NOT NULL AND TRY_CAST(:end_at AS TIMESTAMP) >= TRY_CAST(:start_at AS TIMESTAMP)", status: 422, code: CRM_LEAD_MEETING_VALUES_INVALID, message: Meeting name and a valid start/end window are required. }
+      result: { query: "SELECT * FROM crm_meetings WHERE id = :id" }
+    fields:
+      - { field: name, label: Meeting, type: text, required: true, placeholder: Renewal review }
+      - { field: start_at, label: Starts at, type: text, required: true, placeholder: '2026-09-25 09:00' }
+      - { field: end_at, label: Ends at, type: text, required: true, placeholder: '2026-09-25 10:00' }
+      - { field: location, label: Location, type: text, placeholder: Meeting room or video link }
+      - { field: attendee_names, label: Attendees, type: text, placeholder: Customer and sales team }
+      - { field: description, label: Description, type: textarea }

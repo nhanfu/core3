@@ -1,0 +1,34 @@
+version: 0.0.34
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_meetings (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        lead_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        start_at TIMESTAMP NOT NULL,
+        end_at TIMESTAMP NOT NULL,
+        location VARCHAR,
+        attendee_names VARCHAR,
+        description VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Scheduled',
+        organizer VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_meetings_lead_start ON crm_meetings(lead_id, start_at);
+      INSERT INTO crm_meetings(id, lead_id, name, start_at, end_at, location, attendee_names, description, state, organizer, created_at, updated_at)
+      VALUES
+        ('crm-meeting-demo-001', 'crm-demo-001', 'Renewal review', TIMESTAMP '2026-09-25 09:00:00', TIMESTAMP '2026-09-25 10:00:00', 'Acme video room', 'Acme Corporation and Admin User', 'Review the renewal proposal.', 'Scheduled', 'Admin User', TIMESTAMP '2026-09-20 09:00:00', TIMESTAMP '2026-09-20 09:00:00'),
+        ('crm-meeting-demo-002', 'crm-demo-001', 'Technical discovery', TIMESTAMP '2026-09-10 14:00:00', TIMESTAMP '2026-09-10 15:00:00', 'Online', 'Acme Corporation and Dispatcher User', 'Confirm technical requirements.', 'Held', 'Dispatcher User', TIMESTAMP '2026-09-01 09:00:00', TIMESTAMP '2026-09-01 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_meetings WHERE id IN ('crm-meeting-demo-001', 'crm-meeting-demo-002');
+      DROP INDEX IF EXISTS idx_crm_meetings_lead_start;
+      DROP TABLE IF EXISTS crm_meetings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,44 @@
+title: Meetings
+page: { id: crm-lead-meetings, route: /crm/lead-meetings, breadcrumb: [CRM, Opportunity, Meetings], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_meetings
+    search: { label: Search meetings, placeholder: Search meetings... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: start_at
+        end_date_field: end_at
+        card: { title: name, subtitle: opportunity, fields: [{ field: location, label: Location }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Meeting, type: PrimaryEntityCell, sortable: true }
+      - { field: opportunity, label: Opportunity }
+      - { field: start_at, label: Starts at }
+      - { field: end_at, label: Ends at }
+      - { field: location, label: Location }
+      - { field: attendee_names, label: Attendees }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    selectable: false
+    create_action: create_crm_lead_meeting
+    empty_state: { title: Schedule a meeting, description: Meetings linked to this opportunity will appear here. }
+  - type: ContactGrid
+    source: crm_lead_meetings_context
+    row_key: id
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: salesperson, label: Salesperson }
+
+actions:
+  - id: back_to_crm_lead_from_meetings
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{query.id}' }
