@@ -1,6 +1,35 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded Product Image Delete slice; module sign-off remains open)
+Status: qa-in-progress (bounded Online Sales Analysis slice; module sign-off remains open)
+
+## Bounded feature — Online Sales Analysis (`ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`)
+
+Wave 54 selects the next missing concrete Website Sale action after the
+catalog/media and wishlist slices: Odoo's Reporting > Online Sales menu entry
+`sale_report_action_dashboard`. The Odoo 19 action is named “Online Sales
+Analysis”, targets `sale.report`, opens `pivot,graph`, limits rows to website
+orders, and defaults the Confirmed Orders filter. Its search view supports
+date, product, product category, customer, customer country, company, and
+matching group-by choices; the website pivot uses order date rows, status
+columns, and untaxed revenue as its primary measure.
+
+Core3 had no eCommerce reporting menu, page, or datasource for this action.
+It now adds the `/ecommerce/reporting/online-sales-analysis` route and a
+Reporting > Online Sales Analysis manifest entry. The page and API remain
+separate and join by `page.id: ecommerce-online-sales-analysis`; the API reads
+the durable `ecommerce_orders` and `ecommerce_order_lines` records created by
+the existing checkout schema, projects the single Core3 website and available
+product category, and applies company, status, search, and bounded date
+filters. No new schema migration is required because the report is read-only
+over existing durable order-line data.
+
+Focused verification is in
+`test/ecommerce_online_sales_analysis.integration.test.ts` (3 tests, 26
+assertions). Evidence is under
+`evidence/ecommerce/2026-09-22/ecom-report-online-sales-analysis-001/`.
+BrowserSkill inspection was attempted on browser instance `245ea108`, but the
+authenticated Odoo tab was already borrowed by another session (`wabp`), so
+no live action capture was possible and no visual-parity claim is made.
 
 ## Bounded feature — Product Image Delete (`ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`)
 

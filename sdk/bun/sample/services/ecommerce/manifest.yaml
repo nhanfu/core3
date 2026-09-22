@@ -74,6 +74,13 @@ menu:
           label: Product Ribbons
           icon: tag
           permission: ecommerce.read
+    - id: reporting
+      label: Reporting
+      items:
+        - path: /ecommerce/reporting/online-sales-analysis
+          label: Online Sales Analysis
+          icon: chart
+          permission: ecommerce.read
     - id: configuration
       label: Configuration
       items:

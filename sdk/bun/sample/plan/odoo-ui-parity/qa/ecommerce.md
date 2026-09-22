@@ -1,5 +1,31 @@
 # ecommerce QA ledger
 
+## Online Sales Analysis (`ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`, 2026-09-22)
+
+- Source comparison: pass. Odoo 19
+  `website_sale/report/sale_report_views.xml` defines
+  `sale_report_action_dashboard` as “Online Sales Analysis”, with
+  `pivot,graph`, website-order domain, Confirmed Orders default, date/product/
+  category/customer/country/company filters, and date/status/revenue pivot
+  defaults. The inherited `sale.report` source is read-only.
+- Core3 contract: pass. `pages/online-sales-analysis.yaml` and
+  `api/online-sales-analysis.yaml` are separate and join by
+  `ecommerce-online-sales-analysis`; the manifest adds the Reporting menu
+  entry; the datasource reads durable checkout order lines with read,
+  company, status, search, date, empty, and transport-error guards.
+- Focused verification: `bun test
+  ./test/ecommerce_online_sales_analysis.integration.test.ts --timeout 30000`
+  — **3 passed, 26 assertions, 0 failures**. Coverage includes page/API/menu
+  binding, Odoo Graph/Pivot/default/filter/grouping parity, durable confirmed
+  rows, product search, date filtering, empty state, and error contracts.
+- Browser/Odoo status: BrowserSkill daemon and browser instance `245ea108`
+  were ready, but borrowing the signed-in Odoo tab `1770662590` was denied
+  because it was already borrowed by session `wabp`. The owned BrowserSkill
+  session was stopped; no independent tab/login was used and no visual-parity
+  claim is made. Exact blocker evidence is recorded in the feature evidence
+  directory.
+- Evidence: `evidence/ecommerce/2026-09-22/ecom-report-online-sales-analysis-001/`.
+
 ## Product Image Delete (`ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`, 2026-09-22)
 
 - Source comparison: pass. Odoo `product.image` is an owned media record;

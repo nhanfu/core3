@@ -1,0 +1,61 @@
+title: Online Sales Analysis
+page: { id: ecommerce-online-sales-analysis, route: /ecommerce/reporting/online-sales-analysis, breadcrumb: [eCommerce, Reporting, Online Sales Analysis], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_online_sales_analysis
+    search: { label: Search, placeholder: 'Search products, customers, or orders...' }
+    date_range:
+      label: Order Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: month
+      presets: [month, last_12_months, year, all]
+      preset_labels: { month: This Month, last_12_months: Last 365 Days, year: This Year, all: All Dates }
+    filters:
+      - { field: state, label: Status, options: [{ id: 'Sale Order', label: Confirmed Orders }, { id: Quotation, label: Quotations }, { id: Cancelled, label: Cancelled }] }
+    default_filters: { state: 'Sale Order' }
+    group_by:
+      - { field: website_name, label: Website }
+      - { field: product_name, label: Product }
+      - { field: category, label: Product Category }
+      - { field: customer_name, label: Customer }
+      - { field: country, label: Customer Country }
+      - { field: state, label: Status }
+      - { field: date_month, label: Order Date }
+    default_group_by: date_month
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: date_month, column: Order Date, type: date }
+            - { field: state, column: Status }
+            - { field: website_name, column: Website }
+            - { field: product_name, column: Product }
+            - { field: category, column: Product Category }
+            - { field: customer_name, column: Customer }
+            - { field: country, column: Customer Country }
+            - { field: quantity, column: Quantity }
+            - { field: untaxed_total, column: Untaxed Total }
+          default:
+            rows: [date_month]
+            columns: [state]
+            measures:
+              - { field: untaxed_total, aggregate: sum, column: Untaxed Total }
+              - { field: quantity, aggregate: sum, column: Quantity }
+      - { id: graph, label: Graph, icon: graph, type: line, category_field: date_month, measure_field: untaxed_total, measure_label: Untaxed Total }
+    columns:
+      - { field: order_number, label: Order, type: PrimaryEntityCell }
+      - { field: order_date, label: Order Date }
+      - { field: website_name, label: Website }
+      - { field: product_name, label: Product }
+      - { field: customer_name, label: Customer }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: untaxed_total, label: Untaxed Total, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 80
+    row_key: report_line_id
+    empty_state: { title: You don't have any order from the website, description: Confirmed website orders will appear here. }

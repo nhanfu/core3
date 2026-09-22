@@ -1,0 +1,37 @@
+page: { id: ecommerce-online-sales-analysis }
+datasources:
+  - id: ecommerce_online_sales_analysis
+    single: false
+    permission: ecommerce.read
+    pivot:
+      fields: [date_month, state, website_name, product_name, category, customer_name, country, quantity, untaxed_total]
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ONLINE_SALES_UNAUTHENTICATED, message: Sign in to view online sales analysis. }
+      forbidden: { status: 403, code: ECOMMERCE_ONLINE_SALES_FORBIDDEN, message: You do not have permission to view online sales analysis. }
+      transport_error: { status: 503, code: ECOMMERCE_ONLINE_SALES_UNAVAILABLE, message: Online sales analysis is temporarily unavailable. }
+    query: |
+      SELECT
+        l.id AS report_line_id,
+        o.order_number,
+        CAST(o.date_order AS VARCHAR) AS order_date,
+        strftime(o.date_order, '%Y-%m') AS date_month,
+        'core3-main-website' AS website_id,
+        'Core3 Website' AS website_name,
+        l.product_name,
+        COALESCE(p.category, 'Uncategorised') AS category,
+        o.customer_name,
+        'Unknown' AS country,
+        o.state,
+        o.currency,
+        CAST(l.quantity AS DOUBLE) AS quantity,
+        CAST(l.line_total AS DOUBLE) AS untaxed_total
+      FROM ecommerce_order_lines l
+      JOIN ecommerce_orders o ON o.id = l.order_id
+      LEFT JOIN ecommerce_products p ON p.id = l.product_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN FALSE ELSE TRUE END
+        AND (:company_name IS NULL OR o.company_name = :company_name)
+        AND (:state IS NULL OR o.state = :state)
+        AND (:q IS NULL OR o.order_number ILIKE '%' || :q || '%' OR o.customer_name ILIKE '%' || :q || '%' OR l.product_name ILIKE '%' || :q || '%')
+        AND (:from_date IS NULL OR o.date_order >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR o.date_order < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      ORDER BY o.date_order DESC, o.order_number, l.id

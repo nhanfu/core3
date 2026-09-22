@@ -4,6 +4,10 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
+Latest Wave 54 bounded slice: `ECOM-REPORT-ONLINE-SALES-ANALYSIS-001`
+(implementation and focused verification complete: 3 tests, 26 assertions;
+BrowserSkill could not borrow the signed-in Odoo tab because it was owned by
+session `wabp`; no visual-parity claim; module sign-off remains open).
 Latest Wave 53 bounded slice: `ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001`
 (implementation and focused verification complete: 3 tests, 20 assertions;
 authenticated Odoo/Core3 visual evidence is blocked as recorded; module

@@ -7,6 +7,24 @@ Reference addon/version: website_sale, Odoo 19 Community
 Plan status: approved
 Last reviewed: 2026-09-12
 
+## ECOM-REPORT-ONLINE-SALES-ANALYSIS-001
+
+- ECOM-FUNC-093: compare Odoo's `sale_report_action_dashboard`, website-order
+  domain, Confirmed Orders default, pivot/graph views, search fields, and
+  grouping choices with the separate Core3 eCommerce report page/API.
+- ECOM-DATA-093: query durable `ecommerce_orders` plus
+  `ecommerce_order_lines`, verify confirmed rows, product/category projection,
+  company scope, bounded date/search filters, migration-backed data, and
+  empty results without adding report-only storage.
+- ECOM-PERM-093: require `ecommerce.read` for the route and datasource and
+  expose explicit unauthenticated, forbidden, and transport-error contracts;
+  keep the report read-only with no mutation actions.
+- ECOM-UI-093: compare the authenticated Odoo Online Sales Analysis action at
+  desktop and iPhone-14 mobile viewports, including Graph/Pivot states,
+  filters, grouping, and empty state. The shared signed-in tab was already
+  borrowed by session `wabp`, so the exact BrowserSkill blocker is captured
+  and visual sign-off is withheld.
+
 ## ECOM-CATALOG-PRODUCT-IMAGE-DELETE-001
 
 - ECOM-FUNC-092: compare Odoo's `product.image` cascade ownership, the
