@@ -1583,3 +1583,33 @@ catalog exposes the new route and `/api/modules` returns 200. An authenticated
 Core3 capture was not possible: the fresh bsk tab had no local Core3 login
 session and redirected to `/auth/login`; credentials were not entered. No
 Core3 visual-parity claim is made for this batch.
+
+## Current batch: invoice Pay Now workflow (2026-09-22)
+
+The next distinct gap after Preview is Odoo's public payment route. Local Odoo
+19 `payment.controllers.portal.PaymentPortal.payment_pay` exposes `/payment/pay`
+and prepares a provider-aware payment form whose `/payment/transaction` request
+creates a draft `payment.transaction`; it does not settle the invoice until the
+provider completes the flow. The existing Core3 Preview page had no Pay Now
+action or durable online-payment request.
+
+Stable feature ID `ACC-INVOICE-PAY-NOW-001` adds the page/API-matched
+`/accounting/invoice-payment` form and a `Pay Now` action from the posted
+customer invoice/credit-note Preview page. Migration
+`20260922150000-052-accounting-invoice-pay-now.yaml` adds the invoice relation
+to the existing Accounting payment-transaction table. The permissioned
+mutation creates one durable `pending` payment transaction with provider and
+method, preserves the invoice balance, links the transaction back to the
+invoice, and refreshes the form. Missing, non-posted/paid, stale, blank-actor,
+unsupported-provider/method, duplicate-pending, and failed-insert guards are
+server-side; restart coverage confirms the relation persists.
+
+Focused validation is
+`test/accounting_invoice_pay_now.integration.test.ts` (3 tests, 18
+assertions). The shared authenticated Odoo tab was unavailable for this
+feature because it was already borrowed by BrowserSkill session `ddkr`, whose
+session was busy; the exact command output and no-claim boundary are recorded
+under `evidence/accounting/2026-09-22/ACC-INVOICE-PAY-NOW-001/`. No new live
+desktop/mobile screenshot or visual-parity claim is made. Provider completion,
+external portal access tokens, public sharing, and invoice settlement remain
+follow-up integration work.

@@ -1,0 +1,44 @@
+title: Pay Now
+page: { id: invoice-payment, route: /accounting/invoice-payment, breadcrumb: [Finance, Invoices, Pay Now], auth: { require: [accounting.read] } }
+components:
+  - type: Html
+    tag: section
+    class: accounting-invoice-preview-banner
+    children:
+      - { type: Html, tag: p, text: Secure online payment }
+      - { type: Html, tag: p, text: Review the invoice and choose a payment method to start the payment request. }
+  - type: OdooFormView
+    source: accounting_invoice_payment
+    title_field: name
+    subtitle_field: partner_name
+    status_field: transaction_state
+    status_label_field: transaction_state_label
+    statusbar:
+      - { value: pending, label: Pending }
+      - { value: authorized, label: Authorized }
+      - { value: done, label: Confirmed }
+      - { value: cancel, label: Canceled }
+      - { value: error, label: Error }
+    editable: true
+    initial_editing: true
+    labels: { save: Pay Now, discard: Back, workflowStatus: Payment status }
+    header_actions:
+      - { id: back_to_accounting_invoice_payment, label: Back to invoice, variant: secondary, permission: accounting.read }
+      - { id: submit_accounting_invoice_payment, label: Pay Now, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_payment.payment_transaction_id === ''" }
+      - { id: view_accounting_invoice_payment_transaction, label: View payment transaction, variant: secondary, permission: accounting.read, show_if: "state.accounting_invoice_payment.payment_transaction_id !== ''" }
+    group_columns: 2
+    groups:
+      - title: Invoice
+        fields:
+          - { field: name, label: Invoice, readonly: true }
+          - { field: partner_name, label: Customer, readonly: true }
+          - { field: invoice_date, label: Invoice Date, readonly: true }
+          - { field: due_date, label: Due Date, readonly: true }
+      - title: Payment
+        fields:
+          - { field: amount_display, label: Amount due, readonly: true }
+          - { field: currency, label: Currency, readonly: true }
+          - { field: provider, label: Payment Provider, type: select, options_source: accounting_invoice_payment_providers, required: true }
+          - { field: payment_method, label: Payment Method, type: select, options_source: accounting_invoice_payment_methods, required: true }
+          - { field: payment_status, label: Status, readonly: true }
+          - { field: payment_reference, label: Payment Reference, readonly: true }

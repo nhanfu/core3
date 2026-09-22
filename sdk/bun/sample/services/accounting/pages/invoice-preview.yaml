@@ -14,6 +14,7 @@ components:
     editable: false
     header_actions:
       - { id: back_to_accounting_invoice, label: Back to edit mode, variant: secondary, permission: accounting.read }
+      - { id: pay_now_accounting_invoice, label: Pay Now, variant: primary, permission: accounting.read, show_if: "state.accounting_invoice_preview.amount_residual > 0" }
       - { id: download_invoice_preview_pdf, label: Download, variant: secondary, permission: accounting.read }
     group_columns: 2
     groups:

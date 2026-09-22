@@ -31,3 +31,8 @@ actions:
         anchor.remove();
         setTimeout(() => URL.revokeObjectURL(url), 0);
       }
+  - id: pay_now_accounting_invoice
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/invoice-payment
+    params: { id: '{query.id}' }

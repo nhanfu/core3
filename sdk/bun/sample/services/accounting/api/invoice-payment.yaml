@@ -1,0 +1,63 @@
+page: { id: invoice-payment }
+datasources:
+  - id: accounting_invoice_payment
+    single: true
+    permission: accounting.read
+    error_states:
+      not_found: { status: 404, code: ACCOUNTING_INVOICE_PAYMENT_NOT_FOUND, message: This invoice is not available for online payment. }
+      transport_error: { status: 503, code: ACCOUNTING_INVOICE_PAYMENT_UNAVAILABLE, message: The online payment form is temporarily unavailable. }
+    query: "SELECT i.id, i.row_version, i.name, i.partner_name, i.invoice_type, CAST(i.invoice_date AS VARCHAR) AS invoice_date, CAST(i.due_date AS VARCHAR) AS due_date, i.amount_residual AS amount, printf('$ %,.2f', CAST(i.amount_residual AS DOUBLE)) AS amount_display, 'USD' AS currency, CASE WHEN t.id IS NULL THEN '' ELSE t.id END AS payment_transaction_id, COALESCE(t.state, '') AS transaction_state, COALESCE(t.state_label, '') AS transaction_state_label, COALESCE(t.reference, '') AS payment_reference, COALESCE(t.provider, '') AS transaction_provider, COALESCE(t.payment_method, '') AS transaction_payment_method, CASE WHEN t.id IS NULL THEN 'Ready to pay' ELSE t.state_label END AS payment_status FROM accounting_invoices i LEFT JOIN accounting_payment_transactions t ON t.id = (SELECT candidate.id FROM accounting_payment_transactions candidate WHERE candidate.invoice_id = i.id ORDER BY candidate.create_date DESC, candidate.id DESC LIMIT 1) WHERE i.id = :id AND i.state = 'Posted' AND i.invoice_type IN ('Customer Invoice', 'Customer Credit Note') AND i.amount_residual > 0"
+  - id: accounting_invoice_payment_methods
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Card', 'Card'), ('Bank Transfer', 'Bank Transfer')) payment_methods(value, label) ORDER BY label"
+  - id: accounting_invoice_payment_providers
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Demo', 'Demo'), ('Wire Transfer', 'Wire Transfer')) providers(value, label) ORDER BY label"
+actions:
+  - id: back_to_accounting_invoice_payment
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/invoice-preview
+    params: { id: '{query.id}' }
+  - id: view_accounting_invoice_payment_transaction
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-transaction-detail
+    params: { id: '{state.accounting_invoice_payment.payment_transaction_id}' }
+  - id: submit_accounting_invoice_payment
+    type: server_form
+    permission: accounting.write
+    title: Pay Now
+    action: accounting.invoices.pay_online
+    handler: yaml_mutation
+    operation: create_payment_transaction
+    params: { id: '{state.accounting_invoice_payment.id}', expected_row_version: '{state.accounting_invoice_payment.row_version}' }
+    prefill: state.accounting_invoice_payment
+    refresh: [accounting_invoice_payment]
+    mutation:
+      generated: [payment_transaction_id, payment_reference]
+      concurrency: { required: true }
+      before_steps:
+        - query: "SELECT 'accounting-invoice-payment-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS payment_transaction_id FROM accounting_payment_transactions WHERE invoice_id = :id"
+          assign: true
+        - query: "SELECT 'PAY-' || replace(i.name, '/', '-') || '-' || CAST(COUNT(t.id) + 1 AS VARCHAR) AS payment_reference FROM accounting_invoices i LEFT JOIN accounting_payment_transactions t ON t.invoice_id = i.id WHERE i.id = :id GROUP BY i.name"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id", status: 404, code: ACCOUNTING_INVOICE_PAYMENT_NOT_FOUND, message: Invoice not found. }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND invoice_type IN ('Customer Invoice', 'Customer Credit Note') AND amount_residual > 0 AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INVOICE_PAYMENT_UNAVAILABLE, message: Only an unchanged posted customer invoice with an amount due can be paid online. Reload before paying. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: ACCOUNTING_INVOICE_PAYMENT_ACTOR_REQUIRED, message: A signed-in Accounting user is required to start a payment. }
+        - { query: "SELECT 1 AS ok WHERE :provider IN ('Demo', 'Wire Transfer') AND :payment_method IN ('Card', 'Bank Transfer')", status: 422, code: ACCOUNTING_INVOICE_PAYMENT_METHOD_INVALID, message: Choose a supported payment provider and method. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_payment_transactions WHERE invoice_id = :id AND state IN ('draft', 'pending', 'authorized'))", status: 409, code: ACCOUNTING_INVOICE_PAYMENT_PENDING, message: A payment is already pending for this invoice. }
+      steps:
+        - query: "INSERT INTO accounting_payment_transactions (id, row_version, reference, create_date, create_month, payment_method, provider, partner, partner_name, amount, amount_display, state, state_label, company, is_live, is_live_label, source_transaction, provider_reference, token, last_state_change, partner_address, partner_city, partner_state, partner_zip, partner_country, partner_email, partner_phone, partner_lang, state_message, payment_reference, payment_state, payment_state_label, payment_date, invoice_id) SELECT :payment_transaction_id, 1, :payment_reference, CAST(CURRENT_TIMESTAMP AS VARCHAR), strftime(CURRENT_DATE, '%B %Y'), :payment_method, :provider, COALESCE(i.partner_name, ''), COALESCE(i.partner_name, ''), i.amount_residual, printf('$ %,.2f', CAST(i.amount_residual AS DOUBLE)), 'pending', 'Pending', 'My Company (San Francisco)', FALSE, 'Test', NULL, :payment_reference || '-pending', NULL, CAST(CURRENT_TIMESTAMP AS VARCHAR), '', '', '', '', '', '', '', '', 'Payment is waiting for provider confirmation.', i.name, 'pending', 'Pending', CAST(CURRENT_DATE AS VARCHAR), i.id FROM accounting_invoices i WHERE i.id = :id AND i.row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: ACCOUNTING_INVOICE_PAYMENT_FAILED
+          message: The payment request could not be started. Reload and try again.
+      result:
+        query: "SELECT id, row_version, reference, invoice_id, amount, amount_display, provider, payment_method, state, state_label, payment_reference, payment_state, payment_state_label FROM accounting_payment_transactions WHERE id = :payment_transaction_id"
+    fields:
+      - { field: provider, label: Payment Provider, type: select, options_source: accounting_invoice_payment_providers, required: true, default: Demo }
+      - { field: payment_method, label: Payment Method, type: select, options_source: accounting_invoice_payment_methods, required: true, default: Card }

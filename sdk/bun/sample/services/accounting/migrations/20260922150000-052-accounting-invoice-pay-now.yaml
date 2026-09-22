@@ -1,0 +1,15 @@
+version: 0.0.52
+kind: data
+description: Add durable invoice relation for portal Pay Now transactions
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payment_transactions ADD COLUMN IF NOT EXISTS invoice_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_accounting_payment_transactions_invoice ON accounting_payment_transactions(invoice_id, create_date);
+    down: |
+      DROP INDEX IF EXISTS idx_accounting_payment_transactions_invoice;
+      ALTER TABLE accounting_payment_transactions DROP COLUMN IF EXISTS invoice_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
