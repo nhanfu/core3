@@ -34,6 +34,12 @@ datasources:
           OR COALESCE(m.result_package, '') ILIKE '%' || :q || '%' OR COALESCE(m.product_category_name, '') ILIKE '%' || :q || '%')
         AND (:state IS NULL OR :state = '' OR (:state = 'done' AND m.state = 'Done') OR (:state = 'todo' AND m.state NOT IN ('Done', 'Draft', 'Cancelled')))
         AND (:movement_type IS NULL OR :movement_type = '' OR m.movement_type = :movement_type)
+        AND (:product_template_id IS NULL OR :product_template_id = '' OR EXISTS (
+          SELECT 1 FROM inventory_product_template_move_links ml
+          WHERE ml.move_line_id = m.id AND ml.template_id = :product_template_id
+            AND (ml.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+              OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND ml.company_name = 'My Company (San Francisco)'))
+        ))
         AND (:from_date IS NULL OR :from_date = '' OR CAST(m.date AS DATE) >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR :to_date = '' OR CAST(m.date AS DATE) <= CAST(:to_date AS DATE))
       ORDER BY m.date DESC, m.id DESC

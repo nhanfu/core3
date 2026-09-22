@@ -2152,3 +2152,32 @@ Inventory sign-off remains open.
 QA disposition: PASS for the bounded durable Core3 All Transfers contract;
 BLOCKED for authenticated desktop/mobile visual comparison. Full Inventory
 sign-off remains open.
+
+## Inventory Product form Stock Moves QA — `INV-PRODUCT-MOVES-001`
+
+- Odoo source/action: PASS. `action_view_stock_move_lines` is declared on the
+  Product form at `addons/stock/views/product_views.xml:498-513`; the model
+  action at `addons/stock/models/product.py:1242-1246` scopes
+  `stock.stock_move_line_action` to all variants of the selected template.
+- Core3 contract: PASS. Product detail remains presentation-only and its API
+  adds `view_inventory_product_template_moves` with `page.id:
+  product-template-detail`. The action opens the existing `moves` page with a
+  `product_template_id` context; migration 0.0.91 persists the stable
+  template-to-move relation. The report is read-only and company-scoped.
+- Focused verification: PASS — 3 tests / 21 assertions in
+  `test/inventory_product_move_history.integration.test.ts`, covering source
+  mapping, deterministic two-row aggregation, empty/company boundaries,
+  permission, migration replay, and restart persistence.
+- Browser evidence: BLOCKED. BrowserSkill doctor passed for shared instance
+  `245ea108`, and the authenticated Odoo tab was listed, but the required tab
+  borrow timed out awaiting extension confirmation. No desktop/mobile capture
+  or visual-parity claim is made. Exact details are in
+  `evidence/inventory/2026-09-22/INV-PRODUCT-MOVES-001/browser-blocker.md`.
+- Concurrent workspace note: unrelated POS page/action edits currently make
+  global discovery fail, and additional existing move fixtures make the
+  historical Moves History test expect 13 while the current database returns
+  16. Those files were preserved and not repaired in this bounded change.
+
+QA disposition: PASS for the bounded durable Core3 Product Stock Moves action;
+PARTIAL/BLOCKED for authenticated desktop/mobile and live Odoo comparison.
+Full Inventory sign-off remains open.

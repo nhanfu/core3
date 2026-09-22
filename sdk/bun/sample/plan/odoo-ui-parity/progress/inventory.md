@@ -1643,3 +1643,22 @@ Inventory sign-off remains open.
   boundary are included. Authenticated Odoo browser evidence is blocked because
   the shared tab borrow confirmation expired; no visual-parity claim is made.
 - Evidence: `evidence/inventory/2026-09-22/INV-RULES-001/`.
+
+## `INV-PRODUCT-MOVES-001` — Product form Stock Moves (2026-09-22)
+
+- Selected the missing non-transfer Product form action
+  `action_view_stock_move_lines` from
+  `addons/stock/views/product_views.xml:498-513` and
+  `addons/stock/models/product.py:1242-1246`.
+- Added the `view_inventory_product_template_moves` stat action to Product
+  detail, with `move_count` and a product-template context filter on the
+  existing Moves History report. Migration 0.0.91 adds three stable,
+  same-company relation rows and is idempotent/restart-safe.
+- Focused verification passes 3 tests / 21 assertions in
+  `inventory_product_move_history.integration.test.ts`.
+- BrowserSkill connected to `245ea108` and listed the signed-in tab, but the
+  borrow confirmation timed out. No authenticated desktop/mobile capture or
+  visual-parity claim is made; exact evidence is under
+  `evidence/inventory/2026-09-22/INV-PRODUCT-MOVES-001/`.
+
+Full Inventory sign-off remains open.

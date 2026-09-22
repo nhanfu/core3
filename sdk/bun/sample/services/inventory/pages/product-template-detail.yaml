@@ -43,7 +43,9 @@ components:
           - { field: sales_price, label: Sales Price, type: number }
           - { field: standard_price, label: Cost, type: number }
           - { field: variant_count, label: Product Variants, type: number, readonly: true }
-    stat_buttons: [{ id: view_inventory_product_template_variants, label: Variants, icon: boxes, value_field: variant_count, permission: inventory.read }]
+    stat_buttons:
+      - { id: view_inventory_product_template_variants, label: Variants, icon: boxes, value_field: variant_count, permission: inventory.read }
+      - { id: view_inventory_product_template_moves, label: Stock Moves, icon: transfer, value_field: move_count, permission: inventory.read, show_if: "record.move_count > 0" }
   - type: ListView
     variant: odoo
     source: inventory_product_template_variants

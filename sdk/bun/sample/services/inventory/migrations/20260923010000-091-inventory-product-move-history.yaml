@@ -1,0 +1,31 @@
+version: 0.0.91
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_template_move_links (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        template_id VARCHAR NOT NULL,
+        move_line_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(template_id, move_line_id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_product_template_move_links_template_idx
+        ON inventory_product_template_move_links(template_id, company_name, move_line_id);
+      INSERT INTO inventory_product_template_move_links
+        (id, template_id, move_line_id, company_name, created_at)
+      VALUES
+        ('product-template-move-storage-box-0001', 'inventory-template-storage-box', 'move-line-0005', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:00:00'),
+        ('product-template-move-storage-box-0002', 'inventory-template-storage-box', 'move-line-0007', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:00:00'),
+        ('product-template-move-corner-desk-0001', 'inventory-template-corner-desk', 'move-line-0004', 'Core3 Demo Company', TIMESTAMP '2026-01-15 08:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_template_move_links
+      WHERE id IN ('product-template-move-storage-box-0001', 'product-template-move-storage-box-0002', 'product-template-move-corner-desk-0001');
+      DROP TABLE IF EXISTS inventory_product_template_move_links;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

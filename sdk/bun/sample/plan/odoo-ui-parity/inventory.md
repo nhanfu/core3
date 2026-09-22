@@ -2910,3 +2910,35 @@ fallback was used. Desktop/mobile Odoo captures and visual-parity sign-off
 are omitted. The exact blocker is under
 evidence/inventory/2026-09-22/INV-REORDERING-RULES-001/browser-blocker.md.
 Full Inventory sign-off remains open.
+
+## Products > Product form Stock Moves — `INV-PRODUCT-MOVES-001` (2026-09-22)
+
+The next uncovered non-transfer, non-rule, non-reordering Inventory action is
+Odoo's `action_view_stock_move_lines` on the Product form. The source button is
+declared in `addons/stock/views/product_views.xml:498-513`, and
+`addons/stock/models/product.py:1242-1246` opens `stock.stock_move_line_action`
+with a product-template domain that includes every variant.
+
+Core3 adds the stable `view_inventory_product_template_moves` stat action to
+the existing Product detail page. It navigates to the existing read-only Moves
+History page with `product_template_id`; the API filters through the durable
+same-company `inventory_product_template_move_links` relation and exposes a
+deterministic `move_count` on the Product detail datasource. Migration
+`20260923010000-091-inventory-product-move-history.yaml` is idempotent and
+replay-safe, with no new page-specific renderer or duplicate report surface.
+
+Focused verification passes 3 tests / 21 assertions in
+`test/inventory_product_move_history.integration.test.ts`, covering action
+wiring, template/variant aggregation, company and empty boundaries,
+read-only permission, migration replay, and file-backed restart persistence.
+The shared workspace currently has unrelated concurrent POS schema changes and
+additional Inventory move fixtures, so the historical global Moves History
+baseline and repository-wide discovery are blocked outside this slice.
+
+BrowserSkill connected to instance `245ea108` and listed the authenticated Odoo
+tab, but borrowing timed out awaiting extension confirmation. No Odoo or Core3
+desktop/mobile screenshot, live action execution, or visual-parity claim is
+made. Exact evidence is under
+`evidence/inventory/2026-09-22/INV-PRODUCT-MOVES-001/`.
+
+Full Inventory sign-off remains open.

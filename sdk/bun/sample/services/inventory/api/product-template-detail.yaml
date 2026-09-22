@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: inventory.read
     error_states: { missing_record: { status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Product not found. }, transport_error: { status: 503, code: INVENTORY_PRODUCT_TEMPLATE_DETAIL_UNAVAILABLE, message: Product details are temporarily unavailable. } }
-    query: "SELECT t.id, t.row_version, t.sequence, t.name, t.default_code, COALESCE(t.barcode, '') AS barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, CAST(t.sales_price AS DOUBLE) AS sales_price, CAST(t.standard_price AS DOUBLE) AS standard_price, CAST(t.weight AS DOUBLE) AS weight, CAST(t.volume AS DOUBLE) AS volume, COUNT(v.id) AS variant_count, COALESCE(SUM(v.on_hand), 0) AS on_hand, COALESCE(SUM(v.forecasted), 0) AS forecasted FROM inventory_product_templates t LEFT JOIN inventory_product_variants v ON v.template_name = t.name AND v.active = TRUE AND (v.company_name = t.company_name OR v.company_name = 'Shared' OR (t.company_name = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)')) WHERE t.id = :id AND (t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR t.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)')) GROUP BY t.id, t.row_version, t.sequence, t.name, t.default_code, t.barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, t.sales_price, t.standard_price, t.weight, t.volume"
+    query: "SELECT t.id, t.row_version, t.sequence, t.name, t.default_code, COALESCE(t.barcode, '') AS barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, CAST(t.sales_price AS DOUBLE) AS sales_price, CAST(t.standard_price AS DOUBLE) AS standard_price, CAST(t.weight AS DOUBLE) AS weight, CAST(t.volume AS DOUBLE) AS volume, COUNT(v.id) AS variant_count, COALESCE(SUM(v.on_hand), 0) AS on_hand, COALESCE(SUM(v.forecasted), 0) AS forecasted, (SELECT COUNT(*) FROM inventory_product_template_move_links ml WHERE ml.template_id = t.id AND (ml.company_name = t.company_name OR (t.company_name = 'Core3 Demo Company' AND ml.company_name = 'My Company (San Francisco)'))) AS move_count FROM inventory_product_templates t LEFT JOIN inventory_product_variants v ON v.template_name = t.name AND v.active = TRUE AND (v.company_name = t.company_name OR v.company_name = 'Shared' OR (t.company_name = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)')) WHERE t.id = :id AND (t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR t.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)')) GROUP BY t.id, t.row_version, t.sequence, t.name, t.default_code, t.barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, t.sales_price, t.standard_price, t.weight, t.volume"
   - id: inventory_product_template_variants
     single: false
     permission: inventory.read
@@ -24,6 +24,11 @@ actions:
     permission: inventory.read
     navigate_to: /product-variants
     params: { q: '{state.inventory_product_template_detail.name}' }
+  - id: view_inventory_product_template_moves
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves
+    params: { product_template_id: '{state.inventory_product_template_detail.id}' }
   - id: edit_inventory_product_template
     type: server_form
     permission: inventory.manage
