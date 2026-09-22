@@ -1486,8 +1486,10 @@ schema migration is required.
 
 Focused coverage is `test/pos_session_payments.integration.test.ts`: 3 tests
 and 18 assertions cover the source action, page/API IDs, payment-state domain,
-company boundary, read permission, method grouping, and migration replay
-durability. Related POS session, actor/company, and report regressions pass.
+company boundary, read permission, method grouping, empty/error states, and
+migration replay durability. The POS core/session regression subset passes;
+the broader actor/company and report rerun is currently blocked by an
+unrelated duplicate inventory datasource introduced by concurrent work.
 
 BrowserSkill instance `245ea108` was connected, but the Odoo tab
 `1770662590` was already borrowed by session `olvm`; a fresh borrow attempt in

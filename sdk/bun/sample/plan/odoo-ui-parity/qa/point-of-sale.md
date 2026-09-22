@@ -11,9 +11,12 @@
   existing payment-detail row navigation, and explicit empty/error metadata.
 - Focused test: `bun test ./test/pos_session_payments.integration.test.ts
   --timeout 30000` — 3 tests, 18 assertions passed.
-- Regression: session, actor/company, and session-report suites passed 27 tests
-  and 197 assertions combined; audit passed with 825 pages, 833 routes, and
-  1,716 datasources; frontend/CSS build and `git diff --check` passed.
+- Regression: the POS core/session subset passed 16 tests and 84 assertions;
+  audit passed with 826 pages, 834 routes, and 1,718 datasources before the
+  latest concurrent inventory files appeared. A broader rerun is currently
+  blocked by duplicate datasource id `inventory_reordering_rule_products` in
+  the unrelated concurrent inventory reordering-rule API/page pair.
+  Frontend/CSS build and `git diff --check` passed before that blocker.
 - BrowserSkill: instance `245ea108` was connected. Odoo tab `1770662590` was
   already borrowed by session `olvm`; the fresh borrow in session `xrhq`
   timed out waiting for human confirmation. No independent browser/login was
