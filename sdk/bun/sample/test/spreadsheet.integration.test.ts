@@ -309,7 +309,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
       'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources',
     ]);
     expect((await repository.querySource(groups, { q: null, fixture_state: 'all' }, 0, 50)).data.map((row: any) => row.name)).toEqual([
-      'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources', 'Unpopulated', 'Custom dashboards', 'Acme Company dashboards',
+      'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources', 'Unpopulated', 'Custom dashboards', 'Acme Company dashboards', 'Delete candidate',
     ]);
     expect((await repository.querySource(groups, { q: 'Finance', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Finance']);
     expect((await repository.querySource(groups, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
@@ -344,6 +344,54 @@ describe('Spreadsheet dashboard configuration parity', () => {
     for (const file of ['dashboard-groups.yaml', 'dashboard-group.yaml']) {
       for (const source of yaml(`api/${file}`).datasources) expect(source.permission, file).toBe('spreadsheet.manage');
     }
+  });
+
+  test('implements Odoo official dashboard-group deletion boundaries with a stable ID', async () => {
+    const odooGroupModel = readFileSync('/home/nhanjs/projects/odoo/addons/spreadsheet_dashboard/models/spreadsheet_dashboard_group.py', 'utf8');
+    expect(odooGroupModel).toContain("_name = 'spreadsheet.dashboard.group'");
+    expect(odooGroupModel).toContain('@api.ondelete(at_uninstall=False)');
+    expect(odooGroupModel).toContain("not external_id.startswith('__export__')");
+
+    const page = yaml('pages/dashboard-groups.yaml');
+    const api = yaml('api/dashboard-groups.yaml');
+    const list = page.components[0];
+    const remove = api.actions.find((candidate: any) => candidate.id === 'delete_spreadsheet_dashboard_group');
+    expect(list).toMatchObject({ selectable: true, row_actions: 'menu' });
+    expect(remove).toMatchObject({
+      permission: 'spreadsheet.dashboard.manage',
+      action: 'spreadsheet.dashboard.groups.delete',
+      operation: 'delete',
+      handler: 'yaml_mutation',
+    });
+    expect(remove.mutation).toMatchObject({ operation: 'delete', table: 'spreadsheet_dashboard_groups', concurrency: { required: true } });
+    expect(remove.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 404, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_FOUND' }),
+      expect.objectContaining({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_PROTECTED' }),
+      expect.objectContaining({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_EMPTY' }),
+      expect.objectContaining({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_STALE' }),
+    ]));
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_group_delete_migrations', ['schema', 'data']);
+    await expect(repository.executeMutation(remove.mutation, { id: 'sdg-sales', expected_row_version: 1 })).rejects.toMatchObject({
+      status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_PROTECTED',
+    });
+    await expect(repository.executeMutation(remove.mutation, { id: 'sdg-custom', expected_row_version: 1 })).rejects.toMatchObject({
+      status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_EMPTY',
+    });
+    await expect(repository.executeMutation(remove.mutation, { id: 'sdg-delete-empty', expected_row_version: 0 })).rejects.toMatchObject({
+      status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_STALE',
+    });
+    const deleted = await repository.executeMutation(remove.mutation, { id: 'sdg-delete-empty', expected_row_version: 1 });
+    expect(deleted).toEqual({});
+    expect(await repository.query('SELECT id FROM spreadsheet_dashboard_groups WHERE id = ?', ['sdg-delete-empty'])).toEqual([]);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_group_delete_migrations', ['schema', 'data']);
+    expect(await repository.query('SELECT id FROM spreadsheet_dashboard_groups WHERE id = ?', ['sdg-delete-empty'])).toEqual([]);
+    await expect(repository.executeMutation(remove.mutation, { id: 'sdg-delete-empty', expected_row_version: 1 })).rejects.toMatchObject({
+      status: 404, code: 'SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_FOUND',
+    });
+    database.close();
   });
 
   test('declares the dashboard Share action with deterministic active and revoked link fixtures', async () => {

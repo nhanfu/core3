@@ -6,3 +6,23 @@ datasources:
     query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (official = true OR :fixture_state = 'all') AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_GROUPS_UNAVAILABLE, message: Dashboard groups are temporarily unavailable. }
+actions:
+  - id: delete_spreadsheet_dashboard_group
+    type: server
+    permission: spreadsheet.dashboard.manage
+    action: spreadsheet.dashboard.groups.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete dashboard group {{row.name}}?'
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [spreadsheet_dashboard_groups]
+    mutation:
+      operation: delete
+      table: spreadsheet_dashboard_groups
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :id", status: 404, code: SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_FOUND, message: Dashboard group not found. }
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :id AND official = false", status: 409, code: SPREADSHEET_DASHBOARD_GROUP_DELETE_PROTECTED, message: Official dashboard groups cannot be deleted. }
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :id AND NOT EXISTS (SELECT 1 FROM spreadsheet_dashboards WHERE group_id = :id)", status: 409, code: SPREADSHEET_DASHBOARD_GROUP_DELETE_NOT_EMPTY, message: Delete or move the dashboards in this group before deleting it. }
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_GROUP_DELETE_STALE, message: This dashboard group changed before it was deleted. Reload and try again. }
+      result: { query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE id = :id" }

@@ -7,6 +7,7 @@ components:
     create_action: create_dashboard_group
     create_label: New
     selectable: true
+    row_actions: menu
     column_chooser: true
     columns:
       - { field: sequence, label: '', type: HandleCell, sortable: false }

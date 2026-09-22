@@ -1,0 +1,15 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO spreadsheet_dashboard_groups
+        (id, row_version, name, sequence, company_name, official, dashboard_count)
+      VALUES
+        ('sdg-delete-empty', 1, 'Delete candidate', 110, 'Global', false, 0);
+    down: |
+      DELETE FROM spreadsheet_dashboard_groups WHERE id = 'sdg-delete-empty';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
