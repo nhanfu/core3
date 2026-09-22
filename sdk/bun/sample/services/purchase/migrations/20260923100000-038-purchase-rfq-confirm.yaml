@@ -1,0 +1,24 @@
+version: 0.0.38
+kind: data
+description: Seed a deterministic RFQ for the Confirm RFQ list action
+type:
+  postgres:
+    up: |
+      INSERT INTO purchase_orders(
+        id, name, vendor_id, vendor_name, product_name, quantity, qty_received,
+        unit_price, state, order_date, expected_date, reference, order_type,
+        approval_status, locked, acknowledged, currency, buyer_name, total_amount,
+        contact_name, notes
+      ) VALUES (
+        'po-demo-010', 'PO/2026/0010', 'vendor-demo-003', 'Saigon Office Goods',
+        'Conference room whiteboards', 4, 0, 210.00, 'Sent', DATE '2026-08-01',
+        DATE '2026-09-10', 'Meeting room refresh', 'rfq', 'approved', false,
+        false, 'USD', 'Mitchell Admin', 840.00, 'Nguyen Minh',
+        'Deterministic Confirm RFQ bulk-action fixture.'
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM purchase_orders WHERE id = 'po-demo-010';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

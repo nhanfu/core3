@@ -353,6 +353,39 @@ Evidence manifest: `evidence/purchase/2026-09-22/PURCHASE-ORDER-SECTION-001/`.
 This is a conditional bounded pass for source-backed persistence and guards,
 not a visual or module sign-off.
 
+## 2026-09-22 candidate QA — Confirm RFQ list action
+
+- Stable ID: `PURCHASE-RFQ-CONFIRM-001`.
+- Scope: Odoo Purchase RFQ list/kanban `Confirm RFQ` bulk action only; no full
+  Purchase sign-off.
+- Source: Odoo 19 `addons/purchase/views/purchase_views.xml:921-933` and
+  `addons/purchase/models/purchase_order.py:625-639`.
+- Focused validation: `bun test ./test/purchase.integration.test.ts -t
+  'confirms eligible RFQs' --timeout 30000` — **PASS**, 1 test / 8 assertions;
+  restart/replay test — **PASS**, 1 test / 2 assertions.
+- Purchase Sass: `bun run css:build:purchase` — **PASS**.
+- Diff check: `git diff --check` — **PASS**.
+- Contract coverage: page/API `purchase-rfqs` binding, `purchase.write`, empty
+  and invalid selection guards, Draft/Sent confirmation, unchanged To Approve
+  selection, row versions, deterministic `po-demo-010`, replay, and restart.
+
+### Browser result and open gates
+
+BrowserSkill was healthy (`245ea108`), but the only local Odoo-looking user tab
+(`1770663154`) did not enter agent scope during borrow request session `sotj`
+and the request timed out. The session was no longer registered afterward; no
+tab was borrowed, so no tab return or authenticated Odoo/Core3 capture is
+claimed and no credentials were accessed.
+
+| ID | Finding | Result |
+| --- | --- | --- |
+| PURCHASE-RFQ-CONFIRM-QA-001 | Required authenticated BrowserSkill tab borrow timed out | open blocker; no visual claim |
+| PURCHASE-RFQ-CONFIRM-QA-002 | Repository audit cannot discover all pages because unrelated Activity/CRM/Accounting YAML references are incomplete in the shared checkout | external blocker; Purchase files preserved |
+
+Disposition: **conditional bounded pass** for the source-backed YAML contract,
+durable confirmation workflow, state/permission guards, migration, and focused
+tests; not a browser or full-module sign-off.
+
 ## 2026-09-22 candidate QA — Purchase Order Upload Bill
 
 - Stable ID: `PURCHASE-UPLOAD-BILL-001`.

@@ -61,6 +61,7 @@ components:
     row_key: id
     selectable: true
     bulk_actions:
+      - { id: confirm_purchase_rfqs, label: Confirm RFQ, permission: purchase.write }
       - { id: merge_purchase_rfqs, label: Merge RFQs, permission: accounting.write }
     row_open_action: view_purchase_order
     row_double_click_action: view_purchase_order

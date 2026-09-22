@@ -1428,3 +1428,33 @@ detail captures under `/tmp/odoo-purchase/desktop-order-p00012.png` and
 `/tmp/odoo-purchase/mobile-order-p00012.png` show the source Upload Bill
 control. A fresh BrowserSkill borrow of tab `1770662590` was not obtained in
 this run, so there are no new Core3 captures and no visual-parity claim.
+
+## 2026-09-22 bounded slice — Confirm RFQ list action
+
+The next unimplemented stable-ID Purchase action was Odoo's list/kanban-bound
+`action_confirm_rfqs` (`Confirm RFQ`) in
+`addons/purchase/views/purchase_views.xml:921-933`. Its server action calls
+`purchase.order.button_confirm()`; the source model at
+`addons/purchase/models/purchase_order.py:625-639` confirms Draft/Sent records
+and leaves other states unchanged.
+
+Core3 adds `PURCHASE-RFQ-CONFIRM-001` to the existing page/API pair
+`page.id: purchase-rfqs`. The RFQ list now exposes `Confirm RFQ` beside the
+existing `Merge RFQs` bulk action. `api/purchase-rfqs.yaml` owns the
+`purchase.rfqs.confirm` mutation with `purchase.write`, selection/state guards,
+atomic state, approval-status, row-version persistence, and list refresh. A
+fixed Sent RFQ (`po-demo-010`) is seeded by
+`20260923100000-038-purchase-rfq-confirm.yaml`; Draft/Sent selected records are
+confirmed while To Approve/Cancelled records remain unchanged, matching the
+source method's state branch.
+
+Focused integration coverage verifies page/API binding, exact label and
+permission, mixed selection behavior, invalid/empty guards, deterministic
+fixture data, migration replay, and file-backed restart persistence. The two
+feature tests pass (10 assertions total). Evidence is under
+`evidence/purchase/2026-09-22/PURCHASE-RFQ-CONFIRM-001/`.
+
+BrowserSkill session `sotj` could not borrow the only local Odoo-looking user
+tab before timeout, so no authenticated desktop/mobile capture or visual claim
+is made. Repository audit remains blocked by unrelated shared-checkout Activity
+and CRM/Accounting YAML references; those files were not edited by this slice.
