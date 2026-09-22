@@ -1,12 +1,16 @@
 title: Activity
-page: { id: activity-detail, breadcrumb: [Contacts, Activity, Detail], auth: { require: [base.activities.read] } }
-datasources:
-  - { id: activity_detail, single: true, permission: base.activities.read, query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name, note FROM base_activities WHERE id = :id" }
+page: { id: activity-detail, route: /activity-detail, breadcrumb: [Contacts, Activities, Detail], auth: { require: [base.activities.read] } }
 components:
   - type: OdooFormView
     source: activity_detail
     title_field: summary
     status_field: state
+    header_actions:
+      - { id: back_to_activities, label: Activities, variant: secondary, permission: base.activities.read }
+      - { id: open_activity_contact, label: Open contact, variant: secondary, permission: base.contacts.read }
+      - { id: edit_activity, label: Edit, variant: primary, permission: base.activities.write, show_if: "row.state === 'planned'" }
+      - { id: complete_activity_detail, label: Mark done, variant: primary, permission: base.activities.write, show_if: "row.state === 'planned'" }
+      - { id: cancel_activity_detail, label: Cancel, variant: danger, permission: base.activities.write, show_if: "row.state === 'planned'" }
     groups:
       - title: Activity
-        fields: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }, { field: note, label: Note }]
+        fields: [{ field: contact_name, label: Document }, { field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status, type: StatusChip }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }, { field: completed_at, label: Done date }, { field: feedback, label: Feedback }, { field: note, label: Note }]

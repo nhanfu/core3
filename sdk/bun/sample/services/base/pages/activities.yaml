@@ -1,0 +1,63 @@
+title: Activity Overview
+page: { id: activities, route: /base-activities, breadcrumb: [Contacts, Activities, Activity Overview], auth: { require: [base.activities.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: activities
+    create_action: create_activity
+    create_label: Schedule activity
+    search: { label: Search activities, placeholder: 'Search contact, summary, or type...' }
+    filters:
+      - { field: state, label: Status, options_source: activity_states }
+      - { field: activity_type, label: Activity, options_source: activity_types }
+      - { field: timing, label: Deadline, options_source: activity_timing }
+    group_by:
+      - { field: contact_name, label: Contact }
+      - { field: activity_type, label: Activity }
+      - { field: assigned_user_name, label: Assigned To }
+      - { field: timing, label: Deadline }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: summary
+          subtitle: contact_name
+          fields:
+            - { field: activity_type, label: Activity }
+            - { field: assigned_user_name, label: Assigned to }
+            - { field: due_date, label: Due date }
+            - { field: state, label: Status }
+    columns:
+      - { field: summary, label: Summary, type: PrimaryEntityCell, secondary: contact_name }
+      - { field: activity_type, label: Activity }
+      - { field: assigned_user_name, label: Assigned To }
+      - { field: contact_name, label: Linked to }
+      - { field: due_date, label: Deadline }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: feedback, label: Feedback, optional: hide }
+      - field: id
+        label: ' '
+        sortable: false
+        actions:
+          - { id: complete_activity, label: Done, icon: check, permission: base.activities.write, show_if: "row.state === 'planned'" }
+          - { id: cancel_activity, label: Cancel, icon: close, variant: danger, permission: base.activities.write, show_if: "row.state === 'planned'" }
+          - { id: reschedule_activity_today, label: Today, icon: arrow-down, permission: base.activities.write, show_if: "row.state === 'planned'" }
+          - { id: reschedule_activity_tomorrow, label: Tomorrow, icon: calendar-plus, permission: base.activities.write, show_if: "row.state === 'planned'" }
+          - { id: reschedule_activity_next_week, label: Next Week, icon: calendar, permission: base.activities.write, show_if: "row.state === 'planned'" }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    selectable: true
+    row_open_action: view_activity
+    row_double_click_action: view_activity
+    bulk_actions:
+      - { id: complete_activities, label: Done, permission: base.activities.write }
+      - { id: cancel_activities, label: Cancel, permission: base.activities.write }
+      - { id: reschedule_activities_today, label: Today, permission: base.activities.write }
+      - { id: reschedule_activities_tomorrow, label: Tomorrow, permission: base.activities.write }
+      - { id: reschedule_activities_next_week, label: Next Week, permission: base.activities.write }
+    empty_state: { title: No activities found, description: There are no activities matching the current filters. }

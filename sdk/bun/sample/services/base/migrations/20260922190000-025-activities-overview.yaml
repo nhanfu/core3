@@ -1,0 +1,17 @@
+version: 0.0.25
+kind: data
+description: Seed deterministic planned, overdue, and completed activities for the Base Activities overview
+type:
+  postgres:
+    up: |
+      INSERT INTO base_activities(id, contact_id, summary, activity_type, state, due_date, assigned_user_name, completed_at)
+      VALUES
+        ('activity-overdue', 'contact-demo', 'Follow up on unanswered email', 'email', 'planned', CURRENT_DATE - INTERVAL '2 days', 'Administrator', NULL),
+        ('activity-done', 'contact-demo', 'Introductory email sent', 'email', 'done', CURRENT_DATE - INTERVAL '1 day', 'Administrator', CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM base_activities WHERE id IN ('activity-overdue', 'activity-done');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

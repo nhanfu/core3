@@ -1,0 +1,72 @@
+page: { id: activity-detail }
+datasources:
+  - id: activity_detail
+    single: true
+    permission: base.activities.read
+    error_states: { transport_error: { status: 503, code: BASE_ACTIVITY_DETAIL_UNAVAILABLE, message: This activity is temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.contact_id, c.name AS contact_name, a.summary, a.activity_type, a.state, a.feedback, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_at AS VARCHAR) AS completed_at, a.assigned_user_id, a.assigned_user_name, a.note FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)"
+  - id: activity_detail_types
+    permission: base.activities.read
+    query: "SELECT value, label FROM (VALUES ('todo', 'To-do'), ('call', 'Call'), ('meeting', 'Meeting'), ('email', 'Email')) types(value, label)"
+actions:
+  - { id: back_to_activities, type: navigate, permission: base.activities.read, navigate_to: /base-activities }
+  - { id: open_activity_contact, type: navigate, permission: base.contacts.read, navigate_to: /contacts/detail, params: { id: '{row.contact_id}' } }
+  - id: edit_activity
+    type: server_form
+    permission: base.activities.write
+    title: Edit activity
+    action: base.activities.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [activity_detail]
+    mutation:
+      operation: update
+      table: base_activities
+      fields: [activity_type, summary, due_date, assigned_user_id, assigned_user_name, note]
+      required: [summary, due_date]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 404, code: BASE_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: Only an unchanged planned activity can be edited. }
+      result: { query: "SELECT a.id, a.row_version, a.contact_id, c.name AS contact_name, a.summary, a.activity_type, a.state, a.feedback, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_at AS VARCHAR) AS completed_at, a.assigned_user_id, a.assigned_user_name, a.note FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id" }
+    fields:
+      - { field: activity_type, label: Activity, type: select, options_source: activity_detail_types, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: text, required: true }
+      - { field: assigned_user_name, label: Assigned to, type: text }
+      - { field: note, label: Note, type: textarea }
+  - id: complete_activity_detail
+    type: server
+    permission: base.activities.write
+    action: base.activities.detail.done
+    handler: yaml_mutation
+    operation: complete_activity
+    params: { id: '{state.activity_detail.id}', expected_row_version: '{state.activity_detail.row_version}' }
+    refresh: [activity_detail]
+    mutation:
+      operation: update
+      table: base_activities
+      fields: [state, completed_at]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 404, code: BASE_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: Only an unchanged planned activity can be completed. }
+      steps: [{ query: "UPDATE base_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BASE_ACTIVITY_STALE, message: The activity changed before it could be completed. }]
+      result: { query: "SELECT id, state, row_version, CAST(completed_at AS VARCHAR) AS completed_at FROM base_activities WHERE id = :id" }
+  - id: cancel_activity_detail
+    type: server
+    permission: base.activities.write
+    action: base.activities.detail.cancel
+    handler: yaml_mutation
+    operation: cancel_activity
+    params: { id: '{state.activity_detail.id}', expected_row_version: '{state.activity_detail.row_version}' }
+    refresh: [activity_detail]
+    mutation:
+      operation: delete
+      table: base_activities
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT a.id FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)", status: 404, code: BASE_ACTIVITY_NOT_FOUND, message: Activity not found. }
+        - { query: "SELECT id FROM base_activities WHERE id = :id AND state = 'planned' AND row_version = :expected_row_version", status: 409, code: BASE_ACTIVITY_STALE, message: Only an unchanged planned activity can be cancelled. }
+      result: { query: "SELECT :id AS id, true AS cancelled" }

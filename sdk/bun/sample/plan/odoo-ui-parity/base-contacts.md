@@ -570,3 +570,38 @@ The implementation does not claim Odoo attachment transfer, standalone
 Activities-menu parity, activity form parity, or authenticated paired visual
 evidence. Evidence is in
 `evidence/base/2026-09-22/BASE-CONTACT-ACTIVITY-FEEDBACK-001/`.
+
+## Standalone Activities overview bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-ACTIVITIES-OVERVIEW-001`.
+
+Odoo source comparison: Odoo 19 `addons/mail/views/mail_activity_views.xml`
+defines `mail_activity_action` as the `Activity Overview` list/form action,
+including search by linked record/summary, user and activity-type filters,
+deadline filters, Done, and list actions for completing, cancelling, and
+rescheduling activities. `addons/mail/views/mail_menus.xml` places it under
+the top-level Activities menu.
+
+Core3 now exposes `/base-activities` through a page-only
+`pages/activities.yaml` fragment and API-owned `api/activities.yaml`, joined
+by `page.id: activities`. The API reads all current-company contact
+activities, supports text/status/type/deadline filters, exposes scheduling,
+completion, cancellation, bulk, and rescheduling actions, and keeps the
+`base_activities` state workflow in `pages/activity-workflow.yaml`. The
+existing activity detail page is now page-only and uses its own API fragment;
+its edit/open-contact actions preserve the Odoo list/form navigation shape.
+
+Migration `20260922190000-025-activities-overview.yaml` idempotently seeds
+overdue planned and completed activities so the overview has deterministic
+filter states without changing user-created rows. Focused validation is
+`test/base_contact_activities_overview.integration.test.ts`, covering Odoo
+source mapping, page/API separation, workflow registration, migration replay,
+filtered reads, create/complete persistence, restart persistence, and
+permission/company/stale guards.
+
+Authenticated paired desktop/mobile evidence remains open: BrowserSkill's
+daemon and extension were healthy, but the only visible authenticated Odoo
+tab was a user-owned PDF tab and its borrow confirmation timed out. No
+credentials were inspected and no Playwright session was used. Evidence is
+recorded in
+`evidence/base/2026-09-22/BASE-CONTACT-ACTIVITIES-OVERVIEW-001/`.

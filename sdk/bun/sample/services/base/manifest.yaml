@@ -17,6 +17,7 @@ menu:
       items:
         - { path: /contacts, label: Contacts, icon: users, permission: base.contacts.read }
         - { path: /companies, label: Companies, icon: building, permission: base.companies.read }
+        - { path: /base-activities, label: Activities, icon: activity, permission: base.activities.read }
         - path: /base-reference-data
           label: Configuration
           icon: settings
