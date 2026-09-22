@@ -1,0 +1,46 @@
+page: { id: sms-utm-campaigns }
+datasources:
+  - id: sms_utm_campaign_stages
+    permission: sms_marketing.manage
+    query: "SELECT id AS value, name AS label FROM sms_marketing_campaign_stages ORDER BY sequence, id"
+  - id: sms_utm_campaigns
+    permission: sms_marketing.manage
+    error_states: { transport_error: { status: 503, code: SMS_UTM_CAMPAIGNS_UNAVAILABLE, message: Campaigns are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.title, c.name, c.user_name, c.stage_id, c.stage_name, c.tag_names, c.active, c.color, c.mailing_sms_count, c.is_auto_campaign, c.company_name FROM sms_marketing_utm_campaigns c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND c.is_auto_campaign = false AND ((:active IS NULL AND c.active = true) OR (:active IS NOT NULL AND c.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR c.title ILIKE '%' || :q || '%' OR c.name ILIKE '%' || :q || '%' OR c.user_name ILIKE '%' || :q || '%' OR c.stage_name ILIKE '%' || :q || '%' OR COALESCE(c.tag_names, '') ILIKE '%' || :q || '%') AND (:stage_id IS NULL OR c.stage_id = :stage_id) AND (:user_name IS NULL OR c.user_name = :user_name) ORDER BY c.active DESC, c.title, c.id"
+actions:
+  - id: view_sms_utm_campaign
+    type: navigate
+    permission: sms_marketing.manage
+    navigate_to: /sms-marketing/campaigns/detail
+    params: { id: '{row.id}' }
+  - id: create_sms_utm_campaign
+    type: server_form
+    permission: sms_marketing.manage
+    title: New Campaign
+    action: mass_mailing.action_view_utm_campaigns.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_utm_campaigns]
+    mutation:
+      operation: insert
+      table: sms_marketing_utm_campaigns
+      generated: [id]
+      fields: [title, name, user_name, stage_id, stage_name, tag_names, active, color, is_auto_campaign, mailing_sms_count, company_name, created_at, updated_at]
+      required: [title, stage_id]
+      defaults: { user_name: Administrator, tag_names: '', active: true, color: 0, is_auto_campaign: false, mailing_sms_count: 0, company_name: Core3 Vietnam, row_version: 1, created_at: '2026-09-22 13:00:00', updated_at: '2026-09-22 13:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0", status: 422, code: SMS_UTM_CAMPAIGN_TITLE_REQUIRED, message: A campaign name is required. }
+        - { query: "SELECT id AS stage_id, name AS stage_name FROM sms_marketing_campaign_stages WHERE id = :stage_id", status: 422, code: SMS_UTM_CAMPAIGN_STAGE_REQUIRED, message: Select a valid campaign stage., assign: true }
+        - { query: "SELECT 'sms-utm-campaign-' || regexp_replace(lower(trim(CAST(:title AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id, regexp_replace(lower(trim(CAST(:title AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS name", assign: true }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_marketing_utm_campaigns WHERE name = :name)", status: 409, code: SMS_UTM_CAMPAIGN_EXISTS, message: A campaign with this name already exists. }
+      result: { query: "SELECT * FROM sms_marketing_utm_campaigns WHERE id = :id" }
+    fields:
+      - { field: title, label: Campaign Name, type: text, required: true, placeholder: 'e.g. Black Friday' }
+      - { field: user_name, label: Responsible, type: text, required: true }
+      - { field: stage_id, label: Stage, type: select, options_source: sms_utm_campaign_stages, required: true }
+      - { field: tag_names, label: Tags, type: text, placeholder: 'Marketing, Newsletter' }
+      - { field: color, label: Color Index, type: number, min: 0, max: 11 }
+  - id: new_sms_utm_campaign
+    type: navigate
+    permission: sms_marketing.manage
+    navigate_to: /sms-marketing/campaigns

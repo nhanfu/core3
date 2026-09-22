@@ -269,6 +269,45 @@ remained in the user's window and was not accessed through another browser
 backend; no Odoo visual-parity claim is made. Core3 visual evidence remains
 pending until an authenticated browser pass succeeds.
 
+## Bounded action: SMS Marketing / Campaigns (wave 6)
+
+Stable ID: `SMS-UTM-CAMPAIGNS-001`.
+
+The next missing SMS Marketing action is the campaign group menu
+`SMS Marketing` → `Campaigns` (menu_email_campaigns), which points to the
+shared Odoo action `mass_mailing.action_view_utm_campaigns`. Local Odoo source
+in `/home/nhanjs/projects/odoo/addons/mass_mailing/views/utm_campaign_views.xml`
+defines the action as `utm.campaign` with `kanban,list,form`, the domain
+`is_auto_campaign = False`, and mailing-campaign help text. Its search supports
+campaign title, tags, responsible user, My Campaigns, Archived, and grouping by
+stage, responsible, or tags. The form supports a stage statusbar, Campaign
+Name, Responsible, Tags, archive/restore, and a Mailings stat/action; the
+mass-mailing inheritance adds the Send Mailing and mailing list/stat surfaces.
+The SMS menu declaration is in
+`/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/mailing_sms_menus.xml`.
+
+Core3 maps this bounded action to `pages/utm-campaigns.yaml` +
+`api/utm-campaigns.yaml` and `pages/utm-campaign-detail.yaml` +
+`api/utm-campaign-detail.yaml`, joined by matching page IDs
+`sms-utm-campaigns` and `sms-utm-campaign-detail`. The SMS-owned durable
+projection stores non-automatic campaigns, stages, tags, responsible users,
+SMS mailing counts, active/archive state, and row versions. Migration
+`20260922130000-015-sms-utm-campaigns.yaml` creates the storage and
+`20260922131000-016-sms-utm-campaigns-demo.yaml` adds fixed, idempotent
+fixtures. `sms_marketing.manage` protects the campaign-group action and all
+CRUD/archive/restore transitions. Duplicate slugs, invalid stages, missing
+records, stale row versions, empty fixtures, and transport failures have
+explicit contracts. SMS mailing navigation stays bound to the existing
+`/sms-campaigns` action.
+
+Focused coverage is `test/sms_marketing_utm_campaigns.integration.test.ts`.
+Authenticated Odoo desktop/mobile evidence is blocked because BrowserSkill's
+single borrow request for the existing signed-in tab in browser instance
+`245ea108` timed out while awaiting the configured confirmation; no
+independent login or alternate browser backend was used, and no visual-parity
+claim is made. Evidence is recorded under
+`evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGNS-001/`.
+
 ## Visual verification: SMS Marketing Analysis
 
 On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:

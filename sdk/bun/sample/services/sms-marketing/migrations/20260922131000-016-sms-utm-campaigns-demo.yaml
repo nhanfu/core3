@@ -1,0 +1,24 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO sms_marketing_campaign_stages (id, name, sequence, color) VALUES
+        ('sms-campaign-stage-new', 'New', 10, 0),
+        ('sms-campaign-stage-schedule', 'Schedule', 20, 2),
+        ('sms-campaign-stage-design', 'Design', 30, 4),
+        ('sms-campaign-stage-sent', 'Sent', 40, 6)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sequence = EXCLUDED.sequence, color = EXCLUDED.color;
+      INSERT INTO sms_marketing_utm_campaigns
+        (id, row_version, title, name, user_name, stage_id, stage_name, tag_names, active, color, mailing_sms_count, is_auto_campaign, company_name, created_at, updated_at)
+      VALUES
+        ('sms-utm-campaign-summer-sale', 1, 'Summer SMS Sale', 'summer-sms-sale', 'Administrator', 'sms-campaign-stage-schedule', 'Schedule', 'Promotion, SMS', true, 2, 2, false, 'Core3 Vietnam', TIMESTAMP '2026-09-22 13:00:00', TIMESTAMP '2026-09-22 13:00:00'),
+        ('sms-utm-campaign-product-update', 1, 'Product Update', 'product-update', 'Marketing User', 'sms-campaign-stage-design', 'Design', 'Product, Release', true, 4, 1, false, 'Core3 Vietnam', TIMESTAMP '2026-09-22 13:05:00', TIMESTAMP '2026-09-22 13:05:00'),
+        ('sms-utm-campaign-event-follow-up', 1, 'Event Follow-up', 'event-follow-up', 'Marketing User', 'sms-campaign-stage-sent', 'Sent', 'Event', true, 6, 3, false, 'Core3 Vietnam', TIMESTAMP '2026-09-22 13:10:00', TIMESTAMP '2026-09-22 13:10:00'),
+        ('sms-utm-campaign-archived', 1, 'Archived SMS Campaign', 'archived-sms-campaign', 'Administrator', 'sms-campaign-stage-new', 'New', 'Legacy', false, 0, 0, false, 'Core3 Vietnam', TIMESTAMP '2026-09-22 13:15:00', TIMESTAMP '2026-09-22 13:15:00')
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, user_name = EXCLUDED.user_name, stage_id = EXCLUDED.stage_id, stage_name = EXCLUDED.stage_name, tag_names = EXCLUDED.tag_names, active = EXCLUDED.active, color = EXCLUDED.color, mailing_sms_count = EXCLUDED.mailing_sms_count, updated_at = EXCLUDED.updated_at;
+    down: DELETE FROM sms_marketing_utm_campaigns WHERE id IN ('sms-utm-campaign-summer-sale', 'sms-utm-campaign-product-update', 'sms-utm-campaign-event-follow-up', 'sms-utm-campaign-archived');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,50 @@
+title: Campaigns
+page: { id: sms-utm-campaigns, route: /sms-marketing/campaigns, breadcrumb: [Marketing, SMS Marketing, Campaigns], auth: { require: [sms_marketing.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_utm_campaigns
+    create_action: create_sms_utm_campaign
+    create_label: New
+    search: { label: Search campaigns, placeholder: Search campaigns... }
+    filters:
+      - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    group_by:
+      - { field: stage_name, label: Stage }
+      - { field: user_name, label: Responsible }
+      - { field: tag_names, label: Tags }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: stage_name
+        card:
+          compact: true
+          title: title
+          subtitle: stage_name
+          company_field: user_name
+          primary_metric: mailing_sms_count
+          primary_metric_label: Mailings
+          fields:
+            - { field: tag_names, label: Tags }
+            - { field: active, label: Active }
+          footer:
+            - { field: user_name, label: Responsible }
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: title, label: Name, type: PrimaryEntityCell }
+      - { field: user_name, label: Responsible }
+      - { field: stage_name, label: Stage, type: StatusChip }
+      - { field: tag_names, label: Tags }
+      - { field: mailing_sms_count, label: Mailings, align: right }
+      - { field: active, label: Active, type: StatusChip, optional: true }
+    form_view: { page: apps/services/sms-marketing/pages/utm-campaign-detail.yaml, side_panel: false }
+    page_size: 50
+    row_key: id
+    row_open_action: view_sms_utm_campaign
+    row_double_click_action: view_sms_utm_campaign
+    row_actions: menu
+    empty_state: { title: Create a mailing campaign, description: Campaigns are the perfect tool to track results across multiple SMS mailings. }

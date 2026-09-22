@@ -29,6 +29,17 @@ Numbers` as the next distinct source-backed UI/workflow slice after delivery
 traces and retry. The paired Odoo screen is blocked until `mass_mailing_sms` is
 installed in `core3_reference`; do not claim visual parity from the Apps page.
 
+## Wave 6 checkpoint (2026-09-22)
+
+`SMS-UTM-CAMPAIGNS-001` implements the previously missing SMS Marketing
+`Campaigns` menu action backed by Odoo's shared `action_view_utm_campaigns`.
+The page/API contracts, durable stages and campaign storage, deterministic
+fixtures, manager permission boundary, CRUD, archive/restore, validation, and
+optimistic concurrency are covered by the focused integration test. The
+authenticated Odoo desktop/mobile gate remains blocked by the BrowserSkill tab
+borrow confirmation timeout; no visual-parity claim is made and module
+sign-off remains open.
+
 ## QA checkpoint (2026-09-13, candidate `2fb85b60`)
 
 The exact candidate passed the focused SMS suite: 14 tests / 134 expectations /

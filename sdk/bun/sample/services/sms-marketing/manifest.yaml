@@ -17,6 +17,7 @@ menu:
         - { path: /sms-campaigns, label: SMS Marketing, icon: message, permission: sms_marketing.read }
         - { path: /sms-lists, label: Mailing Lists, icon: users, permission: sms_marketing.read }
         - { path: /sms-mailing-contacts, label: Mailing List Contacts, icon: users, permission: sms_marketing.read }
+        - { path: /sms-marketing/campaigns, label: Campaigns, icon: mail, permission: sms_marketing.manage }
     - id: reporting
       label: Reporting
       items:

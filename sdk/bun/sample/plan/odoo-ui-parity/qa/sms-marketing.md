@@ -138,6 +138,30 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 - Core3 browser gate: pending runtime probe; if the scoped runtime is unavailable
   the exact listener/readiness error and unauthenticated diagnostic will be
   recorded in the feature evidence.
+## Bounded wave 7 - UTM campaigns (2026-09-22)
+
+- Stable ID: `SMS-UTM-CAMPAIGNS-001`.
+- Source comparison: **PASS**. The SMS menu points to the shared Odoo
+  `mass_mailing.action_view_utm_campaigns`; local source confirms
+  `kanban,list,form`, the non-automatic campaign domain, stage/responsible/tag
+  search and grouping, archive/restore, and mailing stat/navigation surfaces.
+- Core3 contract: **PASS**. The focused test covers 4 tests / 32 assertions:
+  source/menu mapping, separate page/API IDs, deterministic migration replay,
+  search/stage/archive/empty reads, CRUD, stage/title validation, duplicate
+  protection, stale row-version rejection, archive/restore, permissions, and
+  transport error contracts.
+- Odoo BrowserSkill gate: **BLOCKED**. Browser instance `245ea108` reported a
+  healthy daemon, but the one authorized borrow request for the existing
+  signed-in Odoo tab timed out while awaiting the configured user-window
+  confirmation. The user tab remained user-owned; no credentials, cookies, or
+  tokens were read, and no independent login or alternate browser backend was
+  used. No authenticated Odoo desktop/mobile captures exist for this feature.
+- Core3 visual gate: **PENDING** until authenticated Odoo reference access is
+  available. No visual-parity claim is made.
+
+| SMS-FUNC-009 | SMS UTM Campaigns page/API and durable CRUD contract | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGNS-001/test-results.md` | pass | Core3 contract; visual gate open |
+| SMS-BROWSER-003 | Authenticated Odoo SMS Campaigns desktop/mobile comparison | `evidence/sms-marketing/2026-09-22/SMS-UTM-CAMPAIGNS-001/verification.md` | blocked | BrowserSkill borrow confirmation timeout |
+
 ## 2026-09-13 coordinator dispatch — bounded SMS wave
 
 - Existing owner `agent/sms-lifecycle-20260913` is assigned on

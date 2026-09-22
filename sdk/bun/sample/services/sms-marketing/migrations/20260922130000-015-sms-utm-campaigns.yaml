@@ -1,0 +1,36 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_marketing_campaign_stages (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        color INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS sms_marketing_utm_campaigns (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        title VARCHAR NOT NULL,
+        name VARCHAR NOT NULL UNIQUE,
+        user_name VARCHAR NOT NULL DEFAULT 'Administrator',
+        stage_id VARCHAR NOT NULL,
+        stage_name VARCHAR NOT NULL,
+        tag_names VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT true,
+        color INTEGER NOT NULL DEFAULT 0,
+        mailing_sms_count INTEGER NOT NULL DEFAULT 0,
+        is_auto_campaign BOOLEAN NOT NULL DEFAULT false,
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Vietnam',
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS sms_marketing_utm_campaigns_stage_idx ON sms_marketing_utm_campaigns(stage_id, active, id);
+    down: |
+      DROP TABLE IF EXISTS sms_marketing_utm_campaigns;
+      DROP TABLE IF EXISTS sms_marketing_campaign_stages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
