@@ -149,3 +149,19 @@ Live Odoo menu/copy behavior was observed, but fresh Core3 desktop/mobile
 captures were blocked when bsk sessions stopped before the duplicate transition;
 no visual parity sign-off is claimed. Evidence is in
 `evidence/base/2026-09-22/BASE-CONTACT-DUPLICATE-001/`.
+
+## Contact child relation slice (`BASE-CONTACT-HIERARCHY-CHILDREN-001`, 2026-09-22)
+
+Implemented the Odoo `res.partner.child_ids` Contacts notebook relation as a
+page/API-separated `LineItemGrid` with durable child-contact datasource and
+create/edit/delete actions. The migration seeds one deterministic child under
+`company-demo`; mutations enforce active-company scope, parent and child row
+versions, required/duplicate/missing guards, and restart durability.
+
+- Focused child suite: **3 tests / 26 assertions** passed.
+- Full Base integration slice: **48 tests / 448 assertions** passed.
+- `bun run audit`: **834 pages / 842 routes / 1,739 datasources**, passed.
+- `bun run frontend:build`: passed.
+- Browser blocker: shared signed-in Odoo Contacts tab `1770662590` on browser
+  `245ea108` was already borrowed by session `ioxf`; exact response was `tab is
+  borrowed by another session`. No visual-parity claim or screenshot is made.

@@ -408,3 +408,37 @@ another active BrowserSkill session). The worker did not navigate an
 independent tab, inspect credentials, or bypass the borrow. No desktop/mobile
 Odoo or Core3 screenshot is claimed; the exact blocker is recorded in
 `evidence/base/2026-09-22/BASE-CONTACTS-EXPORT-001/browser-check.md`.
+
+## Contact child relation bounded slice (2026-09-22)
+
+Stable ID: `BASE-CONTACT-HIERARCHY-CHILDREN-001`.
+
+Odoo source comparison: `odoo/addons/base/models/res_partner.py:215-217`
+defines `parent_id` and `child_ids`; `odoo/addons/base/views/res_partner_views.xml:219-289`
+renders the Contacts notebook tab as an inline `child_ids` kanban with a
+Contact / Address form. Core3 previously supported assigning a parent company
+but had no child-contact datasource or nested relation actions on the contact
+detail form.
+
+Core3 now adds the API-owned `contact_child_contacts` datasource and
+`add_contact_child`, `edit_contact_child`, and `delete_contact_child` line-item
+actions to `api/contact-detail.yaml`. `pages/contact-detail.yaml` remains
+layout-only and binds the OdooFormView Contacts notebook tab to a shared
+`LineItemGrid` through the existing `page.id: contact-detail` contract. The
+relation uses the durable `base_contacts` table, seeds `contact-demo-child`
+under `company-demo`, and guards required names, duplicate IDs/emails,
+active-company scope, parent/child row versions, missing rows, and stale
+writes. Reapplying migrations and file-backed restart are covered.
+
+Focused validation is `test/base_contact_children.integration.test.ts`: 3
+tests / 26 assertions, included in the full Base run of 48 tests / 448
+assertions. The UI audit and frontend build pass; `git diff --check` is
+required before handoff.
+
+BrowserSkill evidence is blocked. Shared browser instance `245ea108` was
+healthy, but the signed-in Contacts tab `1770662590` was already borrowed by
+session `ioxf`; the exact response was `tab is borrowed by another session`.
+The worker stopped its own session without opening an independent tab or
+reading credentials. No Odoo/Core3 desktop or mobile capture, and no visual
+parity claim, is made. Details are in
+`evidence/base/2026-09-22/BASE-CONTACT-HIERARCHY-CHILDREN-001/`.

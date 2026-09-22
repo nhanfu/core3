@@ -21,6 +21,10 @@ datasources:
   - id: contact_detail_parent_companies
     permission: base.contacts.read
     query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
+  - id: contact_child_contacts
+    permission: base.contacts.read
+    error_states: { transport_error: { status: 503, code: BASE_CONTACT_CHILDREN_UNAVAILABLE, message: Related contacts are temporarily unavailable. } }
+    query: "SELECT child.id, child.row_version, child.parent_company_id, child.name, child.company_type, child.email, child.phone, child.city, child.country_name, child.is_company, child.active, upper(substr(child.name, 1, 1)) AS avatar_initials FROM base_contacts child JOIN base_contacts parent ON parent.id = child.parent_company_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND child.parent_company_id = :id AND child.active = true AND parent.active = true AND parent.is_company = true AND (COALESCE(:current_company_id, '') = '' OR child.company_id = :current_company_id) AND (COALESCE(:current_company_id, '') = '' OR parent.company_id = :current_company_id) AND (:q IS NULL OR child.name ILIKE '%' || :q || '%' OR child.email ILIKE '%' || :q || '%' OR child.phone ILIKE '%' || :q || '%') ORDER BY child.name, child.id"
   - id: contact_attachments
     permission: base.contacts.read
     query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, a.created_at FROM base_contact_attachments a JOIN base_contacts c ON c.id = a.contact_id WHERE a.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT 'contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00' WHERE :id = 'contact-demo' AND (COALESCE(:current_company_id, '') = '' OR EXISTS (SELECT 1 FROM base_contacts c WHERE c.id = :id AND c.company_id = :current_company_id))) attachments WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
@@ -71,6 +75,101 @@ actions:
       - { field: currency_code, label: Currency, type: text }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
+  - id: add_contact_child
+    type: server_form
+    permission: base.contacts.write
+    title: Add Contact
+    action: base.contacts.children.create
+    handler: line_item
+    operation: create
+    domain: contact_detail
+    params: { parent_id: '{state.contact_detail.id}', parent_expected_row_version: '{state.contact_detail.row_version}' }
+    refresh: [contact_detail, contact_child_contacts]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: street2, label: Street 2, type: text }
+      - { field: city, label: City, type: text }
+      - { field: state_name, label: State, type: text }
+      - { field: zip, label: ZIP, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: is_company, label: Is a company, type: checkbox }
+    mutation:
+      operation: insert
+      table: base_contacts
+      id_input: child_id
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, company_id, parent_company_id, is_company, active]
+      required: [name]
+      defaults: { company_type: person, is_company: false, active: true, row_version: 1, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }
+      before_steps:
+        - { query: "SELECT 'base-contact-child-' || CAST(:parent_id AS VARCHAR) || '-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS child_id", assign: true }
+      guards:
+        - { query: "SELECT p.id AS parent_id, p.company_id AS company_id, p.id AS parent_company_id, p.row_version AS parent_row_version FROM base_contacts p WHERE p.id = :parent_id AND p.active = true AND p.is_company = true AND p.row_version = :parent_expected_row_version AND (COALESCE(:current_company_id, '') = '' OR p.company_id = :current_company_id)", status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed before the contact could be added., assign: true }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BASE_CONTACT_CHILD_NAME_REQUIRED, message: A contact name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE id = 'base-contact-child-' || CAST(:parent_id AS VARCHAR) || '-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g'))", status: 409, code: BASE_CONTACT_CHILD_EXISTS, message: A contact with this name is already related to the company. }
+        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists. }
+      steps:
+        - { query: "UPDATE base_contacts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :parent_id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed while adding the contact. Reload before saving. }
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: edit_contact_child
+    type: server_form
+    permission: base.contacts.write
+    title: Edit Contact
+    action: base.contacts.children.update
+    handler: line_item
+    operation: update
+    domain: contact_detail
+    params: { id: '{row.id}', parent_id: '{state.contact_detail.id}', parent_expected_row_version: '{state.contact_detail.row_version}' }
+    prefill: row
+    refresh: [contact_detail, contact_child_contacts]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: street2, label: Street 2, type: text }
+      - { field: city, label: City, type: text }
+      - { field: state_name, label: State, type: text }
+      - { field: zip, label: ZIP, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: is_company, label: Is a company, type: checkbox }
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, is_company]
+      required: [name]
+      timestamps: true
+      concurrency: { field: row_version, input: expected_row_version }
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :parent_id AND active = true AND is_company = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed before the contact could be saved. Reload before saving. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND parent_company_id = :parent_id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 404, code: BASE_CONTACT_CHILD_NOT_FOUND, message: Related contact not found. }
+        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND id <> :id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists. }
+      steps:
+        - { query: "UPDATE base_contacts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :parent_id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed while saving the contact. Reload before saving. }
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: delete_contact_child
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.children.delete
+    handler: line_item
+    operation: delete
+    domain: contact_detail
+    params: { id: '{row.id}', parent_id: '{state.contact_detail.id}', parent_expected_row_version: '{state.contact_detail.row_version}' }
+    confirm: Delete this related contact?
+    refresh: [contact_detail, contact_child_contacts]
+    mutation:
+      operation: delete
+      table: base_contacts
+      concurrency: { field: row_version, input: expected_row_version }
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :parent_id AND active = true AND is_company = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed before the contact could be deleted. Reload before deleting. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND parent_company_id = :parent_id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 404, code: BASE_CONTACT_CHILD_NOT_FOUND, message: Related contact not found. }
+      steps:
+        - { query: "UPDATE base_contacts SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :parent_id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: BASE_CONTACT_CHILD_PARENT_STALE, message: The company changed while deleting the contact. Reload before deleting. }
   - id: duplicate_contact
     type: server
     permission: base.contacts.write

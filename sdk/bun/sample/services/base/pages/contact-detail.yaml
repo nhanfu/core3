@@ -97,6 +97,42 @@ components:
     message_detail_field: detail
     message_timestamp_field: created_at
     message_actor_field: actor_name
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: contact_child_contacts
+    parent_source: contact_detail
+    title: Contacts
+    description: Manage contacts and addresses related to this company.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_contact_child, label: Add a line, variant: primary, permission: base.contacts.write }
+    empty_state: { title: No contacts, description: Add a contact or address related to this company. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Name, required: true }
+      - { type: LineItemField, id: company_type, field: company_type, label: Type, readonly: true }
+      - { type: LineItemField, id: email, field: email, label: Email, readonly: true }
+      - { type: LineItemField, id: phone, field: phone, label: Phone, readonly: true }
+      - { type: LineItemField, id: city, field: city, label: City, readonly: true }
+      - type: LineItemActions
+        id: contact_child_actions
+        actions:
+          - { id: edit_contact_child, label: Edit, icon: edit, variant: ghost, permission: base.contacts.write }
+          - { id: delete_contact_child, label: Delete, icon: trash, variant: danger, permission: base.contacts.write }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: company_type, label: Type, mobile: true }
+      - { field: email, label: Email, mobile: false }
+      - { field: phone, label: Phone, mobile: true }
+      - { field: city, label: City, mobile: false }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_contact_child, label: Edit, icon: edit, variant: ghost, permission: base.contacts.write }
+          - { id: delete_contact_child, label: Delete, icon: trash, variant: danger, permission: base.contacts.write }
   - type: ListView
     variant: odoo
     source: contact_activities

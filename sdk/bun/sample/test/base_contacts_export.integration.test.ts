@@ -46,7 +46,7 @@ describe('Base Contacts export parity slice', () => {
       country_name: null,
       fixture_state: null,
     }, 0, 100);
-    expect(all.data).toHaveLength(10);
+    expect(all.data).toHaveLength(11);
     expect(all.data[0]).toEqual(expect.objectContaining({
       name: 'Azure Interior',
       company_type: 'company',

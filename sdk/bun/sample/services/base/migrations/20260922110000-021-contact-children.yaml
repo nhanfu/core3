@@ -1,0 +1,16 @@
+version: 0.0.21
+kind: data
+description: Seed a durable Odoo-shaped child contact for the Contacts notebook relation
+type:
+  postgres:
+    up: |
+      INSERT INTO base_contacts(id, row_version, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, active, parent_company_id, website, language_code, company_id)
+      SELECT 'contact-demo-child', 1, 'Demo Contact Address', 'person', 'address@core3.local', '+1 555 0111', '100 Main Street', 'San Francisco', 'California', '94105', 'United States', 'USD', false, true, 'company-demo', NULL, 'en_US', 'company-demo'
+      WHERE EXISTS (SELECT 1 FROM base_contacts WHERE id = 'company-demo' AND is_company = true AND active = true)
+      ON CONFLICT (id) DO UPDATE SET parent_company_id = EXCLUDED.parent_company_id, company_id = EXCLUDED.company_id, active = true;
+    down: |
+      DELETE FROM base_contacts WHERE id = 'contact-demo-child';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

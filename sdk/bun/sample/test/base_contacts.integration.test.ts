@@ -63,7 +63,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     const contacts = source('contacts.yaml', 'contacts');
     const defaults = await repository.querySource(contacts, { q: null, active: null, company_type: null, country_name: null, fixture_state: null }, 0, 50);
     expect(defaults.data.map((row: any) => row.id)).toEqual([
-      'company-azure', 'contact-azure-brandon', 'company-demo', 'company-vietnam', 'contact-demo',
+      'company-azure', 'contact-azure-brandon', 'company-demo', 'contact-demo-child', 'company-vietnam', 'contact-demo',
       'contact-gemini-edwin', 'company-gemini', 'contact-gemini-jesse', 'contact-berlin',
       'company-northwind',
     ]);

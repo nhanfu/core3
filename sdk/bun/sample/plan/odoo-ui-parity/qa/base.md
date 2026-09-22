@@ -21,6 +21,10 @@ Runtime: `bun run agent:module -- base --port=4010`
 - [x] Contact duplicate workflow contract, guards, and restart coverage.
 - [ ] Fresh authenticated Core3 desktop/mobile duplicate captures; bsk sessions
       stopped before the transition could be captured.
+- [x] Contact child relation datasource, nested CRUD, scope, stale, and restart
+      contract.
+- [ ] Fresh authenticated Odoo/Core3 desktop/mobile child relation captures;
+      the shared signed-in tab was already borrowed by another bsk session.
 
 ## Decision
 
@@ -42,6 +46,21 @@ because its run had a transient `/api/apps` failure.
   navigation with `session not registered or already stopped`; no fresh Core3
   desktop/mobile screenshots exist for the duplicate transition. Contract
   sign-off is recorded, but visual parity remains open.
+
+## QA verification: contact child relation `BASE-CONTACT-HIERARCHY-CHILDREN-001` (2026-09-22)
+
+- Focused relation suite: **3 tests / 26 assertions** passed.
+- Full Base integration slice: **48 tests / 448 assertions** passed.
+- UI audit: **834 pages / 842 routes / 1,739 datasources** passed; frontend
+  build passed.
+- Odoo source confirms `res.partner.child_ids` is the Contacts notebook inline
+  kanban/form relation. Core3 now exposes the same bounded relation shape with
+  API-owned datasource and line-item CRUD actions.
+- Browser blocker `BASE-CONTACT-HIERARCHY-CHILDREN-QA-001`: BrowserSkill
+  instance `245ea108` was healthy, but borrowing signed-in tab `1770662590`
+  returned `tab is borrowed by another session` for session `ioxf`. No fresh
+  Odoo or Core3 desktop/mobile captures exist, and no visual-parity claim is
+  made. The worker session was stopped and no borrowed tab was left open.
 
 ## QA result: attachment panel candidate `bb3487c2` (2026-09-13)
 
