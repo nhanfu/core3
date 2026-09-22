@@ -1,0 +1,36 @@
+title: Certification Preview
+page: { id: survey-certification-preview, route: /surveys/certification-preview, breadcrumb: [Marketing, Surveys, Detail, Certification Preview], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_certification_preview
+    title_field: title
+    subtitle_field: template_name
+    status_field: state
+    editable: false
+    header_actions:
+      - { id: print_survey_certification_preview, label: Print, permission: surveys.read, variant: primary }
+      - { id: back_to_survey_certification, label: Back to survey, permission: surveys.read, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Certification
+        fields: [{ field: title, label: Survey }, { field: owner, label: Owner }, { field: certification_report_layout, label: Template }, { field: template_code, label: Template code }]
+      - title: Preview context
+        fields: [{ field: preview_result, label: Result }, { field: preview_recipient, label: Recipient }, { field: preview_date, label: Date }, { field: description, label: Description }]
+  - type: TemplatePreview
+    id: survey-certification-template-preview
+    source: survey_certification_preview_blocks
+    template_source: survey_certification_preview_template
+actions:
+  - id: print_survey_certification_preview
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_survey_certification
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/detail
+    params: { id: '{row.id}' }

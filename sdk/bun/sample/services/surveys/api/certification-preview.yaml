@@ -1,0 +1,22 @@
+page: { id: survey-certification-preview }
+datasources:
+  - id: survey_certification_preview
+    single: true
+    permission: surveys.read
+    error_states:
+      unauthorized: { status: 401, code: SURVEY_CERTIFICATION_PREVIEW_UNAUTHORIZED, message: Sign in to preview this certification. }
+      forbidden: { status: 403, code: SURVEY_CERTIFICATION_PREVIEW_FORBIDDEN, message: You do not have permission to preview this certification. }
+      missing_record: { status: 404, code: SURVEY_CERTIFICATION_PREVIEW_NOT_FOUND, message: A certified survey is required for preview. }
+      transport_error: { status: 503, code: SURVEY_CERTIFICATION_PREVIEW_UNAVAILABLE, message: The certification preview is temporarily unavailable. }
+    query: "SELECT s.id, s.id AS survey_id, s.title, s.description, s.owner, s.state, COALESCE(s.certification_report_layout, 'modern_purple') AS certification_report_layout, CASE COALESCE(s.certification_report_layout, 'modern_purple') WHEN 'modern_purple' THEN 'Modern Purple' WHEN 'modern_blue' THEN 'Modern Blue' WHEN 'modern_gold' THEN 'Modern Gold' WHEN 'classic_purple' THEN 'Classic Purple' WHEN 'classic_blue' THEN 'Classic Blue' WHEN 'classic_gold' THEN 'Classic Gold' ELSE 'Modern Purple' END AS template_name, 'CERT-' || UPPER(REPLACE(COALESCE(s.certification_report_layout, 'modern_purple'), '_', '-')) AS template_code, 'Certification Failed' AS preview_result, 'Sample Recipient' AS preview_recipient, '2026-01-15' AS preview_date FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived'"
+  - id: survey_certification_preview_template
+    single: true
+    permission: surveys.read
+    error_states:
+      transport_error: { status: 503, code: SURVEY_CERTIFICATION_PREVIEW_UNAVAILABLE, message: The certification preview is temporarily unavailable. }
+    query: "SELECT s.id, 'CERT-' || UPPER(REPLACE(COALESCE(s.certification_report_layout, 'modern_purple'), '_', '-')) AS code, CASE COALESCE(s.certification_report_layout, 'modern_purple') WHEN 'modern_purple' THEN 'Modern Purple certification' WHEN 'modern_blue' THEN 'Modern Blue certification' WHEN 'modern_gold' THEN 'Modern Gold certification' WHEN 'classic_purple' THEN 'Classic Purple certification' WHEN 'classic_blue' THEN 'Classic Blue certification' WHEN 'classic_gold' THEN 'Classic Gold certification' ELSE 'Modern Purple certification' END AS name FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived'"
+  - id: survey_certification_preview_blocks
+    permission: surveys.read
+    error_states:
+      transport_error: { status: 503, code: SURVEY_CERTIFICATION_PREVIEW_UNAVAILABLE, message: The certification preview is temporarily unavailable. }
+    query: "SELECT s.id || '-preview-title' AS id, 1 AS sequence, 'text' AS block_type, 'Certification' AS label, s.title AS content, NULL AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' UNION ALL SELECT s.id || '-preview-result' AS id, 2 AS sequence, 'text' AS block_type, 'Result' AS label, 'Certification Failed' AS content, NULL AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' UNION ALL SELECT s.id || '-preview-recipient' AS id, 3 AS sequence, 'token' AS block_type, 'Recipient' AS label, NULL AS content, 'user.name' AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' UNION ALL SELECT s.id || '-preview-date' AS id, 4 AS sequence, 'token' AS block_type, 'Date' AS label, NULL AS content, 'date' AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' UNION ALL SELECT s.id || '-preview-score' AS id, 5 AS sequence, 'token' AS block_type, 'Score' AS label, NULL AS content, 'score' AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' UNION ALL SELECT s.id || '-preview-questions' AS id, 6 AS sequence, 'table' AS block_type, 'Question results' AS label, NULL AS content, NULL AS token_key FROM surveys s WHERE s.id = :id AND COALESCE(s.certification, false) = true AND s.state <> 'Archived' ORDER BY sequence, id"

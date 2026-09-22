@@ -34,6 +34,7 @@ components:
       - { id: update_survey_responsible_user, label: Change responsible user, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_speed_rating, label: Quick-answer rewards, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_certification_template, label: Certification template, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
+      - { id: preview_survey_certification, label: Preview certification, variant: secondary, permission: surveys.read, show_if: "record.certification === true && record.state !== 'Archived'" }
       - { id: update_survey_scoring, label: Scoring settings, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_time_limit, label: Survey Time Limit, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
       - { id: update_survey_access, label: Access settings, variant: secondary, permission: surveys.write, show_if: "record.state !== 'Archived'" }
@@ -176,6 +177,15 @@ actions:
       async ({ row }) => {
         if (!row.access_token) throw new Error('This survey does not have a printable link.');
         window.open(`/survey/print/${encodeURIComponent(row.access_token)}`, '_blank', 'noopener');
+      }
+  - id: preview_survey_certification
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async ({ row }) => {
+        if (!row.certification) throw new Error('Enable certification before previewing the certificate.');
+        window.open(`/surveys/certification-preview?id=${encodeURIComponent(String(row.id))}`, '_blank', 'noopener');
       }
   - id: delete_survey_detail
     type: client

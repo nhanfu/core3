@@ -2853,3 +2853,39 @@ allowed`; no Core3 visual parity sign-off is claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-ACCESS-SETTINGS-001/`.
+
+## Bounded slice: `SURVEYS-CERTIFICATION-PREVIEW-001` — 2026-09-22
+
+The next concrete source-backed action after the existing certification
+settings is Odoo's certification-template `Preview` object action. Odoo
+renders the button beside `certification_report_layout` and opens
+`/survey/<survey_id>/certification_preview`; its controller renders a preview
+shell and a generated certification report
+(`addons/survey/views/survey_survey_views.xml:151-153`,
+`addons/survey/models/survey_survey.py:1131-1136`,
+`addons/survey/controllers/main.py:686-700`).
+
+Core3 adds the permissioned `preview_survey_certification` action to the
+existing `survey-detail` page and a new `survey-certification-preview`
+page/API pair joined by `page.id`. The preview uses the shared
+`TemplatePreview` primitive and the durable six-value certification layout;
+Print and Back actions are available on the new surface. Datasource guards
+return an empty/not-found state for missing, non-certified, or archived
+surveys. No migration or custom renderer was required.
+
+Focused verification passes **3 tests / 18 assertions**. The adjacent
+certification, scoring, time-limit, and Surveys regressions pass; audit passes
+with **813 pages, 822 routes, and 1,696 datasources**; the sample frontend/CSS
+build and `git diff --check` pass.
+
+Live Odoo desktop evidence is retained at
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CERTIFICATION-PREVIEW-001/odoo-desktop.png`.
+The required authenticated user-tab borrow was blocked because session
+`augl` owned tab `1770662590`; Chrome also blocked iphone-14 CDP access to an
+extension frame. No Core3 authenticated screenshot, mobile screenshot, or
+visual-parity sign-off is claimed. The bounded difference from Odoo is
+explicit: Core3 renders a safe printable template preview rather than a
+generated PDF/temp answer workflow.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CERTIFICATION-PREVIEW-001/`.

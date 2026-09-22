@@ -76,6 +76,26 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 - Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: bounded candidate QA recorded; not signed off. Full regression, rollback/replay-down, complete actor mutation matrix, and full paired Odoo visual comparison remain open.
 
+## Bounded QA rerun: SURVEYS-CERTIFICATION-PREVIEW-001 (2026-09-22)
+
+- Focused preview contract: **3 passed, 18 assertions**.
+- Adjacent certification-template, scoring, time-limit, and Surveys regression
+  files: passed in the combined command recorded in the feature evidence.
+- Audit: **pass**, 813 pages, 822 routes, 1,696 datasources.
+- Frontend/CSS build: **pass** from `sdk/bun/sample`.
+- Diff check: **pass**.
+- Odoo desktop action: live `Feedback Form Preview` route captured at
+  `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CERTIFICATION-PREVIEW-001/odoo-desktop.png`.
+- Browser blocker: authenticated user tab `1770662590` was already borrowed
+  by session `augl`; iphone-14 emulation then hit Chrome's exact
+  `chrome-extension://` CDP restriction. No Core3 authenticated screenshot,
+  mobile screenshot, or paired visual-parity claim is recorded.
+
+Decision: **bounded implementation verified; module not signed off**. The
+preview action contract and datasource guards pass, while generated-PDF
+fidelity, authenticated Core3 browser evidence, and mobile paired comparison
+remain open.
+
 ## Wave 24 — token-only public access (`SURVEYS-PUBLIC-TOKEN-ACCESS-001`)
 
 | Test ID | Scenario | Evidence | Result |
