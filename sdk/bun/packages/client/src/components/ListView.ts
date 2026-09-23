@@ -12,6 +12,7 @@ import { ActivityView, type ActivityViewDefinition } from '@core3/client/compone
 import { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
 import { i18n } from '@core3/client/i18n';
 import { drawColumnChooser } from '@core3/client/components/ColumnChooser';
+import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 
 type ListRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -132,6 +133,7 @@ export type ListViewOptions = {
   viewNavigation?: 'icons' | 'tabs';
   responsiveCard?: boolean;
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
+  onRowReorder?: (row: ListRow, target: ListRow) => Promise<void> | void;
   onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   onKanbanEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   onKanbanDeleteStatus?: (stateId: string, replacementState: string) => Promise<void> | void;
@@ -175,6 +177,16 @@ export class ListView extends BaseComponent {
   options: ListViewOptions;
   private dismissCleanup: Array<() => void> = [];
   private drawVersion = 0;
+  private reorderPending = false;
+
+  private async reorderRow(row: ListRow, target: ListRow) {
+    if (this.reorderPending || !this.options.onRowReorder) return;
+    this.reorderPending = true;
+    this._container?.setAttribute('aria-busy', 'true');
+    try { await this.options.onRowReorder(row, target); }
+    catch (error: any) { showToast(error.message || 'Unable to reorder rows.', toastTypeForError(error)); }
+    finally { this.reorderPending = false; this._container?.removeAttribute('aria-busy'); }
+  }
 
   constructor(id: string, state: Record<string, unknown> = {}, defs: ListViewColumn[] = [], options: ListViewOptions = {}) {
     super(id, state);
@@ -969,6 +981,17 @@ export class ListView extends BaseComponent {
     const inline = this.options.inlineEdit;
     const editing = Boolean(inline && this.inlineEditId() === id);
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).ele();
+    const reorder = this.options.onRowReorder && !this.state.sort && !this.state.groupBy && !editing && Number(this.state.meta?.total || 0) <= this.state.rows.length ? this.options.onRowReorder : undefined;
+    if (reorder) {
+      html.take(tr).event('dragover', (event: DragEvent) => { if (event.dataTransfer?.types.includes(`application/x-core3-list-${this.id}`)) event.preventDefault(); });
+      html.take(tr).event('drop', (event: DragEvent) => {
+        const sourceId = event.dataTransfer?.getData(`application/x-core3-list-${this.id}`);
+        const source = this.state.rows.find((candidate: ListRow, index: number) => this.rowId(candidate, index) === sourceId);
+        if (!source || sourceId === id) return;
+        event.preventDefault(); event.stopPropagation();
+        void this.reorderRow(source, row);
+      });
+    }
     if (editing) html.take(tr).toggleClass('o-list-inline-editing', true);
     let openClickTimer: ReturnType<typeof setTimeout> | undefined;
     const openRow = (action: string) => void this.submit(action, { row });
@@ -1050,6 +1073,38 @@ export class ListView extends BaseComponent {
         this.drawRowActions(cell, row, id, column.rowActions, labels);
       } else if (column.render) {
         column.render(cell, row[column.field], row);
+        if (reorder && column.type === 'HandleCell') {
+          cell.draggable = true;
+          cell.tabIndex = 0;
+          cell.setAttribute('role', 'button');
+          cell.setAttribute('aria-label', 'Reorder row; Alt+Arrow keys to move');
+          cell.style.touchAction = 'none';
+          let pointer: { id: number; x: number; y: number } | undefined;
+          html.take(cell).event('pointerdown', (event: PointerEvent) => {
+            if (!['touch', 'pen'].includes(event.pointerType) || !event.isPrimary || this.reorderPending) return;
+            pointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            cell.setPointerCapture(event.pointerId);
+          });
+          html.take(cell).event('pointercancel', () => { pointer = undefined; });
+          html.take(cell).event('lostpointercapture', () => { pointer = undefined; });
+          html.take(cell).event('pointerup', (event: PointerEvent) => {
+            const start = pointer;
+            pointer = undefined;
+            if (!start || start.id !== event.pointerId || Math.hypot(event.clientX - start.x, event.clientY - start.y) < 8) return;
+            const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('tr[data-row-id]');
+            if (!targetRow || targetRow.parentElement !== tr.parentElement) return;
+            const target = this.state.rows.find((candidate: ListRow, index: number) => this.rowId(candidate, index) === targetRow.dataset.rowId);
+            if (target && targetRow.dataset.rowId !== id) void this.reorderRow(row, target);
+          });
+          html.take(cell).event('click', (event: MouseEvent) => event.stopPropagation());
+          html.take(cell).event('dragstart', (event: DragEvent) => { event.dataTransfer?.setData(`application/x-core3-list-${this.id}`, id); });
+          html.take(cell).event('keydown', (event: KeyboardEvent) => {
+            if (!event.altKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+            event.preventDefault(); event.stopPropagation();
+            const target = this.state.rows[index + (event.key === 'ArrowUp' ? -1 : 1)];
+            if (target) void this.reorderRow(row, target);
+          });
+        }
       } else {
         const value = row[column.field];
         html.take(cell).replaceText(value == null || value === '' ? '—' : String(value));

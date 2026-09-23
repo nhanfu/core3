@@ -1,0 +1,16 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE spreadsheet_dashboard_shares ADD COLUMN dashboard_name VARCHAR;
+      ALTER TABLE spreadsheet_dashboard_shares ADD COLUMN snapshot_status VARCHAR;
+      ALTER TABLE spreadsheet_dashboard_shares ADD COLUMN workbook_snapshot VARCHAR;
+      UPDATE spreadsheet_dashboard_shares s SET dashboard_name = d.name,
+        snapshot_status = d.snapshot_status, workbook_snapshot = d.workbook_snapshot
+        FROM spreadsheet_dashboards d WHERE d.id = s.dashboard_id;
+    down: |
+      ALTER TABLE spreadsheet_dashboard_shares DROP COLUMN workbook_snapshot;
+      ALTER TABLE spreadsheet_dashboard_shares DROP COLUMN snapshot_status;
+      ALTER TABLE spreadsheet_dashboard_shares DROP COLUMN dashboard_name;
+  duckdb: postgres

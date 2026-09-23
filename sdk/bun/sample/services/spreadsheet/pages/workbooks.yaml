@@ -1,0 +1,12 @@
+title: Spreadsheets
+page:
+  id: spreadsheet-workbooks
+  route: /spreadsheet/workbooks
+  breadcrumb: [Spreadsheets]
+  auth: { require: [spreadsheet.read] }
+components:
+  - type: SpreadsheetWorkspace
+    id: spreadsheet-workspace
+    title: Spreadsheets
+    endpoint: /api/spreadsheet/workbooks
+    public_route: /spreadsheet/shared

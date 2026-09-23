@@ -69,6 +69,8 @@ export interface AuthServiceProtocol {
   login(request: AuthenticationRequest): Promise<AuthenticationResult>;
   logout(userId: string): Promise<void>;
   getCurrentUser(request: Request | unknown): Promise<AuthClaims>;
+  /** Server-only identity lookup for durable jobs; never accepts stored claims. */
+  resolveBackgroundUser?(userId: string, companyName: string): Promise<AuthClaims>;
   hasPermission(user: AuthClaims | User, permission: string): boolean;
   getSecurityContext(user: AuthClaims | User): SecurityContext;
   changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;

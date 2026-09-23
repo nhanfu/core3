@@ -282,6 +282,17 @@ async function renderPublicSpreadsheet(path: string) {
   await mod.mount(outlet, route.shareId, route.token);
 }
 
+let mountedPublicWorkbook: { dispose(): void } | undefined;
+async function renderPublicWorkbook() {
+  const outlet = document.getElementById('outlet');
+  if (!outlet) return;
+  mountedPublicWorkbook?.dispose();
+  const { SpreadsheetWorkspace } = await import('@core3/client/components/SpreadsheetWorkspace');
+  const workspace = new SpreadsheetWorkspace('public-workbook', { endpoint: '/api/spreadsheet/workbooks' });
+  mountedPublicWorkbook = workspace;
+  workspace.mount(outlet);
+}
+
 async function renderPublicWebsite(path: string) {
   if (!publicWebsiteRoute(path)) return;
   const outlet = document.getElementById('outlet');
@@ -436,6 +447,11 @@ async function bootstrap() {
     await renderPublicSurvey(window.location.pathname);
     return;
   }
+  if (window.location.pathname === '/spreadsheet/shared') {
+    app.innerHTML = '<div id="outlet"></div>';
+    await renderPublicWorkbook();
+    return;
+  }
   if (publicSpreadsheetRoute(window.location.pathname)) {
     app.innerHTML = '<div id="outlet"></div>';
     await renderPublicSpreadsheet(window.location.pathname);
@@ -551,6 +567,12 @@ async function bootstrap() {
 
 // Handle browser back/forward and direct slash navigation.
 window.addEventListener('popstate', () => {
+  if (window.location.pathname === '/spreadsheet/shared') {
+    void renderPublicWorkbook();
+    return;
+  }
+  mountedPublicWorkbook?.dispose();
+  mountedPublicWorkbook = undefined;
   if (publicSurveyToken(window.location.pathname)) {
     void renderPublicSurvey(window.location.pathname);
     return;

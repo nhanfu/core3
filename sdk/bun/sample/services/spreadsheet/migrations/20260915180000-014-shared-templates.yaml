@@ -1,0 +1,14 @@
+version: 0.0.14
+kind: schema
+type:
+  postgres:
+    up: |
+      DROP INDEX spreadsheet_workbook_templates_owner;
+      ALTER TABLE spreadsheet_workbook_templates ADD COLUMN published BOOLEAN DEFAULT FALSE;
+      ALTER TABLE spreadsheet_workbook_templates ALTER COLUMN published SET NOT NULL;
+      CREATE INDEX spreadsheet_workbook_templates_owner ON spreadsheet_workbook_templates (owner_id, company_name);
+    down: |
+      DROP INDEX spreadsheet_workbook_templates_owner;
+      ALTER TABLE spreadsheet_workbook_templates DROP COLUMN published;
+      CREATE INDEX spreadsheet_workbook_templates_owner ON spreadsheet_workbook_templates (owner_id, company_name);
+  duckdb: postgres

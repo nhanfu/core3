@@ -17,6 +17,7 @@ components:
     header_actions:
       - { id: edit_spreadsheet_dashboard, label: Edit, variant: primary }
       - { id: open_spreadsheet_dashboard, label: Open Dashboard, variant: secondary }
+      - { id: link_spreadsheet_dashboard_workbook, label: Choose Workbook, variant: secondary }
     action_menu:
       label: Actions
       actions:

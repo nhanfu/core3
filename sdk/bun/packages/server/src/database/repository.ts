@@ -12,7 +12,7 @@ private readonly resolveService?: (name: string) => any;
   constructor(db: DatabaseAdapter, resolveService?: (name: string) => any) {
     this.db = db;
     this.resolveService = resolveService;
-    this.mutationRuntime = new YamlMutationRuntime(resolveService);
+    this.mutationRuntime = new YamlMutationRuntime(resolveService, db.driver);
   }
 
   get driver(): DatabaseDriver | undefined {

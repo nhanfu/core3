@@ -1,0 +1,9 @@
+version: 0.0.9
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE spreadsheet_dashboards ADD COLUMN workbook_id VARCHAR;
+    down: |
+      ALTER TABLE spreadsheet_dashboards DROP COLUMN workbook_id;
+  duckdb: postgres

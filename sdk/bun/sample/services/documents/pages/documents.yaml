@@ -1,6 +1,10 @@
 title: Documents
 page: { id: documents, breadcrumb: [Finance, Documents], auth: { require: [documents.read] } }
 datasources:
+  - id: document_workbook_references
+    single: false
+    permission: documents.read
+    query: "SELECT id, name, state FROM documents WHERE state <> 'Archived' AND (:document_id IS NULL OR id = :document_id) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
   - id: document_states
     single: false
     permission: documents.read
@@ -17,7 +21,7 @@ datasources:
     single: false
     permission: documents.read
     workflow: documents
-    query: "SELECT d.id, d.row_version, d.name, d.folder_id, f.name AS folder_name, d.owner_name, d.partner_name, d.document_type, d.mime_type, d.file_size, d.state, CAST(d.document_date AS VARCHAR) AS document_date, CAST(d.expiry_date AS VARCHAR) AS expiry_date, d.description FROM documents d LEFT JOIN document_folders f ON f.id = d.folder_id WHERE (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.owner_name ILIKE '%' || :q || '%' OR d.partner_name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) ORDER BY d.document_date DESC"
+    query: "SELECT d.id, d.row_version, d.name, d.folder_id, f.name AS folder_name, d.owner_name, d.partner_name, d.document_type, d.mime_type, d.file_size, d.state, CAST(d.document_date AS VARCHAR) AS document_date, CAST(d.expiry_date AS VARCHAR) AS expiry_date, d.description FROM documents d LEFT JOIN document_folders f ON f.id = d.folder_id WHERE (:document_id IS NULL OR d.id = :document_id) AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.owner_name ILIKE '%' || :q || '%' OR d.partner_name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) ORDER BY d.document_date DESC"
 components:
   - type: ListView
     variant: odoo
@@ -53,10 +57,16 @@ components:
     row_key: id
     row_actions: menu
     actions:
+      - { id: open_document_spreadsheets, label: Spreadsheets, permission: spreadsheet.read, show_if: "row.state !== 'Archived'" }
       - { id: submit_document, label: Submit, permission: documents.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: approve_document, label: Approve, permission: documents.manage, variant: secondary, show_if: "row.state === 'Submitted'" }
       - { id: archive_document, label: Archive, permission: documents.manage, variant: danger, show_if: "row.state !== 'Archived'" }
 actions:
+  - id: open_document_spreadsheets
+    type: navigate
+    permission: spreadsheet.read
+    navigate_to: /spreadsheet/workbooks
+    params: { document_id: '{row.id}' }
   - id: create_document
     type: server_form
     permission: documents.write

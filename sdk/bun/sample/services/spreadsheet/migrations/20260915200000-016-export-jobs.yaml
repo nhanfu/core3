@@ -1,0 +1,17 @@
+version: 0.0.16
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_export_jobs (
+        id VARCHAR PRIMARY KEY, workbook_id VARCHAR NOT NULL, revision_id VARCHAR NOT NULL,
+        owner_id VARCHAR NOT NULL, company_name VARCHAR NOT NULL, name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0,
+        workbook_snapshot VARCHAR, artifact_base64 VARCHAR, required_permissions VARCHAR NOT NULL,
+        error VARCHAR, lease_token VARCHAR, lease_until BIGINT NOT NULL DEFAULT 0,
+        created_at_ms BIGINT NOT NULL, updated_at_ms BIGINT NOT NULL, expires_at_ms BIGINT NOT NULL
+      );
+      CREATE INDEX spreadsheet_export_jobs_pending ON spreadsheet_export_jobs (state, created_at_ms);
+    down: |
+      DROP TABLE spreadsheet_export_jobs;
+  duckdb: postgres

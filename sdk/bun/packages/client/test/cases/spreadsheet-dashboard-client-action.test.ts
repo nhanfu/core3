@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SpreadsheetDashboardClientAction } from '@core3/client/components/SpreadsheetDashboardClientAction';
+
+const mounted = vi.hoisted(() => vi.fn());
+vi.mock('../../src/adapters/SpreadsheetAdapter', () => ({ SpreadsheetAdapter: class {
+  mount(element: HTMLElement, options: any) { mounted(options); options.onReady({}); }
+  dispose() {}
+} }));
 
 const dataMap = {
   groups: { data: [{ id: 'sales', name: 'Sales' }] },
@@ -20,15 +26,13 @@ function mount(definition: any, state: Record<string, string> = {}, submit?: (ac
 }
 
 describe('SpreadsheetDashboardClientAction', () => {
-  it('renders a read-only landing, selected workbook, figures, and mobile-compatible controls', () => {
+  it('mounts the selected stored workbook in engine dashboard mode', () => {
     const container = mount({ groups_source: 'groups', dashboards_source: 'dashboards', workbooks_source: 'workbooks', summaries_source: 'summaries', chart_source: 'chart', rows_source: 'rows', favorite_action: 'toggle_dashboard_favorite' });
     expect(container.querySelector('.o-spreadsheet-readonly')?.textContent).toBe('Read-only');
     expect(container.querySelector('.o-spreadsheet-dashboard-sidebar')?.textContent).toContain('Sales');
-    expect(container.querySelector('.o-spreadsheet-workbook')?.textContent).toContain('Sheet1');
-    expect(container.querySelector('.o-spreadsheet-kpis')?.textContent).toContain('$184,250');
-    expect(container.querySelector('[aria-label="Top countries map"]')).not.toBeNull();
-    expect(container.querySelector('[aria-label="Top categories treemap"]')).not.toBeNull();
-    expect(container.querySelectorAll('.o-spreadsheet-granularity button')).toHaveLength(4);
+    expect(mounted).toHaveBeenCalledWith(expect.objectContaining({ mode: 'dashboard', data: dataMap.workbooks.data[0].workbook_snapshot }));
+    expect(container.querySelector('.o-spreadsheet-dashboard-engine')).not.toBeNull();
+    expect(container.querySelector('.o-spreadsheet-dashboard-mobile-picker')).not.toBeNull();
   });
 
   it('submits the declared favorite action for the selected dashboard', async () => {

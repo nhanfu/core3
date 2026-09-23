@@ -19,6 +19,8 @@ import type { TopicRouter } from './topics/direct.ts';
 import { topicDefinition } from './topics/contracts.ts';
 import type { ModuleApiHandler } from './module.ts';
 import { FetchObjectStore, MessageLog } from './message-log.ts';
+import { WorkbookRuntime, validateWorkbookRuntime } from './workbook-runtime.ts';
+import { createYamlSourceReader, type YamlSourceReader } from './yaml-source-reader';
 
 export type YamlRuntimeContext = {
   id: string;
@@ -30,6 +32,7 @@ export type YamlRuntimeContext = {
   actions: Map<string, any>;
   storage: any;
   reloadPages?: () => number;
+  routePrefixes?: string[];
 };
 
 export type DiscoveredYamlService = {
@@ -47,6 +50,7 @@ export type YamlServiceDefinition = DiscoveredYamlService & {
   operations: unknown;
   storage: unknown;
   migrations: unknown;
+  workbooks: unknown;
 };
 
 export function loadYamlServiceManifest(root: string): DiscoveredYamlService {
@@ -72,6 +76,7 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
     operations: readOptionalYaml(root, manifest.operations),
     storage: readOptionalYaml(root, manifest.storage),
     migrations: manifest.migrations,
+    workbooks: readOptionalYaml(root, manifest.workbooks),
   };
 }
 
@@ -158,6 +163,7 @@ export class YamlServiceModule implements ModuleLifecycle {
   private repository: YamlRepository | null = null;
   private topics: TopicRouter | null = null;
   private runtime: YamlRuntimeContext | null = null;
+  private workbookRuntime: WorkbookRuntime | null = null;
   private readonly messageLogs = new Map<string, MessageLog>();
 
   constructor(private readonly service: DiscoveredYamlService) {
@@ -311,9 +317,17 @@ export class YamlServiceModule implements ModuleLifecycle {
       reloadPages,
       resolveService: context.resolveService,
     });
+    const workbookRuntime = this.workbookRuntime = this.definition.workbooks
+      ? new WorkbookRuntime(validateWorkbookRuntime(this.definition.workbooks), this.repository, authProvider, service => context.resolveService<YamlSourceReader>(`yaml.service.${service}`))
+      : null;
+    if (workbookRuntime) context.registerApi(workbookRuntime.handle);
     this.runtime = {
       id: this.id,
-      api,
+      api: workbookRuntime ? async (request, url, server) => {
+        const response = await workbookRuntime.handle(request, url, server);
+        return response === null ? api(request, url, server) : response;
+      } : api,
+      routePrefixes: workbookRuntime ? [workbookRuntime.definition.endpoint] : [],
       pages: pageMaps.pages,
       datasources: pageMaps.datasources,
       menus: pageMaps.menus,
@@ -325,6 +339,7 @@ export class YamlServiceModule implements ModuleLifecycle {
     // services can call another YAML service without importing its database
     // or growing a service-specific module implementation.
     context.registerService(`yaml.service.${this.id}`, {
+      ...createYamlSourceReader(api),
       call: (operation: string, request: Record<string, unknown> = {}) => this.call(operation, request),
     });
   }
@@ -346,6 +361,8 @@ export class YamlServiceModule implements ModuleLifecycle {
 
   async unload(context: ModuleContext): Promise<void> {
     void context;
+    this.workbookRuntime?.dispose();
+    this.workbookRuntime = null;
     this.topics?.stop();
     this.topics = null;
     for (const log of this.messageLogs.values()) await log.stop();

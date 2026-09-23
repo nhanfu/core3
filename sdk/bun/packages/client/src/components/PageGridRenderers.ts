@@ -594,6 +594,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     align: column.align,
     sortable: column.sortable !== false,
     optional: column.optional,
+    type: column.type,
     rowActions: column.actions?.map((action: any) => ({
       ...action,
       visible: (row: any) => {
@@ -1030,6 +1031,11 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         pushParams(nextParams);
       },
       rowActions: def.row_actions || 'buttons',
+      onRowReorder: def.reorder_action && (config.actions || []).some((action: any) => action.id === def.reorder_action && hasPermission(ctx.user, action.permission))
+        ? (row: any, target: any) => handleAction((config.actions || []).find((action: any) => action.id === def.reorder_action), {
+          ...row, target_id: target[def.row_key || 'id'],
+          order_signature: (dataMap[sourceId]?.data || []).map((item: any) => `${item[def.row_key || 'id']}:${item.row_version}`).join('|'),
+        }) : undefined,
       views,
       viewNavigation: def.view_navigation || 'icons',
       responsiveCard: def.responsive_card === true,

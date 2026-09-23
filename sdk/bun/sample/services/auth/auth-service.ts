@@ -108,6 +108,23 @@ export class AuthService implements AuthServiceProtocol {
     return { ...user, roles, permissions, view_scope: access?.view_scope || user.view_scope, avatar_url: profile.avatar_url || null, company_id: profile.current_company_id || null, company } as any;
   }
 
+  async resolveBackgroundUser(userId: string, companyName: string): Promise<AuthClaims> {
+    const user = await this.repository.findBackgroundUser(userId);
+    if (!user || user.enabled !== true) throw Object.assign(new Error('Background actor unavailable'), { status: 403, code: 'BACKGROUND_ACTOR_FORBIDDEN' });
+    const companies = await this.repository.companiesForUser(userId);
+    const matches = companies.filter(company => company.name === companyName);
+    if (matches.length !== 1) throw Object.assign(new Error('Background actor company access revoked or ambiguous'), { status: 403, code: 'BACKGROUND_ACTOR_FORBIDDEN' });
+    const company = matches[0];
+    return {
+      sub: String(user.id), id: String(user.id), email: user.email, name: user.name,
+      roles: String(user.roles_csv || '').split(',').map(role => role.trim()).filter(Boolean),
+      permissions: await this.repository.permissions(userId),
+      branch_id: user.branch_id || null, branches: user.branch_id ? [String(user.branch_id)] : [],
+      view_scope: user.view_scope || 'own', attributes: { department_id: user.department_id },
+      company_id: String(company.id), company, companies,
+    };
+  }
+
   async introspect(token: string): Promise<AuthClaims | null> {
     try {
       return this.keyRing ? await this.keyRing.verify<AuthClaims>(token) || await verifyAuthJwt<AuthClaims>(token, this.secret) : await verifyAuthJwt<AuthClaims>(token, this.secret);

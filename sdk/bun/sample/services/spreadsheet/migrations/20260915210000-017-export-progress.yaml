@@ -1,0 +1,18 @@
+version: 0.0.17
+kind: schema
+
+type:
+  postgres:
+    up: |
+      DROP INDEX spreadsheet_export_jobs_pending;
+      ALTER TABLE spreadsheet_export_jobs ADD COLUMN stage VARCHAR DEFAULT 'queued';
+      ALTER TABLE spreadsheet_export_jobs ALTER COLUMN stage SET NOT NULL;
+      ALTER TABLE spreadsheet_export_jobs ADD COLUMN data_pages_read INTEGER DEFAULT 0;
+      ALTER TABLE spreadsheet_export_jobs ALTER COLUMN data_pages_read SET NOT NULL;
+      CREATE INDEX spreadsheet_export_jobs_pending ON spreadsheet_export_jobs (state, created_at_ms);
+    down: |
+      DROP INDEX spreadsheet_export_jobs_pending;
+      ALTER TABLE spreadsheet_export_jobs DROP COLUMN data_pages_read;
+      ALTER TABLE spreadsheet_export_jobs DROP COLUMN stage;
+      CREATE INDEX spreadsheet_export_jobs_pending ON spreadsheet_export_jobs (state, created_at_ms);
+  duckdb: postgres

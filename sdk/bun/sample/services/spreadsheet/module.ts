@@ -1,12 +1,15 @@
 import { loadYamlServiceManifest, YamlServiceModule } from '@core3/server/yaml-service';
 import type { ModuleContext, ModuleLifecycle } from '@core3/server/module';
 import type { YamlRuntimeContext } from '@core3/server/yaml-service';
+import { WorkbookEngine } from '@core3/server/workbook-engine';
+import { readWorkbook } from '@core3/client/spreadsheet/model';
 
 type SpreadsheetService = { call(operation: string, request?: Record<string, unknown>): Promise<any> };
 
 export default class SpreadsheetModule implements ModuleLifecycle {
   readonly id = 'spreadsheet';
   private delegate: YamlServiceModule | null = null;
+  private readonly exportEngine = new WorkbookEngine();
   private authAdapter: { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean } | null = null;
 
   private getDelegate(context: ModuleContext) {
@@ -30,6 +33,7 @@ export default class SpreadsheetModule implements ModuleLifecycle {
   }
 
   async unload(context: ModuleContext): Promise<void> {
+    this.exportEngine.stop();
     await this.delegate?.unload(context);
     this.delegate = null;
   }
@@ -59,7 +63,7 @@ export default class SpreadsheetModule implements ModuleLifecycle {
       });
     }
     if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-    if (!request.headers.get('Authorization')) return this.json({ error: 'Authentication required', code: 'UNAUTHORIZED' }, 401);
+    if (!request.headers.get('Authorization') || !this.authAdapter) return this.json({ error: 'Authentication required', code: 'UNAUTHORIZED' }, 401);
     if (this.authAdapter) {
       let user: any;
       try { user = await this.authAdapter.getCurrentUser(request); } catch { return this.json({ error: 'Authentication required', code: 'UNAUTHORIZED' }, 401); }
@@ -67,7 +71,10 @@ export default class SpreadsheetModule implements ModuleLifecycle {
     }
     if (share.snapshot_status !== 'ready') return this.json({ error: 'Dashboard export is unavailable', code: 'SPREADSHEET_EXPORT_UNAVAILABLE' }, 503);
     const filename = `${String(share.dashboard_name || 'dashboard').replace(/[^A-Za-z0-9_-]+/g, '-')}.xlsx`;
-    return new Response(JSON.stringify(this.parseSnapshot(share.workbook_snapshot)), {
+    let bytes: Uint8Array;
+    try { bytes = await this.exportEngine.exportSnapshot(readWorkbook(share.workbook_snapshot)); }
+    catch { return this.json({ error: 'Dashboard export is unavailable', code: 'SPREADSHEET_EXPORT_UNAVAILABLE' }, 503); }
+    return new Response(bytes as BodyInit, {
       headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Content-Disposition': `attachment; filename="${filename}"`, 'Cache-Control': 'no-store' },
     });
   }

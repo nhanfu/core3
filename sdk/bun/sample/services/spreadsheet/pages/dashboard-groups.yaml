@@ -4,6 +4,7 @@ components:
   - type: ListView
     variant: odoo
     source: spreadsheet_dashboard_groups_configuration
+    reorder_action: reorder_dashboard_groups
     create_action: create_dashboard_group
     create_label: New
     selectable: true
@@ -23,20 +24,3 @@ actions:
     permission: spreadsheet.manage
     navigate_to: /spreadsheet/dashboard-group
     params: { id: '{row.id}' }
-  - id: create_dashboard_group
-    type: server_form
-    permission: spreadsheet.dashboard.manage
-    title: New dashboard group
-    action: spreadsheet.dashboard.groups.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [spreadsheet_dashboard_groups]
-    mutation:
-      operation: insert
-      table: spreadsheet_dashboard_groups
-      fields: [name, company_name]
-      required: [name]
-      defaults: { company_name: Global, official: false, row_version: 1 }
-    fields:
-      - { field: name, label: Group name, type: text, required: true }
-      - { field: company_name, label: Company, type: text }

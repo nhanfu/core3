@@ -43,6 +43,11 @@ export class AuthRepository {
     return rows[0] || null;
   }
 
+  async findBackgroundUser(userId: string): Promise<any | null> {
+    const rows = await this.execute('find_background_user', { user_id: userId });
+    return rows[0] || null;
+  }
+
   async lookupUser(email: string): Promise<any | null> {
     const rows = await this.execute('lookup_user', { email: email.trim() });
     return rows[0] || null;

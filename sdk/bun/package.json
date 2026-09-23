@@ -1,6 +1,9 @@
 {
   "name": "core3",
   "private": true,
+  "patchedDependencies": {
+    "@odoo/o-spreadsheet@19.0.50": "patches/odoo-spreadsheet-19.0.50.patch"
+  },
   "workspaces": ["sample", "packages/*", "med", "spec"],
   "scripts": {
     "lint": "eslint ."

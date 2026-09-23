@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PostgresDatabase, postgresPlaceholders, postgresSql } from '@core3/server/database/postgres-database';
 
+it('preserves explicit double precision in dashboard order validation', () => {
+  const sql = "SELECT CAST(? AS DOUBLE PRECISION), CAST(? AS DOUBLE), CAST(? AS double\nprecision)";
+  expect(postgresSql(sql)).toBe("SELECT CAST($1 AS DOUBLE PRECISION), CAST($2 AS DOUBLE PRECISION), CAST($3 AS double\nprecision)");
+});
+
 describe('Postgres durable database adapter', () => {
   it('translates positional repository parameters without changing quoted question marks', () => {
     expect(postgresPlaceholders("SELECT '?' AS literal, value FROM records WHERE id = ? AND note = \"?\" AND code = ?"))

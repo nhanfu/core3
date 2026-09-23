@@ -1,5 +1,9 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { pushParams } from '@core3/client/navigate';
+import { SpreadsheetAdapter } from '../adapters/SpreadsheetAdapter';
+import { workbookRequest } from '../spreadsheet/WorkbookTransport';
+import { WorkbookLiveData } from '../spreadsheet/live-data';
+import { openWorkbookFilters } from '../spreadsheet/global-filters';
 
 type DashboardRow = {
   id: string;
@@ -19,12 +23,20 @@ function text(value: unknown, fallback = '') {
   return String(value ?? fallback);
 }
 
-function money(value: unknown) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value) || 0);
-}
-
-/** Read-only approximation of Odoo's action_spreadsheet_dashboard client action. */
+/** Dashboard navigation around the persisted workbook's actual engine surface. */
 export class SpreadsheetDashboardClientAction extends BaseComponent {
+  model: any = null;
+  private liveData?: WorkbookLiveData;
+  private pending = new AbortController();
+  private generation = 0;
+
+  override dispose() {
+    this.generation++;
+    this.pending.abort();
+    this.liveData?.dispose();
+    super.dispose();
+  }
+
   static resolveState(definition: any, context: any) {
     return {
       ...definition,
@@ -36,19 +48,19 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    const generation = ++this.generation;
+    this.pending.abort(); this.pending = new AbortController();
+    this.liveData?.dispose(); this.liveData = undefined;
     const dataMap = this.state.dataMap || {};
     const groups = sourceRows(dataMap, this.state.groups_source);
     const dashboards = sourceRows(dataMap, this.state.dashboards_source) as DashboardRow[];
     const workbooks = sourceRows(dataMap, this.state.workbooks_source);
-    const summaries = sourceRows(dataMap, this.state.summaries_source);
-    const chartPoints = sourceRows(dataMap, this.state.chart_source);
-    const rows = sourceRows(dataMap, this.state.rows_source);
-    const filterStates = sourceRows(dataMap, this.state.filter_source);
     const activeId = text(this.state.activeDashboardId);
     const active = activeId
       ? dashboards.find(dashboard => text(dashboard.id) === activeId)
       : dashboards[0];
-    const filterState = filterStates.find(state => text(state.dashboard_id) === text(active?.id));
+    this.model = null;
+    this.disposeAdapters();
 
     container.replaceChildren();
     const root = document.createElement('section');
@@ -66,37 +78,6 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     const controls = document.createElement('div');
     controls.className = 'o-spreadsheet-dashboard-controls';
     header.append(controls);
-    const date = document.createElement('button');
-    date.type = 'button';
-    date.className = 'o-spreadsheet-dashboard-date';
-    date.textContent = text(filterState?.date_range || this.state.pageParams?.dashboard_date, 'This year');
-    date.title = 'Dashboard date';
-    date.setAttribute('aria-label', 'Dashboard date range');
-    date.addEventListener('click', () => {
-      if (!filterState || !this.state.filter_action || !active) return;
-      const options = ['Today', 'This week', 'This month', 'This year'];
-      const previous = text(filterState.date_range, 'This year');
-      const next = options[(options.indexOf(previous) + 1) % options.length];
-      filterState.date_range = next;
-      void this.submit(this.state.filter_action, {
-        state: { dashboard_id: active.id, filter_state_id: filterState.id, filter_row_version: filterState.row_version },
-        row: filterState,
-        values: { date_range: next },
-      }).then((result: any) => {
-        if (result?.row_version !== undefined) filterState.row_version = result.row_version;
-        this.redraw();
-      }).catch(() => {
-        filterState.date_range = previous;
-      });
-    });
-    controls.append(date);
-    const share = document.createElement('button');
-    share.type = 'button';
-    share.className = 'o-spreadsheet-dashboard-share';
-    share.textContent = 'Share';
-    share.disabled = true;
-    share.title = 'Sharing is available from the dashboard access batch';
-    controls.append(share);
     const favorite = document.createElement('button');
     favorite.type = 'button';
     favorite.className = 'o-spreadsheet-dashboard-favorite';
@@ -136,21 +117,14 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     shell.append(content);
     const canvasHeading = document.createElement('div');
     canvasHeading.className = 'o-spreadsheet-dashboard-canvas-heading';
-    canvasHeading.innerHTML = `<div><span class="o-spreadsheet-dashboard-group">${active.group_name || 'Dashboards'}</span><h2>${active.name}</h2></div>`;
-    const granularity = document.createElement('div');
-    granularity.className = 'o-spreadsheet-granularity';
-    for (const option of ['days', 'weeks', 'months', 'quarters']) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = option[0].toUpperCase() + option.slice(1);
-      button.className = option === this.state.granularity ? 'is-active' : '';
-      button.addEventListener('click', () => {
-        this.state.granularity = option;
-        this.redraw();
-      });
-      granularity.append(button);
-    }
-    canvasHeading.append(granularity);
+    const groupLabel = document.createElement('span');
+    groupLabel.className = 'o-spreadsheet-dashboard-group';
+    groupLabel.textContent = active.group_name || 'Dashboards';
+    const title = document.createElement('h2');
+    title.textContent = active.name;
+    const headingText = document.createElement('div');
+    headingText.append(groupLabel, title);
+    canvasHeading.append(headingText);
     content.append(canvasHeading);
 
     const workbook = workbooks.find(row => text(row.id) === text(active.id));
@@ -168,8 +142,45 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
       return;
     }
 
-    const snapshot = this.parseSnapshot(workbook.workbook_snapshot);
-    this.renderWorkbook(content, snapshot, summaries.find(row => text(row.dashboard_id) === text(active.id)), chartPoints.filter(row => text(row.dashboard_id) === text(active.id)), rows.filter(row => text(row.dashboard_id) === text(active.id)));
+    const engineStatus = document.createElement('p');
+    engineStatus.setAttribute('role', 'status');
+    engineStatus.textContent = 'Loading dashboard…';
+    const canvas = document.createElement('div');
+    canvas.className = 'o-spreadsheet-dashboard-engine';
+    canvas.style.cssText = 'height:75vh;min-height:420px;min-width:0;position:relative;overflow:hidden';
+    content.append(engineStatus, canvas);
+    const mount = (data: any, revisions?: any[]) => this.mountAdapter('dashboard', new SpreadsheetAdapter(), canvas, {
+      data, revisions, mode: 'dashboard',
+      config: this.liveData ? { custom: { core3Data: this.liveData } } : undefined,
+      onReady: model => { this.model = model; this.liveData?.attach(model); engineStatus.textContent = 'View only'; },
+      onError: error => { engineStatus.textContent = error.message; },
+    });
+    if (workbook.workbook_id) {
+      const refresh = document.createElement('button');
+      refresh.type = 'button'; refresh.textContent = 'Refresh dashboard';
+      refresh.addEventListener('click', () => this.redraw());
+      controls.prepend(refresh);
+      if (!this.state.workbook_endpoint) { engineStatus.textContent = 'Workbook service unavailable'; return; }
+      const request = workbookRequest(`${this.state.workbook_endpoint}/${encodeURIComponent(workbook.workbook_id)}`);
+      void request('', { signal: this.pending.signal }).then(book => {
+        if (generation !== this.generation) return;
+        if (book.archived) throw new Error('Dashboard workbook is archived');
+        if (this.state.workbook_route) {
+          const open = document.createElement('a');
+          open.textContent = 'Open workbook';
+          const target = new URL(this.state.workbook_route, window.location.origin);
+          target.searchParams.set('workbook_id', workbook.workbook_id);
+          open.href = target.pathname + target.search;
+          controls.append(open);
+        }
+        this.liveData = new WorkbookLiveData(request);
+        const filters = document.createElement('button');
+        filters.type = 'button'; filters.textContent = 'Global filters';
+        filters.addEventListener('click', () => { void openWorkbookFilters(container, request, () => this.redraw()).catch(error => { engineStatus.textContent = error.message; }); });
+        controls.append(filters);
+        mount(book.snapshot, book.revisions);
+      }).catch(error => { if (generation === this.generation) engineStatus.textContent = error.message; });
+    } else mount(workbook.workbook_snapshot);
   }
 
   private renderDashboardButtons(target: HTMLElement, groups: any[], dashboards: DashboardRow[], active: DashboardRow) {
@@ -198,131 +209,6 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     }
   }
 
-  private renderWorkbook(container: HTMLElement, snapshot: any, summary: any, chartPoints: any[], rows: any[]) {
-    const workbook = document.createElement('div');
-    workbook.className = 'o-spreadsheet-workbook';
-    const sheetbar = document.createElement('div');
-    sheetbar.className = 'o-spreadsheet-sheetbar';
-    sheetbar.innerHTML = `<span class="o-spreadsheet-sheet-icon">▦</span><span>Sheet1</span><span class="o-spreadsheet-sheet-state">View only</span>`;
-    workbook.append(sheetbar);
-    const formula = document.createElement('div');
-    formula.className = 'o-spreadsheet-formula-bar';
-    formula.innerHTML = '<span class="o-spreadsheet-name-box">B2</span><span class="o-spreadsheet-formula">=SUM(B5:B7)</span>';
-    workbook.append(formula);
-    const figures = document.createElement('div');
-    figures.className = 'o-spreadsheet-figures';
-    this.renderKpis(figures, summary);
-    this.renderChart(figures, chartPoints);
-    this.renderTable(figures, rows);
-    this.renderMap(figures, rows);
-    this.renderTreemap(figures, rows);
-    workbook.append(figures);
-    const grid = document.createElement('div');
-    grid.className = 'o-spreadsheet-grid';
-    grid.setAttribute('role', 'grid');
-    const cells = snapshot?.sheets?.[0]?.cells || { A1: 'Sales dashboard', B2: '=SUM(B5:B7)' };
-    const rowsToRender = [['', 'A', 'B', 'C', 'D'], ['1', text(cells.A1, 'Sales dashboard'), '', '', ''], ['2', '', text(cells.B2, '=SUM(B5:B7)'), '', ''], ['3', '', '2026-01-15', 'Published', 'Read-only']];
-    for (const values of rowsToRender) {
-      const row = document.createElement('div');
-      row.className = 'o-spreadsheet-grid-row';
-      for (const value of values) {
-        const cell = document.createElement('span');
-        cell.className = 'o-spreadsheet-grid-cell';
-        cell.textContent = value;
-        row.append(cell);
-      }
-      grid.append(row);
-    }
-    workbook.append(grid);
-    container.append(workbook);
-  }
-
-  private renderKpis(target: HTMLElement, summary: any) {
-    const card = document.createElement('section');
-    card.className = 'o-spreadsheet-figure o-spreadsheet-kpi-figure';
-    card.innerHTML = '<h3>Overview</h3>';
-    const grid = document.createElement('div');
-    grid.className = 'o-spreadsheet-kpis';
-    for (const item of [{ label: 'Revenue', value: money(summary?.revenue) }, { label: 'Orders', value: text(summary?.orders, '0') }, { label: 'Customers', value: text(summary?.customers, '0') }]) {
-      const kpi = document.createElement('div');
-      kpi.className = 'o-spreadsheet-kpi';
-      kpi.innerHTML = `<span>${item.label}</span><strong>${item.value}</strong>`;
-      grid.append(kpi);
-    }
-    card.append(grid);
-    target.append(card);
-  }
-
-  private renderChart(target: HTMLElement, points: any[]) {
-    const figure = document.createElement('section');
-    figure.className = 'o-spreadsheet-figure o-spreadsheet-chart-figure';
-    figure.innerHTML = '<h3>Revenue over time</h3><div class="o-spreadsheet-chart" role="img" aria-label="Revenue over time"></div>';
-    const chart = figure.querySelector('.o-spreadsheet-chart') as HTMLElement;
-    const max = Math.max(...points.map(point => Number(point.revenue) || 0), 1);
-    for (const point of points) {
-      const bar = document.createElement('span');
-      bar.title = `${point.period}: ${money(point.revenue)}`;
-      bar.style.height = `${Math.max(8, ((Number(point.revenue) || 0) / max) * 100)}%`;
-      bar.dataset.period = text(point.period);
-      chart.append(bar);
-    }
-    target.append(figure);
-  }
-
-  private renderTable(target: HTMLElement, rows: any[]) {
-    const figure = document.createElement('section');
-    figure.className = 'o-spreadsheet-figure o-spreadsheet-table-figure';
-    figure.innerHTML = '<h3>Top categories</h3>';
-    const table = document.createElement('table');
-    table.innerHTML = '<thead><tr><th>Country</th><th>Category</th><th>Revenue</th><th>Orders</th></tr></thead>';
-    const body = document.createElement('tbody');
-    for (const row of rows.slice(0, 5)) {
-      const tr = document.createElement('tr');
-      for (const value of [row.country, row.category, money(row.revenue), row.orders]) {
-        const td = document.createElement('td');
-        td.textContent = text(value);
-        tr.append(td);
-      }
-      body.append(tr);
-    }
-    table.append(body);
-    figure.append(table);
-    target.append(figure);
-  }
-
-  private renderMap(target: HTMLElement, rows: any[]) {
-    const figure = document.createElement('section');
-    figure.className = 'o-spreadsheet-figure o-spreadsheet-map-figure';
-    figure.innerHTML = '<h3>Top countries</h3><div class="o-spreadsheet-map" role="img" aria-label="Top countries map"></div>';
-    const map = figure.querySelector('.o-spreadsheet-map') as HTMLElement;
-    rows.slice(0, 5).forEach((row, index) => {
-      const marker = document.createElement('span');
-      marker.className = 'o-spreadsheet-map-marker';
-      marker.textContent = String(index + 1);
-      marker.style.left = `${18 + index * 17}%`;
-      marker.style.top = `${30 + (index % 2) * 24}%`;
-      marker.title = text(row.country);
-      map.append(marker);
-    });
-    target.append(figure);
-  }
-
-  private renderTreemap(target: HTMLElement, rows: any[]) {
-    const figure = document.createElement('section');
-    figure.className = 'o-spreadsheet-figure o-spreadsheet-treemap-figure';
-    figure.innerHTML = '<h3>Top categories</h3><div class="o-spreadsheet-treemap" role="img" aria-label="Top categories treemap"></div>';
-    const tree = figure.querySelector('.o-spreadsheet-treemap') as HTMLElement;
-    rows.slice(0, 5).forEach((row, index) => {
-      const tile = document.createElement('span');
-      tile.textContent = text(row.category);
-      tile.title = `${row.category}: ${money(row.revenue)}`;
-      tile.style.flex = `${Math.max(1, Number(row.revenue) || 1)} 1 0`;
-      tile.className = `o-spreadsheet-tile is-${index % 4}`;
-      tree.append(tile);
-    });
-    target.append(figure);
-  }
-
   private renderState(target: HTMLElement, state: string, title: string, description: string) {
     const stateEl = document.createElement('div');
     stateEl.className = `o-spreadsheet-dashboard-state is-${state}`;
@@ -330,12 +216,4 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     target.append(stateEl);
   }
 
-  private parseSnapshot(value: unknown) {
-    if (typeof value === 'object' && value) return value;
-    try {
-      return JSON.parse(text(value, '{}'));
-    } catch {
-      return {};
-    }
-  }
 }

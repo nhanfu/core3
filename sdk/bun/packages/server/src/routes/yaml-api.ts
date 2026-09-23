@@ -7,6 +7,7 @@ import { handleEventRoutes } from '@core3/server/routes/event-websocket';
 import { authenticatedCompanyName } from './auth-context.ts';
 import type { ModuleServer } from '../module.ts';
 import type { TopicRouter } from '../topics/direct.ts';
+import type { BackgroundActor } from '../yaml-source-reader';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,7 @@ type YamlApiContext = {
 };
 
 export function createYamlApi(ctx: YamlApiContext) {
+  const backgroundActors = new WeakMap<Request, BackgroundActor>();
   const {
     repository,
     authProvider,
@@ -79,6 +81,13 @@ export function createYamlApi(ctx: YamlApiContext) {
   }
 
   async function requireAuth(req: Request) {
+    const actor = backgroundActors.get(req);
+    if (actor) {
+      if (!authProvider.resolveBackgroundUser) throw Object.assign(new Error('Background authorization unavailable'), { status: 503, code: 'BACKGROUND_AUTH_UNAVAILABLE' });
+      const user = await authProvider.resolveBackgroundUser(actor.user_id, actor.company_name);
+      if (String(user?.sub) !== actor.user_id || authenticatedCompanyName(user) !== actor.company_name) throw Object.assign(new Error('Background actor mismatch'), { status: 403, code: 'BACKGROUND_ACTOR_FORBIDDEN' });
+      return user;
+    }
     return authProvider.getCurrentUser(req);
   }
 
@@ -368,7 +377,17 @@ export function createYamlApi(ctx: YamlApiContext) {
     }
     return apiError(404, 'API route not found');
   }
-  return handleAPI;
+  return Object.assign(handleAPI, {
+    // Only this in-process method can bind an actor. HTTP headers and body fields
+    // cannot create a binding, and the method always invokes the read-only route.
+    async queryAsActor(actor: BackgroundActor, sourceId: string, params: Record<string, unknown>, skip: number, top: number) {
+      const url = new URL('http://internal/api/query');
+      const request = new Request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceId, params, skip, top }) });
+      backgroundActors.set(request, { user_id: actor.user_id, company_name: actor.company_name });
+      try { return await handleAPI(request, url); }
+      finally { backgroundActors.delete(request); }
+    },
+  });
 }
 
 function applyDefaultDateRanges(components: any[], params: Record<string, unknown>): void {

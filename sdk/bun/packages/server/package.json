@@ -6,10 +6,12 @@
     "@core3/client": "workspace:*",
     "@core3/med": "workspace:*",
     "@duckdb/node-api": "^1.5.5-r.3",
+    "@napi-rs/canvas": "0.1.80",
+    "jose": "^5.9.6",
+    "jsdom": "25.0.1",
     "mssql": "^12.7.0",
     "mysql2": "^3.23.3",
     "oracledb": "^7.0.1",
-    "jose": "^5.9.6",
     "uuid": "^14.0.1"
   },
   "exports": {

@@ -1,0 +1,15 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_workbook_shares (
+        id VARCHAR PRIMARY KEY, workbook_id VARCHAR NOT NULL,
+        token_hash VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL,
+        revision_id VARCHAR NOT NULL, workbook_snapshot VARCHAR NOT NULL,
+        created_by VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL, revoked BOOLEAN NOT NULL DEFAULT FALSE
+      );
+    down: |
+      DROP TABLE IF EXISTS spreadsheet_workbook_shares;
+  duckdb: postgres

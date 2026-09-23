@@ -14,7 +14,7 @@ datasources:
   - id: spreadsheet_dashboard_workbooks
     single: false
     permission: spreadsheet.read
-    query: "SELECT d.id, d.name, d.snapshot_status, d.workbook_snapshot FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) AND d.state <> 'Archived' AND d.published = TRUE ORDER BY d.sequence, d.name"
+    query: "SELECT d.id, d.name, CASE WHEN d.workbook_id IS NOT NULL THEN 'ready' ELSE d.snapshot_status END AS snapshot_status, d.workbook_id, CASE WHEN d.workbook_id IS NULL THEN d.workbook_snapshot ELSE NULL END AS workbook_snapshot FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) AND d.state <> 'Archived' AND d.published = TRUE ORDER BY d.sequence, d.name"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_WORKBOOKS_UNAVAILABLE, message: Dashboard workbooks are temporarily unavailable. }
   - id: spreadsheet_dashboard_summaries_landing

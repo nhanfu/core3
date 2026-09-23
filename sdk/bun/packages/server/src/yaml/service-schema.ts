@@ -12,6 +12,7 @@ export type YamlServiceManifest = {
   operations?: string;
   storage?: string;
   migrations?: string;
+  workbooks?: string;
 };
 
 export type YamlServiceDatabase = {
@@ -46,7 +47,7 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
   if (manifest.kind !== undefined && manifest.kind !== 'domain-service' && manifest.kind !== 'infrastructure-service') {
     throw new Error(`Service manifest kind is invalid: ${file}`);
   }
-  for (const key of ['runtime', 'permissions', 'topics', 'events', 'messages', 'policies', 'operations', 'storage', 'migrations'] as const) {
+  for (const key of ['runtime', 'permissions', 'topics', 'events', 'messages', 'policies', 'operations', 'storage', 'migrations', 'workbooks'] as const) {
     if (manifest[key] !== undefined && typeof manifest[key] !== 'string') {
       throw new Error(`Service manifest ${key} must be a string: ${file}`);
     }
@@ -106,5 +107,6 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
     operations: manifest.operations as string | undefined,
     storage: manifest.storage as string | undefined,
     migrations: manifest.migrations as string | undefined,
+    workbooks: manifest.workbooks as string | undefined,
   };
 }

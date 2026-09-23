@@ -1,0 +1,300 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { migrateDatabase } from '@core3/server/migrations';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
+import { createYamlSourceReader } from '@core3/server/yaml-source-reader';
+import { WorkbookRuntime, validateWorkbookRuntime } from '@core3/server/workbook-runtime';
+import { readWorkbookXlsx } from '@core3/client/spreadsheet/files';
+import { workbookStringLiteral } from '@core3/client/spreadsheet/string-literal';
+
+test('reads the real Orders YAML datasource under each viewer identity without persisting business rows', async () => {
+  const db = await DuckDbDatabase.open(':memory:');
+  const sourceDb = await DuckDbDatabase.open(':memory:');
+  let runtime: WorkbookRuntime | undefined;
+  try {
+    const repository = new YamlRepository(db), sourceRepository = new YamlRepository(sourceDb);
+    const root = join(import.meta.dir, '../services/spreadsheet');
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'binding_test_migrations', ['schema', 'data']);
+    await sourceRepository.query(`CREATE TABLE orders (
+      id VARCHAR, row_version BIGINT, order_number VARCHAR, customer_name VARCHAR, customer_legal_name VARCHAR,
+      order_date DATE, status VARCHAR, shipment_type VARCHAR, route VARCHAR, transport_method VARCHAR,
+      trip_count INTEGER, total_amount DOUBLE, created_by VARCHAR, created_at TIMESTAMP, branch_id VARCHAR
+    )`, []);
+    await sourceRepository.query('CREATE TABLE order_workflow_states (order_id VARCHAR, status VARCHAR)', []);
+    await sourceRepository.query(`INSERT INTO orders VALUES
+      ('one', 1, 'SO-ONE', 'First customer', 'First', CURRENT_DATE - 1, 'Draft', 'Local', 'Route', 'Road', 1, 42, 'owner', CURRENT_TIMESTAMP, 'owner'),
+      ('two', 1, 'SO-TWO', 'Second customer', 'Second', CURRENT_DATE - 1, 'Draft', 'Local', 'Route', 'Road', 1, 99, 'editor', CURRENT_TIMESTAMP, 'editor')`, []);
+    const permissions = ['spreadsheet.read', 'spreadsheet.write', 'spreadsheet.export', 'orders.read'];
+    const auth = {
+      async resolveBackgroundUser(id: string, company: string) {
+        if (company !== 'Acme') throw Object.assign(new Error('Unauthorized'), { status: 403 });
+        return this.getCurrentUser(new Request('http://fixture', { headers: { Authorization: `Bearer ${id}` } }));
+      },
+      async getCurrentUser(request: Request) {
+        const id = request.headers.get('authorization')?.replace('Bearer ', '');
+        if (!['owner', 'editor'].includes(id || '')) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+        return { sub: id, company_name: 'Acme', branch_id: id, view_scope: 'own', permissions };
+      },
+      hasPermission: (user: any, permission: string) => user.permissions.includes(permission),
+    };
+    let sourceDenied = false;
+    const source = (Bun.YAML.parse(readFileSync(join(root, '../order/api/orders.yaml'), 'utf8')) as any).datasources.find((source: any) => source.id === 'orders');
+    const api = createYamlApi({
+      repository: sourceRepository, authProvider: { ...auth, hasPermission: (user: any, permission: string) => !sourceDenied && auth.hasPermission(user, permission) },
+      sources: new Map([['orders', source]]), pageSources: new Map(), pages: new Map(), catalogs: new Map(), menus: new Map(), workflows: new Map([['orders', { permission: 'orders.read', states: [] }]]), workflowFiles: new Map(), permissions: { permissions: ['orders.read'] }, uploadRoot: '', eventStore: {}, topics: {},
+    });
+    const reader = createYamlSourceReader(api);
+    let backgroundPagesRead = 0;
+    const readSourceAs = reader.readSourceAs!;
+    reader.readSourceAs = async (...args) => {
+      const result = await readSourceAs(...args);
+      backgroundPagesRead++;
+      return result;
+    };
+    const definition = validateWorkbookRuntime(Bun.YAML.parse(readFileSync(join(root, 'workbooks.yaml'), 'utf8')));
+    definition.export_jobs!.poll_ms = 600000;
+    runtime = new WorkbookRuntime(definition, repository, auth, service => {
+      expect(service).toBe('order'); return reader;
+    });
+    const request = async (path: string, method = 'GET', body?: any, actor = 'owner') => {
+      const url = new URL(`http://data.test/api/spreadsheet/workbooks${path}`);
+      const response = (await runtime!.handle(new Request(url, { method, headers: { Authorization: `Bearer ${actor}` }, ...(body ? { body: JSON.stringify(body) } : {}) }), url))!;
+      return { status: response.status, body: await response.json() };
+    };
+    const created = await request('', 'POST', { name: 'Live data boundary' });
+    const path = `/${created.body.id}`;
+    await request(`${path}/members`, 'POST', { user_id: 'editor', role: 'reader' });
+    const date = (days: number) => new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+    const query = { source: 'sales_orders', filters: { from_date: date(2), to_date: date(0) } };
+    const ownerRows = await request(`${path}/data`, 'POST', query);
+    expect(ownerRows).toMatchObject({ status: 200 });
+    expect(ownerRows.body.data).toEqual([{ order_number: 'SO-ONE', customer_name: 'First customer', order_date: date(1), status: 'Draft', total_amount: 42 }]);
+    expect((await request(`${path}/data`, 'POST', query, 'editor')).body.data[0].order_number).toBe('SO-TWO');
+    expect((await request(`${path}/data`, 'POST', { ...query, filters: { ...query.filters, current_branch_id: 'editor' } })).status).toBe(422);
+    expect((await request(`${path}/data`, 'POST', { ...query, top: 501 })).status).toBe(422);
+    expect((await request(`${path}/data`, 'POST', { ...query, filters: {} })).status).toBe(422);
+    sourceDenied = true;
+    expect((await request(`${path}/data`, 'POST', query)).status).toBe(403);
+    sourceDenied = false;
+    await sourceRepository.query("UPDATE orders SET total_amount = 73 WHERE id = 'one'", []);
+    expect((await request(`${path}/data`, 'POST', query)).body.data[0].total_amount).toBe(73);
+    const loaded = (await request(path)).body;
+    expect(loaded.head_sequence).toBe(0);
+    expect(loaded.snapshot.sheets[0].cells).toEqual({});
+    const formula = (field: string, filters: string) => `=CORE3.VALUE("sales_orders","${field}",1,${filters})`;
+    const quotedName = 'A "quoted" customer\\';
+    await sourceRepository.query('UPDATE orders SET customer_name = ? WHERE id = ?', [quotedName, 'one']);
+    const filterLiteral = workbookStringLiteral(JSON.stringify(query.filters));
+    const linked = await request('', 'POST', { name: 'Authorized export', snapshot: { sheets: [{ id: 's', name: 'Sheet1', rowNumber: 100, colNumber: 26, cells: {
+      A1: formula('total_amount', filterLiteral), B1: '=A1+1',
+      C1: formula('order_number', filterLiteral),
+      E1: formula('customer_name', filterLiteral),
+      H1: `=SEQUENCE(2,1,CORE3.VALUE("sales_orders","total_amount",1,${filterLiteral}))`,
+      D1: formula('total_amount', `LEFT(${filterLiteral},LEN(${filterLiteral})-1)&${workbookStringLiteral(', "q":"')}&C1&${workbookStringLiteral('"}')}`),
+    } }] } });
+    expect(linked.status).toBe(201);
+    const linkedPath = `/${linked.body.id}`;
+    await request(`${linkedPath}/members`, 'POST', { user_id: 'editor', role: 'reader' });
+    let lastExportParts: Record<string, any> = {};
+    const exported = async (actor: string) => {
+      const url = new URL(`http://data.test/api/spreadsheet/workbooks${linkedPath}/export`);
+      const response = (await runtime!.handle(new Request(url, { headers: { Authorization: `Bearer ${actor}` } }), url))!;
+      expect(response.status).toBe(200);
+      const parts = readWorkbookXlsx(new Uint8Array(await response.arrayBuffer()), 10000000, 1000);
+      lastExportParts = parts;
+      return parts['xl/worksheets/sheet0.xml'];
+    };
+    const ownerExport = await exported('owner');
+    expect(ownerExport).toContain('<v>73</v>');
+    expect(ownerExport).toContain('<v>74</v>');
+    expect(ownerExport).not.toContain('CORE3.VALUE');
+    const editorExport = await exported('editor');
+    expect(editorExport).toContain('<v>99</v>');
+    expect(editorExport).toContain('<v>100</v>');
+    expect(editorExport).not.toContain('<v>73</v>');
+    for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
+      backgroundPagesRead = 0;
+      const queued = await request(`${linkedPath}/export`, 'POST', undefined, actor);
+      expect(queued.status).toBe(202);
+      const [input] = await repository.query('SELECT workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      expect(JSON.parse(input.workbook_snapshot).format).toBe('core3-export-input-v1');
+      expect(input.workbook_snapshot).toContain('CORE3.VALUE');
+      if (actor === 'owner') {
+        const exportEngine = (runtime as any).exportEngine;
+        const convert = exportEngine.exportSnapshot.bind(exportEngine);
+        exportEngine.exportSnapshot = async () => { throw Object.assign(new Error('Simulated conversion worker failure'), { code: 'WORKBOOK_ENGINE_UNAVAILABLE' }); };
+        try { await (runtime as any).exportJobs.runOnce(); }
+        finally { exportEngine.exportSnapshot = convert; }
+        const [prepared] = await repository.query('SELECT state, stage, data_pages_read, workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+        expect(prepared.state).toBe('queued');
+        expect(prepared.stage).toBe('converting');
+        expect(prepared.data_pages_read).toBeGreaterThan(0);
+        expect(prepared.data_pages_read).toBe(backgroundPagesRead);
+        expect(JSON.parse(prepared.workbook_snapshot).sheets[0].cells).toMatchObject({ A1: amount, B1: '=A1+1', D1: amount, H1: amount, H2: String(Number(amount) + 1) });
+        // Retrying conversion reuses the committed preparation, even if the
+        // datasource is now unavailable. Download still checks actor permissions.
+        sourceDenied = true;
+      }
+      await (runtime as any).exportJobs.runOnce();
+      sourceDenied = false;
+      const [job] = await repository.query('SELECT state, stage, data_pages_read, workbook_snapshot, required_permissions, artifact_base64 FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      expect(job.state).toBe('completed');
+      expect(job.stage).toBe('converting');
+      expect(job.data_pages_read).toBeGreaterThan(0);
+      expect(job.data_pages_read).toBe(backgroundPagesRead);
+      expect(JSON.parse(job.required_permissions)).toEqual(['orders.read']);
+      expect(job.workbook_snapshot).toBeNull();
+      const xml = readWorkbookXlsx(Buffer.from(job.artifact_base64, 'base64'), 10000000, 1000)['xl/worksheets/sheet0.xml'];
+      expect(xml).toContain(`<v>${amount}</v>`);
+      expect(xml).not.toContain('CORE3.VALUE');
+    }
+    const ownerPrint = await request(`${linkedPath}/print`);
+    expect(ownerPrint.status).toBe(200);
+    expect(ownerPrint.body).toMatchObject({ name: 'Authorized export', revision_id: 'START_REVISION', max_cells: 100000 });
+    expect(ownerPrint.body.page_setup).toEqual(definition.print_page_setup);
+    expect(ownerPrint.body.snapshot.sheets[0].cells.A1).toBe('73');
+    expect((await request(`${linkedPath}/print`, 'GET', undefined, 'editor')).body.snapshot.sheets[0].cells.A1).toBe('99');
+    for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
+      const queued = await request(`${linkedPath}/print`, 'POST', undefined, actor);
+      expect(queued).toMatchObject({ status: 202, body: { kind: 'print' } });
+      await (runtime as any).exportJobs.runOnce();
+      const result = await request(`/exports/${queued.body.id}?download=true`, 'GET', undefined, actor);
+      expect(result.status).toBe(200);
+      expect(result.body.snapshot.sheets[0].cells).toMatchObject({ A1: amount, B1: String(Number(amount) + 1), H1: amount, H2: String(Number(amount) + 1) });
+      expect(JSON.stringify(result.body.snapshot.sheets[0].cells)).not.toContain('CORE3.VALUE');
+      const index = permissions.indexOf('orders.read');
+      permissions.splice(index, 1);
+      try { expect((await request(`/exports/${queued.body.id}?download=true`, 'GET', undefined, actor)).status).toBe(403); }
+      finally { permissions.push('orders.read'); }
+    }
+    const queuedShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    expect(queuedShare).toMatchObject({ status: 202, body: { kind: 'share' } });
+    await (runtime as any).exportJobs.runOnce();
+    const queuedLink = await request(`/exports/${queuedShare.body.id}?download=true`);
+    expect(queuedLink.status).toBe(200);
+    const queuedPublic = await request(`/public/${queuedLink.body.token}`);
+    expect(queuedPublic.body.snapshot.sheets[0].cells).toMatchObject({ A1: '73', B1: '74', H1: '73', H2: '74' });
+    expect(JSON.stringify(queuedPublic.body.snapshot.sheets[0].cells)).not.toContain('CORE3.VALUE');
+    // Revocation during preparation must prevent publication, even after freezing succeeded.
+    const deniedShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    const originalMutation = repository.executeMutation.bind(repository);
+    repository.executeMutation = async (mutation, params) => {
+      const result = await originalMutation(mutation, params);
+      if (mutation === definition.operations.export_job_prepare.mutation && params.job_id === deniedShare.body.id) permissions.splice(permissions.indexOf('orders.read'), 1);
+      return result;
+    };
+    try {
+      await (runtime as any).exportJobs.runOnce();
+      expect((await request(`/exports/${deniedShare.body.id}`)).body.state).toBe('failed');
+      expect(await repository.query('SELECT id FROM spreadsheet_workbook_shares WHERE id = ?', [deniedShare.body.id])).toEqual([]);
+      expect((await request(`/exports/${queuedShare.body.id}?download=true`)).status).toBe(403);
+      expect((await request(`/public/${queuedLink.body.token}`)).body).toEqual(queuedPublic.body);
+    } finally { repository.executeMutation = originalMutation; permissions.push('orders.read'); }
+    const share = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' });
+    expect(share.status).toBe(201);
+    const published = (await request(`/public/${share.body.token}`)).body;
+    expect(published.snapshot.sheets[0].cells).toMatchObject({ A1: '73', B1: '74', C1: '="SO-ONE"', D1: '73' });
+    expect(published.snapshot.sheets[0].cells.E1).toBe(`=${workbookStringLiteral(quotedName)}`);
+    const copy = await request('', 'POST', { name: 'Frozen copy', snapshot: published.snapshot });
+    const copyShare = await request(`/${copy.body.id}/shares`, 'POST', { base_revision: 'START_REVISION' });
+    expect(copyShare.status).toBe(201);
+    expect((await request(`/public/${copyShare.body.token}`)).body.snapshot.sheets[0].cells.E1).toBe(published.snapshot.sheets[0].cells.E1);
+    sourceDenied = true;
+    expect((await request(`${linkedPath}/print`)).status).toBe(403);
+    expect((await request(`${linkedPath}/export`)).status).toBe(403);
+    const deniedJob = await request(`${linkedPath}/export`, 'POST');
+    expect(deniedJob.status).toBe(202);
+    await (runtime as any).exportJobs.runOnce();
+    expect((await request(`/exports/${deniedJob.body.id}`)).body.state).toBe('failed');
+    expect((await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' })).status).toBe(403);
+    expect((await request(`/public/${share.body.token}`)).body).toEqual(published);
+    sourceDenied = false;
+    await sourceRepository.query("UPDATE orders SET total_amount = 81 WHERE id = 'one'", []);
+    expect(await exported('owner')).toContain('<v>81</v>');
+    expect((await request(`/public/${share.body.token}`)).body).toEqual(published);
+    definition.max_data_queries = 1;
+    expect((await request(`${linkedPath}/export`)).body.code).toBe('WORKBOOK_RENDER_QUERY_LIMIT');
+    definition.max_data_queries = 10000;
+    expect(await exported('editor')).toContain('<v>99</v>');
+    const durable = (await request(linkedPath)).body;
+    expect(durable.head_sequence).toBe(0);
+    expect(durable.snapshot.sheets[0].cells.A1).toBe(formula('total_amount', filterLiteral));
+    await sourceRepository.query(`INSERT INTO orders SELECT 'three', 1, 'SO-THREE', customer_name, customer_legal_name,
+      order_date, status, shipment_type, route, transport_method, trip_count, 142, created_by, CURRENT_TIMESTAMP, branch_id
+      FROM orders WHERE id = 'one'`, []);
+    expect((await request(`${linkedPath}/filters`)).body.fields).toContainEqual({ key: 'search', label: 'Search', type: 'text' });
+    expect(await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } })).toMatchObject({ status: 200 });
+    expect((await request(`${linkedPath}/filters`)).body.values).toEqual({ search: 'SO-THREE' });
+    expect((await request(`${linkedPath}/filters`, 'GET', undefined, 'editor')).body.values).toEqual({});
+    expect((await request(`${linkedPath}/data`, 'POST', query)).body.data.map((row: any) => row.order_number)).toEqual(['SO-THREE']);
+    expect(await exported('owner')).toContain('<v>142</v>');
+    expect(await exported('editor')).toContain('<v>99</v>');
+    const filteredPrint = await request(`${linkedPath}/print`, 'POST');
+    expect(filteredPrint.status).toBe(202);
+    await request(`${linkedPath}/filters`, 'POST', { values: {} });
+    await (runtime as any).exportJobs.runOnce();
+    expect((await request(`/exports/${filteredPrint.body.id}?download=true`)).body.snapshot.sheets[0].cells.A1).toBe('142');
+    await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } });
+    const filteredShareJob = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    expect(filteredShareJob.status).toBe(202);
+    await request(`${linkedPath}/filters`, 'POST', { values: {} });
+    await (runtime as any).exportJobs.runOnce();
+    const filteredLink = await request(`/exports/${filteredShareJob.body.id}?download=true`);
+    expect(filteredLink.status).toBe(200);
+    expect((await request(`/public/${filteredLink.body.token}`)).body.snapshot.sheets[0].cells.A1).toBe('142');
+    await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } });
+    const filteredShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' });
+    expect(filteredShare.status).toBe(201);
+    expect((await request(`/public/${filteredShare.body.token}`)).body.snapshot.sheets[0].cells.A1).toBe('142');
+    expect((await request(`${linkedPath}/filters`, 'POST', { values: { current_branch_id: 'editor' } })).status).toBe(422);
+    expect((await request(`${linkedPath}/filters`, 'POST', { values: { from_date: '2026-02-30' } })).status).toBe(422);
+    expect((await request(`${linkedPath}/filters`, 'POST', { values: {} })).status).toBe(200);
+    expect((await request(`${linkedPath}/filters`)).body.values).toEqual({});
+    expect((await request(linkedPath)).body.head_sequence).toBe(0);
+    const chart = {
+      type: 'CREATE_CHART', sheetId: 's', chartId: 'amount-chart', figureId: 'amount-figure', col: 6, row: 2, offset: { x: 0, y: 0 }, size: { width: 600, height: 360 },
+      definition: { type: 'bar', dataSets: [{ dataRange: 'A1' }], labelRange: 'C1', dataSetsHaveTitle: false, title: { text: 'Amounts' }, legendPosition: 'none' },
+    };
+    const client = (await request(linkedPath)).body.client;
+    expect(await request(`${linkedPath}/revisions`, 'POST', { type: 'REMOTE_REVISION', version: 1, clientId: client.id, serverRevisionId: 'START_REVISION', nextRevisionId: 'chart-created', commands: [chart] })).toMatchObject({ status: 200 });
+    await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } });
+    await exported('owner');
+    const chartXml = Object.entries(lastExportParts).filter(([path]) => path.startsWith('xl/charts/') && path.endsWith('.xml')).map(([, xml]) => xml).join('');
+    expect(lastExportParts['xl/worksheets/sheet0.xml']).toContain('<v>142</v>');
+    expect(chartXml.match(/<c:f>.*?<\/c:f>/g)).toEqual(expect.arrayContaining(['<c:f>Sheet1!A1</c:f>', '<c:f>Sheet1!C1</c:f>']));
+    const chartShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'chart-created' });
+    expect(chartShare.status).toBe(201);
+    const frozenChart = (await request(`/public/${chartShare.body.token}`)).body.snapshot;
+    expect(frozenChart.sheets[0].cells.A1).toBe('142');
+    expect(frozenChart.sheets[0].figures).toHaveLength(1);
+    expect(JSON.stringify(frozenChart)).toContain('amount-chart');
+    const pivotCommands = [
+      { type: 'UPDATE_CELL', sheetId: 's', col: 6, row: 0, content: 'Customer' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 7, row: 0, content: 'Amount' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 6, row: 1, content: '=E1' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 7, row: 1, content: '=A1' },
+      { type: 'ADD_PIVOT', pivotId: 'orders-pivot', pivot: { type: 'SPREADSHEET', name: 'Orders pivot', dataSet: { sheetId: 's', zone: { left: 6, right: 7, top: 0, bottom: 1 } }, rows: [{ fieldName: 'Customer' }], columns: [], measures: [{ id: 'Amount:sum', fieldName: 'Amount', aggregator: 'sum' }] } },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 9, row: 0, content: '=PIVOT.VALUE(1,"Amount:sum")' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 11, row: 0, content: '=PIVOT(1)' },
+    ];
+    expect(await request(`${linkedPath}/revisions`, 'POST', { type: 'REMOTE_REVISION', version: 1, clientId: client.id, serverRevisionId: 'chart-created', nextRevisionId: 'pivot-created', commands: pivotCommands })).toMatchObject({ status: 200 });
+    expect((await exported('owner')).match(/<c\b[^>]*r="J1"[^>]*>(.*?)<\/c>/s)?.[1]).toContain('<v>142</v>');
+    expect(JSON.stringify(lastExportParts)).not.toContain('Second customer');
+    expect((await exported('editor')).match(/<c\b[^>]*r="J1"[^>]*>(.*?)<\/c>/s)?.[1]).toContain('<v>99</v>');
+    expect(JSON.stringify(lastExportParts)).not.toContain('SO-THREE');
+    const pivotShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'pivot-created' });
+    expect(pivotShare.status).toBe(201);
+    const frozenPivot = (await request(`/public/${pivotShare.body.token}`)).body.snapshot;
+    expect(frozenPivot.sheets[0].cells.J1).toBe('142');
+    expect(JSON.stringify(frozenPivot.sheets[0].cells)).not.toContain('PIVOT(');
+    const pivotDurable = (await request(linkedPath)).body;
+    expect(pivotDurable.head_sequence).toBe(2);
+    expect(JSON.stringify(pivotDurable)).not.toContain('quoted');
+    sourceDenied = true;
+    expect((await request(`${linkedPath}/export`)).status).toBe(403);
+    expect((await request(`/public/${pivotShare.body.token}`)).body.snapshot).toEqual(frozenPivot);
+  } finally { runtime?.dispose(); sourceDb.close(); db.close(); }
+}, 30000);

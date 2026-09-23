@@ -12,6 +12,30 @@ workflow:
     - { id: Approved, label: Approved, color: green }
     - { id: Archived, label: Archived, color: blue, terminal: true }
   transitions:
-    - { id: submit, from: [Draft], to: Submitted, permission: documents.write }
-    - { id: approve, from: [Submitted], to: Approved, permission: documents.manage }
-    - { id: archive, from: [Draft, Submitted, Approved], to: Archived, permission: documents.manage }
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: documents.write
+      mutation:
+        concurrency: { required: true }
+        steps:
+          - { query: "UPDATE documents SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state = 'Draft'", expect_changed: true, status: 409, code: DOCUMENT_STALE, message: This document changed or is no longer a draft. Reload before submitting. }
+        result: { query: "SELECT id, row_version, state FROM documents WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: documents.manage
+      mutation:
+        concurrency: { required: true }
+        steps:
+          - { query: "UPDATE documents SET state = 'Approved', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", expect_changed: true, status: 409, code: DOCUMENT_STALE, message: This document changed or is no longer submitted. Reload before approving. }
+        result: { query: "SELECT id, row_version, state FROM documents WHERE id = :id" }
+    - id: archive
+      from: [Draft, Submitted, Approved]
+      to: Archived
+      permission: documents.manage
+      mutation:
+        concurrency: { required: true }
+        steps:
+          - { query: "UPDATE documents SET state = 'Archived', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state IN ('Draft', 'Submitted', 'Approved')", expect_changed: true, status: 409, code: DOCUMENT_STALE, message: This document changed or is already archived. Reload before archiving. }
+        result: { query: "SELECT id, row_version, state FROM documents WHERE id = :id" }
