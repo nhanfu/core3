@@ -684,3 +684,22 @@ pages, 735 routes, and 1,409 datasources.
 - Browser gate: Core3 port 3001 refused connections; Odoo 8069/8073 returned
   the unauthenticated `/web/login` boundary. Authenticated desktop/mobile
   evidence is blocked; exact probes are in the feature evidence directory.
+
+## 2026-09-23 — `TIMESHEET-MY-BILLED-FIXED-PRICE-FILTER-001`
+
+| Check | Expected evidence | Result |
+| --- | --- | --- |
+| Odoo source/action comparison | `sale_timesheet` `billable_fixed` filter with Sales-user group restriction | pass in focused source test and live BrowserSkill inspection |
+| Paired YAML contract | layout-only `timesheets` page and API joined by `page.id` | pass |
+| Durable filtered reads | `billing_type = billable_fixed` filters personal rows and the total footer | pass |
+| Permission/company/empty guards | `timesheets.read`, active actor, current company, empty fixture | pass |
+| Freshness/restart | persisted billing-type change, migration replay, and file-backed reopen | pass |
+| Focused regression | 4 tests / 21 expectations | pass |
+| Adjacent My Timesheets regression | six selected suites, 23 tests / 119 expectations | pass |
+| Scoped lint/build/diff | focused ESLint, Timesheets CSS build, owned `git diff --check` | pass |
+| Authenticated Odoo desktop/mobile evidence | task-created authenticated reference tab, 1916x833 and iPhone 14 390x844 | pass; no user tab was available to borrow |
+| Authenticated Core3 desktop/mobile evidence | matching Core3 action | blocked; no local Core3 listener on ports 3001, 3002, 4001, or 4012 |
+
+Evidence: `evidence/timesheets/2026-09-23/timesheet-my-billed-fixed-price-filter-001/`.
+The remaining My Timesheets Sales Timesheet billing filters are not covered by
+this bounded slice; no module sign-off is claimed.
