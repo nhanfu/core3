@@ -103,6 +103,16 @@ unauthenticated actors are required.
 
 ## Exit criteria
 
+## Bounded feature wave: CRM-TEAM-ASSIGN-LEADS-001
+
+| Case | Class | Setup / actor | Exact action or route | Expected result / persistence | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| TEAM-ASSIGN-CONTRACT-001 | functional/permission | CRM manager on an active lead-enabled team | `/team-detail`, `Assign Leads` header | Confirmation, `crm.manage` gate, and page/API action binding match Odoo | `evidence/crm/2026-09-23/CRM-TEAM-ASSIGN-LEADS-001/source-comparison.md` |
+| TEAM-ASSIGN-HAPPY-002 | workflow/data | Enterprise team with two active members and three unassigned open leads | Confirm `crm.teams.assign_leads` | Leads distribute deterministically round-robin, convert to opportunities, and increment row versions | `test/crm_team_assign_leads.integration.test.ts` |
+| TEAM-ASSIGN-GUARD-003 | permission/error | Missing or archived team | Execute the same mutation | 409 bounded guard; no assignment occurs | `test/crm_team_assign_leads.integration.test.ts` |
+| TEAM-ASSIGN-RELOAD-004 | data/regression | File-backed CRM database after assignment | Close/reopen database and query CRM storage | Assigned salesperson/type/version remain durable; migration replay is idempotent | `test/crm_team_assign_leads.integration.test.ts` |
+| TEAM-ASSIGN-VISUAL-005 | visual/responsive | Authenticated Odoo/Core3 actor at 1440x900 and 390x844 | Odoo `action_assign_leads` and Core3 team detail | Compare header button, confirmation, notification, responsive layout, and permission-hidden state | blocked: existing Odoo tab borrowed by BrowserSkill session `gzhm`; no visual pass claimed |
+
 - Every current CRM route/action family has a planned functional, security,
   responsive, and persistence case.
 - A CRM-only runner is not accepted for dependent screens; dependency-aware

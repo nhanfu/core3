@@ -8,6 +8,7 @@ components:
     status_colors: { true: green, false: neutral }
     header_actions:
       - { id: edit_crm_team_detail, label: Edit, variant: secondary, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
+      - { id: assign_crm_team_leads, label: Assign Leads, variant: primary, permission: crm.manage, confirm: 'This will assign leads to all members. Do you want to proceed?', show_if: "state.crm_team_detail.active === true && state.crm_team_detail.use_leads === true" }
       - { id: archive_crm_team_detail, label: Archive, variant: danger, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
     group_columns: 2
     stat_buttons:

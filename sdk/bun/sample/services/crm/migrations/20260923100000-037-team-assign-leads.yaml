@@ -1,0 +1,21 @@
+version: 0.0.37
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_team_members(id, team_id, user_name, active)
+      VALUES ('crm-team-member-enterprise-admin', 'crm-team-enterprise', 'Admin User', true)
+      ON CONFLICT(team_id, user_name) DO NOTHING;
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing, created_at)
+      VALUES
+        ('crm-team-assign-enterprise-001', 'Enterprise assignment lead one', 'lead', 'Acme Services', 'assign-one@acme.test', 'Website', 12000, 'New', 10, '', 'Enterprise', DATE '2026-10-20', TIMESTAMP '2026-09-20 09:00:00'),
+        ('crm-team-assign-enterprise-002', 'Enterprise assignment lead two', 'lead', 'Globex Services', 'assign-two@globex.test', 'Email', 18000, 'New', 10, '', 'Enterprise', DATE '2026-10-21', TIMESTAMP '2026-09-20 10:05:00'),
+        ('crm-team-assign-enterprise-003', 'Enterprise assignment lead three', 'lead', 'Umbrella Services', 'assign-three@umbrella.test', 'Referral', 24000, 'Qualified', 25, '', 'Enterprise', DATE '2026-10-22', TIMESTAMP '2026-09-20 10:10:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_leads WHERE id IN ('crm-team-assign-enterprise-001', 'crm-team-assign-enterprise-002', 'crm-team-assign-enterprise-003');
+      DELETE FROM crm_team_members WHERE id = 'crm-team-member-enterprise-admin';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

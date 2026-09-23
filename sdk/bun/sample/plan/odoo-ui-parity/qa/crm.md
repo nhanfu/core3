@@ -256,6 +256,38 @@ Conditional bounded result; not signed off.
 
 Disposition: conditional bounded implementation; not CRM sign-off.
 
+## 2026-09-23 — Sales Team Assign Leads (`CRM-TEAM-ASSIGN-LEADS-001`)
+
+Conditional bounded result; not signed off.
+
+- Source comparison: pass. Odoo's Sales Team form declares the confirmed
+  `Assign Leads` object action; the implementation follows its manager-only
+  team action, round-robin member assignment, lead-to-opportunity conversion,
+  and success outcome at the bounded CRM-local boundary.
+- Core3 focused coverage: `bun test
+  test/crm_team_assign_leads.integration.test.ts` — **2 pass / 13
+  assertions**. Discovery/page/API binding, deterministic seed replay,
+  round-robin assignment, conversion, missing/archived guards, and
+  file-backed restart persistence pass.
+- Related CRM lifecycle: **45 pass / 1 fail / 237 assertions**. The known
+  global AI action-catalog invariant now also reports `crm.teams.assign_leads`
+  (alongside older missing CRM actions); `services/ai/agent.yaml` is outside
+  this CRM-only scope and was not changed.
+- Discovery audit: **866 pages / 874 routes / 1,837 datasources**, passed.
+- Migration/seed: `20260923100000-037-team-assign-leads.yaml`; stable Enterprise
+  members and three unassigned leads are idempotent.
+- BrowserSkill: daemon/browser `245ea108` were healthy. Session `fmpi`
+  attempted to borrow authenticated Odoo tab `1770664277` at
+  `http://localhost:8069` for database `core3_reference`, but the borrow was
+  denied because the tab was already borrowed by session `gzhm`. Session
+  `fmpi` was stopped cleanly. No credentials were requested or exposed; no
+  Odoo/Core3 desktop/mobile screenshot or visual parity claim is recorded.
+- Remaining functional gaps: Odoo assignment-domain weighting, monthly
+  quotas, cross-team allocation, duplicate merge, and team chatter
+  notification are not yet represented by this bounded YAML mutation.
+
+Evidence: `odoo-ui-parity/evidence/crm/2026-09-23/CRM-TEAM-ASSIGN-LEADS-001/`.
+
 ## Bounded feature checkpoint — CRM-LEAD-LOST-WIZARD-001 (2026-09-22)
 
 Selected gap: the existing Core3 lost transition had a lost-reason selector,

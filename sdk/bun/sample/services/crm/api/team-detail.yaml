@@ -28,6 +28,23 @@ actions:
     permission: crm.read
     navigate_to: /crm/team-overdue-opportunities
     params: { team_id: '{state.crm_team_detail.id}' }
+  - id: assign_crm_team_leads
+    type: server
+    permission: crm.manage
+    action: crm.teams.assign_leads
+    handler: yaml_mutation
+    operation: assign_leads
+    params: { id: '{state.crm_team_detail.id}' }
+    refresh: [crm_team_detail, crm_team_members_detail]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_teams WHERE id = :id AND active = true AND use_leads = true"
+          status: 409
+          code: CRM_TEAM_ASSIGN_LEADS_INVALID_TEAM
+          message: Only an active sales team configured for leads can assign leads.
+      steps:
+        - query: "WITH active_members AS (SELECT user_name, ROW_NUMBER() OVER (ORDER BY user_name, id) - 1 AS member_index FROM crm_team_members WHERE team_id = :id AND active = true), eligible_leads AS (SELECT l.id, ROW_NUMBER() OVER (ORDER BY l.created_at, l.id) - 1 AS lead_index FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :id AND l.type = 'lead' AND l.stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(COALESCE(l.salesperson, '')), '') IS NULL), assignments AS (SELECT leads.id, members.user_name FROM eligible_leads leads JOIN active_members members ON members.member_index = leads.lead_index % (SELECT COUNT(*) FROM active_members)) UPDATE crm_leads AS l SET type = 'opportunity', salesperson = assignments.user_name, updated_at = CURRENT_TIMESTAMP, row_version = l.row_version + 1 FROM assignments WHERE l.id = assignments.id"
+      result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
   - id: edit_crm_team_detail
     type: server_form
     permission: crm.manage

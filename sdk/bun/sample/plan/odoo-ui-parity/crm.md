@@ -1031,3 +1031,46 @@ Status: bounded implementation; authenticated visual comparison is blocked.
   not perform SMTP/mail-gateway delivery. Attachment bytes and preview are
   also outside this slice; paired authenticated desktop/mobile evidence is
   pending the tab-borrow blocker.
+
+## 2026-09-23 — Sales Team Assign Leads action
+
+Stable feature ID: `CRM-TEAM-ASSIGN-LEADS-001`.
+
+Status: bounded implementation; authenticated visual comparison blocked, so no
+visual parity claim is made.
+
+Source comparison against Odoo 19:
+
+- `addons/crm/views/crm_team_views.xml:139-148` adds the team form's Odoo-style
+  `Assign Leads` object action when lead/opportunity assignment is enabled,
+  with the confirmation text `This will assign leads to all members. Do you
+  want to proceed?`.
+- `addons/crm/models/crm_team.py:187-221` runs manual assignment with the full
+  quota and all historical eligible records, returns a `Leads Assigned`
+  success notification, and logs the assignment request.
+- Odoo's member assignment uses round-robin distribution
+  (`crm_lead.py:1880-1902`) and converts assigned leads to opportunities as
+  part of the assignment pipeline.
+
+Core3 implementation:
+
+- `pages/team-detail.yaml` adds the permission-gated confirmation-backed
+  header action; `api/team-detail.yaml` binds it through the existing
+  `page.id: team-detail` contract as `crm.teams.assign_leads`.
+- The YAML mutation deterministically selects open, unassigned leads already
+  belonging to the active team, assigns them round-robin to active team
+  members ordered by stable name/id, converts them to opportunities, bumps
+  row versions, and refreshes team datasources.
+- Migration `20260923100000-037-team-assign-leads.yaml` adds two active
+  Enterprise members and three stable unassigned leads for repeatable tests.
+- Focused validation is
+  `test/crm_team_assign_leads.integration.test.ts`: contract/discovery,
+  round-robin assignment, conversion, archived/missing-team guards, migration
+  replay, and file-backed restart persistence.
+
+The bounded contract does not yet reproduce Odoo's assignment-domain weighting,
+monthly quotas, cross-team allocation, duplicate merge, or team chatter
+notification. Those remain explicit follow-up gaps rather than silent parity
+claims. The authenticated Odoo/Core3 desktop/mobile check could not run because
+the existing Odoo tab was already borrowed by BrowserSkill session `gzhm`;
+the denied borrow and stopped session are recorded in the feature evidence.
