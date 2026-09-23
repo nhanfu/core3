@@ -7,6 +7,17 @@ Reference addon/version: event, Odoo 19 Community
 Plan status: approved  
 Last reviewed: 2026-09-22
 
+## Latest bounded cases — event chatter followers (2026-09-23)
+
+Stable feature ID: EVENTS-EVENT-FOLLOWERS-001.
+
+| Case ID | Class | Route/action | Expected result and evidence | Status |
+| --- | --- | --- | --- | --- |
+| EVENTS-FUNC-019 | functional/data | Event detail > Followers | Seeded follower and candidate list render through the page/API pair; add/remove persists and appears in chatter | pass: `events_followers.integration.test.ts` |
+| EVENTS-WF-014 | workflow/security | Add/remove follower actions | `events.write`, actor, duplicate, missing, cancelled, stale, and missing-follower guards reject invalid writes atomically | pass: `events_followers.integration.test.ts` |
+| EVENTS-DATA-014 | data/regression | Migration 045 and restart | Catalog and subscriptions are deterministic, migration replay is idempotent, and audit rows survive restart | pass: `events_followers.integration.test.ts` |
+| EVENTS-UI-012 | visual/responsive | Event detail chatter follower controls | Odoo follower controls remain available at 1916x833 and 390x844; paired Core3 capture is required for sign-off | conditional: Odoo captures committed; Core3 paired capture open |
+
 ## Latest bounded cases — Event Template Questions relation (2026-09-22)
 
 Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001.

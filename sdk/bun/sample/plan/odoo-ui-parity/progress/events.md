@@ -1,5 +1,18 @@
 # events parity progress
 
+## Bounded feature - event chatter followers (2026-09-23)
+
+Stable feature ID: EVENTS-EVENT-FOLLOWERS-001. The event detail form now
+exposes durable Odoo-style follower subscriptions through the existing
+page/API pair. Migration 045 seeds the deterministic Marc Demo subscription
+and follower catalog; add/remove actions require `events.write`, advance the
+event version, record chatter audit rows, and reject actor, missing, duplicate,
+cancelled, stale, and replayed writes. Focused coverage passes 4 tests / 30
+assertions, with related Events inventory/state regressions passing 9 tests /
+107 assertions. BrowserSkill captured authenticated Odoo desktop/mobile
+follower controls; no Core3 paired capture was made, so module sign-off remains
+open. Evidence is under the event-followers evidence folder.
+
 ## Bounded feature - Event Template Questions relation (2026-09-22)
 
 Stable feature ID: EVENTS-TEMPLATE-QUESTIONS-001. The Event Template detail

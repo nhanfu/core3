@@ -1,0 +1,41 @@
+version: 0.0.45
+kind: schema
+description: Durable Odoo Events follower subscriptions and deterministic catalog
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_follower_catalog (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      CREATE TABLE IF NOT EXISTS event_followers (
+        event_id VARCHAR NOT NULL,
+        user_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL,
+        added_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:30:00',
+        PRIMARY KEY (event_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS event_followers_event_idx ON event_followers(event_id, created_at, user_id);
+      INSERT INTO event_follower_catalog(id, name, email, active) VALUES
+        ('user-marc-demo', 'Marc Demo', 'marc.demo@example.com', TRUE),
+        ('user-admin', 'Administrator', 'admin@core3.local', TRUE),
+        ('user-events-manager', 'Events Manager', 'events.manager@core3.local', TRUE)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, active = EXCLUDED.active;
+      INSERT INTO event_followers(event_id, user_id, name, email, added_by, created_at)
+      SELECT 'event-demo-001', id, name, email, 'odoo-system', TIMESTAMP '2026-01-15 11:30:00'
+      FROM event_follower_catalog
+      WHERE id = 'user-marc-demo'
+      ON CONFLICT (event_id, user_id) DO NOTHING;
+    down: |
+      DELETE FROM event_followers WHERE event_id = 'event-demo-001' AND user_id = 'user-marc-demo';
+      DROP TABLE IF EXISTS event_followers;
+      DROP TABLE IF EXISTS event_follower_catalog;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

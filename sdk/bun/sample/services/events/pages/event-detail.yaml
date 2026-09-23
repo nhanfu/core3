@@ -73,6 +73,17 @@ components:
         wide: true
         fields: [{ field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
     message_source: event_detail_chatter
+    follower_source: event_followers
+    follower_candidates_source: event_follower_candidates
+    follower_candidates_page_size: 100
+    follower_add_action: add_event_follower
+    follower_remove_action: remove_event_follower
+    follower_label: Followers
+    add_follower_label: Add Followers
+    remove_follower_label: Remove follower
+    no_followers_label: No followers
+    follower_search_placeholder: Select a follower
+    add_label: Add
     chatter_label: Messages and activities
     message_label: Send message
     note_label: Log note
@@ -81,6 +92,13 @@ components:
     message_placeholder: Send a message to event followers…
     note_placeholder: Log an internal note…
     message_action_field: action_label
+    message_action_labels:
+      events.records.followers.add: Added follower
+      events.records.followers.remove: Removed follower
+      events.records.chatter.message: Message
+      events.records.chatter.note: Note
+      events.records.activity.schedule: Activity scheduled
+      events.records.activity.complete: Activity completed
     message_detail_field: detail
     message_timestamp_field: created_at
     activity_action: schedule_event_detail_activity

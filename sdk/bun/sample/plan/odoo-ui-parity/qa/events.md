@@ -1,5 +1,34 @@
 # events QA ledger
 
+## Bounded QA - Event chatter followers (2026-09-23)
+
+- Stable feature ID: **EVENTS-EVENT-FOLLOWERS-001**.
+- Source contract: **PASS by local source and authenticated Odoo observation**.
+  Odoo 19 `event.event` inherits `mail.thread`, the form renders `<chatter/>`,
+  and the reference exposes follower count, `Follow`, `Add Followers`, and
+  `Remove this follower` controls.
+- YAML ownership and permissions: **PASS**. `event-detail` owns follower
+  presentation, the matching API owns `event_followers`, candidate lookup,
+  and add/remove actions; reads require `events.read` and mutations require
+  `events.write`.
+- Durable data and guards: **PASS**. Migration 045 is replay-safe, seeds a
+  fixed Marc Demo follower, writes deterministic audit messages, advances the
+  parent row version, and covers actor, missing, duplicate, cancelled, stale,
+  missing-follower, and restart boundaries.
+- Focused tests: **PASS**, 4 tests / 30 assertions in
+  `events_followers.integration.test.ts`; related inventory/state regressions
+  pass 9 tests / 107 assertions.
+- Diff check and UI audit: **PASS**. `git diff --check`; `bun run audit`
+  reports 866 pages, 874 routes, and 1,836 datasources.
+- Browser evidence: **PASS for Odoo source evidence**. BrowserSkill daemon and
+  authenticated task-owned tab loaded `core3_reference`; desktop/mobile
+  captures are committed in the feature evidence folder. No Core3 capture was
+  made, so no paired visual-parity claim is made.
+- Full module sign-off: **OPEN**. Broader actor, route, and paired Core3/Odoo
+  visual gates remain outstanding.
+
+Evidence: `odoo-ui-parity/evidence/events/2026-09-23/event-followers/`.
+
 ## Bounded QA - Event archive and restore (2026-09-22)
 
 - Stable feature ID: **EVENTS-EVENT-ARCHIVE-001**.

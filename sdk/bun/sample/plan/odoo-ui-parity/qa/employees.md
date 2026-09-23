@@ -1516,4 +1516,4 @@ Employees sign-off is claimed.
 
 Focused test: `test/employees_tags_group.integration.test.ts` (3 tests, 14
 assertions). Adjacent `test/employees_tags.integration.test.ts` also passes
-(4 tests, 51 assertions). No aggregate Employees sign-off is claimed.
+(4 tests, 30 assertions). No aggregate Employees sign-off is claimed.

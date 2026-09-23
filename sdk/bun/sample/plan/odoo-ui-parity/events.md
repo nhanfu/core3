@@ -1,5 +1,35 @@
 # Events UI parity
 
+## Current bounded batch: Event chatter followers (2026-09-23)
+
+Stable feature ID: EVENTS-EVENT-FOLLOWERS-001.
+
+The next smallest uncovered event-form feature after archive/restore was the
+Odoo `mail.thread` follower subscription surface. Odoo 19's
+`event.event` inherits `mail.thread` in
+`addons/event/models/event_event.py`, the form renders `<chatter/>` in
+`addons/event/views/event_event_views.xml:163`, and the authenticated form
+shows the follower count plus `Follow`, `Add Followers`, and `Remove this
+follower` controls.
+
+Core3 keeps the existing `event-detail` page/API pair joined by `page.id`.
+Migration `20260923200000-045-event-followers.yaml` adds a deterministic
+follower catalog, the seeded Marc Demo subscription, and durable event
+follower rows. The API exposes read-only follower/candidate datasources and
+permissioned `events.write` add/remove actions. Mutations record follower
+changes in the event chatter, advance the event `row_version`, reject
+anonymous, missing, cancelled, duplicate, stale, and replayed writes, and
+survive migration replay and file-backed restart.
+
+Focused coverage is in `test/events_followers.integration.test.ts` plus the
+Events inventory/state regressions: 13 tests / 137 assertions pass. Odoo
+BrowserSkill evidence was captured from the authenticated task-owned tab at
+`http://localhost:8069/odoo/events/1` for `core3_reference` at 1916x833 and
+390x844. No credentials were accessed or exposed. No Core3 visual capture was
+made in this checkpoint, so paired visual parity and full Events sign-off
+remain open. Evidence is under
+`evidence/events/2026-09-23/event-followers/`.
+
 ## Current bounded batch: Event archive and restore (2026-09-22)
 
 Stable feature ID: EVENTS-EVENT-ARCHIVE-001.

@@ -42,6 +42,13 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_CHATTER_UNAVAILABLE, message: Event messages are temporarily unavailable. } }
     query: "SELECT id, row_version, event_id, state, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, row_version, event_id, 'done' AS state, actor_name, action, action_label, detail, created_at FROM event_messages UNION ALL SELECT id, row_version, event_id, state, actor_name, action, action_label, detail, created_at FROM event_activities) timeline WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY created_at DESC, id"
+  - id: event_followers
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_FOLLOWERS_UNAVAILABLE, message: Event followers are temporarily unavailable. } }
+    query: "SELECT f.user_id, f.name, f.email, CAST(f.created_at AS VARCHAR) AS followed_at FROM event_followers f JOIN events e ON e.id = f.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND f.event_id = :id ORDER BY f.created_at, f.user_id"
+  - id: event_follower_candidates
+    permission: events.read
+    query: "SELECT u.id AS value, u.name || ' · ' || u.email AS label FROM event_follower_catalog u JOIN events e ON e.id = :id WHERE u.active = TRUE AND NOT EXISTS (SELECT 1 FROM event_followers f WHERE f.event_id = :id AND f.user_id = u.id) ORDER BY u.name, u.id"
 actions:
   - id: send_event_detail_message
     type: server_form
@@ -372,6 +379,52 @@ actions:
       steps:
         - { query: "UPDATE events SET active = FALSE, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND active = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_ARCHIVE_STALE, message: This event changed before it could be archived. }
       result: { query: "SELECT * FROM events WHERE id = :id" }
+  - id: add_event_follower
+    type: server
+    permission: events.write
+    action: events.records.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_detail_chatter, event_followers, event_follower_candidates]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'event-message-' || :id || '-follower-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM event_messages WHERE event_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EVENT_FOLLOWER_ACTOR_REQUIRED, message: An authenticated Events actor is required to manage followers. }
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :expected_row_version AND state <> 'Cancelled'", status: 409, code: EVENT_FOLLOWER_PARENT_CHANGED, message: This event changed or is cancelled. Reload before adding a follower. }
+        - { query: "SELECT id FROM event_follower_catalog WHERE id = :user_id AND active = TRUE", status: 404, code: EVENT_FOLLOWER_USER_NOT_FOUND, message: Select an enabled follower. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_followers WHERE event_id = :id AND user_id = :user_id)", status: 409, code: EVENT_FOLLOWER_EXISTS, message: This user already follows the event. }
+      steps:
+        - { query: "INSERT INTO event_followers(event_id, user_id, name, email, added_by, created_at) SELECT :id, u.id, u.name, u.email, :current_user_id, TIMESTAMP '2026-01-15 11:30:00' FROM event_follower_catalog u WHERE u.id = :user_id AND u.active = TRUE", expect_changed: true, status: 409, code: EVENT_FOLLOWER_NOT_CREATED, message: The event follower could not be added. }
+        - { query: "INSERT INTO event_messages(id, event_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) SELECT :message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Events User'), 'events.records.followers.add', 'Added follower', u.name || ' now follows ' || e.name, TIMESTAMP '2026-01-15 11:30:00' FROM event_follower_catalog u JOIN events e ON e.id = :id WHERE u.id = :user_id", expect_changed: true, status: 409, code: EVENT_FOLLOWER_MESSAGE_NOT_CREATED, message: The follower activity could not be recorded. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_FOLLOWER_PARENT_CHANGED, message: This event changed while adding the follower. Reload before retrying. }
+      result: { query: "SELECT f.user_id, f.name, f.email, FALSE AS removed FROM event_followers f WHERE f.event_id = :id AND f.user_id = :user_id" }
+  - id: remove_event_follower
+    type: server
+    permission: events.write
+    action: events.records.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}', expected_row_version: '{state.event_detail.row_version}' }
+    refresh: [event_detail, event_detail_chatter, event_followers, event_follower_candidates]
+    confirm: Remove this follower?
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      before_steps:
+        - { query: "SELECT 'event-message-' || :id || '-follower-remove-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM event_messages WHERE event_id = :id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EVENT_FOLLOWER_ACTOR_REQUIRED, message: An authenticated Events actor is required to manage followers. }
+        - { query: "SELECT id FROM events WHERE id = :id AND row_version = :expected_row_version AND state <> 'Cancelled'", status: 409, code: EVENT_FOLLOWER_PARENT_CHANGED, message: This event changed or is cancelled. Reload before removing a follower. }
+        - { query: "SELECT user_id FROM event_followers WHERE event_id = :id AND user_id = :user_id", status: 404, code: EVENT_FOLLOWER_NOT_FOUND, message: Follower not found for this event. }
+      steps:
+        - { query: "INSERT INTO event_messages(id, event_id, row_version, actor_id, actor_name, action, action_label, detail, created_at) SELECT :message_id, :id, 1, :current_user_id, COALESCE(NULLIF(TRIM(CAST(:current_user_name AS VARCHAR)), ''), 'Events User'), 'events.records.followers.remove', 'Removed follower', f.name || ' no longer follows ' || e.name, TIMESTAMP '2026-01-15 11:30:00' FROM event_followers f JOIN events e ON e.id = :id WHERE f.event_id = :id AND f.user_id = :user_id", expect_changed: true, status: 409, code: EVENT_FOLLOWER_MESSAGE_NOT_CREATED, message: The follower activity could not be recorded. }
+        - { query: "DELETE FROM event_followers WHERE event_id = :id AND user_id = :user_id", expect_changed: true, status: 409, code: EVENT_FOLLOWER_NOT_FOUND, message: Follower not found for this event. }
+        - { query: "UPDATE events SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: EVENT_FOLLOWER_PARENT_CHANGED, message: This event changed while removing the follower. Reload before retrying. }
+      result: { query: "SELECT :user_id AS user_id, u.name, u.email, TRUE AS removed FROM event_follower_catalog u WHERE u.id = :user_id" }
   - id: unarchive_event_detail
     type: server
     permission: events.write

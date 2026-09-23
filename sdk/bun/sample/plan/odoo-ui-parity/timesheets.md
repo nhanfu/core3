@@ -2480,33 +2480,3 @@ This is a bounded feature record, not Timesheets module sign-off.
   `Conflicting declarations for named action: base.activities.reschedule_today`;
   the exact failure is recorded beside the captures. No Core3 visual parity or
   module sign-off is claimed. Odoo Print/PDF/action-surface gaps remain open.
-
-## 2026-09-23 `TIMESHEET-MY-BILLED-FIXED-PRICE-FILTER-001`
-
-- Selected the next smallest uncovered stable-ID behavior on the authenticated
-  My Timesheets action. `sale_timesheet/views/hr_timesheet_views.xml` adds the
-  Sales-user `Billed at a Fixed Price` filter with domain
-  `timesheet_invoice_type = billable_fixed`; the live Odoo menu exposes and
-  applies it on `/odoo/timesheets`.
-- Core3 keeps `pages/entries.yaml` layout-only and `api/entries.yaml`
-  data/action-only, joined by `page.id: timesheets`. The page now declares the
-  single filter and the entries plus total-footer datasources apply the durable
-  `billing_type` parameter with the existing current-actor/company guards.
-  No migration was needed because the replay-safe billing column already exists.
-- Focused coverage is
-  `test/timesheets_my_billed_fixed_price_filter.integration.test.ts`: 4 tests /
-  21 expectations, covering source mapping, filtered totals, actor/company/
-  empty guards, relation freshness, migration replay, and file-backed restart.
-  The adjacent six-file My Timesheets regression passed 23 tests / 119
-  expectations. The broader My glob remains blocked by the pre-existing
-  unknown `add_event_follower` / `remove_event_follower` page actions and was
-  stopped after its bounded timeout.
-- BrowserSkill captured authenticated Odoo desktop and iPhone 14 reference
-  states. No user-owned Odoo tab was visible to borrow; the task-created tab
-  was used read-only and no credentials were accessed. Core3 visual capture is
-  blocked because no local Core3 service was listening on ports 3001, 3002,
-  4001, or 4012. No visual-parity or module sign-off is claimed.
-
-Evidence is under
-`evidence/timesheets/2026-09-23/timesheet-my-billed-fixed-price-filter-001/`.
-The remaining four Sales Timesheet billing filters are still separate gaps.
