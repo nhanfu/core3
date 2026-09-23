@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { rm } from 'node:fs/promises';
 import { discoverModules, ModuleManager } from '@core3/server/module';
 import { YamlServiceModule } from '@core3/server/yaml-service';
 import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
@@ -19,6 +20,10 @@ const moduleConfigs: Record<string, Record<string, unknown>> = {};
 const medStoreConfig = await loadMedConfig();
 const eventConfig: any = medStoreConfig.event_store || {};
 const eventDatabase = eventConfig.database || {};
+const eventStorePath = eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet';
+if (process.env.CORE3_CLEAN_EVENT_STORE === 'true' && eventStorePath !== ':memory:') {
+  await rm(eventStorePath, { recursive: true, force: true });
+}
 const chatEvents = Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()) as any;
 const eventSchema = chatEvents.event_schema;
 if (!eventSchema) throw new Error('Chat event schema is not configured');
@@ -35,7 +40,7 @@ const eventBus: EventBus = eventMode === 'mediator'
   })
   : new EventStore({
     schema: eventSchema,
-    databasePath: eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet',
+    databasePath: eventStorePath,
     retentionMs: Number(eventConfig.retention_ms || 60 * 60 * 1000),
     maxRows: Number(eventConfig.max_rows || 1000),
     hotMaxRows: Number(eventConfig.hot_max_rows || 100000),
@@ -149,7 +154,18 @@ async function serveSPA() {
   });
 }
 
-const modules = await discoverModules(APPS_ROOT);
+const discoveredModules = await discoverModules(APPS_ROOT);
+const requestedModules = String(process.env.CORE3_MODULES || process.env.CORE3_MODULE || '')
+  .split(',').map((moduleId) => moduleId.trim()).filter(Boolean);
+if (requestedModules.length) {
+  const availableModules = new Set(discoveredModules.map((module) => module.id));
+  const unknownModule = requestedModules.find((moduleId) => !availableModules.has(moduleId));
+  if (unknownModule) throw new Error(`Unknown module: ${unknownModule}. Available modules: ${[...availableModules].sort().join(', ')}`);
+}
+const selectedModules = new Set([...requestedModules, 'auth']);
+const modules = requestedModules.length
+  ? discoveredModules.filter((module) => selectedModules.has(module.id))
+  : discoveredModules;
 const moduleManager = new ModuleManager(modules);
 const pageDiscovery = discoverPages(APPS_ROOT);
 const pageRoutes = discoverPageRoutes(pageDiscovery);

@@ -10,7 +10,7 @@ coredb
 *.duckdb.*
 *.duckdb.wal
 *.duckdb.tmp
-apps/services/*/.data/
+.data
 .tmp/
 events-parquet/
 uploads
