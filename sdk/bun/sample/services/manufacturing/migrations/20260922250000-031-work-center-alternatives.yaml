@@ -1,0 +1,38 @@
+version: 0.0.31
+description: Deterministic Work Center alternative-order scope
+type:
+  postgres:
+    up: |
+      UPDATE mrp_workcenters
+      SET alternative_workcenters = CASE id
+        WHEN 'workcenter-assembly-1' THEN 'Assembly 2'
+        WHEN 'workcenter-drill-1' THEN 'Assembly 2'
+        ELSE COALESCE(alternative_workcenters, '')
+      END
+      WHERE id IN ('workcenter-assembly-1', 'workcenter-drill-1');
+      CREATE TABLE IF NOT EXISTS mrp_workcenter_alternatives (
+        id VARCHAR PRIMARY KEY,
+        workcenter_id VARCHAR NOT NULL,
+        alternative_workcenter_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(workcenter_id, alternative_workcenter_id, company_name)
+      );
+      INSERT INTO mrp_workcenter_alternatives (id, workcenter_id, alternative_workcenter_id, company_name)
+      VALUES
+        ('wc-alt-assembly-1-assembly-2', 'workcenter-assembly-1', 'workcenter-assembly-2', 'My Company'),
+        ('wc-alt-drill-1-assembly-2', 'workcenter-drill-1', 'workcenter-assembly-2', 'My Company')
+      ON CONFLICT(id) DO NOTHING;
+      CREATE INDEX IF NOT EXISTS idx_mrp_workcenter_alternatives_scope
+        ON mrp_workcenter_alternatives(workcenter_id, alternative_workcenter_id, company_name);
+    down: |
+      DELETE FROM mrp_workcenter_alternatives
+      WHERE id IN ('wc-alt-assembly-1-assembly-2', 'wc-alt-drill-1-assembly-2');
+      DROP INDEX IF EXISTS idx_mrp_workcenter_alternatives_scope;
+      DROP TABLE IF EXISTS mrp_workcenter_alternatives;
+      UPDATE mrp_workcenters SET alternative_workcenters = ''
+      WHERE id IN ('workcenter-assembly-1', 'workcenter-drill-1');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

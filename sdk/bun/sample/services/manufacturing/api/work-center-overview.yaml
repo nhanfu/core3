@@ -35,6 +35,11 @@ actions:
     permission: manufacturing.read
     navigate_to: /manufacturing/work-centers/work-orders
     params: { workcenter_id: '{row.id}', workcenter: '{row.name}' }
+  - id: open_mrp_workcenter_alternatives
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-centers/alternative-orders
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}' }
   - id: open_mrp_workcenter_waiting
     type: navigate
     permission: manufacturing.read
