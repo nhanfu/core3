@@ -71,6 +71,7 @@ components:
             - { id: open_survey_certified_cards, label: Certified, label_field: certified_count, permission: surveys.read, show_if: 'row.certified_count > 0' }
             - { id: open_survey_results_card, label: See results, permission: surveys.read, show_if: "row.state !== 'Archived'" }
             - { id: start_live_session_card, label: Start Live Session, permission: surveys.manage, show_if: "(row.state === 'Draft' || row.state === 'Published') && row.question_count > 0 && !row.session_state" }
+            - { id: end_live_session_card, label: End Live Session, permission: surveys.manage, show_if: "row.session_state === 'Ready' || row.session_state === 'In Progress'" }
       - id: list
         label: List
         icon: table

@@ -1532,3 +1532,26 @@ Core3 visual parity is not claimed.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-LIVE-SESSION-001/`.
+
+## 2026-09-23 — `SURVEYS-CARD-END-LIVE-SESSION-001`
+
+Selected the next uncovered Odoo Surveys kanban stable ID: `End Live Session`
+on active cards. Odoo exposes it for Ready/In Progress sessions and closes the
+session through `action_end_session`; Core3 now exposes the same label through
+the Cards page and the page-matched `surveys.sessions.end_from_card` YAML
+mutation.
+
+The mutation uses the existing durable `survey_live_sessions` row, requires
+`surveys.manage` and an actor, rejects inactive or stale sessions, clears the
+current question, marks active live attendees Completed, advances
+`row_version`, and survives file-backed restart. No migration was required.
+
+Verification: **3/3 focused tests, 15 assertions**; scoped ESLint and
+`git diff --check` pass. BrowserSkill Odoo desktop/mobile reference captures
+are in the feature evidence directory. Core3 visual verification is blocked
+before readiness by the unrelated Events discovery error for unknown
+`add_event_follower` and `remove_event_follower` actions; no visual parity
+sign-off is claimed.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-23/SURVEYS-CARD-END-LIVE-SESSION-001/`.

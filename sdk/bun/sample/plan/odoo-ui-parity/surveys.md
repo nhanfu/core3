@@ -3048,3 +3048,39 @@ runtimes and an authenticated BrowserSkill tab.
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-SEE-RESULTS-001/`.
+
+## Bounded slice: `SURVEYS-CARD-END-LIVE-SESSION-001` — 2026-09-23
+
+The next uncovered stable-ID behavior after the kanban `See results` action is
+Odoo's card-level `End Live Session` button. Odoo renders it for active Ready
+or In Progress sessions in `addons/survey/views/survey_survey_views.xml:323-327`;
+`survey.survey.action_end_session` in `addons/survey/models/survey_survey.py:1166-1175`
+requires the survey-user session-management boundary and closes the active
+session.
+
+Core3 adds the `end_live_session_card` action to the Cards view and its
+page-matched `surveys.sessions.end_from_card` YAML mutation. The card passes
+the durable `session_id` and `session_row_version`; the mutation requires
+`surveys.manage` and an authenticated actor, accepts only Ready/In Progress
+sessions, clears the current question, increments the session version, and
+persists Closed state. Active Core3 live attendees are marked Completed, the
+equivalent of Odoo's active user-input completion. The existing live-session
+manager action now applies the same attendee side effect; no new table or
+migration was needed.
+
+Focused verification is **3 tests / 15 assertions** in
+`test/surveys_card_end_live_session.integration.test.ts`, including page/API
+binding, actor and optimistic-version guards, idempotent replay refusal, and
+file-backed restart persistence. Scoped ESLint and `git diff --check` pass.
+
+BrowserSkill loaded the authenticated Odoo Cards surface for
+`core3_reference` at desktop and iphone-14 mobile viewports and captured the
+reference cards without mutating the reference data. No existing Odoo user tab
+was available to borrow, so the authenticated agent-owned tab was used and
+stopped afterward. Core3 browser validation is blocked before readiness by the
+unrelated global discovery error that Events references unknown
+`add_event_follower` and `remove_event_follower` actions; no Core3 visual parity
+claim is made.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-23/SURVEYS-CARD-END-LIVE-SESSION-001/`.

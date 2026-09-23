@@ -26,6 +26,23 @@ actions:
       steps:
         - { query: "UPDATE survey_live_sessions SET state = 'Ready', session_start_time = TIMESTAMP '2026-01-15 10:00:00', question_started_at = NULL, current_question_id = NULL, current_question_text = NULL, answer_count = 0, question_answer_count = 0, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:00:00' WHERE survey_id = :id AND state = 'Closed' AND row_version = :expected_session_row_version", expect_changed: true, status: 409, code: SURVEY_CARD_SESSION_CHANGED, message: This survey already has an active live session or has changed. }
       result: { query: "SELECT 'Live session ready' AS message, state, session_code FROM survey_live_sessions WHERE survey_id = :id" }
+  - id: end_live_session_card
+    type: server
+    permission: surveys.manage
+    action: surveys.sessions.end_from_card
+    handler: yaml_mutation
+    workflow: surveys
+    params: { expected_row_version: '{row.session_row_version}' }
+    result: alert
+    refresh: [surveys]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: SURVEY_CARD_SESSION_ACTOR_REQUIRED, message: An authenticated survey actor is required to end a live session. }
+        - { query: "SELECT id FROM survey_live_sessions WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", status: 409, code: SURVEY_CARD_SESSION_NOT_ACTIVE, message: Only an active live session can be closed. Reload before closing it. }
+      steps:
+        - { query: "UPDATE survey_live_attendees SET state = 'Completed', row_version = row_version + 1 WHERE session_id = :id AND state = 'In Progress'" }
+        - { query: "UPDATE survey_live_sessions SET state = 'Closed', current_question_id = NULL, current_question_text = NULL, question_started_at = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:00:00' WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_CARD_SESSION_CHANGED, message: The live session changed before it could be closed. Reload and try again. }
+      result: { query: "SELECT 'Live session closed' AS message, state, session_code FROM survey_live_sessions WHERE id = :id" }
   - id: set_survey_card_color
     type: server_form
     permission: surveys.write

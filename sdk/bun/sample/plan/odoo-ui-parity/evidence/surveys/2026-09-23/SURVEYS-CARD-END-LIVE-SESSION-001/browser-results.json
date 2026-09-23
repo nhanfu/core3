@@ -1,0 +1,29 @@
+{
+  "feature_id": "SURVEYS-CARD-END-LIVE-SESSION-001",
+  "browser_skill": {
+    "status": "reference_captured",
+    "service": "http://localhost:8069",
+    "database": "core3_reference",
+    "existing_user_tab": "not_available",
+    "borrowed_existing_tab": false,
+    "agent_owned_session_stopped": true,
+    "desktop": {
+      "status": "pass",
+      "viewport": "1916x833",
+      "capture": "odoo-desktop.png",
+      "visible_action": "End Live Session"
+    },
+    "mobile": {
+      "status": "pass",
+      "viewport": "390x844",
+      "capture": "odoo-mobile.png",
+      "note": "Compact cards collapse desktop footer actions"
+    }
+  },
+  "core3": {
+    "status": "blocked_before_readiness",
+    "command": "bun run agent:module -- surveys --port=4099",
+    "error": "PageSchemaError: components[0].follower_add_action references unknown action add_event_follower; components[0].follower_remove_action references unknown action remove_event_follower",
+    "claim": "No Core3 visual parity claim"
+  }
+}

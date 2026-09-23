@@ -2031,3 +2031,33 @@ Evidence:
 
 Evidence:
 `plan/odoo-ui-parity/evidence/surveys/2026-09-22/SURVEYS-CARD-SEE-RESULTS-001/`.
+
+## Bounded QA run: `SURVEYS-CARD-END-LIVE-SESSION-001` — 2026-09-23
+
+- Source/UI: Odoo's kanban card renders `End Live Session` for active Ready or
+  In Progress sessions (`addons/survey/views/survey_survey_views.xml:323-327`);
+  the model action is `action_end_session`
+  (`addons/survey/models/survey_survey.py:1166-1175`).
+- Contract: `pages/surveys.yaml` declares `end_live_session_card`; the matched
+  `api/surveys.yaml` action owns `surveys.sessions.end_from_card`, passes the
+  card's session ID/version, and refreshes the Cards source.
+- Persistence/guards: `surveys.manage`, actor authentication, active-state and
+  optimistic-version guards are explicit. Closing clears current question
+  fields, marks active live attendees Completed, advances the session version,
+  refuses replay, and survives a file-backed DuckDB reopen.
+- Verification: `bun test test/surveys_card_end_live_session.integration.test.ts
+  --timeout 20000` — **3 passed, 0 failed, 15 assertions**; scoped ESLint and
+  `git diff --check` passed.
+- BrowserSkill: Odoo `core3_reference` Cards loaded successfully at desktop
+  1916x833 and iphone-14 390x844; captures are committed in the feature
+  evidence directory. No existing Odoo user tab was available to borrow, so
+  an authenticated agent-owned tab was used and stopped. No Odoo mutation was
+  performed.
+- Core3 browser blocker: `bun run agent:module -- surveys --port=4099` exits
+  before readiness with `PageSchemaError: components[0].follower_add_action
+  references unknown action "add_event_follower"` and the matching
+  `remove_event_follower` error from Events. No Core3 screenshot or visual
+  parity claim is made; the unrelated worker files were left untouched.
+
+Evidence:
+`plan/odoo-ui-parity/evidence/surveys/2026-09-23/SURVEYS-CARD-END-LIVE-SESSION-001/`.

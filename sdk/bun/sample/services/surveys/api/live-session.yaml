@@ -68,5 +68,6 @@ actions:
       guards:
         - { query: "SELECT id FROM survey_live_sessions WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", status: 409, message: Only an active live session can be closed. Reload before closing it. }
       steps:
+        - { query: "UPDATE survey_live_attendees SET state = 'Completed', row_version = row_version + 1 WHERE session_id = :id AND state = 'In Progress'" }
         - { query: "UPDATE survey_live_sessions SET state = 'Closed', current_question_id = NULL, current_question_text = NULL, question_started_at = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:00:00' WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Only an active live session can be closed. }
       result: { query: "SELECT 'Live session closed' AS message, state FROM survey_live_sessions WHERE id = :id" }
