@@ -175,3 +175,16 @@ remain open; no full Fleet sign-off is claimed.
   Window captures are recorded. No visual parity claim is made.
 
 This is a bounded feature result, not Fleet module completion or sign-off.
+
+## Current wave: contract clickable statusbar `FLEET-CONTRACT-STATUSBAR-001` (2026-09-23)
+
+- Closed the smallest remaining contract-form interaction gap: the Odoo
+  clickable `fleet.vehicle.log.contract.state` statusbar now dispatches the
+  existing YAML transition mutations for New, Running, Expired, and Closed.
+- Focused verification passes **3 tests / 35 assertions**; the adjacent
+  contract and vehicle statusbar regression set passes **11 tests / 121
+  assertions**.
+- BrowserSkill connected to instance `245ea108`, but no user-window Odoo tab
+  was available to borrow. The task-created tab rendered Discuss without Fleet
+  at desktop/mobile sizes; no visual parity claim is made. Evidence is under
+  `evidence/fleet/2026-09-23/fleet-contract-statusbar-20260923/`.

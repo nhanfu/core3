@@ -450,6 +450,33 @@ blocked**. Fleet remains unsigned-off.
 QA state: **conditional bounded functional pass; visual/Odoo gates blocked**.
 Fleet remains unsigned-off.
 
+## 2026-09-23 — Contract clickable statusbar `FLEET-CONTRACT-STATUSBAR-001`
+
+- Odoo source mapping: `fleet_vehicle_log_contract_view_form` declares a
+  clickable `state` statusbar, backed by `action_draft`, `action_open`,
+  `action_expire`, and `action_close` in `fleet_vehicle_log_contract.py`.
+- Core3 binds the four Odoo-equivalent stages on `contract-detail` to the
+  existing `fleet.write` YAML mutations. The Core3-only `To Renew` display
+  stage remains static and is not claimed as an Odoo state.
+- Focused test: `bun test test/fleet_contract_statusbar.integration.test.ts
+  --timeout 30000` — **3 passed / 35 assertions**.
+- Adjacent regression: `bun test
+  test/fleet_contract_statusbar.integration.test.ts
+  test/fleet_contracts.integration.test.ts
+  test/fleet_vehicle_statusbar.integration.test.ts --timeout 30000` — **11
+  passed / 121 assertions**.
+- Persistence and guards: New → Running → Expired → Closed increments the
+  row version from 1 to 5; attempting to reopen Closed returns
+  `409 FLEET_CONTRACT_STATUS_TRANSITION_INVALID`.
+- BrowserSkill: connected instance `245ea108`; no Odoo tab was present in the
+  user-window list for borrowing. The task-created authenticated tab at
+  `http://localhost:8069/odoo` rendered Discuss without Fleet at 1916x833 and
+  390x844. Desktop/mobile blocker captures and hashes are in the evidence
+  directory. No visual parity is claimed.
+
+QA state: **conditional bounded functional pass; live Odoo/Core3 visual gate
+blocked**. Fleet remains unsigned-off.
+
 ## 2026-09-22 — Manufacturer Models stat action
 
 - Feature `fleet-manufacturer-models-action-20260922` replaces the existing

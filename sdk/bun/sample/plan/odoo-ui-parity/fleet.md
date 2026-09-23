@@ -1316,3 +1316,36 @@ authenticated tab at `http://localhost:8069/odoo/fleet` resolved to
 Discuss/OdooBot without Fleet at desktop or 390x844 mobile. No authenticated
 Fleet or Core3 visual-parity claim is made; blocker screenshots are retained
 under `/tmp/core3-odoo-parity/fleet-planned-filter-20260922/`.
+
+## Contract clickable statusbar bounded slice (2026-09-23)
+
+Feature ID: `FLEET-CONTRACT-STATUSBAR-001`.
+
+The next smallest uncovered stable source contract was the Odoo
+`fleet.vehicle.log.contract` form statusbar. Odoo's
+`fleet_vehicle_log_contract_view_form` marks the `state` field as
+`widget="statusbar" options="{'clickable': '1'}"`; the model exposes
+`action_draft`, `action_open`, `action_expire`, and `action_close`. Core3
+already had the corresponding guarded YAML mutations, but
+`pages/contract-detail.yaml` did not bind the rendered statusbar stages to
+those actions, so clicking a stage had no durable effect.
+
+Core3 now binds the Odoo-equivalent stages New, Running, Expired, and Closed
+to `set_fleet_contract_new`, `set_fleet_contract_running`,
+`expire_fleet_contract`, and `close_fleet_contract`. The existing API
+mutations remain the page-bound persistence seam, require `fleet.write`, use
+optimistic row versions, refresh the contract detail/list datasources, and
+retain the closed-contract transition guard. Core3's additional `To Renew`
+display value is intentionally not mapped because it is not an Odoo contract
+state.
+
+Focused coverage is `test/fleet_contract_statusbar.integration.test.ts`:
+**3 tests / 35 assertions**. The adjacent contract and vehicle statusbar
+regression command passes **11 tests / 121 assertions**. Evidence is under
+`odoo-ui-parity/evidence/fleet/2026-09-23/fleet-contract-statusbar-20260923/`.
+
+BrowserSkill connected to instance `245ea108`, but the user-window tab list
+contained no Odoo tab to borrow. The task-created authenticated tab at
+`http://localhost:8069/odoo` rendered Discuss with no Fleet entry at desktop
+and mobile sizes. The exact blocker captures are retained in the evidence
+directory; no Odoo Fleet or Core3 visual-parity claim is made.

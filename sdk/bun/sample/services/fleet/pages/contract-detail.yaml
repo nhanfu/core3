@@ -19,6 +19,7 @@ components:
     status_field: status
     status_colors: { New: neutral, Running: green, 'To Renew': amber, Expired: red, Closed: neutral }
     statusbar: [{ value: New, label: New }, { value: Running, label: Running }, { value: 'To Renew', label: To Renew }, { value: Expired, label: Expired }, { value: Closed, label: Cancelled }]
+    statusbar_actions: { New: set_fleet_contract_new, Running: set_fleet_contract_running, Expired: expire_fleet_contract, Closed: close_fleet_contract }
     status_badges: [{ value: New, label: New, tone: neutral }, { value: Running, label: Running, tone: green }, { value: 'To Renew', label: To Renew, tone: amber }, { value: Expired, label: Expired, tone: red }, { value: Closed, label: Cancelled, tone: neutral }]
     editable: true
     group_columns: 2
