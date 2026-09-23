@@ -18,6 +18,17 @@ export async function findAvailablePort(start: number): Promise<number> {
   throw new Error(`No available development port at or above ${start}`);
 }
 
+async function waitForMediator(port: number): Promise<void> {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    try {
+      if ((await fetch(`http://127.0.0.1:${port}/health`)).ok) return;
+    } catch { /* the mediator is still starting */ }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Event mediator did not become ready on port ${port}`);
+}
+
 if (import.meta.main) {
   const argumentsList = process.argv.slice(2);
   const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
@@ -49,6 +60,10 @@ if (import.meta.main) {
     if (!availableModules.has(moduleId)) throw new Error(`Unknown dev option or module: ${argument}. Available modules: ${[...availableModules].sort().join(', ')}`);
     selectedModules.add(moduleId);
   }
+  const configuredModules = String(process.env.CORE3_MODULES || process.env.CORE3_MODULE || '')
+    .split(',').map((moduleId) => moduleId.trim()).filter(Boolean);
+  const effectiveModules = selectedModules.size ? [...selectedModules] : configuredModules;
+  const runMediator = !effectiveModules.length || effectiveModules.includes('chat');
   const databaseEnv: Record<string, string> = {
     CORE3_DB_DRIVER: defaultDriver,
   };
@@ -57,7 +72,9 @@ if (import.meta.main) {
   if (schemaOnly) databaseEnv.CORE3_SCHEMA_ONLY = 'true';
   for (const serviceId of serviceIds) {
     const prefix = serviceId.toUpperCase().replaceAll('-', '_');
-    databaseEnv[`CORE3_${prefix}_DB_DRIVER`] = process.env[`CORE3_${prefix}_DB_DRIVER`] || defaultDriver;
+    databaseEnv[`CORE3_${prefix}_DB_DRIVER`] = memoryDb
+      ? 'duckdb-memory'
+      : process.env[`CORE3_${prefix}_DB_DRIVER`] || defaultDriver;
   }
   if (memoryDb) {
     databaseEnv.CORE3_AUTH_DB_PATH = ':memory:';
@@ -80,18 +97,25 @@ if (import.meta.main) {
     databaseEnv.CORE3_ORDER_DATABASE_URL = process.env.CORE3_ORDER_DATABASE_URL || url;
     databaseEnv.CORE3_CHAT_DATABASE_URL = process.env.CORE3_CHAT_DATABASE_URL || url;
   }
-  console.log(`Starting Core3 modules: ${selectedModules.size ? [...selectedModules, 'auth'].join(', ') : 'all'}`);
+  console.log(`Starting Core3 modules: ${effectiveModules.length ? [...new Set([...effectiveModules, 'auth'])].join(', ') : 'all'}`);
   console.log(`Service databases: ${serviceIds.map((serviceId) => `${serviceId}=${databaseEnv[`CORE3_${serviceId.toUpperCase().replaceAll('-', '_')}_DB_DRIVER`]}`).join(', ')}`);
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
+  const mediatorStart = Number.parseInt(process.env.EVENT_MEDIATOR_PORT || '3010', 10);
+  const mediatorCandidate = runMediator ? await findAvailablePort(mediatorStart) : 0;
+  const mediatorPort = mediatorCandidate === port ? await findAvailablePort(port + 1) : mediatorCandidate;
+  const mediatorUrl = mediatorPort ? `ws://127.0.0.1:${mediatorPort}/events` : '';
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
+  if (mediatorPort && mediatorPort !== mediatorStart) console.log(`Event mediator port ${mediatorStart} is busy; using port ${mediatorPort}`);
   console.log(`App: http://127.0.0.1:${port}`);
+  if (runMediator) console.log(`Med: ${mediatorUrl}`);
 
   let stopped = false;
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
   let build: ReturnType<typeof Bun.spawn> | null = null;
+  let mediator: ReturnType<typeof Bun.spawn> | null = null;
   let restartTimer: ReturnType<typeof setTimeout> | undefined;
 
   const sourceChanged = (filename: string | Buffer | null) => {
@@ -156,6 +180,7 @@ if (import.meta.main) {
     clearTimeout(restartTimer);
     child?.kill();
     build?.kill();
+    mediator?.kill();
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
@@ -174,13 +199,28 @@ if (import.meta.main) {
         continue;
       }
       restartRequested = false;
+      if (runMediator && !mediator) {
+        mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts'], {
+          env: {
+            ...process.env,
+            ...databaseEnv,
+            EVENT_MEDIATOR_PORT: String(mediatorPort),
+            CORE3_EVENT_MODE: 'mediator',
+            CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
+            ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
+          },
+          stdin: 'inherit', stdout: 'inherit', stderr: 'inherit',
+        });
+        await waitForMediator(mediatorPort);
+      }
       child = Bun.spawn(['bun', 'server.ts'], {
         env: {
           ...process.env,
           ...databaseEnv,
           PORT: String(port),
           CORE3_FRONTEND_DIST: 'true',
-          CORE3_EVENT_MODE: 'embedded',
+          CORE3_EVENT_MODE: runMediator ? 'mediator' : 'embedded',
+          ...(runMediator ? { CORE3_EVENT_MEDIATOR_URL: mediatorUrl } : {}),
           ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
           ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
         },

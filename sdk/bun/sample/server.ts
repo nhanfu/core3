@@ -20,14 +20,14 @@ const moduleConfigs: Record<string, Record<string, unknown>> = {};
 const medStoreConfig = await loadMedConfig();
 const eventConfig: any = medStoreConfig.event_store || {};
 const eventDatabase = eventConfig.database || {};
+const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
 const eventStorePath = eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet';
-if (process.env.CORE3_CLEAN_EVENT_STORE === 'true' && eventStorePath !== ':memory:') {
+if (eventMode !== 'mediator' && process.env.CORE3_CLEAN_EVENT_STORE === 'true' && eventStorePath !== ':memory:') {
   await rm(eventStorePath, { recursive: true, force: true });
 }
 const chatEvents = Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()) as any;
 const eventSchema = chatEvents.event_schema;
 if (!eventSchema) throw new Error('Chat event schema is not configured');
-const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
 const medConnectionConfig = appConfig.med || {};
 const eventBus: EventBus = eventMode === 'mediator'
   ? new EventMediatorClient({
