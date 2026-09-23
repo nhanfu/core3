@@ -1258,6 +1258,23 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-EDUCATION-SCHOOL-001/`.
 - No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-TAGS-GROUP-001 (2026-09-23)
+
+- Selected Odoo's `group_category_ids` / `category_ids` Tags group-by as the
+  next uncovered Employees search behavior after the activity filters. This is
+  separate from existing Employee-detail tag assignment CRUD.
+- Extended the Employees API projection with deterministic `employee_tags`
+  values from the durable tag relation and tag-name search; extended the page
+  group-by, hidden list column, and pivot metadata through the matching
+  `page.id: employees` contract.
+- No migration was required because `20260922130000-067-employee-tags.yaml`
+  already owns the idempotent relation and seed data. Focused verification is
+  3 tests / 14 assertions; the adjacent tag CRUD regression also passes.
+- BrowserSkill captured the authenticated Odoo `core3_reference` Tags menu at
+  desktop and 390x844 mobile sizes. No Core3 screenshot is claimed: no local
+  Core3 listener was available on the checked ports. Evidence:
+  `evidence/employees/2026-09-23/EMP-EMPLOYEE-TAGS-GROUP-001/`.
+
 ## EMP-EMPLOYEE-WORK-CONTACT-SYNC-001 (2026-09-21)
 
 - Selected Odoo's `_inverse_work_contact_details` as the next uncovered

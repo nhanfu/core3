@@ -15,7 +15,7 @@ datasources:
   - id: employees
     permission: employees.read
     pivot:
-      fields: [state, department_name, job_title, employment_type, employee_type, hire_date, contract_start, birthday, employee_properties, employee_count]
+      fields: [state, department_name, job_title, employment_type, employee_type, hire_date, contract_start, birthday, employee_properties, employee_tags, employee_count]
     query: |
       WITH activity_scope AS (
         SELECT e.id,
@@ -44,6 +44,7 @@ datasources:
       SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone,
         e.department_name, e.job_title, e.manager_name, e.coach_name, e.private_car_plate,
         COALESCE(NULLIF(e.employee_properties, ''), '{}') AS employee_properties, e.employment_type,
+        COALESCE((SELECT STRING_AGG(t.name, ', ' ORDER BY t.name) FROM employee_tag_rel r JOIN employee_tags t ON t.id = r.tag_id WHERE r.employee_id = e.id), '') AS employee_tags,
         e.employee_type, e.state,
         COALESCE(e.hr_presence_state, CASE WHEN e.active = false THEN 'archive' WHEN e.presence = 'online' THEN 'present' WHEN e.presence = 'offline' THEN 'absent' ELSE 'out_of_working_hour' END) AS hr_presence_state,
         e.active, e.company_name, CAST(e.hire_date AS VARCHAR) AS hire_date,
@@ -61,7 +62,7 @@ datasources:
       JOIN activity_scope s ON s.id = e.id
       LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true
       WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN)))
-        AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%' OR COALESCE(e.coach_name, '') ILIKE '%' || :q || '%' OR COALESCE(e.private_car_plate, '') ILIKE '%' || :q || '%' OR COALESCE(e.employee_properties, '') ILIKE '%' || :q || '%')
+        AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%' OR COALESCE(e.coach_name, '') ILIKE '%' || :q || '%' OR COALESCE(e.private_car_plate, '') ILIKE '%' || :q || '%' OR COALESCE(e.employee_properties, '') ILIKE '%' || :q || '%' OR EXISTS (SELECT 1 FROM employee_tag_rel qr JOIN employee_tags qt ON qt.id = qr.tag_id WHERE qr.employee_id = e.id AND qt.name ILIKE '%' || :q || '%'))
         AND (:state IS NULL OR e.state = :state)
         AND (:department_name IS NULL OR e.department_name = :department_name)
         AND (:coach_name IS NULL OR e.coach_name = :coach_name)

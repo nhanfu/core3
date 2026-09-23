@@ -1503,3 +1503,17 @@ Focused test: `test/employees_activity_filters.integration.test.ts` (3 tests,
 and organization-chart tests pass (18 tests, 98 assertions). Evidence:
 `evidence/employees/2026-09-22/EMP-EMPLOYEE-ACTIVITY-FILTERS-001/`. No aggregate
 Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-TAGS-GROUP-001 execution (2026-09-23)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-SRC-063 | Odoo `group_category_ids` / `category_ids` Tags mapping | pass; local source and authenticated Odoo Group By menu both expose Tags |
+| EMP-FUNC-063 | Durable tag projection, list grouping value, and tag-name search | pass; current-company Employees datasource returns deterministic tag values and search results |
+| EMP-PERM-063 | Employees read permission and company boundary | pass; datasource remains `employees.read` and foreign-company results are empty |
+| EMP-DATA-063 | Migration replay and file-backed restart | pass; existing tag migration is idempotent and projected values survive reopen |
+| EMP-UI-063 | Authenticated Odoo/Core3 desktop and mobile comparison | conditional; Odoo BrowserSkill captures pass, Core3 capture blocked by no local listener |
+
+Focused test: `test/employees_tags_group.integration.test.ts` (3 tests, 14
+assertions). Adjacent `test/employees_tags.integration.test.ts` also passes
+(4 tests, 51 assertions). No aggregate Employees sign-off is claimed.

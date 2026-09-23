@@ -1942,6 +1942,38 @@ runtime hit DuckDB's `Adding columns with constraints not yet supported`
 startup error; the exact conditional blocker is recorded in the evidence.
 No aggregate Employees sign-off is claimed.
 
+## EMP-EMPLOYEE-TAGS-GROUP-001: Employees Tags group-by (2026-09-23)
+
+The next uncovered stable-ID Employees search behavior is Odoo's
+`group_category_ids` filter, which maps to `category_ids` grouping in the HR
+employee search view at
+`/home/nhanjs/projects/odoo/addons/hr/views/hr_employee_views.xml:77`.
+The authenticated `core3_reference` Employees action also exposes the
+visible `Tags` entry in its Group By menu. This is distinct from the already
+implemented Employee-detail tag assignment CRUD: the list action previously
+had no durable tag projection, tag search, or Tags group-by.
+
+Core3 now projects the existing `employee_tag_rel` / `employee_tags` relation
+as deterministic `employee_tags` text in the Employees datasource, includes
+that field in the datasource pivot contract, searches tag names, and exposes
+the page/API pair through the existing `page.id: employees` binding. The list
+also includes a hidden-by-default Tags column so the grouping value is
+available to the shared ListView without changing the page renderer.
+
+No migration was needed: migration `20260922130000-067-employee-tags.yaml`
+already owns the durable relation and deterministic seed rows. Focused
+verification is `test/employees_tags_group.integration.test.ts`, 3 tests / 14
+assertions, covering Odoo source mapping, current-company projection and tag
+search, replay, and file-backed restart persistence. The adjacent tag CRUD
+regression is included in the verification run.
+
+BrowserSkill evidence under
+`evidence/employees/2026-09-23/EMP-EMPLOYEE-TAGS-GROUP-001/` contains the
+authenticated Odoo reference captures at desktop and 390x844 mobile sizes.
+Core3 visual comparison remains blocked because no local Core3 listener was
+available on the checked development ports during this run. No aggregate
+Employees sign-off is claimed.
+
 ## EMP-EMPLOYEE-ACTIVITY-FILTERS-001: Employees activity search filters (2026-09-22)
 
 Odoo's `hr.employee` search view declares the stable activity filter IDs

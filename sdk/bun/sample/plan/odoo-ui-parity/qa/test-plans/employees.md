@@ -20,6 +20,16 @@ are recorded in [`../employees.md`](../employees.md).
 | EMP-DATA-066 | data | Employees migration | Replayed index remains singular and projection survives file-backed restart | test-results.md | pass |
 | EMP-UI-065 | visual/responsive | `/employees` Graph/Pivot | Desktop/mobile compare title, labels, date grouping, measure, responsive layout, and browser errors | browser-check.md | blocked |
 
+## EMP-EMPLOYEE-TAGS-GROUP-001
+
+| Case ID | Class | Route/action | Expected result and persistence assertion | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| EMP-SRC-063 | regression | `/employees` search Group By | Odoo `group_category_ids` maps to a page/API `Tags` grouping with shared `page.id: employees` | source-comparison.md | pass |
+| EMP-FUNC-063 | functional | `/employees` Employees datasource | Current-company rows expose deterministic tag names, and searching a tag returns matching employees | functionality-checklist.md | pass |
+| EMP-PERM-063 | permission | `/employees` Employees datasource | `employees.read` is required and a foreign company returns no rows | functionality-checklist.md | pass |
+| EMP-DATA-063 | data | Employees migrations and restart | Existing tag relation seed replays without duplicates and tag projection survives file-backed reopen | test-results.md | pass |
+| EMP-UI-063 | visual/responsive | `/employees` Group By Tags | Authenticated Odoo desktop/mobile menu and grouped state are captured; Core3 remains blocked until its listener is available | browser-blocker.md | blocked |
+
 ## Coverage inventory
 
 | Menu/action family | Core3 routes | Scope |

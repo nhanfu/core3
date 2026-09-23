@@ -30,6 +30,7 @@ components:
       - { field: employee_type, label: Employee Type }
       - { field: state, label: Status }
       - { field: birthday, label: Birthday }
+      - { field: employee_tags, label: Tags }
       - { field: employee_properties, label: Properties }
     view_navigation: tabs
     views:
@@ -112,6 +113,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
       - { field: hr_presence_state, label: Presence, type: StatusChip, optional: hide }
       - { field: birthday, label: Birthday, type: date, optional: hide }
+      - { field: employee_tags, label: Tags, optional: hide }
     page_size: 50
     row_key: id
     selectable: true
