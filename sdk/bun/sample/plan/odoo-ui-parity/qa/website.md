@@ -214,3 +214,17 @@ Website module.
 This checkpoint covers the YAML/service/data workflow and exact action
 dispatcher contract. It does not sign off the Website module: paired Odoo/Core3
 desktop/mobile evidence and the remaining public/portal gates are open.
+
+## 2026-09-23 Public cookie consent checkpoint
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| WEBSITE-FUNC-016 | Odoo cookie-bar source trace, banner labels, public YAML operation identity, and GET contract | `test/website_public_cookie_consent.integration.test.ts`; `evidence/website/2026-09-23/website-public-cookie-consent-001/` | pass: 4 tests / 22 assertions |
+| WEBSITE-WF-012 | All/essential preference transitions, replay, malformed-cookie expiry, and disabled-bar guard | same focused test; `website_cookies_bar` browser persistence with 999-day lifetime | pass |
+| WEBSITE-PERM-013 | Public read/write boundary and missing-site/method/validation errors | same focused test; public Odoo frontend behavior does not require an authenticated actor | pass for declared public boundary |
+| WEBSITE-UI-017 | Authenticated Odoo/Core3 desktop/mobile cookie banner comparison | `evidence/website/2026-09-23/website-public-cookie-consent-001/browser-check.md` | blocked; BrowserSkill borrow waited for confirmation and the existing Odoo actor/tab could not be used |
+
+Focused result: `bun test ./test/website_public_cookie_consent.integration.test.ts
+--timeout 20000` — 4 tests, 22 assertions, pass. This checkpoint does not
+sign off the Website module or claim visual parity; the public banner DOM and
+optional-content client interaction remain a separate implementation gap.

@@ -516,3 +516,50 @@ Paired authenticated Odoo/Core3 desktop and mobile evidence remains blocked by
 the reference actor's missing Website application and shared-tab ownership.
 Public cookie-banner rendering/consent persistence, richer theme asset effects,
 and the remaining public/portal Website behavior remain open.
+
+## Wave 16 execution evidence — 2026-09-23 — Public cookie consent
+
+The next smallest uncovered stable-ID Website feature is
+`WEBSITE-PUBLIC-COOKIE-CONSENT-001`. Odoo 19 renders `website_cookies_bar` from
+`addons/website/views/website_templates.xml`; its discrete banner exposes
+`Only essentials`, `I agree`, and `/cookie-policy`. The
+`website.cookies_bar` interaction stores
+`{"required": true, "optional": <choice>, "ts": <timestamp>}` in the
+`website_cookies_bar` browser cookie for 999 days. Odoo's `ir_http` treats
+optional cookies as denied until that cookie grants them, and the Website
+model uses the same decision to block third-party trackers.
+
+Core3 now adds the YAML-declared public datasource/action operations
+`website.public.cookie_consent` and `website.public.cookie_consent.save`, plus
+the Website service route `/api/public/website/cookie-consent`. The GET
+contract resolves the selected Website, exposes the exact banner labels and
+policy URL, reports whether optional cookies are allowed, and expires malformed
+legacy preferences. POST accepts only `all` or `essential`, validates the
+Website's cookie-bar setting, and persists the preference with the Odoo cookie
+name, JSON shape, 999-day lifetime, and same-site path. The Website/page data
+remains deterministic; no database migration is needed because consent is
+browser-scoped in Odoo.
+
+Focused coverage passes in
+`test/website_public_cookie_consent.integration.test.ts` (4 tests, 22
+assertions), including Odoo source anchors, banner contract, all/essential
+choice replay, malformed-cookie expiry, disabled-bar, missing-site, method,
+and validation boundaries. Evidence is under
+`odoo-ui-parity/evidence/website/2026-09-23/website-public-cookie-consent-001/`.
+
+BrowserSkill is connected on instance `245ea108`, but borrowing the only
+visible authenticated Odoo tab `1770664277` at `http://localhost:8069/odoo/discuss`
+waited for the user's confirmation and could not be completed; the owned
+session was stopped without takeover. No credentials, cookies, tokens, or
+independent browser backend were used. Therefore no authenticated Odoo/Core3
+desktop/mobile screenshot or visual-parity claim is made. The public Core3
+frontend's existing Website renderer also has no cookie-banner DOM consumer;
+this stable slice covers the real YAML/service consent boundary, while banner
+rendering/toggle/optional-iframe UI remains open.
+
+### Updated next slice
+
+The public consent service boundary is covered, but the public banner DOM,
+cookie-policy page, optional iframe warning/release behavior, richer theme
+asset effects, portal/public rendering, and paired authenticated Odoo/Core3
+desktop/mobile evidence remain open.

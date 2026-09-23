@@ -11,3 +11,16 @@ operations:
   website.public.asset:
     result_key: asset
     query: "SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.content_base64 FROM website_page_assets a JOIN website_pages p ON p.id = a.page_id AND p.state = 'Published' WHERE a.id = :id AND a.is_public = TRUE LIMIT 1"
+  website.public.cookie_consent:
+    kind: public-datasource
+    route: /api/public/website/cookie-consent
+    method: GET
+    result_key: websites
+    query: "SELECT id, name, COALESCE(cookies_bar, FALSE) AS cookies_bar, COALESCE(block_third_party_domains, TRUE) AS block_third_party_domains FROM website_websites WHERE id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001') LIMIT 1"
+  website.public.cookie_consent.save:
+    kind: public-action
+    route: /api/public/website/cookie-consent
+    method: POST
+    result_key: websites
+    description: Persist the Odoo-compatible website_cookies_bar browser preference.
+    query: "SELECT id, name, COALESCE(cookies_bar, FALSE) AS cookies_bar, COALESCE(block_third_party_domains, TRUE) AS block_third_party_domains FROM website_websites WHERE id = COALESCE(NULLIF(CAST(:website_id AS VARCHAR), ''), 'website-demo-001') LIMIT 1"
