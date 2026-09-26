@@ -329,6 +329,15 @@ async function bootstrap() {
     _apps = [];
   }
   _activeModuleId = String(getDefaultApp()?.module || getDefaultApp()?.id || '');
+  let devSessionActive = false;
+  try {
+    const response = await fetch('/api/auth/dev-session', { cache: 'no-store' });
+    if (response.ok) {
+      const session = await response.json();
+      localStorage.setItem(TOKEN_KEY, String(session.token));
+      devSessionActive = true;
+    }
+  } catch { /* regular sign-in remains available */ }
   const token = getToken();
   if (!app) return;
 
@@ -356,6 +365,9 @@ async function bootstrap() {
     _user = await res.json();
     window.__CORE3_USER__ = _user;
     client.setToken(token);
+    if (devSessionActive && window.location.pathname.startsWith('/auth/login')) {
+      window.history.replaceState({}, '', getDefaultRoute(_user));
+    }
   } catch {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(WELCOME_TOAST_KEY);

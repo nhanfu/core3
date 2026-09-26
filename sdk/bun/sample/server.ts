@@ -231,6 +231,7 @@ process.once('SIGTERM', shutdown);
 
 Bun.serve({
   port: PORT,
+  hostname: process.env.CORE3_DEV_USERNAME ? '127.0.0.1' : '0.0.0.0',
   websocket: {
     open(ws: any) {
       ws.data?.onOpen?.(ws);

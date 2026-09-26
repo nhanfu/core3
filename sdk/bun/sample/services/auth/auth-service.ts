@@ -32,6 +32,25 @@ export class AuthService implements AuthServiceProtocol {
     }
     if (!valid) throw { status: 401, code: 'INVALID_CREDENTIALS', message_key: 'auth.invalid_credentials', message: 'Invalid credentials' };
 
+    return this.issueSession(user);
+  }
+
+  async resolveDevUser(username: string): Promise<any> {
+    const requested = username.trim().toLowerCase();
+    const candidates = await this.repository.devUserCandidates();
+    const exact = candidates.filter((user) => user.id.toLowerCase() === requested || user.email.toLowerCase() === requested);
+    const matches = exact.length ? exact : candidates.filter((user) => user.email.split('@')[0].toLowerCase() === requested);
+    if (matches.length !== 1) throw new Error(matches.length ? `Ambiguous development username: ${username}` : `Development user not found: ${username}`);
+    const user = await this.repository.findUserByEmail(matches[0].email);
+    if (!user || user.enabled === false) throw new Error(`Development user is unavailable: ${username}`);
+    return user;
+  }
+
+  async devLogin(username: string): Promise<AuthenticationResult> {
+    return this.issueSession(await this.resolveDevUser(username));
+  }
+
+  private async issueSession(user: any): Promise<AuthenticationResult> {
     const roles = user.roles_csv ? String(user.roles_csv).split(',').filter(Boolean) : [];
     const permissions = await this.repository.permissions(user.id);
     await this.repository.recordLogin(user.id);

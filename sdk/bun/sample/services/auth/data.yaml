@@ -1,4 +1,6 @@
 queries:
+  dev_user_candidates: |
+    SELECT id, email FROM users
   lookup_user: |
     SELECT id, email, name, avatar_url, enabled, branch_id
     FROM users WHERE lower(email) = lower(:email)

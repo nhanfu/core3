@@ -34,6 +34,12 @@ if (import.meta.main) {
   const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
   const demoData = argumentsList.some((argument) => argument === '--demo-data' || argument === '--demo-data=true');
   const schemaOnly = argumentsList.some((argument) => argument === '--schema-only' || argument === '--schema-only=true');
+  const usernameArgument = argumentsList.find((argument) => argument.startsWith('--username='));
+  const devUsername = usernameArgument?.slice('--username='.length).trim() || '';
+  if (usernameArgument && !devUsername) throw new Error('--username requires an existing user ID, email, or email prefix');
+  if (devUsername && process.env.CORE3_ENV && process.env.CORE3_ENV !== 'development') {
+    throw new Error('--username is available only in development mode');
+  }
   const legacyMemoryFlag = argumentsList.some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
   const memoryDb = process.env.CORE3_DB_DRIVER === 'duckdb-memory'
     || legacyMemoryFlag
@@ -55,7 +61,7 @@ if (import.meta.main) {
   const devOptions = new Set(['--demo-data', '--demo-data=true', '--schema-only', '--schema-only=true', '--memory-db', '--memory-db=true', '--memory', '--memory=true']);
   const selectedModules = new Set<string>();
   for (const argument of argumentsList) {
-    if (devOptions.has(argument) || argument.startsWith('--db=')) continue;
+    if (devOptions.has(argument) || argument.startsWith('--db=') || argument === usernameArgument) continue;
     const moduleId = argument.startsWith('--') && !argument.includes('=') ? argument.slice(2) : '';
     if (!availableModules.has(moduleId)) throw new Error(`Unknown dev option or module: ${argument}. Available modules: ${[...availableModules].sort().join(', ')}`);
     selectedModules.add(moduleId);
@@ -109,6 +115,7 @@ if (import.meta.main) {
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
   if (mediatorPort && mediatorPort !== mediatorStart) console.log(`Event mediator port ${mediatorStart} is busy; using port ${mediatorPort}`);
   console.log(`App: http://127.0.0.1:${port}`);
+  if (devUsername) console.log(`Development sign-in: ${devUsername}`);
   if (runMediator) console.log(`Med: ${mediatorUrl}`);
 
   let stopped = false;
@@ -219,6 +226,7 @@ if (import.meta.main) {
           ...databaseEnv,
           PORT: String(port),
           CORE3_FRONTEND_DIST: 'true',
+          CORE3_DEV_USERNAME: devUsername,
           CORE3_EVENT_MODE: runMediator ? 'mediator' : 'embedded',
           ...(runMediator ? { CORE3_EVENT_MEDIATOR_URL: mediatorUrl } : {}),
           ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),

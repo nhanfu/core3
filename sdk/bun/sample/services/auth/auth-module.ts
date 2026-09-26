@@ -89,6 +89,11 @@ export default class AuthModule {
     const permissionCatalog = [...discoverPages(context.appsRoot).permissions.values()]
       .flatMap((entry: any) => Array.isArray(entry.config?.permissions) ? entry.config.permissions.map(String) : []);
     this.service = new AuthService(repository, jwtSecret, permissionCatalog);
+    const devUsername = String(context.env.CORE3_DEV_USERNAME || '').trim();
+    if (devUsername) {
+      if (context.env.CORE3_ENV && context.env.CORE3_ENV !== 'development') throw new Error('Development sign-in is unavailable outside development mode');
+      await this.service.resolveDevUser(devUsername);
+    }
     context.registerService(AUTH_SERVICE_KEY, this.service);
     this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
     this.topics.register({
@@ -116,6 +121,16 @@ export default class AuthModule {
     const profileEndpoint = String(profileApi.endpoint || '/api/v1/profile');
     const profileFields = new Set(Array.isArray(profileApi.fields) ? profileApi.fields.map(String) : []);
     context.registerApi(async (request: Request, url: URL) => {
+      if (url.pathname === '/api/auth/dev-session' && request.method === 'GET' && devUsername) {
+        const origin = request.headers.get('origin');
+        if ((origin && origin !== url.origin) || request.headers.get('sec-fetch-site') === 'cross-site') {
+          return new Response('Forbidden', { status: 403 });
+        }
+        const session = await this.service.devLogin(devUsername);
+        return new Response(JSON.stringify(session), {
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        });
+      }
       if (url.pathname === '/api/auth/login' && request.method === 'POST') {
         try {
           const body = await request.json() as any;
